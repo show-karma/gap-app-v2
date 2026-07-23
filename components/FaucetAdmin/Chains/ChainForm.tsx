@@ -14,10 +14,18 @@ const chainSchema = z.object({
   decimals: z.number().min(0).max(18),
 });
 
-type ChainFormData = z.infer<typeof chainSchema>;
+export type ChainFormData = z.infer<typeof chainSchema>;
 
 interface ChainFormProps {
-  chain?: any;
+  /** Existing chain to edit. explorerUrl may arrive as a number from the admin API. */
+  chain?: {
+    chainId?: number;
+    name?: string;
+    symbol?: string;
+    rpcUrl?: string;
+    explorerUrl?: string | number;
+    decimals?: number;
+  };
   onSave: (data: ChainFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -30,7 +38,6 @@ export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
   } = useForm<ChainFormData>({
     resolver: zodResolver(chainSchema),
     defaultValues: {
@@ -38,7 +45,7 @@ export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps
       name: chain?.name || "",
       symbol: chain?.symbol || "",
       rpcUrl: chain?.rpcUrl || "",
-      explorerUrl: chain?.explorerUrl || "",
+      explorerUrl: chain?.explorerUrl ? String(chain.explorerUrl) : "",
       decimals: chain?.decimals || 18,
     },
   });
@@ -178,7 +185,7 @@ export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps
       </div>
 
       {/* Form Actions */}
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end gap-x-3 pt-4">
         <button
           type="button"
           onClick={onCancel}

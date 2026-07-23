@@ -95,7 +95,6 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   height = 300,
   minHeight = 270,
   disabled, // Legacy prop
-  overflow = false,
   id,
   "data-field-id": dataFieldId,
   "aria-describedby": ariaDescribedBy,
@@ -191,7 +190,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         style={{ height }}
       >
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
+        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor…</span>
       </div>
     );
   }
@@ -236,8 +235,8 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       {/* Content validation warnings */}
       {contentValidation.warnings.length > 0 && (
         <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-700 dark:text-yellow-400">
-          {contentValidation.warnings.map((warning, idx) => (
-            <p key={idx}>{warning}</p>
+          {contentValidation.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
           ))}
         </div>
       )}

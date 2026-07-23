@@ -15,12 +15,6 @@ export interface OutputData {
   _key?: string;
 }
 
-export interface DeliverableData {
-  name: string;
-  proof: string;
-  description?: string;
-}
-
 export interface CommunityData {
   uid: string;
   name: string;

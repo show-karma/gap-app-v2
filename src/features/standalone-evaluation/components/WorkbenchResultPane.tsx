@@ -52,7 +52,7 @@ export function WorkbenchResultPane({
   onSelectIteration,
 }: WorkbenchResultPaneProps) {
   const sorted = useMemo(
-    () => [...results].sort((a, b) => a.iterationNumber - b.iterationNumber),
+    () => results.toSorted((a, b) => a.iterationNumber - b.iterationNumber),
     [results]
   );
 

@@ -1,9 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  EMAIL_PLACEHOLDERS,
-  PlaceholderReference,
-} from "@/components/FundingPlatform/PlaceholderReference";
+import { PlaceholderReference } from "@/components/FundingPlatform/PlaceholderReference";
+import { EMAIL_PLACEHOLDERS } from "@/components/FundingPlatform/PlaceholderReference.constants";
 
 describe("PlaceholderReference", () => {
   describe("rendering", () => {
@@ -88,7 +86,7 @@ describe("PlaceholderReference", () => {
 
   describe("icon states", () => {
     it("should show chevron down icon when collapsed", () => {
-      const { container } = render(<PlaceholderReference />);
+      render(<PlaceholderReference />);
 
       // The collapsed state should have a specific SVG path
       const button = screen.getByRole("button");

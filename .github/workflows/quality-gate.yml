@@ -203,10 +203,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Pinned to a specific commit (refresh as needed). `fail-on: none` keeps this
-      # informational for the soft-launch; flip to `warning` once the score is trusted.
+      # Pinned to a specific commit (refresh as needed). The codebase is now at
+      # zero react-doctor errors, so `fail-on: error` ratchets that floor —
+      # any newly-introduced error-level finding fails the check. Warnings stay
+      # informational and are tracked via the quality-gate baseline instead.
       - uses: millionco/react-doctor@052cd20aa4a4a6a8caa47ea3348aedbca95f2222 # v0 main as of 2026-05-11
         with:
           diff: ${{ github.event.pull_request.base.ref || 'main' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          fail-on: none
+          fail-on: error

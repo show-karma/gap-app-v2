@@ -20,7 +20,7 @@ vi.mock("next-themes", () => ({
   ThemeProvider: ({ children }: { children: unknown }) => children,
 }));
 
-import { screen, within } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
@@ -28,7 +28,7 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   cleanupAfterEach,
   createMockPermissions,
-  createMockUsePrivy,
+  createMockUseAuth,
   createMockUseTheme,
   renderWithProviders,
 } from "../utils/test-helpers";
@@ -71,7 +71,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<WhitelabelNavbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme("light"),
       });
@@ -95,7 +95,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       };
 
       renderWithProviders(<WhitelabelNavbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -111,7 +111,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<WhitelabelNavbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme("light"),
       });
@@ -127,7 +127,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<WhitelabelNavbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme("dark"),
       });

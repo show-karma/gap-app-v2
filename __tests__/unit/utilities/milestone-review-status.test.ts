@@ -232,8 +232,6 @@ describe("sortMilestones", () => {
 
   const notStarted = (dueDate: string) => makeMilestone({ uid: `ns-${dueDate}`, dueDate });
 
-  const late = (dueDate: string) => makeMilestone({ uid: `l-${dueDate}`, dueDate });
-
   it("sorts non-verified milestones before verified ones", () => {
     const milestones = [verified("2025-01-01"), pending("2025-06-01"), notStarted("2025-03-01")];
     const sorted = sortMilestones(milestones);

@@ -25,6 +25,11 @@ export default function Pagination({
 
   const lastPage = paginationRange?.[paginationRange.length - 1];
 
+  const pageItems = paginationRange?.map((page, index) => ({
+    page,
+    key: page === DOTS ? `dots-${index}` : `page-${page}`,
+  }));
+
   function handlePageChange(page: number | string) {
     if (page === currentPage) {
       return `z-10 bg-background border-brand-blue text-primary relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium`;
@@ -55,6 +60,7 @@ export default function Pagination({
         <div>
           <nav className="relative z-0 inline-flex rounded-md  -space-x-px" aria-label="Pagination">
             <button
+              type="button"
               onClick={() => {
                 setCurrentPage(currentPage - 1);
               }}
@@ -68,11 +74,12 @@ export default function Pagination({
               <span className="sr-only">Previous</span>
               <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
             </button>
-            {paginationRange?.map((page, index) => {
+            {pageItems?.map(({ page, key }) => {
               if (page === DOTS) {
                 return (
                   <button
-                    key={`${page}-${index}`}
+                    type="button"
+                    key={key}
                     className="bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 max-sm:px-2 max-sm:py-1 border text-sm font-medium duration-200 ease-in-out"
                   >
                     {DOTS}
@@ -82,7 +89,7 @@ export default function Pagination({
               return (
                 <button
                   type="button"
-                  key={`${page}-${index}`}
+                  key={key}
                   className={handlePageChange(page)}
                   onClick={() => {
                     setCurrentPage(Number(page));
@@ -93,6 +100,7 @@ export default function Pagination({
               );
             })}
             <button
+              type="button"
               onClick={() => {
                 setCurrentPage(currentPage + 1);
               }}

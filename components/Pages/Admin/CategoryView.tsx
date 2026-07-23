@@ -7,7 +7,6 @@ import { Fragment, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { pickColor } from "@/components/GrantCard";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
@@ -16,6 +15,7 @@ import type { Category, ImpactSegment } from "@/types/impactMeasurement";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { pickColor } from "@/utilities/pickColor";
 import { cn } from "@/utilities/tailwind";
 import { ActivityOutcomeModal } from "./ActivityOutcomeModal";
 
@@ -138,7 +138,7 @@ export const CategoryView = ({
   return (
     <div className="w-full flex flex-col gap-0 flex-1">
       {/* Category Header */}
-      <div className="rounded border border-gray-300 dark:border-zinc-700 py-4 px-4 flex justify-between items-center mb-6">
+      <div className="rounded border border-gray-300 dark:border-zinc-700 p-4 flex justify-between items-center mb-6">
         <div className="flex flex-row gap-4 items-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-indigo-50 dark:bg-zinc-800">
             <Image
@@ -262,10 +262,11 @@ export const CategoryView = ({
                     leaveTo="transform opacity-0 scale-95"
                   >
                     <Menu.Items className="absolute right-0 mt-1 w-48 origin-top-right bg-white dark:bg-zinc-800 divide-y divide-gray-100 dark:divide-gray-700 rounded-md shadow-lg ring-1 ring-black/5 focus:outline-none z-20">
-                      <div className="px-1 py-1">
+                      <div className="p-1">
                         <Menu.Item>
                           {({ active }) => (
                             <button
+                              type="button"
                               className={`${
                                 active ? "bg-gray-100 dark:bg-zinc-700" : ""
                               } w-full px-4 py-2 text-left flex items-center text-sm`}
@@ -282,6 +283,7 @@ export const CategoryView = ({
                         <Menu.Item>
                           {({ active }) => (
                             <button
+                              type="button"
                               className={`${
                                 active ? "bg-gray-100 dark:bg-zinc-700" : ""
                               } w-full px-4 py-2 text-left flex items-center text-sm text-red-500`}

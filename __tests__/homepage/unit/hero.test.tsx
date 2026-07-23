@@ -21,7 +21,7 @@ vi.mock("@/src/components/ui/infinite-moving-cards", () => ({
   InfiniteMovingCards: ({ items }: any) => (
     <div data-testid="infinite-moving-cards">
       {items?.map((item: any, idx: number) => (
-        <div key={idx} data-testid={`carousel-item-${idx}`}>
+        <div key={item.text || item.name} data-testid={`carousel-item-${idx}`}>
           {item.text || item.name}
         </div>
       ))}
@@ -205,7 +205,7 @@ describe("Hero Component", () => {
     });
 
     it("should show hero image on desktop but hide on mobile", () => {
-      const { container } = renderWithProviders(<Hero />);
+      renderWithProviders(<Hero />);
 
       const heroImage = screen.getByAltText("Builder Hero");
       expect(heroImage).toBeInTheDocument();

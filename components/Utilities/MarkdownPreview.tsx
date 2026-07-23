@@ -234,6 +234,12 @@ export const MarkdownPreview = ({
           {children}
         </p>
       ),
+      // User-authored markdown must never mint page-level headings: every
+      // surface embedding this preview (cards, descriptions, comments) sits on
+      // a page that already owns its single h1. Demote markdown h1 -> h2 so
+      // the document outline stays intact; excerpt goes further (h1-h6 -> p)
+      // via excerptComponents below.
+      h1: ({ children }: React.ComponentProps<"h1">) => <h2>{children}</h2>,
       ...(variant === "inline" ? inlineTableComponents : {}),
       ...(variant === "excerpt" ? (excerptComponents as Partial<Components>) : {}),
       ...(components as Partial<Components>),

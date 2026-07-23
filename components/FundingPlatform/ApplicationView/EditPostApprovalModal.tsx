@@ -31,7 +31,7 @@ const EditPostApprovalModal: FC<EditPostApprovalModalProps> = ({
   const { updatePostApprovalDataAsync, isUpdating } = usePostApprovalUpdate();
   const [matchingDiagnostics, setMatchingDiagnostics] = useState<{
     matched: Array<{ fieldLabel: string; originalKey: string; fieldId: string }>;
-    unmatched: Array<{ originalKey: string; value: any }>;
+    unmatched: Array<{ originalKey: string; value: unknown }>;
     matchRate: number;
   } | null>(null);
 
@@ -62,7 +62,7 @@ const EditPostApprovalModal: FC<EditPostApprovalModalProps> = ({
     try {
       await updatePostApprovalDataAsync({
         applicationId: application.referenceNumber || application.id,
-        postApprovalData: postApprovalData as Record<string, any>,
+        postApprovalData,
       });
       onSuccess?.();
       handleClose();
@@ -143,7 +143,7 @@ const EditPostApprovalModal: FC<EditPostApprovalModalProps> = ({
             <div className="flex flex-col items-center justify-center py-12">
               <Spinner className="h-8 w-8" />
               <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                Loading form configuration...
+                Loading form configuration…
               </p>
             </div>
           ) : errorMessage ? (

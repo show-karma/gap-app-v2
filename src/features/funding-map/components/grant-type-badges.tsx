@@ -1,6 +1,7 @@
 import type { VariantProps } from "class-variance-authority";
 import React from "react";
-import { Badge, type badgeVariants } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
+import type { badgeVariants } from "@/components/ui/badge.variants";
 import { cn } from "@/utilities/tailwind";
 import { OPPORTUNITY_TO_GRANT_TYPE } from "../constants/filter-options";
 import type { OpportunityType } from "../types/funding-program";

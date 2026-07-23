@@ -817,7 +817,7 @@ describe("groupByCategory", () => {
     ];
     const grouped = groupByCategory(articles);
     expect(grouped["Core Concepts"]).toHaveLength(2);
-    expect(grouped["Capabilities"]).toHaveLength(1);
+    expect(grouped.Capabilities).toHaveLength(1);
   });
 
   it("returns empty object for empty array", () => {
@@ -1371,7 +1371,7 @@ describe("groupDocsByCategory", () => {
       makeDocsPage({ path: "/overview/supported-networks", category: "Overview" }),
     ];
     const grouped = groupDocsByCategory(pages);
-    expect(grouped["Overview"]).toHaveLength(2);
+    expect(grouped.Overview).toHaveLength(2);
     expect(grouped["For Builders"]).toHaveLength(1);
   });
 
@@ -1488,7 +1488,7 @@ describe("constants integrity", () => {
   });
 
   it("SITEMAP_DESCRIPTION_MAP has non-empty descriptions", () => {
-    for (const [key, desc] of Object.entries(SITEMAP_DESCRIPTION_MAP)) {
+    for (const desc of Object.values(SITEMAP_DESCRIPTION_MAP)) {
       expect(desc.length).toBeGreaterThan(10);
     }
   });

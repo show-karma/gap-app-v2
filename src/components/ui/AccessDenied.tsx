@@ -147,7 +147,7 @@ export function AccessDenied({
   communityName,
 }: AccessDeniedProps) {
   const { authenticated, login } = useAuth();
-  const router = useRouter();
+  const { push } = useRouter();
   const { roles: detectedRoles, isLoading: isRbacLoading } = usePermissionContext();
   const { data: customMessages, isLoading: isCustomLoading } = useAccessDeniedMessages(
     communitySlug,
@@ -205,10 +205,10 @@ export function AccessDenied({
       return;
     }
     if (cta) {
-      router.push(cta.href);
+      push(cta.href);
       return;
     }
-    router.push(returnUrl);
+    push(returnUrl);
   };
 
   // `cta` is a post-login redirect target — only honor it once the visitor is

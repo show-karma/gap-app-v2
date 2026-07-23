@@ -29,10 +29,9 @@ import {
 import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
-import { defaultMetadata } from "@/utilities/meta";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 
-export const metadata = defaultMetadata;
+const STAT_CARD_SKELETON_KEYS = Array.from({ length: 8 }, (_, i) => `stat-card-${i + 1}`);
 
 function MilestonesReportSkeleton() {
   return (
@@ -48,9 +47,9 @@ function MilestonesReportSkeleton() {
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(8)].map((_, i) => (
+        {STAT_CARD_SKELETON_KEYS.map((key) => (
           <div
-            key={i}
+            key={key}
             className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50"
           >
             <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />

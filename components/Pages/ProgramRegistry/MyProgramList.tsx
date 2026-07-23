@@ -32,7 +32,7 @@ import { ProgramTypeBadges } from "./ProgramTypeBadges";
 interface MyProgramListProps {
   grantPrograms: GrantProgram[];
   tab: "accepted" | "rejected" | "pending";
-  editFn: (program: GrantProgram) => any;
+  editFn: (program: GrantProgram) => void;
   selectProgram: (program: GrantProgram) => void;
   isAllowed: boolean;
   setSortField: (field: string) => void;
@@ -41,7 +41,6 @@ interface MyProgramListProps {
 
 export const MyProgramList: FC<MyProgramListProps> = ({
   grantPrograms,
-  tab,
   editFn,
   selectProgram,
   isAllowed,
@@ -292,7 +291,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                     <Tooltip.Trigger asChild>
                       <p
                         key={grant.programId}
-                        className="whitespace-nowrap rounded-full w-6 h-6 items-center flex flex-col justify-center px-1 py-1 text-[11px] truncate text-center text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
+                        className="whitespace-nowrap rounded-full w-6 h-6 items-center flex flex-col justify-center p-1 text-[11px] truncate text-center text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
                       >
                         +{restNetworks.length}
                       </p>
@@ -430,9 +429,9 @@ export const MyProgramList: FC<MyProgramListProps> = ({
 
           return (
             <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {program.admins?.map((admin, index) => (
+              {program.admins?.map((admin) => (
                 <span
-                  key={index}
+                  key={admin}
                   className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${
                     admin.toLowerCase() === normalizedAddress ? "bg-blue-100" : "bg-zinc-50"
                   }`}
@@ -493,7 +492,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
 
   const table = useReactTable({
     data: grantPrograms,
-    columns: columns as any,
+    columns,
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),

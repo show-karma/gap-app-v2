@@ -207,7 +207,7 @@ export function VirtualizedTable<T>({
         {loadingComponent || (
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-zinc-100" />
-            <span className="text-sm text-gray-500 dark:text-zinc-400">Loading...</span>
+            <span className="text-sm text-gray-500 dark:text-zinc-400">Loading…</span>
           </div>
         )}
       </div>
@@ -351,5 +351,3 @@ export function VirtualizedTable<T>({
     </div>
   );
 }
-
-export default VirtualizedTable;

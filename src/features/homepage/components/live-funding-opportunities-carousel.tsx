@@ -76,9 +76,14 @@ export function LiveFundingOpportunitiesCarousel({
     setCurrent(api.selectedScrollSnap() + 1);
 
     // Listen for carousel slide changes and update current slide
-    api.on("select", () => {
+    const handleSelect = () => {
       setCurrent(api.selectedScrollSnap() + 1);
-    });
+    };
+    api.on("select", handleSelect);
+
+    return () => {
+      api.off("select", handleSelect);
+    };
   }, [api]);
 
   // Empty state when there are no programs
@@ -152,6 +157,7 @@ export function LiveFundingOpportunitiesCarousel({
           {/* Navigation controls - works on all screen sizes */}
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => api?.scrollPrev()}
               disabled={current === 1}
               className="w-9 h-9 rounded-md border border-border bg-background shadow-sm flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent transition-colors"
@@ -160,6 +166,7 @@ export function LiveFundingOpportunitiesCarousel({
               <ArrowRightIcon className="w-4 h-4 rotate-180 text-foreground" />
             </button>
             <button
+              type="button"
               onClick={() => api?.scrollNext()}
               disabled={current === totalSlides}
               className="w-9 h-9 rounded-md border border-border bg-background shadow-sm flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent transition-colors"

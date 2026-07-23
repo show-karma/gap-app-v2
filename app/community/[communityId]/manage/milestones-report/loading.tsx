@@ -1,5 +1,9 @@
 import { Skeleton } from "@/components/Utilities/Skeleton";
 
+const STAT_CARD_KEYS = Array.from({ length: 8 }, (_, i) => `stat-card-${i + 1}`);
+const TABLE_ROW_KEYS = Array.from({ length: 12 }, (_, i) => `table-row-${i + 1}`);
+const PAGINATION_KEYS = Array.from({ length: 5 }, (_, i) => `page-${i + 1}`);
+
 export default function Loading() {
   return (
     <output aria-label="Loading" className="block space-y-6">
@@ -17,9 +21,9 @@ export default function Loading() {
 
       {/* Stat cards 2x4 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(8)].map((_, i) => (
+        {STAT_CARD_KEYS.map((key) => (
           <div
-            key={i}
+            key={key}
             className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50"
           >
             <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
@@ -45,9 +49,9 @@ export default function Loading() {
           </div>
         </div>
         {/* Table rows */}
-        {[...Array(12)].map((_, i) => (
+        {TABLE_ROW_KEYS.map((key) => (
           <div
-            key={i}
+            key={key}
             className="flex items-center gap-6 px-4 h-14 border-b border-gray-100 dark:border-zinc-800 last:border-b-0"
           >
             <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -67,8 +71,8 @@ export default function Loading() {
         <div className="border-t border-gray-200 dark:border-zinc-700 px-4 py-3 flex justify-between items-center">
           <Skeleton className="h-4 w-44 rounded" />
           <div className="flex gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-8 w-8 rounded" />
+            {PAGINATION_KEYS.map((key) => (
+              <Skeleton key={key} className="h-8 w-8 rounded" />
             ))}
           </div>
         </div>

@@ -147,7 +147,6 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should call onInputChange when value is changed", async () => {
-      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");
@@ -159,7 +158,6 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should call onInputChange when start date is changed", async () => {
-      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const dateInputs = screen.getAllByLabelText(/start date for entry/i);
@@ -176,7 +174,6 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should call onInputChange when end date is changed", async () => {
-      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const dateInputs = screen.getAllByLabelText(/end date for entry/i);
@@ -309,7 +306,6 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should call onInputChange when proof URL is changed", async () => {
-      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const proofInputs = screen.getAllByLabelText(/proof url/i);
@@ -450,7 +446,6 @@ describe("VirtualizedDatapointsTable", () => {
 
   describe("Data Index Tracking", () => {
     it("should pass correct index to onInputChange", async () => {
-      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");

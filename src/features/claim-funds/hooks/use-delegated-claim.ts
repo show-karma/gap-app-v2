@@ -32,7 +32,7 @@ interface PendingClaim {
   };
 }
 
-export interface UseDelegatedClaimReturn {
+interface UseDelegatedClaimReturn {
   requestSignature: (
     campaignId: string,
     eligibility: ClaimEligibility,

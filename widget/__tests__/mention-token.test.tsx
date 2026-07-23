@@ -37,13 +37,13 @@ describe("mentionToToken", () => {
 
 describe("renderWithMentionPills", () => {
   it("renders plain text unchanged when no tokens are present", () => {
-    const { container } = render(<>{renderWithMentionPills("just some text")}</>);
+    const { container } = render(renderWithMentionPills("just some text"));
     expect(container.textContent).toBe("just some text");
   });
 
   it("renders a pill for an embedded mention token", () => {
     const { container } = render(
-      <>{renderWithMentionPills("@[Fund#2](mention:project:fund-2) what is the status?")}</>
+      renderWithMentionPills("@[Fund#2](mention:project:fund-2) what is the status?")
     );
     const pill = container.querySelector("span");
     expect(pill?.textContent).toBe("@Fund#2");
@@ -52,7 +52,7 @@ describe("renderWithMentionPills", () => {
 
   it("renders multiple pills in order interleaved with text", () => {
     const text = "compare @[A](mention:milestone:0xa?project=p1) and @[B](mention:milestone:0xb)";
-    const { container } = render(<>{renderWithMentionPills(text)}</>);
+    const { container } = render(renderWithMentionPills(text));
     const pills = container.querySelectorAll("span");
     expect(pills.length).toBe(2);
     expect(pills[0].textContent).toBe("@A");

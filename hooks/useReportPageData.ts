@@ -68,7 +68,7 @@ interface ReportAPIResponse {
   };
 }
 
-export type { Report, ReportAPIResponse, TabId };
+export type { Report, ReportAPIResponse };
 
 export const itemsPerPage = 50;
 
@@ -120,7 +120,7 @@ export function getPendingTableResetKey(
   programIds: string[],
   page: number
 ): string {
-  return `${reviewerAddress ?? "all"}-${[...programIds].sort().join(",")}-${page}`;
+  return `${reviewerAddress ?? "all"}-${programIds.toSorted().join(",")}-${page}`;
 }
 
 export function useReportPageData({

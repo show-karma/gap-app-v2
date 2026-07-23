@@ -110,10 +110,6 @@ export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
   [Role.NONE]: [],
 };
 
-export function getPermissionsForRole(role: Role): PermissionString[] {
-  return PERMISSION_MATRIX[role] ?? [];
-}
-
 export function getPermissionsForRoles(roles: Role[]): Permission[] {
   const permissionSet = new Set<Permission>();
   const wildcardPrefixes: string[] = [];

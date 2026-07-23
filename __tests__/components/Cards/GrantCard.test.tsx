@@ -4,12 +4,22 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import { GrantCard, pickColor } from "@/components/GrantCard";
+import { GrantCard } from "@/components/GrantCard";
 import type { GrantResponse } from "@/types/v2/grant";
+import { pickColor } from "@/utilities/pickColor";
 
 // Mock Next.js Link component
 vi.mock("next/link", () => {
-  const MockLink = ({ children, href, className, ...props }: any) => (
+  const MockLink = ({
+    children,
+    href,
+    className,
+    ...props
+  }: {
+    children?: React.ReactNode;
+    href: string;
+    className?: string;
+  } & Record<string, unknown>) => (
     <a href={href} className={className} {...props}>
       {children}
     </a>
@@ -28,7 +38,15 @@ vi.mock("next/link", () => {
 
 // Mock ProfilePicture component
 vi.mock("@/components/Utilities/ProfilePicture", () => ({
-  ProfilePicture: ({ imageURL, name, className, alt }: any) => (
+  ProfilePicture: ({
+    name,
+    className,
+    alt,
+  }: {
+    name?: string;
+    className?: string;
+    alt?: string;
+  }) => (
     <div data-testid="profile-picture" className={className} aria-label={alt}>
       {name}
     </div>
@@ -37,7 +55,7 @@ vi.mock("@/components/Utilities/ProfilePicture", () => ({
 
 // Mock MarkdownPreview component
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
-  MarkdownPreview: ({ source, variant }: any) => (
+  MarkdownPreview: ({ source, variant }: { source?: string; variant?: string }) => (
     <div data-testid="markdown-preview" data-variant={variant}>
       {source}
     </div>
@@ -46,7 +64,7 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
 
 // Mock TrackTags component
 vi.mock("@/components/TrackTags", () => ({
-  TrackTags: ({ communityId, trackIds }: any) => (
+  TrackTags: ({ communityId, trackIds }: { communityId?: string; trackIds?: string[] }) => (
     <div data-testid="track-tags" data-community-id={communityId}>
       {trackIds?.map((id: string) => (
         <span key={id} data-testid={`track-${id}`}>
@@ -59,7 +77,7 @@ vi.mock("@/components/TrackTags", () => ({
 
 // Mock GrantPercentage component
 vi.mock("@/components/Pages/Project/Grants/components/GrantPercentage", () => ({
-  GrantPercentage: ({ grant, className }: any) => (
+  GrantPercentage: ({ className }: { className?: string }) => (
     <div data-testid="grant-percentage" className={className}>
       75%
     </div>
@@ -111,10 +129,10 @@ describe("GrantCard", () => {
       },
     },
     milestones: [
-      { uid: "milestone-1", completed: false } as any,
-      { uid: "milestone-2", completed: true } as any,
+      { uid: "milestone-1", completed: false },
+      { uid: "milestone-2", completed: true },
     ],
-    updates: [{ uid: "update-1" } as any],
+    updates: [{ uid: "update-1" }],
     categories: ["DeFi", "Infrastructure"],
   } as unknown as GrantResponse;
 
@@ -391,8 +409,8 @@ describe("GrantCard", () => {
     it("should display singular milestone text when count is 1", () => {
       const grantWithOneMilestone = {
         ...mockGrant,
-        milestones: [{ uid: "milestone-1", completed: false } as any],
-      } as GrantResponse;
+        milestones: [{ uid: "milestone-1", completed: false }],
+      } as unknown as GrantResponse;
 
       render(<GrantCard grant={grantWithOneMilestone} index={0} />);
 
@@ -431,12 +449,12 @@ describe("GrantCard", () => {
       const grantWithMultipleUpdates = {
         ...mockGrant,
         milestones: [
-          { uid: "m1", completed: true } as any,
-          { uid: "m2", completed: true } as any,
-          { uid: "m3", completed: false } as any,
+          { uid: "m1", completed: true },
+          { uid: "m2", completed: true },
+          { uid: "m3", completed: false },
         ],
-        updates: [{ uid: "u1" } as any, { uid: "u2" } as any],
-      } as GrantResponse;
+        updates: [{ uid: "u1" }, { uid: "u2" }],
+      } as unknown as GrantResponse;
 
       render(<GrantCard grant={grantWithMultipleUpdates} index={0} />);
 

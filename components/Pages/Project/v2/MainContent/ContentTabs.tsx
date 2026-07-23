@@ -44,13 +44,7 @@ interface ContentTabsProps {
  * Support tab (mobile only) shows Donate, Endorse, Subscribe, and Quick Links.
  * Profile card is always visible above the tabs on mobile.
  */
-export function ContentTabs({
-  activeTab,
-  onTabChange,
-  fundingCount,
-  teamCount,
-  className,
-}: ContentTabsProps) {
+export function ContentTabs({ activeTab, onTabChange, fundingCount, className }: ContentTabsProps) {
   const params = useParams();
   const projectId = params?.projectId as string;
 

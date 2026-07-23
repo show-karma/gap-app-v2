@@ -23,7 +23,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("next/image", () => ({
   __esModule: true,
-  default: (props: any) => <img {...props} />,
+  default: (props: any) => <img alt="" {...props} />,
 }));
 
 vi.mock("@/src/components/navigation/Link", () => ({

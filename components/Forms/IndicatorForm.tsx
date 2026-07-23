@@ -13,7 +13,6 @@ import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 const UNIT_TYPES = ["int", "float"] as const;
-type UnitType = (typeof UNIT_TYPES)[number];
 
 const indicatorSchema = z.object({
   name: z
@@ -74,7 +73,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
-    setValue,
     watch,
   } = useForm<IndicatorFormData>({
     resolver: zodResolver(indicatorSchema),

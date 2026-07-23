@@ -12,14 +12,14 @@ import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
-import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
+import { prepareChartData } from "../../Communities/Impact/ImpactCharts.helpers";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
+import { filterIndicators } from "./FilteredOutputsAndOutcomes.helpers";
 import { GroupedLinks } from "./GroupedLinks";
 
 // Dynamically import heavy Tremor chart component for bundle optimization
@@ -33,6 +33,8 @@ type OutputForm = {
   categoryId: string;
   unitOfMeasure: "int" | "float";
   datapoints: {
+    /** Immutable client-side row identity used only as a React key; never sent to the API. */
+    localId: string;
     value: number | string;
     proof: string;
     startDate: string;
@@ -48,27 +50,6 @@ interface FilteredOutputsAndOutcomesProps {
   indicatorIds?: string[];
   indicatorNames?: string[];
 }
-
-// Helper function to filter indicators
-export const filterIndicators = (
-  indicators: ImpactIndicatorWithData[],
-  indicatorIds?: string[],
-  indicatorNames?: string[]
-) => {
-  if (!indicatorIds?.length && !indicatorNames?.length) {
-    return indicators; // Return all if no filters provided
-  }
-
-  return indicators.filter((indicator) => {
-    if (indicatorIds?.length) {
-      return indicatorIds.includes(indicator.id);
-    }
-    if (indicatorNames?.length) {
-      return indicatorNames.includes(indicator.name);
-    }
-    return false;
-  });
-};
 
 export const FilteredOutputsAndOutcomes = ({
   indicatorIds,
@@ -125,6 +106,9 @@ export const FilteredOutputsAndOutcomes = ({
           categoryId: "",
           datapoints:
             item.datapoints.map((datapoint) => ({
+              localId:
+                datapoint.outputTimestamp ||
+                `${datapoint.startDate || ""}|${datapoint.endDate || ""}`,
               value: datapoint.value,
               proof: datapoint.proof || "",
               startDate: datapoint.startDate || "",
@@ -154,7 +138,7 @@ export const FilteredOutputsAndOutcomes = ({
     try {
       await submitImpactAnswer({
         indicatorId: id,
-        datapoints: form.datapoints,
+        datapoints: form.datapoints.map(({ localId: _localId, ...datapoint }) => datapoint),
       });
 
       // Reset editing state
@@ -234,6 +218,7 @@ export const FilteredOutputsAndOutcomes = ({
               datapoints: [
                 ...f.datapoints,
                 {
+                  localId: crypto.randomUUID(),
                   value: 0,
                   proof: "",
                   startDate: new Date().toISOString().split("T")[0],
@@ -277,14 +262,13 @@ export const FilteredOutputsAndOutcomes = ({
     const endDate = new Date(timestamp);
     endDate.setHours(0, 0, 0, 0); // Normalize to start of day
 
-    const timestamps = form.datapoints
-      .map((dp) => dp.endDate || dp.outputTimestamp)
-      .filter(Boolean)
-      .map((date) => {
-        const d = new Date(date as string);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime();
-      });
+    const timestamps = form.datapoints.flatMap((dp) => {
+      const date = dp.endDate || dp.outputTimestamp;
+      if (!date) return [];
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return [d.getTime()];
+    });
 
     return timestamps.filter((t) => t === endDate.getTime()).length > 1;
   };
@@ -436,13 +420,20 @@ export const FilteredOutputsAndOutcomes = ({
                               <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
                                 {(form?.isEditing ? form.datapoints : item.datapoints).map(
                                   (datapoint, index) => (
-                                    <tr key={index}>
+                                    <tr
+                                      key={
+                                        ("localId" in datapoint ? datapoint.localId : undefined) ||
+                                        datapoint.outputTimestamp ||
+                                        `${datapoint.startDate}|${datapoint.endDate}`
+                                      }
+                                    >
                                       <td className="px-4 py-2">
                                         {form?.isEditing && isAuthorized ? (
                                           <div className="flex flex-col gap-1">
                                             <div className="flex items-center gap-2">
                                               <input
                                                 type={"number"}
+                                                aria-label="Value"
                                                 value={form?.datapoints?.[index]?.value || ""}
                                                 onChange={(e) =>
                                                   handleInputChange(
@@ -488,6 +479,7 @@ export const FilteredOutputsAndOutcomes = ({
                                         {form?.isEditing && isAuthorized ? (
                                           <input
                                             type="date"
+                                            aria-label="Start date"
                                             value={
                                               form?.datapoints?.[index]?.startDate?.split("T")[0] ||
                                               new Date().toISOString().split("T")[0]
@@ -524,6 +516,7 @@ export const FilteredOutputsAndOutcomes = ({
                                         {form?.isEditing && isAuthorized ? (
                                           <input
                                             type="date"
+                                            aria-label="End date"
                                             value={
                                               form?.datapoints?.[index]?.endDate?.split("T")[0] ||
                                               form?.datapoints?.[index]?.outputTimestamp?.split(
@@ -575,6 +568,7 @@ export const FilteredOutputsAndOutcomes = ({
                                         {form?.isEditing && isAuthorized ? (
                                           <input
                                             type="text"
+                                            aria-label="Proof"
                                             value={form?.datapoints?.[index]?.proof || ""}
                                             onChange={(e) =>
                                               handleInputChange(
@@ -643,6 +637,7 @@ export const FilteredOutputsAndOutcomes = ({
                     !form?.isEditing &&
                     isAuthorized && (
                       <button
+                        type="button"
                         onClick={() => handleEditClick(item.id)}
                         className="rounded-sm px-6 py-2 text-sm font-medium text-white bg-black dark:bg-zinc-700 hover:bg-zinc-700 dark:hover:bg-zinc-900/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"
                       >
@@ -652,6 +647,7 @@ export const FilteredOutputsAndOutcomes = ({
                   {form?.isEditing && isAuthorized && (
                     <div className="flex gap-3 pt-2 flex-row">
                       <button
+                        type="button"
                         onClick={() => handleCancel()}
                         disabled={form?.isSaving}
                         className="rounded-sm border border-black dark:border-zinc-100 px-6 py-2 text-sm font-medium text-black bg-white dark:bg-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-100/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"
@@ -671,7 +667,7 @@ export const FilteredOutputsAndOutcomes = ({
                       >
                         {form?.isSaving ? (
                           <div className="flex items-center justify-center gap-2">
-                            <span>Saving...</span>
+                            <span>Saving…</span>
                           </div>
                         ) : (
                           "Save Changes"

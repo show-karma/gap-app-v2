@@ -56,7 +56,10 @@ function tokenize(source: string): Token[] {
 }
 
 function canonicalizeEntityName(name: string): string[] {
-  const tokens = name.split(/\s+/).map(normalizeToken).filter(Boolean);
+  const tokens = name.split(/\s+/).flatMap((token) => {
+    const normalized = normalizeToken(token);
+    return normalized ? [normalized] : [];
+  });
 
   // Drop leading article(s): "The Ford Foundation" → "Ford Foundation"
   while (tokens.length > 1 && LEADING_ARTICLES.has(tokens[0])) {

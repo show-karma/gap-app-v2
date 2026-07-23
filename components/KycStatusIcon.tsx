@@ -7,6 +7,7 @@ import {
   MinusCircleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
+import { getEffectiveKycStatus } from "@/components/KycStatusIcon.helpers";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type KycStatusResponse, KycVerificationStatus } from "@/types/kyc";
 import { formatDate } from "@/utilities/formatDate";
@@ -68,15 +69,6 @@ const statusConfig: Record<
 };
 
 /**
- * Shared helper to get the effective status accounting for expiration
- */
-export function getEffectiveKycStatus(status: KycStatusResponse | null): KycVerificationStatus {
-  return status?.isExpired
-    ? KycVerificationStatus.EXPIRED
-    : (status?.status ?? KycVerificationStatus.NOT_STARTED);
-}
-
-/**
  * Shared tooltip content component to reduce duplication
  */
 interface KycTooltipContentProps {
@@ -84,7 +76,7 @@ interface KycTooltipContentProps {
   showDates?: boolean;
 }
 
-export function KycTooltipContent({ status, showDates = true }: KycTooltipContentProps) {
+function KycTooltipContent({ status, showDates = true }: KycTooltipContentProps) {
   const effectiveStatus = getEffectiveKycStatus(status);
   const config = statusConfig[effectiveStatus];
 

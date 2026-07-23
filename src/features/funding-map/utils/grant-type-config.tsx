@@ -1,6 +1,6 @@
 import { ArrowDownToDot, Code, FastForward, IterationCw, Trophy, Vote } from "lucide-react";
 
-export interface GrantTypeConfig {
+interface GrantTypeConfig {
   icon: React.ReactNode;
   color: string;
 }

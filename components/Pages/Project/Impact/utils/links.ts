@@ -30,7 +30,7 @@ const networkNames: Record<string, string> = {
   sei: "Sei",
 };
 
-export const linkFormatter = (link: string) => {
+const linkFormatter = (link: string) => {
   if (link.includes("github.com")) {
     const githubFromField = link.includes("http") ? link : `https://${link}`;
     const repoUrl = new URL(githubFromField);
@@ -96,9 +96,12 @@ export const mapLinks = (linksToMap: string[], networkAddresses?: string[]) => {
 
   // Filter out Etherscan API links and Dune links from the displayed links
   const linksMap = linksToMap
-    .map((datapoint) => (urlRegex.test(datapoint) ? linkFormatter(datapoint) : null))
-    .filter(Boolean)
-    .filter((link) => !isEtherscanApiLink(link as string) && !isDuneLink(link as string)); // Don't show API links or Dune links
+    .flatMap((datapoint) => {
+      if (!urlRegex.test(datapoint)) return [];
+      const link = linkFormatter(datapoint);
+      return link ? [link] : [];
+    })
+    .filter((link) => !isEtherscanApiLink(link) && !isDuneLink(link)); // Don't show API links or Dune links
 
   // Get contract URLs from network addresses when Etherscan API link or Dune link is present
   let contractUrls: string[] = [];

@@ -38,14 +38,6 @@ export function useReportConfigs(communitySlug: string) {
   });
 }
 
-export function useReportConfig(communitySlug: string, configId: string) {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.configs(communitySlug), configId],
-    queryFn: () => portfolioService.getReportConfig(communitySlug, configId),
-    enabled: Boolean(communitySlug && configId),
-  });
-}
-
 export function useCreateReportConfig(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({

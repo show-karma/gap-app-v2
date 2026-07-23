@@ -108,7 +108,7 @@ export default function QuestionBuilderPage() {
               Unable to load the form schema. This might be the first time creating a form for this
               program.
             </p>
-            <div className="flex space-x-3">
+            <div className="flex gap-x-3">
               <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back to Programs
@@ -145,7 +145,7 @@ export default function QuestionBuilderPage() {
         {!readOnly && (isUpdating || isUpdatingPostApproval) && (
           <div className="absolute top-4 right-4 flex items-center text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
             <Spinner />
-            <span className="ml-2">Saving...</span>
+            <span className="ml-2">Saving…</span>
           </div>
         )}
 

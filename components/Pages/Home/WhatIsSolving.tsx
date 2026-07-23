@@ -64,7 +64,13 @@ export function WhatIsSolving() {
         </div>
         <div className="flex min-w-[280px] flex-1 flex-col items-start gap-3 rounded-3xl bg-[#EAECF0] px-8 py-6 max-2xl:px-6">
           <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-            <img src="/icons/coins-stacked.png" alt="Grantee" className="h-7 w-7" />
+            <Image
+              src="/icons/coins-stacked.png"
+              alt="Grantee"
+              width={28}
+              height={28}
+              className="h-7 w-7"
+            />
           </div>
           <h3 className=" text-2xl font-bold text-black  max-2xl:text-xl">
             Inadequate Data Structure

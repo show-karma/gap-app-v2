@@ -9,7 +9,7 @@ import type { ChainPayoutAddressMap } from "../types/chain-payout-address";
  * Query key factory for chain payout address queries
  * Provides consistent, type-safe query keys for cache management
  */
-export const chainPayoutAddressKeys = {
+const chainPayoutAddressKeys = {
   all: ["chainPayoutAddress"] as const,
   project: (projectId: string) => [...chainPayoutAddressKeys.all, projectId] as const,
 } as const;

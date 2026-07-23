@@ -138,25 +138,21 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
   // Get completion status for milestones
   const getCompletionStatus = () => {
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
-      const milestoneData = update.data as any;
-      return (
-        milestoneData.completed ||
-        (milestoneData.completed &&
-          typeof milestoneData.completed === "object" &&
-          Object.keys(milestoneData.completed).length > 0)
-      );
+      const milestoneData = update.data as { completed?: unknown };
+      return Boolean(milestoneData.completed);
     }
     return false;
   };
 
-  const startDate = (update as any).data?.startDate;
-  const endDate = (update as any).data?.endDate;
+  const dateWindow = (update as { data?: { startDate?: string; endDate?: string } }).data;
+  const startDate = dateWindow?.startDate;
+  const endDate = dateWindow?.endDate;
 
   return (
     <div className="flex flex-col gap-0 w-full">
       {/* Grants Related Section */}
       {/* Show grants related if they exist */}
-      <div className="flex flex-col gap-3 w-full px-6 py-6">
+      <div className="flex flex-col gap-3 w-full p-6">
         <div className="flex flex-col gap-3 w-full">
           {/* Activity Pill with Due Date and Status */}
           <div className="flex flex-row items-start justify-between gap-3">

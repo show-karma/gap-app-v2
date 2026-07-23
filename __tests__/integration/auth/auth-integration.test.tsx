@@ -21,7 +21,6 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  PRIVY_BRIDGE_DEFAULTS,
   PrivyBridgeProvider,
   type PrivyBridgeValue,
   useLoadPrivy,
@@ -29,6 +28,7 @@ import {
   usePrivyBridgeSetter,
   usePrivyLoadRequested,
 } from "@/contexts/privy-bridge-context";
+import { PRIVY_BRIDGE_DEFAULTS } from "@/contexts/privy-bridge-defaults";
 
 // ---------------------------------------------------------------------------
 // Test wrapper

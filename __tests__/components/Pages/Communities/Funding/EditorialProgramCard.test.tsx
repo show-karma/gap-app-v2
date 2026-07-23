@@ -2,7 +2,7 @@
  * @file Tests for computeProgramView pure function.
  */
 
-import { computeProgramView } from "@/components/Pages/Communities/Funding/EditorialProgramCard";
+import { computeProgramView } from "@/components/Pages/Communities/Funding/EditorialProgramCard.helpers";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 
 const FIXED_NOW = new Date("2026-05-07T12:00:00.000Z");

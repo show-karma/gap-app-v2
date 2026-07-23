@@ -30,7 +30,7 @@ export function IterationHistory({ sessionId, style }: IterationHistoryProps) {
   const [expanded, setExpanded] = useState(true);
 
   const sorted = useMemo(
-    () => [...results].sort((a, b) => a.iterationNumber - b.iterationNumber),
+    () => results.toSorted((a, b) => a.iterationNumber - b.iterationNumber),
     [results]
   );
 

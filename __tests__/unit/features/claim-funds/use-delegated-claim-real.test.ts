@@ -16,7 +16,6 @@ import toast from "react-hot-toast";
 // ---------------------------------------------------------------------------
 
 const {
-  mockToast,
   mockSignTypedData,
   mockWriteContract,
   mockWalletClient,

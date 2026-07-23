@@ -183,7 +183,7 @@ describe("Parallel React Query mutations", () => {
 
   it("should resolve all 5 rapid-fire calls of the same mutation correctly", async () => {
     let callCount = 0;
-    const mutationFn = vi.fn().mockImplementation(async (input: string) => {
+    const mutationFn = vi.fn().mockImplementation(async (_input: string) => {
       callCount++;
       return `result-${callCount}`;
     });

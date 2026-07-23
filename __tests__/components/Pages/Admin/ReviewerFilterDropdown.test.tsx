@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { getReviewerLabel } from "@/components/Pages/Admin/ReviewerFilterDropdown";
+import { getReviewerLabel } from "@/components/Pages/Admin/ReviewerFilterDropdown.helpers";
 import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 

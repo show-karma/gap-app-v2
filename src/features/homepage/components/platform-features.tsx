@@ -67,8 +67,8 @@ function FeatureCard({
                 </p>
               </div>
               <ul className="hidden lg:flex flex-col gap-3">
-                {checklist.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2.5">
+                {checklist.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5">
                     <SquareCheckBig className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5" />
                     <span className="text-xs font-medium text-muted-foreground">{item}</span>
                   </li>
@@ -250,9 +250,9 @@ export function PlatformFeatures() {
 
         {/* Feature Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {features.map((feature, index) => (
+          {features.map((feature) => (
             <FeatureCard
-              key={index}
+              key={feature.title}
               title={feature.title}
               description={feature.description}
               image={feature.image}

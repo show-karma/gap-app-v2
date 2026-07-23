@@ -48,8 +48,8 @@ export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
 
   return (
     <>
-      {Object.entries(groupedLinks).map(([name, urls], groupIndex) => (
-        <div key={groupIndex} className="relative flex items-center gap-1 mr-2 mb-1">
+      {Object.entries(groupedLinks).map(([name, urls]) => (
+        <div key={name} className="relative flex items-center gap-1 mr-2 mb-1">
           {urls.length === 1 ? (
             <ExternalLink
               href={urls[0]}
@@ -67,6 +67,7 @@ export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
               className="relative"
             >
               <button
+                type="button"
                 onClick={() => toggleDropdown(name)}
                 className="text-sm text-gray-500 dark:text-zinc-400 underline truncate flex items-center gap-1 hover:text-gray-700 dark:hover:text-zinc-300"
               >
@@ -82,7 +83,7 @@ export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
                 <div className="absolute left-0 z-10 mt-1 py-1 w-max min-w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded shadow-lg">
                   {urls.map((url, i) => (
                     <ExternalLink
-                      key={i}
+                      key={url}
                       href={url}
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
                     >

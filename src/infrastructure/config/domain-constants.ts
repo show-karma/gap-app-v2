@@ -1,6 +1,6 @@
 import type { TenantId } from "../types/tenant";
 
-export interface DomainInfo {
+interface DomainInfo {
   domain: string;
   isProduction: boolean;
   isShared: boolean;
@@ -9,7 +9,7 @@ export interface DomainInfo {
   isLegacyUmbrella?: boolean;
 }
 
-export const DOMAIN_CONFIGS: DomainInfo[] = [
+const DOMAIN_CONFIGS: DomainInfo[] = [
   { domain: "grantsapp.scroll.io", isProduction: true, isShared: false, tenantId: "scroll" },
   { domain: "grants.filecoin.io", isProduction: true, isShared: false, tenantId: "filecoin" },
   { domain: "app.filpgf.io", isProduction: true, isShared: false, tenantId: "filecoin" },
@@ -56,12 +56,6 @@ export function getTenantForExclusiveDomain(hostname: string): TenantId | null {
   return domainInfo?.tenantId || null;
 }
 
-export function getSharedDomains(): string[] {
-  return DOMAIN_CONFIGS.filter((config) => config.isShared).map((config) => config.domain);
-}
-
 export function getExclusiveDomainsForTenant(tenantId: TenantId): string[] {
-  return DOMAIN_CONFIGS.filter((config) => config.tenantId === tenantId).map(
-    (config) => config.domain
-  );
+  return DOMAIN_CONFIGS.flatMap((config) => (config.tenantId === tenantId ? [config.domain] : []));
 }

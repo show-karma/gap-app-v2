@@ -54,7 +54,6 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
   // effect would run twice and overwrite anything the curator typed
   // during the round-trip. Keying on `source?.id` keeps hydration tied
   // to "this is a different row" without coupling to identity churn.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: hydration is intentionally driven by row identity, not source-object reference; see comment above
   useEffect(() => {
     if (open && source) {
       setTitle(source.title);
@@ -236,6 +235,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
                     <input
                       id="kb-edit-title"
                       type="text"
+                      aria-label="Title"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       maxLength={200}
@@ -262,6 +262,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
                     <input
                       id="kb-edit-external"
                       type="text"
+                      aria-label="Source URL or ID"
                       value={externalId}
                       onChange={(e) => setExternalId(e.target.value)}
                       maxLength={2048}
@@ -282,6 +283,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
                     <div className="relative">
                       <textarea
                         id="kb-edit-goal"
+                        aria-label="Purpose"
                         value={goal}
                         onChange={(e) => setGoal(e.target.value.slice(0, GOAL_MAX))}
                         maxLength={GOAL_MAX}
@@ -306,6 +308,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
                       <input
                         id="kb-edit-citation-url"
                         type="url"
+                        aria-label="Citation link"
                         value={citationUrl}
                         onChange={(e) => setCitationUrl(e.target.value)}
                         placeholder="https://example.com/published-handbook"
@@ -501,6 +504,7 @@ function FollowLinksToggle({
         <input
           type="checkbox"
           checked={checked}
+          aria-label="Follow links to other Google Docs"
           onChange={(e) => onChange(e.target.checked)}
           className="mt-[2px] h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-stone-300 text-sky-600 focus:ring-2 focus:ring-sky-500/40 dark:border-zinc-700 dark:bg-zinc-800 dark:focus:ring-sky-400/40"
         />

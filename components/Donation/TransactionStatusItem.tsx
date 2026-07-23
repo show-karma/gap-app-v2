@@ -84,7 +84,7 @@ export function TransactionStatusItem({
               />
             </svg>
             <span className="text-xs text-gray-600 dark:text-gray-400">
-              Processing transaction...
+              Processing transaction…
             </span>
           </div>
         )}
@@ -98,8 +98,8 @@ export function TransactionStatusItem({
                   What you can do:
                 </p>
                 <ul className="mt-1 space-y-0.5 text-xs text-red-700 dark:text-red-300">
-                  {errorInfo.actionableSteps.slice(0, 2).map((step, idx) => (
-                    <li key={idx}>• {step}</li>
+                  {errorInfo.actionableSteps.slice(0, 2).map((step) => (
+                    <li key={step}>• {step}</li>
                   ))}
                 </ul>
               </div>

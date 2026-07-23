@@ -18,7 +18,7 @@
  *   - @/components/Utilities/MarkdownEditor (heavy editor deps)
  *   - @/components/Utilities/Button (simplified for jsdom)
  */
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMockProject } from "@/__tests__/factories/project.factory";
 import { resetSeq } from "@/__tests__/factories/utils";
@@ -427,11 +427,8 @@ describe("Multi-Step Navigation Journey Tests", () => {
         }),
       ];
 
-      let requestCount = 0;
-
       server.use(
         http.get("*/v2/projects", ({ request }) => {
-          requestCount++;
           const url = new URL(request.url);
           const page = Number(url.searchParams.get("page") || "1");
 

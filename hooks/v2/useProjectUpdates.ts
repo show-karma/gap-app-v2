@@ -21,6 +21,25 @@ import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
+ * Extra fields the API may include beyond the typed milestone/update shapes
+ * (raw attestation payloads, embedded grant info). Used for display fallbacks.
+ */
+interface AttestationExtras {
+  attester?: string;
+  dueDate?: string | number;
+  endsAt?: string | number;
+  data?: {
+    recipient?: string;
+    attester?: string;
+    endsAt?: string | number;
+  };
+  grant?: {
+    chainID?: string | number;
+    chainId?: string | number;
+  };
+}
+
+/**
  * Resolve a raw milestone due date (ISO string, epoch seconds, or epoch ms)
  * to UNIX seconds for the `UnifiedMilestone.endsAt` contract, or `undefined`
  * when the value is missing or corrupted. Delegates to the canonical
@@ -132,7 +151,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     // Recipient is the on-chain milestone owner (passes Gap.sol's revoke gate).
     // Attester may differ (Karma backend-signed milestones use a service wallet);
     // display attribution falls back to recipient when attester is unavailable.
-    const milestoneAny = milestone as any;
+    const milestoneAny = milestone as unknown as AttestationExtras;
     const recipient =
       milestone.recipient ||
       milestone.completionDetails?.completedBy ||
@@ -263,7 +282,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   // Convert grant updates to unified format
   data.grantUpdates?.forEach((update: GrantUpdateWithDetails) => {
     // Extract recipient and chain details with fallbacks - API may include additional fields
-    const updateAny = update as any;
+    const updateAny = update as unknown as AttestationExtras;
     const grantInfo = update.grant;
     const chainID =
       parseChainId(update.chainId) ||
@@ -353,7 +372,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
  * Note: endsAt is in seconds, createdAt needs conversion from ISO string to seconds
  */
 const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[] => {
-  return [...milestones].sort((a, b) => {
+  return milestones.toSorted((a, b) => {
     const getTimestamp = (item: UnifiedMilestone): number => {
       // endsAt is already in seconds (Unix timestamp)
       if (item.endsAt) return item.endsAt;
@@ -478,6 +497,3 @@ export function useProjectUpdates(
     refetch,
   };
 }
-
-// Alias for backward compatibility during migration
-export const useProjectUpdatesV2 = useProjectUpdates;

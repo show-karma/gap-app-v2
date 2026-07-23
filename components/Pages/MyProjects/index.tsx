@@ -65,11 +65,7 @@ export default function MyProjects() {
     }
   };
 
-  const {
-    data: projects,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: projects, isLoading } = useQuery({
     queryKey: ["totalProjects", address],
     queryFn: () => fetchMyProjects(address as `0x${string}` | undefined),
     enabled: Boolean(address),
@@ -126,14 +122,12 @@ export default function MyProjects() {
                     const total = card.grants?.length || 0;
                     card.grants?.forEach((grant) => {
                       if (grant.completed) return;
-                      const hasActive = grant.milestones?.find(
-                        (milestone: any) => !milestone.completed
-                      );
+                      const hasActive = grant.milestones?.find((milestone) => !milestone.completed);
                       if (hasActive) active += 1;
                     });
                     return (
                       <div
-                        key={index}
+                        key={card.uid}
                         className="h-full dark:border-gray-900 border border-gray-200 rounded-xl pb-5 w-full transition-all ease-in-out duration-200"
                       >
                         <Link

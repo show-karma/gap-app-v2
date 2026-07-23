@@ -18,7 +18,6 @@ interface MilestoneDisplayProps {
 export function MilestoneDisplay({
   milestones,
   fieldLabel,
-  referenceNumber,
   grantMilestones = [],
 }: MilestoneDisplayProps) {
   return (
@@ -34,7 +33,7 @@ export function MilestoneDisplay({
 
         return (
           <div
-            key={`${fieldLabel}-${index}`}
+            key={`${fieldLabel}-${milestone.title}`}
             className="border-l-2 border-zinc-200 dark:border-zinc-700 pl-4 space-y-1"
           >
             <div className="flex items-baseline gap-2 flex-wrap">

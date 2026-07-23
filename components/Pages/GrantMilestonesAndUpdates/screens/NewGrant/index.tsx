@@ -77,7 +77,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     updateFormData,
     resetFormData,
     setMilestonesForms,
-    flowType,
     setFlowType,
     formData,
   } = useGrantFormStore();

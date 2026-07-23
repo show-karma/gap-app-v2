@@ -8,7 +8,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 /**
  * Result of a prefetch operation indicating success or failure
  */
-export interface PrefetchResult {
+interface PrefetchResult {
   grants: boolean;
   updates: boolean;
   impacts: boolean;
@@ -73,27 +73,3 @@ export const prefetchProjectProfileData = cache(
     };
   }
 );
-
-/**
- * Get cached project grants data for server-side use.
- * Uses React.cache() for request deduplication.
- */
-export const getProjectGrantsCached = cache(async (projectId: string) => {
-  return getProjectGrants(projectId);
-});
-
-/**
- * Get cached project updates data for server-side use.
- * Uses React.cache() for request deduplication.
- */
-export const getProjectUpdatesCached = cache(async (projectId: string) => {
-  return getProjectUpdates(projectId);
-});
-
-/**
- * Get cached project impacts data for server-side use.
- * Uses React.cache() for request deduplication.
- */
-export const getProjectImpactsCached = cache(async (projectId: string) => {
-  return getProjectImpacts(projectId);
-});

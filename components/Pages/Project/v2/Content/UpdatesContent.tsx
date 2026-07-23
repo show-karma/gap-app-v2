@@ -39,7 +39,7 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
   const { projectId } = useParams();
   const { isAuthorized } = useProjectAuthorization();
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
 
   // Keep the server-rendered feed twin in place through the client's first
@@ -125,9 +125,9 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
       }
 
       const newURL = params.toString() ? `?${params.toString()}` : pathname;
-      router.replace(newURL, { scroll: false });
+      replace(newURL, { scroll: false });
     },
-    [searchParams, router, pathname]
+    [searchParams, replace, pathname]
   );
 
   // Update URL when milestone status changes
@@ -136,9 +136,9 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("milestoneStatus", status);
       const newURL = params.toString() ? `?${params.toString()}` : pathname;
-      router.replace(newURL, { scroll: false });
+      replace(newURL, { scroll: false });
     },
-    [searchParams, router, pathname]
+    [searchParams, replace, pathname]
   );
 
   // Update URL when date range changes.
@@ -158,9 +158,9 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
         params.delete("dateTo");
       }
       const newURL = params.toString() ? `?${params.toString()}` : pathname;
-      router.replace(newURL, { scroll: false });
+      replace(newURL, { scroll: false });
     },
-    [searchParams, router, pathname]
+    [searchParams, replace, pathname]
   );
 
   // Update URL when AI evaluation filter changes.
@@ -207,9 +207,9 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
       }
 
       const newURL = params.toString() ? `?${params.toString()}` : pathname;
-      router.replace(newURL, { scroll: false });
+      replace(newURL, { scroll: false });
     },
-    [searchParams, router, pathname]
+    [searchParams, replace, pathname]
   );
 
   const handleFilterToggle = useCallback(

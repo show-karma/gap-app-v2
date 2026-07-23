@@ -112,7 +112,7 @@ export const useGrantCompletion = ({
 
       showSuccess(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
       onComplete?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error completing grant:", error);
 
       if (isUserCancellationError(error)) {

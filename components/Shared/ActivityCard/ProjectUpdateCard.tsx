@@ -88,7 +88,7 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
 
   return (
     <div className="flex flex-col gap-0 w-full">
-      <div className="flex flex-col gap-3 w-full px-6 py-6">
+      <div className="flex flex-col gap-3 w-full p-6">
         <div className="flex flex-col gap-3 w-full">
           <div className="flex flex-row items-start justify-between gap-3">
             <ActivityStatusHeader
@@ -128,12 +128,12 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
                   <p className="text-sm font-bold text-foreground">Deliverables</p>
                   <div className="w-full">
                     <div className="grid grid-cols-1 gap-4">
-                      {deliverables.map((deliverable, idx) => {
+                      {deliverables.map((deliverable) => {
                         const proofHref = normalizeProofUrl(deliverable.proof);
 
                         return (
                           <div
-                            key={idx}
+                            key={deliverable.name}
                             className="flex flex-col p-4 bg-secondary border rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                           >
                             <div className="flex flex-col gap-1">
@@ -185,8 +185,11 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
                 <div className="flex w-full flex-col gap-2 p-6 bg-background border rounded-md">
                   <p className="text-sm font-bold text-foreground">Metrics</p>
                   <div className="grid grid-cols-1 gap-4">
-                    {indicators.map((indicator, idx) => (
-                      <div key={idx} className="flex flex-col p-4 bg-secondary border rounded-lg">
+                    {indicators.map((indicator) => (
+                      <div
+                        key={indicator.name}
+                        className="flex flex-col p-4 bg-secondary border rounded-lg"
+                      >
                         <h4 className="text-lg font-semibold text-foreground">{indicator.name}</h4>
                         {indicator.description && (
                           <p className="text-sm text-muted-foreground mt-1">

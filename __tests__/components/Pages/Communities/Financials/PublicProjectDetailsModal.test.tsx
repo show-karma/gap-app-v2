@@ -83,11 +83,11 @@ vi.mock("@/utilities/donations/helpers", () => ({
 }));
 
 vi.mock("@/utilities/formatDate", () => ({
-  formatDate: (date: string) => "Jan 1, 2025",
+  formatDate: (_date: string) => "Jan 1, 2025",
 }));
 
 vi.mock("@/utilities/network", () => ({
-  getChainNameById: (id: number) => "Ethereum",
+  getChainNameById: (_id: number) => "Ethereum",
 }));
 
 vi.mock("@/utilities/pages", () => ({

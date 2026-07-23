@@ -5,10 +5,8 @@ import Image from "next/image";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useCallback, useEffect, useMemo } from "react";
-import {
-  computeProgramView,
-  EditorialProgramCard,
-} from "@/components/Pages/Communities/Funding/EditorialProgramCard";
+import { EditorialProgramCard } from "@/components/Pages/Communities/Funding/EditorialProgramCard";
+import { computeProgramView } from "@/components/Pages/Communities/Funding/EditorialProgramCard.helpers";
 import { FeaturedProgram } from "@/components/Pages/Communities/Funding/FeaturedProgram";
 import { PageHero } from "@/components/Pages/Communities/PageHero";
 import { ProgramCardSkeleton } from "@/src/features/programs/components/ProgramCardSkeleton";
@@ -30,7 +28,7 @@ const SKELETON_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6"];
 
 export default function FundingOpportunitiesPage() {
   const { communityId } = useParams<{ communityId: string }>();
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { programs, loading, error, filters, setFilters, refetch } = usePrograms(communityId);
@@ -66,9 +64,9 @@ export default function FundingOpportunitiesPage() {
         params.delete("q");
       }
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [pathname, router, searchParams]
+    [pathname, replace, searchParams]
   );
 
   const stats = useMemo(() => {

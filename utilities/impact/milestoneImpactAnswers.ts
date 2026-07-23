@@ -5,13 +5,6 @@ import { api } from "../api/client";
 import { INDEXER } from "../indexer";
 import { MESSAGES } from "../messages";
 
-interface DataPoint {
-  value: number | string;
-  proof: string;
-  startDate: string;
-  endDate: string;
-}
-
 /**
  * Sends impact indicator data for a milestone
  *

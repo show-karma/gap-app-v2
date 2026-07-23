@@ -104,7 +104,7 @@ export const getProgramIdForUrl = (program: GrantProgram): string => {
  * @param program - The GrantProgram object to normalize
  * @returns The program with normalized grantTypes
  */
-export const normalizeGrantTypes = (program: GrantProgram): GrantProgram => {
+const normalizeGrantTypes = (program: GrantProgram): GrantProgram => {
   if (program.metadata?.grantTypes && typeof program.metadata.grantTypes === "string") {
     return {
       ...program,
@@ -179,15 +179,15 @@ export const buildMetadata = (data: ProgramFormData) => ({
  * Build type-specific metadata payload from form data.
  * Maps form fields to the API shape expected by the indexer for each opportunity type.
  */
-export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknown> => {
+const buildTypedMetadata = (data: ProgramFormData): Record<string, unknown> => {
   const type = data.opportunityType;
   if (type === "hackathon" && data.hackathonMeta) {
     const m = data.hackathonMeta;
     const tracks = m.tracks
-      ? m.tracks
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean)
+      ? m.tracks.split(",").flatMap((t) => {
+          const track = t.trim();
+          return track ? [track] : [];
+        })
       : undefined;
     return {
       hackathonMetadata: {
@@ -217,10 +217,10 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
   if (type === "bounty" && data.bountyMeta) {
     const m = data.bountyMeta;
     const skills = m.skills
-      ? m.skills
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
+      ? m.skills.split(",").flatMap((s) => {
+          const skill = s.trim();
+          return skill ? [skill] : [];
+        })
       : undefined;
     return {
       bountyMetadata: {
@@ -258,10 +258,10 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
   if (type === "vc_fund" && data.vcFundMeta) {
     const m = data.vcFundMeta;
     const portfolio = m.portfolio
-      ? m.portfolio
-          .split(",")
-          .map((p) => p.trim())
-          .filter(Boolean)
+      ? m.portfolio.split(",").flatMap((p) => {
+          const company = p.trim();
+          return company ? [company] : [];
+        })
       : undefined;
     return {
       vcFundMetadata: {
@@ -285,10 +285,10 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
   if (type === "rfp" && data.rfpMeta) {
     const m = data.rfpMeta;
     const requirements = m.requirements
-      ? m.requirements
-          .split("\n")
-          .map((r) => r.trim())
-          .filter(Boolean)
+      ? m.requirements.split("\n").flatMap((r) => {
+          const requirement = r.trim();
+          return requirement ? [requirement] : [];
+        })
       : undefined;
     return {
       rfpMetadata: {

@@ -40,7 +40,7 @@ import type {
   PayoutGrantConfig,
 } from "../types/payout-disbursement";
 
-export interface PayoutConfigurationContentProps {
+interface PayoutConfigurationContentProps {
   ref?: Ref<PayoutConfigurationContentRef>;
   isActive: boolean;
   grantUID: string;
@@ -86,8 +86,6 @@ export function PayoutConfigurationContent({
   grantUID,
   projectUID,
   communityUID,
-  grantName,
-  projectName,
   existingConfig,
   onSuccess,
   onDirtyChange,
@@ -492,7 +490,7 @@ export function PayoutConfigurationContent({
       <div className="flex items-center justify-center py-12">
         <Spinner className="w-8 h-8" />
         <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-          Loading configuration...
+          Loading configuration…
         </span>
       </div>
     );

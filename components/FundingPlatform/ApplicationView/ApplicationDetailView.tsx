@@ -8,8 +8,8 @@ import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/App
 import {
   ApplicationTabs,
   type TabConfig,
-  TabIcons,
 } from "@/components/FundingPlatform/ApplicationView/ApplicationTabs";
+import { TabIcons } from "@/components/FundingPlatform/ApplicationView/ApplicationTabs.constants";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";

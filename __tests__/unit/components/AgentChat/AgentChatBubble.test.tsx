@@ -104,7 +104,7 @@ vi.mock("@/components/ui/input-group", () => ({
     children,
     ...props
   }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => {
-    const { variant, size, ...rest } = props as Record<string, unknown>;
+    const { variant: _variant, size: _size, ...rest } = props as Record<string, unknown>;
     return <button {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>;
   },
 }));
@@ -163,7 +163,13 @@ vi.mock("@/components/ui/button", () => ({
     children,
     ...props
   }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => {
-    const { variant, size, asChild, isLoading, ...rest } = props as Record<string, unknown>;
+    const {
+      variant: _variant,
+      size: _size,
+      asChild: _asChild,
+      isLoading: _isLoading,
+      ...rest
+    } = props as Record<string, unknown>;
     return <button {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>;
   },
 }));

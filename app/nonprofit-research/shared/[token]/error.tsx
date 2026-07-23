@@ -7,7 +7,7 @@ import { AlertTriangle } from "lucide-react";
  * see Karma branding, internal navigation, or "reset" controls. They get
  * a clean instruction to contact their advisor.
  */
-export default function Error({
+export default function SharedReportError({
   error: _error,
 }: {
   error: Error & { digest?: string };

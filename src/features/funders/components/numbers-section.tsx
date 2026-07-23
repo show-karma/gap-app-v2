@@ -88,8 +88,8 @@ export function NumbersSection() {
           <div
             className={cn("grid grid-cols-1 md:grid-cols-2 gap-8", "w-full lg:flex-1 lg:min-w-0")}
           >
-            {statistics.map((stat, index) => (
-              <div key={index} className="flex flex-col gap-2">
+            {statistics.map((stat) => (
+              <div key={stat.title} className="flex flex-col gap-2">
                 {/* Number with gradient */}
                 {stat.number === "4x faster" ? (
                   <div className="flex items-baseline gap-1">

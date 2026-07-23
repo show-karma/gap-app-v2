@@ -1,6 +1,6 @@
 import mp from "mixpanel-browser";
 
-export interface IMixpanelEvent {
+interface IMixpanelEvent {
   event: string;
   properties?: Record<string, unknown>;
 }

@@ -44,7 +44,7 @@ const TEXTAREA_PROPERTIES = [
   "word-break",
 ] as const;
 
-export interface CaretCoordinates {
+interface CaretCoordinates {
   top: number;
   left: number;
 }

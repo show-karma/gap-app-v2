@@ -21,6 +21,3 @@ export const useCommunityProjects = (slug: string, options?: UseCommunityProject
     retry: false,
   });
 };
-
-// Alias for backward compatibility during migration
-export const useCommunityProjectsV2 = useCommunityProjects;

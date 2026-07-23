@@ -1623,8 +1623,6 @@ function generateLlmsTxt(
 ): string {
   const lines: string[] = [];
   const primary = getPrimaryLandingMetadata(landingPages);
-  const homeTarget = LANDING_PAGE_TARGETS.find((t) => t.path === "/");
-
   const homePage = landingPages.find((page) => page.path === "/");
 
   lines.push(`# ${PROJECT_NAME}`);
@@ -1698,7 +1696,7 @@ function generateLlmsTxt(
       lines.push(`- [${article.title}](${article.url}): ${category} — ${article.description}`);
     }
   }
-  const uncategorized = grouped["Uncategorized"] || [];
+  const uncategorized = grouped.Uncategorized || [];
   for (const article of uncategorized) {
     lines.push(`- [${article.title}](${article.url}): ${article.description}`);
   }
@@ -1817,7 +1815,7 @@ function generateLlmsFullTxt(
           // Downshift headings: docs are at H4 level, so ## becomes #####
           body = body.replace(
             /^(#{1,4}) /gm,
-            (_, hashes: string) => "#".repeat(Math.min(hashes.length + 3, 6)) + " "
+            (_, hashes: string) => `${"#".repeat(Math.min(hashes.length + 3, 6))} `
           );
           lines.push(body);
           lines.push("");
@@ -1863,7 +1861,7 @@ function generateLlmsFullTxt(
         // ## headings become #### to maintain proper nesting
         body = body.replace(
           /^(#{1,4}) /gm,
-          (_, hashes: string) => "#".repeat(Math.min(hashes.length + 2, 6)) + " "
+          (_, hashes: string) => `${"#".repeat(Math.min(hashes.length + 2, 6))} `
         );
         lines.push(body);
         lines.push("");

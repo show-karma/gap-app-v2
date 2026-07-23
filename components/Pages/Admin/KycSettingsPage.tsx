@@ -315,7 +315,7 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
             {isSaving ? (
               <>
                 <Spinner className="w-4 h-4 mr-2" />
-                Saving...
+                Saving…
               </>
             ) : (
               "Save Configuration"

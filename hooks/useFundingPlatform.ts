@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -10,13 +11,12 @@ import {
   fundingPlatformService,
   type IApplicationFilters,
 } from "@/services/fundingPlatformService";
+import type { FundingProgramMetadata } from "@/src/features/funding-map/types/funding-program";
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
 import type { ProgramMetadata } from "@/src/features/program-registry/types";
 import type {
   ExportFormat,
   FundingApplicationStatusV2,
-  IApplicationStatusUpdateRequest,
-  IApplicationSubmitRequest,
   IApplicationUpdateRequest,
   IFormSchema,
   IFundingApplication,
@@ -24,6 +24,12 @@ import type {
 } from "@/types/funding-platform";
 import { QUERY_KEYS } from "./fundingPlatformQueryKeys";
 import { useAuth } from "./useAuth";
+
+const getApiErrorStatus = (error: unknown): number | undefined =>
+  isAxiosError(error) ? error.response?.status : undefined;
+
+const getApiErrorMessage = (error: unknown, fallback: string): string =>
+  (isAxiosError<{ message?: string }>(error) && error.response?.data?.message) || fallback;
 
 /**
  * Hook for managing funding programs for a community
@@ -75,7 +81,7 @@ export const useFundingPrograms = (communityId: string) => {
 export const useUpdateProgramEnrollment = (
   programId: string,
   communityId: string,
-  program: { metadata: Record<string, any> } | null | undefined
+  program: { metadata: FundingProgramMetadata } | null | undefined
 ) => {
   const queryClient = useQueryClient();
 
@@ -88,7 +94,10 @@ export const useUpdateProgramEnrollment = (
         ...program.metadata,
         anyoneCanJoin,
       };
-      await ProgramRegistryService.updateProgram(programId, updatedMetadata as ProgramMetadata);
+      await ProgramRegistryService.updateProgram(
+        programId,
+        updatedMetadata as unknown as ProgramMetadata
+      );
       return anyoneCanJoin;
     },
     onMutate: async (anyoneCanJoin: boolean) => {
@@ -127,26 +136,6 @@ export const useUpdateProgramEnrollment = (
   return {
     updateEnrollment: mutation.mutate,
     isPending: mutation.isPending,
-  };
-};
-
-/**
- * Hook for managing a specific program configuration
- */
-export const useProgramStats = (programId: string) => {
-  const statsQuery = useQuery({
-    queryKey: QUERY_KEYS.programStats(programId),
-    queryFn: () => fundingPlatformService.programs.getProgramStats(programId),
-    enabled: !!programId,
-  });
-
-  return {
-    stats: statsQuery.data,
-    isLoading: statsQuery.isLoading,
-    error: statsQuery.error,
-    refetch: () => {
-      statsQuery.refetch();
-    },
   };
 };
 
@@ -228,7 +217,7 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
   const queryClient = useQueryClient();
 
   // Set default limit to 25 if not provided, exclude page from filters for infinite scroll
-  const { page, ...filtersWithoutPage } = filters;
+  const { page: _page, ...filtersWithoutPage } = filters;
   const filtersWithDefaults = {
     limit: 25,
     ...filtersWithoutPage,
@@ -265,16 +254,17 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
   });
 
   const submitApplicationMutation = useMutation({
-    mutationFn: (applicationData: Record<string, any>) => {
+    mutationFn: (applicationData: Record<string, unknown>) => {
       // Extract email from application data
       let applicantEmail = "";
-      const emailFields = Object.keys(applicationData).filter(
-        (key) =>
-          key.toLowerCase().includes("email") ||
-          (typeof applicationData[key] === "string" && applicationData[key].includes("@"))
-      );
+      const emailFields = Object.keys(applicationData).filter((key) => {
+        const value = applicationData[key];
+        return (
+          key.toLowerCase().includes("email") || (typeof value === "string" && value.includes("@"))
+        );
+      });
       if (emailFields.length > 0) {
-        applicantEmail = applicationData[emailFields[0]];
+        applicantEmail = String(applicationData[emailFields[0]] ?? "");
       } else {
         throw new Error("Email field is required in the application form");
       }
@@ -407,96 +397,6 @@ export const useFundingApplication = (applicationId: string) => {
 };
 
 /**
- * Hook for form schema management with auto-save
- */
-export const useFormSchemaManager = (programId: string, _chainId: number) => {
-  const [isDirty, setIsDirty] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
-  const { config, updateFormSchema, isUpdating } = useProgramConfig(programId);
-
-  const saveSchema = useCallback(
-    (schema: IFormSchema) => {
-      updateFormSchema(schema);
-      setIsDirty(false);
-      setLastSaved(new Date());
-    },
-    [updateFormSchema]
-  );
-
-  const markDirty = useCallback(() => {
-    setIsDirty(true);
-  }, []);
-
-  return {
-    currentSchema: config?.formSchema,
-    saveSchema,
-    markDirty,
-    isDirty,
-    lastSaved,
-    isSaving: isUpdating,
-  };
-};
-
-/**
- * Hook for V2 application submission with better error handling
- */
-export const useApplicationSubmissionV2 = (programId: string, _chainId: number) => {
-  const queryClient = useQueryClient();
-
-  // Check if user already has an application
-  const checkExistingApplication = useCallback(
-    async (email: string) => {
-      try {
-        const existing = await fundingPlatformService.applications.getApplicationByEmail(
-          programId,
-          email
-        );
-        return existing;
-      } catch (error) {
-        console.error("Error checking existing application:", error);
-        return null;
-      }
-    },
-    [programId]
-  );
-
-  const submitMutation = useMutation({
-    mutationFn: async (request: IApplicationSubmitRequest) => {
-      // Check for existing application first
-      const existing = await checkExistingApplication(request.applicantEmail);
-      if (existing) {
-        throw new Error("You have already submitted an application for this program");
-      }
-
-      return fundingPlatformService.applications.submitApplication(request);
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applicationStats(programId),
-      });
-      toast.success(`Application submitted successfully! Reference: ${data.referenceNumber}`);
-    },
-    onError: (error: any) => {
-      console.error("Failed to submit application:", error);
-      const message =
-        error.response?.data?.message || error.message || "Failed to submit application";
-      toast.error(message);
-    },
-  });
-
-  return {
-    submitApplication: submitMutation.mutate,
-    isSubmitting: submitMutation.isPending,
-    error: submitMutation.error,
-    checkExistingApplication,
-  };
-};
-
-/**
  * Hook for application updates (for users updating their applications)
  */
 export const useApplicationUpdateV2 = () => {
@@ -523,20 +423,18 @@ export const useApplicationUpdateV2 = () => {
         toast.success("Application updated successfully");
       }
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error("Failed to update application:", error);
 
-      if (error.response?.status === 403) {
-        const message =
-          error.response?.data?.message || "You do not have permission to edit this application";
-        toast.error(message);
-      } else if (error.response?.status === 400) {
-        const message =
-          error.response?.data?.message || "Validation error. Please check your input.";
-        toast.error(message);
+      const status = getApiErrorStatus(error);
+      if (status === 403) {
+        toast.error(
+          getApiErrorMessage(error, "You do not have permission to edit this application")
+        );
+      } else if (status === 400) {
+        toast.error(getApiErrorMessage(error, "Validation error. Please check your input."));
       } else {
-        const message = error.response?.data?.message || "Failed to update application";
-        toast.error(message);
+        toast.error(getApiErrorMessage(error, "Failed to update application"));
       }
     },
   });
@@ -562,7 +460,7 @@ export const usePostApprovalUpdate = () => {
       postApprovalData,
     }: {
       applicationId: string;
-      postApprovalData: Record<string, any>;
+      postApprovalData: Record<string, unknown>;
     }) =>
       fundingPlatformService.applications.updatePostApprovalData(applicationId, postApprovalData),
     onSuccess: (_, variables) => {
@@ -571,22 +469,20 @@ export const usePostApprovalUpdate = () => {
       });
       toast.success("Post-approval data updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       if (process.env.NODE_ENV === "development") {
         console.error("Failed to update post-approval data:", error);
       }
 
-      if (error.response?.status === 403) {
-        const message =
-          error.response?.data?.message || "You do not have permission to edit post-approval data";
-        toast.error(message);
-      } else if (error.response?.status === 400) {
-        const message =
-          error.response?.data?.message || "Validation error. Please check your input.";
-        toast.error(message);
+      const status = getApiErrorStatus(error);
+      if (status === 403) {
+        toast.error(
+          getApiErrorMessage(error, "You do not have permission to edit post-approval data")
+        );
+      } else if (status === 400) {
+        toast.error(getApiErrorMessage(error, "Validation error. Please check your input."));
       } else {
-        const message = error.response?.data?.message || "Failed to update post-approval data";
-        toast.error(message);
+        toast.error(getApiErrorMessage(error, "Failed to update post-approval data"));
       }
     },
   });
@@ -596,73 +492,6 @@ export const usePostApprovalUpdate = () => {
     updatePostApprovalDataAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
     error: updateMutation.error,
-  };
-};
-
-/**
- * Hook for admin status updates with V2 reason support
- */
-export const useApplicationStatusV2 = (applicationId?: string) => {
-  const queryClient = useQueryClient();
-
-  const updateStatusMutation = useMutation({
-    mutationFn: ({
-      applicationId: appId,
-      request,
-    }: {
-      applicationId: string;
-      request: IApplicationStatusUpdateRequest;
-    }) =>
-      fundingPlatformService.applications.updateApplicationStatus(appId || applicationId!, request),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.application(variables.applicationId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["applications"], // Invalidate all application lists
-      });
-
-      toast.success(`Application ${variables.request.status.replace("_", " ")}`);
-    },
-    onError: (error: any) => {
-      console.error("Failed to update application status:", error);
-      toast.error("Failed to update application status");
-    },
-  });
-
-  return {
-    updateStatus: (
-      appId: string,
-      status: FundingApplicationStatusV2,
-      reason: string,
-      approvedAmount?: string,
-      approvedCurrency?: string
-    ) =>
-      updateStatusMutation.mutate({
-        applicationId: appId,
-        request: { status, reason, approvedAmount, approvedCurrency },
-      }),
-    isUpdating: updateStatusMutation.isPending,
-    error: updateStatusMutation.error,
-  };
-};
-
-/**
- * Hook for searching applications by Application ID
- */
-export const useApplicationByReference = (referenceNumber: string) => {
-  const applicationQuery = useQuery({
-    queryKey: QUERY_KEYS.applicationByReference(referenceNumber),
-    queryFn: () => fundingPlatformService.applications.getApplicationByReference(referenceNumber),
-    enabled: !!referenceNumber && referenceNumber.length > 0,
-    retry: false,
-  });
-
-  return {
-    application: applicationQuery.data,
-    isLoading: applicationQuery.isLoading,
-    error: applicationQuery.error,
-    isNotFound: applicationQuery.error && (applicationQuery.error as any)?.response?.status === 404,
   };
 };
 
@@ -696,7 +525,7 @@ export const useApplicationExport = (programId: string, isAdmin: boolean = false
         if (format === "csv" && data instanceof Blob) {
           blob = data;
         } else if (format === "csv") {
-          blob = new Blob([data], { type: "text/csv" });
+          blob = new Blob([data as BlobPart], { type: "text/csv" });
         } else {
           blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
         }
@@ -822,8 +651,8 @@ export const useApplicationStatus = (programId?: string, _chainId?: number) => {
       // Applications" page), so it doesn't change that surface's behavior.
       queryClient.invalidateQueries({ queryKey: ["reviewer-inbox"] });
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || "Failed to update application status";
+    onError: (error) => {
+      const errorMessage = getApiErrorMessage(error, "Failed to update application status");
       toast.error(errorMessage);
       console.error("Failed to update application status:", error);
     },
@@ -864,8 +693,8 @@ export const useApplicationComments = (applicationId: string | null, _isAdmin: b
       });
       toast.success("Comment added successfully");
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || "Failed to add comment";
+    onError: (error) => {
+      const errorMessage = getApiErrorMessage(error, "Failed to add comment");
       toast.error(errorMessage);
       errorManager(errorMessage, error);
       console.error("Failed to add comment:", error);
@@ -883,8 +712,8 @@ export const useApplicationComments = (applicationId: string | null, _isAdmin: b
       });
       toast.success("Comment updated successfully");
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || "Failed to edit comment";
+    onError: (error) => {
+      const errorMessage = getApiErrorMessage(error, "Failed to edit comment");
       toast.error(errorMessage);
       console.error("Failed to edit comment:", error);
     },
@@ -900,8 +729,8 @@ export const useApplicationComments = (applicationId: string | null, _isAdmin: b
       });
       toast.success("Comment deleted successfully");
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || "Failed to delete comment";
+    onError: (error) => {
+      const errorMessage = getApiErrorMessage(error, "Failed to delete comment");
       toast.error(errorMessage);
       console.error("Failed to delete comment:", error);
     },
@@ -1019,10 +848,11 @@ export const useDeleteApplication = () => {
       });
       toast.success("Application deleted successfully");
     },
-    onError: (error: any, referenceNumber: string) => {
+    onError: (error, referenceNumber: string) => {
       // Determine specific error message based on status code
       let userMessage: string;
-      const statusCode = error?.response?.status;
+      const axiosError = isAxiosError<{ message?: string }>(error) ? error : undefined;
+      const statusCode = axiosError?.response?.status;
 
       if (statusCode === 401 || statusCode === 403) {
         userMessage =
@@ -1032,12 +862,12 @@ export const useDeleteApplication = () => {
       } else if (statusCode === 500 || (statusCode && statusCode >= 500)) {
         userMessage =
           "Server error occurred while deleting the application. Please try again or contact support.";
-      } else if (!statusCode || error?.code === "ERR_NETWORK") {
+      } else if (!statusCode || axiosError?.code === "ERR_NETWORK") {
         userMessage = "Network error. Please check your connection and try again.";
       } else {
         // Fallback for other errors
         userMessage =
-          error?.response?.data?.message || "Failed to delete application. Please try again.";
+          axiosError?.response?.data?.message || "Failed to delete application. Please try again.";
       }
 
       // Use errorManager for comprehensive error handling with Sentry
@@ -1048,7 +878,7 @@ export const useDeleteApplication = () => {
           referenceNumber,
           statusCode,
           operation: "delete-application",
-          errorResponse: error?.response?.data,
+          errorResponse: axiosError?.response?.data,
         },
         {
           error: userMessage,

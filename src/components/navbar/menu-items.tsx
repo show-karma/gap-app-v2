@@ -29,12 +29,12 @@ export interface MenuItem {
   anchor?: string;
 }
 
-export interface ForFundersItems {
+interface ForFundersItems {
   main: MenuItem;
   secondary: MenuItem[];
 }
 
-export interface ExploreItems {
+interface ExploreItems {
   projects: MenuItem[];
   communities: MenuItem[];
 }

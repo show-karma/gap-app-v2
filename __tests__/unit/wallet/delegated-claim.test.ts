@@ -298,17 +298,17 @@ describe("Delegated claim / Safe provider trust tests", () => {
         "b".repeat(64) + // s (32 bytes)
         "1b"; // v (1 byte = 27)
 
-      const r = "0x" + sig.slice(2, 66);
-      const s = "0x" + sig.slice(66, 130);
+      const r = `0x${sig.slice(2, 66)}`;
+      const s = `0x${sig.slice(66, 130)}`;
       const v = parseInt(sig.slice(130, 132), 16);
 
-      expect(r).toBe("0x" + "a".repeat(64));
-      expect(s).toBe("0x" + "b".repeat(64));
+      expect(r).toBe(`0x${"a".repeat(64)}`);
+      expect(s).toBe(`0x${"b".repeat(64)}`);
       expect(v).toBe(27);
     });
 
     it("v value 28 (0x1c) is valid", () => {
-      const sig = "0x" + "a".repeat(64) + "b".repeat(64) + "1c";
+      const sig = `0x${"a".repeat(64)}${"b".repeat(64)}1c`;
       const v = parseInt(sig.slice(130, 132), 16);
       expect(v).toBe(28);
     });

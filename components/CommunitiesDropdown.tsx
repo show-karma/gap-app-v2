@@ -60,17 +60,19 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
     }
   }, []);
 
-  const communitiesArray = communities
-    .filter((community) => community.details?.name) // Filter out communities without a name
-    .map((community) => {
-      const logoUrl = community.details?.logoUrl || community.details?.imageURL;
-      return {
+  const communitiesArray = communities.flatMap((community) => {
+    // Filter out communities without a name
+    if (!community.details?.name) return [];
+    const logoUrl = community.details?.logoUrl || community.details?.imageURL;
+    return [
+      {
         value: community.uid,
         label: community.details?.name || shortAddress(community.uid),
         networkId: community.chainID,
         logo: getCommunityLogo(logoUrl, community.uid),
-      };
-    });
+      },
+    ];
+  });
 
   // sort communities by name alphabetically
   const sortedCommunities = communitiesArray.sort((a, b) => {

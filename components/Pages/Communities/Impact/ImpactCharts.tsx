@@ -3,41 +3,10 @@ import { useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import type { ProgramImpactDataResponse } from "@/types/programs";
-import { formatDate } from "@/utilities/formatDate";
 import { CategoryRow } from "./CategoryRow";
 import { CommunityMetricsSection } from "./CommunityMetricsSection";
 import { ImpactOutcomes } from "./ImpactOutcomes";
 import { ProgramBanner } from "./ProgramBanner";
-
-export const prepareChartData = (
-  values: number[],
-  timestamps: string[],
-  name: string,
-  runningValues?: number[],
-  proofs?: string[]
-): { date: string; [key: string]: number | string }[] => {
-  const chartData = timestamps
-    .map((timestamp, index) => {
-      if (runningValues?.length) {
-        return {
-          rawTimestamp: timestamp, // Keep original for sorting
-          date: formatDate(new Date(timestamp), "UTC"),
-          [name]: Number(values[index]) || 0,
-          Cumulative: Number(runningValues[index]) || 0,
-          proof: proofs?.[index] || "",
-        };
-      }
-      return {
-        rawTimestamp: timestamp, // Keep original for sorting
-        date: formatDate(new Date(timestamp), "UTC"),
-        [name]: Number(values[index]) || 0,
-        proof: proofs?.[index] || "",
-      };
-    })
-    .sort((a, b) => new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime())
-    .map(({ rawTimestamp: _, ...rest }) => rest); // Remove rawTimestamp from output
-  return chartData;
-};
 
 export const CommunityImpactCharts = () => {
   const searchParams = useSearchParams();

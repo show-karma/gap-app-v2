@@ -7,6 +7,7 @@ import type { PendingVerificationMilestone } from "@/hooks/usePendingVerificatio
 import { Link } from "@/src/components/navigation/Link";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { PAGES } from "@/utilities/pages";
+import { getEmptyStateMessage } from "./PendingVerificationTable.helpers";
 
 const skeletonArray = Array.from({ length: 12 }, (_, i) => i);
 
@@ -22,23 +23,6 @@ interface PendingVerificationTableProps {
   selectedReviewerAddress?: string;
   currentUserAddress?: string;
   allocationMap?: Map<string, string>;
-}
-
-export function getEmptyStateMessage(
-  selectedReviewerAddress?: string,
-  currentUserAddress?: string
-): string {
-  if (
-    selectedReviewerAddress &&
-    currentUserAddress &&
-    selectedReviewerAddress.toLowerCase() === currentUserAddress.toLowerCase()
-  ) {
-    return "All your assigned milestones are verified";
-  }
-  if (selectedReviewerAddress) {
-    return "All milestones assigned to this reviewer are verified";
-  }
-  return "All milestones are verified";
 }
 
 export function PendingVerificationTable({

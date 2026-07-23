@@ -1,12 +1,11 @@
 "use client";
 
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import { BanknotesIcon, CheckIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { formatUnits, isAddress } from "viem";
-import { useAccount } from "wagmi";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
@@ -25,7 +24,6 @@ import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
 import { CreateDisbursementModal } from "@/src/features/payout-disbursement/components/CreateDisbursementModal";
-import { getPaidAllocationIds } from "@/src/features/payout-disbursement/components/MilestoneSelectionStep";
 import { PayoutConfigurationModal } from "@/src/features/payout-disbursement/components/PayoutConfigurationModal";
 import { PayoutHistoryDrawer } from "@/src/features/payout-disbursement/components/PayoutHistoryDrawer";
 import { TokenBreakdown } from "@/src/features/payout-disbursement/components/TokenBreakdown";
@@ -40,15 +38,16 @@ import {
   type CommunityPayoutsSorting,
   type GrantDisbursementInfo,
   type PayoutConfigItem,
+  type PayoutDisbursement,
   PayoutDisbursementStatus,
   type PayoutGrantConfig,
   type SavePayoutConfigRequest,
   type TokenTotal,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { getPaidAllocationIds } from "@/src/features/payout-disbursement/utils/allocation-selection";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { sanitizeNumericInput } from "@/utilities/validation";
 import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload";
 
 // Component-specific types
@@ -71,10 +70,9 @@ interface PayoutsTableData {
 }
 
 export default function PayoutsAdminPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { address } = useAccount();
   const { ready: authReady } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
@@ -82,8 +80,6 @@ export default function PayoutsAdminPage() {
   // State for tracking edits
   const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // State for tracking individual field saves (key format: "grantUID-fieldName")
-  const [savingFields, setSavingFields] = useState<Set<string>>(new Set());
 
   // State for row selection (for disbursement)
   const [selectedGrants, setSelectedGrants] = useState<Set<string>>(new Set());
@@ -184,8 +180,6 @@ export default function PayoutsAdminPage() {
 
   // Save payout config mutation (saves to payout_grant_config collection)
   const { mutate: saveConfigs, isPending: isSaving } = useSavePayoutConfig();
-  // Separate mutation for inline single-field saves
-  const { mutate: saveSingleField } = useSavePayoutConfig();
 
   // Process payouts into table data format
   const tableData: PayoutsTableData[] = useMemo(() => {
@@ -213,7 +207,10 @@ export default function PayoutsAdminPage() {
 
   // Create a map of grant UID to disbursement info from the payouts response
   const disbursementMap = useMemo(() => {
-    const map: Record<string, { totalsByToken: TokenTotal[]; status: string; history: any[] }> = {};
+    const map: Record<
+      string,
+      { totalsByToken: TokenTotal[]; status: string; history: PayoutDisbursement[] }
+    > = {};
     payouts.forEach((payout) => {
       map[payout.grant.uid] = {
         totalsByToken: payout.disbursements.totalsByToken || [],
@@ -239,7 +236,7 @@ export default function PayoutsAdminPage() {
   );
 
   // KYC: Fetch KYC configuration for the community
-  const { config: kycConfig, isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
+  const { isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
     enabled: !!community?.uid,
   });
 
@@ -274,7 +271,11 @@ export default function PayoutsAdminPage() {
   const computeDisplayStatus = useCallback(
     (
       _item: PayoutsTableData,
-      disbursementInfo?: { totalsByToken: TokenTotal[]; status: string; history: any[] }
+      disbursementInfo?: {
+        totalsByToken: TokenTotal[];
+        status: string;
+        history: PayoutDisbursement[];
+      }
     ): { label: string; color: string } => {
       const aggregatedStatus = disbursementInfo?.status;
       const history = disbursementInfo?.history || [];
@@ -339,7 +340,7 @@ export default function PayoutsAdminPage() {
       programId: programId,
       page: "1", // Reset to first page when changing program
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleItemsPerPageChange = (limit: number) => {
@@ -347,14 +348,14 @@ export default function PayoutsAdminPage() {
       limit: limit.toString(),
       page: "1", // Reset to first page when changing items per page
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handlePageChange = (page: number) => {
     const query = createQueryString({
       page: page.toString(),
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleSort = (column: CommunityPayoutsSorting["sortBy"]) => {
@@ -368,25 +369,7 @@ export default function PayoutsAdminPage() {
       sortOrder: newSortOrder,
       page: "1", // Reset to first page when changing sort
     });
-    router.push(`${pathname}?${query}`);
-  };
-
-  // Handle field changes
-  const handleFieldChange = (uid: string, field: keyof EditableFields, value: string) => {
-    setEditedFields((prev) => ({
-      ...prev,
-      [uid]: {
-        ...prev[uid],
-        [field]: value,
-      },
-    }));
-
-    // Clear error when user starts typing
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[`${uid}-${field}`];
-      return newErrors;
-    });
+    push(`${pathname}?${query}`);
   };
 
   // Validate a single field
@@ -412,90 +395,6 @@ export default function PayoutsAdminPage() {
     }
 
     return true;
-  };
-
-  // Handle saving a single field inline
-  const handleSaveField = (
-    grantUID: string,
-    projectUID: string,
-    field: "payoutAddress" | "amount"
-  ) => {
-    const fieldValue = editedFields[grantUID]?.[field];
-
-    // Validate the field before saving
-    if (fieldValue && !validateField(grantUID, field, fieldValue)) {
-      return;
-    }
-
-    // Find the item to get current values for other fields
-    const item = tableData.find((d) => d.uid === grantUID);
-    if (!item) return;
-
-    const savingKey = `${grantUID}-${field}`;
-    setSavingFields((prev) => new Set(prev).add(savingKey));
-
-    // Build the config item with the single field being saved
-    const configItem: PayoutConfigItem = {
-      grantUID,
-      projectUID,
-    };
-
-    if (field === "payoutAddress") {
-      configItem.payoutAddress = fieldValue || undefined;
-      // Include current amount if exists
-      if (item.currentAmount) {
-        configItem.totalGrantAmount = item.currentAmount;
-      }
-    } else if (field === "amount") {
-      configItem.totalGrantAmount = fieldValue || undefined;
-      // Include current payout address if exists
-      if (item.currentPayoutAddress) {
-        configItem.payoutAddress = item.currentPayoutAddress;
-      }
-    }
-
-    const request: SavePayoutConfigRequest = {
-      configs: [configItem],
-      communityUID: community?.uid || "",
-    };
-
-    saveSingleField(request, {
-      onSuccess: (data) => {
-        setSavingFields((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(savingKey);
-          return newSet;
-        });
-
-        if (data.success.length > 0) {
-          toast.success(`Saved ${field === "payoutAddress" ? "payout address" : "grant amount"}`);
-          // Clear the edited field for this specific field only
-          setEditedFields((prev) => {
-            const newEdited = { ...prev };
-            if (newEdited[grantUID]) {
-              delete newEdited[grantUID][field];
-              // If no more edited fields for this grant, remove the entry
-              if (Object.keys(newEdited[grantUID]).length === 0) {
-                delete newEdited[grantUID];
-              }
-            }
-            return newEdited;
-          });
-        } else if (data.failed.length > 0) {
-          toast.error(
-            `Failed to save ${field === "payoutAddress" ? "payout address" : "grant amount"}`
-          );
-        }
-      },
-      onError: (error) => {
-        setSavingFields((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(savingKey);
-          return newSet;
-        });
-        toast.error(error.message || "Failed to save");
-      },
-    });
   };
 
   // State to store last CSV result for display
@@ -685,8 +584,10 @@ export default function PayoutsAdminPage() {
 
     const grantsInfo: GrantDisbursementInfo[] = selectedItems.map((item) => {
       // Use the same logic as the input display: prefer editedFields if the key exists
-      const hasEditedPayoutAddress = editedFields[item.uid]?.hasOwnProperty("payoutAddress");
-      const hasEditedAmount = editedFields[item.uid]?.hasOwnProperty("amount");
+      const hasEditedPayoutAddress =
+        editedFields[item.uid] && Object.hasOwn(editedFields[item.uid], "payoutAddress");
+      const hasEditedAmount =
+        editedFields[item.uid] && Object.hasOwn(editedFields[item.uid], "amount");
 
       const payoutAddress = hasEditedPayoutAddress
         ? editedFields[item.uid].payoutAddress || ""
@@ -730,7 +631,8 @@ export default function PayoutsAdminPage() {
   // Open history drawer for a specific grant
   const handleOpenHistoryDrawer = (item: PayoutsTableData) => {
     // Use the same logic as the input display: prefer editedFields if the key exists
-    const hasEditedAmount = editedFields[item.uid]?.hasOwnProperty("amount");
+    const hasEditedAmount =
+      editedFields[item.uid] && Object.hasOwn(editedFields[item.uid], "amount");
     const approvedAmount = hasEditedAmount
       ? editedFields[item.uid].amount || "0"
       : item.currentAmount || "0";
@@ -898,9 +800,9 @@ export default function PayoutsAdminPage() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router]);
+  }, [communityError, push]);
 
   // Loading state
   if (!authReady || loadingAdmin || isLoadingPayouts || isLoadingCommunity) {
@@ -979,6 +881,11 @@ export default function PayoutsAdminPage() {
                       onChange={(e) => handleSelectAll(e.target.checked)}
                       disabled={selectableGrants.length === 0}
                       title={
+                        selectableGrants.length === 0
+                          ? "No grants have valid payout address and amount"
+                          : `Select all ${selectableGrants.length} eligible grants`
+                      }
+                      aria-label={
                         selectableGrants.length === 0
                           ? "No grants have valid payout address and amount"
                           : `Select all ${selectableGrants.length} eligible grants`
@@ -1109,7 +1016,7 @@ export default function PayoutsAdminPage() {
                         checkboxState.disabled && !isFullyDisbursed && "opacity-60"
                       )}
                     >
-                      <td className="px-2 py-2 text-center">
+                      <td className="p-2 text-center">
                         <input
                           type="checkbox"
                           className={cn(
@@ -1120,6 +1027,9 @@ export default function PayoutsAdminPage() {
                           onChange={(e) => handleSelectGrant(item.uid, e.target.checked)}
                           disabled={checkboxState.disabled}
                           title={checkboxState.reason || "Select for disbursement"}
+                          aria-label={
+                            checkboxState.reason || `Select ${item.projectName} for disbursement`
+                          }
                         />
                       </td>
                       <td className="px-4 py-2 font-medium h-16">
@@ -1181,6 +1091,7 @@ export default function PayoutsAdminPage() {
                       {/* Status column - clickable to open history */}
                       <td className="px-4 py-2 text-center">
                         <button
+                          type="button"
                           onClick={() => handleOpenHistoryDrawer(item)}
                           className={cn(
                             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity",
@@ -1194,6 +1105,7 @@ export default function PayoutsAdminPage() {
                       {/* Actions column */}
                       <td className="px-4 py-2 text-center">
                         <button
+                          type="button"
                           onClick={() => handleOpenConfigModal(item)}
                           className={cn(
                             "p-2 rounded-md transition-colors",
@@ -1201,6 +1113,7 @@ export default function PayoutsAdminPage() {
                             "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-zinc-800"
                           )}
                           title="Configure payout settings"
+                          aria-label="Configure payout settings"
                         >
                           <Cog6ToothIcon className="h-5 w-5" />
                         </button>

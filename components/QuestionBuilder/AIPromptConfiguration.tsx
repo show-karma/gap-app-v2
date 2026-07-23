@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { PAGE_HEADER_CONTENT } from "@/components/FundingPlatform/PageHeader.constants";
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import { MigrationBanner, PromptEditor, useProgramPrompts } from "@/src/features/prompt-management";
 import type { FormSchema } from "@/types/question-builder";
@@ -61,6 +62,7 @@ function PromptTabs({ programId, readOnly }: { programId: string; readOnly: bool
           Failed to load prompts: {error?.message || "Unknown error"}
         </p>
         <button
+          type="button"
           onClick={() => refetch()}
           className="text-red-600 dark:text-red-400 underline text-sm hover:no-underline"
         >
@@ -115,7 +117,6 @@ export function AIPromptConfiguration({
   onUpdate,
   className = "",
   programId,
-  chainId,
   readOnly = false,
 }: AIPromptConfigurationProps) {
   // Fetch available AI models from backend
@@ -237,7 +238,7 @@ export function AIPromptConfiguration({
                 className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly || isLoadingModels ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {isLoadingModels ? (
-                  <option value="">Loading models...</option>
+                  <option value="">Loading models…</option>
                 ) : (
                   availableModels.map((model) => (
                     <option key={model} value={model}>

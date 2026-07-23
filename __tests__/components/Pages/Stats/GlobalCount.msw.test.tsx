@@ -5,7 +5,6 @@
  * instead of vi.mock("useQuery").
  */
 import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { installMswLifecycle, server } from "@/__tests__/msw/server";
 import { renderWithProviders } from "@/__tests__/utils/render";
@@ -32,7 +31,7 @@ afterEach(() => {
 
 describe("GlobalCount", () => {
   describe("loading state", () => {
-    it("shows 'Loading stats...' while query is pending", () => {
+    it("shows 'Loading stats…' while query is pending", () => {
       // Use a handler that never resolves to keep loading state
       server.use(
         http.get(GLOBAL_COUNT_URL, () => {
@@ -44,7 +43,7 @@ describe("GlobalCount", () => {
 
       renderWithProviders(<GlobalCount />);
 
-      expect(screen.getByText("Loading stats...")).toBeInTheDocument();
+      expect(screen.getByText("Loading stats…")).toBeInTheDocument();
     });
   });
 
@@ -115,7 +114,7 @@ describe("GlobalCount", () => {
       });
 
       // Should not show loading
-      expect(screen.queryByText("Loading stats...")).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading stats…")).not.toBeInTheDocument();
     });
 
     it("shows error message when API returns null data", async () => {

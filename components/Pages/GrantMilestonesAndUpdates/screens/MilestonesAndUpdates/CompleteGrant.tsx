@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
@@ -48,9 +47,7 @@ export const GrantCompletion: FC = () => {
   >([]);
   const [isFundingProgram, setIsFundingProgram] = useState(false);
 
-  // Get tracks for the program to check if they exist
   const programIdWithChain = grant?.details?.programId;
-  const { data: availableTracks = [] } = useTracksForProgram(programIdWithChain || "");
 
   // Validation states
   const [validationErrors, setValidationErrors] = useState<{
@@ -60,7 +57,7 @@ export const GrantCompletion: FC = () => {
   }>({});
 
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
 
   const { chain, address } = useAccount();
@@ -227,7 +224,7 @@ export const GrantCompletion: FC = () => {
               // Let the share dialog render before any route transition.
               if (pathname !== targetPath) {
                 setTimeout(() => {
-                  router.push(targetPath);
+                  push(targetPath);
                 }, 250);
               }
 
@@ -251,7 +248,7 @@ export const GrantCompletion: FC = () => {
             "Grant completion is taking longer than expected. Please refresh the page in a moment to see if it completed."
           );
         });
-    } catch (error: any) {
+    } catch (error) {
       if (isUserCancellationError(error)) {
         showError("Grant completion cancelled");
       } else {

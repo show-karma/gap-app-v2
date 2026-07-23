@@ -9,7 +9,7 @@ import { communityColors } from "@/utilities/communityColors";
 describe("communityColors", () => {
   describe("known community color resolution", () => {
     it("should resolve 'black' to #000000", () => {
-      expect(communityColors["black"]).toBe("#000000");
+      expect(communityColors.black).toBe("#000000");
     });
 
     it("should resolve known community UIDs to their configured hex colors", () => {
@@ -37,7 +37,7 @@ describe("communityColors", () => {
 
     it("should have all values as valid hex color strings", () => {
       const hexPattern = /^#[0-9a-fA-F]{6}$/;
-      for (const [key, color] of Object.entries(communityColors)) {
+      for (const color of Object.values(communityColors)) {
         expect(color).toMatch(hexPattern);
       }
     });

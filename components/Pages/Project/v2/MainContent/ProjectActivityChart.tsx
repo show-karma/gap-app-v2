@@ -105,7 +105,6 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
         return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       case "1y":
         return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-      case "all":
       default:
         return null;
     }
@@ -195,16 +194,6 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
 
     return result.sort((a, b) => a.sortKey - b.sortKey);
   }, [filteredMilestones, timeRange]);
-
-  // Calculate summary stats
-  const stats = useMemo(() => {
-    if (!filteredMilestones?.length) return { total: 0, completed: 0 };
-
-    const total = filteredMilestones.length;
-    const completed = filteredMilestones.filter((m) => m.completed).length;
-
-    return { total, completed };
-  }, [filteredMilestones]);
 
   // Toggle category filter
   const toggleCategory = (category: string) => {

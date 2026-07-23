@@ -5,6 +5,8 @@ interface MobileProfileContentSkeletonProps {
   className?: string;
 }
 
+const QUICK_LINK_SKELETON_KEYS = ["quick-link-1", "quick-link-2", "quick-link-3"];
+
 function SeparatorSkeleton() {
   return <div className="h-px w-full bg-border" />;
 }
@@ -53,8 +55,8 @@ export function MobileProfileContentSkeleton({ className }: MobileProfileContent
       <div className="flex flex-col gap-4 p-6 rounded-xl border bg-background">
         <Skeleton className="h-6 w-24" />
         <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }, (_, i) => (
-            <div key={i}>
+          {QUICK_LINK_SKELETON_KEYS.map((key, i) => (
+            <div key={key}>
               <div className="flex flex-row items-center gap-2 py-2">
                 <Skeleton className="h-4 w-4 rounded" />
                 <Skeleton className="h-4 w-24" />

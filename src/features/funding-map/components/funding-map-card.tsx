@@ -6,7 +6,7 @@ import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useMixpanel } from "@/hooks/useMixpanel";
-import Link from "@/src/components/navigation/Link";
+import { Link } from "@/src/components/navigation/Link";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { FundingProgramResponse, OpportunityType } from "../types/funding-program";

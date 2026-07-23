@@ -21,7 +21,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
   const { submitApplication, isSubmitting } = useFundingApplications(programId);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  const handleSubmit = async (applicationData: Record<string, any>) => {
+  const handleSubmit = async (applicationData: Record<string, unknown>) => {
     try {
       setSubmissionError(null);
       await submitApplication(applicationData);
@@ -40,7 +40,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
       <div className="flex items-center justify-center p-12">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading application form...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading application form…</p>
         </div>
       </div>
     );
@@ -60,6 +60,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           </p>
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >
@@ -85,6 +86,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           </p>
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >
@@ -111,6 +113,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           </p>
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >

@@ -6,7 +6,7 @@ import { Button } from "@/components/Utilities/Button";
 import { getTokenByAddressAndChain } from "@/constants/supportedTokens";
 import { useGrantLinkedActivities } from "@/hooks/v2/useGrantLinkedActivities";
 import { usePayoutConfigByGrantPublic } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
-import type { Grant } from "@/types/v2/grant";
+import type { Grant, GrantMilestone, GrantUpdate as GrantUpdateData } from "@/types/v2/grant";
 import type { UnifiedMilestone, ProjectUpdate as V2ProjectUpdate } from "@/types/v2/roadmap";
 import { normalizeTimestamp } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
@@ -21,6 +21,11 @@ interface MilestonesListProps {
 }
 
 type Tab = "completed" | "pending" | "all";
+
+type MergedItem =
+  | { object: GrantUpdateData; date: number; type: "update" }
+  | { object: GrantMilestone; date: number; type: "milestone" }
+  | { object: V2ProjectUpdate; date: number; type: "activity" };
 
 interface TabButtonProps {
   handleSelection: (text: Tab) => void;
@@ -104,7 +109,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   }, []);
 
   // Helper to get timestamp in milliseconds from various date formats
-  const getTimestampMs = (value: any): number => {
+  const getTimestampMs = (value: string | number | Date | null | undefined): number => {
     if (!value) return 0;
     // If it's a number (Unix timestamp), normalize it
     if (typeof value === "number") return normalizeTimestamp(value);
@@ -114,7 +119,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   // Compute merged and ordered array from props (no state needed)
   const generalArray = useMemo(() => {
-    const merged: any[] = [];
+    const merged: MergedItem[] = [];
 
     updates?.forEach((update) => {
       merged.push({
@@ -148,7 +153,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   // Helper to properly check if a milestone is completed
   // API may return empty array [] which is truthy in JS but means not completed
-  const isCompleted = (item: any): boolean => {
+  const isCompleted = (item: MergedItem): boolean => {
     if (item.type === "update") return true; // Updates are always "completed"
     if (item.type === "activity") return true; // Activities are stateless; treat as completed
     const completed = item.object.completed;
@@ -163,13 +168,14 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
       (item) =>
         !isCompleted(item) &&
         item.type !== "update" &&
-        // status lives on the wrapped milestone (item.object), not the item
-        !isCancelledMilestoneStatus(item.object?.currentStatus)
+        // currentStatus lives only on the wrapped milestone (item.object), not on activities
+        !(item.type === "milestone" && isCancelledMilestoneStatus(item.object.currentStatus))
     );
 
     // For completed items: use completion date or creation date, descending (newest first)
-    const getCompletedDate = (item: any): number => {
+    const getCompletedDate = (item: MergedItem): number => {
       if (item.type === "update") return getTimestampMs(item.object.createdAt);
+      if (item.type === "activity") return item.date;
       // Check for completion with proper array handling
       const completed = item.object.completed;
       if (completed && !Array.isArray(completed) && completed.createdAt) {
@@ -182,16 +188,19 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     };
 
     // For pending items: use due date (endsAt), ascending (soonest due first)
-    const getPendingDate = (item: any): number => {
-      if (item.object.data?.endsAt) {
-        return getTimestampMs(item.object.data.endsAt);
+    const getPendingDate = (item: MergedItem): number => {
+      // Legacy API shapes may nest the due date under `data.endsAt`.
+      const legacyEndsAt = (item.object as { data?: { endsAt?: string | number } }).data?.endsAt;
+      if (legacyEndsAt) {
+        return getTimestampMs(legacyEndsAt);
       }
       return item.date; // fallback to pre-computed date
     };
 
     // For all items: use appropriate date based on status, descending (newest first)
-    const getAllDate = (item: any): number => {
+    const getAllDate = (item: MergedItem): number => {
       if (item.type === "update") return getTimestampMs(item.object.createdAt);
+      if (item.type === "activity") return item.date;
       // Check for completion with proper array handling
       const completed = item.object.completed;
       if (completed && !Array.isArray(completed) && completed.createdAt) {
@@ -216,11 +225,11 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
     return {
       // Completed: descending by completion/creation date (newest first)
-      completedMilestones: [...unsortedCompleted].sort(
+      completedMilestones: unsortedCompleted.toSorted(
         (a, b) => getCompletedDate(b) - getCompletedDate(a)
       ),
       // Pending: ascending by due date (soonest first)
-      pendingMilestones: [...unsortedPending].sort((a, b) => getPendingDate(a) - getPendingDate(b)),
+      pendingMilestones: unsortedPending.toSorted((a, b) => getPendingDate(a) - getPendingDate(b)),
       // All: completed milestones first, then everything else by createdAt desc
       allMilestones: [...completedMilestoneBucket, ...restBucket],
     };
@@ -294,28 +303,29 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
           <div className="mt-3 flex w-full flex-col gap-6">
             {selectedTabArray.map((item) => {
               if (item.type === "update") {
-                const updatesArray = generalArray.filter((i) => i.type === "update");
+                const updatesArray = generalArray.filter(
+                  (i): i is Extract<MergedItem, { type: "update" }> => i.type === "update"
+                );
+                // Legacy API payloads may expose the uid as `_uid`.
+                const getUpdateUid = (object: GrantUpdateData) =>
+                  (object as { _uid?: string })._uid || object.uid;
                 const updatesIndex = updatesArray.findIndex(
-                  (i) =>
-                    // eslint-disable-next-line no-underscore-dangle
-                    (i?.object._uid || i.object.uid) ===
-                    // eslint-disable-next-line no-underscore-dangle
-                    (item?.object._uid || item.object.uid)
+                  (i) => getUpdateUid(i.object) === getUpdateUid(item.object)
                 );
                 return (
                   <GrantUpdate
                     key={item.object.uid}
                     index={updatesArray.length - updatesIndex}
-                    title={item.object?.title}
-                    description={item.object?.text}
-                    date={item.object.createdAt}
+                    title={item.object.title}
+                    description={item.object.text || ""}
+                    date={item.object.createdAt || ""}
                     update={item.object}
                   />
                 );
               }
 
               if (item.type === "activity") {
-                const activity = item.object as V2ProjectUpdate;
+                const activity = item.object;
                 const unified: UnifiedMilestone = {
                   uid: activity.uid,
                   chainID: 0,

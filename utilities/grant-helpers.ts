@@ -27,11 +27,7 @@ interface FetchGrantInstanceParams {
  * await grantInstance.complete(walletSigner, data, changeStepperStep);
  * ```
  */
-export const fetchGrantInstance = async ({
-  gapClient,
-  projectUid,
-  grantUid,
-}: FetchGrantInstanceParams) => {
+export const fetchGrantInstance = async ({ projectUid, grantUid }: FetchGrantInstanceParams) => {
   const grants = await getProjectGrants(projectUid);
 
   const grantInstance = grants?.find((g) => g.uid.toLowerCase() === grantUid.toLowerCase());
@@ -98,7 +94,6 @@ interface FetchMilestoneInstanceParams {
  * ```
  */
 export const fetchMilestoneInstance = async ({
-  gapClient,
   projectUid,
   programId,
   milestoneUid,

@@ -100,9 +100,7 @@ describe("SettingsSidebar", () => {
     });
 
     it("should change active tab highlighting when prop changes", () => {
-      const { rerender, container } = render(
-        <SettingsSidebar {...defaultProps} activeTab="build" />
-      );
+      const { rerender } = render(<SettingsSidebar {...defaultProps} activeTab="build" />);
 
       // Get navigation button by name pattern
       const getNavButton = (name: RegExp) => {
@@ -141,7 +139,7 @@ describe("SettingsSidebar", () => {
     it("should not show check marks for incomplete steps", () => {
       const completedSteps = new Set<SidebarTabKey>(["program-details"]);
 
-      const { container } = render(
+      render(
         <SettingsSidebar {...defaultProps} completedSteps={completedSteps} activeTab="settings" />
       );
 

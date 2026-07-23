@@ -13,7 +13,7 @@ export const useTeamProfiles = (project: ProjectResponse | undefined) => {
   const uniqueLowercasedAddresses = useMemo(() => {
     const rawAddresses = [
       project?.owner,
-      ...(project?.members?.map((member) => member.address).filter(Boolean) || []),
+      ...(project?.members?.flatMap((member) => (member.address ? [member.address] : [])) || []),
     ].filter(Boolean) as string[];
     return Array.from(new Set(rawAddresses.map((address) => address.toLowerCase())));
   }, [project?.owner, project?.members]);

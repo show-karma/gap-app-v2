@@ -121,7 +121,7 @@ describe("PayoutConfigurationModal", () => {
         wrapper: createWrapper(),
       });
 
-      expect(screen.getByText("Loading configuration...")).toBeInTheDocument();
+      expect(screen.getByText("Loading configuration…")).toBeInTheDocument();
     });
 
     it("should render form fields", () => {
@@ -631,8 +631,6 @@ describe("PayoutConfigurationModal", () => {
     });
 
     it("should still allow editing unpaid custom line items when some are paid", async () => {
-      const user = userEvent.setup();
-
       const configWithMultipleCustom: PayoutGrantConfig = {
         ...existingConfigWithCustom,
         milestoneAllocations: [

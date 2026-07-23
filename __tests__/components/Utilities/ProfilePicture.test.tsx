@@ -9,7 +9,15 @@ vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     // Filter out Next.js-specific props
-    const { fill, priority, quality, loader, placeholder, blurDataURL, ...imgProps } = props;
+    const {
+      fill: _fill,
+      priority: _priority,
+      quality: _quality,
+      loader: _loader,
+      placeholder: _placeholder,
+      blurDataURL: _blurDataURL,
+      ...imgProps
+    } = props;
     return React.createElement("img", imgProps);
   },
 }));

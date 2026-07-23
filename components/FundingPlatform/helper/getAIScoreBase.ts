@@ -3,7 +3,7 @@ import type { IFundingApplication } from "@/types/funding-platform";
 /**
  * Evaluation source type for different AI evaluation types
  */
-export type EvaluationSource = "aiEvaluation" | "internalAIEvaluation";
+type EvaluationSource = "aiEvaluation" | "internalAIEvaluation";
 
 /**
  * Supported score field names in evaluation objects (lowercase for case-insensitive matching)
@@ -25,8 +25,16 @@ function extractScore(evaluation: unknown): { score: number; field: string } | n
   const evalObj = evaluation as Record<string, unknown>;
   const keys = Object.keys(evalObj);
 
+  // Map normalized (lowercase) key -> first matching original key, so lookups
+  // stay case-insensitive while preserving the original "first match wins".
+  const keyByLowercase = new Map<string, string>();
+  for (const k of keys) {
+    const lower = k.toLowerCase();
+    if (!keyByLowercase.has(lower)) keyByLowercase.set(lower, k);
+  }
+
   for (const targetField of SCORE_FIELDS) {
-    const matchedKey = keys.find((k) => k.toLowerCase() === targetField);
+    const matchedKey = keyByLowercase.get(targetField);
     if (
       matchedKey &&
       typeof evalObj[matchedKey] === "number" &&

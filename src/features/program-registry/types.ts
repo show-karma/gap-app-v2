@@ -55,21 +55,10 @@ export interface ProgramMetadata {
   financeEmails?: string[];
 }
 
-export interface ProgramCreationRequest {
-  owner: string;
-  chainId: number;
-  metadata: ProgramMetadata;
-}
-
 export interface ProgramCreationResult {
   programId: string;
   success: boolean;
   requiresManualApproval?: boolean;
-}
-
-export interface ProgramApprovalRequest {
-  programId: string;
-  isValid: "accepted" | "rejected" | "pending";
 }
 
 export interface CreateProgramFormData {

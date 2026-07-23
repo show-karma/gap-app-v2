@@ -141,10 +141,10 @@ describe("DonationExecutor", () => {
   });
 
   describe("Executing state", () => {
-    it("should show Processing... text and spinner when executing", () => {
+    it("should show Processing… text and spinner when executing", () => {
       renderWithProviders(<DonationExecutor {...defaultProps} isExecuting={true} />);
 
-      expect(screen.getByText("Processing...")).toBeInTheDocument();
+      expect(screen.getByText("Processing…")).toBeInTheDocument();
     });
 
     it("should set aria-busy when executing", () => {

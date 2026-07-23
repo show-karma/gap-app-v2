@@ -19,7 +19,7 @@ export enum DonationErrorCode {
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
-export interface ParsedError {
+interface ParsedError {
   code: DonationErrorCode;
   message: string;
   technicalMessage?: string;

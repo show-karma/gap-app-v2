@@ -1,15 +1,19 @@
 "use client";
 
-import type { FC, JSX } from "react";
+import type { FC, ReactNode } from "react";
 import { useMemo } from "react";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import type {
+  IFormSchema,
+  IFundingApplication,
+  ProgramWithFormSchema,
+} from "@/types/funding-platform";
 import { createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
-export interface PostApprovalDataViewProps {
+interface PostApprovalDataViewProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
 }
@@ -17,12 +21,17 @@ export interface PostApprovalDataViewProps {
 export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ application, program }) => {
   // Resolve post-approval form schema from program object
   const postApprovalFormSchema =
-    (program as any)?.applicationConfig?.postApprovalFormSchema || program?.postApprovalFormSchema;
+    (
+      program as
+        | { applicationConfig?: { postApprovalFormSchema?: IFormSchema } | null }
+        | null
+        | undefined
+    )?.applicationConfig?.postApprovalFormSchema || program?.postApprovalFormSchema;
 
   // Create field labels mapping from post-approval schema
   const fieldLabels: Record<string, string> = {};
   if (postApprovalFormSchema?.fields) {
-    postApprovalFormSchema.fields.forEach((field: any) => {
+    postApprovalFormSchema.fields.forEach((field) => {
       if (field.id && field.label) {
         fieldLabels[field.id] = field.label;
       }
@@ -35,7 +44,7 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
     [postApprovalFormSchema]
   );
 
-  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
+  const renderFieldValue = (value: unknown, fieldKey?: string): ReactNode => {
     if (Array.isArray(value)) {
       // Check if it's an array of objects with title (like milestones)
       const isObjectArray = value.length > 0 && typeof value[0] === "object" && "title" in value[0];
@@ -43,9 +52,9 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
       if (isObjectArray) {
         return (
           <div className="space-y-3">
-            {value.map((item: any, index) => (
+            {value.map((item) => (
               <div
-                key={index}
+                key={item.title}
                 className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
               >
                 <div className="space-y-2">
@@ -72,9 +81,9 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
       // Regular array - render as tags
       return (
         <div className="flex flex-wrap gap-2">
-          {value.map((item, index) => (
+          {value.map((item) => (
             <span
-              key={index}
+              key={String(item)}
               className="inline-block bg-gray-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-full text-sm"
             >
               {String(item)}
@@ -151,5 +160,3 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
     </div>
   );
 };
-
-export default PostApprovalDataView;

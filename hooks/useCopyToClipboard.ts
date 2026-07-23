@@ -22,7 +22,7 @@ export function useCopyToClipboard(): [CopiedValue, CopyFn] {
       setCopiedText(text);
       toast.success(message);
       return true;
-    } catch (error: any) {
+    } catch (error) {
       errorManager("Copy to clipboard failed", error);
       console.warn("Copy failed", error);
       setCopiedText(null);

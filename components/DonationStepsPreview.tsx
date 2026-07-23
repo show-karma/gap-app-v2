@@ -184,6 +184,8 @@ export function DonationStepsPreview({
               </p>
             </div>
             <button
+              type="button"
+              aria-label="Close dialog"
               onClick={onCancel}
               className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
             >
@@ -233,7 +235,7 @@ export function DonationStepsPreview({
         <div className="max-h-96 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
             {steps.map((step, index) => (
-              <div key={index} className="flex items-start gap-4">
+              <div key={`${step.type}-${step.chainId}`} className="flex items-start gap-4">
                 <div className="flex flex-col items-center">
                   {getStepIcon(step.type)}
                   {index < steps.length - 1 && (
@@ -253,8 +255,8 @@ export function DonationStepsPreview({
                   </div>
                   <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{step.chainName}</p>
                   <ul className="mt-2 space-y-1">
-                    {step.details.map((detail, detailIndex) => (
-                      <li key={detailIndex} className="text-xs text-gray-600 dark:text-gray-400">
+                    {step.details.map((detail) => (
+                      <li key={detail} className="text-xs text-gray-600 dark:text-gray-400">
                         • {detail}
                       </li>
                     ))}
@@ -285,12 +287,14 @@ export function DonationStepsPreview({
 
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={onCancel}
               className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Review Changes
             </button>
             <button
+              type="button"
               onClick={onProceed}
               disabled={isLoading}
               className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"

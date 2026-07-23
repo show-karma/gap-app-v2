@@ -20,7 +20,7 @@ function getGovSubdomain(): string {
  */
 export function shouldRedirectToGov(path: string): boolean {
   // Check exact matches
-  if (FRONTEND_NEXTJS_ROUTES.includes(path as any)) {
+  if ((FRONTEND_NEXTJS_ROUTES as readonly string[]).includes(path)) {
     return true;
   }
 

@@ -151,7 +151,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-500">Loading applications...</div>
+        <div className="text-gray-500">Loading applications…</div>
       </div>
     );
   }

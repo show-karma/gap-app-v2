@@ -1,10 +1,5 @@
-import { createApplicationList } from "../../data/applications";
 import { MOCK_COMMUNITIES } from "../../data/communities";
-import {
-  createClosedProgram,
-  createMockProgram,
-  createMockProgramWithAccessCode,
-} from "../../data/programs";
+import { createClosedProgram, createMockProgram } from "../../data/programs";
 import { expect, mock404, mockError, mockJson, test } from "../../fixtures";
 import { assertNoJsErrors, collectJsErrors } from "../../helpers/assertions";
 import {
@@ -22,7 +17,6 @@ test.describe("Journey — Grant Application", () => {
     description: "Funding for infrastructure projects on Optimism",
   });
   const closedProgram = createClosedProgram();
-  const accessCodeProgram = createMockProgramWithAccessCode();
 
   test.describe("Program Page", () => {
     test("J-APP-01: program page loads with program details", async ({ page, withApiMocks }) => {

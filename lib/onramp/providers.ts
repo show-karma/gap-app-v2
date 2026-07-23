@@ -6,8 +6,6 @@ import { OnrampProvider } from "@/hooks/donation/types";
  */
 export const STRIPE_SUPPORTED_CHAIN_IDS = [1, 8453, 137, 43114] as const;
 
-export const ALLOWED_ONRAMP_DOMAINS = ["crypto.link.com"] as const;
-
 /**
  * EU member states (27 countries) - ISO 3166-1 alpha-2 country codes.
  * Used for EUR currency selection and as part of allowed countries.
@@ -46,7 +44,7 @@ const EU_COUNTRIES = new Set([
  * Countries where Stripe Crypto Onramp is available.
  * Currently limited to US and EU member states.
  */
-export const STRIPE_ALLOWED_COUNTRIES = new Set(["US", ...EU_COUNTRIES]);
+const STRIPE_ALLOWED_COUNTRIES = new Set(["US", ...EU_COUNTRIES]);
 
 /**
  * Check if a country is supported for Stripe onramp.
@@ -56,7 +54,7 @@ export function isCountrySupported(countryCode: string | null | undefined): bool
   return STRIPE_ALLOWED_COUNTRIES.has(countryCode.toUpperCase());
 }
 
-export interface CurrencyInfo {
+interface CurrencyInfo {
   code: string;
   symbol: string;
 }
@@ -84,7 +82,7 @@ export function getCurrencyForCountry(countryCode: string | null | undefined): C
   return { code: "USD", symbol: "$" };
 }
 
-export interface OnrampProviderConfig {
+interface OnrampProviderConfig {
   id: OnrampProvider;
   name: string;
   description: string;
@@ -113,8 +111,4 @@ export function getProviderConfig(provider: OnrampProvider): OnrampProviderConfi
     throw new Error(`Unsupported onramp provider: ${provider}`);
   }
   return config;
-}
-
-export function getSupportedProviders(): OnrampProviderConfig[] {
-  return Object.values(PROVIDER_CONFIGS);
 }

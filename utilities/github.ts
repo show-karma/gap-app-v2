@@ -1,4 +1,4 @@
-export type GithubValidationResult = { valid: true } | { valid: false; error: string };
+type GithubValidationResult = { valid: true } | { valid: false; error: string };
 
 /**
  * Validates a GitHub URL, accepting only github.com/{username} or github.com/{organization} format.

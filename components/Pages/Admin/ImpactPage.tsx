@@ -7,7 +7,6 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess, useCommunityDetails } from "@/hooks/communities";
 import { Link } from "@/src/components/navigation/Link";
-import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { OutputMetrics } from "./OutputMetrics";
@@ -15,7 +14,7 @@ import { OutputMetrics } from "./OutputMetrics";
 type Tab = "metrics" | "impact";
 
 export default function ProgramImpactPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const params = useParams();
   const communityId = params.communityId as string;
   const [activeTab, setActiveTab] = useState<Tab>("metrics");
@@ -25,9 +24,9 @@ export default function ProgramImpactPage() {
 
   useEffect(() => {
     if (community === null && !communityLoading) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
-  }, [community, communityLoading, router]);
+  }, [community, communityLoading, push]);
 
   const tabs = [
     { id: "metrics", label: "Output Metrics" },
@@ -55,9 +54,10 @@ export default function ProgramImpactPage() {
 
           <div className="w-full max-w-4xl">
             <div className="border-b border-gray-200 dark:border-gray-700">
-              <nav className="flex space-x-8" aria-label="Program Impact Tabs">
+              <nav className="flex gap-x-8" aria-label="Program Impact Tabs">
                 {tabs.map((tab) => (
                   <button
+                    type="button"
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as Tab)}
                     className={cn(
@@ -96,5 +96,3 @@ export default function ProgramImpactPage() {
     </div>
   );
 }
-
-export const metadata = defaultMetadata;

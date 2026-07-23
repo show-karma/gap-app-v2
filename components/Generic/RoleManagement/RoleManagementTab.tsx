@@ -484,7 +484,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             <Button
               onClick={() => setShowAddForm(!showAddForm)}
               disabled={isAddingMember}
-              className="flex items-center space-x-2"
+              className="flex items-center gap-x-2"
               aria-label={
                 roleOptions && roleOptions.length > 0
                   ? "Add new reviewer"
@@ -523,6 +523,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                         type="checkbox"
                         value={option.value}
                         checked={selectedRoles?.includes(option.value) ?? false}
+                        aria-label={option.label}
                         onChange={(e) => handleRoleCheckboxChange(option.value, e.target.checked)}
                         disabled={isAddingMember}
                         className="h-4 w-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
@@ -542,6 +543,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                         name="roleType"
                         value={option.value}
                         checked={selectedRole === option.value}
+                        aria-label={option.label}
                         onChange={(e) => onRoleChange?.(e.target.value)}
                         disabled={isAddingMember}
                         className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
@@ -626,16 +628,16 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
               </div>
             ))}
           </div>
-          <div className="mt-4 flex items-center space-x-3">
+          <div className="mt-4 flex items-center gap-x-3">
             <Button
               onClick={handleAdd}
               disabled={isAddingMember}
-              className="flex items-center space-x-2"
+              className="flex items-center gap-x-2"
             >
               {isAddingMember ? (
                 <>
                   <Spinner className="h-4 w-4" />
-                  <span>Adding...</span>
+                  <span>Adding…</span>
                 </>
               ) : (
                 <>
@@ -684,14 +686,14 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                 <li key={member.id} className="px-6 py-4 bg-white dark:bg-gray-800">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center gap-x-3">
                         <div className="flex-shrink-0">
                           <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                             <UserIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-col space-y-1">
+                          <div className="flex flex-col gap-y-1">
                             {/* Name with role badges */}
                             {member.name && (
                               <div className="flex items-center space-x-2 flex-wrap">
@@ -717,7 +719,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
 
                             {/* Inline edit form for roles */}
                             {isEditing && roleOptions && (
-                              <div className="flex items-center space-x-4 py-1">
+                              <div className="flex items-center gap-x-4 py-1">
                                 {roleOptions.map((option) => (
                                   <label
                                     key={option.value}
@@ -726,6 +728,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                     <input
                                       type="checkbox"
                                       checked={editRoles.includes(option.value)}
+                                      aria-label={option.label}
                                       onChange={(e) =>
                                         handleEditRoleToggle(option.value, e.target.checked)
                                       }
@@ -737,7 +740,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                     </span>
                                   </label>
                                 ))}
-                                <div className="flex items-center space-x-1">
+                                <div className="flex items-center gap-x-1">
                                   <button
                                     type="button"
                                     onClick={handleSaveEdit}
@@ -827,7 +830,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                             {!isEditing && (member.email || member.telegram || member.slack) && (
                               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 flex-wrap gap-x-2">
                                 {member.email && (
-                                  <span className="flex items-center space-x-1">
+                                  <span className="flex items-center gap-x-1">
                                     <EnvelopeIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
                                     <span>{member.email}</span>
                                   </span>
@@ -836,7 +839,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                   <span className="text-gray-400 dark:text-gray-500">|</span>
                                 )}
                                 {member.telegram && (
-                                  <span className="flex items-center space-x-1">
+                                  <span className="flex items-center gap-x-1">
                                     <TelegramIcon className="h-4 w-4" />
                                     <span>
                                       {member.telegram?.[0] === "@" ? "" : "@"}
@@ -848,7 +851,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                   <span className="text-gray-400 dark:text-gray-500">|</span>
                                 )}
                                 {member.slack && (
-                                  <span className="flex items-center space-x-1">
+                                  <span className="flex items-center gap-x-1">
                                     <SlackIcon className="h-4 w-4" />
                                     <span>
                                       {member.slack?.[0] === "@"
@@ -871,7 +874,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                       (member.publicAddress || member.walletAddress) as string
                                     )
                                   }
-                                  className="flex items-center space-x-1 hover:text-gray-600 dark:hover:text-gray-300 transition-colors group"
+                                  className="flex items-center gap-x-1 hover:text-gray-600 dark:hover:text-gray-300 transition-colors group"
                                   title="Click to copy wallet address"
                                 >
                                   <span>
@@ -901,7 +904,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                       </div>
                     </div>
                     {canManage && !isEditing && (
-                      <div className="flex items-center space-x-1 ml-4">
+                      <div className="flex items-center gap-x-1 ml-4">
                         {((onEditRoles && roleOptions) || onEditContact) && (
                           <button
                             type="button"

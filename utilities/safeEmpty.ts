@@ -20,6 +20,3 @@
 
 /** Shared, frozen empty array. Use as a stable selector fallback. */
 export const EMPTY_ARRAY: readonly never[] = Object.freeze([]);
-
-/** Shared, frozen empty object. Use as a stable selector fallback. */
-export const EMPTY_OBJECT: Readonly<Record<string, never>> = Object.freeze({});

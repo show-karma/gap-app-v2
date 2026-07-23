@@ -73,11 +73,18 @@ export function useNetworkSwitching() {
           }
 
           // Check via direct wallet query if available
-          if (typeof window !== "undefined" && (window as any).ethereum) {
+          const provider =
+            typeof window !== "undefined"
+              ? (
+                  window as {
+                    ethereum?: { request: (args: { method: string }) => Promise<unknown> };
+                  }
+                ).ethereum
+              : undefined;
+          if (provider) {
             try {
-              const provider = (window as any).ethereum;
               const currentChain = await provider.request({ method: "eth_chainId" });
-              const currentChainDecimal = parseInt(currentChain, 16);
+              const currentChainDecimal = parseInt(String(currentChain), 16);
 
               if (currentChainDecimal === expectedChainId) {
                 return true;

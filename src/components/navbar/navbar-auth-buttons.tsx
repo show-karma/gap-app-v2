@@ -10,7 +10,7 @@ export function NavbarAuthButtons() {
   const { authenticate: login, ready, authenticated } = useAuth();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
+  const { replace } = useRouter();
   const hasTriggeredRef = useRef(false);
 
   useEffect(() => {
@@ -21,8 +21,8 @@ export function NavbarAuthButtons() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("login");
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
-  }, [ready, authenticated, searchParams, login, pathname, router]);
+    replace(query ? `${pathname}?${query}` : pathname);
+  }, [ready, authenticated, searchParams, login, pathname, replace]);
 
   if (!ready) {
     return <NavbarAuthButtonsSkeleton />;

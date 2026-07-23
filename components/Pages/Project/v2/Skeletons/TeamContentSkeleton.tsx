@@ -33,9 +33,14 @@ function TeamMemberCardSkeleton() {
  * Skeleton loading state for TeamContent.
  * Shows placeholders for team member cards.
  */
-export function TeamContentSkeleton({ className }: TeamContentSkeletonProps) {
-  const memberCount = 4;
+const TEAM_MEMBER_SKELETON_KEYS = [
+  "team-member-1",
+  "team-member-2",
+  "team-member-3",
+  "team-member-4",
+];
 
+export function TeamContentSkeleton({ className }: TeamContentSkeletonProps) {
   return (
     <div className={cn("flex flex-col gap-6", className)} data-testid="team-content-skeleton">
       {/* Header */}
@@ -46,8 +51,8 @@ export function TeamContentSkeleton({ className }: TeamContentSkeletonProps) {
 
       {/* Team members grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Array.from({ length: memberCount }, (_, i) => (
-          <TeamMemberCardSkeleton key={i} />
+        {TEAM_MEMBER_SKELETON_KEYS.map((key) => (
+          <TeamMemberCardSkeleton key={key} />
         ))}
       </div>
     </div>

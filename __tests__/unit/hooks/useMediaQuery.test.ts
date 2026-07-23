@@ -128,7 +128,7 @@ describe("useMediaQuery", () => {
 
   describe("Query Changes", () => {
     it("should update when query changes", () => {
-      const { result, rerender } = renderHook(({ query }) => useMediaQuery(query), {
+      const { rerender } = renderHook(({ query }) => useMediaQuery(query), {
         initialProps: { query: "(min-width: 768px)" },
       });
 
@@ -241,8 +241,8 @@ describe("useMediaQuery", () => {
 
   describe("Multiple Hook Instances", () => {
     it("should handle multiple hooks with different queries", () => {
-      const { result: result1 } = renderHook(() => useMediaQuery("(min-width: 768px)"));
-      const { result: result2 } = renderHook(() => useMediaQuery("(max-width: 640px)"));
+      renderHook(() => useMediaQuery("(min-width: 768px)"));
+      renderHook(() => useMediaQuery("(max-width: 640px)"));
 
       expect(mockMatchMedia).toHaveBeenCalledWith("(min-width: 768px)");
       expect(mockMatchMedia).toHaveBeenCalledWith("(max-width: 640px)");

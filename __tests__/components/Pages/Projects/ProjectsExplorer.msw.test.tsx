@@ -9,7 +9,7 @@ import { HttpResponse, http } from "msw";
 import { createMockProject } from "@/__tests__/factories/project.factory";
 import { resetSeq } from "@/__tests__/factories/utils";
 import { installMswLifecycle, server } from "@/__tests__/msw/server";
-import { createTestQueryClient, renderWithProviders } from "@/__tests__/utils/render";
+import { renderWithProviders } from "@/__tests__/utils/render";
 import { ProjectsExplorer } from "@/components/Pages/Projects/ProjectsExplorer";
 
 const BASE = "http://localhost:4000";

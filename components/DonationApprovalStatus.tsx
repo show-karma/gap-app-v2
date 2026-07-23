@@ -51,7 +51,7 @@ export function DonationApprovalStatus({ executionState }: DonationApprovalStatu
 
   return (
     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-      <div className="flex items-start space-x-3">
+      <div className="flex items-start gap-x-3">
         <div className="text-2xl">{getPhaseIcon(executionState.phase)}</div>
         <div className="flex-1">
           <h3 className="font-medium text-blue-900 dark:text-blue-100">
@@ -63,8 +63,11 @@ export function DonationApprovalStatus({ executionState }: DonationApprovalStatu
 
           {executionState.phase === "approving" && executionState.approvals && (
             <div className="mt-3 space-y-2">
-              {executionState.approvals.map((approval, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
+              {executionState.approvals.map((approval) => (
+                <div
+                  key={approval.tokenAddress}
+                  className="flex items-center justify-between text-sm"
+                >
                   <span className="text-blue-800 dark:text-blue-200">
                     {approval.tokenSymbol} approval
                   </span>

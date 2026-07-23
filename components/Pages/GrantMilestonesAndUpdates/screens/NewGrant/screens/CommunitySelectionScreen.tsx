@@ -30,7 +30,7 @@ export const CommunitySelectionScreen: React.FC = () => {
     setCommunityNetworkId,
   } = useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const params = useParams();
   const grantUid = params.grantUid as string;
@@ -115,7 +115,7 @@ export const CommunitySelectionScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
+    push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   const isProjectAlreadyInProgram = useMemo(() => {

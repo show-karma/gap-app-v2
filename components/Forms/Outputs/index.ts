@@ -1,5 +1,2 @@
-export { DeliverablesTable } from "./DeliverablesTable";
-export { MetricsTable } from "./MetricsTable";
-export { OutputDialog } from "./OutputDialog";
 export { OutputsSection } from "./OutputsSection";
-export type { CategorizedIndicator, CommunityData, DeliverableData, OutputData } from "./types";
+export type { CategorizedIndicator } from "./types";

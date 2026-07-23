@@ -102,7 +102,7 @@ const MentionAutocomplete: FC<MentionAutocompleteProps> = ({
               <Spinner className="h-4 w-4" />
             </div>
           ) : isError ? (
-            <div className="px-3 py-3 text-center">
+            <div className="p-3 text-center">
               <p className="text-sm text-red-500">
                 {error instanceof Error ? error.message : "Failed to load reviewers"}
               </p>

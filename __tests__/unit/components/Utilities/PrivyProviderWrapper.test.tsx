@@ -1,5 +1,4 @@
 import { act, render } from "@testing-library/react";
-import React from "react";
 
 // Mock heavy dependencies
 vi.mock("@tanstack/react-query", () => ({
@@ -98,7 +97,7 @@ describe("PrivyProviderWrapper", () => {
     mockGetItem.mockReturnValue(null);
 
     // Mock requestIdleCallback
-    const mockRIC = vi.fn((cb: IdleRequestCallback) => {
+    const mockRIC = vi.fn((_cb: IdleRequestCallback) => {
       // Don't call cb immediately — it should be deferred
       return 1;
     });

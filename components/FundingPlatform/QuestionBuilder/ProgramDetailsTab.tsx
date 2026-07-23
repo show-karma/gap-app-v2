@@ -12,7 +12,8 @@ import { useAdminProgramForm } from "@/src/features/program-registry/hooks/use-a
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
-import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
+import { PageHeader } from "../PageHeader";
+import { PAGE_HEADER_CONTENT } from "../PageHeader.constants";
 
 interface ProgramDetailsTabProps {
   programId: string;

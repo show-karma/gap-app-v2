@@ -55,7 +55,6 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
 };
 
 const CARD_SKELETON_KEYS = Array.from({ length: 12 }, (_, i) => `project-card-skeleton-${i}`);
-const PROGRAM_SKELETON_KEYS = Array.from({ length: 6 }, (_, i) => `program-filter-skeleton-${i}`);
 
 export const ProjectCardListSkeleton = () => {
   return (
@@ -66,16 +65,6 @@ export const ProjectCardListSkeleton = () => {
     </div>
   );
 };
-export const FilterByProgramsSkeleton = () => {
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      {PROGRAM_SKELETON_KEYS.map((key) => (
-        <Skeleton key={key} className={"h-7 w-full"} />
-      ))}
-    </div>
-  );
-};
-
 export const NewProjectsLoading = () => {
   return (
     <div

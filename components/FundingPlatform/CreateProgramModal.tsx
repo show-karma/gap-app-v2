@@ -27,7 +27,7 @@ export function CreateProgramModal({
   communityId,
   onSuccess,
 }: CreateProgramModalProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const {
     data: community,
     isLoading: isLoadingCommunity,
@@ -49,7 +49,7 @@ export function CreateProgramModal({
       onSuccess();
       onClose();
       if (result.programId) {
-        router.push(PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, result.programId));
+        push(PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, result.programId));
       }
     },
   });

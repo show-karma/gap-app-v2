@@ -258,6 +258,7 @@ export function PayoutsCsvUpload({
   return (
     <div className="w-full mb-6 border border-gray-200 dark:border-zinc-700 rounded-lg">
       <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
       >
@@ -290,6 +291,7 @@ export function PayoutsCsvUpload({
             </p>
             {onDownloadExample && (
               <button
+                type="button"
                 onClick={onDownloadExample}
                 className="ml-4 text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
               >
@@ -308,6 +310,7 @@ export function PayoutsCsvUpload({
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={handleNewUpload}
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
@@ -323,6 +326,7 @@ export function PayoutsCsvUpload({
                     </h4>
                     {parseResults.errors.length > 0 && (
                       <button
+                        type="button"
                         onClick={() => {
                           const errorText = parseResults.errors.join("\n");
                           const blob = new Blob([errorText], {
@@ -372,8 +376,8 @@ export function PayoutsCsvUpload({
                             Errors:
                           </p>
                           <div className="text-xs text-red-600 dark:text-red-400 space-y-1">
-                            {parseResults.errors.slice(0, 5).map((error, index) => (
-                              <p key={index}>{error}</p>
+                            {parseResults.errors.slice(0, 5).map((error) => (
+                              <p key={error}>{error}</p>
                             ))}
                             {parseResults.errors.length > 5 && (
                               <p className="text-gray-500 dark:text-gray-400">
@@ -390,8 +394,8 @@ export function PayoutsCsvUpload({
                             Unmatched project slugs:
                           </p>
                           <div className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
-                            {unmatchedProjects.slice(0, 5).map((slug, index) => (
-                              <p key={index}>• {slug}</p>
+                            {unmatchedProjects.slice(0, 5).map((slug) => (
+                              <p key={slug}>• {slug}</p>
                             ))}
                             {unmatchedProjects.length > 5 && (
                               <p className="text-gray-500 dark:text-gray-400">

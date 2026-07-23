@@ -166,7 +166,7 @@ describe("GrantCompletedButton", () => {
       );
 
       expect(screen.getByTestId("spinner")).toBeInTheDocument();
-      expect(screen.getByText("Revoking...")).toBeInTheDocument();
+      expect(screen.getByText("Revoking…")).toBeInTheDocument();
       expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "true");
     });
   });

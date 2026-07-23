@@ -8,7 +8,7 @@
  * the exact `issue.path` produced by a start-after-end violation.
  */
 
-import { milestoneSchema } from "@/components/Forms/Milestone";
+import { milestoneSchema } from "@/components/Forms/Milestone.schema";
 
 describe("milestoneSchema (dates refine)", () => {
   it("fails when startsAt is after endsAt, with the issue path resolving to dates.startsAt", () => {

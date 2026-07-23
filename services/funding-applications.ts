@@ -75,13 +75,17 @@ export async function fetchUserApplications(params: {
 export async function deleteApplication(referenceNumber: string): Promise<void> {
   try {
     await apiClient.delete(INDEXER.V2.APPLICATIONS.DELETE(referenceNumber));
-  } catch (error: any) {
+  } catch (error) {
+    const axiosError = error as {
+      message?: string;
+      response?: { status?: number; statusText?: string; data?: { message?: string } };
+    };
     // Log error with context before re-throwing for hook to handle
     console.error("Service layer: Failed to delete application", {
       referenceNumber,
-      status: error?.response?.status,
-      statusText: error?.response?.statusText,
-      errorMessage: error?.response?.data?.message || error?.message,
+      status: axiosError?.response?.status,
+      statusText: axiosError?.response?.statusText,
+      errorMessage: axiosError?.response?.data?.message || axiosError?.message,
       timestamp: new Date().toISOString(),
     });
     throw error;

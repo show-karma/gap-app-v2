@@ -6,7 +6,8 @@ export interface ProgramScoreUploadRequest {
   communityUID: string;
   programId: string;
   chainId: number;
-  csvData: any[];
+  /** Parsed CSV rows keyed by column header */
+  csvData: Record<string, string>[];
 }
 
 const ProgramScoreUploadResultSchema = z

@@ -29,8 +29,8 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
 vi.mock("next/dynamic", () => ({
   __esModule: true,
   default: (
-    importFn: () => Promise<{ default: React.ComponentType }>,
-    options?: { loading?: () => React.ReactNode }
+    _importFn: () => Promise<{ default: React.ComponentType }>,
+    _options?: { loading?: () => React.ReactNode }
   ) => {
     // Return a mock MDEditor component matching md-editor-rt's direct prop API
     const MockMDEditor = ({

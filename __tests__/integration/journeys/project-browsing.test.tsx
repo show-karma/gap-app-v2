@@ -230,7 +230,7 @@ describe("ProjectsExplorer - Project browsing & search", () => {
     it("shows search-specific empty message when search returns no results", async () => {
       // Preset the search query state
       const setter = vi.fn();
-      mockQueryStates["q"] = ["nonexistent", setter];
+      mockQueryStates.q = ["nonexistent", setter];
 
       mockGetExplorerProjectsPaginated.mockResolvedValue(
         createPaginatedProjectsResponse([], { totalCount: 0 })
@@ -246,7 +246,7 @@ describe("ProjectsExplorer - Project browsing & search", () => {
     it("shows filter-specific empty message when raising funds filter has no results", async () => {
       // Preset the raisingFunds filter to active (nuqs key used by ProjectsExplorer)
       const setter = vi.fn();
-      mockQueryStates["raisingFunds"] = ["true", setter];
+      mockQueryStates.raisingFunds = ["true", setter];
 
       mockGetExplorerProjectsPaginated.mockResolvedValue(
         createPaginatedProjectsResponse([], { totalCount: 0 })
@@ -355,7 +355,7 @@ describe("ProjectsExplorer - Project browsing & search", () => {
       await user.click(sortOrderButton);
 
       // The nuqs setter should have been called
-      const sortOrderState = mockQueryStates["sortOrder"];
+      const sortOrderState = mockQueryStates.sortOrder;
       expect(sortOrderState).toBeDefined();
       expect(sortOrderState[1]).toHaveBeenCalled();
     });
@@ -409,7 +409,7 @@ describe("ProjectsExplorer - Project browsing & search", () => {
       await user.click(toggle);
 
       // The nuqs setter for raisingFunds should have been called
-      const payoutState = mockQueryStates["raisingFunds"];
+      const payoutState = mockQueryStates.raisingFunds;
       expect(payoutState).toBeDefined();
       expect(payoutState[1]).toHaveBeenCalled();
     });

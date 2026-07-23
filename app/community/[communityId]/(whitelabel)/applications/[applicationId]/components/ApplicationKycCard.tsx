@@ -1,6 +1,7 @@
 "use client";
 
-import { getEffectiveKycStatus, KycStatusBadge } from "@/components/KycStatusIcon";
+import { KycStatusBadge } from "@/components/KycStatusIcon";
+import { getEffectiveKycStatus } from "@/components/KycStatusIcon.helpers";
 import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
 import { kycStatusDescriptions } from "@/src/features/kyc/lib/status-config";
 

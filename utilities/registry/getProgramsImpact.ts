@@ -7,7 +7,7 @@ import { INDEXER } from "../indexer";
  * API response interfaces for the impact endpoint
  * Exported for potential reuse in other parts of the codebase
  */
-export interface ImpactApiImpact {
+interface ImpactApiImpact {
   name: string;
   id: string;
   description: string;
@@ -15,12 +15,12 @@ export interface ImpactApiImpact {
   indicatorIds: string[];
 }
 
-export interface ImpactApiCategory {
+interface ImpactApiCategory {
   categoryName: string;
   impacts: ImpactApiImpact[];
 }
 
-export interface ImpactApiResponse {
+interface ImpactApiResponse {
   stats: {
     totalCategories: number;
     totalProjects: number;

@@ -47,9 +47,9 @@ function ImpactCardSkeleton() {
  * Skeleton loading state for ImpactContent.
  * Shows placeholders for impact/outcome cards.
  */
-export function ImpactContentSkeleton({ className }: ImpactContentSkeletonProps) {
-  const impactCount = 3;
+const IMPACT_CARD_SKELETON_KEYS = ["impact-card-1", "impact-card-2", "impact-card-3"];
 
+export function ImpactContentSkeleton({ className }: ImpactContentSkeletonProps) {
   return (
     <div className={cn("flex flex-col gap-6", className)} data-testid="impact-content-skeleton">
       {/* Header */}
@@ -63,8 +63,8 @@ export function ImpactContentSkeleton({ className }: ImpactContentSkeletonProps)
 
       {/* Impact cards */}
       <div className="flex flex-col gap-4">
-        {Array.from({ length: impactCount }, (_, i) => (
-          <ImpactCardSkeleton key={i} />
+        {IMPACT_CARD_SKELETON_KEYS.map((key) => (
+          <ImpactCardSkeleton key={key} />
         ))}
       </div>
     </div>

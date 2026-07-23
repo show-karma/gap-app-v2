@@ -1,5 +1,4 @@
 import { authorizationService } from "../services/authorization.service";
-import { ReviewerType, Role } from "../types/role";
 
 vi.mock("@/utilities/api/client", () => ({
   api: { get: vi.fn() },

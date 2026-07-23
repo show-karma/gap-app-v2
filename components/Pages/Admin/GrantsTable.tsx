@@ -56,6 +56,7 @@ export const GrantsTable = ({
 
   const renderColumnHeader = (field: SortField, label: string) => (
     <button
+      type="button"
       onClick={() => onSort(field)}
       className="flex items-center text-left font-medium hover:text-primary-600 transition-colors"
     >
@@ -98,7 +99,7 @@ export const GrantsTable = ({
           {grants.map((grant) => {
             const grantCategories = selectedCategories[grant.projectUid] || grant.categories;
             return (
-              <tr key={grant.uid} className="dark:text-zinc-300 text-gray-900 px-4 py-4">
+              <tr key={grant.uid} className="dark:text-zinc-300 text-gray-900 p-4">
                 <td className="px-4 py-2 font-medium h-16">
                   <ExternalLink
                     href={PAGES.PROJECT.OVERVIEW(grant.projectSlug || grant.projectUid)}

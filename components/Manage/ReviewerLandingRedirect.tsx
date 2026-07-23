@@ -20,7 +20,7 @@ import { PAGES } from "@/utilities/pages";
 export function ReviewerLandingRedirect() {
   const params = useParams();
   const communityId = params.communityId as string;
-  const router = useRouter();
+  const { replace } = useRouter();
   const { isLoading, isCommunityAdmin, isReviewerType } = usePermissionContext();
 
   const isProgramReviewer = isReviewerType(ReviewerType.PROGRAM);
@@ -30,9 +30,9 @@ export function ReviewerLandingRedirect() {
 
   useEffect(() => {
     if (shouldRedirect) {
-      router.replace(PAGES.MANAGE.ACTION_ITEMS(communityId));
+      replace(PAGES.MANAGE.ACTION_ITEMS(communityId));
     }
-  }, [shouldRedirect, communityId, router]);
+  }, [shouldRedirect, communityId, replace]);
 
   return null;
 }

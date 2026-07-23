@@ -7,7 +7,8 @@ import { ApplicationStatusChip } from "@/src/components/ui/ApplicationStatusChip
 import type { Application } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { PAGES } from "@/utilities/pages";
-import { extractApplicantName, WhatHappensNext } from "./WhatHappensNext";
+import { WhatHappensNext } from "./WhatHappensNext";
+import { extractApplicantName } from "./WhatHappensNext.helpers";
 import { WhatHappensNextSkeleton } from "./WhatHappensNextSkeleton";
 
 interface PageProps {

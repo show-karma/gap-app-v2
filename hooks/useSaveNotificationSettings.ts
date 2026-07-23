@@ -13,12 +13,12 @@ import {
  * these refs in its own state so the user's edits don't get clobbered by
  * sibling-mutation invalidations (see commit a17bed6b).
  */
-export interface NotificationSaveBaselines {
+interface NotificationSaveBaselines {
   telegram: MutableRefObject<{ enabled: boolean; chats: TelegramChat[] }>;
   slack: MutableRefObject<{ enabled: boolean; urls: string[] }>;
 }
 
-export interface NotificationChannelState {
+interface NotificationChannelState {
   telegram: { enabled: boolean; chats: TelegramChat[]; dirty: boolean };
   slack: { enabled: boolean; urls: string[]; dirty: boolean };
 }

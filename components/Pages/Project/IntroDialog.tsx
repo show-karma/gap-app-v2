@@ -18,8 +18,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 
-type IntroDialogProps = {};
-
 const schema = z.object({
   email: z.string().email({ message: MESSAGES.PROJECT.INTRO.EMAIL }).min(3, {
     message: MESSAGES.PROJECT.INTRO.EMAIL,
@@ -36,7 +34,7 @@ type SchemaType = z.infer<typeof schema>;
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
-export const IntroDialog: FC<IntroDialogProps> = () => {
+export const IntroDialog: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { address } = useAccount();
 
@@ -83,7 +81,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
       }
       closeModal();
       toast.success("Successfully requested intro!");
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         MESSAGES.REQUEST_INTRO.ERROR,
         error,

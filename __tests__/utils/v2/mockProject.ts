@@ -124,9 +124,3 @@ export function createMockProjectList(count: number = 3): ProjectResponse[] {
     })
   );
 }
-
-// Aliases for backward compatibility during migration
-export const createMockProjectV2 = createMockProject;
-export const createMockProjectV2WithGrants = createMockProjectWithGrants;
-export const createMinimalMockProjectV2 = createMinimalMockProject;
-export const createMockProjectV2List = createMockProjectList;

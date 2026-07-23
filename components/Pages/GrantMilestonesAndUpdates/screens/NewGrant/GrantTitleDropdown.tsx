@@ -195,6 +195,7 @@ export const GrantTitleDropdown: FC<{
               adding ? (
                 <div className="my-2 px-2">
                   <input
+                    aria-label={`${pluralize(type, 1)} name`}
                     className="rounded-md py-1 px-2 w-full dark:text-white dark:bg-zinc-800 border-zinc-200"
                     placeholder={`${pluralize(type, 1)} name...`}
                     value={title}
@@ -202,7 +203,7 @@ export const GrantTitleDropdown: FC<{
                       setTitle(e.target.value);
                     }}
                     // on enter key press, add the network
-                    onKeyDown={(e: any) => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         addCustom(title);
                       }
@@ -212,6 +213,7 @@ export const GrantTitleDropdown: FC<{
               ) : (
                 <div className="my-2 px-2">
                   <button
+                    type="button"
                     className="text-brand-blue dark:text-blue-200 font-semibold text-sm"
                     onClick={(e) => {
                       e?.preventDefault?.();

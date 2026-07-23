@@ -28,7 +28,7 @@ export function SetupWizard({
   progress,
   readOnly = false,
 }: SetupWizardProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const {
     toggleStatusAsync,
     isUpdating: isEnabling,
@@ -47,7 +47,7 @@ export function SetupWizard({
       await toggleStatusAsync(true);
       // The mutation already shows success toast, so just redirect
       await refetchConfig();
-      router.push(dashboardUrl);
+      push(dashboardUrl);
     } catch {
       // The mutation already handles error toast
     }

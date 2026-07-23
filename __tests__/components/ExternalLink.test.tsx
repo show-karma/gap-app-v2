@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import "@testing-library/jest-dom";
 
@@ -157,7 +156,6 @@ describe("ExternalLink", () => {
     });
 
     it("should accept onMouseEnter handler", async () => {
-      const user = userEvent.setup();
       const handleMouseEnter = vi.fn();
 
       render(

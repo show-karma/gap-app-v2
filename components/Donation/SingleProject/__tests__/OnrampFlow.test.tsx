@@ -304,7 +304,7 @@ describe("OnrampFlow", () => {
 
       // Capture the OnrampSuccessModal onClose prop when it renders
       let capturedOnClose: (() => void) | undefined;
-      mockOnrampSuccessModal.mockImplementation((props: any) => {
+      mockOnrampSuccessModal.mockImplementation((props: { onClose?: () => void }) => {
         capturedOnClose = props.onClose;
         return <div data-testid="success-modal">Success Modal</div>;
       });
@@ -322,8 +322,8 @@ describe("OnrampFlow", () => {
       });
 
       // Capture StripeOnrampEmbed onSuccess callback
-      let capturedStripeOnSuccess: ((data: any) => void) | undefined;
-      mockStripeOnrampEmbed.mockImplementation((props: any) => {
+      let capturedStripeOnSuccess: ((data: unknown) => void) | undefined;
+      mockStripeOnrampEmbed.mockImplementation((props: { onSuccess?: (data: unknown) => void }) => {
         capturedStripeOnSuccess = props.onSuccess;
         return <div data-testid="stripe-embed">Stripe Embed</div>;
       });
@@ -367,8 +367,8 @@ describe("OnrampFlow", () => {
       });
 
       // Capture StripeOnrampEmbed onSuccess callback
-      let capturedStripeOnSuccess: ((data: any) => void) | undefined;
-      mockStripeOnrampEmbed.mockImplementation((props: any) => {
+      let capturedStripeOnSuccess: ((data: unknown) => void) | undefined;
+      mockStripeOnrampEmbed.mockImplementation((props: { onSuccess?: (data: unknown) => void }) => {
         capturedStripeOnSuccess = props.onSuccess;
         return <div data-testid="stripe-embed">Stripe Embed</div>;
       });

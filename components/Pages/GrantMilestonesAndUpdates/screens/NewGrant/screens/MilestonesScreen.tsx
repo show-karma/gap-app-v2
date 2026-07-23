@@ -38,7 +38,6 @@ export const MilestonesScreen: React.FC = () => {
     saveMilestone,
     clearMilestonesForms,
     setFormPriorities,
-    updateFormData,
     resetFormData,
     setFlowType,
     communityNetworkId,
@@ -46,20 +45,13 @@ export const MilestonesScreen: React.FC = () => {
   const { switchChainAsync } = useWallet();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
-  const router = useRouter();
-  const { connector, chain } = useAccount();
+  const { push } = useRouter();
+  const { chain } = useAccount();
   const { authenticated: isAuth, address, isConnected } = useAuth();
   const { gap } = useGap();
   const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
-  const {
-    startAttestation,
-    changeStepperStep,
-    setIsStepper,
-    showLoading,
-    showSuccess,
-    showError,
-    dismiss,
-  } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
   const queryClient = useQueryClient();
 
   const pathname = usePathname();
@@ -75,7 +67,7 @@ export const MilestonesScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
+    push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   // Check if all milestones are valid
@@ -201,7 +193,7 @@ export const MilestonesScreen: React.FC = () => {
 
       // Attest grant
       await grant
-        .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
+        .attest(walletSigner, selectedProject.chainID, changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           const txHash = res?.tx[0]?.hash;
@@ -265,7 +257,7 @@ export const MilestonesScreen: React.FC = () => {
               await refetchGrants();
               setTimeout(() => {
                 setIsStepper(false);
-                router.push(
+                push(
                   PAGES.PROJECT.GRANT(
                     selectedProject?.details?.slug || selectedProject.uid,
                     grant.uid
@@ -279,7 +271,7 @@ export const MilestonesScreen: React.FC = () => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error: any) {
+    } catch (error) {
       showError(
         flowType === "grant"
           ? MESSAGES.GRANT.CREATE.ERROR(formData.title)
@@ -336,7 +328,11 @@ export const MilestonesScreen: React.FC = () => {
           ) : (
             <div className="flex w-full flex-col items-center justify-center gap-8">
               {milestonesForms.map((milestone, index) => (
-                <Milestone currentMilestone={milestone.data} key={index} index={index} />
+                <Milestone
+                  currentMilestone={milestone.data}
+                  key={milestone.formKey}
+                  index={index}
+                />
               ))}
             </div>
           )}

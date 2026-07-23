@@ -92,6 +92,7 @@ export function NavbarSearch({ onSelectItem, placeholder }: NavbarSearchProps = 
         <MagnifyingGlassIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         <input
           type="text"
+          aria-label={placeholder ?? "Search Project/Community"}
           placeholder={placeholder ?? "Search Project/Community"}
           className="w-full flex-1 text-sm bg-transparent text-foreground placeholder:text-muted-foreground border-none outline-none focus:ring-0 p-0 min-w-0"
           value={searchValue}
@@ -118,7 +119,7 @@ export function NavbarSearch({ onSelectItem, placeholder }: NavbarSearchProps = 
           ) : (
             <div className="max-h-72 w-full overflow-y-auto overflow-x-hidden">
               <div
-                className="flex flex-col gap-1 py-3 px-3 min-w-0 w-full"
+                className="flex flex-col gap-1 p-3 min-w-0 w-full"
                 style={{ maxWidth: "100%", boxSizing: "border-box" }}
               >
                 {results.communities.map((community) => {

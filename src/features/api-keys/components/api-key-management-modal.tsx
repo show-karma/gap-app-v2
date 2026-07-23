@@ -128,6 +128,8 @@ export function ApiKeyManagementModal() {
   );
 }
 
+const LOADING_ROW_KEYS = ["loading-row-1", "loading-row-2", "loading-row-3", "loading-row-4"];
+
 function LoadingState() {
   return (
     <>
@@ -136,11 +138,11 @@ function LoadingState() {
           <div className="h-5 w-5 rounded bg-muted animate-pulse" />
           API Key
         </DialogTitle>
-        <DialogDescription>Loading your API key information...</DialogDescription>
+        <DialogDescription>Loading your API key information…</DialogDescription>
       </DialogHeader>
       <div className="space-y-3 py-2">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex justify-between items-center">
+        {LOADING_ROW_KEYS.map((key) => (
+          <div key={key} className="flex justify-between items-center">
             <div className="h-4 w-16 rounded bg-muted animate-pulse" />
             <div className="h-4 w-24 rounded bg-muted animate-pulse" />
           </div>

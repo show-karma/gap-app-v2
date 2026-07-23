@@ -12,7 +12,7 @@ import { RunKarmaProfileButton } from "../RunKarmaProfileButton";
 import { type AIAnalysisSubTabId, AIAnalysisSubTabs } from "./AIAnalysisSubTabs";
 import { EmptyEvaluationState } from "./EmptyEvaluationState";
 
-export interface AIAnalysisTabProps {
+interface AIAnalysisTabProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
   onEvaluationComplete?: () => void;
@@ -182,5 +182,3 @@ function RunButton({
     />
   );
 }
-
-export default AIAnalysisTab;

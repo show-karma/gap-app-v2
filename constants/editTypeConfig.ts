@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 
 export type EditType = "applicant" | "admin" | "reviewer";
 
-export interface EditTypeConfig {
+interface EditTypeConfig {
   label: string;
   icon: ComponentType<{ className?: string }>;
   color: string;

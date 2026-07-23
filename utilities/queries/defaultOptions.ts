@@ -19,7 +19,8 @@ function legacyShouldRetry(failureCount: number, error: unknown): boolean {
     return false;
   }
 
-  const status = (error as any)?.response?.status ?? (error as any)?.status ?? undefined;
+  const errorLike = error as { response?: { status?: number }; status?: number } | null | undefined;
+  const status = errorLike?.response?.status ?? errorLike?.status ?? undefined;
   if (status === 429 || status === 401) {
     return false;
   }

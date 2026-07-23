@@ -3,7 +3,7 @@ import { fetchCommunityReviewerPrograms } from "@/services/community-reviewers/c
 import type { CommunityReviewerProgramsResponse } from "@/services/community-reviewers/community-reviewers.types";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-export interface UseCommunityReviewerProgramsParams {
+interface UseCommunityReviewerProgramsParams {
   communityUID: string;
   enabled?: boolean;
 }

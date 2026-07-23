@@ -1,7 +1,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getProjectGrants } from "@/services/project-grants.service";
 
-export interface DuplicateCheckParams {
+interface DuplicateCheckParams {
   projectUid?: string;
   programId?: string;
   community: string;

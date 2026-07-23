@@ -38,7 +38,7 @@ export function DonationCheckout() {
     lastCompletedSession,
     clearLastCompletedSession,
   } = useDonationCart();
-  const router = useRouter();
+  const { back } = useRouter();
   const params = useParams();
   const communityId = params?.communityId as string | undefined;
   const {
@@ -214,12 +214,12 @@ export function DonationCheckout() {
           session={lastCompletedSession}
           onStartNewDonation={() => {
             clearLastCompletedSession();
-            router.back();
+            back();
           }}
         />
       );
     }
-    return <EmptyCart onBrowseProjects={() => router.back()} />;
+    return <EmptyCart onBrowseProjects={() => back()} />;
   }
 
   return (

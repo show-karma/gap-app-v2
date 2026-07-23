@@ -34,7 +34,8 @@ import {
   EmptyStateGuidance,
   PostApprovalEmptyState,
 } from "@/components/FundingPlatform/EmptyStateGuidance";
-import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { PAGE_HEADER_CONTENT } from "@/components/FundingPlatform/PageHeader.constants";
 import { NotificationConfigTab } from "@/components/FundingPlatform/QuestionBuilder/NotificationConfigTab";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
@@ -49,7 +50,8 @@ import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
-import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
+import { FieldTypeSelector } from "./FieldTypeSelector";
+import { fieldTypes } from "./FieldTypeSelector.constants";
 import { KycSettingsConfiguration } from "./KycSettingsConfiguration";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 
@@ -89,7 +91,7 @@ interface QuestionBuilderProps {
   program?: {
     programId: string;
     chainID: number;
-    metadata: Record<string, any>;
+    metadata: { anyoneCanJoin?: boolean };
     communityUID?: string;
   } | null;
   /** Whether KYC is enabled for the community - controls visibility of KYC settings tab */
@@ -112,7 +114,7 @@ export function QuestionBuilder({
   program,
   kycEnabled = false,
 }: QuestionBuilderProps) {
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -224,7 +226,7 @@ export function QuestionBuilder({
         const params = new URLSearchParams(searchParams.toString());
         params.delete("tab");
         const url = params.toString() ? `${pathname}?${params}` : pathname;
-        router.replace(url);
+        replace(url);
       }
     } catch (error) {
       errorManager("Failed to synchronize tab state with URL", error, {
@@ -233,7 +235,7 @@ export function QuestionBuilder({
       // Fallback to default tab on error
       setActiveTab(DEFAULT_TAB);
     }
-  }, [pathname, router, searchParams]);
+  }, [pathname, replace, searchParams]);
 
   const updateTabInUrl = (tab: SidebarTabKey) => {
     try {
@@ -246,7 +248,7 @@ export function QuestionBuilder({
       }
 
       const url = params.toString() ? `${pathname}?${params}` : pathname;
-      router.replace(url);
+      replace(url);
     } catch (error) {
       errorManager(`Failed to update URL for tab: ${tab}`, error, {
         tab,
@@ -304,12 +306,13 @@ export function QuestionBuilder({
   // Scroll to the selected field editor when it opens
   useEffect(() => {
     if (selectedFieldId && fieldRefs.current[selectedFieldId]) {
-      setTimeout(() => {
+      const scrollTimeoutId = setTimeout(() => {
         fieldRefs.current[selectedFieldId]?.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
         });
       }, 100);
+      return () => clearTimeout(scrollTimeoutId);
     }
   }, [selectedFieldId]);
 
@@ -634,6 +637,7 @@ export function QuestionBuilder({
       <div className="mb-6 p-1 space-y-3">
         <input
           type="text"
+          aria-label="Form Title"
           value={currentSchema.title}
           onChange={(e) => handleTitleChange(e.target.value)}
           className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400 w-full px-3 py-2"
@@ -704,7 +708,7 @@ export function QuestionBuilder({
                 <div className="space-y-4">
                   {/* Email Field Warning - only for main application form */}
                   {needsEmailValidation() && (
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start gap-x-3">
                       <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
@@ -721,7 +725,7 @@ export function QuestionBuilder({
 
                   {/* Post Approval Form Info */}
                   {isPostApprovalMode && (
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start gap-x-3">
                       <CheckCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
@@ -797,7 +801,7 @@ export function QuestionBuilder({
                           <div className="space-y-2 mb-4">
                             {currentSchema.emailNotifications.map((email, index) => (
                               <div
-                                key={index}
+                                key={email}
                                 className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                               >
                                 <div className="flex items-center gap-3">
@@ -1056,13 +1060,13 @@ const SortableFieldItem = React.memo(function SortableFieldItem({
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-x-2">
                   <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
                     {fieldTypes.find((item) => item.type === field.type)?.label || field.type}
                   </span>
                   {field.required && <span className="text-xs text-red-500">Required</span>}
                   {field.private && (
-                    <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded flex items-center space-x-1">
+                    <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded flex items-center gap-x-1">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path
                           fillRule="evenodd"

@@ -84,10 +84,6 @@ export const privyConfig = createConfig({
   ssr: true,
 }) as unknown as Config;
 
-export function getPrivyWagmiConfig() {
-  return privyConfig;
-}
-
 /**
  * Minimal wagmi config for the outer WagmiProvider in PrivyProviderWrapper.
  *

@@ -2,7 +2,7 @@
 import mp, { type Mixpanel } from "mixpanel-browser";
 import { useEffect, useState } from "react";
 
-export interface IMixpanelEvent {
+interface IMixpanelEvent {
   event: string;
   properties?: Record<string, unknown>;
 }

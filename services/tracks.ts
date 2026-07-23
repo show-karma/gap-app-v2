@@ -15,7 +15,7 @@ export interface Track {
   isActive?: boolean;
 }
 
-export interface ProjectTrack {
+interface ProjectTrack {
   id: string;
   projectUID: string;
   trackId: string;

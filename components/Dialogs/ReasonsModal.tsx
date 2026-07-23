@@ -59,7 +59,7 @@ export const ReasonsModal: FC<{
                     {reasons && reasons.length > 0 ? (
                       <div className="space-y-3">
                         {reasons.map((reason, index) => (
-                          <div key={index} className="text-gray-700 dark:text-gray-300">
+                          <div key={reason} className="text-gray-700 dark:text-gray-300">
                             <span className="font-semibold">Milestone #{index + 1}</span>{" "}
                             <p>{reason}</p>
                           </div>

@@ -14,14 +14,11 @@ import { useGrantsTable } from "@/hooks/useGrantsTable";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { reduceText } from "@/utilities/reduceText";
 import { CategoryCreationDialog } from "./CategoryCreationDialog";
 import { GrantsTable } from "./GrantsTable";
 import { ProgramFilter } from "./ProgramFilter";
-
-export const metadata = defaultMetadata;
 
 export interface CategoriesOptions {
   id: number;
@@ -29,18 +26,14 @@ export interface CategoriesOptions {
 }
 
 export default function EditCategoriesPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
   const [selectedCategories, setSelectedCategories] = useState<Record<string, string[]>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  const {
-    data: community,
-    isLoading: isLoadingCommunity,
-    error: communityError,
-  } = useCommunityDetails(communityId);
+  const { data: community, error: communityError } = useCommunityDetails(communityId);
 
   const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
 
@@ -49,9 +42,9 @@ export default function EditCategoriesPage() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router]);
+  }, [communityError, push]);
 
   // Fetch grants data using V2 endpoint
   const {
@@ -83,7 +76,6 @@ export default function EditCategoriesPage() {
     currentPage,
     totalItems,
     paginatedGrants,
-    uniquePrograms,
     selectedProgramId,
     sort,
     handlePageChange,
@@ -127,7 +119,7 @@ export default function EditCategoriesPage() {
       await refreshGrants();
       toast.success("Categories updated successfully.");
       setSelectedCategories({});
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         `Error updating categories of ${communityId}`,
         error,

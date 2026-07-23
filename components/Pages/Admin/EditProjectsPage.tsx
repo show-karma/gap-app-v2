@@ -9,25 +9,21 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useAuth } from "@/hooks/useAuth";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { useCommunityRegions } from "@/hooks/useCommunityRegions";
-import { useCommunityProjectsV2 } from "@/hooks/v2/useCommunityProjects";
+import { type RegionOption, useCommunityRegions } from "@/hooks/useCommunityRegions";
+import { useCommunityProjects } from "@/hooks/v2/useCommunityProjects";
 import { Link } from "@/src/components/navigation/Link";
 import type { CommunityProject } from "@/types/v2/community";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { ProgramFilter } from "./ProgramFilter";
 import { RegionCreationDialog } from "./RegionCreationDialog";
 
-export const metadata = defaultMetadata;
-
 interface ProjectsTableProps {
   projects: CommunityProject[];
-  regions: any[];
+  regions: RegionOption[];
   selectedRegions: Record<string, string>;
   optimisticRegions: Record<string, string>;
   onRegionChange: (uid: string, region: string) => void;
@@ -41,7 +37,6 @@ interface ProjectsTableProps {
 const ProjectsTable: React.FC<ProjectsTableProps> = ({
   projects,
   regions,
-  selectedRegions,
   optimisticRegions,
   onRegionChange,
   currentPage,
@@ -97,7 +92,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
                 : currentRegionName || "None";
 
             return (
-              <tr key={project.uid} className="dark:text-zinc-300 text-gray-900 px-4 py-4">
+              <tr key={project.uid} className="dark:text-zinc-300 text-gray-900 p-4">
                 <td className="px-4 py-2 font-medium h-16">
                   <Link
                     href={PAGES.PROJECT.OVERVIEW(project.details.slug)}
@@ -159,20 +154,15 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
 };
 
 export default function EditProjectsPage() {
-  const router = useRouter();
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { push } = useRouter();
+  const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
   const [selectedRegions, _setSelectedRegions] = useState<Record<string, string>>({});
   const [optimisticRegions, setOptimisticRegions] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  const {
-    data: community,
-    isLoading: isLoadingCommunity,
-    error: communityError,
-  } = useCommunityDetails(communityId);
+  const { data: community, error: communityError } = useCommunityDetails(communityId);
 
   const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(community?.uid);
 
@@ -181,9 +171,9 @@ export default function EditProjectsPage() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router]);
+  }, [communityError, push]);
 
   // Simple state management for pagination since we're using the v2 endpoint
   const [currentPage, setCurrentPage] = useState(1);
@@ -194,7 +184,7 @@ export default function EditProjectsPage() {
     data: projectsData,
     isLoading: isLoadingProjects,
     refetch: refreshProjects,
-  } = useCommunityProjectsV2(community?.details?.slug || communityId, {
+  } = useCommunityProjects(community?.details?.slug || communityId, {
     page: currentPage,
     limit: 12,
     selectedProgramId: selectedProgramId || undefined,
@@ -249,7 +239,7 @@ export default function EditProjectsPage() {
         delete newState[uid];
         return newState;
       });
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         `Error updating region for project ${uid}`,
         error,

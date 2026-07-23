@@ -28,7 +28,7 @@ interface PendingClaimViaASafe {
   claimAmount: bigint;
 }
 
-export interface UseClaimViaASafeReturn {
+interface UseClaimViaASafeReturn {
   requestClaim: (
     campaignId: string,
     eligibility: ClaimEligibility,
@@ -57,7 +57,7 @@ interface PrepareClaimVariables {
 }
 
 export function useClaimViaASafe(
-  tenantId: string,
+  _tenantId: string,
   networkName: string = "optimism"
 ): UseClaimViaASafeReturn {
   const { address: userAddress } = useAccount();

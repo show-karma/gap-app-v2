@@ -22,10 +22,7 @@ describe("Program API Contract", () => {
     it("default program config passes schema validation", () => {
       const mock = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(mock);
-      if (!result.success) {
-        // eslint-disable-next-line no-console -- diagnostic output for test failures
-        console.log("Validation issues:", result.error.issues);
-      }
+      expect(result.error?.issues ?? []).toEqual([]);
       expect(result.success).toBe(true);
     });
 
@@ -59,43 +56,43 @@ describe("Program API Contract", () => {
 
   describe("required fields validation", () => {
     it("rejects when id is missing", () => {
-      const { id, ...rest } = createMockProgramConfig();
+      const { id: _id, ...rest } = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when programId is missing", () => {
-      const { programId, ...rest } = createMockProgramConfig();
+      const { programId: _programId, ...rest } = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when chainID is missing", () => {
-      const { chainID, ...rest } = createMockProgramConfig();
+      const { chainID: _chainID, ...rest } = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when formSchema is missing", () => {
-      const { formSchema, ...rest } = createMockProgramConfig();
+      const { formSchema: _formSchema, ...rest } = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when isEnabled is missing", () => {
-      const { isEnabled, ...rest } = createMockProgramConfig();
+      const { isEnabled: _isEnabled, ...rest } = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when createdAt is missing", () => {
-      const { createdAt, ...rest } = createMockProgramConfig();
+      const { createdAt: _createdAt, ...rest } = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it("rejects when updatedAt is missing", () => {
-      const { updatedAt, ...rest } = createMockProgramConfig();
+      const { updatedAt: _updatedAt, ...rest } = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });

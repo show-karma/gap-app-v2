@@ -274,7 +274,6 @@ describe("Integration: Donation Cart & Checkout UI", () => {
     });
 
     it("fires onAmountChange when amount is updated", async () => {
-      const user = userEvent.setup();
       const onAmountChange = vi.fn();
       const token = createMockToken();
 
@@ -662,21 +661,19 @@ describe("Integration: Donation Cart & Checkout UI", () => {
       ]);
 
       const { unmount } = render(
-        <>
-          {result.current.items.map((item) => (
-            <CartItemRow
-              key={item.uid}
-              item={item}
-              selectedToken={result.current.selectedTokens[item.uid]}
-              currentAmount={result.current.amounts[item.uid] || ""}
-              tokenOptions={[usdc, eth]}
-              balanceByTokenKey={balances}
-              onTokenSelect={vi.fn()}
-              onAmountChange={vi.fn()}
-              onRemove={vi.fn()}
-            />
-          ))}
-        </>
+        result.current.items.map((item) => (
+          <CartItemRow
+            key={item.uid}
+            item={item}
+            selectedToken={result.current.selectedTokens[item.uid]}
+            currentAmount={result.current.amounts[item.uid] || ""}
+            tokenOptions={[usdc, eth]}
+            balanceByTokenKey={balances}
+            onTokenSelect={vi.fn()}
+            onAmountChange={vi.fn()}
+            onRemove={vi.fn()}
+          />
+        ))
       );
 
       expect(screen.getByText("Alpha")).toBeInTheDocument();

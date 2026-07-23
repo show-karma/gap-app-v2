@@ -41,7 +41,6 @@ interface CommentItemProps {
 const CommentItem: FC<CommentItemProps> = ({
   comment,
   isAdmin,
-  currentUserAddress,
   onEdit,
   onDelete,
   programId,
@@ -189,7 +188,7 @@ const CommentItem: FC<CommentItemProps> = ({
 
   return (
     <div className={cn("group relative", comment.isDeleted && "opacity-60")}>
-      <div className="flex space-x-3">
+      <div className="flex gap-x-3">
         <div className="flex-shrink-0">
           <span
             className={cn(
@@ -235,9 +234,10 @@ const CommentItem: FC<CommentItemProps> = ({
             </div>
 
             {!isEditing && !comment.isDeleted && (canEdit || canDelete) && (
-              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {canEdit && (
                   <button
+                    type="button"
                     onClick={() => {
                       setEditContent(comment.content); // Ensure we have the current content
                       setIsEditing(true);
@@ -257,6 +257,7 @@ const CommentItem: FC<CommentItemProps> = ({
                 )}
                 {canDelete && (
                   <button
+                    type="button"
                     onClick={() => setIsDeleteDialogOpen(true)}
                     disabled={isUpdating}
                     className={cn(
@@ -314,8 +315,9 @@ const CommentItem: FC<CommentItemProps> = ({
                     />
                   )}
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-x-2">
                   <button
+                    type="button"
                     onClick={handleSaveEdit}
                     disabled={!editContent.trim() || isUpdating}
                     className={cn(
@@ -331,7 +333,7 @@ const CommentItem: FC<CommentItemProps> = ({
                     {isUpdating ? (
                       <>
                         <Spinner className="h-3 w-3 mr-1 border-2" />
-                        Saving...
+                        Saving…
                       </>
                     ) : (
                       <>
@@ -341,6 +343,7 @@ const CommentItem: FC<CommentItemProps> = ({
                     )}
                   </button>
                   <button
+                    type="button"
                     onClick={handleCancelEdit}
                     disabled={isUpdating}
                     className={cn(

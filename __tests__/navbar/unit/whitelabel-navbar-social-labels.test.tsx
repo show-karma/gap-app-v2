@@ -15,7 +15,7 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   cleanupAfterEach,
   createMockPermissions,
-  createMockUsePrivy,
+  createMockUseAuth,
   createMockUseTheme,
   renderWithProviders,
 } from "../utils/test-helpers";
@@ -49,7 +49,7 @@ function buildTenant(navigation: Partial<TenantConfig["navigation"]>): TenantCon
 function renderNavbar() {
   const authFixture = getAuthFixture("unauthenticated");
   renderWithProviders(<WhitelabelNavbar />, {
-    mockUsePrivy: createMockUsePrivy(authFixture.authState),
+    mockUsePrivy: createMockUseAuth(authFixture.authState),
     mockPermissions: createMockPermissions(authFixture.permissions),
     mockUseTheme: createMockUseTheme("light"),
   });

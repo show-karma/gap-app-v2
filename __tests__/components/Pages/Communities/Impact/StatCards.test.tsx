@@ -33,7 +33,7 @@ vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ communityId: "test-community" })),
   usePathname: vi.fn(() => "/community/test-community"),
   useSearchParams: vi.fn(() => ({
-    get: vi.fn((key: string) => null),
+    get: vi.fn((_key: string) => null),
   })),
 }));
 

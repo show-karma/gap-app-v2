@@ -9,7 +9,7 @@ import { FILINGS_STATS } from "../lib/stats";
 
 const MCP_URL = "https://gapapi.karmahq.xyz/mcp";
 
-export type Provider = "claude" | "chatgpt";
+type Provider = "claude" | "chatgpt";
 
 function sharedFaqs(productName: "Claude" | "ChatGPT"): FaqItem[] {
   return [

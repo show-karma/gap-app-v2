@@ -144,7 +144,7 @@ export const formatDate = (
 /**
  * Get ordinal suffix for a day number (1st, 2nd, 3rd, 4th, etc.)
  */
-export function getOrdinalSuffix(day: number): string {
+function getOrdinalSuffix(day: number): string {
   if (day > 3 && day < 21) return "th";
   switch (day % 10) {
     case 1:

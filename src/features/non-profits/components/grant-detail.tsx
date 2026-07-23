@@ -191,7 +191,7 @@ function RelatedGrantsList({
   }
 
   // Sort by amount desc, take top N
-  const sorted = [...grants].sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
+  const sorted = grants.toSorted((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
   const visible = sorted.slice(0, RELATED_LIMIT);
   const hasMore = (totalCount ?? grants.length) > RELATED_LIMIT;
 

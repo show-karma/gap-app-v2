@@ -33,6 +33,7 @@ export const GrantCompletedButton: React.FC<GrantCompletedButtonProps> = ({
 
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       aria-label="Revoke grant completion"
@@ -44,7 +45,7 @@ export const GrantCompletedButton: React.FC<GrantCompletedButtonProps> = ({
       {isRevoking ? (
         <>
           <Spinner className="h-5 w-5" />
-          <span>Revoking...</span>
+          <span>Revoking…</span>
         </>
       ) : (
         <>

@@ -26,7 +26,8 @@ import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types/permission";
 import { sanitizeSlack, sanitizeTelegram, validateEmail } from "@/utilities/validators";
-import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
+import { PageHeader } from "../PageHeader";
+import { PAGE_HEADER_CONTENT } from "../PageHeader.constants";
 
 // Task 17: Lazy-load the heavy modal — keeps it out of the program-setup main chunk.
 const ReviewerPickerModal = dynamic(
@@ -436,7 +437,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    className="flex items-center space-x-2"
+                    className="flex items-center gap-x-2"
                     data-testid="open-reviewer-picker-btn"
                   >
                     <PlusIcon className="h-5 w-5" aria-hidden="true" />

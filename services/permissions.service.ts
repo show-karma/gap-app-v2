@@ -38,7 +38,7 @@ export interface PermissionCheckOptions {
 /**
  * Permission check response
  */
-export interface PermissionCheckResponse {
+interface PermissionCheckResponse {
   hasPermission: boolean;
   permissions: string[];
 }
@@ -46,23 +46,12 @@ export interface PermissionCheckResponse {
 /**
  * User permissions response
  */
-export interface UserPermissionsResponse {
+interface UserPermissionsResponse {
   permissions: Array<{
     resource: string;
     actions: string[];
     role?: string;
   }>;
-}
-
-/**
- * Reviewer program
- */
-export interface ReviewerProgram {
-  programId: string;
-  chainID: number;
-  name?: string;
-  assignedAt: string;
-  permissions: string[];
 }
 
 /**

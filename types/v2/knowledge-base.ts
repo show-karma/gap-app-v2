@@ -51,22 +51,6 @@ export interface KnowledgeSource {
   updatedAt: string;
 }
 
-export interface KnowledgeDocument {
-  id: string;
-  sourceId: string;
-  externalId: string;
-  title: string;
-  sourceUrl: string;
-  mimeType: string;
-  lastFetchedAt: string;
-  byteSize: number;
-  chunkCount: number;
-  // DEV-192: id of the parent KnowledgeDocument that linked to this one
-  // during a depth=1 link-following sync. Null for top-level docs.
-  discoveredFromId: string | null;
-  deletedAt: string | null;
-}
-
 export interface CreateKnowledgeSourceInput {
   programId?: string | null;
   kind: KnowledgeSourceKind;

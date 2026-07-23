@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
@@ -35,7 +35,6 @@ function getActiveTab(pathname: string): GrantTab {
 export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
   const params = useParams();
   const pathname = usePathname();
-  const router = useRouter();
 
   const projectIdFromUrl = params.projectId as string;
   const grantUid = params.grantUid as string;
@@ -163,7 +162,7 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
           </div>
         ) : isAuthorized && grant && project ? (
           <div className="flex flex-row gap-2 items-center">
-            <GrantLinkExternalAddressButton grant={grant as any} />
+            <GrantLinkExternalAddressButton grant={grant} />
             <GrantCompleteButton project={project} grant={grant} />
             <GrantDelete grant={grant} />
           </div>
@@ -172,7 +171,7 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
 
       {/* Tab Navigation */}
       <nav
-        className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1 bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
+        className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg p-1 bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
         aria-label="Grant Tabs"
       >
         {tabs.map((tab) => (

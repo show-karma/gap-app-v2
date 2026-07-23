@@ -23,7 +23,7 @@ vi.mock("@/utilities/api/client", () => ({
 }));
 
 // Import the service AFTER all mocks are set up
-import { searchProjects, searchProjectsV2 } from "@/services/project-search.service";
+import { searchProjects } from "@/services/project-search.service";
 // Import the mocked module to get access to the mock function
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
@@ -140,12 +140,6 @@ describe("project-search.service", () => {
       const result = await searchProjects("test");
 
       expect(result).toEqual([]);
-    });
-  });
-
-  describe("searchProjectsV2 alias", () => {
-    it("should be an alias for searchProjects", () => {
-      expect(searchProjectsV2).toBe(searchProjects);
     });
   });
 });

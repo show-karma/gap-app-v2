@@ -50,6 +50,3 @@ export const searchProjects = async (query: string, limit?: number): Promise<Pro
     return [];
   }
 };
-
-// Alias for backward compatibility during migration
-export const searchProjectsV2 = searchProjects;

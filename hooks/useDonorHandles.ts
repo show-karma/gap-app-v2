@@ -10,7 +10,7 @@ import {
 } from "@/services/donor-research.service";
 import type { DonorHandle, DonorHandleList } from "@/types/donor-research";
 
-export const donorHandlesQueryKey = (options: ListHandlesOptions = {}) =>
+const donorHandlesQueryKey = (options: ListHandlesOptions = {}) =>
   ["donor-research", "handles", options] as const;
 
 export const donorHandleQueryKey = (handleId: string) =>

@@ -11,8 +11,10 @@
  * fire the same store action the navbar fires, and verify the dialog appears.
  */
 import { render, screen, waitFor } from "@testing-library/react";
-import { act } from "react";
+import { act, type ComponentType } from "react";
 import "@testing-library/jest-dom";
+
+type AnyComponent = ComponentType<Record<string, unknown>>;
 
 // Make next/dynamic resolve as quickly as possible. The lazy loader runs once
 // per dynamic() call; the component instance subscribes via useSyncExternalStore
@@ -21,11 +23,12 @@ import "@testing-library/jest-dom";
 vi.mock("next/dynamic", async () => {
   const React = await import("react");
   return {
-    default: (loader: () => Promise<any>) => {
+    default: (loader: () => Promise<unknown>) => {
       const listeners = new Set<() => void>();
-      let Component: any = null;
-      loader().then((mod: any) => {
-        Component = mod?.default ?? mod;
+      let Component: AnyComponent | null = null;
+      loader().then((mod) => {
+        const resolved = mod as { default?: AnyComponent } | AnyComponent;
+        Component = (resolved as { default?: AnyComponent })?.default ?? (resolved as AnyComponent);
         for (const l of listeners) l();
       });
       const subscribe = (l: () => void) => {
@@ -33,7 +36,7 @@ vi.mock("next/dynamic", async () => {
         return () => listeners.delete(l);
       };
       const getSnapshot = () => Component;
-      const DynamicComponent = (props: any) => {
+      const DynamicComponent = (props: Record<string, unknown>) => {
         const Resolved = React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
         if (!Resolved) return null;
         return React.createElement(Resolved, props);

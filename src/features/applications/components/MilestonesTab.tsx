@@ -9,7 +9,7 @@ import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 // fields. Accepts both the whitelabel `Application` and the admin
 // `IFundingApplication` shapes; status is `string` so any enum union
 // satisfies (the lifecycle check below only inspects "approved").
-export interface MilestonesTabApplication {
+interface MilestonesTabApplication {
   referenceNumber: string;
   projectUID?: string;
   status: string;

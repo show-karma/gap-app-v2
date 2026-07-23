@@ -72,7 +72,7 @@ function getLoggedInEmail(
  * issue #1587.
  */
 export function OnboardingFlow() {
-  const router = useRouter();
+  const { replace } = useRouter();
   const advisorQuery = useDonorAdvisor();
   const onboard = useOnboardAdvisor();
   const privy = usePrivyBridge();
@@ -116,12 +116,12 @@ export function OnboardingFlow() {
 
   useEffect(() => {
     if (advisorQuery.isSuccess && advisorQuery.data) {
-      router.replace(PAGES.DONOR_RESEARCH.INDEX);
+      replace(PAGES.DONOR_RESEARCH.INDEX);
     }
-    // `router` is kept in the deps: the app-router instance is referentially
+    // `replace` is kept in the deps: the app-router method is referentially
     // stable so it never causes a re-run, and listing it satisfies the
     // exhaustive-deps gate (react-doctor) rather than fighting it.
-  }, [advisorQuery.isSuccess, advisorQuery.data, router]);
+  }, [advisorQuery.isSuccess, advisorQuery.data, replace]);
 
   // Move focus to the active step's heading on every transition. This is the
   // canonical wizard focus pattern (WCAG 2.4.3 Focus Order) and gives any
@@ -162,7 +162,7 @@ export function OnboardingFlow() {
       },
       {
         onSuccess: () => {
-          router.replace(PAGES.DONOR_RESEARCH.INDEX);
+          replace(PAGES.DONOR_RESEARCH.INDEX);
         },
       }
     );

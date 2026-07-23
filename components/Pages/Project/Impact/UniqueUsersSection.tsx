@@ -11,7 +11,6 @@ import {
   getChainColor,
   getChainName,
   getLatestByPeriod,
-  hasUniqueUsersData,
   parseBreakdown,
   rollingPeriodLabels,
   rollingPeriodOrder,
@@ -33,8 +32,6 @@ interface UniqueUsersSectionProps {
   datapoints: PeriodDatapoint[];
   indicatorName: string;
 }
-
-export { hasUniqueUsersData };
 
 /**
  * Beautiful dashboard for Unique Users indicator
@@ -117,12 +114,17 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
 
     const breakdown = parseBreakdown(dp.breakdown);
     return Object.entries(breakdown)
-      .filter(([, value]) => value > 0)
-      .map(([chainId, value]) => ({
-        name: getChainName(chainId),
-        value,
-        color: getChainColor(chainId),
-      }))
+      .flatMap(([chainId, value]) =>
+        value > 0
+          ? [
+              {
+                name: getChainName(chainId),
+                value,
+                color: getChainColor(chainId),
+              },
+            ]
+          : []
+      )
       .sort((a, b) => b.value - a.value);
   }, [rollingPeriods, selectedPeriod]);
 
@@ -432,20 +434,20 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
                         : "hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                     )}
                   >
-                    <td className="px-3 py-3 text-sm font-medium text-gray-900 dark:text-zinc-100">
+                    <td className="p-3 text-sm font-medium text-gray-900 dark:text-zinc-100">
                       {rollingPeriodLabels[period]}
                     </td>
-                    <td className="px-3 py-3 text-sm font-bold text-right tabular-nums text-blue-600 dark:text-blue-400">
+                    <td className="p-3 text-sm font-bold text-right tabular-nums text-blue-600 dark:text-blue-400">
                       {formatCurrency(value)}
                     </td>
-                    <td className="px-3 py-3 text-xs text-gray-500 dark:text-zinc-400">
+                    <td className="p-3 text-xs text-gray-500 dark:text-zinc-400">
                       {formatDate(new Date(dp.startDate), "UTC")} -{" "}
                       {formatDate(new Date(dp.endDate), "UTC")}
                     </td>
                     {availableChains.slice(0, 3).map((chainId) => (
                       <td
                         key={chainId}
-                        className="px-3 py-3 text-sm text-right tabular-nums text-gray-700 dark:text-zinc-300"
+                        className="p-3 text-sm text-right tabular-nums text-gray-700 dark:text-zinc-300"
                       >
                         {formatCurrency(breakdown[chainId] || 0)}
                       </td>

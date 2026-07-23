@@ -1,4 +1,3 @@
-export type { PermissionString } from "./permission";
 export { isValidPermission, Permission } from "./permission";
 export type {
   PermissionContextValue,
@@ -7,13 +6,10 @@ export type {
 } from "./resource";
 export type { UserRoles } from "./role";
 export {
-  getHighestRole,
-  getRoleLevel,
   isRoleAtLeast,
   isValidReviewerType,
   isValidRole,
   ReviewerType,
-  ROLE_HIERARCHY,
   ROLE_LABELS,
   Role,
 } from "./role";

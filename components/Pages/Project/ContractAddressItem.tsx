@@ -65,8 +65,8 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
     const hasError = useMemo(() => isInvalid || formatError !== null, [isInvalid, formatError]);
 
     return (
-      <div className="flex flex-col space-y-2">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col gap-y-2">
+        <div className="flex items-center gap-x-2">
           <div
             className={`flex items-center justify-between p-4 rounded-lg flex-grow ${
               hasError
@@ -74,11 +74,11 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                 : "bg-gray-100 dark:bg-zinc-700"
             }`}
           >
-            <div className="flex items-center space-x-4 w-full">
+            <div className="flex items-center gap-x-4 w-full">
               <span className="text-md font-bold capitalize whitespace-nowrap">
                 Contract {index + 1}
               </span>
-              <div className="flex-1 flex space-x-4">
+              <div className="flex-1 flex gap-x-4">
                 {readOnly ? (
                   <div className="flex-1 px-3 py-2 text-sm capitalize text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-600 rounded-md">
                     {pair.network || "No network"}
@@ -112,10 +112,10 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                 />
               </div>
               {pair.address && pair.network && (
-                <div className="flex items-center space-x-2 ml-2">
+                <div className="flex items-center gap-x-2 ml-2">
                   {pair.verified ? (
                     <div
-                      className="flex items-center space-x-1 text-green-600 dark:text-green-400"
+                      className="flex items-center gap-x-1 text-green-600 dark:text-green-400"
                       title={`Verified on ${
                         pair.verifiedAt ? new Date(pair.verifiedAt).toLocaleDateString() : "N/A"
                       }`}
@@ -125,7 +125,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center space-x-1 text-yellow-600 dark:text-yellow-400">
+                      <div className="flex items-center gap-x-1 text-yellow-600 dark:text-yellow-400">
                         <ExclamationTriangleIcon className="h-5 w-5" />
                         <span className="text-xs font-medium">Unverified</span>
                       </div>

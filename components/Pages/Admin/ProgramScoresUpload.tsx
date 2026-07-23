@@ -33,7 +33,7 @@ interface ProgramScoresUploadProps {
 interface CsvRow {
   projectTitle: string;
   projectProfile: string;
-  [key: string]: any; // Dynamic score columns
+  [key: string]: string; // Dynamic score columns
 }
 
 interface ParsedCsvData {
@@ -205,7 +205,7 @@ export function ProgramScoresUpload({
             className="bg-background text-foreground w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             disabled={isUploading}
           >
-            <option value="">Choose a program...</option>
+            <option value="">Choose a program…</option>
             {programs.map((program) => (
               <option
                 key={buildCompositeProgramId(program.programId, program.chainID)}
@@ -262,6 +262,7 @@ export function ProgramScoresUpload({
         {parsedData && (
           <div className="border border-gray-200 rounded-md">
             <button
+              type="button"
               onClick={() => setIsPreviewExpanded(!isPreviewExpanded)}
               className="w-full px-4 py-3 flex items-center justify-between text-left bg-secondary transition-colors"
             >
@@ -289,8 +290,8 @@ export function ProgramScoresUpload({
                   <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
                     <h4 className="font-medium text-red-800 mb-2">Validation Errors:</h4>
                     <ul className="text-sm text-red-700 space-y-1">
-                      {parsedData.errors.map((error, index) => (
-                        <li key={index}>• {error}</li>
+                      {parsedData.errors.map((error) => (
+                        <li key={error}>• {error}</li>
                       ))}
                     </ul>
                   </div>
@@ -331,8 +332,8 @@ export function ProgramScoresUpload({
                       </tr>
                     </thead>
                     <tbody>
-                      {parsedData.rows.slice(0, 5).map((row, index) => (
-                        <tr key={index} className="border-b border-gray-100">
+                      {parsedData.rows.slice(0, 5).map((row) => (
+                        <tr key={row.projectProfile} className="border-b border-gray-100">
                           <td className="py-2 px-3 text-foreground">{row.projectTitle}</td>
                           <td className="py-2 px-3 text-foreground-alt truncate max-w-xs">
                             {row.projectProfile}
@@ -408,8 +409,8 @@ export function ProgramScoresUpload({
                   <details className="mt-2">
                     <summary className="cursor-pointer font-medium">View failed matches</summary>
                     <ul className="mt-1 ml-4 space-y-1">
-                      {uploadResult.failed.map((projectName, index) => (
-                        <li key={index}>• {projectName}</li>
+                      {uploadResult.failed.map((projectName) => (
+                        <li key={projectName}>• {projectName}</li>
                       ))}
                     </ul>
                   </details>

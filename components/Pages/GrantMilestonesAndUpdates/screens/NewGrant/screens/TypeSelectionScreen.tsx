@@ -18,7 +18,7 @@ interface TypeOption {
 export const TypeSelectionScreen: React.FC = () => {
   const { setCurrentStep, setFlowType, flowType, updateFormData } = useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
-  const router = useRouter();
+  const { push } = useRouter();
 
   const options: TypeOption[] = [
     {
@@ -52,7 +52,7 @@ export const TypeSelectionScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
+    push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   return (

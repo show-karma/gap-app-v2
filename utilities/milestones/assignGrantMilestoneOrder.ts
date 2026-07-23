@@ -20,7 +20,7 @@ const getOrderTimestamp = (milestone: OrderableMilestone): number => {
 export function buildGrantMilestoneOrderMap<T extends OrderableMilestone>(
   milestones: T[]
 ): Map<string, { index: number; total: number }> {
-  const sorted = [...milestones].sort((a, b) => {
+  const sorted = milestones.toSorted((a, b) => {
     const diff = getOrderTimestamp(a) - getOrderTimestamp(b);
     if (diff !== 0) return diff;
     return a.uid.localeCompare(b.uid);

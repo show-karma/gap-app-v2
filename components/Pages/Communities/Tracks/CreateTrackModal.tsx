@@ -62,6 +62,7 @@ export const CreateTrackModal = ({
                     type="button"
                     className="text-gray-400 hover:text-gray-500"
                     onClick={onClose}
+                    aria-label="Close dialog"
                   >
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>

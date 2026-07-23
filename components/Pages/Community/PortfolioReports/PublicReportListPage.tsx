@@ -227,7 +227,7 @@ export function PublicReportListPage({ community }: Props) {
   const [typeFilter, setTypeFilter] = useQueryState("type", { defaultValue: ALL_TYPES });
 
   const sortedReports = useMemo(
-    () => (reports ? [...reports].sort((a, b) => b.runDate.localeCompare(a.runDate)) : []),
+    () => (reports ? reports.toSorted((a, b) => b.runDate.localeCompare(a.runDate)) : []),
     [reports]
   );
 

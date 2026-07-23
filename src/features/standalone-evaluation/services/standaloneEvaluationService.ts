@@ -284,5 +284,3 @@ export const standaloneEvaluationService = {
     );
   },
 };
-
-export type StandaloneEvaluationService = typeof standaloneEvaluationService;

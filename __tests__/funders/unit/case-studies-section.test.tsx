@@ -50,7 +50,7 @@ describe("CaseStudiesSection Component", () => {
     });
 
     it("should render 4 case study cards", () => {
-      const { container } = renderWithProviders(<CaseStudiesSection />);
+      renderWithProviders(<CaseStudiesSection />);
 
       // Count the cards by checking for card-specific content
       expect(screen.getByText(/Gonna/i)).toBeInTheDocument();

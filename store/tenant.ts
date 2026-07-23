@@ -1,8 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { getTenantConfig } from "@/src/infrastructure/config/tenant-config";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
-import { isKnownTenant } from "@/src/infrastructure/types/tenant";
 
 interface TenantState {
   tenant: TenantConfig | null;
@@ -55,14 +53,6 @@ export const useTenantStore = create<TenantState>()(
     { name: "tenant-store" }
   )
 );
-
-export function useTenant(): TenantConfig {
-  const tenant = useTenantStore((state) => state.tenant);
-  if (!tenant) {
-    return getTenantConfig("karma");
-  }
-  return tenant;
-}
 
 export function useTenantSafe(): TenantConfig | null {
   return useTenantStore((state) => state.tenant);

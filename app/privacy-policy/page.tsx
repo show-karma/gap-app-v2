@@ -23,7 +23,7 @@ const styles = {
 
 export default function PrivacyPolicy() {
   return (
-    <div className="flex flex-col items-center justify-start max-w-full w-full px-8 py-8 text-start mb-10">
+    <div className="flex flex-col items-center justify-start max-w-full w-full p-8 text-start mb-10">
       <div className="flex flex-col items-start justify-start h-full max-w-4xl w-full text-start">
         <div className={styles.block}>
           <h1 className={styles.h1}>Privacy Policy</h1>

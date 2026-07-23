@@ -16,7 +16,7 @@ import type {
 /**
  * Query key factory for program prompt queries
  */
-export const promptKeys = {
+const promptKeys = {
   all: ["prompts"] as const,
   program: (programId: string) => [...promptKeys.all, programId] as const,
   jobs: ["prompt-jobs"] as const,
@@ -126,31 +126,6 @@ export function useTriggerBulkEvaluation(
     onError: (error: Error) => {
       options?.onError?.(error);
     },
-  });
-}
-
-/**
- * Hook for fetching bulk evaluation job status
- *
- * @param programId - The program ID
- * @param jobId - The job ID
- * @param options - Optional settings
- */
-export function useBulkEvaluationJob(
-  programId: string,
-  jobId: string | null,
-  options?: {
-    enabled?: boolean;
-    refetchInterval?: number | false;
-  }
-) {
-  return useQuery({
-    queryKey: promptKeys.job(programId, jobId ?? ""),
-    queryFn: () => programPromptService.getJobStatus(programId, jobId!),
-    enabled: !!jobId && (options?.enabled ?? true),
-    refetchInterval: options?.refetchInterval ?? false,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 

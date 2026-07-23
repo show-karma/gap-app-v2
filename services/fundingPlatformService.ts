@@ -190,12 +190,16 @@ export const fundingProgramsAPI = {
         INDEXER.V2.FUNDING_PROGRAMS.GET(programId)
       );
       return response.data || null;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
+    } catch (error) {
+      const response = (error as { response?: { status?: number; data?: { message?: string } } })
+        ?.response;
+      if (response?.status === 404) {
         return null;
       }
       throw new Error(
-        error.response?.data?.message || error.message || "Failed to fetch program configuration"
+        response?.data?.message ||
+          (error instanceof Error ? error.message : "") ||
+          "Failed to fetch program configuration"
       );
     }
   },
@@ -333,7 +337,7 @@ export const fundingProgramsAPI = {
 
 // Funding Applications API (V2)
 // `data` is a parsed JSON document or a CSV Blob depending on `format`.
-type ApplicationExportResult = { data: any; filename?: string };
+type ApplicationExportResult = { data: unknown; filename?: string };
 
 // Shared implementation for the public/admin application export endpoints: builds the same
 // filter query and parses the download filename from Content-Disposition; only the path differs.
@@ -396,7 +400,7 @@ export const fundingApplicationsAPI = {
   // edit existing post-approval data with audit trail tracking
   async updatePostApprovalData(
     applicationId: string,
-    postApprovalData: Record<string, any>
+    postApprovalData: Record<string, unknown>
   ): Promise<IFundingApplication> {
     const response = await apiClient.put(
       `/v2/funding-applications/${applicationId}/post-approval`,
@@ -641,5 +645,3 @@ export const fundingPlatformService = {
   programs: fundingProgramsAPI,
   applications: fundingApplicationsAPI,
 };
-
-export default fundingPlatformService;

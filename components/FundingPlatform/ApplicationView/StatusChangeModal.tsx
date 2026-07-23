@@ -437,8 +437,11 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                 </Disclosure.Button>
                                 <Disclosure.Panel className="px-3 pb-3">
                                   <dl className="space-y-1.5">
-                                    {applicationSummary.map((field, index) => (
-                                      <div key={index} className="flex items-start gap-2 text-xs">
+                                    {applicationSummary.map((field) => (
+                                      <div
+                                        key={field.label}
+                                        className="flex items-start gap-2 text-xs"
+                                      >
                                         <dt className="font-medium text-gray-500 dark:text-gray-400 min-w-0 shrink-0">
                                           {field.label}:
                                         </dt>
@@ -582,7 +585,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                   id="currency-info"
                                   className="mt-1 text-xs text-gray-500 dark:text-gray-400"
                                 >
-                                  Loading currency from program funding details...
+                                  Loading currency from program funding details…
                                 </p>
                               ) : isCurrencyFromAPI ? (
                                 <p
@@ -666,7 +669,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                           : ""
                     }`}
                   >
-                    {isSubmitting ? "Processing..." : "Confirm"}
+                    {isSubmitting ? "Processing…" : "Confirm"}
                   </Button>
                   <Button
                     variant="secondary"

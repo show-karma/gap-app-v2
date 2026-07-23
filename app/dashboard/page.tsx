@@ -45,6 +45,10 @@ export default function DashboardOverviewPage() {
 
   return (
     <>
+      {/* The bento overview has no visible page title by design; keep an
+          sr-only h1 so the page retains a heading outline for a11y/SEO.
+          Drill-in module pages render their own h1 and replace this route. */}
+      <h1 className="sr-only">Dashboard</h1>
       {content}
       {showSuperAdmin ? (
         <div className="mt-[18px]">

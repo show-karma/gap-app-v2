@@ -107,10 +107,10 @@ const InboxListComponent: FC<InboxListProps> = ({
 
   const groups = useMemo(
     () =>
-      ORDERED_BUCKETS.map((bucket) => ({
-        bucket,
-        list: shown.filter((i) => i.bucket === bucket),
-      })).filter((group) => group.list.length > 0),
+      ORDERED_BUCKETS.flatMap((bucket) => {
+        const list = shown.filter((i) => i.bucket === bucket);
+        return list.length > 0 ? [{ bucket, list }] : [];
+      }),
     [shown]
   );
 

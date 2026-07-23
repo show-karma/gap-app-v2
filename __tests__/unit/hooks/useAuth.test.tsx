@@ -715,6 +715,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     vi.restoreAllMocks();
     mockGetToken.mockReset();
     resetBridgeState();
+    // biome-ignore lint/suspicious/noDocumentCookie: jsdom lacks the Cookie Store API; tests must clear document.cookie directly
     document.cookie = "privy-session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   });
 
@@ -778,6 +779,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   });
 
   it("should detect privy-session cookie and prevent logout", async () => {
+    // biome-ignore lint/suspicious/noDocumentCookie: jsdom lacks the Cookie Store API; tests must seed document.cookie directly
     document.cookie = "privy-session=abc123";
 
     renderHook(() => useAuth(), { wrapper });

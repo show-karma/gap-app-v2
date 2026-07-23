@@ -52,7 +52,7 @@ export const ProjectObjectiveForm = ({
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const params = useParams();
   const projectId = params.projectId as string;
-  const router = useRouter();
+  const { push } = useRouter();
 
   const isEditing = !!previousObjective;
 
@@ -120,7 +120,7 @@ export const ProjectObjectiveForm = ({
         text: sanitizeInput(data.text),
       };
       await newObjective
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .attest(walletSigner, sanitizedData, changeStepperStep)
         .then(async (res) => {
           const _fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;
@@ -147,9 +147,7 @@ export const ProjectObjectiveForm = ({
                   stateHandler?.(false);
                   setTimeout(() => {
                     dismiss();
-                    router.push(
-                      PAGES.PROJECT.OVERVIEW(project?.details?.slug || project?.uid || "")
-                    );
+                    push(PAGES.PROJECT.OVERVIEW(project?.details?.slug || project?.uid || ""));
                   }, 1500);
                 }
                 retries -= 1;
@@ -219,7 +217,7 @@ export const ProjectObjectiveForm = ({
       if (!objectiveInstance) return;
       objectiveInstance.setValues(sanitizedData);
       await objectiveInstance
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .attest(walletSigner, sanitizedData, changeStepperStep)
         .then(async (res) => {
           const _fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;

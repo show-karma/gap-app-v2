@@ -4,11 +4,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useState } from "react";
 import { WagmiProvider } from "wagmi";
 import {
-  PRIVY_BRIDGE_DEFAULTS,
   PrivyBridgeProvider,
   usePrivyBridgeSetter,
   usePrivyLoadRequested,
 } from "@/contexts/privy-bridge-context";
+import { PRIVY_BRIDGE_DEFAULTS } from "@/contexts/privy-bridge-defaults";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { ensureCryptoRandomUUID } from "@/utilities/auth/ensure-crypto-random-uuid";
 import { queryClient } from "@/utilities/query-client";
@@ -18,7 +18,6 @@ import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";
  * @deprecated Import from `@/utilities/query-client` instead.
  * This re-export exists only for backwards compatibility and will be removed in a future version.
  */
-export { queryClient };
 
 type PrivyModule = {
   default: React.ComponentType<{ tenantConfig?: TenantConfig | null }>;

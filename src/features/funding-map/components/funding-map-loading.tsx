@@ -2,6 +2,9 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FundingMapCardSkeleton } from "./funding-map-card-skeleton";
 
+const SEARCH_TAG_SKELETON_KEYS = Array.from({ length: 9 }, (_, i) => `search-tag-${i + 1}`);
+const CARD_SKELETON_KEYS = Array.from({ length: 6 }, (_, i) => `card-skeleton-${i + 1}`);
+
 function SearchSkeleton() {
   return (
     <section className="flex w-full justify-center my-16">
@@ -14,8 +17,8 @@ function SearchSkeleton() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <Skeleton key={i} className="h-6 w-16 rounded-full" />
+            {SEARCH_TAG_SKELETON_KEYS.map((key) => (
+              <Skeleton key={key} className="h-6 w-16 rounded-full" />
             ))}
           </div>
         </div>
@@ -44,8 +47,8 @@ function ListSkeleton() {
       <FiltersSkeleton />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <FundingMapCardSkeleton key={i} />
+        {CARD_SKELETON_KEYS.map((key) => (
+          <FundingMapCardSkeleton key={key} />
         ))}
       </div>
     </section>

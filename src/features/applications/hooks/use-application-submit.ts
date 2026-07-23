@@ -6,7 +6,7 @@ import type { Application } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import type { ApplicationFormData, UseApplicationSubmitReturn } from "../types";
 
-export function useApplicationSubmit(communityId: string): UseApplicationSubmitReturn {
+export function useApplicationSubmit(_communityId: string): UseApplicationSubmitReturn {
   const submitMutation = useMutation({
     mutationFn: async ({
       programId,

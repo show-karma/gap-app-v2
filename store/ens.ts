@@ -3,13 +3,13 @@ import { create } from "zustand";
 import { fetchENS } from "@/utilities/fetchENS";
 
 // Define the structure for ENS names and avatars
-export interface EnsData {
+interface EnsData {
   name?: string | null;
   avatar?: string | null;
   isFetching?: boolean;
 }
 
-export type EnsRecord = Record<Hex, EnsData>;
+type EnsRecord = Record<Hex, EnsData>;
 
 // Define the store interface
 interface EnsStore {

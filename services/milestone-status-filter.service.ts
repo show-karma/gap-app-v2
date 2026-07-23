@@ -20,7 +20,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
  */
 export type MilestoneStatusFilter = "all" | "pending" | "completed" | "verified";
 
-export interface MilestoneStatusOption {
+interface MilestoneStatusOption {
   value: MilestoneStatusFilter;
   label: string;
 }

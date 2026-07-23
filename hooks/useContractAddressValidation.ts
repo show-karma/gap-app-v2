@@ -7,7 +7,7 @@ import { getContractKey } from "@/utilities/contractKey";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-export interface ContractAddressValidationResult {
+interface ContractAddressValidationResult {
   isAvailable: boolean;
   existingProject?: {
     uid: string;

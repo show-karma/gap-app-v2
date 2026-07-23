@@ -34,7 +34,7 @@ function httpErrorMessage(error: unknown): string {
 /**
  * User profile information
  */
-export interface UserProfile {
+interface UserProfile {
   id: string;
   publicAddress: string;
   name: string;
@@ -48,7 +48,7 @@ export interface UserProfile {
 /**
  * Milestone reviewer information from API
  */
-export interface MilestoneReviewerResponse {
+interface MilestoneReviewerResponse {
   publicAddress: string;
   programId: string;
   chainID: number;
@@ -83,7 +83,7 @@ export interface AddMilestoneReviewerRequest {
 /**
  * Update milestone reviewer contact request (PATCH by email)
  */
-export interface UpdateMilestoneReviewerContactRequest {
+interface UpdateMilestoneReviewerContactRequest {
   email: string;
   telegram?: string;
   slack?: string;

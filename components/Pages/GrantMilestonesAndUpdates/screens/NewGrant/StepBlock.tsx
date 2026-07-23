@@ -42,8 +42,8 @@ export const StepBlock: React.FC<StepBlockProps> = ({
         <h2 className="text-base font-semibold text-black dark:text-zinc-100 mb-4">{title}</h2>
 
         <div className="flex items-center justify-between mb-8">
-          {Array.from({ length: totalSteps }).map((_, index) => (
-            <React.Fragment key={index}>
+          {Array.from({ length: totalSteps }, (_, i) => `step-${i}`).map((stepKey, index) => (
+            <React.Fragment key={stepKey}>
               {/* Step indicator */}
               <div className="flex flex-col items-center">
                 <div

@@ -32,7 +32,7 @@ export function Can({
     usePermissionContext();
 
   if (isLoading) {
-    return showWhileLoading ? <>{children}</> : <>{fallback}</>;
+    return showWhileLoading ? children : fallback;
   }
 
   let hasAccess = false;
@@ -49,7 +49,7 @@ export function Can({
     hasAccess = isReviewerType(reviewerType);
   }
 
-  return hasAccess ? <>{children}</> : <>{fallback}</>;
+  return hasAccess ? children : fallback;
 }
 
 interface CannotProps {
@@ -83,7 +83,7 @@ export function Cannot({
     hasAccess = hasRole(role);
   }
 
-  return hasAccess ? null : <>{children}</>;
+  return hasAccess ? null : children;
 }
 
 interface RequirePermissionProps {
@@ -131,39 +131,6 @@ export function RequireRole({
   );
 }
 
-interface RequireReviewerProps {
-  type?: ReviewerType;
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-/**
- * Renders children only if user has reviewer access.
- * Uses context-aware `isReviewer` which is computed by the backend based on:
- * - Global context: true if reviewer in any program
- * - Community context: true if reviewer in any program of that community
- * - Program context: true if reviewer in that specific program
- * If `type` is specified, also requires that specific reviewer type.
- */
-export function RequireReviewer({ type, children, fallback = null }: RequireReviewerProps) {
-  const { roles, isLoading, isReviewer } = usePermissionContext();
-
-  if (isLoading) {
-    return <>{fallback}</>;
-  }
-
-  if (!isReviewer) {
-    return <>{fallback}</>;
-  }
-
-  // If a specific type is required, check it (only applies at program level)
-  if (type && !roles.reviewerTypes?.includes(type)) {
-    return <>{fallback}</>;
-  }
-
-  return <>{children}</>;
-}
-
 interface AdminOnlyProps {
   children: ReactNode;
   fallback?: ReactNode;
@@ -181,32 +148,5 @@ export function AdminOnly({ children, fallback = null, level = "program" }: Admi
     <Can roleOrHigher={roleMap[level]} fallback={fallback}>
       {children}
     </Can>
-  );
-}
-
-/**
- * Accessible permission denied message component.
- * Use as a fallback in Can/RequirePermission when users need to understand
- * why they can't see content.
- *
- * @example
- * ```tsx
- * <Can
- *   permission={Permission.PROGRAM_EDIT}
- *   fallback={<PermissionDeniedMessage message="You need editor access to modify this program." />}
- * >
- *   <EditForm />
- * </Can>
- * ```
- */
-export function PermissionDeniedMessage({
-  message = "You do not have permission to view this content.",
-}: {
-  message?: string;
-}) {
-  return (
-    <output aria-live="polite">
-      <p>{message}</p>
-    </output>
   );
 }

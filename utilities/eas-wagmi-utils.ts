@@ -1,8 +1,8 @@
 "use client";
-import type { JsonRpcProvider, JsonRpcSigner } from "ethers";
+import type { JsonRpcSigner } from "ethers";
 import { useEffect, useState } from "react";
 import type { Account, Chain, Client, Transport } from "viem";
-import { usePublicClient, useWalletClient } from "wagmi";
+import { useWalletClient } from "wagmi";
 
 export async function publicClientToProvider(client: Client<Transport, Chain>) {
   const { chain, transport } = client;
@@ -45,7 +45,7 @@ export function useSigner() {
     async function getSigner() {
       if (!walletClient) return;
 
-      const tmpSigner: any = await walletClientToSigner(walletClient);
+      const tmpSigner = await walletClientToSigner(walletClient);
 
       setSigner(tmpSigner);
     }
@@ -53,22 +53,4 @@ export function useSigner() {
     getSigner();
   }, [walletClient]);
   return signer;
-}
-
-export function useProvider() {
-  const publicClient = usePublicClient();
-
-  const [provider, setProvider] = useState<JsonRpcProvider | undefined>(undefined);
-  useEffect(() => {
-    async function getSigner() {
-      if (!publicClient) return;
-
-      const tmpProvider: any = await publicClientToProvider(publicClient);
-
-      setProvider(tmpProvider);
-    }
-
-    getSigner();
-  }, [publicClient]);
-  return provider;
 }

@@ -1,93 +1,12 @@
 "use client";
 
 import type { FormField } from "@/types/question-builder";
+import { fieldTypes } from "./FieldTypeSelector.constants";
 
 interface FieldTypeSelectorProps {
   onFieldAdd: (fieldType: FormField["type"]) => void;
   isPostApprovalMode?: boolean;
 }
-
-export const fieldTypes = [
-  {
-    type: "section_header" as const,
-    label: "Section Header",
-    icon: "🔖",
-    description: "Visual heading to group related fields",
-  },
-  {
-    type: "email" as const,
-    label: "Email",
-    icon: "📧",
-    description: "Email address input",
-  },
-  {
-    type: "karma_profile_link" as const,
-    label: "Karma profile link",
-    icon: "🔍",
-    description: "Search and select an existing Karma project profile",
-  },
-  {
-    type: "text" as const,
-    label: "Text Input",
-    icon: "📝",
-    description: "Single line text input",
-  },
-  {
-    type: "textarea" as const,
-    label: "Textarea",
-    icon: "📄",
-    description: "Multi-line text input",
-  },
-  {
-    type: "select" as const,
-    label: "Dropdown",
-    icon: "📋",
-    description: "Select from options",
-  },
-  {
-    type: "radio" as const,
-    label: "Radio Button",
-    icon: "🔘",
-    description: "Choose one option",
-  },
-  {
-    type: "checkbox" as const,
-    label: "Checkbox",
-    icon: "☑️",
-    description: "Choose multiple options",
-  },
-  {
-    type: "number" as const,
-    label: "Number",
-    icon: "🔢",
-    description: "Numeric input",
-  },
-  {
-    type: "url" as const,
-    label: "URL",
-    icon: "🔗",
-    description: "Website URL input",
-  },
-  {
-    type: "date" as const,
-    label: "Date",
-    icon: "📅",
-    description: "Date picker",
-  },
-  {
-    type: "milestone" as const,
-    label: "Milestones",
-    icon: "🎯",
-    description:
-      "Dynamic milestone management with title, description, due dates, funding requested, and completion criteria",
-  },
-  {
-    type: "metric" as const,
-    label: "Metrics",
-    icon: "📊",
-    description: "Repeatable metrics, each with a data source, how it's measured, and a target",
-  },
-];
 
 export function FieldTypeSelector({
   onFieldAdd,
@@ -100,6 +19,7 @@ export function FieldTypeSelector({
       <div className="grid grid-cols-1 gap-2">
         {fieldTypes.map((fieldType) => (
           <button
+            type="button"
             key={fieldType.type}
             onClick={() => onFieldAdd(fieldType.type)}
             className={`flex items-center p-3 text-left border rounded-lg transition-colors ${
@@ -110,7 +30,7 @@ export function FieldTypeSelector({
           >
             <span className="text-2xl mr-3">{fieldType.icon}</span>
             <div className="flex-1">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-x-2">
                 <span className="font-medium text-gray-900 dark:text-white">{fieldType.label}</span>
                 {fieldType.type === "email" && !isPostApprovalMode && (
                   <span className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-0.5 rounded-full">

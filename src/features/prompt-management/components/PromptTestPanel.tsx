@@ -153,7 +153,7 @@ export function PromptTestPanel({
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Running Test...
+              Running Test…
             </>
           ) : (
             <>

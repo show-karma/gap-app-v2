@@ -70,16 +70,3 @@ export function useTypeCounts(options?: { onlyOnKarma?: boolean }) {
     gcTime: 30 * 60 * 1000,
   });
 }
-
-/**
- * Hook to fetch organization/community filters for the funding map dropdown
- * Returns a list of organizations and communities that have programs
- */
-export function useOrganizationFilters() {
-  return useQuery({
-    queryKey: fundingProgramsKeys.organizationFilters(),
-    queryFn: () => fundingProgramsService.getOrganizationFilters(),
-    staleTime: 10 * 60 * 1000, // 10 minutes - filters don't change often
-    gcTime: 30 * 60 * 1000, // 30 minutes
-  });
-}

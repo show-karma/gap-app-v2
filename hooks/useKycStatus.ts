@@ -34,7 +34,7 @@ const KYC_CONFIG_STALE_TIME = 10 * 60 * 1000; // 10 minutes
 const EMPTY_KYC_STATUS_MAP = new Map<string, KycStatusResponse | null>();
 
 // Application reference prefix constant
-export const APPLICATION_REFERENCE_PREFIX = "APP-";
+const APPLICATION_REFERENCE_PREFIX = "APP-";
 
 /**
  * Determine if identifier is an application reference (APP-...) vs project UID (0x...)
@@ -399,7 +399,7 @@ export const useKycFormUrl = () => {
 /**
  * Hook to save KYC provider configuration for a community
  */
-export interface SaveKycConfigRequest {
+interface SaveKycConfigRequest {
   providerType: KycProviderType;
   providerName: string;
   kycFormUrl: string;

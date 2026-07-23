@@ -193,9 +193,6 @@ describe("useFundingApplication.updateStatus (mutation integration)", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // Mark the query as fresh
-    const stateBefore = queryClient.getQueryState(queryKey);
-
     await act(async () => {
       result.current.updateStatus({ status: "approved" });
     });

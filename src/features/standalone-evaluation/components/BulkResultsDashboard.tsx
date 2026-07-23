@@ -180,7 +180,7 @@ export function BulkResultsDashboard({ sessionId, jobId, enabled }: BulkResultsD
 
   const stats = useMemo(() => {
     const scores = rows.map((r) => r.score).filter((s): s is number => s !== null);
-    const sorted = [...scores].sort((a, b) => a - b);
+    const sorted = scores.toSorted((a, b) => a - b);
     const median =
       sorted.length === 0
         ? null
@@ -264,6 +264,7 @@ export function BulkResultsDashboard({ sessionId, jobId, enabled }: BulkResultsD
           />
           <input
             type="search"
+            aria-label="Search applications"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search applications…"

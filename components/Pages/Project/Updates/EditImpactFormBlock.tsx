@@ -13,7 +13,6 @@ import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
@@ -52,7 +51,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   const { switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
-  const router = useRouter();
+  const { refresh } = useRouter();
 
   // Fetch impacts using dedicated hook
   const { impacts, refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
@@ -64,7 +63,6 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   }, [impactId, impacts]);
 
   const {
-    register,
     handleSubmit,
     control,
     setValue,
@@ -80,7 +78,6 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
     },
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { gap } = useGap();
   const { startAttestation, changeStepperStep, showSuccess, showError, dismiss } =
     useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
@@ -154,7 +151,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         createdAt: impactInstance.createdAt,
       });
 
-      await updatedImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await updatedImpact.attest(walletSigner, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -176,7 +173,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
                 if (onClose) {
                   onClose();
                 }
-                router.refresh();
+                refresh();
               }, 1500);
             }
           } catch {
@@ -186,7 +183,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       showError("There was an error updating the impact. Please try again");
       errorManager(`Error updating impact ${impactId} from project ${project?.uid}`, error);
     } finally {
@@ -202,6 +199,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
           <h2 className="text-xl font-bold text-black dark:text-zinc-100">Impact Not Found</h2>
           {onClose && (
             <button
+              type="button"
               onClick={onClose}
               className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700"
             >
@@ -222,6 +220,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         <h2 className="text-xl font-bold text-black dark:text-zinc-100">Edit Impact</h2>
         {onClose && (
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700"
           >

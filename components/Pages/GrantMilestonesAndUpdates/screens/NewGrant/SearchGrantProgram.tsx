@@ -21,7 +21,7 @@ interface SearchGrantProgramProps {
       shouldValidate: boolean;
     }
   ) => void;
-  watch: (field: string) => any;
+  watch: (field: string) => unknown;
   searchForProgram?: string | string[];
   canAdd?: boolean;
 }
@@ -132,7 +132,7 @@ export function SearchGrantProgram({
     <div className="w-full">
       {isLoading ? (
         <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
-          Loading Grants...
+          Loading Grants…
         </div>
       ) : !communityUID ? (
         <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">

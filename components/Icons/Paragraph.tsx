@@ -13,11 +13,7 @@ export const ParagraphIcon = ({ className }: Props) => {
       className={className}
     >
       <metadata>Created by potrace 1.14, written by Peter Selinger 2001-2017</metadata>
-      <g
-        transform="translate(0.000000,521.000000) scale(0.100000,-0.100000)"
-        fill="currentColor"
-        stroke="none"
-      >
+      <g transform="translate(0,521) scale(0.1,-0.1)" fill="currentColor" stroke="none">
         <path
           d="M140 3350 l0 -1750 514 0 c317 0 517 4 521 10 3 5 12 7 19 4 22 -8
     316 -10 316 -2 0 4 6 5 13 2 8 -3 27 -6 43 -7 23 -2 29 -7 28 -25 0 -12 3 -22

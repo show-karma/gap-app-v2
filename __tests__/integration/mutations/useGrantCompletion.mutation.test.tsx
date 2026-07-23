@@ -36,12 +36,6 @@ vi.mock("@/hooks/useWallet", () => ({
 }));
 
 // Mock useSetupChainAndWallet
-const mockGapClient = {
-  fetch: {
-    projectById: vi.fn(),
-  },
-};
-
 const mockWalletSigner = { address: "0x1234" };
 
 vi.mock("@/hooks/useSetupChainAndWallet", () => ({

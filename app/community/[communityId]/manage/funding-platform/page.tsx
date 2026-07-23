@@ -25,10 +25,8 @@ import toast from "react-hot-toast";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
 import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
 import { NoProgramsEmptyState } from "@/components/FundingPlatform/NoProgramsEmptyState";
-import {
-  hasFormConfigured,
-  ProgramSetupStatus,
-} from "@/components/FundingPlatform/ProgramSetupStatus";
+import { ProgramSetupStatus } from "@/components/FundingPlatform/ProgramSetupStatus";
+import { hasFormConfigured } from "@/components/FundingPlatform/ProgramSetupStatus.helpers";
 import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -78,9 +76,9 @@ function FundingPlatformContent() {
     }
 
     const reviewerProgramIds = new Set(
-      reviewerPrograms
-        .filter((p) => p.communityUID === communityId || p.communitySlug === communityId)
-        .map((p) => p.programId)
+      reviewerPrograms.flatMap((p) =>
+        p.communityUID === communityId || p.communitySlug === communityId ? [p.programId] : []
+      )
     );
 
     return allPrograms.filter((program) => reviewerProgramIds.has(program.programId));
@@ -377,6 +375,7 @@ function FundingPlatformContent() {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
+                aria-label="Search programs by name or description"
                 placeholder="Search programs by name or description..."
                 value={searchTerm}
                 onChange={(e) => setSearch(e.target.value)}
@@ -455,7 +454,7 @@ function FundingPlatformContent() {
                 <div
                   key={program.programId}
                   data-testid={`program-card-${program.programId}`}
-                  className="px-4 py-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-gray-700 relative"
+                  className="p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-gray-700 relative"
                 >
                   {togglingPrograms.has(program.programId) && (
                     <LoadingOverlay message="Updating program status..." isLoading={true} />

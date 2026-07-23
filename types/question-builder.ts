@@ -69,11 +69,3 @@ export interface FormSchema {
   // Email addresses that should receive post-approval notifications (only for post-approval forms)
   emailNotifications?: string[];
 }
-
-export interface FormSubmission {
-  id: string;
-  formId: string;
-  data: Record<string, any>;
-  submittedAt: string;
-  submitterAddress?: string;
-}

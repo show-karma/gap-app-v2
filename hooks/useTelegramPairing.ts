@@ -18,12 +18,12 @@ function httpErrorMessage(error: HttpError): string {
 
 // ── Types ──
 
-export interface TelegramPairStartResponse {
+interface TelegramPairStartResponse {
   token: string;
   expiresAt: string;
 }
 
-export interface TelegramPairVerifyResponse {
+interface TelegramPairVerifyResponse {
   chatId: string;
   chatTitle: string;
   chatType: string;

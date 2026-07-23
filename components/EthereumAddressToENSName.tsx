@@ -5,7 +5,7 @@ import { useENS } from "@/store/ens";
 import { cn } from "@/utilities/tailwind";
 
 interface Props {
-  address: any;
+  address?: string | null;
   shouldTruncate?: boolean;
   className?: string;
 }
@@ -17,7 +17,7 @@ const EthereumAddressToENSName: React.FC<Props> = ({
 }) => {
   const ensNames = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
-  const lowerCasedAddress = address?.toLowerCase();
+  const lowerCasedAddress = address?.toLowerCase() as `0x${string}` | undefined;
 
   useEffect(() => {
     if (lowerCasedAddress && !ensNames[lowerCasedAddress]) {

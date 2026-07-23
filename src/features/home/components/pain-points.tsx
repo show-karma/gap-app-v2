@@ -75,7 +75,7 @@ export function PainPoints() {
           {painPoints.map((point, index) => {
             const IconComponent = point.icon;
             return (
-              <ScrollReveal key={index} variant="fade-up" delay={index * 100}>
+              <ScrollReveal key={point.title} variant="fade-up" delay={index * 100}>
                 <div className="flex flex-col gap-4 bg-secondary rounded-2xl p-8 h-full">
                   <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center">
                     <IconComponent className="w-5 h-5 text-foreground" />

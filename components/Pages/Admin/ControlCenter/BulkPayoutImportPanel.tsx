@@ -306,6 +306,7 @@ export function BulkPayoutImportPanel({
                 <textarea
                   value={pasteValue}
                   onChange={(event) => setPasteValue(event.target.value)}
+                  aria-label="Paste CSV rows including header"
                   placeholder="Paste CSV rows including header"
                   className="w-full min-h-[160px] rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100"
                 />
@@ -338,7 +339,7 @@ export function BulkPayoutImportPanel({
                   <p className="text-green-700 dark:text-green-400">Valid: {validRows.length}</p>
                   <p className="text-red-700 dark:text-red-400">Invalid: {invalidRows.length}</p>
                   {isValidating && (
-                    <p className="text-blue-600 dark:text-blue-400 mt-1">Validating matches...</p>
+                    <p className="text-blue-600 dark:text-blue-400 mt-1">Validating matches…</p>
                   )}
                   {validateMutation.isError && (
                     <p className="text-red-600 dark:text-red-400 mt-1">
@@ -366,14 +367,14 @@ export function BulkPayoutImportPanel({
                       <table className="min-w-[1000px] w-full text-sm">
                         <thead className="bg-gray-50 dark:bg-zinc-900 text-gray-600 dark:text-zinc-300">
                           <tr>
-                            <th className="px-2 py-2 text-left">Row</th>
-                            <th className="px-2 py-2 text-left">grantUID</th>
-                            <th className="px-2 py-2 text-left">projectUID</th>
-                            <th className="px-2 py-2 text-left">projectSlug</th>
-                            <th className="px-2 py-2 text-left">projectName</th>
-                            <th className="px-2 py-2 text-left">payoutAddress</th>
-                            <th className="px-2 py-2 text-left">amount</th>
-                            <th className="px-2 py-2 text-left">Issue</th>
+                            <th className="p-2 text-left">Row</th>
+                            <th className="p-2 text-left">grantUID</th>
+                            <th className="p-2 text-left">projectUID</th>
+                            <th className="p-2 text-left">projectSlug</th>
+                            <th className="p-2 text-left">projectName</th>
+                            <th className="p-2 text-left">payoutAddress</th>
+                            <th className="p-2 text-left">amount</th>
+                            <th className="p-2 text-left">Issue</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -382,46 +383,51 @@ export function BulkPayoutImportPanel({
                               key={row.rowNumber}
                               className="border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
                             >
-                              <td className="px-2 py-2">{row.rowNumber}</td>
-                              <td className="px-2 py-2">
+                              <td className="p-2">{row.rowNumber}</td>
+                              <td className="p-2">
                                 <input
                                   value={row.grantUID}
+                                  aria-label={`Grant UID for row ${row.rowNumber}`}
                                   onChange={(event) =>
                                     handleEditRow(row.rowNumber, "grantUID", event.target.value)
                                   }
                                   className="w-full rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1"
                                 />
                               </td>
-                              <td className="px-2 py-2">
+                              <td className="p-2">
                                 <input
                                   value={row.projectUID}
+                                  aria-label={`Project UID for row ${row.rowNumber}`}
                                   onChange={(event) =>
                                     handleEditRow(row.rowNumber, "projectUID", event.target.value)
                                   }
                                   className="w-full rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1"
                                 />
                               </td>
-                              <td className="px-2 py-2">
+                              <td className="p-2">
                                 <input
                                   value={row.projectSlug}
+                                  aria-label={`Project slug for row ${row.rowNumber}`}
                                   onChange={(event) =>
                                     handleEditRow(row.rowNumber, "projectSlug", event.target.value)
                                   }
                                   className="w-full rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1"
                                 />
                               </td>
-                              <td className="px-2 py-2">
+                              <td className="p-2">
                                 <input
                                   value={row.projectName}
+                                  aria-label={`Project name for row ${row.rowNumber}`}
                                   onChange={(event) =>
                                     handleEditRow(row.rowNumber, "projectName", event.target.value)
                                   }
                                   className="w-full rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1"
                                 />
                               </td>
-                              <td className="px-2 py-2">
+                              <td className="p-2">
                                 <input
                                   value={row.payoutAddress}
+                                  aria-label={`Payout address for row ${row.rowNumber}`}
                                   onChange={(event) =>
                                     handleEditRow(
                                       row.rowNumber,
@@ -432,16 +438,17 @@ export function BulkPayoutImportPanel({
                                   className="w-full rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1"
                                 />
                               </td>
-                              <td className="px-2 py-2">
+                              <td className="p-2">
                                 <input
                                   value={row.amount}
+                                  aria-label={`Amount for row ${row.rowNumber}`}
                                   onChange={(event) =>
                                     handleEditRow(row.rowNumber, "amount", event.target.value)
                                   }
                                   className="w-full rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1"
                                 />
                               </td>
-                              <td className="px-2 py-2 text-red-700 dark:text-red-300">
+                              <td className="p-2 text-red-700 dark:text-red-300">
                                 {row.errors.join("; ")}
                               </td>
                             </tr>

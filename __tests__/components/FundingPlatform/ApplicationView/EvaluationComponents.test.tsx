@@ -153,21 +153,21 @@ describe("EvaluationComponents", () => {
     });
 
     it("should apply green color for approve/accept/high decisions", () => {
-      const { container } = render(<DecisionDisplay decision="approve" isAuditGrants={false} />);
+      render(<DecisionDisplay decision="approve" isAuditGrants={false} />);
 
       const decisionText = screen.getByText("APPROVE");
       expect(decisionText.className).toContain("text-green-600");
     });
 
     it("should apply red color for reject/rejected/low decisions", () => {
-      const { container } = render(<DecisionDisplay decision="reject" isAuditGrants={false} />);
+      render(<DecisionDisplay decision="reject" isAuditGrants={false} />);
 
       const decisionText = screen.getByText("REJECT");
       expect(decisionText.className).toContain("text-red-600");
     });
 
     it("should apply yellow color for pending/review/medium decisions", () => {
-      const { container } = render(<DecisionDisplay decision="pending" isAuditGrants={false} />);
+      render(<DecisionDisplay decision="pending" isAuditGrants={false} />);
 
       const decisionText = screen.getByText("PENDING");
       expect(decisionText.className).toContain("text-yellow-600");

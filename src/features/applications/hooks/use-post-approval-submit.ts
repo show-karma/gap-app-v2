@@ -24,7 +24,7 @@ function toErrorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
 
-export enum PostApprovalErrorType {
+enum PostApprovalErrorType {
   NETWORK = "NETWORK",
   VALIDATION = "VALIDATION",
   AUTH = "AUTH",
@@ -33,7 +33,7 @@ export enum PostApprovalErrorType {
   UNKNOWN = "UNKNOWN",
 }
 
-export interface PostApprovalError {
+interface PostApprovalError {
   type: PostApprovalErrorType;
   message: string;
   details?: unknown;

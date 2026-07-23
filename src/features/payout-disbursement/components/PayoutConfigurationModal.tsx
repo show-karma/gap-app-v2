@@ -10,7 +10,7 @@ import {
   type PayoutConfigurationContentRef,
 } from "./PayoutConfigurationContent";
 
-export interface PayoutConfigurationModalProps {
+interface PayoutConfigurationModalProps {
   isOpen: boolean;
   onClose: () => void;
   grantUID: string;

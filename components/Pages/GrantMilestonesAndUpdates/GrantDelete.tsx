@@ -5,7 +5,6 @@ import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -35,13 +34,12 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
 
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const { refetch: refetchGrants, grants } = useProjectGrants(project?.uid || "");
+  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
-  const { gap } = useGap();
   const { performOffChainRevoke } = useOffChainRevoke();
 
-  const router = useRouter();
+  const { push } = useRouter();
 
   const deleteFn = async () => {
     setIsDeletingGrant(true);
@@ -93,7 +91,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
 
         // Redirect if the grant was deleted and there are other grants
         if (shouldRedirect) {
-          router.push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
+          push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
         }
       };
       if (!isOnChainAuthorized) {
@@ -119,7 +117,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
             changeStepperStep("indexed");
             showSuccess(MESSAGES.GRANT.DELETE.SUCCESS);
           });
-        } catch (onChainError: any) {
+        } catch (onChainError) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
@@ -141,7 +139,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           }
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)));
       errorManager(
         MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)),

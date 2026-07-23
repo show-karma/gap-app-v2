@@ -12,7 +12,6 @@ import {
   projectObjectiveCompletionSchema as schema,
 } from "@/components/Forms/projectObjectiveCompletionPayload";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
@@ -46,7 +45,6 @@ export const ProjectObjectiveCompletionForm = ({
   const project = useProjectStore((state) => state.project);
   const [isCompleting, setIsCompleting] = useState(false);
   const { chain, address } = useAccount();
-  const { gap } = useGap();
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
     useAttestationToast();
   const { switchChainAsync } = useWallet();
@@ -72,7 +70,7 @@ export const ProjectObjectiveCompletionForm = ({
   });
 
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
-  const router = useRouter();
+  const { push } = useRouter();
   const { openShareDialog } = useShareDialogStore();
 
   const { refetch } = useProjectUpdates(projectId as string);
@@ -170,7 +168,7 @@ export const ProjectObjectiveCompletionForm = ({
               });
 
               setTimeout(() => {
-                router.push(PAGES.PROJECT.OVERVIEW(slugOrUid));
+                push(PAGES.PROJECT.OVERVIEW(slugOrUid));
               }, 250);
               return;
             }
@@ -179,7 +177,7 @@ export const ProjectObjectiveCompletionForm = ({
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR);
       errorManager(
         `Error completing milestone ${objectiveUID}`,

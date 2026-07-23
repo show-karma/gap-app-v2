@@ -1,6 +1,8 @@
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { cn } from "@/utilities/tailwind";
 
+const CHART_BAR_KEYS = Array.from({ length: 12 }, (_, i) => `chart-bar-${i + 1}`);
+
 interface ChartSkeletonProps {
   /** Height of the chart skeleton. Defaults to "h-52" to match typical AreaChart height. */
   height?: string;
@@ -53,8 +55,8 @@ export function ChartSkeleton({
       {/* Legend placeholders */}
       {showLegend && (
         <div className="flex flex-wrap gap-2">
-          {Array.from({ length: legendCount }, (_, i) => (
-            <div key={i} className="flex items-center gap-1.5">
+          {Array.from({ length: legendCount }, (_, i) => `legend-item-${i}`).map((key) => (
+            <div key={key} className="flex items-center gap-1.5">
               <Skeleton className="h-3 w-3 rounded-sm" />
               <Skeleton className="h-4 w-16" />
             </div>
@@ -76,13 +78,13 @@ export function ChartSkeleton({
         {/* Chart visualization area */}
         <div className="absolute inset-0 ml-12 mr-4 my-4 flex items-end justify-around gap-1">
           {/* Animated bars/area representation */}
-          {Array.from({ length: 12 }, (_, i) => {
+          {CHART_BAR_KEYS.map((key, i) => {
             // Create varying heights for visual interest
             const heights = [40, 60, 45, 70, 55, 80, 65, 50, 75, 60, 85, 70];
             const heightPercent = heights[i % heights.length];
             return (
               <div
-                key={i}
+                key={key}
                 className="flex-1 bg-gray-200 dark:bg-zinc-700 rounded-t animate-pulse"
                 style={{ height: `${heightPercent}%` }}
               />

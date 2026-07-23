@@ -42,6 +42,7 @@ export function ChainSettingsManager() {
       {/* Add New Chain Button */}
       <div className="flex justify-end">
         <button
+          type="button"
           onClick={() => setShowAddForm(true)}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
@@ -76,7 +77,7 @@ export function ChainSettingsManager() {
                   Chain ID: {settings.chainId}
                 </p>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-x-2">
                 <EmergencyControls
                   chainId={settings.chainId}
                   enabled={settings.enabled}
@@ -84,12 +85,14 @@ export function ChainSettingsManager() {
                   onResume={() => resumeOperations(settings.chainId)}
                 />
                 <button
+                  type="button"
                   onClick={() => setEditingChain(settings.chainId)}
                   className="px-3 py-1 text-sm bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-zinc-600"
                 >
                   Edit
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     if (confirm("Are you sure you want to delete these settings?")) {
                       deleteChainSettings(settings.chainId);
@@ -158,6 +161,7 @@ export function ChainSettingsManager() {
                 No chain settings configured yet
               </p>
               <button
+                type="button"
                 onClick={() => setShowAddForm(true)}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >

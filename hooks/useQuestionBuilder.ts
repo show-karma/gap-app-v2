@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
+import { type AxiosError, isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
@@ -77,9 +77,9 @@ function createFormSchemaHook(
           // Return the form schema based on type (schemas are directly on IFundingProgramConfig)
           const schema = config[schemaField];
           return schema ? (schema as FormSchema) : null;
-        } catch (error: any) {
+        } catch (error) {
           // If config doesn't exist yet, return null instead of throwing
-          if (error.response?.status === 404) {
+          if (isAxiosError(error) && error.response?.status === 404) {
             return null;
           }
           throw error;

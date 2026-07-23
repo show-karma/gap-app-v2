@@ -38,12 +38,14 @@ export function ScrollReveal({
       return;
     }
 
+    let revealTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
             // Add revealed class after delay
-            setTimeout(() => {
+            revealTimeoutId = setTimeout(() => {
               el.classList.add("scroll-revealed");
             }, delay);
             observer.unobserve(el);
@@ -54,7 +56,12 @@ export function ScrollReveal({
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (revealTimeoutId !== undefined) {
+        clearTimeout(revealTimeoutId);
+      }
+    };
   }, [delay, threshold]);
 
   return (
@@ -69,46 +76,6 @@ export function ScrollReveal({
       }
     >
       {children}
-    </div>
-  );
-}
-
-/**
- * Wraps children in staggered scroll reveals.
- * Each child gets an increasing delay for a cascade effect.
- */
-interface StaggerRevealProps {
-  children: ReactNode[];
-  className?: string;
-  variant?: ScrollRevealProps["variant"];
-  /** Delay between each child in ms */
-  stagger?: number;
-  /** Base delay before the first child */
-  baseDelay?: number;
-  /** Wrapper element class for each child */
-  itemClassName?: string;
-}
-
-export function StaggerReveal({
-  children,
-  className,
-  variant = "fade-up",
-  stagger = 100,
-  baseDelay = 0,
-  itemClassName,
-}: StaggerRevealProps) {
-  return (
-    <div className={className}>
-      {children.map((child, i) => (
-        <ScrollReveal
-          key={i}
-          variant={variant}
-          delay={baseDelay + i * stagger}
-          className={itemClassName}
-        >
-          {child}
-        </ScrollReveal>
-      ))}
     </div>
   );
 }

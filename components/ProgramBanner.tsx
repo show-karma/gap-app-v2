@@ -25,7 +25,7 @@ const normalizeProgramId = (id: string | null): string | null => {
 export const ProgramBanner = () => {
   const searchParams = useSearchParams();
   const { communityId } = useParams();
-  const { data, isLoading } = useCommunityPrograms(communityId as string);
+  const { data } = useCommunityPrograms(communityId as string);
   const rawProgramId = searchParams.get("programId");
   // Normalize to handle both "programId" and legacy "programId_chainId" formats
   const programId = normalizeProgramId(rawProgramId);
@@ -33,7 +33,7 @@ export const ProgramBanner = () => {
 
   if (!programId || !program) return null;
   return (
-    <div className="flex flex-row gap-5 bg-brand-lightblue dark:bg-zinc-800 rounded-xl  px-4 py-4">
+    <div className="flex flex-row gap-5 bg-brand-lightblue dark:bg-zinc-800 rounded-xl p-4">
       <div className="h-full items-start">
         <Image
           width={32}

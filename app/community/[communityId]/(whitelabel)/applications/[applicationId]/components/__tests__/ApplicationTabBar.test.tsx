@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { ApplicationTabBar, TAB_ICONS } from "../ApplicationTabBar";
+import { ApplicationTabBar } from "../ApplicationTabBar";
+import { TAB_ICONS } from "../ApplicationTabBar.constants";
 
 const tabs = [
   { key: "details" as const, label: "Application Details", Icon: TAB_ICONS.details },

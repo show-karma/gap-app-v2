@@ -7,7 +7,7 @@ import { isSharedSubdomain } from "@/src/infrastructure/config/domain-mapping";
  * Builds a URL with proper community prefix for shared subdomains.
  * Ensures the resulting path is always a valid absolute path.
  */
-export const getUrlBuilder = (community: string, href: string): string => {
+const getUrlBuilder = (community: string, href: string): string => {
   if (!community || community === "karma") return href;
 
   // Ensure href starts with "/" so the resulting path is valid

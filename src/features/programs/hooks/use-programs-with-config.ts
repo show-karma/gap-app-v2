@@ -20,16 +20,20 @@ interface UseProgramsWithConfigReturn {
 export function useProgramsWithConfig(communityId: string): UseProgramsWithConfigReturn {
   const { data, isLoading, error, refetch } = useProgramsList(communityId);
 
-  const programs = (data ?? [])
-    .filter((program) => program.applicationConfig?.formSchema)
-    .map((program) => ({
-      programId: program.programId,
-      chainID: program.chainID,
-      name: program.name || program.metadata?.title || `Program ${program.programId}`,
-      description: program.metadata?.description,
-      applicationConfig: program.applicationConfig,
-      metrics: program.metrics,
-    }));
+  const programs = (data ?? []).flatMap((program) =>
+    program.applicationConfig?.formSchema
+      ? [
+          {
+            programId: program.programId,
+            chainID: program.chainID,
+            name: program.name || program.metadata?.title || `Program ${program.programId}`,
+            description: program.metadata?.description,
+            applicationConfig: program.applicationConfig,
+            metrics: program.metrics,
+          },
+        ]
+      : []
+  );
 
   return {
     programs,

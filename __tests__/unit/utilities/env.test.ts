@@ -14,7 +14,7 @@ describe("env validation", () => {
     });
 
     it("defaults NEXT_PUBLIC_ENV to development when missing", () => {
-      const { NEXT_PUBLIC_ENV, ...rest } = validClientEnv;
+      const { NEXT_PUBLIC_ENV: _NEXT_PUBLIC_ENV, ...rest } = validClientEnv;
       const result = clientSchema.safeParse(rest);
       expect(result.success).toBe(true);
       if (result.success) {

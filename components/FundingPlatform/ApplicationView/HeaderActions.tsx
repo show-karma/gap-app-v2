@@ -73,13 +73,13 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
   rejected: [],
 };
 
-export interface HeaderActionsProps {
+interface HeaderActionsProps {
   currentStatus: ApplicationStatus;
   onStatusChange: (status: ApplicationStatus) => void;
   isUpdating?: boolean;
 }
 
-export const HeaderActions: FC<HeaderActionsProps> = ({
+const HeaderActions: FC<HeaderActionsProps> = ({
   currentStatus,
   onStatusChange,
   isUpdating = false,

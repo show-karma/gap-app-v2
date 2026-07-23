@@ -1,4 +1,3 @@
-import type { AxiosInstance } from "axios";
 import type {
   IApplicationStatistics,
   IApplicationStatusUpdateRequest,
@@ -28,9 +27,6 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
-var mockAxiosInstance: vi.Mocked<AxiosInstance>;
-
 // Mock api-client for mutations (POST, PUT, DELETE)
 vi.mock("@/utilities/auth/api-client", () => {
   const mockGet = vi.fn();
@@ -48,8 +44,6 @@ vi.mock("@/utilities/auth/api-client", () => {
       response: { use: vi.fn() },
     },
   };
-
-  mockAxiosInstance = instance as unknown as vi.Mocked<AxiosInstance>;
 
   return {
     createAuthenticatedApiClient: vi.fn(() => instance),
@@ -76,7 +70,6 @@ const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
 const mockGet = (apiClientModule as any).__mockGet as vi.Mock;
 const mockPost = (apiClientModule as any).__mockPost as vi.Mock;
 const mockPut = (apiClientModule as any).__mockPut as vi.Mock;
-const mockDelete = (apiClientModule as any).__mockDelete as vi.Mock;
 
 describe("fundingPlatformService", () => {
   beforeEach(() => {

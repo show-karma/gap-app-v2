@@ -118,7 +118,7 @@ test.describe("Journey — Navigation & Permissions", () => {
       await expect(page.getByText("Optimism").first()).toBeVisible();
 
       // Admin-specific actions may be visible
-      const hasAdminActions = await Promise.race([
+      await Promise.race([
         page
           .getByRole("button", { name: /manage|settings|edit|create/i })
           .first()

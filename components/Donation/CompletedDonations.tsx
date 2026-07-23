@@ -102,8 +102,8 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
           <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-zinc-950/70">
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Donated</div>
             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {totalAmount.map((t, i) => (
-                <div key={i}>
+              {totalAmount.map((t) => (
+                <div key={t.symbol}>
                   {t.amount} {t.symbol}
                 </div>
               ))}

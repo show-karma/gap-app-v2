@@ -6,7 +6,7 @@ import { cn } from "@/utilities/tailwind";
 
 export type AIAnalysisSubTabId = "external" | "internal" | "insights";
 
-export interface AIAnalysisSubTabsProps {
+interface AIAnalysisSubTabsProps {
   /** Currently active sub-tab */
   activeTab: AIAnalysisSubTabId;
   /** Callback when tab changes */
@@ -83,5 +83,3 @@ export const AIAnalysisSubTabs: FC<AIAnalysisSubTabsProps> = ({ activeTab, onTab
     </div>
   );
 };
-
-export default AIAnalysisSubTabs;

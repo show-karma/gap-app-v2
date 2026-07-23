@@ -12,7 +12,7 @@ import {
   parseEvaluation,
 } from "./evaluationUtils";
 
-export type AIEvaluationData = string;
+type AIEvaluationData = string;
 
 interface AIEvaluationDisplayProps {
   evaluation: AIEvaluationData | null;
@@ -70,10 +70,8 @@ function EvaluationContent({
 
 export function AIEvaluationDisplay({
   evaluation,
-  isLoading,
   isEnabled,
   className = "",
-  hasError = false,
   programName,
 }: AIEvaluationDisplayProps) {
   if (!isEnabled) {

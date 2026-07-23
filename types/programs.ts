@@ -1,4 +1,4 @@
-export interface ProgramImpactDatapoint {
+interface ProgramImpactDatapoint {
   value: number;
   proof: string;
   outputTimestamp: string | null;
@@ -48,41 +48,4 @@ export interface ProgramImpactData {
     totalFundingAllocated: string | undefined;
   };
   data: ProgramImpactDataResponse[];
-}
-
-export interface ImpactAggregateDatapoint {
-  outputTimestamp: string;
-  avg_value: number;
-  total_value: number;
-  min_value: number;
-  max_value: number;
-}
-
-export interface ImpactAggregateIndicator {
-  impactIndicatorId: string;
-  indicatorName: string;
-  indicatorDescription: string;
-  indicatorUnitOfMeasure: string;
-  impactSegmentName: string;
-  impactSegmentDescription: string;
-  impactSegmentType: "outcome" | "output";
-  impactSegmentId: string;
-  categoryId: string;
-  categoryName: string;
-  amount?: string;
-  datapoints: ImpactAggregateDatapoint[];
-}
-
-export interface ImpactAggregateSegment {
-  categoryName: string;
-  impactSegmentName: string;
-  impactSegmentId: string;
-  impactSegmentDescription: string;
-  impactSegmentType: "output" | "outcome";
-  indicators: ImpactAggregateIndicator[];
-}
-
-export interface ImpactAggregateData {
-  categoryName: string;
-  impacts: ImpactAggregateSegment[];
 }

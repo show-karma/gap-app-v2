@@ -250,12 +250,13 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
             adding ? (
               <div className="my-2 px-2">
                 <input
+                  aria-label={`${pluralize(type, 1)} name`}
                   className="rounded-md py-1 px-2 w-full dark:text-white dark:bg-zinc-800 border-zinc-200"
                   placeholder={`${pluralize(type, 1)} name...`}
                   // on enter key press, add the network
-                  onKeyDown={(e: any) => {
+                  onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      addCustomNetwork(e.target?.value);
+                      addCustomNetwork((e.target as HTMLInputElement).value);
                     }
                   }}
                   value={title}
@@ -269,6 +270,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
             ) : (
               <div className="my-2 px-2">
                 <button
+                  type="button"
                   className="px-3 py-2 text-sm rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
                   onClick={(e) => {
                     e?.preventDefault?.();

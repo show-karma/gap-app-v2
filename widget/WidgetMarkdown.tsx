@@ -21,7 +21,7 @@ function processLine(
     let i = index;
     while (!block.includes("</pre>") && i + 1 < lines.length) {
       i++;
-      block += "\n" + lines[i];
+      block += `\n${lines[i]}`;
     }
     closeList();
     out.push(block);

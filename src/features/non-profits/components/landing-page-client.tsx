@@ -1022,7 +1022,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
 // ————————————————————————— Main Export —————————————————————————
 
 export function LandingPageClient() {
-  const router = useRouter();
+  const { push } = useRouter();
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -1031,9 +1031,9 @@ export function LandingPageClient() {
       // Persist the query so the workbench (ChatView) can read it via
       // getSession(searchId) and run it; skipping this drops the query.
       const sessionId = useSearchSessionStore.getState().createSession(trimmed);
-      router.push(NON_PROFITS_PAGES.SEARCH(sessionId), { scroll: false });
+      push(NON_PROFITS_PAGES.SEARCH(sessionId), { scroll: false });
     },
-    [router]
+    [push]
   );
 
   const scrollToHero = useCallback(() => {

@@ -80,20 +80,12 @@ vi.mock("@/utilities/whitelabel-context", () => ({
 
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useAuth } from "@/hooks/useAuth";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
-import { useNavbarPermissions } from "@/src/components/navbar/navbar-permissions-context";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
-import { mockAuthState, mockNavbarPermissionsState } from "../setup";
 import {
   createMockPermissions,
   createMockUseAuth,
-  createMockUseCommunitiesStore,
   createMockUseContributorProfileModalStore,
-  createMockUseOwnerStore,
-  createMockUsePermissionsQuery,
-  createMockUseRegistryStore,
-  createMockUseReviewerPrograms,
   createMockUseTheme,
   renderWithProviders,
   resetMockAuthState,

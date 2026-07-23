@@ -5,7 +5,11 @@ import { type FC, useEffect, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import type {
+  IFormSchema,
+  IFundingApplication,
+  ProgramWithFormSchema,
+} from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 import ApplicationVersionSelector from "../ApplicationVersionSelector";
 import ApplicationVersionViewer from "../ApplicationVersionViewer";
@@ -13,7 +17,7 @@ import { ApplicationDataView } from "./ApplicationDataView";
 import { ApplicationSubTabs, type SubTabId } from "./ApplicationSubTabs";
 import { PostApprovalDataView } from "./PostApprovalDataView";
 
-export interface ApplicationTabProps {
+interface ApplicationTabProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
   /** Controlled view mode */
@@ -53,7 +57,12 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
   // Check if post-approval tab should be shown:
   // Show when application is approved AND (program has a post-approval form schema OR data already exists)
   const postApprovalFormSchema =
-    (program as any)?.applicationConfig?.postApprovalFormSchema || program?.postApprovalFormSchema;
+    (
+      program as
+        | { applicationConfig?: { postApprovalFormSchema?: IFormSchema } | null }
+        | null
+        | undefined
+    )?.applicationConfig?.postApprovalFormSchema || program?.postApprovalFormSchema;
   const hasPostApprovalSchema = !!postApprovalFormSchema?.fields?.length;
   const hasPostApprovalData =
     !!application.postApprovalData && Object.keys(application.postApprovalData).length > 0;
@@ -155,5 +164,3 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
     </div>
   );
 };
-
-export default ApplicationTab;

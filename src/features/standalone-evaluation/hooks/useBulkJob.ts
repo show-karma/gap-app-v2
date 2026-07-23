@@ -10,7 +10,7 @@ import { useEvaluationDraftStore } from "../store/evaluationDraftStore";
 import { CREDITS_QUERY_KEYS } from "./useCredits";
 import { EVALUATION_SESSION_KEYS } from "./useEvaluationSessions";
 
-export const BULK_JOB_KEYS = {
+const BULK_JOB_KEYS = {
   all: ["evaluation-bulk-jobs"] as const,
   job: (sessionId: string, jobId: string) => [...BULK_JOB_KEYS.all, sessionId, jobId] as const,
   result: (sessionId: string, jobId: string) =>
@@ -27,7 +27,7 @@ export const useBulkJobsList = (sessionId: string, enabled = true) => {
   });
 };
 
-export interface BulkResultData {
+interface BulkResultData {
   columns: string[];
   rows: Record<string, unknown>[];
 }
@@ -42,7 +42,7 @@ export const useBulkJobResult = (sessionId: string, jobId: string | null, enable
   });
 };
 
-export interface BulkProgressState {
+interface BulkProgressState {
   status: BulkJobStatus | "IDLE" | "ERROR";
   totalApplications: number;
   completedApplications: number;
@@ -84,15 +84,6 @@ export const useStartBulkJob = () => {
     onError: (error) => {
       toast.error(error.message || "Failed to start bulk job");
     },
-  });
-};
-
-export const useBulkJobStatus = (sessionId: string, jobId: string | null) => {
-  return useQuery<BulkJobResponse>({
-    queryKey: BULK_JOB_KEYS.job(sessionId, jobId ?? ""),
-    queryFn: () => standaloneEvaluationService.getBulkJob(sessionId, jobId as string),
-    enabled: Boolean(sessionId && jobId),
-    staleTime: 0,
   });
 };
 

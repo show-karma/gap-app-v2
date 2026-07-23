@@ -9,7 +9,6 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -38,7 +37,6 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
   const [isDeleting, setIsDeleting] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
     useAttestationToast();
   const project = useProjectStore((state) => state.project);
@@ -130,7 +128,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
             changeStepperStep("indexed");
           });
           showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
-        } catch (onChainError: any) {
+        } catch (onChainError) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
 
@@ -151,7 +149,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
           }
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       showError(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR);
       errorManager(`Error deleting objective ${objectiveId}`, error, {
         project: projectId,

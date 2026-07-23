@@ -13,7 +13,7 @@
  *     don't have a "completed" state in the milestone sense.
  */
 
-export type MilestoneCardActivityType =
+type MilestoneCardActivityType =
   | "milestone"
   | "grant"
   | "project"
@@ -24,7 +24,7 @@ export type MilestoneCardActivityType =
   | "grant_received"
   | "endorsement";
 
-export interface MilestoneCardCompletionGateInput {
+interface MilestoneCardCompletionGateInput {
   type: MilestoneCardActivityType | string;
   /** From `milestone.completed` — boolean for fresh shapes, object for v1 */
   completed: unknown;
@@ -35,7 +35,7 @@ export interface MilestoneCardCompletionGateInput {
   isEditing: boolean;
 }
 
-export interface MilestoneCardCompletionGate {
+interface MilestoneCardCompletionGate {
   /** Whether the whole "Milestone Update" section renders. */
   showSection: boolean;
   /**

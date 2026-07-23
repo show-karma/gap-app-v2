@@ -6,8 +6,6 @@ import { isAddress } from "viem";
 import { z } from "zod";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useAuth } from "@/hooks/useAuth";
-import { useGap } from "@/hooks/useGap";
 import { useGrant } from "@/hooks/useGrant";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
@@ -64,30 +62,17 @@ const grantSchema = z.object({
 });
 
 // Define types based on schemas
-type BaseFormType = z.infer<typeof baseSchema>;
 type GrantFormType = z.infer<typeof grantSchema>;
 
 export const DetailsScreen: React.FC = () => {
-  const {
-    setCurrentStep,
-    flowType,
-    formData,
-    updateFormData,
-    resetFormData,
-    setFlowType,
-    clearMilestonesForms,
-    setFormPriorities,
-    communityNetworkId,
-  } = useGrantFormStore();
+  const { setCurrentStep, flowType, formData, updateFormData } = useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
   const _refreshProject = useProjectStore((state) => state.refreshProject);
-  const router = useRouter();
+  const { push } = useRouter();
 
   // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(selectedProject?.uid || "");
-  const { authenticated: isAuth } = useAuth();
-  const { gap } = useGap();
-  const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
+  const { updateGrant } = useGrant();
   const isCommunityAdmin = useIsCommunityAdmin();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [_isLoading, _setIsLoading] = useState(false);
@@ -105,7 +90,6 @@ export const DetailsScreen: React.FC = () => {
     setValue,
     watch,
     trigger,
-    control,
   } = useForm<GrantFormType>({
     resolver: zodResolver(flowType === "grant" ? grantSchema : baseSchema),
     defaultValues: {
@@ -128,7 +112,7 @@ export const DetailsScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
+    push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   const handleNext = () => {

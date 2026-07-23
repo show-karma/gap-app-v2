@@ -27,14 +27,3 @@ export const CONTRACT_OWNER_CACHE_CONFIG = {
   /** Time before garbage collection removes unused data (10 minutes) */
   gcTime: 1000 * 60 * 10,
 } as const;
-
-/**
- * Cache timing for staff authorization checks
- * Very long duration since staff status rarely changes
- */
-export const STAFF_CACHE_CONFIG = {
-  /** Time before data is considered stale (24 hours) */
-  staleTime: 1000 * 60 * 60 * 24,
-  /** Time before garbage collection removes unused data (24 hours) */
-  gcTime: 1000 * 60 * 60 * 24,
-} as const;

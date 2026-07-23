@@ -30,18 +30,6 @@ export const networkAddressPairSchema = z.object({
 });
 
 /**
- * Validates an array of network-address pairs
- */
-export const contractAddressesSchema = z
-  .array(networkAddressPairSchema)
-  .min(1, "At least one contract address is required");
-
-/**
- * Type for a validated network-address pair
- */
-export type ValidatedNetworkAddressPair = z.infer<typeof networkAddressPairSchema>;
-
-/**
  * Validates a single contract address and returns validation result
  */
 export const validateContractAddress = (

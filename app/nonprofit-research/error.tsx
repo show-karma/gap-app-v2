@@ -2,7 +2,7 @@
 
 import { DonorResearchError } from "@/src/features/donor-research/components/common/DonorResearchError";
 
-export default function Error({
+export default function NonprofitResearchError({
   error,
   reset,
 }: {

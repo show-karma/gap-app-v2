@@ -65,12 +65,6 @@ export const CLAIM_CAMPAIGNS_ABI = [
 ] as const;
 
 /**
- * EIP-712 type hash for claim signatures
- */
-export const CLAIM_TYPEHASH =
-  "Claim(bytes16 campaignId,address claimer,uint256 claimAmount,uint256 nonce,uint256 expiry)" as const;
-
-/**
  * Build EIP-712 typed data for claimWithSig
  */
 export function buildClaimTypedData(params: {
@@ -199,14 +193,4 @@ export function formatTokenAmount(amount: string | bigint, decimals: number): st
   } catch {
     return "0";
   }
-}
-
-/**
- * Parse a decimal string amount to raw bigint with proper decimals.
- */
-export function parseTokenAmount(amount: string, decimals: number): bigint {
-  const [integerPart, fractionalPart = ""] = amount.split(".");
-  const paddedFractional = fractionalPart.padEnd(decimals, "0").slice(0, decimals);
-  const rawAmount = integerPart + paddedFractional;
-  return BigInt(rawAmount);
 }

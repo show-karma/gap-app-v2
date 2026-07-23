@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { useSearchParams } from "next/navigation";
 import { vi } from "vitest";
 import PayoutsAdminPage from "@/components/Pages/Admin/PayoutsAdminPage";
@@ -227,7 +227,7 @@ vi.mock("@/utilities/validation", () => ({
 }));
 
 vi.mock("viem", () => ({
-  formatUnits: vi.fn((value: bigint, decimals: number) => "100.00"),
+  formatUnits: vi.fn((_value: bigint, _decimals: number) => "100.00"),
   isAddress: vi.fn((addr: string) => /^0x[0-9a-fA-F]{40}$/.test(addr)),
 }));
 

@@ -174,7 +174,7 @@ export type ComponentKey =
   | "donorMatch"
   | "compliance";
 
-export interface ComponentRow {
+interface ComponentRow {
   key: ComponentKey;
   label: string;
   /** 0..1 — already on the same scale as `candidate.components.*`. */

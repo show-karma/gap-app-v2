@@ -9,12 +9,6 @@ export function roleSelectionFromCommunityRole(role: CommunityReviewerRole): Rev
   return role === "milestone-reviewer" ? "milestone" : "program";
 }
 
-// ─── Role constants ──────────────────────────────────────────────────────────
-export const COMMUNITY_REVIEWER_ROLES = {
-  PROGRAM: "program-reviewer",
-  MILESTONE: "milestone-reviewer",
-} as const;
-
 // ─── Row kinds ───────────────────────────────────────────────────────────────
 
 /**

@@ -21,7 +21,7 @@ import {
 import { mockSearchFunction } from "../setup";
 import {
   cleanupAfterEach,
-  createMockUsePrivy,
+  createMockUseAuth,
   renderWithProviders,
   waitForDebounce,
 } from "../utils/test-helpers";
@@ -144,7 +144,7 @@ describe("Search Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open mobile drawer
@@ -182,7 +182,7 @@ describe("Search Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockUsePrivy: createMockUseAuth(authFixture.authState),
       });
 
       // Open mobile drawer

@@ -54,7 +54,7 @@ const CommunityCardSkeleton = () => (
     </div>
 
     {/* Stats Skeleton */}
-    <div className="flex justify-center space-x-4 mb-3 min-w-0">
+    <div className="flex justify-center gap-x-4 mb-3 min-w-0">
       <div className="text-center min-w-0">
         <div className="h-4 w-6 bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
         <div className="h-4 w-10 bg-gray-300 dark:bg-gray-600 rounded"></div>
@@ -123,17 +123,6 @@ export const CardListSkeleton = () => {
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] xl:grid-cols-3">
       {cardIndexes.map((cardIndex) => (
         <CardSkeleton key={cardIndex} index={cardIndex} />
-      ))}
-    </div>
-  );
-};
-
-export const FilterByProgramsSkeleton = () => {
-  const programIndexes = Array.from({ length: 6 }, (_, index) => index);
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      {programIndexes.map((programIndex) => (
-        <Skeleton key={programIndex} className={"h-7 w-full"} />
       ))}
     </div>
   );
@@ -249,68 +238,6 @@ export const CommunitiesSkeleton = () => {
             );
           }}
         </AutoSizer>
-      </div>
-    </div>
-  );
-};
-
-export const CommunitiesLoading = () => {
-  return (
-    <div className="flex w-full max-w-full flex-row justify-start gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4  max-lg:flex-col">
-      <div className="flex w-full max-w-full flex-col justify-start items-center gap-6">
-        <div
-          className="flex h-max w-full flex-row items-center justify-start gap-3 rounded-2xl p-6 max-lg:py-4"
-          style={{
-            backgroundColor: "#000000",
-          }}
-        >
-          <div className="flex justify-center border border-white rounded-full p-2">
-            <Skeleton className={"h-14 w-14 rounded-full max-lg:h-8 max-lg:w-8"} />
-          </div>
-
-          <div className="flex flex-row gap-2 max-2xl:text-2xl max-lg:text-xl">
-            <Skeleton className={"h-10 w-40"} />
-          </div>
-        </div>
-
-        <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-          <div className="w-full">
-            <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
-              <div className="flex flex-row gap-2 items-center">
-                <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl font-sans">
-                  Total Grants
-                </p>
-                <Skeleton className={"h-8 w-10"} />
-                <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl font-sans">
-                  across
-                </p>
-                <Skeleton className={"h-8 w-10"} />
-                <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl font-sans">
-                  projects
-                </p>
-              </div>
-              <div className="flex items-center gap-x-3 flex-wrap gap-y-2">
-                <Skeleton className={"h-10 w-20"} />
-                <Skeleton className={"h-10 w-20"} />
-              </div>
-            </div>
-            <section className="flex flex-col gap-4 md:flex-row">
-              <div className="flex flex-col gap-2">
-                <div className="text-base text-nowrap font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm mb-2 mt-5">
-                  Filter by Programs
-                </div>
-                <FilterByProgramsSkeleton />
-              </div>
-              <div className="h-full w-full my-8">
-                <CardListSkeleton />
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 w-4/12 max-lg:w-full max-lg:hidden">
-        <Skeleton className={"h-[200px] w-full"} />
-        <Skeleton className={"h-[360px] w-full"} />
       </div>
     </div>
   );

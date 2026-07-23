@@ -69,7 +69,7 @@ export function CommentMarkdownInput({
           className="flex items-center justify-center bg-gray-50 dark:bg-zinc-800"
           style={{ height: minHeight }}
         >
-          <div className="text-gray-400 dark:text-gray-500 text-sm">Loading editor...</div>
+          <div className="text-gray-400 dark:text-gray-500 text-sm">Loading editor…</div>
         </div>
       )}
     </div>

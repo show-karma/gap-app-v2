@@ -303,7 +303,6 @@ describe("AgentAttachmentSchema", () => {
 
 describe("AgenticQueryResponseSchema attachments", () => {
   it("accepts payloads without an attachments field for back-compat", () => {
-    // biome-ignore lint/correctness/noUnusedVariables: intentional destructure for test
     const { attachments: _attachments, ...withoutAttachments } = BASE_RESPONSE as Record<
       string,
       unknown

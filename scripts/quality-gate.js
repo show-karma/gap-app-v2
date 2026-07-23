@@ -69,6 +69,7 @@ const FLAGS = {
 const REACT_DOCTOR_VERSION = "0.2.2";
 
 // ── utils ───────────────────────────────────────────────────────────────────
+// biome-ignore lint/suspicious/noConsole: CLI script reports progress to stdout
 const log = (...a) => console.log("[quality]", ...a);
 const warn = (...a) => console.warn("[quality:warn]", ...a);
 
@@ -261,7 +262,9 @@ function collectReactDoctor() {
   } catch {
     /* noop */
   }
-  const score = parsed.score ?? parsed.healthScore ?? 0;
+  // react-doctor's JSON (schemaVersion 1) reports the health score under
+  // `summary.score`; older shapes used a top-level `score`/`healthScore`.
+  const score = parsed.summary?.score ?? parsed.score ?? parsed.healthScore ?? 0;
   const findings = parsed.findings ?? parsed.diagnostics ?? [];
   let errors = 0;
   let warnings = 0;
@@ -632,7 +635,7 @@ function main() {
       reactDoctor: current.reactDoctor ??
         baseline.reactDoctor ?? { score: 0, errors: 0, warnings: 0, byCategory: {} },
     };
-    writeFileSafe(BASELINE_PATH, JSON.stringify(next, null, 2) + "\n");
+    writeFileSafe(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
     log(`baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
     process.exit(0);
   }
@@ -642,11 +645,11 @@ function main() {
   const report = render({ status, current, baseline, regressions, improvements });
 
   writeFileSafe(REPORT_PATH, report);
-  process.stdout.write(report + "\n");
+  process.stdout.write(`${report}\n`);
 
   if (FLAGS.ci && process.env.GITHUB_STEP_SUMMARY) {
     try {
-      fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report + "\n");
+      fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${report}\n`);
     } catch {
       /* noop */
     }

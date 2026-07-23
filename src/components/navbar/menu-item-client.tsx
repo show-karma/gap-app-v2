@@ -37,7 +37,7 @@ export function MenuItemClient({
   openModal,
   anchor,
 }: MenuItemClientProps) {
-  const router = useRouter();
+  const { push } = useRouter();
 
   const content = (
     <>
@@ -62,7 +62,7 @@ export function MenuItemClient({
         modalButton.click();
       } else {
         // If button doesn't exist, navigate to MY_PROJECTS where it should exist
-        router.push(href);
+        push(href);
         // Try to click the button after navigation
         setTimeout(() => {
           const button = document.getElementById("new-project-button");
@@ -89,7 +89,7 @@ export function MenuItemClient({
         }, 50);
       } else {
         // Navigate first, then scroll
-        router.push(`${href}#${anchor}`);
+        push(`${href}#${anchor}`);
         // Wait for navigation and DOM update
         setTimeout(() => {
           const element = document.getElementById(anchor);

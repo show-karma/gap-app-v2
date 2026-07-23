@@ -7,7 +7,7 @@ import {
 import type { CommunityUpdatesResponse } from "@/types/community-updates";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-export interface UseCommunityProjectUpdatesOptions {
+interface UseCommunityProjectUpdatesOptions {
   page?: number;
   limit?: number;
   status?: "all" | "pending" | "completed" | "past_due";

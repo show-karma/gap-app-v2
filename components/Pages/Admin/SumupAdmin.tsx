@@ -48,7 +48,7 @@ export default function SumupAdminPage() {
 
       reset();
       toast.success(MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.SUCCESS);
-    } catch (error: any) {
+    } catch (error) {
       errorManager(
         MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.ERROR,
         error,

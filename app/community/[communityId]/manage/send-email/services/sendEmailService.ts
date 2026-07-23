@@ -51,4 +51,4 @@ export async function sendEmailToGrantees(params: SendEmailParams): Promise<Send
   );
 }
 
-export type { GranteeEmail, SendEmailParams, SendEmailResponse };
+export type { SendEmailParams };

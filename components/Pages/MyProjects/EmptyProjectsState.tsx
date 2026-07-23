@@ -34,7 +34,7 @@ const ProjectsIllustration: FC = () => (
     />
     {/* Folder tab */}
     <path
-      d="M30 58C30 53.5817 33.5817 50 38 50H70L80 40H162C166.418 40 170 43.5817 170 48V50H30V58Z"
+      d="M30 58C30 53.58 33.58 50 38 50H70L80 40H162C166.42 40 170 43.58 170 48V50H30V58Z"
       className="fill-gray-100 dark:fill-gray-800 stroke-gray-200 dark:stroke-gray-700"
       strokeWidth="2"
     />

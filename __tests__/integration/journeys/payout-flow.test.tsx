@@ -165,7 +165,7 @@ describe("Payout configuration flow", () => {
         wrapper: createWrapper(),
       });
 
-      expect(screen.getByText("Loading configuration...")).toBeInTheDocument();
+      expect(screen.getByText("Loading configuration…")).toBeInTheDocument();
     });
   });
 

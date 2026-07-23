@@ -13,6 +13,7 @@ import {
   ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
 import debounce from "lodash.debounce";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -145,7 +146,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
     const links = projectToUpdate?.details?.links || [];
-    return links.filter(isCustomLink).map((link: any, index: number) => ({
+    return links.filter(isCustomLink).map((link, index) => ({
       id: `custom-${index}`,
       name: link.name || "",
       url: link.url,
@@ -194,7 +195,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
-  const [_walletSigner, setWalletSigner] = useState<any>(null);
+  const [_walletSigner, setWalletSigner] = useState<Awaited<
+    ReturnType<typeof walletClientToSigner>
+  > | null>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
@@ -208,7 +211,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       // keep their own chainID.
       defaultValues: dataToUpdate ?? { chainID: PROJECT_CREATION_DEFAULT_CHAIN_ID },
     });
-  const { errors, isValid } = formState;
+  const { errors } = formState;
 
   // Watch the chainID value for the useEffect
   const chainIDValue = watch("chainID");
@@ -526,7 +529,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         links: Array<ExternalLink[0] | ExternalCustomLink>;
         recipient?: string;
       }
-      const { chainID, ...rest } = data;
+      const { chainID: _chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
         members: [resolvedAddress as Hex],
@@ -714,7 +717,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setStep(0);
       setContacts([]);
       setCustomLinks([]);
-    } catch (error: any) {
+    } catch (error) {
       if (handleSignerError(error)) return;
       // A transient chain-switch / bundler-RPC hiccup (GAP-FRONTEND-23C) is
       // recoverable by retrying — tell the user that instead of a dead-end
@@ -769,7 +772,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         return;
       }
 
-      const { gapClient, walletSigner, chainId } = setup;
+      const { gapClient, walletSigner } = setup;
 
       // Resolve address after setup — Farcaster users get smartWalletAddress from setupChainAndWallet
       if (!smartWalletAddress && !address) {
@@ -850,7 +853,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           }
         }, 1500);
       });
-    } catch (error: any) {
+    } catch (error) {
       if (handleSignerError(error)) return;
       const userMessage = isRetryableChainError(error)
         ? MESSAGES.PROJECT.UPDATE.RETRYABLE_ERROR
@@ -893,7 +896,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const tooltipText = () => {
     const errors = hasErrors();
     if (isLoading) {
-      return <p>Loading...</p>;
+      return <p>Loading…</p>;
     }
     if (signerStatus === "initializing") {
       return <p>{MESSAGES.PROJECT.CREATE.WALLET_PREPARING}</p>;
@@ -906,7 +909,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
-  const [githubValidatedAs, setGithubValidatedAs] = useState<"org" | null>(null);
+  const [, setGithubValidatedAs] = useState<"org" | null>(null);
 
   const validateGithubUrl = debounce(async (value: string) => {
     setGithubValidatedAs(null);
@@ -1275,9 +1278,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             </label>
             {logoPreviewUrl && !isLogoUploading && (
               <div className="flex flex-col gap-2">
-                <img
+                <Image
                   src={logoPreviewUrl}
                   alt="Logo preview"
+                  width={80}
+                  height={80}
                   className="w-20 h-20 object-cover rounded-lg border border-gray-300"
                 />
                 <button
@@ -1372,6 +1377,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     <div className="flex items-end">
                       <button
                         type="button"
+                        aria-label="Remove custom link"
                         onClick={() => {
                           const updatedLinks = customLinks.filter((_, i) => i !== index);
                           setCustomLinks(updatedLinks);

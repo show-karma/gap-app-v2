@@ -12,16 +12,13 @@ import {
 } from "@/hooks/communities";
 import type { Category } from "@/types/impactMeasurement";
 import { MESSAGES } from "@/utilities/messages";
-import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CategoryView } from "./CategoryView";
 import { IndicatorsView } from "./IndicatorsView";
 
-export const metadata = defaultMetadata;
-
 export default function ManageIndicatorsPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const params = useParams();
   const communityId = params.communityId as string;
 
@@ -52,9 +49,9 @@ export default function ManageIndicatorsPage() {
 
   useEffect(() => {
     if (community === null && !communityLoading) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
-  }, [community, communityLoading, router]);
+  }, [community, communityLoading, push]);
 
   useEffect(() => {
     if (categories.length > 0 && !selectedCategory) {
@@ -96,7 +93,7 @@ export default function ManageIndicatorsPage() {
                 ? "Unable to load community information. Please try again later."
                 : "Unable to load categories. Please try again later."}
             </p>
-            <Button onClick={() => router.push("/communities")}>Return to Communities</Button>
+            <Button onClick={() => push("/communities")}>Return to Communities</Button>
           </div>
         </div>
       ) : hasAccess ? (

@@ -7,7 +7,7 @@ import {
   PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
 export interface DropdownItem {
@@ -128,6 +128,7 @@ export const MultiSelectDropdown = ({
   unknownSelectionHint,
 }: MultiSelectDropdownProps) => {
   const isDisabled = disabled || isLoading;
+  const listboxId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -233,6 +234,7 @@ export const MultiSelectDropdown = ({
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        aria-controls={listboxId}
         aria-disabled={isDisabled}
         tabIndex={isDisabled ? -1 : 0}
         className={cn(
@@ -330,7 +332,7 @@ export const MultiSelectDropdown = ({
             </div>
           </div>
 
-          <div className="max-h-60 overflow-y-auto p-2">
+          <div id={listboxId} role="listbox" className="max-h-60 overflow-y-auto p-2">
             {filteredItems.length > 0 ? (
               <>
                 {filteredItems.map((item) => (

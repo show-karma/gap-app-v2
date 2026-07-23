@@ -22,7 +22,7 @@ const ERC20_ABI = [
 ] as const;
 
 // Query keys for react-query
-export const BALANCE_QUERY_KEYS = {
+const BALANCE_QUERY_KEYS = {
   all: ["token-balances"] as const,
   chain: (chainId: number, address: string) =>
     [...BALANCE_QUERY_KEYS.all, "chain", chainId, address] as const,

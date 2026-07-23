@@ -18,7 +18,8 @@ import type { FormSchema } from "@/types/question-builder";
 import { formatDate } from "@/utilities/formatDate";
 import { getBrowseApplicationsUrl, getGatedApplyUrl } from "@/utilities/fundingPlatformUrls";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
-import { PAGE_HEADER_CONTENT, PageHeader } from "../FundingPlatform/PageHeader";
+import { PageHeader } from "../FundingPlatform/PageHeader";
+import { PAGE_HEADER_CONTENT } from "../FundingPlatform/PageHeader.constants";
 import { PlaceholderReference } from "../FundingPlatform/PlaceholderReference";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -200,7 +201,7 @@ export function SettingsConfiguration({
             <AccordionContent className="px-6 pb-6">
               <div className="space-y-6">
                 {/* Donation Round */}
-                <div className="flex items-start space-x-3">
+                <div className="flex items-start gap-x-3">
                   <input
                     {...register("donationRound")}
                     type="checkbox"
@@ -223,7 +224,7 @@ export function SettingsConfiguration({
                 </div>
 
                 {/* Open Enrollment */}
-                <div className="flex items-start space-x-3">
+                <div className="flex items-start gap-x-3">
                   <input
                     type="checkbox"
                     id="anyoneCanJoin"
@@ -419,11 +420,11 @@ export function SettingsConfiguration({
               <div className="space-y-6">
                 {/* Browse All Applications URL */}
                 {!watch("privateApplications") && programId && (
-                  <div className="flex flex-col space-y-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="flex flex-col gap-y-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       All Applications URL
                     </div>
-                    <div className="flex flex-row items-center space-x-2">
+                    <div className="flex flex-row items-center gap-x-2">
                       <ExternalLink
                         className="underline text-blue-500"
                         href={getBrowseApplicationsUrl(communityId, programId, whitelabelOrigin)}
@@ -437,7 +438,7 @@ export function SettingsConfiguration({
 
                 {/* Private Applications */}
                 <div className="space-y-3">
-                  <div className="flex items-start space-x-3">
+                  <div className="flex items-start gap-x-3">
                     <input
                       {...register("privateApplications")}
                       type="checkbox"
@@ -476,7 +477,7 @@ export function SettingsConfiguration({
                 </div>
 
                 {/* Show Comments */}
-                <div className="flex items-start space-x-3 pt-4 border-t border-gray-100 dark:border-zinc-700">
+                <div className="flex items-start gap-x-3 pt-4 border-t border-gray-100 dark:border-zinc-700">
                   <input
                     {...register("showCommentsOnPublicPage")}
                     type="checkbox"

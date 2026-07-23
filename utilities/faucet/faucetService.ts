@@ -165,7 +165,7 @@ const ChainResponseSchema = z
     chainId: z.number(),
     createdAt: z.string(),
     decimals: z.number(),
-    explorerUrl: z.number().optional(),
+    explorerUrl: z.string().optional(),
     id: z.string(),
     metadata: z.any(),
     name: z.string(),

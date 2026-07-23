@@ -401,11 +401,18 @@ export function ProjectDetailsSidebar({
       }
     >();
 
+    // Index invoices by milestone key once (first occurrence wins, matching .find)
+    const invoiceByMilestoneKey = new Map<string, CommunityPayoutInvoiceInfo>();
+    milestoneInvoices.forEach((inv, idx) => {
+      const milestoneKey = getMilestoneKey(inv, idx);
+      if (!invoiceByMilestoneKey.has(milestoneKey)) {
+        invoiceByMilestoneKey.set(milestoneKey, inv);
+      }
+    });
+
     // Add date edits
     for (const [key, edits] of Object.entries(milestoneEdits)) {
-      const matchedInvoice = milestoneInvoices.find(
-        (inv, idx) => getMilestoneKey(inv, idx) === key
-      );
+      const matchedInvoice = invoiceByMilestoneKey.get(key);
       const rawDate = edits.invoiceReceivedAt;
       const isoDate =
         rawDate && !rawDate.includes("T") ? `${rawDate}T00:00:00.000Z` : (rawDate ?? null);
@@ -439,9 +446,7 @@ export function ProjectDetailsSidebar({
         existing.invoiceFileKey = null;
         existing.invoiceFileUrl = null;
       } else {
-        const matchedInvoice = milestoneInvoices.find(
-          (inv, idx) => getMilestoneKey(inv, idx) === mKey
-        );
+        const matchedInvoice = invoiceByMilestoneKey.get(mKey);
         if (matchedInvoice) {
           invoiceMap.set(mKey, {
             milestoneLabel: matchedInvoice.milestoneLabel,

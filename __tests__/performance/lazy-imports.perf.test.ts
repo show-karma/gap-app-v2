@@ -165,14 +165,6 @@ describe("Lazy import enforcement for heavy libraries", () => {
     }
 
     if (violations.length > 0) {
-      const message = [
-        "Heavy Tremor components must be loaded with next/dynamic, not static imports.",
-        "Use: const MyChart = dynamic(() => import('@tremor/react').then(m => m.MyChart))",
-        "",
-        "Violations found:",
-        ...violations.map((v) => `  - ${v}`),
-      ].join("\n");
-
       // This is informational -- report but do not fail the build
       // because Card/Title are intentionally excluded and there may be
       // legitimate cases. Uncomment the next line to make it strict:

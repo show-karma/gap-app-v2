@@ -132,7 +132,7 @@ function ActiveFilterChips({
 
 // ─── FilterToolbar ───────────────────────────────────────────────────────────
 
-export interface FilterToolbarProps {
+interface FilterToolbarProps {
   localSearch: string;
   onLocalSearchChange: (value: string) => void;
   onSearch: () => void;

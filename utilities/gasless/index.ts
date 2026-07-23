@@ -100,13 +100,7 @@ export async function getGaslessSigner(
 
 // Re-export commonly used items
 export { getChainGaslessConfig, isChainSupportedForGasless } from "./config";
-export type {
-  ChainGaslessConfig,
-  GaslessProviderType,
-  IGaslessProvider,
-  LocalAccountWithEIP7702,
-  SmartAccountClient,
-} from "./types";
+
 export { GaslessProviderError } from "./types";
-export type { PrivyEmbeddedWallet } from "./utils/privy-signer";
+
 export { createPrivySignerForGasless } from "./utils/privy-signer";

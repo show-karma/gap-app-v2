@@ -4,12 +4,10 @@ import { ArchiveBoxIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/outlin
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
-import { useAuth } from "@/hooks/useAuth";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import {
   useArchiveTrack,
@@ -35,9 +33,7 @@ export const TracksAdminPage = ({
   communityId: string;
   community: Community;
 }) => {
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
-  const router = useRouter();
+  const { back } = useRouter();
 
   const [selectedProgram, setSelectedProgram] = useState<string>("");
   const [newTrack, setNewTrack] = useState({ name: "", description: "" });
@@ -52,17 +48,13 @@ export const TracksAdminPage = ({
   const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
 
   // React Query hooks
-  const {
-    data: tracks = [],
-    isLoading: isLoadingTracks,
-    refetch: refetchTracks,
-  } = useTracksForCommunity(community?.uid || "", true);
+  const { data: tracks = [], isLoading: isLoadingTracks } = useTracksForCommunity(
+    community?.uid || "",
+    true
+  );
 
-  const {
-    data: programTracks = [],
-    isLoading: isLoadingProgramTracks,
-    refetch: refetchProgramTracks,
-  } = useTracksForProgram(selectedProgram);
+  const { data: programTracks = [], isLoading: isLoadingProgramTracks } =
+    useTracksForProgram(selectedProgram);
 
   // React Query hook for community programs
   const { data: programs = [], isLoading: isLoadingPrograms } = useCommunityPrograms(communityId);
@@ -145,9 +137,9 @@ export const TracksAdminPage = ({
     );
 
     // Get tracks to remove (in program but not selected)
-    const tracksToRemove = programTracks
-      .filter((pt: Track) => !selectedTrackIds.includes(pt.id))
-      .map((pt: Track) => pt.id);
+    const tracksToRemove = programTracks.flatMap((pt: Track) =>
+      selectedTrackIds.includes(pt.id) ? [] : [pt.id]
+    );
 
     // Add new tracks
     if (tracksToAdd.length > 0) {
@@ -189,7 +181,7 @@ export const TracksAdminPage = ({
         <p className="text-gray-600 dark:text-gray-300 text-center">
           {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId)}
         </p>
-        <Button className="mt-4" onClick={() => router.back()}>
+        <Button className="mt-4" onClick={() => back()}>
           Go Back
         </Button>
       </div>
@@ -254,7 +246,7 @@ export const TracksAdminPage = ({
                       </p>
                     )}
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex gap-x-2">
                     <Button
                       onClick={() => {
                         setSelectedTrack(track);
@@ -295,7 +287,7 @@ export const TracksAdminPage = ({
             >
               <option value="">Select a program</option>
               {isLoadingPrograms ? (
-                <option disabled>Loading programs...</option>
+                <option disabled>Loading programs…</option>
               ) : (
                 programs
                   .filter((program) => program.programId)

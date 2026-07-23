@@ -26,7 +26,7 @@ import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 import CommentItem from "../CommentItem";
 
-export interface TimelineContainerProps {
+interface TimelineContainerProps {
   /** Comments to display */
   comments: ApplicationComment[];
   /** Status history entries */
@@ -191,7 +191,7 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
     const isCurrent = status.status === currentStatus && isLatest;
 
     return (
-      <div className="flex space-x-3">
+      <div className="flex gap-x-3">
         <div className="flex-shrink-0">
           <span
             className={cn(
@@ -245,7 +245,7 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
     const isInitialVersion = version.versionNumber === 0;
 
     return (
-      <div className="flex space-x-3">
+      <div className="flex gap-x-3">
         <div className="flex-shrink-0">
           <span className="h-8 w-8 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400">
             {isInitialVersion ? (
@@ -272,6 +272,7 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
             </div>
             {onVersionClick && (
               <button
+                type="button"
                 onClick={() => onVersionClick(version.id)}
                 className="ml-2 inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
               >
@@ -316,7 +317,7 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
             Activity Timeline
@@ -388,5 +389,3 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
     </div>
   );
 };
-
-export default TimelineContainer;

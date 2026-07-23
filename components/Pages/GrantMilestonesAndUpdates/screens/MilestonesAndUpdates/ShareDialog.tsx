@@ -14,14 +14,8 @@ import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
 
 export const ShareDialog: FC = () => {
-  const {
-    isOpen,
-    modalShareText,
-    shareButtonText,
-    shareText,
-    modalShareSecondText,
-    closeShareDialog,
-  } = useShareDialogStore();
+  const { isOpen, modalShareText, shareText, modalShareSecondText, closeShareDialog } =
+    useShareDialogStore();
 
   useEffect(() => {
     if (isOpen) {

@@ -25,7 +25,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
 
-export interface DetailsSectionProps {
+interface DetailsSectionProps {
   grant: ProjectDetailsSidebarGrant;
   kycStatus: KycStatusResponse | null;
   agreement: CommunityPayoutAgreementInfo | null;
@@ -67,7 +67,6 @@ export const DetailsSection = memo(function DetailsSection({
   totalsByToken,
   remainingBalance,
   awaitingTx,
-  chainInfo,
   milestoneSummary,
   invoiceRequired,
 }: DetailsSectionProps) {
@@ -149,7 +148,7 @@ export const DetailsSection = memo(function DetailsSection({
                 />
                 {toggleAgreementMutation.isPending && (
                   <span className="text-[11px] text-gray-400 dark:text-zinc-500 animate-pulse">
-                    Saving...
+                    Saving…
                   </span>
                 )}
               </div>

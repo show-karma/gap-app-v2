@@ -183,6 +183,8 @@ vi.mock("@/components/FundingPlatform/NoProgramsEmptyState", () => ({
 
 vi.mock("@/components/FundingPlatform/ProgramSetupStatus", () => ({
   ProgramSetupStatus: () => null,
+}));
+vi.mock("@/components/FundingPlatform/ProgramSetupStatus.helpers", () => ({
   hasFormConfigured: () => true,
 }));
 
@@ -289,10 +291,11 @@ describe("Community client pages", () => {
     await renderClientPage(
       () => import("@/app/community/[communityId]/(with-header)/funding-opportunities/page")
     );
-    // With no programs the page renders its hero (PageHero <h1>) plus the
-    // empty state — assert the hero heading and empty-state copy are present.
+    // With no programs the page renders its hero (PageHero <h2> — the shared
+    // community header owns the page's single h1) plus the empty state —
+    // assert the hero heading and empty-state copy are present.
     expect(
-      screen.getByRole("heading", { name: /funding opportunities/i, level: 1 })
+      screen.getByRole("heading", { name: /funding opportunities/i, level: 2 })
     ).toBeInTheDocument();
     expect(screen.getByText(/no programs available/i)).toBeInTheDocument();
   });

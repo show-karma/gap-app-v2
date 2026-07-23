@@ -33,6 +33,7 @@
     "@tailwindcss/forms",
     "@tailwindcss/typography",
     "tailwindcss-animate",
-    "motion"
+    "motion",
+    "jscpd"
   ]
 }

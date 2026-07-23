@@ -7,8 +7,6 @@ import {
   type VerificationResult,
 } from "@/services/contracts.service";
 
-export type { VerificationMessage, VerificationResult, DeployerInfo };
-
 export enum VerificationStep {
   IDLE = "idle",
   LOOKING_UP_DEPLOYER = "looking_up_deployer",
@@ -20,7 +18,7 @@ export enum VerificationStep {
   ERROR = "error",
 }
 
-export interface VerificationState {
+interface VerificationState {
   step: VerificationStep;
   deployerInfo: DeployerInfo | null;
   verificationMessage: VerificationMessage | null;

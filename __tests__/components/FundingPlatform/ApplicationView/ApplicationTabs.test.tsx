@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import {
   ApplicationTabs,
   type TabConfig,
-  TabIcons,
 } from "@/components/FundingPlatform/ApplicationView/ApplicationTabs";
+import { TabIcons } from "@/components/FundingPlatform/ApplicationView/ApplicationTabs.constants";
 
 // Mock cn utility
 vi.mock("@/utilities/tailwind", () => ({
@@ -196,7 +196,7 @@ describe("ApplicationTabs", () => {
       const { container } = render(<ApplicationTabs tabs={defaultTabs} />);
 
       const tabs = container.querySelectorAll('[role="tab"]');
-      tabs.forEach((tab, index) => {
+      tabs.forEach((tab, _index) => {
         expect(tab).toBeInTheDocument();
       });
     });

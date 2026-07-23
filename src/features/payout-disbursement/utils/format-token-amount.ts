@@ -5,15 +5,6 @@
  * and human-readable display formats, supporting various token decimals.
  */
 
-/** Default decimals for common tokens */
-export const TOKEN_DECIMALS = {
-  USDC: 6,
-  USDT: 6,
-  DAI: 18,
-  ETH: 18,
-  DEFAULT: 18,
-} as const;
-
 /**
  * Formats a raw token amount (in smallest units) to a human-readable string.
  *
@@ -123,53 +114,6 @@ export function fromSmallestUnit(amount: string, decimals: number): number {
 }
 
 /**
- * Calculates the progress percentage between disbursed and approved amounts.
- *
- * @param disbursedRaw - Raw disbursed amount (in smallest units)
- * @param approvedHumanReadable - Human-readable approved amount (e.g., "10000")
- * @param decimals - Number of decimals for the disbursed amount token
- * @returns Progress percentage (0-100)
- */
-export function calculateDisbursementProgress(
-  disbursedRaw: string,
-  approvedHumanReadable: string,
-  decimals: number
-): number {
-  const disbursedNum = fromSmallestUnit(disbursedRaw, decimals);
-  const approvedNum = parseFloat(approvedHumanReadable.replace(/,/g, ""));
-
-  if (Number.isNaN(disbursedNum) || Number.isNaN(approvedNum) || approvedNum === 0) {
-    return 0;
-  }
-
-  return Math.min(100, (disbursedNum / approvedNum) * 100);
-}
-
-/**
- * Calculates the remaining balance between approved and disbursed amounts.
- *
- * @param disbursedRaw - Raw disbursed amount (in smallest units)
- * @param approvedHumanReadable - Human-readable approved amount (e.g., "10000")
- * @param decimals - Number of decimals for the disbursed amount token
- * @returns Formatted remaining balance string
- */
-export function calculateRemainingBalance(
-  disbursedRaw: string,
-  approvedHumanReadable: string,
-  decimals: number
-): string {
-  const disbursedNum = fromSmallestUnit(disbursedRaw, decimals);
-  const approvedNum = parseFloat(approvedHumanReadable.replace(/,/g, ""));
-
-  if (Number.isNaN(disbursedNum) || Number.isNaN(approvedNum)) {
-    return "0";
-  }
-
-  const remaining = Math.max(0, approvedNum - disbursedNum);
-  return remaining.toLocaleString("en-US", { maximumFractionDigits: 2 });
-}
-
-/**
  * Format a human-readable number string with locale-aware thousands separators.
  *
  * Unlike {@link formatTokenAmount}, this operates on amounts already in human-readable
@@ -188,20 +132,4 @@ export function formatDisplayAmount(amount: string, maxDecimals = 2): string {
   const num = parseFloat(sanitized);
   if (Number.isNaN(num)) return "0";
   return num.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
-}
-
-/**
- * Gets the default decimals for a known token symbol, or returns the default.
- *
- * @param tokenSymbol - Token symbol (e.g., "USDC", "ETH")
- * @returns Number of decimals for the token
- */
-export function getDefaultDecimals(tokenSymbol: string): number {
-  const upperSymbol = tokenSymbol.toUpperCase();
-
-  if (upperSymbol in TOKEN_DECIMALS) {
-    return TOKEN_DECIMALS[upperSymbol as keyof typeof TOKEN_DECIMALS];
-  }
-
-  return TOKEN_DECIMALS.DEFAULT;
 }

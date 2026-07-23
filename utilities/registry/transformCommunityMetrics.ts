@@ -166,7 +166,7 @@ export function transformCommunityMetrics(
       .filter((dp): dp is NonNullable<typeof dp> => dp !== null);
 
     // Sort by date to find latest value
-    const sortedDatapoints = [...datapoints].sort(
+    const sortedDatapoints = datapoints.toSorted(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
@@ -200,7 +200,7 @@ export function transformCommunityMetrics(
 /**
  * Chart display configuration for a metric
  */
-export interface ChartDisplayConfig {
+interface ChartDisplayConfig {
   chartDisplayLabel?: string;
   yTransform?: (value: number) => number;
   yDomain?: [number, number];

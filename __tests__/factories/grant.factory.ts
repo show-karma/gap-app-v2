@@ -1,7 +1,7 @@
 import type { Grant } from "@/types/v2/grant";
 import { createMockGrant } from "./project.factory";
 import type { DeepPartial } from "./utils";
-import { randomAddress, seq } from "./utils";
+import { seq } from "./utils";
 
 // Re-export base factory for convenience
 export { createMockGrant } from "./project.factory";

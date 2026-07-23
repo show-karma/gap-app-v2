@@ -82,7 +82,7 @@ export function NumbersSection() {
             className={cn("grid grid-cols-1 md:grid-cols-2 gap-8", "w-full lg:flex-1 lg:min-w-0")}
           >
             {statistics.map((stat, index) => (
-              <ScrollReveal key={index} variant="fade-up" delay={index * 120}>
+              <ScrollReveal key={stat.title} variant="fade-up" delay={index * 120}>
                 <div className="flex flex-col gap-2">
                   <div
                     className={cn(

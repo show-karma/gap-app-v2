@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  ChatBubbleLeftRightIcon,
-  DocumentTextIcon,
-  FlagIcon,
-  LockClosedIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
+import type { DocumentTextIcon } from "@heroicons/react/24/outline";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/utilities/tailwind";
@@ -18,7 +12,7 @@ export interface TabConfig {
   content: ReactNode;
 }
 
-export interface ApplicationTabsProps {
+interface ApplicationTabsProps {
   tabs: TabConfig[];
   defaultIndex?: number;
   onChange?: (index: number) => void;
@@ -113,14 +107,3 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
     </Tabs>
   );
 };
-
-// Export commonly used icons for convenience
-export const TabIcons = {
-  Application: DocumentTextIcon,
-  AIAnalysis: SparklesIcon,
-  Discussion: ChatBubbleLeftRightIcon,
-  Milestones: FlagIcon,
-  Notes: LockClosedIcon,
-};
-
-export default ApplicationTabs;

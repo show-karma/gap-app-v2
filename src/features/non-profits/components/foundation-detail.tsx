@@ -1143,7 +1143,7 @@ export function FoundationDetail({ id }: { id: string }) {
 
   const latestFinancials = React.useMemo(() => {
     if (!financials || financials.length === 0) return null;
-    return [...financials].sort((a, b) => b.filingYear - a.filingYear)[0];
+    return financials.toSorted((a, b) => b.filingYear - a.filingYear)[0];
   }, [financials]);
 
   // Officers filtered by selected financial year

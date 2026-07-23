@@ -12,8 +12,8 @@ import { authFixtures, getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   cleanupAfterEach,
   createMockPermissions,
+  createMockUseAuth,
   createMockUseLogoutFunction,
-  createMockUsePrivy,
   renderWithProviders,
 } from "../utils/test-helpers";
 
@@ -101,7 +101,7 @@ describe("Permission Matrix Integration Tests", () => {
       describe(`Scenario: ${name}`, () => {
         it("should show correct elements in desktop view", async () => {
           renderWithProviders(<Navbar />, {
-            mockUsePrivy: createMockUsePrivy(fixture.authState),
+            mockUsePrivy: createMockUseAuth(fixture.authState),
             mockPermissions: createMockPermissions(fixture.permissions),
           });
 
@@ -138,7 +138,7 @@ describe("Permission Matrix Integration Tests", () => {
           const user = userEvent.setup();
 
           renderWithProviders(<Navbar />, {
-            mockUsePrivy: createMockUsePrivy(fixture.authState),
+            mockUsePrivy: createMockUseAuth(fixture.authState),
             mockPermissions: createMockPermissions(fixture.permissions),
             mockUseLogout: createMockUseLogoutFunction(vi.fn()),
           });
@@ -167,7 +167,7 @@ describe("Permission Matrix Integration Tests", () => {
           const user = userEvent.setup();
 
           renderWithProviders(<Navbar />, {
-            mockUsePrivy: createMockUsePrivy(fixture.authState),
+            mockUsePrivy: createMockUseAuth(fixture.authState),
             mockPermissions: createMockPermissions(fixture.permissions),
             mockUseLogout: createMockUseLogoutFunction(vi.fn()),
           });
@@ -193,7 +193,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
       });
 
       // Sign in is the only auth button in the nav header now
@@ -210,7 +210,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -238,7 +238,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("community-admin-single");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -263,7 +263,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("reviewer-single");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -288,7 +288,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("staff");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -311,7 +311,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("owner");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -334,7 +334,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("program-creator");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -361,7 +361,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("registry-admin");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -384,7 +384,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("admin-and-reviewer");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -408,7 +408,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("staff-and-reviewer");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -432,7 +432,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("registry-admin-and-community-admin");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -456,7 +456,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("super-user");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 
@@ -480,7 +480,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("loading");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
       });
 
       // Mobile menu button should still be present
@@ -497,7 +497,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
       });
 
       // Resources should be available (in desktop nav or mobile menu)
@@ -508,7 +508,7 @@ describe("Permission Matrix Integration Tests", () => {
       const fixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(fixture.authState),
+        mockUsePrivy: createMockUseAuth(fixture.authState),
         mockPermissions: createMockPermissions(fixture.permissions),
       });
 

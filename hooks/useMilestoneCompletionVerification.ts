@@ -49,7 +49,7 @@ interface UseMilestoneCompletionVerificationParams {
 interface MilestoneInstance {
   uid: string;
   recipient: `0x${string}`;
-  completed: boolean | { data: any; attester: string };
+  completed: boolean | { data: unknown; attester: string };
   verified?: Array<{ attester: string }>;
   chainID: number;
 }
@@ -155,7 +155,7 @@ export const useMilestoneCompletionVerification = ({
     }
   ) => {
     const milestoneCompletedSchema = gapClient.findSchema("MilestoneCompleted");
-    const payloads: any[] = [];
+    const payloads: Awaited<ReturnType<MilestoneCompleted["payloadFor"]>>[] = [];
     let payloadIndex = 0;
 
     // Add completion attestation if requested
@@ -420,7 +420,7 @@ export const useMilestoneCompletionVerification = ({
       );
 
       return true;
-    } catch (error: any) {
+    } catch (error) {
       if (isAbortError(error)) {
         // Silent — caller's finally already dismisses the toast.
         return false;
@@ -530,7 +530,7 @@ export const useMilestoneCompletionVerification = ({
 
       // Success callback - backend will sync to off-chain database automatically
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error) {
       if (isAbortError(error)) {
         // Silent — component unmounted during the flow.
         return;
@@ -538,7 +538,12 @@ export const useMilestoneCompletionVerification = ({
       console.error("Error verifying milestone:", error);
 
       // Check if user cancelled
-      if (error?.message?.includes("User rejected") || error?.code === 4001) {
+      const errorMessage = error instanceof Error ? error.message : "";
+      const errorCode =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error as { code?: unknown }).code
+          : undefined;
+      if (errorMessage.includes("User rejected") || errorCode === 4001) {
         showError("Verification cancelled");
       } else {
         showError("Failed to verify milestone");

@@ -1,4 +1,4 @@
-export interface E2EAuthState {
+interface E2EAuthState {
   authenticated?: boolean;
   ready?: boolean;
   user?: {
@@ -7,9 +7,6 @@ export interface E2EAuthState {
     };
   };
 }
-
-/** @deprecated Use E2EAuthState instead */
-export type CypressAuthState = E2EAuthState;
 
 const E2E_AUTH_STATE_STORAGE_KEY = "privy:auth_state";
 
@@ -44,6 +41,3 @@ export const getE2EMockAuthState = (): E2EAuthState | null => {
 
   return null;
 };
-
-/** @deprecated Use getE2EMockAuthState instead */
-export const getCypressMockAuthState = getE2EMockAuthState;

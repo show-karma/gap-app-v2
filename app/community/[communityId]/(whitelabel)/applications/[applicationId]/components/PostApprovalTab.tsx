@@ -45,7 +45,6 @@ export const PostApprovalTab: FC<PostApprovalTabProps> = ({
     return null;
   }
 
-  const dataToDisplay = submittedData ?? application.postApprovalData;
   const hasData = hasExistingData || !!submittedData;
 
   // Show the form if owner has no data yet
@@ -64,7 +63,7 @@ export const PostApprovalTab: FC<PostApprovalTabProps> = ({
             formSchema={postApprovalFormSchema as IFormSchema}
             onSubmit={handleSubmit}
             isLoading={isSubmitting}
-            initialData={application.postApprovalData as Record<string, any>}
+            initialData={application.postApprovalData}
             isEditMode={false}
           />
         </div>
@@ -87,7 +86,7 @@ export const PostApprovalTab: FC<PostApprovalTabProps> = ({
         <div className="p-6">
           <PostApprovalDataView
             application={displayApplication as unknown as IFundingApplication}
-            program={program as any}
+            program={program}
           />
         </div>
       </div>

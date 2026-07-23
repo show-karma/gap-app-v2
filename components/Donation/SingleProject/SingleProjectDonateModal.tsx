@@ -31,7 +31,7 @@ const OnrampFlow = dynamic(() => import("./OnrampFlow").then((m) => ({ default: 
 
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project, initialAmount }) => {
-    const { authenticated, login, connectWallet } = useAuth();
+    const { authenticated, connectWallet } = useAuth();
     const {
       paymentMethod,
       selectedToken,
@@ -224,7 +224,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                       {isExecuting ? (
                         <span className="flex items-center justify-center gap-2">
                           <Loader2 className="animate-spin h-4 w-4" />
-                          Processing...
+                          Processing…
                         </span>
                       ) : (
                         <span className="flex items-center justify-center gap-2">
@@ -238,28 +238,25 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
               </>
             )}
 
-            {paymentMethod === PaymentMethod.FIAT && (
-              <>
-                {fiatPayoutConfig.address && fiatPayoutConfig.isSupported ? (
-                  <OnrampFlow
-                    projectUid={project.uid}
-                    payoutAddress={fiatPayoutConfig.address}
-                    chainId={fiatPayoutConfig.chainId}
-                    initialAmount={amount}
-                    isAuthenticated={authenticated}
-                    onDonationComplete={onClose}
-                  />
-                ) : configuredChainIds.length > 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    Card payments are not available for this project&apos;s configured networks.
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    This project hasn&apos;t set up donation addresses yet.
-                  </p>
-                )}
-              </>
-            )}
+            {paymentMethod === PaymentMethod.FIAT &&
+              (fiatPayoutConfig.address && fiatPayoutConfig.isSupported ? (
+                <OnrampFlow
+                  projectUid={project.uid}
+                  payoutAddress={fiatPayoutConfig.address}
+                  chainId={fiatPayoutConfig.chainId}
+                  initialAmount={amount}
+                  isAuthenticated={authenticated}
+                  onDonationComplete={onClose}
+                />
+              ) : configuredChainIds.length > 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                  Card payments are not available for this project&apos;s configured networks.
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                  This project hasn&apos;t set up donation addresses yet.
+                </p>
+              ))}
           </div>
         </DialogContent>
       </Dialog>

@@ -17,14 +17,15 @@ import type { IndicatorDatapoint, OutputForm, SelectedPointData } from "@/types/
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { parseProofUrls, sortIndicatorsByPriority } from "@/utilities/impact";
+import { hasUniqueUsersData } from "@/utilities/indicator";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
-import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
+import { prepareChartData } from "../../Communities/Impact/ImpactCharts.helpers";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { AggregatedDataSection } from "./AggregatedDataSection";
 import { GroupedLinks } from "./GroupedLinks";
-import { hasUniqueUsersData, UniqueUsersSection } from "./UniqueUsersSection";
+import { UniqueUsersSection } from "./UniqueUsersSection";
 import { VirtualizedDatapointsTable } from "./VirtualizedDatapointsTable";
 
 // Dynamically import heavy Tremor chart component for bundle optimization
@@ -348,9 +349,8 @@ export const OutputsAndOutcomes = ({
       const candidate =
         item.lastUpdatedAt ??
         item.datapoints
-          ?.map((dp) => dp.endDate)
-          .filter(Boolean)
-          .sort((a, b) => new Date(b as string).getTime() - new Date(a as string).getTime())[0];
+          ?.flatMap((dp) => (dp.endDate ? [dp.endDate] : []))
+          .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
       if (!candidate) continue;
       const t = new Date(candidate).getTime();
       if (Number.isFinite(t) && (latest === null || t > latest)) latest = t;
@@ -373,14 +373,13 @@ export const OutputsAndOutcomes = ({
     const endDate = new Date(timestamp);
     endDate.setHours(0, 0, 0, 0); // Normalize to start of day
 
-    const timestamps = form.datapoints
-      .map((dp) => dp.endDate || dp.outputTimestamp)
-      .filter(Boolean)
-      .map((date) => {
-        const d = new Date(date as string);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime();
-      });
+    const timestamps = form.datapoints.flatMap((dp) => {
+      const date = dp.endDate || dp.outputTimestamp;
+      if (!date) return [];
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return [d.getTime()];
+    });
 
     return timestamps.filter((t) => t === endDate.getTime()).length > 1;
   };
@@ -662,6 +661,7 @@ export const OutputsAndOutcomes = ({
                                       <div className="flex items-center gap-2">
                                         <input
                                           type="number"
+                                          aria-label={item.name}
                                           value={datapoint.value || ""}
                                           onChange={(e) =>
                                             handleInputChange(
@@ -708,6 +708,7 @@ export const OutputsAndOutcomes = ({
                                       </span>
                                       <input
                                         type="text"
+                                        aria-label="Proof"
                                         value={datapoint.proof || ""}
                                         onChange={(e) =>
                                           handleInputChange(item.id, "proof", e.target.value, index)
@@ -737,6 +738,7 @@ export const OutputsAndOutcomes = ({
                                       </span>
                                       <input
                                         type="date"
+                                        aria-label="Start Date"
                                         value={
                                           datapoint.startDate?.split("T")[0] ||
                                           new Date().toISOString().split("T")[0]
@@ -772,6 +774,7 @@ export const OutputsAndOutcomes = ({
                                       </span>
                                       <input
                                         type="date"
+                                        aria-label="End Date"
                                         value={
                                           datapoint.endDate?.split("T")[0] ||
                                           datapoint.outputTimestamp?.split("T")[0] ||
@@ -888,19 +891,17 @@ export const OutputsAndOutcomes = ({
                                         {datapoint.proof ? (
                                           <div className="flex flex-col gap-1">
                                             {parseProofUrls(datapoint.proof).length > 0 ? (
-                                              parseProofUrls(datapoint.proof).map(
-                                                (url, urlIndex) => (
-                                                  <a
-                                                    key={urlIndex}
-                                                    href={url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-500 underline dark:text-blue-400 truncate max-w-xs"
-                                                  >
-                                                    {url}
-                                                  </a>
-                                                )
-                                              )
+                                              parseProofUrls(datapoint.proof).map((url) => (
+                                                <a
+                                                  key={url}
+                                                  href={url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-500 underline dark:text-blue-400 truncate max-w-xs"
+                                                >
+                                                  {url}
+                                                </a>
+                                              ))
                                             ) : (
                                               <span className="text-gray-900 dark:text-zinc-100">
                                                 {datapoint.proof}
@@ -973,7 +974,7 @@ export const OutputsAndOutcomes = ({
                       >
                         {form?.isSaving ? (
                           <div className="flex items-center justify-center gap-2">
-                            <span>Saving...</span>
+                            <span>Saving…</span>
                           </div>
                         ) : (
                           "Save Changes"
@@ -1070,7 +1071,7 @@ export const OutputsAndOutcomes = ({
                               {parseProofUrls(selectedPoint.data.proof).length > 0 ? (
                                 parseProofUrls(selectedPoint.data.proof).map((url, index) => (
                                   <a
-                                    key={index}
+                                    key={url}
                                     href={url}
                                     target="_blank"
                                     rel="noopener noreferrer"

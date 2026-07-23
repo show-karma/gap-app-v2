@@ -176,9 +176,11 @@ export function FundingMapList() {
 function FundingMapListSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: FUNDING_MAP_PAGE_SIZE }).map((_, i) => (
-        <FundingMapCardSkeleton key={i} />
-      ))}
+      {Array.from({ length: FUNDING_MAP_PAGE_SIZE }, (_, i) => `program-card-skeleton-${i}`).map(
+        (key) => (
+          <FundingMapCardSkeleton key={key} />
+        )
+      )}
     </div>
   );
 }

@@ -46,7 +46,7 @@ vi.mock("@headlessui/react", () => {
 
   // Mock Disclosure component for application summary
   const MockDisclosure = ({ children, defaultOpen }: any) => {
-    const [isOpen, setIsOpen] = React.useState(defaultOpen ?? false);
+    const [isOpen] = React.useState(defaultOpen ?? false);
     return typeof children === "function" ? children({ open: isOpen }) : children;
   };
   MockDisclosure.Button = ({ children, ...props }: any) => (
@@ -116,7 +116,7 @@ vi.mock("@heroicons/react/24/outline", () => ({
 vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, disabled, children, className, variant }: any) => {
     const testId =
-      children === "Confirm" || children === "Processing..." ? "confirm-button" : "cancel-button";
+      children === "Confirm" || children === "Processing…" ? "confirm-button" : "cancel-button";
     return (
       <button
         onClick={disabled ? undefined : onClick}
@@ -542,7 +542,7 @@ describe("StatusChangeModal", () => {
       );
 
       const cancelButtons = screen.getAllByTestId("cancel-button");
-      // Click the actual Cancel button (not the Processing... button)
+      // Click the actual Cancel button (not the Processing… button)
       const cancelButton = cancelButtons.find((btn) => btn.textContent === "Cancel");
       if (cancelButton) {
         await user.click(cancelButton);
@@ -552,10 +552,10 @@ describe("StatusChangeModal", () => {
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it('should show "Processing..." text when isSubmitting is true', () => {
+    it('should show "Processing…" text when isSubmitting is true', () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
 
-      expect(screen.getByText("Processing...")).toBeInTheDocument();
+      expect(screen.getByText("Processing…")).toBeInTheDocument();
       expect(screen.queryByText("Confirm")).not.toBeInTheDocument();
     });
 
@@ -719,9 +719,7 @@ describe("StatusChangeModal", () => {
 
   describe("Icon Colors by Status", () => {
     it("should show green icon for approved status", () => {
-      const { container } = renderWithQueryClient(
-        <StatusChangeModal {...defaultProps} status="approved" />
-      );
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const icon = screen.getByTestId("warning-icon");
       // Check that icon has green color class
@@ -991,8 +989,8 @@ describe("StatusChangeModal", () => {
 
       await user.type(amountInput, "1000");
 
-      // Manually set currency via input (simulating direct state change)
-      const currencyInput = screen.getByLabelText(/approved currency/i);
+      // Ensure currency input is rendered (getByLabelText throws if missing)
+      screen.getByLabelText(/approved currency/i);
       // Test that the form accepts various currency lengths
       await enterCurrency("USD");
 
@@ -1499,8 +1497,8 @@ describe("StatusChangeModal", () => {
 
       await user.type(amountInput, "1000");
 
-      // Currency is required but not entered
-      const currencyInput = screen.getByLabelText(/approved currency/i);
+      // Currency is required but not entered (getByLabelText throws if missing)
+      screen.getByLabelText(/approved currency/i);
 
       // Try to submit without currency
       const confirmButton = screen.getByTestId("confirm-button");

@@ -11,7 +11,7 @@ export function formatSitemapLastmod(date: Date = new Date()): string {
 // Page size of the LEGACY chunked child routes (/sitemaps/<kind>/sitemap/<n>.xml).
 // Those URLs were submitted to GSC individually and must keep serving the same
 // chunk boundaries; new crawling goes through the consolidated per-kind files.
-export const SITEMAP_PAGE_SIZE = 1000;
+const SITEMAP_PAGE_SIZE = 1000;
 
 // Page size used when fetching URL lists from the indexer — its hard cap
 // (limitQuerySchema max in gap-indexer's GetSitemapUrlsQuerySchema). Bigger
@@ -35,7 +35,7 @@ export const MAX_SITEMAP_CHUNK = 100_000;
 // Crawler traffic triggers the refresh (stale-while-revalidate), so no cron is
 // needed; a slow or unreachable indexer keeps serving the last good response
 // instead of an empty one.
-export const SITEMAP_REVALIDATE_SECONDS = 60 * 60 * 24; // 24h
+const SITEMAP_REVALIDATE_SECONDS = 60 * 60 * 24; // 24h
 
 // Next's Data Cache persists across deployments (unlike the CDN edge cache,
 // which is purged on every deploy), so a redeploy alone never forces a fresh
@@ -58,7 +58,7 @@ export const SITEMAP_CACHE_CONTROL =
 
 export type SitemapKind = "projects" | "impacts" | "grants" | "milestones" | "funding-programs";
 
-export interface SitemapKindMeta {
+interface SitemapKindMeta {
   kind: SitemapKind;
   priority: number;
   changeFrequency: "daily" | "weekly" | "monthly";

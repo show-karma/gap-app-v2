@@ -6,7 +6,7 @@ import type { ClaimCampaign, ClaimProvider, HedgeyProviderConfig } from "../type
  * Hedgey claim provider implementation.
  * Integrates with Hedgey Finance's token claim infrastructure.
  */
-export class HedgeyProvider implements ClaimProvider {
+class HedgeyProvider implements ClaimProvider {
   readonly id = "hedgey";
   readonly name = "Hedgey Finance";
 
@@ -20,9 +20,10 @@ export class HedgeyProvider implements ClaimProvider {
 
   async fetchCampaigns(): Promise<ClaimCampaign[]> {
     const envCampaignIds = process.env.NEXT_PUBLIC_HEDGEY_CAMPAIGN_IDS
-      ? process.env.NEXT_PUBLIC_HEDGEY_CAMPAIGN_IDS.split(",")
-          .map((id) => id.trim())
-          .filter(Boolean)
+      ? process.env.NEXT_PUBLIC_HEDGEY_CAMPAIGN_IDS.split(",").flatMap((id) => {
+          const trimmed = id.trim();
+          return trimmed ? [trimmed] : [];
+        })
       : undefined;
 
     const campaignIdsFilter = this.testCampaignIds ?? envCampaignIds;

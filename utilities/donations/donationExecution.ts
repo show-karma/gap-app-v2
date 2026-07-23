@@ -1,6 +1,24 @@
 import toast from "react-hot-toast";
 import { NETWORK_CONSTANTS } from "@/constants/donation";
 import type { SupportedToken } from "@/constants/supportedTokens";
+import type { DonationCartItem } from "@/store/donationCart";
+
+/**
+ * Per-project outcome of a batch donation execution.
+ */
+export interface DonationExecutionResult {
+  hash: string;
+  projectId: string;
+  status: string;
+}
+
+/**
+ * Returns a freshly-fetched wallet client (or null while the wallet is still
+ * syncing). Only the chain id is needed here, so the shape is kept minimal.
+ */
+export type FreshWalletClientGetter = (
+  chainId: number
+) => Promise<{ chain?: { id: number } } | null | undefined>;
 
 export interface DonationPayment {
   projectId: string;
@@ -70,7 +88,7 @@ export async function waitForWalletSync(
   payment: DonationPayment,
   activeChainId: number | null,
   switchToNetwork: (chainId: number) => Promise<void>,
-  getFreshWalletClient: (chainId: number) => Promise<any>
+  getFreshWalletClient: FreshWalletClientGetter
 ): Promise<number | null> {
   if (!payment.chainId || payment.chainId === activeChainId) {
     return activeChainId;
@@ -109,9 +127,9 @@ export async function waitForWalletSync(
  * Create completed donation records from results
  */
 export function createCompletedDonations(
-  results: any[],
+  results: DonationExecutionResult[],
   payments: DonationPayment[],
-  cartItems: any[]
+  cartItems: DonationCartItem[]
 ) {
   return results
     .map((result) => {

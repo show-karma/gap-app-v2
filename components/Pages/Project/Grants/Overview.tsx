@@ -40,10 +40,10 @@ const isValidAmount = (grant?: { amount?: string; details?: { amount?: string } 
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       }).format(+split0);
-      return amountToFormat + " " + split[1];
+      return `${amountToFormat} ${split[1]}`;
     }
     // it should format and round to 2 decimal places without use formatCurrency
-    return formatCurrency(+split0) + " " + split[1];
+    return `${formatCurrency(+split0)} ${split[1]}`;
   }
   const number = Number(amountToFormat);
   if (Number.isNaN(number)) return amountToFormat;
@@ -53,7 +53,6 @@ const isValidAmount = (grant?: { amount?: string; details?: { amount?: string } 
 export const GrantOverview = () => {
   const grant = useGrantStore((state) => state.grant);
   const loading = useGrantStore((state) => state.loading);
-  const refreshGrant = useGrantStore((state) => state.refreshGrant);
   const _isOwner = useOwnerStore((state) => state.isOwner);
 
   const grantData: { stat?: number | string; title: string }[] = [
@@ -201,7 +200,7 @@ export const GrantOverview = () => {
                 <p className="font-semibold text-black dark:text-white">Breakdown of Fund Usage</p>
               </div>
               <div
-                className="flex flex-col gap-4 px-4 py-4 border-t border-gray-200 w-full"
+                className="flex flex-col gap-4 p-4 border-t border-gray-200 w-full"
                 data-color-mode="light"
               >
                 <MarkdownPreview

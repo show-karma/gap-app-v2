@@ -11,7 +11,6 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
-import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { searchProjects } from "@/services/project-search.service";
@@ -110,6 +109,7 @@ function SearchProject({
       <MagnifyingGlassIcon className="h-5 w-5" />
       <input
         type="text"
+        aria-label="Search for the primary project"
         placeholder="Search for the primary project"
         className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0"
         onChange={(e) => debouncedSearch(e.target.value)}
@@ -157,9 +157,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
 
-  const { gap } = useGap();
   const { address, chain } = useAccount();
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   function closeModal() {
     setIsOpen(false);
   }
@@ -208,7 +207,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         schema: gapClient.findSchema("ProjectPointer"),
       });
 
-      await projectPointer.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await projectPointer.attest(walletSigner, changeStepperStep).then(async (res) => {
         showLoading("Indexing project merge...");
 
         let retries = 1000;
@@ -229,8 +228,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                 showSuccess(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
                 setTimeout(() => {
                   dismiss();
-                  router.push(`/project/${primaryProject?.details?.slug}`);
-                  router.refresh();
+                  push(`/project/${primaryProject?.details?.slug}`);
+                  refresh();
                 }, 1500);
               }
               retries -= 1;
@@ -244,7 +243,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
             });
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       showError("Failed to create project pointer.");
       errorManager(
         `Error creating project pointer`,

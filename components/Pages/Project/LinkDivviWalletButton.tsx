@@ -201,6 +201,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
                         </span>
                         <input
                           type="text"
+                          aria-label="Divvi Identifier"
                           value={walletAddress}
                           onChange={(e) => handleWalletChange(e.target.value)}
                           className="text-sm rounded-md w-full text-gray-900 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"

@@ -46,13 +46,16 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
       {isLoading ? (
         <div className="flex flex-col  gap-5 justify-center items-center h-full">
           <Spinner />
-          <div>Hold on, Grants Genie is working on finding you the best programs...</div>
+          <div>Hold on, Grants Genie is working on finding you the best programs…</div>
         </div>
       ) : recommendations?.length === 0 || error ? (
         <div>No recommendations available at the moment.</div>
       ) : (
-        recommendations.map((recommendation, index) => (
-          <div key={index} className="rounded-xl bg-teal-50 shadow p-8 gap-5 grid grid-cols-2">
+        recommendations.map((recommendation) => (
+          <div
+            key={recommendation.title}
+            className="rounded-xl bg-teal-50 shadow p-8 gap-5 grid grid-cols-2"
+          >
             <div className="">
               <h3 className="font-semibold">{recommendation.title}</h3>
               <p>{recommendation.description}</p>

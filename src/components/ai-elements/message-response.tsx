@@ -8,7 +8,7 @@ import remarkGfm from "remark-gfm";
 import { Streamdown } from "streamdown";
 import { cn } from "@/utilities/tailwind";
 
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
+type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
 const lazyMath = () => import("@streamdown/math").then((m) => m.math);
 const lazyMermaid = () => import("@streamdown/mermaid").then((m) => m.mermaid);

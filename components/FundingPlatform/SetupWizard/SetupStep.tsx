@@ -14,7 +14,7 @@ interface SetupStepProps {
   readOnly?: boolean;
 }
 
-export function SetupStep({ step, stepNumber, isLast = false, readOnly = false }: SetupStepProps) {
+export function SetupStep({ step, stepNumber, readOnly = false }: SetupStepProps) {
   const isCompleted = step.status === "completed";
   const isPending = step.status === "pending";
   const isDisabled = step.status === "disabled";

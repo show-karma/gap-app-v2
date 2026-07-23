@@ -4,12 +4,7 @@ export const CREDIT_PACKS = ["PACK_50", "PACK_100", "PACK_500"] as const;
 export const creditPackSchema = z.enum(CREDIT_PACKS);
 export type CreditPack = z.infer<typeof creditPackSchema>;
 
-export const creditPurchaseSchema = z.object({
-  pack: creditPackSchema,
-});
-export type CreditPurchaseInput = z.infer<typeof creditPurchaseSchema>;
-
-export interface CreditPackInfo {
+interface CreditPackInfo {
   id: CreditPack;
   label: string;
   credits: number;
@@ -41,14 +36,14 @@ export const CREDIT_PACK_INFO: Readonly<Record<CreditPack, CreditPackInfo>> = Ob
   },
 });
 
-export const TRANSACTION_TYPES = [
+const TRANSACTION_TYPES = [
   "SIGNUP_BONUS",
   "PURCHASE",
   "EVALUATION",
   "BULK_EVALUATION",
   "REFUND",
 ] as const;
-export type TransactionType = (typeof TRANSACTION_TYPES)[number];
+type TransactionType = (typeof TRANSACTION_TYPES)[number];
 
 export interface TransactionResponse {
   id: string;

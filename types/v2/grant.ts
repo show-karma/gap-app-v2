@@ -1,13 +1,5 @@
 import type { Community } from "./community";
 
-export type GrantScreen =
-  | "milestones-and-updates"
-  | "new"
-  | "edit"
-  | "impact-criteria"
-  | "overview"
-  | "outputs";
-
 /**
  * V2 Grant Details - flat structure with properties at top level
  *
@@ -24,7 +16,8 @@ export interface GrantDetails {
   startDate?: string | null;
   receivedDate?: string | null;
   payoutAddress?: string;
-  questions?: any[];
+  /** Mirrors the SDK's IGrantDetailsQuestion shape */
+  questions?: Array<{ query: string; explanation: string; type: string }>;
   selectedTrackIds?: string[];
   isCompleted?: boolean;
   completedAt?: string | null;
@@ -136,7 +129,7 @@ export interface GrantUpdate {
   };
 }
 
-export interface GrantCompletedTrackExplanation {
+interface GrantCompletedTrackExplanation {
   trackUID: string;
   explanation: string;
 }

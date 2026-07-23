@@ -1,6 +1,6 @@
 import type { WalletClient } from "viem";
 
-export interface WalletClientValidationResult {
+interface WalletClientValidationResult {
   isValid: boolean;
   chainId?: number;
   issues: string[];

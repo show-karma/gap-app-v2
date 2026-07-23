@@ -205,10 +205,6 @@ export function toHslToken(color: string): string | null {
   return null;
 }
 
-export function isWhitelabelDomain(hostname: string): boolean {
-  return getWhitelabelByDomain(hostname) !== null;
-}
-
 /**
  * Find the whitelabel domain for a community slug, matching production/staging environment.
  *

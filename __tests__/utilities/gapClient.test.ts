@@ -61,7 +61,7 @@ describe("gapClient", () => {
 
   it("should NOT eagerly initialize all networks on import", async () => {
     // Import the module fresh
-    const { getGapClient } = await import("@/utilities/gapClient");
+    await import("@/utilities/gapClient");
 
     // Before any getGapClient call, GAP constructor should NOT have been called
     expect(mockGAP).not.toHaveBeenCalled();

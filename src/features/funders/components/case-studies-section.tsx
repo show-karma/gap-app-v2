@@ -143,8 +143,8 @@ function _MetricCardComponent({ card }: { card: MetricCard }) {
 
       {communities.length > 0 && (
         <div className="flex items-center gap-2">
-          {communities.map(({ community, imageUrl }, index) => (
-            <CommunityImage key={index} src={imageUrl} alt={community.name} />
+          {communities.map(({ community, imageUrl }) => (
+            <CommunityImage key={community.slug} src={imageUrl} alt={community.name} />
           ))}
         </div>
       )}

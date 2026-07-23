@@ -34,7 +34,7 @@ function getClaimGrantsConfigForTenant(tenantId: TenantId): ClaimGrantsConfig {
   return { enabled: false, provider: "none" };
 }
 
-export function getDefaultAssets(): TenantAssets {
+function getDefaultAssets(): TenantAssets {
   return {
     logo: "/shared/karma/karma-logo-light.svg",
     logoDark: "/shared/karma/karma-logo-dark.svg",
@@ -43,7 +43,7 @@ export function getDefaultAssets(): TenantAssets {
   };
 }
 
-export function getDefaultContent(): TenantContent {
+function getDefaultContent(): TenantContent {
   return {
     welcomeText: "Welcome to",
     subtitle: "Community Funding Platform",
@@ -79,7 +79,7 @@ const isDev =
   process.env.NEXT_PUBLIC_VERCEL_ENV === "development" ||
   process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
 
-export const programsChainId = isDev ? 11155111 : 42161;
+const programsChainId = isDev ? 11155111 : 42161;
 
 const tenantMetadata: Record<
   TenantId,

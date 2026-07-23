@@ -78,7 +78,7 @@ export const ProjectActivity = () => {
       </div>
 
       <Tab.Group onChange={setSelectedTab}>
-        <Tab.List className="flex space-x-2 rounded-xl bg-blue-50 dark:bg-zinc-800 p-1">
+        <Tab.List className="flex gap-x-2 rounded-xl bg-blue-50 dark:bg-zinc-800 p-1">
           {tabs.map((tab) => (
             <Tab
               key={tab.name}
@@ -97,9 +97,9 @@ export const ProjectActivity = () => {
           ))}
         </Tab.List>
         <Tab.Panels className="mt-2">
-          {tabs.map((_tab, idx) => (
+          {tabs.map((tab) => (
             <Tab.Panel
-              key={idx}
+              key={tab.name}
               className={cn(
                 "rounded-xl p-3",
                 "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none"

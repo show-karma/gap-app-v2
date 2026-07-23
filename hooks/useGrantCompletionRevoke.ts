@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -42,7 +41,6 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
   const [isRevoking, setIsRevoking] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { startAttestation, showSuccess, showError, showLoading, changeStepperStep, dismiss } =
     useAttestationToast();
@@ -156,7 +154,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         await refetchGrants();
         await refreshGrant();
         showSuccess(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
-      } catch (onChainError: any) {
+      } catch (onChainError) {
         // Fallback to off-chain revocation if on-chain fails
         dismiss(); // Reset toast since we're falling back
 

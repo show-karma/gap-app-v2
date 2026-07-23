@@ -14,7 +14,7 @@ import { useOwnerStore } from "@/store";
  * This prevents multiple navbar components from calling the same hooks
  * repeatedly, reducing duplicate API calls.
  */
-export interface NavbarPermissionsContextValue {
+interface NavbarPermissionsContextValue {
   // Auth state
   isLoggedIn: boolean;
   address: Hex | undefined;
@@ -133,5 +133,3 @@ export function useNavbarPermissions(): NavbarPermissionsContextValue {
 
   return context;
 }
-
-export { NavbarPermissionsContext };

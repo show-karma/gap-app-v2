@@ -8,7 +8,6 @@ import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileN
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -29,7 +28,6 @@ interface DeleteMemberDialogProps {
 export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { gap } = useGap();
   const { address, chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
@@ -57,7 +55,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         return;
       }
 
-      const { walletSigner, gapClient } = setup;
+      const { walletSigner } = setup;
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
       const member = fetchedProject.members.find(
@@ -97,7 +95,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
       };
 
       try {
-        const res = await member.revoke(walletSigner as any, changeStepperStep);
+        const res = await member.revoke(walletSigner, changeStepperStep);
         changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -107,7 +105,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         changeStepperStep("indexed");
         showSuccess("Member removed successfully");
         closeModal();
-      } catch (onChainError: any) {
+      } catch (onChainError) {
         // Silently fallback to off-chain revoke
         setIsStepper(false); // Reset stepper since we're falling back
 
@@ -128,7 +126,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
           throw onChainError;
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       showError(`Failed to remove member ${memberAddress}.`);
       errorManager(
         `Error removing member ${memberAddress}`,

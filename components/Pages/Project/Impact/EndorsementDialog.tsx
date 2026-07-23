@@ -11,7 +11,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getProject } from "@/services/project.service";
@@ -25,9 +24,7 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { shortAddress } from "@/utilities/shortAddress";
 
-type EndorsementDialogProps = {};
-
-export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
+export const EndorsementDialog: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { isEndorsementOpen: isOpen, setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
@@ -35,11 +32,10 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const project = useProjectStore((state) => state.project);
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { gap } = useGap();
   const { chain } = useAccount();
   const { address } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   // No hardcoded `true`: the admin-gated contacts GET must only fire for
   // resolved project admins. Non-admin endorsers previously triggered a
@@ -151,7 +147,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
               // Let the share dialog render before any route transition.
               if (pathname !== targetPath) {
                 setTimeout(() => {
-                  router.push(targetPath);
+                  push(targetPath);
                 }, 250);
               }
             }, 1500);

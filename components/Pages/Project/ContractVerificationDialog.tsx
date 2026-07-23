@@ -185,7 +185,7 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                   )}
 
                   {/* Status Message */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-x-2">
                     {step === VerificationStep.SUCCESS ? (
                       <CheckCircleIcon className="h-6 w-6 text-green-500" />
                     ) : step === VerificationStep.ERROR ? (
@@ -234,7 +234,7 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex justify-end space-x-3 mt-6">
+                  <div className="flex justify-end gap-x-3 mt-6">
                     {step === VerificationStep.SUCCESS ? (
                       <Button onClick={handleClose}>Close</Button>
                     ) : (

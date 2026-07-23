@@ -13,7 +13,7 @@ import { INDEXER } from "@/utilities/indexer";
  * deals with workspace-level concerns.
  */
 
-export interface TestWorkspaceResponse {
+interface TestWorkspaceResponse {
   teamId: string;
   botUserId: string;
 }

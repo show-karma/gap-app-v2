@@ -48,7 +48,7 @@ export function FaucetAdminDashboard() {
 
         {/* Tab Navigation */}
         <Tab.Group selectedIndex={selectedIndex} onChange={setSelectedIndex}>
-          <Tab.List className="flex space-x-1 rounded-xl bg-white dark:bg-zinc-800 p-1 shadow-sm mb-8">
+          <Tab.List className="flex gap-x-1 rounded-xl bg-white dark:bg-zinc-800 p-1 shadow-sm mb-8">
             {tabs.map((tab) => (
               <Tab
                 key={tab.name}
@@ -63,7 +63,7 @@ export function FaucetAdminDashboard() {
                   )
                 }
               >
-                <div className="flex items-center justify-center space-x-2">
+                <div className="flex items-center justify-center gap-x-2">
                   <tab.icon className="w-5 h-5" />
                   <span>{tab.name}</span>
                 </div>

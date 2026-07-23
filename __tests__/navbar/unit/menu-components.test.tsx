@@ -313,8 +313,7 @@ describe("ExploreContent Component", () => {
     it("should use proper padding", () => {
       const { container } = renderWithProviders(<ExploreContent variant="desktop" />);
       const mainContainer = container.querySelector(".flex.flex-col.gap-4");
-      expect(mainContainer).toHaveClass("px-4");
-      expect(mainContainer).toHaveClass("py-4");
+      expect(mainContainer).toHaveClass("p-4");
     });
   });
 

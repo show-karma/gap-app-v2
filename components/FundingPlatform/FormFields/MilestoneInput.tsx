@@ -2,7 +2,7 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import type { FC } from "react";
-import type { Control, FieldError } from "react-hook-form";
+import type { Control, FieldError, FieldErrorsImpl, FieldValues, Merge } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import { MILESTONE_FIELD_REQUIRED } from "@/components/FundingPlatform/ApplicationView/lib/repeatable-item-schemas";
 import { Button } from "@/components/Utilities/Button";
@@ -16,9 +16,9 @@ const RequiredMark: FC = () => <span className="text-red-500 ml-1">{" *"}</span>
 
 interface MilestoneInputProps {
   field: IFormField;
-  control: Control<any>;
+  control: Control<FieldValues>;
   fieldKey: string;
-  error?: FieldError | any;
+  error?: FieldError | Merge<FieldError, FieldErrorsImpl<FieldValues>>;
   isLoading?: boolean;
 }
 
@@ -157,7 +157,7 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                 render={({ field: dateField, fieldState }) => {
                   const dateValue = dateField.value
                     ? (() => {
-                        const d = new Date(dateField.value + "T00:00:00");
+                        const d = new Date(`${dateField.value}T00:00:00`);
                         return Number.isNaN(d.getTime()) ? undefined : d;
                       })()
                     : undefined;

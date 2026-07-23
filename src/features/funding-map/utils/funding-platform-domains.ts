@@ -20,17 +20,3 @@ export const FUNDING_PLATFORM_DOMAINS = {
     prod: "https://app.karmahq.xyz",
   },
 };
-
-export const FUNDING_PLATFORM_TENANT_IDS = [
-  "optimism",
-  "arbitrum",
-  "celo",
-  "polygon",
-  "scroll",
-  "karma",
-  "celopg",
-  "regen-coordination",
-  "localism-fund",
-  "filecoin",
-  "for-the-world",
-] as const;

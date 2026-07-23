@@ -14,12 +14,17 @@ import { marketingLayoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
+const PROJECT_CARD_SKELETON_KEYS = Array.from(
+  { length: 8 },
+  (_, index) => `project-card-skeleton-${index}`
+);
+
 function ProjectsSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {Array.from({ length: 8 }).map((_, index) => (
+      {PROJECT_CARD_SKELETON_KEYS.map((key, index) => (
         <div
-          key={index}
+          key={key}
           className="rounded-2xl overflow-hidden bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-brand-300/20 dark:border-brand-300/10 animate-pulse"
           style={{ animationDelay: `${index * 0.05}s` }}
         >

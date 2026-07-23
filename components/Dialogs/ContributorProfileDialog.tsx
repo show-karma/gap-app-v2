@@ -180,7 +180,7 @@ export const ContributorProfileDialog: FC = () => {
         recipient: (smartWalletAddress || address) as `0x${string}`,
         schema: gapClient.findSchema("ContributorProfile"),
       });
-      const res = await contributorProfile.attest(walletSigner as any, changeStepperStep);
+      const res = await contributorProfile.attest(walletSigner, changeStepperStep);
       showLoading("Indexing profile...");
 
       if (!isProjectMember && !isGlobal && inviteCodeParam) {

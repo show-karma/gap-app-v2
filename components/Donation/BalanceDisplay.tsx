@@ -81,11 +81,11 @@ export function BalanceDisplay({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <span className="text-gray-500 dark:text-gray-400">Loading balance...</span>
+          <span className="text-gray-500 dark:text-gray-400">Loading balance…</span>
         </div>
         {isSlowFetch && (
           <div className="mt-0.5 text-amber-600 dark:text-amber-400">
-            Taking longer than expected...
+            Taking longer than expected…
           </div>
         )}
       </div>

@@ -11,7 +11,8 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { z } from "zod";
+import type { z } from "zod";
+import { milestoneSchema } from "@/components/Forms/Milestone.schema";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -30,39 +31,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { errorManager } from "../Utilities/errorManager";
-
-// Exported as a test seam so the refine's error-path fix (dates.startsAt, not
-// dates.dates.startsAt) can be locked with a direct schema test instead of a
-// brittle full-form render.
-export const milestoneSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: MESSAGES.MILESTONES.FORM.TITLE.MIN })
-    .max(50, { message: MESSAGES.MILESTONES.FORM.TITLE.MAX }),
-  priority: z.number().optional(),
-  description: z.string().optional(),
-  dates: z
-    .object({
-      endsAt: z.date({
-        error: MESSAGES.MILESTONES.FORM.DATE,
-      }),
-      startsAt: z.date().optional(),
-    })
-    .refine(
-      (data) => {
-        const endsAt = data.endsAt.getTime() / 1000;
-        const startsAt = data.startsAt ? data.startsAt.getTime() / 1000 : undefined;
-
-        return startsAt ? startsAt <= endsAt : true;
-      },
-      {
-        message: "Start date must be before the end date",
-        // Relative to the `dates` object this refine is attached to; a
-        // ["dates", "startsAt"] path would resolve to dates.dates.startsAt
-        path: ["startsAt"],
-      }
-    ),
-});
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -100,24 +68,15 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useIsCommunityAdmin();
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
   const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
-  const {
-    startAttestation,
-    showLoading,
-    showSuccess,
-    showError,
-    dismiss,
-    updateStep,
-    changeStepperStep,
-    setIsStepper,
-  } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, updateStep, changeStepperStep, setIsStepper } =
+    useAttestationToast();
 
-  const router = useRouter();
+  const { push, refresh } = useRouter();
 
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
@@ -153,7 +112,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         recipient: (recipient as Hex) || smartWalletAddress || address,
         data: milestone,
       });
-      await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await milestoneToAttest.attest(walletSigner, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -181,7 +140,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             if (milestoneExists) {
               retries = 0;
               showSuccess(MESSAGES.MILESTONES.CREATE.SUCCESS);
-              router.push(
+              push(
                 PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                   (project?.details?.slug || project?.uid) as string,
                   fetchedGrant?.uid as string,
@@ -189,7 +148,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                 )
               );
               setTimeout(() => {
-                router.refresh();
+                refresh();
                 afterSubmit?.();
               }, 1500);
             }
@@ -239,7 +198,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
           <Controller
             name="priority"
             control={control}
-            render={({ field, formState, fieldState }) => (
+            render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>Milestone priority (optional)</div>
                 <div>
@@ -252,6 +211,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                       {({ close }) => (
                         <>
                           <button
+                            type="button"
                             key={"none"}
                             className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
                             onClick={(event) => {
@@ -269,6 +229,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                           </button>
                           {priorities.map((priority) => (
                             <button
+                              type="button"
                               key={priority}
                               className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
                               disabled={milestones?.some((m) => m.priority === priority)}

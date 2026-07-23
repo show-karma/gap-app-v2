@@ -171,9 +171,9 @@ function RecordPaymentDialogInner({
       list.push(option);
       groups.set(option.category, list);
     }
-    return (["milestone", "payment", "custom"] as OptionCategory[])
-      .filter((cat) => groups.has(cat))
-      .map((cat) => ({ category: cat, ...CATEGORY_CONFIG[cat], items: groups.get(cat)! }));
+    return (["milestone", "payment", "custom"] as OptionCategory[]).flatMap((cat) =>
+      groups.has(cat) ? [{ category: cat, ...CATEGORY_CONFIG[cat], items: groups.get(cat)! }] : []
+    );
   }, [milestoneOptions]);
 
   // Pre-select milestone and pre-fill amount when opening from the status dropdown
@@ -211,9 +211,9 @@ function RecordPaymentDialogInner({
 
     const selectedMilestones = milestoneOptions.filter((m) => selectedKeys.includes(m.key));
 
-    const paidAllocationIds = selectedMilestones
-      .map((m) => m.allocationId)
-      .filter(Boolean) as string[];
+    const paidAllocationIds = selectedMilestones.flatMap((m) =>
+      m.allocationId ? [m.allocationId] : []
+    );
 
     const milestoneBreakdown: Record<string, string> | undefined =
       selectedMilestones.length > 0
@@ -356,6 +356,7 @@ function RecordPaymentDialogInner({
                       >
                         <input
                           type="checkbox"
+                          aria-label={`Select ${option.label}`}
                           checked={isSelected}
                           onChange={() => toggleSelection(option.key)}
                           disabled={isDisabled}

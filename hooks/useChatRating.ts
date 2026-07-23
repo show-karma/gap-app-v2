@@ -6,9 +6,9 @@ import { useAgentChatStore } from "@/store/agentChat";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 
-export type RatingValue = 1 | -1;
+type RatingValue = 1 | -1;
 
-export interface UseChatRatingResult {
+interface UseChatRatingResult {
   rating: RatingValue | null;
   /**
    * Submit a thumbs rating. Returns true on success, false on any failure

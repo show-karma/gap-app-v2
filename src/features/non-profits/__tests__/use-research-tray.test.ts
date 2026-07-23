@@ -235,7 +235,6 @@ describe("useRemoveFromResearchTray", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    const cached = queryClient.getQueryData<ResearchTrayEntry[]>(RESEARCH_TRAY_KEY);
     // After rollback + invalidation, cache might be repopulated; check error occurred
     expect(result.current.isError).toBe(true);
   });

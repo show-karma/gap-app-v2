@@ -238,12 +238,6 @@ export const createMockUseAuth = (authState: AuthFixture["authState"] | any) => 
 });
 
 /**
- * Alias for createMockUseAuth to support integration tests
- * Integration tests were written using createMockUsePrivy naming
- */
-export const createMockUsePrivy = createMockUseAuth;
-
-/**
  * Create mock permissions object from permission state
  */
 export const createMockPermissions = (permissions: AuthFixture["permissions"]) => ({
@@ -658,8 +652,8 @@ export const renderWithProviders = (
     mockUseAuth,
     mockUsePrivy,
     mockPermissions,
-    mockUseLogout,
-    mockModalStore,
+    mockUseLogout: _mockUseLogout,
+    mockModalStore: _mockModalStore,
     mockUseTheme,
     mockUseContributorProfileModalStore,
     ...renderOptions

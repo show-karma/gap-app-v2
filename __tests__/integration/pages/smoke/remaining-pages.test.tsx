@@ -193,6 +193,8 @@ vi.mock("@/components/FundingPlatform/NoProgramsEmptyState", () => ({
 }));
 vi.mock("@/components/FundingPlatform/ProgramSetupStatus", () => ({
   ProgramSetupStatus: () => null,
+}));
+vi.mock("@/components/FundingPlatform/ProgramSetupStatus.helpers", () => ({
   hasFormConfigured: () => true,
 }));
 

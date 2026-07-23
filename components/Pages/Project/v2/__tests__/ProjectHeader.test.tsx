@@ -19,7 +19,7 @@ vi.mock("react-wrap-balancer", () => ({
 
 // Mock utilities
 vi.mock("@/utilities/customLink", () => ({
-  isCustomLink: (link: any) => !!link?.name,
+  isCustomLink: (link?: { name?: string }) => !!link?.name,
 }));
 
 vi.mock("@/utilities/ensureProtocol", () => ({
@@ -43,12 +43,12 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
 
 // Mock the VerificationBadge component
 vi.mock("../icons/VerificationBadge", () => ({
-  VerificationBadge: (props: any) => <span data-testid={props["data-testid"]} />,
+  VerificationBadge: (props: Record<string, string>) => <span data-testid={props["data-testid"]} />,
 }));
 
 // Mock the ProfilePicture component
 vi.mock("@/components/Utilities/ProfilePicture", () => ({
-  ProfilePicture: ({ name, imageURL }: any) => (
+  ProfilePicture: ({ name, imageURL }: { name?: string; imageURL?: string }) => (
     <div data-testid="profile-picture">{imageURL ? <img src={imageURL} alt={name} /> : name}</div>
   ),
 }));
@@ -221,9 +221,6 @@ describe("ProjectHeader", () => {
     it("should render profile pictures for desktop and mobile", () => {
       render(<ProjectHeader project={mockProject} />);
 
-      // ProfilePicture renders img element when valid URL is provided
-      const images = screen.queryAllByRole("img");
-      // We expect at least some images to be rendered (could be avatars)
       // The component should render successfully
       expect(screen.getByTestId("project-header")).toBeInTheDocument();
     });

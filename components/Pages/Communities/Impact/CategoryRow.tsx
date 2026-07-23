@@ -1,5 +1,4 @@
 "use client";
-import { Card } from "@tremor/react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
@@ -20,26 +19,30 @@ import formatCurrency, { formatWeiToEth } from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { SegmentSkeleton } from "./SegmentSkeleton";
-import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./TimeframeSelector";
+import { type TimeframeOption, TimeframeSelector } from "./TimeframeSelector";
+import { timeframeOptions } from "./TimeframeSelector.constants";
 
-export const fundedAmountFormatter = (value: string) => {
-  const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);
-  const formattedAmount = Number(amount.toFixed(2));
-  if (Number.isNaN(formattedAmount)) {
-    return value;
-  }
-  return formattedAmount;
-};
+/** Minimal structural shape of the aggregated indicators returned by useAggregatedIndicators. */
+interface AggregatedIndicatorLike {
+  name: string;
+  aggregatedData: { value: number; timestamp: string }[];
+}
 
-const prepareAggregatedChartData = (indicators: any[]) => {
+interface AggregatedChartDatapoint {
+  rawDate: string;
+  date: string;
+  [indicatorName: string]: number | string;
+}
+
+const prepareAggregatedChartData = (indicators: AggregatedIndicatorLike[]) => {
   if (!indicators.length) return [];
 
   // Combine all datapoints from all indicators into a single timeline
   // Use rawDate for sorting and date for display
-  const allDatapoints: any[] = [];
+  const allDatapoints: AggregatedChartDatapoint[] = [];
 
   indicators.forEach((indicator) => {
-    indicator.aggregatedData.forEach((datapoint: any) => {
+    indicator.aggregatedData.forEach((datapoint) => {
       const formattedDate = formatDate(new Date(datapoint.timestamp), "UTC");
       const existingIndex = allDatapoints.findIndex((dp) => dp.rawDate === datapoint.timestamp);
       if (existingIndex >= 0) {
@@ -47,7 +50,7 @@ const prepareAggregatedChartData = (indicators: any[]) => {
         allDatapoints[existingIndex][indicator.name] = datapoint.value;
       } else {
         // Create new datapoint entry with formatted date for display
-        const newDatapoint: any = {
+        const newDatapoint: AggregatedChartDatapoint = {
           rawDate: datapoint.timestamp,
           date: formattedDate,
         };
@@ -189,7 +192,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
       </div>
 
       {/* Chart body */}
-      <div className="px-5 py-5">
+      <div className="p-5">
         {isLoading ? (
           <div className="flex h-40 items-center justify-center">
             <Spinner />
@@ -275,13 +278,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
   );
 };
 
-export const EmptySegment = ({
-  type,
-  category,
-}: {
-  type: "output" | "outcome";
-  category: string;
-}) => {
+const EmptySegment = ({ type, category }: { type: "output" | "outcome"; category: string }) => {
   return (
     <div className="p-6 bg-[#f8f9fb] dark:bg-zinc-800 flex flex-col justify-center items-center w-full h-full">
       <div className="flex flex-col justify-center items-center gap-8 h-full w-full border border-dashed border-gray-400 dark:border-gray-600 rounded-xl px-12 py-6">

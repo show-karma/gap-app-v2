@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/utilities/tailwind";
 
-export interface MoreActionsDropdownProps {
+interface MoreActionsDropdownProps {
   referenceNumber: string;
   onDeleteClick: () => void;
   canDelete: boolean;
@@ -30,7 +30,7 @@ export interface MoreActionsDropdownProps {
   canEditPostApproval?: boolean;
 }
 
-export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
+const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
   referenceNumber: _referenceNumber,
   onDeleteClick,
   canDelete,

@@ -11,7 +11,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
  * Helper to get the completion object from a milestone.
  * API may return completion as an object or an array.
  */
-export const getCompletionData = (milestone: GrantMilestone) => {
+const getCompletionData = (milestone: GrantMilestone) => {
   const completed = milestone.completed;
   if (!completed) return null;
 
@@ -27,9 +27,6 @@ export const getCompletionData = (milestone: GrantMilestone) => {
 
   return completed;
 };
-
-export const isMilestoneCompleted = (milestone: GrantMilestone): boolean =>
-  getCompletionData(milestone) !== null;
 
 type GrantContext =
   | {

@@ -76,7 +76,7 @@ import { useCampaigns } from "@/src/features/claim-funds/hooks/use-campaigns";
 describe("useCampaigns — query key includes tenantId", () => {
   it("places tenantId at index 2 in the query key", () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useCampaigns("tenant-xyz", CLAIM_GRANTS), { wrapper });
+    renderHook(() => useCampaigns("tenant-xyz", CLAIM_GRANTS), { wrapper });
 
     const queries = wrapper.queryClient.getQueryCache().findAll();
     expect(queries.length).toBeGreaterThan(0);
@@ -161,12 +161,7 @@ describe("useClaimTransaction — invalidates cache keys with tenantId on succes
 
     renderHook(() => useClaimTransaction("tenant-xyz", CLAIM_GRANTS), { wrapper });
 
-    // Simulate a successful claim by triggering onSuccess directly via useMutation options
-    // Since we're using a real QueryClient here, we access the mutation options via the
-    // QueryClient's mutation cache.
-    const mutations = wrapper.queryClient.getMutationCache().findAll();
-    // The hook registers a mutation; find its onSuccess callback
-    // As an alternative, verify the query key structure is correct by checking the
+    // Verify the query key structure is correct by checking the
     // invalidation call shape in the hook source (integration-style verification).
 
     // The hook calls: queryClient.invalidateQueries({ queryKey: ["claim-eligibility", providerId, tenantId, address] })

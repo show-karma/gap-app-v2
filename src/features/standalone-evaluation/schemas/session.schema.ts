@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-export const EVALUATION_STYLES = ["RUBRIC", "NARRATIVE", "QUICK_SCORE"] as const;
+const EVALUATION_STYLES = ["RUBRIC", "NARRATIVE", "QUICK_SCORE"] as const;
 export const evaluationStyleSchema = z.enum(EVALUATION_STYLES);
 export type EvaluationStyle = z.infer<typeof evaluationStyleSchema>;
 
-export const SESSION_STATUSES = ["DRAFT", "ITERATING", "READY_FOR_BULK", "COMPLETED"] as const;
-export const sessionStatusSchema = z.enum(SESSION_STATUSES);
+const SESSION_STATUSES = ["DRAFT", "ITERATING", "READY_FOR_BULK", "COMPLETED"] as const;
+const sessionStatusSchema = z.enum(SESSION_STATUSES);
 export type SessionStatus = z.infer<typeof sessionStatusSchema>;
 
 // Field caps mirror BE schema (kept conservative).
@@ -13,7 +13,6 @@ export const PROGRAM_DESCRIPTION_MAX = 10_000;
 export const EVALUATION_CRITERIA_MAX = 10_000;
 export const APPLICATION_TEXT_MAX = 50_000;
 export const FEEDBACK_MAX = 2_000;
-export const SAMPLE_APPLICATION_MAX = 50_000;
 
 export const sessionCreateSchema = z.object({
   programDescription: z
@@ -46,7 +45,6 @@ export const sessionEvaluateSchema = z.object({
       `Application text must be at most ${APPLICATION_TEXT_MAX} characters`
     ),
 });
-export type SessionEvaluateInput = z.infer<typeof sessionEvaluateSchema>;
 
 export const sessionFeedbackSchema = z.object({
   feedback: z
@@ -55,19 +53,6 @@ export const sessionFeedbackSchema = z.object({
     .min(5, "Feedback must be at least 5 characters")
     .max(FEEDBACK_MAX, `Feedback must be at most ${FEEDBACK_MAX} characters`),
 });
-export type SessionFeedbackInput = z.infer<typeof sessionFeedbackSchema>;
-
-export const sessionSampleSchema = z.object({
-  sampleApplication: z
-    .string()
-    .trim()
-    .min(20, "Sample application must be at least 20 characters")
-    .max(
-      SAMPLE_APPLICATION_MAX,
-      `Sample application must be at most ${SAMPLE_APPLICATION_MAX} characters`
-    ),
-});
-export type SessionSampleInput = z.infer<typeof sessionSampleSchema>;
 
 export interface SessionResponse {
   id: string;

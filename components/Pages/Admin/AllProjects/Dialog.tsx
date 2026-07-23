@@ -94,7 +94,7 @@ export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
       <MarkdownPreview className="line-clamp-2" source={description} />
       <Button
         onClick={openModal}
-        className="px-0 py-0 bg-transparent text-blue-500 underline hover:bg-transparent dark:hover:bg-transparent"
+        className="p-0 bg-transparent text-blue-500 underline hover:bg-transparent dark:hover:bg-transparent"
       >
         See more
       </Button>

@@ -111,7 +111,6 @@ vi.mock("@/src/components/ui/ApplicationStatusChip", () => ({
 
 vi.mock("@/src/components/navigation/Link", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode } & Record<string, unknown>) => (
-    // biome-ignore lint/a11y/useValidAnchor: stub
     <a {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>{children}</a>
   ),
 }));
@@ -136,6 +135,12 @@ vi.mock(
   "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/success/WhatHappensNext",
   () => ({
     WhatHappensNext: () => <div data-testid="what-happens-next">WhatHappensNext</div>,
+  })
+);
+
+vi.mock(
+  "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/success/WhatHappensNext.helpers",
+  () => ({
     extractApplicantName: (d: Record<string, unknown> | undefined) =>
       (d?.name as string) ?? "Applicant",
   })

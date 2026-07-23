@@ -40,7 +40,7 @@ const mockUsePayoutConfigsByCommunityPublic =
 // ─── Mock child components ────────────────────────────────────────────────────
 
 vi.mock("@/components/Pages/Admin/ControlCenter/FilterToolbar", () => ({
-  FilterToolbar: (props: any) => <div data-testid="filter-toolbar">FilterToolbar</div>,
+  FilterToolbar: (_props: any) => <div data-testid="filter-toolbar">FilterToolbar</div>,
 }));
 
 vi.mock("@/components/Pages/Admin/ControlCenter/ControlCenterTable", () => ({

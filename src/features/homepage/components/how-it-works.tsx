@@ -119,10 +119,12 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
       return undefined;
     }
 
+    let transitionTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
     intervalRef.current = window.setInterval(() => {
       setIsAnimating(true);
 
-      setTimeout(() => {
+      transitionTimeoutId = setTimeout(() => {
         setOrder((prev) => {
           const newOrder = [...prev];
           const first = newOrder.shift()!;
@@ -138,11 +140,22 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      if (transitionTimeoutId !== undefined) {
+        clearTimeout(transitionTimeoutId);
+      }
     };
   }, [hasMultipleItems, prefersReducedMotion]);
 
   // The card that will enter at the back (currently front card)
   const enteringCardIndex = order[0];
+
+  // Key includes the stack position on purpose: cards remount when the stack
+  // rotates, so the post-rotation style change does not transition.
+  const stackItems = order.map((cardIndex, stackPosition) => ({
+    cardIndex,
+    stackPosition,
+    key: `card-${cardIndex}-${stackPosition}`,
+  }));
 
   return (
     <div
@@ -150,7 +163,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
       style={{ height: `${ANIMATION_CONFIG.containerHeight}px` }}
       aria-live="polite"
     >
-      {order.map((cardIndex, stackPosition) => {
+      {stackItems.map(({ cardIndex, stackPosition, key }) => {
         const cardText = items[cardIndex] ?? "";
         const isLeaving = isAnimating && stackPosition === 0;
 
@@ -181,8 +194,8 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
 
         return (
           <div
-            key={`card-${cardIndex}-${stackPosition}`}
-            className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
+            key={key}
+            className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background p-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
             style={{
               transform: `scale(${scale}) translateY(${y}px)`,
               opacity,
@@ -200,7 +213,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
       {/* Entering card - rendered separately during animation */}
       <div
         key={`entering-${enteringCardIndex}`}
-        className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
+        className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background p-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
         style={{
           transform: `scale(${
             isAnimating
@@ -270,8 +283,8 @@ export function HowItWorks() {
 
           {/* Step Cards */}
           <div className="flex flex-col lg:flex-row lg:justify-between items-end gap-4 lg:gap-4 flex-1 w-full lg:w-auto relative z-10">
-            {steps.map((step, index) => (
-              <StepCard key={index} text={step.text} size={step.size} />
+            {steps.map((step) => (
+              <StepCard key={step.text} text={step.text} size={step.size} />
             ))}
             <RotatingOutcomeCard items={outcomes} />
           </div>

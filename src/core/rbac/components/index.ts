@@ -1,12 +1,4 @@
-export {
-  AdminOnly,
-  Can,
-  Cannot,
-  PermissionDeniedMessage,
-  RequirePermission,
-  RequireReviewer,
-  RequireRole,
-} from "./can";
+export { AdminOnly } from "./can";
 
 export {
   FundingPlatformGuard,

@@ -194,9 +194,9 @@ export const VirtualizedDatapointsTable = ({
           ) : datapoint.proof ? (
             <div className="flex flex-col gap-1">
               {parseProofUrls(datapoint.proof).length > 0 ? (
-                parseProofUrls(datapoint.proof).map((url, urlIndex) => (
+                parseProofUrls(datapoint.proof).map((url) => (
                   <a
-                    key={urlIndex}
+                    key={url}
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"

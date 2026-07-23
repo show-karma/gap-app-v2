@@ -11,7 +11,7 @@ interface AddedTeamMember {
   memberName: string;
 }
 
-export interface InvitedGranteePayload {
+interface InvitedGranteePayload {
   email: string;
   name: string;
 }

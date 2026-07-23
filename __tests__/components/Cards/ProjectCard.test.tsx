@@ -464,7 +464,6 @@ describe("ProjectCard", () => {
 
   describe("Integration with utilities", () => {
     it("should call formatCurrency for all numeric stats", () => {
-      const formatCurrencyMock = vi.mocked(formatCurrency);
       render(<ProjectCard project={mockProject} index={0} />);
 
       expect(formatCurrency).toHaveBeenCalledWith(5); // grants
@@ -472,7 +471,6 @@ describe("ProjectCard", () => {
     });
 
     it("should call formatDate with createdAt string", () => {
-      const formatDateMock = vi.mocked(formatDate);
       render(<ProjectCard project={mockProject} index={0} />);
 
       // formatDate accepts string (ISO date), number (timestamp), or Date

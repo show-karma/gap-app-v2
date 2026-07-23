@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, FileText, Lock, type LucideIcon, MessageSquare, Target } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/utilities/tailwind";
 
 export type ApplicationTabKey = "details" | "milestones" | "post-approval" | "comments" | "notes";
@@ -61,11 +61,3 @@ export function ApplicationTabBar({ tabs, activeTab, onTabChange }: ApplicationT
     </div>
   );
 }
-
-export const TAB_ICONS = {
-  details: FileText,
-  milestones: Target,
-  "post-approval": CheckCircle2,
-  comments: MessageSquare,
-  notes: Lock,
-} satisfies Record<ApplicationTabKey, LucideIcon>;

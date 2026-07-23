@@ -2,6 +2,7 @@
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
+import type { MultiAttestPayload } from "@show-karma/karma-gap-sdk/core/types";
 import type { Transaction } from "ethers";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -59,14 +60,14 @@ export const UnifiedMilestoneScreen = () => {
   // wagmi address is DISPLAY/recipient-only — never gate signing on it (#1821).
   // The signing identity comes from useSetupChainAndWallet (Privy signer).
   const { address, chain } = useAccount();
+  const { connectWallet } = useAuth();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { connectWallet } = useAuth();
   const { startAttestation, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
   const { projectId } = useParams();
   const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
-  const router = useRouter();
+  const { push } = useRouter();
 
   const {
     register,
@@ -131,7 +132,7 @@ export const UnifiedMilestoneScreen = () => {
       };
 
       await newObjective
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .attest(walletSigner, sanitizedData, changeStepperStep)
         .then(async (res) => {
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
@@ -278,7 +279,7 @@ export const UnifiedMilestoneScreen = () => {
             data: milestone,
           });
 
-          const result = await milestoneToAttest.attest(walletSigner as any, changeStepperStep);
+          const result = await milestoneToAttest.attest(walletSigner, changeStepperStep);
           anyAttested = true;
 
           // Handle indexer notification
@@ -312,7 +313,7 @@ export const UnifiedMilestoneScreen = () => {
           const grantUIDs = chainGrants.map((item) => item.grant.uid as `0x${string}`);
 
           // Create separate milestone objects for each grant
-          const allPayloads: any[] = [];
+          const allPayloads: MultiAttestPayload = [];
 
           for (const grantUID of grantUIDs) {
             // Create a new milestone for each grant with direct reference
@@ -333,7 +334,7 @@ export const UnifiedMilestoneScreen = () => {
 
           // Use the GapContract to submit all attestations in a single transaction
           const result = await GapContract.multiAttest(
-            walletSigner as any,
+            walletSigner,
             allPayloads.map((p) => p[1])
           );
           anyAttested = true;
@@ -362,12 +363,13 @@ export const UnifiedMilestoneScreen = () => {
 
       // Poll until at least one milestone is indexed (indicates indexing is working)
       let indexed = false;
+      const selectedGrantIdSet = new Set(selectedGrantIds);
       for (let i = 0; i < 30; i++) {
         const { data: updatedGrants } = await refetchGrants();
 
         // Check if any of the selected grants now have a milestone with the title we just created
         const foundNewMilestone = updatedGrants?.some((grant) => {
-          if (!selectedGrantIds.includes(grant.uid)) return false;
+          if (!selectedGrantIdSet.has(grant.uid)) return false;
           return grant.milestones?.some((m) => m.title === data.title);
         });
 
@@ -399,7 +401,7 @@ export const UnifiedMilestoneScreen = () => {
 
       setTimeout(() => {
         dismiss();
-        router.push(PAGES.PROJECT.OVERVIEW(project?.details?.slug || project?.uid || ""));
+        push(PAGES.PROJECT.OVERVIEW(project?.details?.slug || project?.uid || ""));
         closeProgressModal();
       }, 1500);
     } finally {

@@ -44,7 +44,7 @@ const getTokenName = (tokenId: string): string => {
   return TOKEN_OPTIONS.find((t) => t.id === tokenId)?.name || tokenId.toUpperCase();
 };
 
-export const formatNumber = (value: number): string => {
+const formatNumber = (value: number): string => {
   if (value >= 1_000_000) {
     return `${(value / 1_000_000).toFixed(1)}M`;
   }
@@ -76,7 +76,7 @@ interface TransactionState {
     totalAmount: number;
     safeUrl: string;
     createTxUrl?: string;
-    transactionData?: any;
+    transactionData?: unknown;
     executed?: boolean;
   } | null;
 }
@@ -182,14 +182,14 @@ export const DisbursementForm = () => {
   );
 
   const parseCsv = (file: File) => {
-    Papa.parse(file, {
+    Papa.parse<string[]>(file, {
       header: false,
       skipEmptyLines: true,
       complete: (results) => {
         // Skip the first row (header row)
         const dataRows = results.data.slice(1);
 
-        const parsedData: DisbursementRecipient[] = dataRows.map((row: any) => {
+        const parsedData: DisbursementRecipient[] = dataRows.map((row) => {
           const address = row[0]?.trim();
           const amount = row[1]?.trim();
           let error: string | undefined;
@@ -700,7 +700,7 @@ export const DisbursementForm = () => {
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
                     <span className="text-blue-600 font-medium">
-                      Verifying Safe access and balance...
+                      Verifying Safe access and balance…
                     </span>
                   </div>
                 ) : (
@@ -904,7 +904,7 @@ export const DisbursementForm = () => {
                   {transactionState.isProcessing ? (
                     <>
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
-                      🔄 Processing...
+                      🔄 Processing…
                     </>
                   ) : (
                     <>

@@ -41,7 +41,7 @@ const userScopedLocalStorage = {
   },
 };
 
-export interface EvaluationDraft {
+interface EvaluationDraft {
   programDescription: string;
   evaluationCriteria: string;
   evaluationStyle: EvaluationStyle;

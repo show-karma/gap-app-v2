@@ -46,10 +46,7 @@ function extractTextFromAssistantMessage(event: SSEEvent): string {
   const message = event.message as Record<string, unknown> | undefined;
   if (!message?.content) return "";
   const contentBlocks = message.content as Array<{ type: string; text?: string }>;
-  return contentBlocks
-    .filter((b) => b.type === "text" && b.text)
-    .map((b) => b.text)
-    .join("");
+  return contentBlocks.flatMap((b) => (b.type === "text" && b.text ? [b.text] : [])).join("");
 }
 
 function extractDeltaText(event: SSEEvent): string {
@@ -104,9 +101,9 @@ function extractToolUsesFromAssistantMessage(event: SSEEvent): Array<{ id: strin
   const message = event.message as Record<string, unknown> | undefined;
   if (!message?.content) return [];
   const contentBlocks = message.content as Array<{ type: string; id?: string; name?: string }>;
-  return contentBlocks
-    .filter((b) => b.type === "tool_use" && b.id && b.name)
-    .map((b) => ({ id: b.id as string, name: stripMcpPrefix(b.name as string) }));
+  return contentBlocks.flatMap((b) =>
+    b.type === "tool_use" && b.id && b.name ? [{ id: b.id, name: stripMcpPrefix(b.name) }] : []
+  );
 }
 
 function extractToolResultData(raw: unknown): Record<string, unknown> {

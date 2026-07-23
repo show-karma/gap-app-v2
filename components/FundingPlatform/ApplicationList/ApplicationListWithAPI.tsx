@@ -30,7 +30,7 @@ interface IApplicationListWithAPIProps {
   onApplicationHover?: (applicationId: string) => void;
   showStatusActions?: boolean;
   initialFilters?: IApplicationFilters;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<any>;
+  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<unknown>;
   isAdmin?: boolean;
 }
 
@@ -116,7 +116,12 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   // KYC: Collect unique reference numbers from loaded applications
   const referenceNumbers = useMemo(
-    () => [...new Set(applications.map((app) => app.referenceNumber).filter(Boolean))].sort(),
+    () =>
+      [
+        ...new Set(
+          applications.flatMap((app) => (app.referenceNumber ? [app.referenceNumber] : []))
+        ),
+      ].sort(),
     [applications]
   );
 
@@ -188,6 +193,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
             There was an error loading the applications. Please try again.
           </p>
           <button
+            type="button"
             onClick={() => refetch()}
             className="mt-4 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -224,7 +230,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         loader={
           <div className="flex items-center justify-center py-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Loading more applications...
+              Loading more applications…
             </div>
           </div>
         }

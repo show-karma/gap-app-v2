@@ -156,7 +156,10 @@ function LoadingSkeleton() {
             <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
               Status
             </th>
-            <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground" />
+            <th
+              aria-label="Actions"
+              className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            />
           </tr>
         </thead>
         <tbody>
@@ -262,6 +265,7 @@ function ProgramPillSelector({
       {open ? (
         <div
           role="listbox"
+          aria-label="Select program"
           className="absolute left-0 top-[calc(100%+6px)] z-30 max-h-[360px] w-[300px] overflow-y-auto rounded-xl border border-border bg-background p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.08)]"
         >
           <div className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
@@ -598,7 +602,10 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
                         <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                           Status
                         </th>
-                        <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground" />
+                        <th
+                          aria-label="Actions"
+                          className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                        />
                       </tr>
                     </thead>
                     <tbody>

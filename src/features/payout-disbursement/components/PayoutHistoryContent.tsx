@@ -19,7 +19,7 @@ import { usePayoutHistory, useUpdateDisbursementStatus } from "../hooks/use-payo
 import { type PayoutDisbursement, PayoutDisbursementStatus } from "../types/payout-disbursement";
 import { formatTokenAmount } from "../utils/format-token-amount";
 
-export interface PayoutHistoryContentProps {
+interface PayoutHistoryContentProps {
   isActive: boolean;
   grantUID: string;
   grantName: string;
@@ -92,8 +92,6 @@ function truncateAddress(address: string): string {
 export function PayoutHistoryContent({
   isActive,
   grantUID,
-  grantName,
-  projectName,
   approvedAmount,
 }: PayoutHistoryContentProps) {
   const {
@@ -163,7 +161,7 @@ export function PayoutHistoryContent({
   return (
     <div className="flex flex-col h-full">
       {/* Summary */}
-      <div className="border-b border-gray-200 bg-gray-50 px-4 py-4 rounded-lg dark:border-zinc-700 dark:bg-zinc-700/30 mb-4">
+      <div className="border-b border-gray-200 bg-gray-50 p-4 rounded-lg dark:border-zinc-700 dark:bg-zinc-700/30 mb-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">

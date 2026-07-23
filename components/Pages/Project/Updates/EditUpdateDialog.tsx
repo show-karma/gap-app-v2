@@ -16,7 +16,6 @@ interface EditUpdateDialogProps {
 export const EditUpdateDialog = ({
   isOpen,
   onClose,
-  projectId,
   updateId,
   updateType = "ProjectUpdate",
 }: EditUpdateDialogProps) => {

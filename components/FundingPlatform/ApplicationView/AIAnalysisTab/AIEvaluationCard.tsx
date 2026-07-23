@@ -3,7 +3,7 @@
 import type { FC, ReactNode } from "react";
 import { cn } from "@/utilities/tailwind";
 
-export interface AIEvaluationCardProps {
+interface AIEvaluationCardProps {
   /** Card title */
   title: string;
   /** Subtitle/description */
@@ -81,5 +81,3 @@ export const AIEvaluationCard: FC<AIEvaluationCardProps> = ({
     </div>
   );
 };
-
-export default AIEvaluationCard;

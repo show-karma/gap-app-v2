@@ -72,7 +72,7 @@ function TableSkeleton() {
 }
 
 export function PublicControlCenter() {
-  const router = useRouter();
+  const { replace, push } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const params = useParams();
@@ -137,8 +137,8 @@ export function PublicControlCenter() {
     previousFilterSignature.current = filterSignature;
     if (currentPage === 1) return;
     const query = createQueryString({ page: "1" });
-    router.replace(`${pathname}?${query}`);
-  }, [createQueryString, currentPage, filterSignature, pathname, router]);
+    replace(`${pathname}?${query}`);
+  }, [createQueryString, currentPage, filterSignature, pathname, replace, push]);
 
   // ─── Data fetching (all parallel, using slug directly) ─────────────────
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
@@ -252,17 +252,17 @@ export function PublicControlCenter() {
   // ─── URL param handlers ─────────────────────────────────────────────────
   const handleProgramChange = (programId: string | null) => {
     const query = createQueryString({ programId, page: "1" });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleItemsPerPageChange = (value: string) => {
     const query = createQueryString({ limit: value, page: "1" });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handlePageChange = (page: number) => {
     const query = createQueryString({ page: page.toString() });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleSort = (column: CommunityPayoutsSorting["sortBy"]) => {
@@ -275,17 +275,17 @@ export function PublicControlCenter() {
       sortOrder: newSortOrder,
       page: "1",
     });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleSearch = () => {
     const query = createQueryString({ search: localSearch || null, page: "1" });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   const handleFilterChange = (key: string, value: string | null) => {
     const query = createQueryString({ [key]: value, page: "1" });
-    router.push(`${pathname}?${query}`);
+    push(`${pathname}?${query}`);
   };
 
   // ─── Open details modal ────────────────────────────────────────────────
@@ -305,7 +305,7 @@ export function PublicControlCenter() {
 
   const handleClearFilters = () => {
     setLocalSearch("");
-    router.push(pathname);
+    push(pathname);
   };
 
   // ─── Error / redirect handling ────────────────────────────────────────
@@ -314,7 +314,7 @@ export function PublicControlCenter() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND);
+      push(PAGES.NOT_FOUND);
     }
   }, [communityError]); // eslint-disable-line react-hooks/exhaustive-deps
 

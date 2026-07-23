@@ -1,7 +1,7 @@
 import { createMockApplication } from "../../data/applications";
-import { createMockCommunity, MOCK_COMMUNITIES } from "../../data/communities";
+import { MOCK_COMMUNITIES } from "../../data/communities";
 import { createMockProgram } from "../../data/programs";
-import { expect, mock404, mockError, mockJson, test } from "../../fixtures";
+import { expect, mockError, mockJson, test } from "../../fixtures";
 import { assertNoJsErrors, collectJsErrors } from "../../helpers/assertions";
 import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 

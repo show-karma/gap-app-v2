@@ -62,7 +62,7 @@ export const ReEvaluateInternalButton: FC<ReEvaluateInternalButtonProps> = ({
         variant="secondary"
         disabled={disabled || mutation.isPending}
         aria-busy={mutation.isPending}
-        className="flex items-center space-x-2 px-3 py-2 text-sm"
+        className="flex items-center gap-x-2 px-3 py-2 text-sm"
       >
         <ArrowPathIcon className={`w-4 h-4 ${mutation.isPending ? "animate-spin" : ""}`} />
         <span>{mutation.isPending ? "Re-evaluating..." : "Re-evaluate"}</span>
