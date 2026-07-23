@@ -18,13 +18,19 @@ interface MastheadProps {
    * the shared document gets none.
    */
   variant?: "advisor" | "shared" | "staff";
+  /**
+   * Shows the weights/share-token controls. Defaults to owner-only
+   * (`variant === "advisor"`); the authenticated view passes `true` for
+   * staff as well.
+   */
+  canManageReport?: boolean;
 }
 
 /**
  * Report header (redesign spec 2.3): the dynamic headline/byline (kept
  * verbatim from the editorial brief — `headline()` / `byline()` below) and
- * the owner-only Adjust ranking + Share actions. Report number, status, mode,
- * and issue date live in the summary immediately below.
+ * the Adjust ranking + Share actions (owner and staff). Report number,
+ * status, mode, and issue date live in the summary immediately below.
  */
 export function Masthead({
   report,
@@ -32,8 +38,9 @@ export function Masthead({
   surfacedCount,
   isTerminal,
   variant = "advisor",
+  canManageReport,
 }: MastheadProps) {
-  const isOwner = variant === "advisor";
+  const showManageControls = canManageReport ?? variant === "advisor";
   return (
     <header
       className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8"
@@ -59,7 +66,7 @@ export function Masthead({
         </p>
       </div>
 
-      {isTerminal && isOwner ? (
+      {isTerminal && showManageControls ? (
         <div className="flex flex-none flex-wrap items-start gap-2">
           {report.weights && report.candidates.length > 0 ? <WeightsPanel report={report} /> : null}
           <ShareTokenControls
