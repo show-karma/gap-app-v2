@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   useApproveAgentWrite,
@@ -24,8 +24,11 @@ export function SettingsAgentActionsPage() {
 
   const pendingQuery = usePendingAgentWrites("pending", gate);
   const historyQuery = usePendingAgentWrites("decided", gate);
-  const approveMutation = useApproveAgentWrite();
-  const rejectMutation = useRejectAgentWrite();
+  // `mutateAsync` is referentially stable across renders (React Query v5), so
+  // destructuring it keeps the row callbacks below stable and `React.memo` on
+  // the rows effective.
+  const { mutateAsync: approveWrite } = useApproveAgentWrite();
+  const { mutateAsync: rejectWrite } = useRejectAgentWrite();
   const [busyId, setBusyId] = useState<string | null>(null);
 
   // Read-only deep link (approvalUrl `?item=<id>`). Never mirrored into state or
@@ -33,26 +36,36 @@ export function SettingsAgentActionsPage() {
   const searchParams = useSearchParams();
   const highlightedId = searchParams.get("item");
 
-  const handleApprove = async (write: PendingAgentWrite) => {
-    setBusyId(write.id);
-    try {
-      await approveMutation.mutateAsync(write);
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const handleApprove = useCallback(
+    async (write: PendingAgentWrite) => {
+      setBusyId(write.id);
+      try {
+        await approveWrite(write);
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [approveWrite]
+  );
 
-  const handleReject = async (write: PendingAgentWrite) => {
-    setBusyId(write.id);
-    try {
-      await rejectMutation.mutateAsync(write);
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const handleReject = useCallback(
+    async (write: PendingAgentWrite) => {
+      setBusyId(write.id);
+      try {
+        await rejectWrite(write);
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [rejectWrite]
+  );
 
   if (!ready) {
-    return <Layout>{null}</Layout>;
+    return (
+      <Layout>
+        <ListSkeleton />
+      </Layout>
+    );
   }
 
   if (!authenticated) {
@@ -88,7 +101,7 @@ export function SettingsAgentActionsPage() {
         <Card>
           <h2 className="text-base font-semibold text-foreground">Couldn't load agent actions</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {(pendingQuery.error as Error)?.message ?? "An unexpected error occurred."}
+            {pendingQuery.error?.message ?? "An unexpected error occurred."}
           </p>
           <div className="mt-4">
             <Button variant="outline" onClick={() => pendingQuery.refetch()}>
