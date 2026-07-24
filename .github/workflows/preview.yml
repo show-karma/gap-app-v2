@@ -1,0 +1,140 @@
+name: Deploy Preview
+
+# Preview deployments are built here rather than by Vercel's Git integration.
+#
+# Vercel's standard preview build machine has 8 GB of RAM, and the Next.js 16
+# Turbopack production build peaks above that, so Vercel-side preview builds are
+# OOM-killed (exit 137). Production never hit this because production.yml already
+# builds on GitHub's 16 GB runner and ships prebuilt artifacts. This workflow
+# mirrors that path for previews: build on the 16 GB runner, then
+# `vercel deploy --prebuilt`. Vercel Git preview builds are disabled in
+# vercel.json (git.deploymentEnabled "*": false).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # Skip previews for changes that cannot affect the built output. Mirrors the
+    # inert-path set from the old vercel-ignore.sh, minus the *.md rule so a
+    # served public/*.md change is never skipped.
+    paths-ignore:
+      - 'docs/**'
+      - '.github/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '__tests__/**'
+      - 'e2e/**'
+      - '**/*.test.*'
+      - '**/*.spec.*'
+
+# One preview build per PR; newer pushes cancel in-flight builds.
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      # Vercel's own build cache lives on their builders and is not reachable
+      # from Actions, so without this every preview is a cold build. Keyed on
+      # the lockfile + config so a dependency or build-config change starts
+      # fresh; restore-keys let unrelated source changes reuse the last cache.
+      - name: Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-preview-${{ hashFiles('pnpm-lock.yaml', 'next.config.ts') }}-${{ github.sha }}
+          restore-keys: |
+            next-preview-${{ hashFiles('pnpm-lock.yaml', 'next.config.ts') }}-
+            next-preview-
+
+      - name: Pull Vercel Environment Information
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Build Project Artifacts
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          NODE_OPTIONS: '--max-old-space-size=4096'
+          # Vercel does NOT inject System Environment Variables into `--prebuilt`
+          # builds, and NEXT_PUBLIC_VERCEL_ENV is read at build time to pick the
+          # chain (src/infrastructure/config/tenant-config.ts):
+          #   isDev = NEXT_PUBLIC_VERCEL_ENV in (development, preview)
+          #   programsChainId = isDev ? 11155111 (Sepolia) : 42161 (Arbitrum)
+          # Left undefined, a preview would silently build against mainnet.
+          # Production is unaffected — it wants the non-dev branch anyway.
+          NEXT_PUBLIC_VERCEL_ENV: preview
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy Preview
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+          echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
+          echo "Preview deployed to $url"
+
+      - name: Comment preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.deployment_url }}';
+            const marker = '<!-- preview-url -->';
+            const shortSha = context.payload.pull_request.head.sha.slice(0, 7);
+            const body = [
+              marker,
+              '### ⚡ Preview deployment',
+              '',
+              `**${url}**`,
+              '',
+              `Commit \`${shortSha}\` · built on GitHub Actions (16 GB) and deployed with \`vercel deploy --prebuilt\`.`,
+            ].join('\n');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
