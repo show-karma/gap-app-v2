@@ -70,6 +70,14 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           NODE_OPTIONS: '--max-old-space-size=4096'
+          # Vercel does NOT inject System Environment Variables into `--prebuilt`
+          # builds, and NEXT_PUBLIC_VERCEL_ENV is read at build time to pick the
+          # chain (src/infrastructure/config/tenant-config.ts):
+          #   isDev = NEXT_PUBLIC_VERCEL_ENV in (development, preview)
+          #   programsChainId = isDev ? 11155111 (Sepolia) : 42161 (Arbitrum)
+          # Left undefined, a preview would silently build against mainnet.
+          # Production is unaffected — it wants the non-dev branch anyway.
+          NEXT_PUBLIC_VERCEL_ENV: preview
         run: vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy Preview
