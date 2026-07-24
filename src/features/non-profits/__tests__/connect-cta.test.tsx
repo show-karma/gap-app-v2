@@ -16,6 +16,11 @@ vi.mock("next/image", () => ({
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }));
 
+// Restored in afterEach — stubIntersectionObserver replaces the global stub
+// from __tests__/setup.ts, and leaving it in place would leak a
+// callback-capturing observer into every later test in the run.
+const realIntersectionObserver = global.IntersectionObserver;
+
 /**
  * The global IntersectionObserver stub in __tests__/setup.ts never invokes its
  * callback, so the card could never reach its retired state. This one captures
@@ -69,6 +74,7 @@ describe("ConnectFloatingCard", () => {
   afterEach(() => {
     connector.remove();
     window.sessionStorage.clear();
+    global.IntersectionObserver = realIntersectionObserver;
   });
 
   it("is visible from page load, without waiting on any scroll", () => {

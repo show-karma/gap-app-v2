@@ -76,12 +76,16 @@ const ConnectLink = memo(function ConnectLink({
 });
 
 export function ConnectorNudge({ variant = "inline" }: { variant?: "inline" | "rail" }) {
-  const [hidden, setHidden] = useState(true);
+  // The inline variant starts hidden and reveals after mount, because whether
+  // it renders depends on sessionStorage — reading that during render would
+  // desync the server output from the first client paint. The rail variant has
+  // no dismissal to consult, so it renders immediately: SearchRail is
+  // server-rendered, and deferring it to an effect would flash an empty rail.
+  const [hidden, setHidden] = useState(variant !== "rail");
 
-  // Avoid SSR/hydration mismatch — only show after mount, only if not dismissed.
-  // The rail variant carries no dismiss affordance, so it always shows.
   useEffect(() => {
-    if (variant === "rail" || !isDismissed()) setHidden(false);
+    if (variant === "rail") return;
+    if (!isDismissed()) setHidden(false);
   }, [variant]);
 
   if (hidden) return null;
