@@ -1183,14 +1183,14 @@
 }
 .lp-hero-foot-link:hover { color: var(--lp-primary); border-color: var(--lp-primary); }
 
-/* Brand marks inline in the hero eyebrow — the first "runs in your AI tool"
+/* Brand marks — hero eyebrow and the floating connect card — the first "runs in your AI tool"
    signal on the page, above the title. */
-.lp-eyebrow-brands {
+.lp-brand-marks {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
-.lp-eyebrow-brand-logo { width: 13px; height: 13px; }
+.lp-brand-mark-logo { width: 13px; height: 13px; }
 
 /* Scoped under `.landing` so these beat the `.landing a`/`.landing button`
    resets at the top of this file, which would otherwise force `color: inherit`

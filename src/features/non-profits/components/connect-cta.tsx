@@ -17,37 +17,22 @@
  */
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Link } from "@/src/components/navigation/Link";
-import { NON_PROFITS_PAGES } from "@/utilities/pages";
+import { CONNECT_TARGETS } from "../lib/connect-targets";
 
-const DISMISS_KEY = "np-connect-bar-dismissed";
+const DISMISS_KEY = "np-connect-cta-dismissed";
 
-// The brand marks are single-path black SVGs — `dark:invert` is what keeps them
-// legible on the dark theme (same treatment as the /mcp connect page).
-const CONNECT_TARGETS = [
-  {
-    label: "Claude",
-    href: NON_PROFITS_PAGES.CONNECT_CLAUDE,
-    logo: "/images/mcp/claude.svg",
-  },
-  {
-    label: "ChatGPT",
-    href: NON_PROFITS_PAGES.CONNECT_CHATGPT,
-    logo: "/images/mcp/openai.svg",
-  },
-] as const;
-
-function ConnectButton({
+const ConnectButton = memo(function ConnectButton({
   href,
   logo,
-  label,
-  className = "lp-connect-btn",
+  name,
+  className,
 }: {
   href: string;
   logo: string;
-  label: string;
-  className?: string;
+  name: string;
+  className: string;
 }) {
   return (
     <Link href={href} className={className}>
@@ -59,10 +44,10 @@ function ConnectButton({
         aria-hidden="true"
         className="lp-connect-btn-logo dark:invert"
       />
-      <span>Add to {label}</span>
+      <span>Add to {name}</span>
     </Link>
   );
-}
+});
 
 /**
  * The two brand marks on their own — an at-a-glance "this runs in your AI
@@ -71,7 +56,7 @@ function ConnectButton({
  */
 export function ConnectLogos() {
   return (
-    <span className="lp-eyebrow-brands">
+    <span className="lp-brand-marks">
       {CONNECT_TARGETS.map((target) => (
         <Image
           key={target.href}
@@ -80,7 +65,7 @@ export function ConnectLogos() {
           width={13}
           height={13}
           aria-hidden="true"
-          className="lp-eyebrow-brand-logo dark:invert"
+          className="lp-brand-mark-logo dark:invert"
         />
       ))}
     </span>
@@ -167,7 +152,7 @@ export function ConnectFloatingCard({ hideAtId = "connector" }: { hideAtId?: str
             key={target.href}
             href={target.href}
             logo={target.logo}
-            label={target.label}
+            name={target.name}
             className="lp-connect-btn lp-connect-btn-sm"
           />
         ))}

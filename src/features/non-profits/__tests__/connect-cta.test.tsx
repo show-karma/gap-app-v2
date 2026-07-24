@@ -113,7 +113,7 @@ describe("ConnectFloatingCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /Dismiss/i }));
 
     expect(screen.queryByRole("link", { name: /Add to Claude/i })).not.toBeInTheDocument();
-    expect(window.sessionStorage.getItem("np-connect-bar-dismissed")).toBe("1");
+    expect(window.sessionStorage.getItem("np-connect-cta-dismissed")).toBe("1");
 
     unmount();
     stubIntersectionObserver();

@@ -19,25 +19,10 @@
 
 import { ArrowUpRight, Sparkles, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { NON_PROFITS_PAGES } from "@/utilities/pages";
+import { memo, useEffect, useState } from "react";
+import { CONNECT_TARGETS } from "../lib/connect-targets";
 
 const DISMISS_KEY = "np-connector-nudge-dismissed";
-
-// The brand marks are single-path black SVGs, so `dark:invert` is what makes
-// them legible on a dark card (same treatment as the /mcp connect page).
-const CONNECT_TARGETS = [
-  {
-    label: "Add to Claude",
-    href: NON_PROFITS_PAGES.CONNECT_CLAUDE,
-    logo: "/images/mcp/claude.svg",
-  },
-  {
-    label: "Add to ChatGPT",
-    href: NON_PROFITS_PAGES.CONNECT_CHATGPT,
-    logo: "/images/mcp/openai.svg",
-  },
-] as const;
 
 const LINK_BASE =
   "inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800";
@@ -63,15 +48,15 @@ function persistDismiss(): void {
  * Setup guides always open in a new tab so the user never loses the
  * conversation they're in the middle of.
  */
-function ConnectLink({
+const ConnectLink = memo(function ConnectLink({
   href,
   logo,
-  label,
+  name,
   className,
 }: {
   href: string;
   logo: string;
-  label: string;
+  name: string;
   className: string;
 }) {
   return (
@@ -84,11 +69,11 @@ function ConnectLink({
         aria-hidden="true"
         className="size-3.5 shrink-0 dark:invert"
       />
-      {label}
+      Add to {name}
       <ArrowUpRight className="size-3" />
     </a>
   );
-}
+});
 
 export function ConnectorNudge({ variant = "inline" }: { variant?: "inline" | "rail" }) {
   const [hidden, setHidden] = useState(true);
@@ -120,7 +105,7 @@ export function ConnectorNudge({ variant = "inline" }: { variant?: "inline" | "r
               key={target.href}
               href={target.href}
               logo={target.logo}
-              label={target.label}
+              name={target.name}
               className={`${LINK_BASE} justify-center`}
             />
           ))}
@@ -166,7 +151,7 @@ export function ConnectorNudge({ variant = "inline" }: { variant?: "inline" | "r
                 key={target.href}
                 href={target.href}
                 logo={target.logo}
-                label={target.label}
+                name={target.name}
                 className={LINK_BASE}
               />
             ))}
