@@ -117,6 +117,49 @@ describe("SettingsAgentActionsPage", () => {
     });
   });
 
+  describe("history loading", () => {
+    it("shows a compact history skeleton while the pending list is already rendered", () => {
+      mockPendingQuery.mockReturnValue({
+        data: { writes: [makeWrite()], total: 1 },
+        isLoading: false,
+        isError: false,
+      });
+      mockHistoryQuery.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+      render(<SettingsAgentActionsPage />);
+
+      // Pending list rendered as usual.
+      expect(screen.getByText(/1 pending action$/i)).toBeInTheDocument();
+      // History area shows its own skeleton rather than popping in late.
+      expect(screen.getByLabelText(/Loading your recent decisions/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("history error", () => {
+    it("renders an inline error with a working retry that refetches history", () => {
+      const historyRefetch = vi.fn();
+      mockPendingQuery.mockReturnValue({
+        data: { writes: [makeWrite()], total: 1 },
+        isLoading: false,
+        isError: false,
+      });
+      mockHistoryQuery.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error("history boom"),
+        refetch: historyRefetch,
+      });
+      render(<SettingsAgentActionsPage />);
+
+      // Pending list still visible — the history failure doesn't take down the page.
+      expect(screen.getByText(/1 pending action$/i)).toBeInTheDocument();
+      expect(screen.getByText(/Couldn't load your recent decisions/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: /Try again/i }));
+      expect(historyRefetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("empty", () => {
     it("renders the caught-up empty state and no history section", () => {
       render(<SettingsAgentActionsPage />);

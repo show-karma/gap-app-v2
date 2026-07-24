@@ -146,7 +146,20 @@ export function SettingsAgentActionsPage() {
         </section>
       )}
 
-      {history.length > 0 ? (
+      {historyQuery.isLoading ? (
+        <HistorySkeleton />
+      ) : historyQuery.isError ? (
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-foreground">
+              Couldn't load your recent decisions
+            </p>
+            <Button variant="outline" size="sm" onClick={() => historyQuery.refetch()}>
+              Try again
+            </Button>
+          </div>
+        </Card>
+      ) : history.length > 0 ? (
         <section aria-labelledby="history-heading">
           <h2 id="history-heading" className="text-sm font-semibold text-foreground">
             {history.length} recent {pluralize("decision", history.length)}
@@ -189,6 +202,19 @@ function ListSkeleton() {
         <div
           key={i}
           className="h-32 w-full animate-pulse rounded-2xl border border-border bg-card"
+        />
+      ))}
+    </output>
+  );
+}
+
+function HistorySkeleton() {
+  return (
+    <output aria-label="Loading your recent decisions" className="block space-y-3">
+      {[0, 1].map((i) => (
+        <div
+          key={i}
+          className="h-20 w-full animate-pulse rounded-2xl border border-border bg-card"
         />
       ))}
     </output>
