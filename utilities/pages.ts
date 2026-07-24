@@ -171,6 +171,10 @@ export const PAGES = {
   DONOR_REWARDS: `/donor-rewards`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
   MCP_CONNECT: `/mcp/connect`,
+  SETTINGS: {
+    CONNECTIONS: `/settings/connections`,
+    AGENT_ACTIONS: `/settings/agent-actions`,
+  },
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
   ASK_KARMA: `/ask-karma`,

@@ -252,6 +252,14 @@ export const INDEXER = {
         return trackId ? `${base}?trackId=${trackId}` : base;
       },
     },
+    PENDING_AGENT_WRITES: {
+      // MCP writes staged for human approval (see mcp-writes PRD FR-18–20).
+      LIST: (status: "pending" | "decided" | "all" = "pending") =>
+        `/v2/pending-agent-writes?status=${status}`,
+      GET: (id: string) => `/v2/pending-agent-writes/${id}`,
+      APPROVE: (id: string) => `/v2/pending-agent-writes/${id}/approve`,
+      REJECT: (id: string) => `/v2/pending-agent-writes/${id}/reject`,
+    },
     PAYOUTS: {
       CREATE: "/v2/payouts/disburse",
       RECORD_PAYMENT: "/v2/payouts/record-payment",
