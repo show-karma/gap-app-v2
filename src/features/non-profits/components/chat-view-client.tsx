@@ -484,8 +484,11 @@ export function ChatView({ searchId }: { searchId?: string }) {
                   </div>
                 )
               )}
+              {/* The connector CTA lives in the right rail (SearchRail), which
+                  only renders at `xl`. Below that the rail is hidden, so the
+                  inline banner is the fallback rather than a duplicate. */}
               {showNudge && (
-                <div className="mx-auto w-full max-w-2xl">
+                <div className="mx-auto w-full max-w-2xl xl:hidden">
                   <ConnectorNudge />
                 </div>
               )}
