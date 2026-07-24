@@ -39,7 +39,7 @@ export function SearchGrantProgram({
   const pathname = usePathname();
   const isEditing = pathname.includes("/edit");
 
-  const { data: programs = [], isLoading } = useCommunityPrograms(communityUID);
+  const { data: programs = [], isLoading, isError, refetch } = useCommunityPrograms(communityUID);
 
   // Program-flow hides already-ended programs; an optional searchForProgram
   // term narrows by title, otherwise the list is sorted alphabetically.
@@ -96,6 +96,10 @@ export function SearchGrantProgram({
     }
   }, [allPrograms, isEditing, grantToEdit, hasAttemptedAutoSelect, setValue, formData.title]);
 
+  const handleRetryPrograms = () => {
+    refetch();
+  };
+
   const programIdWatch = watch("programId");
 
   // Reset selected program when programId is cleared
@@ -114,6 +118,17 @@ export function SearchGrantProgram({
       ) : !communityUID ? (
         <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
           Select a community to proceed
+        </div>
+      ) : isError ? (
+        <div className="flex items-center justify-between gap-3 bg-red-50 p-3 text-sm ring-1 ring-red-200 rounded text-red-900 dark:bg-red-950 dark:ring-red-900 dark:text-red-100">
+          <span>Failed to load programs.</span>
+          <button
+            type="button"
+            onClick={handleRetryPrograms}
+            className="font-semibold underline underline-offset-2"
+          >
+            Retry
+          </button>
         </div>
       ) : (
         <>

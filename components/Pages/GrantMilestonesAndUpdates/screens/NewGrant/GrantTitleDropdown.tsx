@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid";

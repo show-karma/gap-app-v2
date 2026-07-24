@@ -12,7 +12,7 @@
  * sparse).
  */
 
-export interface CommunityProgramSocialLinks {
+interface CommunityProgramSocialLinks {
   website?: string;
   twitter?: string;
   discord?: string;
