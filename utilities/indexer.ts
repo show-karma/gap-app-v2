@@ -253,6 +253,11 @@ export const INDEXER = {
         return trackId ? `${base}?trackId=${trackId}` : base;
       },
     },
+    PENDING_AGENT_WRITES: {
+      LIST: (status: "pending" | "decided" | "all") => `/v2/pending-agent-writes?status=${status}`,
+      APPROVE: (id: string) => `/v2/pending-agent-writes/${id}/approve`,
+      REJECT: (id: string) => `/v2/pending-agent-writes/${id}/reject`,
+    },
     PAYOUTS: {
       CREATE: "/v2/payouts/disburse",
       RECORD_PAYMENT: "/v2/payouts/record-payment",
