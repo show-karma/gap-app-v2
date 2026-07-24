@@ -613,21 +613,39 @@ export function MilestoneCard({
         ) : null}
       </div>
 
-      {/* Cancellation banner (DEV-523) */}
+      {/* Cancellation banner (DEV-523) — quiet terminal state, styled to match
+          the neutral "Cancelled" badge rather than the colored completion/
+          verification boxes. */}
       {isCancelled && milestone.cancellation && (
-        <div className="mb-3 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-800/50">
-          <p className="text-gray-700 dark:text-gray-300">
-            <span className="font-medium">Cancelled</span>
-            {milestone.cancellation.cancelledBy ? (
-              <>
-                {" by "}
-                <EthereumAddressToProfileName address={milestone.cancellation.cancelledBy} />
-              </>
+        <div className="mb-3 flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/60">
+          <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
+            <NoSymbolIcon className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm leading-tight">
+              <span className="font-semibold text-gray-800 dark:text-gray-200">Cancelled</span>
+              {milestone.cancellation.cancelledBy ? (
+                <span className="text-gray-500 dark:text-gray-400">
+                  by{" "}
+                  <EthereumAddressToProfileName
+                    address={milestone.cancellation.cancelledBy}
+                    className="font-medium text-gray-700 dark:text-gray-300"
+                  />
+                </span>
+              ) : null}
+              {milestone.cancellation.cancelledAt ? (
+                <span className="text-gray-400 dark:text-gray-500">
+                  <span aria-hidden="true">·</span> {formatDate(milestone.cancellation.cancelledAt)}
+                </span>
+              ) : null}
+            </div>
+            {milestone.cancellation.reason ? (
+              <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Reason:</span>{" "}
+                {milestone.cancellation.reason}
+              </p>
             ) : null}
-          </p>
-          {milestone.cancellation.reason ? (
-            <p className="mt-1 text-gray-600 dark:text-gray-400">{milestone.cancellation.reason}</p>
-          ) : null}
+          </div>
         </div>
       )}
 
