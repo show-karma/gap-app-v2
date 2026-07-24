@@ -128,20 +128,6 @@ export function projectHandlers(options?: { list?: MockProject[]; detail?: Parti
       return HttpResponse.json({ available: true, ...body });
     }),
 
-    http.get(`${BASE}/v2/projects/contracts/deployer`, () =>
-      HttpResponse.json({ deployer: "0x0000000000000000000000000000000000000000" })
-    ),
-
-    http.post(`${BASE}/v2/projects/contracts/verify-message`, async ({ request }) => {
-      const body = (await request.json()) as Record<string, unknown>;
-      return HttpResponse.json({ verified: true, ...body });
-    }),
-
-    http.post(`${BASE}/v2/projects/contracts/verify-signature`, async ({ request }) => {
-      const body = (await request.json()) as Record<string, unknown>;
-      return HttpResponse.json({ verified: true, ...body });
-    }),
-
     http.get(`${BASE}/v2/projects/logos/presigned`, () =>
       HttpResponse.json({
         url: "https://storage.example.com/upload/presigned-url",
