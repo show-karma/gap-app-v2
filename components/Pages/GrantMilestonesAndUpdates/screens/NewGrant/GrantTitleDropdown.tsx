@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
@@ -6,7 +7,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import pluralize from "pluralize";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import type { Grant } from "@/types/v2/grant";
 import { cn } from "@/utilities/tailwind";
 
@@ -18,9 +19,9 @@ export const GrantTitleDropdown: FC<{
       shouldValidate: boolean;
     }
   ) => void;
-  selectedProgram: GrantProgram | null;
+  selectedProgram: CommunityProgram | null;
   grantToEdit: Grant | undefined;
-  list: GrantProgram[];
+  list: CommunityProgram[];
   type: string;
   chainId: number;
   cleanFunction?: () => void;
@@ -28,7 +29,7 @@ export const GrantTitleDropdown: FC<{
   buttonClassname?: string;
   canAdd?: boolean;
   canSearch?: boolean;
-  setSelectedProgram: (program: GrantProgram) => void;
+  setSelectedProgram: (program: CommunityProgram) => void;
 }> = ({
   setValue,
   selectedProgram,
@@ -60,7 +61,7 @@ export const GrantTitleDropdown: FC<{
   // NOTE: This is a UX-only enforcement. Backend enforcement via gap-indexer PR #868 is pending.
   // Server-side validation is the real security gate - this prevents accidental submissions only.
   const handleProgramSelect = useCallback(
-    (item: GrantProgram, isRestricted: boolean) => {
+    (item: CommunityProgram, isRestricted: boolean) => {
       if (isRestricted) {
         toast.error("Please contact the program manager to add this grant to your project", {
           duration: 5000,
@@ -86,7 +87,7 @@ export const GrantTitleDropdown: FC<{
       (item) => item.metadata?.title?.toLowerCase() === trimmedCustom.toLowerCase()
     );
 
-    let requestProgram: GrantProgram;
+    let requestProgram: CommunityProgram;
 
     if (programAlreadyExists) {
       // Block selection of restricted programs via custom input
@@ -106,21 +107,15 @@ export const GrantTitleDropdown: FC<{
         shouldValidate: true,
       });
     } else {
-      const timestamp = Date.now().toString();
-
       requestProgram = {
         metadata: {
           title: trimmedCustom,
           status: "active",
           description: "",
           website: "",
-          tags: [],
         },
         programId: custom,
         chainID: chainId,
-        _id: { $oid: custom },
-        createdAt: timestamp,
-        updatedAt: timestamp,
       };
 
       setList((prevList) => [...prevList, requestProgram]);
@@ -261,10 +256,7 @@ export const GrantTitleDropdown: FC<{
             ) : null}
             {list.map((item) => {
               const isRestricted = item.metadata?.anyoneCanJoin === false;
-              const itemKey =
-                item.programId ??
-                (typeof item._id === "string" ? item._id : item._id?.$oid) ??
-                item.metadata?.title;
+              const itemKey = item.programId || item.metadata?.title;
 
               return (
                 <CommandItem key={itemKey}>
