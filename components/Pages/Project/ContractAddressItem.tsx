@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckBadgeIcon, ExclamationTriangleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { CheckBadgeIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { memo, useEffect, useMemo, useState } from "react";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
@@ -20,7 +20,6 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
     onNetworkChange,
     onAddressChange,
     onRemove,
-    onVerify,
     supportedNetworks,
     readOnly = false,
   }) => {
@@ -111,36 +110,17 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                   aria-describedby={hasError ? `contract-error-${index}` : undefined}
                 />
               </div>
-              {pair.address && pair.network && (
+              {pair.address && pair.network && pair.verified && (
                 <div className="flex items-center space-x-2 ml-2">
-                  {pair.verified ? (
-                    <div
-                      className="flex items-center space-x-1 text-green-600 dark:text-green-400"
-                      title={`Verified on ${
-                        pair.verifiedAt ? new Date(pair.verifiedAt).toLocaleDateString() : "N/A"
-                      }`}
-                    >
-                      <CheckBadgeIcon className="h-5 w-5" />
-                      <span className="text-xs font-medium">Verified</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center space-x-1 text-yellow-600 dark:text-yellow-400">
-                        <ExclamationTriangleIcon className="h-5 w-5" />
-                        <span className="text-xs font-medium">Unverified</span>
-                      </div>
-                      {onVerify && (
-                        <button
-                          type="button"
-                          onClick={() => onVerify(index)}
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                          aria-label={`Verify contract ${index + 1}`}
-                        >
-                          Verify
-                        </button>
-                      )}
-                    </>
-                  )}
+                  <div
+                    className="flex items-center space-x-1 text-green-600 dark:text-green-400"
+                    title={`Verified on ${
+                      pair.verifiedAt ? new Date(pair.verifiedAt).toLocaleDateString() : "N/A"
+                    }`}
+                  >
+                    <CheckBadgeIcon className="h-5 w-5" />
+                    <span className="text-xs font-medium">Verified</span>
+                  </div>
                 </div>
               )}
             </div>

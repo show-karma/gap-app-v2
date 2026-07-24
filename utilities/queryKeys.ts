@@ -129,8 +129,6 @@ export const QUERY_KEYS = {
       ["reviewers", "community", communityUID, "programs"] as const,
   },
   CONTRACTS: {
-    DEPLOYER: (network: string, contractAddress: string) =>
-      ["contract-deployer", network, contractAddress] as const,
     VALIDATION: {
       ALL: ["contract-validation"] as const,
       VALIDATE: (params: { address: string; network: string; excludeProjectId?: string }) =>
