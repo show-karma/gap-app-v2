@@ -22,6 +22,7 @@ export const getCommunityPrograms = async (uidOrSlug: string): Promise<Community
     const data = await api.get<CommunityProgram[]>(INDEXER.V2.COMMUNITIES.PROGRAMS(uidOrSlug));
     return data ?? [];
   } catch (error) {
+    // not a swallow: logs to Sentry via errorManager, then rethrows
     errorManager(`Error fetching programs for community ${uidOrSlug}`, error, {
       context: "community-programs.service",
       uidOrSlug,
