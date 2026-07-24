@@ -11,7 +11,9 @@
  */
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 
-export interface ConnectTarget {
+// Deliberately not exported: consumers read the array, never the element type,
+// and an unused exported type trips the knip check in the quality gate.
+interface ConnectTarget {
   /** Product name — callers format their own label, e.g. `Add to ${name}`. */
   name: string;
   href: string;
