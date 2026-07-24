@@ -9,8 +9,8 @@ import { INDEXER } from "@/utilities/indexer";
  * MCP agents (over OAuth) can *propose* critical funding-platform writes; those
  * are staged server-side and the human owner approves/rejects them here. This
  * is the FE half of the binding wire contract — field names below are EXACT and
- * every schema uses `.passthrough()` so the backend may add fields without
- * breaking the client, but must never rename or remove these.
+ * every schema is loose (unknown keys preserved) so the backend may add fields
+ * without breaking the client, but must never rename or remove these.
  *
  * See: mcp-writes PRD §4.4 / FR-18–20, and the wire contract doc.
  */
@@ -29,64 +29,55 @@ export type PendingAgentWriteStatus = (typeof PENDING_AGENT_WRITE_STATUSES)[numb
 /** Queue view. `decided` = executed | rejected | failed | expired. */
 export type PendingAgentWritesStatusFilter = "pending" | "decided" | "all";
 
-const ResultSchema = z
-  .object({
-    statusCode: z.number(),
-    error: z.string().nullable(),
-  })
-  .passthrough();
+// `z.looseObject` is the Zod 4 equivalent of `z.object(...).passthrough()`: it
+// keeps unknown keys so the backend can add fields without breaking the client,
+// but must never rename or remove the ones declared here.
+const ResultSchema = z.looseObject({
+  statusCode: z.number(),
+  error: z.string().nullable(),
+});
 
-export type AgentWriteResult = z.infer<typeof ResultSchema>;
-
-const PendingAgentWriteSchema = z
-  .object({
-    id: z.string(),
-    summary: z.string(),
-    label: z.string(),
-    method: z.string(),
-    path: z.string(),
-    // The exact request body to be executed on approval. Kept as `unknown` so a
-    // non-object payload from the backend can never fail-crash the whole list;
-    // it is only ever rendered as pretty-printed JSON for the human reviewer.
-    body: z.unknown().nullable(),
-    status: z.enum(PENDING_AGENT_WRITE_STATUSES),
-    clientName: z.string().nullable(),
-    createdAt: z.string(),
-    expiresAt: z.string(),
-    decidedAt: z.string().nullable(),
-    result: ResultSchema.nullable(),
-  })
-  .passthrough();
+const PendingAgentWriteSchema = z.looseObject({
+  id: z.string(),
+  summary: z.string(),
+  label: z.string(),
+  method: z.string(),
+  path: z.string(),
+  // The exact request body to be executed on approval. Kept as `unknown` so a
+  // non-object payload from the backend can never fail-crash the whole list;
+  // it is only ever rendered as pretty-printed JSON for the human reviewer.
+  body: z.unknown().nullable(),
+  status: z.enum(PENDING_AGENT_WRITE_STATUSES),
+  clientName: z.string().nullable(),
+  createdAt: z.string(),
+  expiresAt: z.string(),
+  decidedAt: z.string().nullable(),
+  result: ResultSchema.nullable(),
+});
 
 export type PendingAgentWrite = z.infer<typeof PendingAgentWriteSchema>;
 
-const ListResponseSchema = z
-  .object({
-    writes: z.array(PendingAgentWriteSchema),
-    total: z.number(),
-  })
-  .passthrough();
+const ListResponseSchema = z.looseObject({
+  writes: z.array(PendingAgentWriteSchema),
+  total: z.number(),
+});
 
 export type PendingAgentWritesList = z.infer<typeof ListResponseSchema>;
 
-const ApproveResponseSchema = z
-  .object({
-    id: z.string(),
-    status: z.enum(PENDING_AGENT_WRITE_STATUSES),
-    result: ResultSchema.nullable().optional(),
-  })
-  .passthrough();
+const ApproveResponseSchema = z.looseObject({
+  id: z.string(),
+  status: z.enum(PENDING_AGENT_WRITE_STATUSES),
+  result: ResultSchema.nullable().optional(),
+});
 
-export type ApproveAgentWriteResponse = z.infer<typeof ApproveResponseSchema>;
+type ApproveAgentWriteResponse = z.infer<typeof ApproveResponseSchema>;
 
-const RejectResponseSchema = z
-  .object({
-    id: z.string(),
-    status: z.enum(PENDING_AGENT_WRITE_STATUSES),
-  })
-  .passthrough();
+const RejectResponseSchema = z.looseObject({
+  id: z.string(),
+  status: z.enum(PENDING_AGENT_WRITE_STATUSES),
+});
 
-export type RejectAgentWriteResponse = z.infer<typeof RejectResponseSchema>;
+type RejectAgentWriteResponse = z.infer<typeof RejectResponseSchema>;
 
 export const pendingAgentWritesService = {
   /** The caller's own queue for a given status filter (default `pending`). */
