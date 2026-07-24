@@ -6,7 +6,12 @@ import type { MilestoneCancellation } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
 
 interface CancelledMilestoneBannerProps {
-  cancellation: MilestoneCancellation;
+  /**
+   * On-chain cancellation overlay. May be absent for a status-only cancellation
+   * (`status === "cancelled"` with no overlay), in which case the banner still
+   * renders the terminal "Cancelled" state without the metadata.
+   */
+  cancellation: MilestoneCancellation | null;
 }
 
 /**
@@ -23,7 +28,7 @@ function CancelledMilestoneBannerComponent({ cancellation }: CancelledMilestoneB
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm leading-tight">
           <span className="font-semibold text-gray-800 dark:text-gray-200">Cancelled</span>
-          {cancellation.cancelledBy ? (
+          {cancellation?.cancelledBy ? (
             <span className="text-gray-500 dark:text-gray-400">
               by{" "}
               <EthereumAddressToProfileName
@@ -32,13 +37,13 @@ function CancelledMilestoneBannerComponent({ cancellation }: CancelledMilestoneB
               />
             </span>
           ) : null}
-          {cancellation.cancelledAt ? (
+          {cancellation?.cancelledAt ? (
             <span className="text-gray-400 dark:text-gray-500">
               <span aria-hidden="true">·</span> {formatDate(cancellation.cancelledAt)}
             </span>
           ) : null}
         </div>
-        {cancellation.reason ? (
+        {cancellation?.reason ? (
           <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
             <span className="font-medium text-gray-700 dark:text-gray-300">Reason:</span>{" "}
             {cancellation.reason}
