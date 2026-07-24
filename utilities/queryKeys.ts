@@ -145,6 +145,10 @@ export const QUERY_KEYS = {
     PROJECTS: (slug: string, options?: unknown) =>
       ["community-projects-v2", slug, options] as const,
     GRANTS: (communitySlug: string) => ["community-grants", communitySlug] as const,
+    // Kept as ["programs", "community", …] (the pre-consolidation value) so the
+    // cache shared across all useCommunityPrograms consumers stays stable.
+    PROGRAMS: (communityUIDorSlug: string) =>
+      ["programs", "community", communityUIDorSlug] as const,
     CATEGORIES: (communityUIDorSlug?: string) =>
       ["communityCategories", communityUIDorSlug] as const,
     IS_ADMIN: (communityUid?: string, chainId?: number, address?: string, signer?: unknown) =>

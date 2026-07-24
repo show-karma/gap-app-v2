@@ -1,9 +1,9 @@
 /**
  * MSW integration tests for useCommunityPrograms hook (exported from usePrograms.ts).
  *
- * The hook fetches programs via programService.getCommunityPrograms which
- * calls the API against /v2/communities/:uidOrSlug/programs (bare array of
- * whitelisted program objects).
+ * The hook fetches programs via the community-programs service
+ * (getCommunityPrograms) against /v2/communities/:uidOrSlug/programs (bare
+ * array of whitelisted CommunityProgram objects).
  */
 
 import { waitFor } from "@testing-library/react";
