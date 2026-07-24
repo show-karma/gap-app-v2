@@ -253,11 +253,21 @@ const withSentry = withSentryConfig(
     project: "gap-frontend",
     tunnelRoute: "/monitoring",
     reactComponentAnnotation: true,
-    debug: true,
+    // `silent: true` above already suppresses plugin logging; `debug: true`
+    // contradicted it and re-enabled verbose sourcemap diagnostics on every
+    // build for output nobody reads.
+    debug: false,
   },
   {
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
+    // Sentry's "widen" mode uploads source maps for a larger set of client
+    // files than the ones actually referenced by the emitted bundles — its
+    // own docs note this increases build time, and it grows the sourcemap
+    // set held/processed during the build. The Next 16 Turbopack build is
+    // already at the edge of the 8 GB build container, so the marginally
+    // prettier frames are not worth the headroom. Sourcemaps for the real
+    // bundles are still generated and uploaded, so stack traces stay
+    // symbolicated.
+    widenClientFileUpload: false,
 
     // Remove transpileClientSDK as it's deprecated in Next.js 15
     // transpileClientSDK: true,
