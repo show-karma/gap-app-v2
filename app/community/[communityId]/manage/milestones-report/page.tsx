@@ -11,17 +11,6 @@ interface Props {
   params: Promise<{ communityId: string }>;
 }
 
-// This page degrades to an empty program list on fetch failure (the service
-// already logs via errorManager) — the report UI stays usable rather than
-// hard-failing the whole admin route.
-const getGrantPrograms = async (communityId: string): Promise<CommunityProgram[]> => {
-  try {
-    return await getCommunityPrograms(communityId);
-  } catch {
-    return [];
-  }
-};
-
 export default async function Page(props: Props) {
   const { communityId } = await props.params;
 
@@ -31,7 +20,10 @@ export default async function Page(props: Props) {
     notFound();
   }
 
-  const grantPrograms = await getGrantPrograms(communityId);
+  // Fetch failures bubble to the manage segment's error.tsx (the service
+  // already logs via errorManager) — a silent empty list would misreport
+  // "no programs" to admins.
+  const grantPrograms: CommunityProgram[] = await getCommunityPrograms(communityId);
 
   return <ReportMilestonePage community={community} grantPrograms={grantPrograms} />;
 }
