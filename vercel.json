@@ -6,7 +6,7 @@
     }
   },
   "ignoreCommand": "bash vercel-ignore.sh",
-  "buildCommand": "export NODE_OPTIONS='--max-old-space-size=4096'; timeout -k 30s 900s pnpm build || ( rm -rf .next && timeout -k 30s 900s pnpm build )",
+  "buildCommand": "bash vercel-build.sh",
   "crons": [
     {
       "path": "/api/cron/warm-sitemaps",
