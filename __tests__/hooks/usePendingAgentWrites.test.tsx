@@ -153,6 +153,40 @@ describe("useApproveAgentWrite", () => {
     expect(mockToast.error).toHaveBeenCalled();
   });
 
+  it("does not resurrect a row decided by a concurrent mutation when rolling back", async () => {
+    const w1 = makeWrite({ id: "pc_1" });
+    const w2 = makeWrite({ id: "pc_2" });
+    const client = makeClient();
+    seedPending(client, [w1, w2]);
+
+    let failApprove: (error: unknown) => void = () => undefined;
+    mockService.approve.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          failApprove = reject;
+        })
+    );
+    mockService.reject.mockResolvedValue({ id: "pc_2", status: "rejected" });
+
+    const approveHook = renderHook(() => useApproveAgentWrite(), { wrapper: wrap(client) });
+    const rejectHook = renderHook(() => useRejectAgentWrite(), { wrapper: wrap(client) });
+
+    // Approve of pc_1 is left in flight while reject of pc_2 completes.
+    const approvePromise = approveHook.result.current.mutateAsync(w1).catch(() => undefined);
+    await rejectHook.result.current.mutateAsync(w2);
+
+    // The in-flight approve now fails; its rollback must restore ONLY pc_1,
+    // not the pre-approve snapshot that still contained the decided pc_2.
+    failApprove(httpError(500));
+    await approvePromise;
+
+    await waitFor(() => {
+      const data = client.getQueryData<PendingAgentWritesList>(agentActionsKeys.list("pending"));
+      expect(data?.writes.map((w) => w.id)).toEqual(["pc_1"]);
+      expect(data?.total).toBe(1);
+    });
+  });
+
   it("shows an 'already decided' toast on a 409 instead of an error toast", async () => {
     const w1 = makeWrite({ id: "pc_1" });
     const client = makeClient();

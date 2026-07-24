@@ -41,6 +41,10 @@ export function SettingsAgentActionsPage() {
       setBusyId(write.id);
       try {
         await approveWrite(write);
+      } catch {
+        // SUPPRESSED: mutateAsync rejections are already surfaced by the
+        // mutation's onError (rollback + toast/errorManager); catching here
+        // only prevents an unhandled rejection at fire-and-forget call sites.
       } finally {
         setBusyId(null);
       }
@@ -53,6 +57,8 @@ export function SettingsAgentActionsPage() {
       setBusyId(write.id);
       try {
         await rejectWrite(write);
+      } catch {
+        // SUPPRESSED: see handleApprove — errors are handled by the mutation.
       } finally {
         setBusyId(null);
       }
@@ -210,7 +216,11 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function ListSkeleton() {
   return (
-    <output aria-label="Loading your pending agent actions" className="block space-y-3">
+    <output
+      aria-label="Loading your pending agent actions"
+      aria-busy="true"
+      className="block space-y-3"
+    >
       {[0, 1, 2].map((i) => (
         <div
           key={i}
@@ -223,7 +233,7 @@ function ListSkeleton() {
 
 function HistorySkeleton() {
   return (
-    <output aria-label="Loading your recent decisions" className="block space-y-3">
+    <output aria-label="Loading your recent decisions" aria-busy="true" className="block space-y-3">
       {[0, 1].map((i) => (
         <div
           key={i}

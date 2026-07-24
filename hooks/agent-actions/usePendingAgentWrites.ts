@@ -38,24 +38,32 @@ export function usePendingAgentWrites(status: PendingAgentWritesStatusFilter, en
 }
 
 interface OptimisticContext {
-  previousPending?: PendingAgentWritesList;
+  removed?: { write: PendingAgentWrite; index: number };
 }
 
-/** Removes `id` from the cached pending list and returns the prior snapshot. */
+/**
+ * Removes `write` from the cached pending list via a functional updater (safe
+ * when approve/reject of different rows overlap) and returns what was removed
+ * so rollback can restore ONLY that row, never a whole stale snapshot.
+ */
 function optimisticallyRemove(
   queryClient: ReturnType<typeof useQueryClient>,
-  id: string
+  write: PendingAgentWrite
 ): OptimisticContext {
   const key = agentActionsKeys.list("pending");
-  const previousPending = queryClient.getQueryData<PendingAgentWritesList>(key);
-  if (previousPending) {
-    queryClient.setQueryData<PendingAgentWritesList>(key, {
-      ...previousPending,
-      writes: previousPending.writes.filter((w) => w.id !== id),
-      total: Math.max(0, previousPending.total - 1),
-    });
-  }
-  return { previousPending };
+  let removed: OptimisticContext["removed"];
+  queryClient.setQueryData<PendingAgentWritesList>(key, (current) => {
+    if (!current) return current;
+    const index = current.writes.findIndex((w) => w.id === write.id);
+    if (index === -1) return current;
+    removed = { write, index };
+    return {
+      ...current,
+      writes: current.writes.filter((w) => w.id !== write.id),
+      total: Math.max(0, current.total - 1),
+    };
+  });
+  return { removed };
 }
 
 function handleDecisionError(
@@ -65,8 +73,19 @@ function handleDecisionError(
   logLabel: string,
   genericToast: string
 ): void {
-  if (context?.previousPending) {
-    queryClient.setQueryData(agentActionsKeys.list("pending"), context.previousPending);
+  const removed = context?.removed;
+  if (removed) {
+    // Re-insert only the failed row, at its old position, and only if a
+    // concurrent decision has not already re-added or re-fetched it.
+    queryClient.setQueryData<PendingAgentWritesList>(
+      agentActionsKeys.list("pending"),
+      (current) => {
+        if (!current || current.writes.some((w) => w.id === removed.write.id)) return current;
+        const writes = [...current.writes];
+        writes.splice(Math.min(removed.index, writes.length), 0, removed.write);
+        return { ...current, writes, total: current.total + 1 };
+      }
+    );
   }
   // Already decided (approved elsewhere, expired, or double-submit) — not an
   // error the user needs to worry about, just a stale view. Refresh quietly.
@@ -85,7 +104,7 @@ export function useApproveAgentWrite() {
     mutationFn: (write: PendingAgentWrite) => pendingAgentWritesService.approve(write.id),
     onMutate: async (write) => {
       await queryClient.cancelQueries({ queryKey: agentActionsKeys.all });
-      return optimisticallyRemove(queryClient, write.id);
+      return optimisticallyRemove(queryClient, write);
     },
     onError: (error, _write, context) => {
       handleDecisionError(
@@ -119,7 +138,7 @@ export function useRejectAgentWrite() {
     mutationFn: (write: PendingAgentWrite) => pendingAgentWritesService.reject(write.id),
     onMutate: async (write) => {
       await queryClient.cancelQueries({ queryKey: agentActionsKeys.all });
-      return optimisticallyRemove(queryClient, write.id);
+      return optimisticallyRemove(queryClient, write);
     },
     onError: (error, _write, context) => {
       handleDecisionError(

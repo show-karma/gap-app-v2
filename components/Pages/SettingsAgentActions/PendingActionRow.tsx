@@ -44,6 +44,10 @@ export const PendingActionRow = memo(function PendingActionRow({
       } else {
         await onReject(write);
       }
+    } catch {
+      // SUPPRESSED: decision errors are surfaced by the mutation hooks
+      // (rollback + toast); catching here keeps this fire-and-forget click
+      // handler from producing an unhandled rejection if a parent rethrows.
     } finally {
       setIsSubmitting(false);
       setAction(null);
