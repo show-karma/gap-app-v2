@@ -221,6 +221,7 @@ export const INDEXER = {
       REVIEWERS: (communityUID: string) => `/v2/communities/${communityUID}/reviewers`,
       REVIEWER_PROGRAMS: (communityUID: string) =>
         `/v2/communities/${communityUID}/reviewer-programs`,
+      PROGRAMS: (uidOrSlug: string) => `/v2/communities/${uidOrSlug}/programs`,
     },
     REGISTRY: {
       GET_ALL: "/v2/program-registry/search",
@@ -389,7 +390,6 @@ export const INDEXER = {
     },
   },
   PROGRAMS: {
-    COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
     FINANCIALS: (programId: string, page?: number, limit?: number) => {
       const params = new URLSearchParams();
       if (page) params.set("page", page.toString());
@@ -665,7 +665,6 @@ export const INDEXER = {
       PENDING_VERIFICATION: (communityIdOrSlug: string) =>
         `/v2/communities/${communityIdOrSlug}/milestones/pending-verification`,
     },
-    PROGRAMS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/programs`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs/impact-aggregate`,
     PROJECT_DISCOVERY: (communityIdOrSlug: string) =>

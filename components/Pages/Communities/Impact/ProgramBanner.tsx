@@ -1,15 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityAccent } from "@/hooks/useCommunityAccent";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { useCommunityDetails } from "@/hooks/v2/useCommunityDetails";
 import formatCurrency from "@/utilities/formatCurrency";
-import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity";
 
 const normalizeProgramId = (raw: string | null): string | undefined => {
   if (!raw) return undefined;
@@ -30,10 +29,7 @@ export const ProgramBanner = () => {
     projectId: projectSelected ?? undefined,
   });
 
-  const { data } = useQuery({
-    queryKey: ["programs"],
-    queryFn: () => getAllProgramsOfCommunity(communityId as string),
-  });
+  const { data } = useCommunityPrograms(communityId);
   const programs = data?.map((program) => ({
     title: program.metadata?.title || "",
     value: program.programId || "",

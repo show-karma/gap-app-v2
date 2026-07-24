@@ -9,7 +9,6 @@ import {
 import Papa from "papaparse";
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -22,11 +21,12 @@ import {
   buildCompositeProgramId,
   parseCompositeProgramKey,
 } from "@/src/features/program-registry/utils/program-utils";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { cn } from "@/utilities/tailwind";
 
 interface ProgramScoresUploadProps {
   communityUID: string;
-  programs: GrantProgram[];
+  programs: CommunityProgram[];
   defaultChainId?: number;
 }
 
@@ -49,7 +49,7 @@ export function ProgramScoresUpload({
   programs,
   defaultChainId,
 }: ProgramScoresUploadProps) {
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<CommunityProgram | null>(null);
   const [chainId, setChainId] = useState<number>(defaultChainId || 42220); // Use community chainId or default to Celo
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedCsvData | null>(null);

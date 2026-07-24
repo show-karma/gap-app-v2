@@ -110,7 +110,6 @@ const ERROR_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
   "community/[communityId]/manage/impact",
   "community/[communityId]/manage/kyc-settings",
   "community/[communityId]/manage/manage-indicators",
-  "community/[communityId]/manage/milestones-report",
   "community/[communityId]/manage/payouts",
   "community/[communityId]/manage/program-scores",
   "community/[communityId]/manage/tracks",

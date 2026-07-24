@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ChartSectionPicker } from "@/components/Pages/Admin/PortfolioReports/ChartSectionPicker";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ import {
 } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { PAGES } from "@/utilities/pages";
 import {
   computeNextRuns,
@@ -34,7 +34,7 @@ import { zodResolver } from "@/utilities/zodResolver";
 
 interface Props {
   community: Community;
-  grantPrograms: GrantProgram[];
+  grantPrograms: CommunityProgram[];
 }
 
 const AVAILABLE_MODELS = [
@@ -129,7 +129,7 @@ interface ProgramOption {
   label: string;
 }
 
-function buildProgramOptions(grantPrograms: GrantProgram[]): ProgramOption[] {
+function buildProgramOptions(grantPrograms: CommunityProgram[]): ProgramOption[] {
   const options: ProgramOption[] = [];
   for (const program of grantPrograms) {
     const programId = (program as { programId?: string }).programId;
@@ -181,7 +181,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
 
 interface LoadedProps {
   community: Community;
-  grantPrograms: GrantProgram[];
+  grantPrograms: CommunityProgram[];
   configs: ReportConfig[];
   configsError: boolean;
   refetchConfigs: () => void;
