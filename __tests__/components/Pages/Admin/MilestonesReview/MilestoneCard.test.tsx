@@ -272,3 +272,75 @@ describe("MilestoneCard (admin review) — complete on behalf of grantee", () =>
     expect(onSubmitCompletion).toHaveBeenCalledWith(milestone);
   });
 });
+
+describe("MilestoneCard (admin review) — cancellation banner", () => {
+  const CANCELLER = "0x7177000000000000000000000000000000e1e141";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should_render_cancelled_state_with_canceller_profile_name", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({
+          status: "cancelled",
+          cancellation: {
+            uid: "0xcancel-uid",
+            cancelledBy: CANCELLER,
+            cancelledAt: "2026-07-24T12:00:00Z",
+            reason: null,
+          },
+        })}
+      />
+    );
+
+    // "Cancelled" appears twice: the header status badge and the banner label.
+    expect(screen.getAllByText("Cancelled").length).toBeGreaterThanOrEqual(2);
+    // The canceller address is handed to EthereumAddressToProfileName (which
+    // resolves it to a name/ENS/email), not printed raw as a label.
+    expect(screen.getByText(CANCELLER)).toBeInTheDocument();
+  });
+
+  it("should_render_cancellation_reason_when_present", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({
+          status: "cancelled",
+          cancellation: {
+            uid: "0xcancel-uid",
+            cancelledBy: CANCELLER,
+            cancelledAt: "2026-07-24T12:00:00Z",
+            reason: "Scope moved to next quarter",
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByText(/Scope moved to next quarter/i)).toBeInTheDocument();
+  });
+
+  it("should_render_cancelled_banner_for_a_status_only_cancellation_without_overlay", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({ status: "cancelled", cancellation: null })}
+      />
+    );
+
+    // Terminal cancelled state still surfaces the banner (header badge + banner
+    // label) even when the on-chain overlay is absent.
+    expect(screen.getAllByText("Cancelled").length).toBeGreaterThanOrEqual(2);
+    // No canceller metadata is rendered when the overlay is missing.
+    expect(screen.queryByText(CANCELLER)).not.toBeInTheDocument();
+  });
+
+  it("should_not_render_cancellation_banner_for_a_non_cancelled_milestone", () => {
+    render(<MilestoneCard {...DEFAULT_PROPS} milestone={createMilestone()} />);
+
+    expect(screen.queryByText("Cancelled")).not.toBeInTheDocument();
+    expect(screen.queryByText(CANCELLER)).not.toBeInTheDocument();
+  });
+});

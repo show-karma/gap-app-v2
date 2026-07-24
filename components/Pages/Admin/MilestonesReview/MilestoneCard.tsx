@@ -27,6 +27,7 @@ import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
 import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 import { cn } from "@/utilities/tailwind";
+import { CancelledMilestoneBanner } from "./CancelledMilestoneBanner";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
 
 // useLayoutEffect mirrors useEffect on the server to avoid Next.js SSR warnings.
@@ -613,23 +614,7 @@ export function MilestoneCard({
         ) : null}
       </div>
 
-      {/* Cancellation banner (DEV-523) */}
-      {isCancelled && milestone.cancellation && (
-        <div className="mb-3 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-800/50">
-          <p className="text-gray-700 dark:text-gray-300">
-            <span className="font-medium">Cancelled</span>
-            {milestone.cancellation.cancelledBy ? (
-              <>
-                {" by "}
-                <EthereumAddressToProfileName address={milestone.cancellation.cancelledBy} />
-              </>
-            ) : null}
-          </p>
-          {milestone.cancellation.reason ? (
-            <p className="mt-1 text-gray-600 dark:text-gray-400">{milestone.cancellation.reason}</p>
-          ) : null}
-        </div>
-      )}
+      {isCancelled && <CancelledMilestoneBanner cancellation={milestone.cancellation ?? null} />}
 
       {/* Collapsible description */}
       <div className="mb-3">
