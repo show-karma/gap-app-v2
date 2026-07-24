@@ -1,11 +1,11 @@
 "use client";
 
 import { memo, useEffect, useRef } from "react";
+import { RelativeTime } from "@/components/Utilities/RelativeTime";
 import type {
   PendingAgentWrite,
   PendingAgentWriteStatus,
 } from "@/services/pending-agent-writes.service";
-import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 
 interface HistoryActionRowProps {
@@ -83,7 +83,7 @@ export const HistoryActionRow = memo(function HistoryActionRow({
       </p>
       {write.decidedAt ? (
         <p className="text-xs text-muted-foreground">
-          Decided {renderRelativeTime(write.decidedAt)}
+          Decided <RelativeTime value={write.decidedAt} />
         </p>
       ) : null}
       {write.status === "failed" && write.result?.error ? (

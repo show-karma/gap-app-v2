@@ -17,14 +17,6 @@ vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-// --- deep-link search param ---
-let mockItemParam: string | null = null;
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => ({ get: (key: string) => (key === "item" ? mockItemParam : null) }),
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
-  usePathname: () => "/settings/agent-actions",
-}));
-
 // next/link → plain anchor so the page doesn't need an App Router context mounted.
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
@@ -69,7 +61,6 @@ const emptyList = { data: { writes: [], total: 0 }, isLoading: false, isError: f
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockItemParam = null;
   mockUseAuth.mockReturnValue({ ready: true, authenticated: true, login: vi.fn() });
   mockPendingQuery.mockReturnValue(emptyList);
   mockHistoryQuery.mockReturnValue(emptyList);
@@ -79,14 +70,14 @@ describe("SettingsAgentActionsPage", () => {
   describe("auth gating", () => {
     it("renders nothing but the shell while Privy is not ready (no glimpse)", () => {
       mockUseAuth.mockReturnValue({ ready: false, authenticated: false, login: vi.fn() });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
       expect(screen.queryByText(/Sign in to review/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/all caught up/i)).not.toBeInTheDocument();
     });
 
     it("shows a sign-in CTA when unauthenticated and never fetches", () => {
       mockUseAuth.mockReturnValue({ ready: true, authenticated: false, login: vi.fn() });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
       expect(screen.getByText(/Sign in to review agent actions/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Sign in to Karma/i })).toBeInTheDocument();
     });
@@ -95,7 +86,7 @@ describe("SettingsAgentActionsPage", () => {
   describe("loading", () => {
     it("renders a skeleton while the pending query loads", () => {
       mockPendingQuery.mockReturnValue({ data: undefined, isLoading: true, isError: false });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
       expect(screen.getByLabelText(/Loading your pending agent actions/i)).toBeInTheDocument();
     });
   });
@@ -110,7 +101,7 @@ describe("SettingsAgentActionsPage", () => {
         error: new Error("boom"),
         refetch,
       });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
       expect(screen.getByText(/Couldn't load agent actions/i)).toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: /Try again/i }));
       expect(refetch).toHaveBeenCalledTimes(1);
@@ -125,7 +116,7 @@ describe("SettingsAgentActionsPage", () => {
         isError: false,
       });
       mockHistoryQuery.mockReturnValue({ data: undefined, isLoading: true, isError: false });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
 
       // Pending list rendered as usual.
       expect(screen.getByText(/1 pending action$/i)).toBeInTheDocument();
@@ -149,7 +140,7 @@ describe("SettingsAgentActionsPage", () => {
         error: new Error("history boom"),
         refetch: historyRefetch,
       });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
 
       // Pending list still visible — the history failure doesn't take down the page.
       expect(screen.getByText(/1 pending action$/i)).toBeInTheDocument();
@@ -162,7 +153,7 @@ describe("SettingsAgentActionsPage", () => {
 
   describe("empty", () => {
     it("renders the caught-up empty state and no history section", () => {
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
       expect(screen.getByText(/You're all caught up/i)).toBeInTheDocument();
       expect(screen.queryByText(/recent/i)).not.toBeInTheDocument();
     });
@@ -175,7 +166,7 @@ describe("SettingsAgentActionsPage", () => {
         isLoading: false,
         isError: false,
       });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
 
       expect(screen.getByText(/1 pending action$/i)).toBeInTheDocument();
       expect(screen.getByText(/Reject application #47/i)).toBeInTheDocument();
@@ -191,7 +182,7 @@ describe("SettingsAgentActionsPage", () => {
         isLoading: false,
         isError: false,
       });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
       expect(screen.getByText(/2 pending actions$/i)).toBeInTheDocument();
     });
 
@@ -211,7 +202,7 @@ describe("SettingsAgentActionsPage", () => {
         isLoading: false,
         isError: false,
       });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
       expect(screen.getByText(/1 recent decision$/i)).toBeInTheDocument();
       expect(screen.getByText(/Failed/i)).toBeInTheDocument();
       expect(screen.getByText(/RBAC denied/i)).toBeInTheDocument();
@@ -220,13 +211,12 @@ describe("SettingsAgentActionsPage", () => {
 
   describe("deep link", () => {
     it("highlights the row matching ?item=<id> with a ring", () => {
-      mockItemParam = "pc_1";
       mockPendingQuery.mockReturnValue({
         data: { writes: [makeWrite({ id: "pc_1" }), makeWrite({ id: "pc_2" })], total: 2 },
         isLoading: false,
         isError: false,
       });
-      const { container } = render(<SettingsAgentActionsPage />);
+      const { container } = render(<SettingsAgentActionsPage highlightedId="pc_1" />);
 
       const highlighted = container.querySelectorAll(".ring-2.ring-primary");
       expect(highlighted).toHaveLength(1);
@@ -238,7 +228,7 @@ describe("SettingsAgentActionsPage", () => {
         isLoading: false,
         isError: false,
       });
-      render(<SettingsAgentActionsPage />);
+      render(<SettingsAgentActionsPage highlightedId={null} />);
 
       fireEvent.click(screen.getByRole("button", { name: /^Approve$/i }));
 

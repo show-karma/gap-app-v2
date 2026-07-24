@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,16 @@ import { PendingActionRow } from "./PendingActionRow";
 
 const PAGE_TITLE = "Agent actions";
 
-export function SettingsAgentActionsPage() {
+interface SettingsAgentActionsPageProps {
+  /**
+   * Read-only deep-link target (approvalUrl `?item=<id>`), resolved from the
+   * server page's searchParams. Never mirrored into state or pushed back to
+   * the router — just used to highlight + scroll to the row.
+   */
+  highlightedId: string | null;
+}
+
+export function SettingsAgentActionsPage({ highlightedId }: SettingsAgentActionsPageProps) {
   const { ready, authenticated, login } = useAuth();
   const gate = ready && authenticated;
 
@@ -30,11 +38,6 @@ export function SettingsAgentActionsPage() {
   const { mutateAsync: approveWrite } = useApproveAgentWrite();
   const { mutateAsync: rejectWrite } = useRejectAgentWrite();
   const [busyId, setBusyId] = useState<string | null>(null);
-
-  // Read-only deep link (approvalUrl `?item=<id>`). Never mirrored into state or
-  // pushed back to the router — just used to highlight + scroll to the row.
-  const searchParams = useSearchParams();
-  const highlightedId = searchParams.get("item");
 
   const handleApprove = useCallback(
     async (write: PendingAgentWrite) => {

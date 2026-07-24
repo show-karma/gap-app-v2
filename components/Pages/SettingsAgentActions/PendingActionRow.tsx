@@ -1,9 +1,9 @@
 "use client";
 
 import { memo, useEffect, useRef, useState } from "react";
+import { RelativeTime } from "@/components/Utilities/RelativeTime";
 import { Button } from "@/components/ui/button";
 import type { PendingAgentWrite } from "@/services/pending-agent-writes.service";
-import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 import { AgentActionConfirmDialog, type AgentActionKind } from "./AgentActionConfirmDialog";
 
@@ -76,8 +76,8 @@ export const PendingActionRow = memo(function PendingActionRow({
           <span className="font-semibold text-foreground">{write.method}</span> {write.path}
         </p>
         <p className="text-xs text-muted-foreground">
-          Requested {renderRelativeTime(write.createdAt)} · Expires{" "}
-          {renderRelativeTime(write.expiresAt)}
+          Requested <RelativeTime value={write.createdAt} /> · Expires{" "}
+          <RelativeTime value={write.expiresAt} />
         </p>
       </div>
 

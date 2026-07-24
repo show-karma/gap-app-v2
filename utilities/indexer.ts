@@ -253,10 +253,7 @@ export const INDEXER = {
       },
     },
     PENDING_AGENT_WRITES: {
-      // MCP writes staged for human approval (see mcp-writes PRD FR-18–20).
-      LIST: (status: "pending" | "decided" | "all" = "pending") =>
-        `/v2/pending-agent-writes?status=${status}`,
-      GET: (id: string) => `/v2/pending-agent-writes/${id}`,
+      LIST: (status: "pending" | "decided" | "all") => `/v2/pending-agent-writes?status=${status}`,
       APPROVE: (id: string) => `/v2/pending-agent-writes/${id}/approve`,
       REJECT: (id: string) => `/v2/pending-agent-writes/${id}/reject`,
     },

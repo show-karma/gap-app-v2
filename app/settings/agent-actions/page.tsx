@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { SettingsAgentActionsPage } from "@/components/Pages/SettingsAgentActions/SettingsAgentActionsPage";
 import { customMetadata } from "@/utilities/meta";
-import Loading from "./loading";
 
 export const metadata: Metadata = customMetadata({
   title: "Agent actions — Karma settings",
@@ -11,14 +9,14 @@ export const metadata: Metadata = customMetadata({
   robots: { index: false, follow: false },
 });
 
-// SettingsAgentActionsPage calls useSearchParams() to read the `?item=` deep
-// link, which Next.js App Router requires to be wrapped in a Suspense boundary
-// or the production build fails with "useSearchParams() should be wrapped in a
-// Suspense boundary at page /settings/agent-actions".
-export default function Page() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <SettingsAgentActionsPage />
-    </Suspense>
-  );
+interface PageProps {
+  searchParams: Promise<{ item?: string | string[] }>;
+}
+
+// The `?item=<id>` deep link (from an agent's approvalUrl) is resolved here on
+// the server and passed down as a prop, so the client page needs neither
+// useSearchParams() nor a Suspense boundary.
+export default async function Page({ searchParams }: PageProps) {
+  const { item } = await searchParams;
+  return <SettingsAgentActionsPage highlightedId={typeof item === "string" ? item : null} />;
 }
