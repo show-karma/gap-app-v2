@@ -10,8 +10,8 @@ import { useProjectDiscovery } from "@/hooks/communities/useProjectDiscovery";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import type { IndicatorDistribution } from "@/services/projectDiscovery";
 import { Link } from "@/src/components/navigation/Link";
-import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
 import type { Category, ImpactIndicator } from "@/types/impactMeasurement";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { PAGES } from "@/utilities/pages";
 import { DiscoveryResults } from "./DiscoveryResults";
 import { FilterSelect } from "./FilterSelect";
@@ -19,7 +19,7 @@ import { IndicatorSliders } from "./IndicatorSliders";
 
 const UNTITLED_PROGRAM = "Untitled Program";
 
-const programLabel = (program: FundingProgramResponse | null): string =>
+const programLabel = (program: CommunityProgram | null): string =>
   program?.metadata?.title || UNTITLED_PROGRAM;
 
 // Static empty-state help — hoisted so it isn't re-created on every render.
@@ -42,7 +42,7 @@ export const ProjectDiscovery = () => {
   const programs = programsQuery.data ?? [];
 
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedProgram, setSelectedProgram] = useState<FundingProgramResponse | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<CommunityProgram | null>(null);
   const [endorserInput, setEndorserInput] = useState<string>("");
   const [endorsers, setEndorsers] = useState<string[]>([]);
   const [indicatorDistribution, setIndicatorDistribution] = useState<IndicatorDistribution>({});

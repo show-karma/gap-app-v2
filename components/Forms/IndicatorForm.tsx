@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 // Temporarily comment out SearchWithValueDropdown to fix import issue
 // import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
@@ -82,7 +81,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [_availablePrograms, setAvailablePrograms] = useState<GrantProgram[]>([]);
   const finalIsLoading = isLoading || externalIsLoading;
 
   // Reset form when defaultValues change
@@ -91,31 +89,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       reset(defaultValues);
     }
   }, [defaultValues, reset]);
-
-  // Fetch programs when communityId changes (only for IndicatorsHub scenario)
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      if (!communityId) return;
-
-      try {
-        // TODO(#1775): add zod schema
-        const result = await api.get<GrantProgram[]>(INDEXER.V2.COMMUNITIES.PROGRAMS(communityId));
-
-        const sortedPrograms = result.sort((a: GrantProgram, b: GrantProgram) => {
-          const aTitle = a.metadata?.title || "";
-          const bTitle = b.metadata?.title || "";
-          if (aTitle < bTitle) return -1;
-          if (aTitle > bTitle) return 1;
-          return 0;
-        });
-        setAvailablePrograms(sortedPrograms);
-      } catch (error) {
-        console.error("Failed to fetch programs:", error);
-      }
-    };
-
-    fetchPrograms();
-  }, [communityId]);
 
   const onSubmit: SubmitHandler<IndicatorFormData> = async (data, event) => {
     if (preventPropagation && event) {
