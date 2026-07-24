@@ -61,6 +61,19 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
+      # Vercel's own build cache lives on their builders and is not reachable
+      # from Actions, so without this every preview is a cold build. Keyed on
+      # the lockfile + config so a dependency or build-config change starts
+      # fresh; restore-keys let unrelated source changes reuse the last cache.
+      - name: Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-preview-${{ hashFiles('pnpm-lock.yaml', 'next.config.ts') }}-${{ github.sha }}
+          restore-keys: |
+            next-preview-${{ hashFiles('pnpm-lock.yaml', 'next.config.ts') }}-
+            next-preview-
+
       - name: Pull Vercel Environment Information
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
