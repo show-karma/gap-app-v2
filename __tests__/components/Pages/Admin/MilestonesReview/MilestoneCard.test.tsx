@@ -322,6 +322,21 @@ describe("MilestoneCard (admin review) — cancellation banner", () => {
     expect(screen.getByText(/Scope moved to next quarter/i)).toBeInTheDocument();
   });
 
+  it("should_render_cancelled_banner_for_a_status_only_cancellation_without_overlay", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({ status: "cancelled", cancellation: null })}
+      />
+    );
+
+    // Terminal cancelled state still surfaces the banner (header badge + banner
+    // label) even when the on-chain overlay is absent.
+    expect(screen.getAllByText("Cancelled").length).toBeGreaterThanOrEqual(2);
+    // No canceller metadata is rendered when the overlay is missing.
+    expect(screen.queryByText(CANCELLER)).not.toBeInTheDocument();
+  });
+
   it("should_not_render_cancellation_banner_for_a_non_cancelled_milestone", () => {
     render(<MilestoneCard {...DEFAULT_PROPS} milestone={createMilestone()} />);
 
