@@ -40,7 +40,9 @@ function persistDismiss(): void {
   try {
     window.sessionStorage.setItem(DISMISS_KEY, "1");
   } catch {
-    // sessionStorage unavailable — ignore
+    // SUPPRESSED: sessionStorage throws in private mode / when storage is
+    // disabled. Dismissal is best-effort cosmetic state — the banner simply
+    // reappears next load, which is not worth reporting.
   }
 }
 

@@ -18,11 +18,15 @@
 
 import Image from "next/image";
 import { memo, useEffect, useState } from "react";
-import { Link } from "@/src/components/navigation/Link";
 import { CONNECT_TARGETS } from "../lib/connect-targets";
 
 const DISMISS_KEY = "np-connect-cta-dismissed";
 
+/**
+ * Opens in a new tab, matching the rail and inline CTAs: the setup guide is a
+ * detour, and the reader should come back to where they were rather than lose
+ * the page they were reading.
+ */
 const ConnectButton = memo(function ConnectButton({
   href,
   logo,
@@ -35,7 +39,7 @@ const ConnectButton = memo(function ConnectButton({
   className: string;
 }) {
   return (
-    <Link href={href} className={className}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
       <Image
         src={logo}
         alt=""
@@ -45,7 +49,7 @@ const ConnectButton = memo(function ConnectButton({
         className="lp-connect-btn-logo dark:invert"
       />
       <span>Add to {name}</span>
-    </Link>
+    </a>
   );
 });
 
@@ -85,7 +89,9 @@ function persistDismiss(): void {
   try {
     window.sessionStorage.setItem(DISMISS_KEY, "1");
   } catch {
-    // sessionStorage unavailable — ignore
+    // SUPPRESSED: sessionStorage throws in private mode / when storage is
+    // disabled. Dismissal is best-effort cosmetic state — the CTA simply
+    // reappears next load, which is not worth reporting.
   }
 }
 

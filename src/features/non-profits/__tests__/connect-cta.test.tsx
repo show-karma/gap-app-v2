@@ -1,16 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectFloatingCard } from "../components/connect-cta";
-
-vi.mock("@/src/components/navigation/Link", () => ({
-  Link: ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
-}));
 
 vi.mock("next/image", () => ({
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
@@ -75,6 +66,19 @@ describe("ConnectFloatingCard", () => {
     connector.remove();
     window.sessionStorage.clear();
     global.IntersectionObserver = realIntersectionObserver;
+  });
+
+  it("opens both setup guides in a new tab", () => {
+    // Matches the rail and inline CTAs. A same-tab navigation would drop the
+    // reader out of the landing page they were part-way through.
+    stubIntersectionObserver();
+    render(<ConnectFloatingCard />);
+
+    for (const name of [/Add to Claude/i, /Add to ChatGPT/i]) {
+      const link = screen.getByRole("link", { name });
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    }
   });
 
   it("is visible from page load, without waiting on any scroll", () => {
