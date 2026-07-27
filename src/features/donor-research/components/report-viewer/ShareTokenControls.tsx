@@ -1,7 +1,7 @@
 "use client";
 
 import { Share2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import {
@@ -19,7 +19,6 @@ interface ShareTokenControlsProps {
   reportId: string;
   hasShareToken: boolean;
   shareToken: string | null;
-  shareTokenExpiresAt: string | null;
 }
 
 const DEFAULT_TTL_DAYS = 30;
@@ -43,7 +42,6 @@ export function ShareTokenControls({
   reportId,
   hasShareToken,
   shareToken,
-  shareTokenExpiresAt,
 }: ShareTokenControlsProps) {
   const [, copyFn] = useCopyToClipboard();
   const copy = async (text: string) => {
@@ -62,14 +60,6 @@ export function ShareTokenControls({
   const [regenerateOpen, setRegenerateOpen] = useState(false);
 
   const effectiveToken = generatedToken ?? shareToken;
-  // Locale/timezone formatting must run after mount: `toLocaleString()` renders
-  // with the server's locale during SSR and the browser's on hydration, so
-  // formatting it in render would produce a hydration mismatch. Compute the
-  // label in an effect and render nothing until it resolves client-side.
-  const [expiresLabel, setExpiresLabel] = useState<string | null>(null);
-  useEffect(() => {
-    setExpiresLabel(shareTokenExpiresAt ? new Date(shareTokenExpiresAt).toLocaleString() : null);
-  }, [shareTokenExpiresAt]);
 
   const rotateShareToken = async () => {
     const result = await generate.mutateAsync({
@@ -161,7 +151,6 @@ export function ShareTokenControls({
           Revoke
         </button>
       </div>
-      {expiresLabel ? <p className="text-xs text-sf-muted">Link expires {expiresLabel}</p> : null}
 
       <DeleteDialog
         title={

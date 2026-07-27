@@ -33,14 +33,7 @@ describe("ShareTokenControls", () => {
   });
 
   it("enables Copy share link when an existing shareToken prop is present (no prior generate)", async () => {
-    render(
-      <ShareTokenControls
-        reportId="report-1"
-        hasShareToken
-        shareToken="existing-token"
-        shareTokenExpiresAt={null}
-      />
-    );
+    render(<ShareTokenControls reportId="report-1" hasShareToken shareToken="existing-token" />);
 
     const copyButton = screen.getByRole("button", { name: "Copy share link" });
     expect(copyButton).not.toBeDisabled();
@@ -56,27 +49,13 @@ describe("ShareTokenControls", () => {
   });
 
   it("disables Copy share link when there is no token at all", () => {
-    render(
-      <ShareTokenControls
-        reportId="report-1"
-        hasShareToken
-        shareToken={null}
-        shareTokenExpiresAt={null}
-      />
-    );
+    render(<ShareTokenControls reportId="report-1" hasShareToken shareToken={null} />);
 
     expect(screen.getByRole("button", { name: "Copy share link" })).toBeDisabled();
   });
 
   it("opens a confirmation dialog on Regenerate instead of rotating immediately", () => {
-    render(
-      <ShareTokenControls
-        reportId="report-1"
-        hasShareToken
-        shareToken="existing-token"
-        shareTokenExpiresAt={null}
-      />
-    );
+    render(<ShareTokenControls reportId="report-1" hasShareToken shareToken="existing-token" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
 
@@ -86,14 +65,7 @@ describe("ShareTokenControls", () => {
   });
 
   it("rotates the token only after confirming the Regenerate dialog", () => {
-    render(
-      <ShareTokenControls
-        reportId="report-1"
-        hasShareToken
-        shareToken="existing-token"
-        shareTokenExpiresAt={null}
-      />
-    );
+    render(<ShareTokenControls reportId="report-1" hasShareToken shareToken="existing-token" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
@@ -107,14 +79,7 @@ describe("ShareTokenControls", () => {
   it("keeps the confirm dialog open when Regenerate fails, instead of presenting failure as success", async () => {
     mockGenerateMutateAsync.mockRejectedValueOnce(new Error("Rotate failed"));
 
-    render(
-      <ShareTokenControls
-        reportId="report-1"
-        hasShareToken
-        shareToken="existing-token"
-        shareTokenExpiresAt={null}
-      />
-    );
+    render(<ShareTokenControls reportId="report-1" hasShareToken shareToken="existing-token" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
@@ -128,14 +93,7 @@ describe("ShareTokenControls", () => {
   it("shows a toast instead of failing silently when 'Share with donor' fails", async () => {
     mockGenerateMutateAsync.mockRejectedValueOnce(new Error("Network down"));
 
-    render(
-      <ShareTokenControls
-        reportId="report-1"
-        hasShareToken={false}
-        shareToken={null}
-        shareTokenExpiresAt={null}
-      />
-    );
+    render(<ShareTokenControls reportId="report-1" hasShareToken={false} shareToken={null} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Share with donor" }));
 
