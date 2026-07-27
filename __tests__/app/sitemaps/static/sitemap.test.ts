@@ -108,6 +108,15 @@ describe("app/sitemaps/static/sitemap.ts", () => {
     expect(urls).toHaveLength(new Set(urls).size); // no duplicates injected
   });
 
+  it("revalidates hourly as a backstop for missed blog webhooks", async () => {
+    // Without this export the route is fully static and only picks up new
+    // posts on deploy — a missed/unconfigured webhook, a scheduled post
+    // crossing its publish date, or a Sanity blip that cached an empty post
+    // list would all silently keep posts out of the sitemap.
+    const sitemapModule = await import("@/app/sitemaps/static/sitemap");
+    expect(sitemapModule.revalidate).toBe(3600);
+  });
+
   it("falls back to just the static pages when the gateway errors", async () => {
     getPublishedSlugsMock.mockRejectedValue(new Error("Sanity unavailable"));
 
