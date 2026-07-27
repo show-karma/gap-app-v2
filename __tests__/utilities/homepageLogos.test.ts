@@ -6,8 +6,9 @@ describe("homepageMarqueeLogos", () => {
   const logos = homepageMarqueeLogos();
   const titles = logos.map((logo) => logo.text);
 
-  it("opens with UNICEF, the two partners, then Filecoin", () => {
-    expect(titles.slice(0, 4)).toEqual([
+  it("leads with Regen Coordination so UNICEF is still on screen after load", () => {
+    expect(titles.slice(0, 5)).toEqual([
+      "Regen Coordination",
       "UNICEF",
       "San Francisco Foundation",
       "Trinity Center",
