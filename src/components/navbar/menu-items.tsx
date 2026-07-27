@@ -13,6 +13,7 @@ import {
   Radio,
   ScrollText,
   UserPlus,
+  UserRoundSearch,
 } from "lucide-react";
 import { karmaLinks } from "@/utilities/karma/karma";
 import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
@@ -29,8 +30,15 @@ export interface MenuItem {
   anchor?: string;
 }
 
+export interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
+
 export interface ForFundersItems {
-  main: MenuItem;
+  /** Audience-labelled groups, rendered in order with a heading each. */
+  groups: MenuGroup[];
+  /** Ungrouped actions shown below the groups — they serve every audience. */
   secondary: MenuItem[];
 }
 
@@ -76,19 +84,36 @@ export const forNonprofitsItems: MenuItem[] = [
 ];
 
 export const forFundersItems: ForFundersItems = {
-  main: {
-    href: PAGES.FOUNDATIONS,
-    icon: GoalIcon,
-    title: "Launch a program",
-    description: "Setup and start funding in 2 days",
-  },
-  secondary: [
+  groups: [
     {
-      href: PAGES.HOME,
-      icon: GalleryThumbnails,
-      title: "Case studies",
-      anchor: "case-studies",
+      title: "Foundations",
+      items: [
+        {
+          href: PAGES.FOUNDATIONS,
+          icon: GoalIcon,
+          title: "Run a grant program",
+          description: "Setup and start funding in 2 days",
+        },
+        {
+          href: PAGES.HOME,
+          icon: GalleryThumbnails,
+          title: "Case studies",
+          anchor: "case-studies",
+        },
+      ],
     },
+    {
+      title: "Donor Advisors",
+      items: [
+        {
+          href: PAGES.DONOR_RESEARCH.INDEX,
+          icon: UserRoundSearch,
+          title: "Nonprofit Deep Research",
+        },
+      ],
+    },
+  ],
+  secondary: [
     {
       href: SOCIALS.PARTNER_FORM,
       icon: PhoneCall,
