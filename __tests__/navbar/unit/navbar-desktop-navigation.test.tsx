@@ -331,8 +331,10 @@ describe("NavbarDesktopNavigation", () => {
 
       // Wait for content - check for Funders menu items
       await waitFor(() => {
-        expect(screen.getByText("Launch a program")).toBeInTheDocument();
+        expect(screen.getByText("Run a grant program")).toBeInTheDocument();
       });
+      expect(screen.getByText("Foundations")).toBeInTheDocument();
+      expect(screen.getByText("Donor Advisors")).toBeInTheDocument();
     });
 
     it("should render ExploreContent in Explore dropdown", async () => {
