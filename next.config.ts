@@ -292,4 +292,26 @@ const withSentry = withSentryConfig(
   }
 );
 
-export default withSentry;
+// The Sentry SDK is switched OFF at runtime on every non-production
+// deployment — sentry.server.config.ts, sentry.edge.config.ts and
+// instrumentation-client.ts all set `enabled: NEXT_PUBLIC_VERCEL_ENV ===
+// "production"`. Preview builds were still paying the full build-time cost
+// of the Sentry plugin (source map generation/processing/upload plus
+// reactComponentAnnotation, an SWC transform applied to every component in
+// the tree) to produce artifacts for an SDK that never initializes on those
+// deployments.
+//
+// That work happens inside the Turbopack compile phase, which is exactly
+// where the 8 GB preview build container is OOM-killed (exit 137), so
+// skipping it on previews removes pure waste rather than trading anything
+// away.
+//
+// Deliberately fail-safe: only an explicit "preview" opts out. If the
+// variable is missing or holds anything else — including a production build
+// or a local build — Sentry stays fully enabled, so production
+// instrumentation can never be dropped by accident.
+const isPreviewBuild =
+  process.env.VERCEL_ENV === "preview" ||
+  process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+
+export default isPreviewBuild ? bundleAnalyzer : withSentry;
