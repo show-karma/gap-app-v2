@@ -1,7 +1,7 @@
-import { chosenCommunities } from "./chosenCommunities";
-import { PAGES } from "./pages";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { PAGES } from "@/utilities/pages";
 
-export interface MarqueeLogo {
+interface MarqueeLogo {
   text: string;
   image: {
     light: string;

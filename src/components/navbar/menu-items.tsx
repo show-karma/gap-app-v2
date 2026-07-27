@@ -30,7 +30,7 @@ export interface MenuItem {
   anchor?: string;
 }
 
-export interface MenuGroup {
+interface MenuGroup {
   title: string;
   items: MenuItem[];
 }
