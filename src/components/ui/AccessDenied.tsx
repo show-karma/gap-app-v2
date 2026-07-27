@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, LogIn, UserRoundSearch } from "lucide-react";
+import { AlertTriangle, LogIn, type LucideIcon, UserRoundSearch } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
@@ -16,6 +16,7 @@ import {
   substituteAccessDeniedTemplate,
 } from "@/utilities/accessDeniedTemplate";
 import { envVars } from "@/utilities/enviromentVars";
+import { cn } from "@/utilities/tailwind";
 
 const MarkdownPreview = dynamic(
   () => import("@/components/Utilities/MarkdownPreview").then((m) => m.MarkdownPreview),
@@ -32,7 +33,7 @@ type AccessDeniedVariant = "denial" | "signin";
 
 const ACCESS_DENIED_VARIANTS: Record<
   AccessDeniedVariant,
-  { Icon: typeof AlertTriangle; wrapperClassName: string; iconClassName: string }
+  { Icon: LucideIcon; wrapperClassName: string; iconClassName: string }
 > = {
   denial: {
     Icon: AlertTriangle,
@@ -252,9 +253,12 @@ export function AccessDenied({
         <CardContent className="text-center py-12 px-8">
           <div className="mb-6 flex justify-center">
             <div
-              className={`w-20 h-20 ${wrapperClassName} rounded-full flex items-center justify-center`}
+              className={cn(
+                "w-20 h-20 rounded-full flex items-center justify-center",
+                wrapperClassName
+              )}
             >
-              <Icon className={`w-10 h-10 ${iconClassName}`} />
+              <Icon aria-hidden="true" className={cn("w-10 h-10", iconClassName)} />
             </div>
           </div>
 
