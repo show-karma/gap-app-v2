@@ -184,16 +184,24 @@ describe("ForProjectsContent Component (formerly ForBuildersContent)", () => {
 
 describe("ForFundersContent Component", () => {
   describe("Desktop Variant", () => {
-    it("should render main item", () => {
+    it("should render every group heading", () => {
       renderWithProviders(<ForFundersContent variant="desktop" />);
-      expect(screen.getByText(forFundersItems.main.title)).toBeInTheDocument();
+      forFundersItems.groups.forEach((group) => {
+        expect(screen.getByText(group.title)).toBeInTheDocument();
+      });
     });
 
-    it("should render main item description", () => {
+    it("should render every grouped item and its description", () => {
       renderWithProviders(<ForFundersContent variant="desktop" />);
-      if (forFundersItems.main.description) {
-        expect(screen.getByText(forFundersItems.main.description)).toBeInTheDocument();
-      }
+
+      forFundersItems.groups.forEach((group) => {
+        group.items.forEach((item) => {
+          expect(screen.getByText(item.title)).toBeInTheDocument();
+          if (item.description) {
+            expect(screen.getByText(item.description)).toBeInTheDocument();
+          }
+        });
+      });
     });
 
     it("should render all secondary items", () => {
@@ -204,7 +212,7 @@ describe("ForFundersContent Component", () => {
       });
     });
 
-    it("should display separator between main and secondary items", () => {
+    it("should display separator between the groups and the secondary items", () => {
       const { container } = renderWithProviders(<ForFundersContent variant="desktop" />);
       const separator = container.querySelector("hr");
       expect(separator).toBeInTheDocument();
@@ -232,9 +240,14 @@ describe("ForFundersContent Component", () => {
   });
 
   describe("Mobile Variant", () => {
-    it("should render main item", () => {
+    it("should render every group heading and item", () => {
       renderWithProviders(<ForFundersContent variant="mobile" />);
-      expect(screen.getByText(forFundersItems.main.title)).toBeInTheDocument();
+      forFundersItems.groups.forEach((group) => {
+        expect(screen.getByText(group.title)).toBeInTheDocument();
+        group.items.forEach((item) => {
+          expect(screen.getByText(item.title)).toBeInTheDocument();
+        });
+      });
     });
 
     it("should render all secondary items", () => {
@@ -262,8 +275,8 @@ describe("ForFundersContent Component", () => {
       const onCloseMock = vi.fn();
       renderWithProviders(<ForFundersContent variant="mobile" onClose={onCloseMock} />);
 
-      const mainItem = screen.getByText(forFundersItems.main.title);
-      await user.click(mainItem);
+      const firstItem = screen.getByText(forFundersItems.groups[0].items[0].title);
+      await user.click(firstItem);
 
       expect(onCloseMock).toHaveBeenCalled();
     });
