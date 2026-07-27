@@ -8,19 +8,14 @@ import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
 import { RotatingWord } from "@/src/features/home/components/rotating-word";
 import { ScrollReveal } from "@/src/features/home/components/scroll-reveal";
 import { marketingLayoutTheme } from "@/src/helper/theme";
-import { chosenCommunities } from "@/utilities/chosenCommunities";
-import { PAGES } from "@/utilities/pages";
+import { homepageMarqueeLogos } from "@/utilities/homepageLogos";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 
 const ROTATING_TARGETS = ["nonprofits", "projects", "initiatives"];
 
 export function Hero() {
-  const communityItems = chosenCommunities(true).map((community) => ({
-    text: community.name,
-    image: community.imageURL,
-    href: PAGES.COMMUNITY.ALL_GRANTS(community.slug),
-  }));
+  const communityItems = homepageMarqueeLogos();
 
   return (
     <section
