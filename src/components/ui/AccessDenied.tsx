@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, LogIn } from "lucide-react";
+import { AlertTriangle, LogIn, type LucideIcon, UserRoundSearch } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
@@ -16,11 +16,36 @@ import {
   substituteAccessDeniedTemplate,
 } from "@/utilities/accessDeniedTemplate";
 import { envVars } from "@/utilities/enviromentVars";
+import { cn } from "@/utilities/tailwind";
 
 const MarkdownPreview = dynamic(
   () => import("@/components/Utilities/MarkdownPreview").then((m) => m.MarkdownPreview),
   { ssr: false }
 );
+
+/**
+ * `denial` is the default: someone hit a wall (missing role, wrong account) and
+ * the red alert glyph is the honest signal. `signin` is for gates that are not
+ * a failure at all — the visitor simply has not signed in yet — so it drops the
+ * alarm styling for a neutral, inviting mark.
+ */
+type AccessDeniedVariant = "denial" | "signin";
+
+const ACCESS_DENIED_VARIANTS: Record<
+  AccessDeniedVariant,
+  { Icon: LucideIcon; wrapperClassName: string; iconClassName: string }
+> = {
+  denial: {
+    Icon: AlertTriangle,
+    wrapperClassName: "bg-red-50 dark:bg-red-900/20",
+    iconClassName: "text-red-600 dark:text-red-400",
+  },
+  signin: {
+    Icon: UserRoundSearch,
+    wrapperClassName: "bg-brand-lightblue dark:bg-brand-blue/15",
+    iconClassName: "text-brand-blue",
+  },
+};
 
 interface AccessDeniedCta {
   label: string;
@@ -42,6 +67,7 @@ interface AccessDeniedSecondaryAction {
 interface AccessDeniedProps {
   title?: string;
   compactTitle?: boolean;
+  variant?: AccessDeniedVariant;
   message?: string;
   returnUrl?: string;
   requiredRoles?: ReadonlyArray<Role | string>;
@@ -136,6 +162,7 @@ function DenialBody({ authenticated, message, customMessage, communityName }: De
 export function AccessDenied({
   title,
   compactTitle = false,
+  variant = "denial",
   message,
   returnUrl = "/",
   requiredRoles,
@@ -218,14 +245,20 @@ export function AccessDenied({
   // render a separate h1 when a caller explicitly passes `title` — e.g.
   // page-specific headings like "Faucet admin access required".
   const resolvedTitle = title ?? null;
+  const { Icon, wrapperClassName, iconClassName } = ACCESS_DENIED_VARIANTS[variant];
 
   return (
     <div className="w-full mx-auto py-16 flex items-center justify-center min-h-[calc(100vh-8rem)]">
       <Card className="max-w-lg">
         <CardContent className="text-center py-12 px-8">
           <div className="mb-6 flex justify-center">
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-10 h-10 text-red-600 dark:text-red-400" />
+            <div
+              className={cn(
+                "w-20 h-20 rounded-full flex items-center justify-center",
+                wrapperClassName
+              )}
+            >
+              <Icon aria-hidden="true" className={cn("w-10 h-10", iconClassName)} />
             </div>
           </div>
 
