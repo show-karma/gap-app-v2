@@ -12,6 +12,12 @@ import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 // measured at ~5.5 s from `goto`, which overruns Playwright's 5 s default
 // `expect` timeout. Matches the allowance T-DON-05 already uses for the same
 // page's post-hydration redirect.
+//
+// Only the *first* assertion after a navigation needs this — it absorbs the
+// hydration wait, and anything rendered in the same commit is already in the
+// DOM by the time it resolves. Follow-up assertions keep the 5 s default so a
+// copy regression still fails fast, and so a hung page can't chain 20 s waits
+// past Playwright's 30 s per-test budget and mask the real assertion error.
 const HYDRATED_QUERY_TIMEOUT = 20000;
 
 test.describe("Smoke Tests — Donation Pages", () => {
@@ -133,9 +139,7 @@ test.describe("Smoke Tests — Donation Pages", () => {
       await expect(page.getByRole("heading", { name: /no programs available/i })).toBeVisible({
         timeout: HYDRATED_QUERY_TIMEOUT,
       });
-      await expect(page.getByText(/no programs available for donations/i)).toBeVisible({
-        timeout: HYDRATED_QUERY_TIMEOUT,
-      });
+      await expect(page.getByText(/no programs available for donations/i)).toBeVisible();
     });
 
     test("T-DON-05: donation page auto-redirects when only one program exists", async ({
