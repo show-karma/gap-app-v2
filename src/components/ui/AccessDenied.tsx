@@ -42,8 +42,8 @@ const ACCESS_DENIED_VARIANTS: Record<
   },
   signin: {
     Icon: UserRoundSearch,
-    wrapperClassName: "bg-blue-50 dark:bg-blue-900/20",
-    iconClassName: "text-blue-600 dark:text-blue-400",
+    wrapperClassName: "bg-brand-lightblue dark:bg-brand-blue/15",
+    iconClassName: "text-brand-blue",
   },
 };
 
