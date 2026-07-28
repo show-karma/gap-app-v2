@@ -4,6 +4,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { staffDenial } from "@/src/components/ui/access-denied-presets";
+import { PermissionCheckError } from "@/src/core/rbac/components/permission-check-error";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { PAGES } from "@/utilities/pages";
@@ -25,7 +26,7 @@ export default function AdminNonprofitResearchLayout({ children }: { children: R
 // redirect, and staff status is only trusted once resolved (`!isLoading`).
 function StaffGate({ children }: { children: React.ReactNode }) {
   const { ready, authenticated } = useAuth();
-  const { isStaff, isLoading } = useStaff();
+  const { isStaff, isLoading, isError } = useStaff();
 
   if (!ready) {
     return (
@@ -51,6 +52,15 @@ function StaffGate({ children }: { children: React.ReactNode }) {
         <Spinner />
       </div>
     );
+  }
+
+  // "Could not be decided" is not "denied". `useStaff` reports isStaff:false for
+  // both, so this branch MUST come first — otherwise a permissions fetch that
+  // failed (the upstream returning 503/504, or our own 15s deadline firing)
+  // renders as "you lack the role" and a real staff member is told to go ask an
+  // admin for access they already have.
+  if (isError) {
+    return <PermissionCheckError />;
   }
 
   if (!isStaff) {
