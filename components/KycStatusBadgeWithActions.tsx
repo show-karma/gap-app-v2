@@ -2,15 +2,13 @@
 
 import { ArrowUturnLeftIcon, ChevronDownIcon, NoSymbolIcon } from "@heroicons/react/24/solid";
 import React, { useState } from "react";
+import { KycStatusBadge, KycStatusIcon, KycTooltipContent } from "@/components/KycStatusIcon";
 import {
   getEffectiveKycStatus,
   getKycBadgeLabel,
   KYC_BADGE_BASE,
-  KycStatusBadge,
-  KycStatusIcon,
-  KycTooltipContent,
   kycBadgeColors,
-} from "@/components/KycStatusIcon";
+} from "@/components/kyc-status-badge.helpers";
 import {
   DropdownMenu,
   DropdownMenuContent,
