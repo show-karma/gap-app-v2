@@ -57,7 +57,7 @@ export const kycStatusLabels: Record<KycVerificationStatus, string> = {
   [KycVerificationStatus.VERIFIED]: "Verified",
   [KycVerificationStatus.REJECTED]: "Rejected",
   [KycVerificationStatus.EXPIRED]: "Expired",
-  [KycVerificationStatus.NOT_APPLICABLE]: "Not applicable",
+  [KycVerificationStatus.NOT_APPLICABLE]: "Not Applicable",
 };
 
 /**

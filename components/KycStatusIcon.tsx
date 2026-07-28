@@ -69,7 +69,7 @@ const statusConfig: Record<
   [KycVerificationStatus.NOT_APPLICABLE]: {
     icon: NoSymbolIcon,
     color: "text-gray-400 dark:text-gray-600",
-    label: "Not applicable",
+    label: "Not Applicable",
     description: "KYC/KYB is not required for this application",
   },
 };

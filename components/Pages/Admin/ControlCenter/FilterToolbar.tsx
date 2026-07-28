@@ -24,7 +24,7 @@ const FILTER_LABELS: Record<string, Record<string, string>> = {
   status: { NOT_STARTED: "Not Started", IN_PROGRESS: "In Progress", COMPLETED: "Completed" },
   kycStatus: {
     NOT_STARTED: "Not Started",
-    NOT_APPLICABLE: "Not applicable",
+    NOT_APPLICABLE: "Not Applicable",
     PENDING: "Pending",
     VERIFIED: "Verified",
     REJECTED: "Rejected",
@@ -264,7 +264,7 @@ export function FilterToolbar({
               <SelectContent>
                 <SelectItem value="all">All KYB</SelectItem>
                 <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-                <SelectItem value="NOT_APPLICABLE">Not applicable</SelectItem>
+                <SelectItem value="NOT_APPLICABLE">Not Applicable</SelectItem>
                 <SelectItem value="PENDING">Pending</SelectItem>
                 <SelectItem value="VERIFIED">Verified</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
