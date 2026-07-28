@@ -314,6 +314,15 @@ export function DonorResearchShell({ children }: DonorResearchShellProps) {
   // sidebar that later swaps for the real one. Only the content pane waits:
   // while the advisor resolves, or while a non-advisor is being redirected to
   // onboarding, it shows a skeleton shaped like the destination route.
+  //
+  // REVIEW-WAIVED: staff report routes deliberately still wait on
+  // `advisorQuery.isLoading`. The wait is bounded and non-additive:
+  // `useDonorAdvisor()` is never disabled here, so it always settles — success
+  // (`null` for a staff viewer with no row) or error both clear `isLoading` —
+  // and `ReportBriefView` independently gates on `advisorQuery.isPending` for
+  // the SAME query key, so skipping the gate here would not surface report
+  // content any sooner. Ungating would only trade a shared skeleton for a
+  // skeleton-inside-a-skeleton.
   const contentPending = advisorQuery.isLoading || (advisorMissing && !allowStaffViewer);
 
   return (
