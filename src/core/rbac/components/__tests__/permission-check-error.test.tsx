@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { permissionsKeys } from "../../hooks/use-permissions";
-import { PermissionCheckError } from "../permission-check-error";
+import { PermissionCheckError } from "@/src/core/rbac/components/permission-check-error";
+import { permissionsKeys } from "@/src/core/rbac/hooks/use-permissions";
 
 // This is the terminal state every RBAC-gated surface falls back to when the
 // permissions lookup fails. Its whole reason to exist is that the viewer gets

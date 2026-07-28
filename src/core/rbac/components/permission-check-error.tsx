@@ -2,7 +2,8 @@
 
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import { permissionsKeys } from "../hooks/use-permissions";
+import { Button } from "@/components/ui/button";
+import { permissionsKeys } from "@/src/core/rbac/hooks/use-permissions";
 
 interface PermissionCheckErrorProps {
   /**
@@ -43,21 +44,22 @@ export function PermissionCheckError({ subject = "this page" }: PermissionCheckE
           The permissions check didn&apos;t complete, so we can&apos;t show {subject} safely. This
           is usually temporary — please try again.
         </p>
-        <button
+        {/*
+          Deliberately not the Button's own `isLoading` prop: it swaps the whole
+          control for a bare spinner, which drops the label and the accessible
+          name mid-retry. The in-place spinning icon keeps both.
+        */}
+        <Button
           aria-busy={isRetrying}
-          className="inline-flex items-center gap-2 rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           disabled={isRetrying}
           onClick={() => {
             void queryClient.refetchQueries({ queryKey: permissionsKeys.all });
           }}
           type="button"
         >
-          <RefreshCw
-            aria-hidden="true"
-            className={isRetrying ? "h-4 w-4 animate-spin" : "h-4 w-4"}
-          />
+          <RefreshCw aria-hidden="true" className={isRetrying ? "animate-spin" : undefined} />
           {isRetrying ? "Retrying…" : "Try again"}
-        </button>
+        </Button>
       </div>
     </div>
   );

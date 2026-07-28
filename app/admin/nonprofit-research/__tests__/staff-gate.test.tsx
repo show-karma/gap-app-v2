@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import AdminNonprofitResearchLayout from "../layout";
+import AdminNonprofitResearchLayout from "@/app/admin/nonprofit-research/layout";
+import { permissionsKeys } from "@/src/core/rbac/hooks/use-permissions";
 
 /**
  * REGRESSION: the staff gate read only `{ isStaff, isLoading }` from
@@ -46,13 +48,16 @@ function renderGate() {
     defaultOptions: { queries: { retry: false } },
   });
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <AdminNonprofitResearchLayout>
-        <div>admin content</div>
-      </AdminNonprofitResearchLayout>
-    </QueryClientProvider>
-  );
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <AdminNonprofitResearchLayout>
+          <div>admin content</div>
+        </AdminNonprofitResearchLayout>
+      </QueryClientProvider>
+    ),
+  };
 }
 
 describe("AdminNonprofitResearchLayout staff gate", () => {
@@ -72,6 +77,18 @@ describe("AdminNonprofitResearchLayout staff gate", () => {
     expect(screen.getByText(/couldn't verify your access/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /try again/i })).toBeEnabled();
     expect(screen.queryByText("Staff access required")).not.toBeInTheDocument();
+  });
+
+  it("wires that error state to a retry that actually re-runs the permissions check", async () => {
+    staffState.isError = true;
+    const user = userEvent.setup();
+
+    const { queryClient } = renderGate();
+    const refetchQueries = vi.spyOn(queryClient, "refetchQueries").mockResolvedValue(undefined);
+
+    await user.click(screen.getByRole("button", { name: /try again/i }));
+
+    expect(refetchQueries).toHaveBeenCalledWith({ queryKey: permissionsKeys.all });
   });
 
   it("still denies a genuinely non-staff viewer", () => {
