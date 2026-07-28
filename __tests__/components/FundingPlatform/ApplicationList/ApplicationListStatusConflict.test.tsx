@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { renderWithProviders } from "@/__tests__/utils/render";
 import type { IFundingApplication } from "@/types/funding-platform";
-import { STATUS_CONFLICT_MESSAGE } from "@/utilities/application-status";
+import { STATUS_CONFLICT_MESSAGE, STATUS_CONFLICT_TOAST_ID } from "@/utilities/application-status";
 
 const mockToastError = vi.fn();
 const mockToastSuccess = vi.fn();
@@ -94,7 +94,22 @@ const renderList = (
     />
   );
 
-const conflictError = () => ({ response: { status: 409, data: { message: "conflict" } } });
+const conflictError = () => ({
+  response: {
+    status: 409,
+    data: { message: "Invalid status transition from 'approved' to 'approved'." },
+  },
+});
+
+// Same 409, different cause: the reviewer can fix this one in the open modal.
+const currencyMismatchError = () => ({
+  response: {
+    status: 409,
+    data: {
+      message: "Currency mismatch: Approved currency 'USDC' does not match program currency 'ETH'.",
+    },
+  },
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -130,28 +145,81 @@ describe("ApplicationList status conflict", () => {
     expect(mockToastError).not.toHaveBeenCalled();
   });
 
+  it("should_keep_the_modal_open_when_a_409_is_a_correctable_validation_error", async () => {
+    const user = userEvent.setup();
+    const onStatusChange = vi.fn().mockRejectedValue(currencyMismatchError());
+
+    renderList({ onStatusChange });
+
+    await user.click(screen.getByText("Approve APP-001"));
+    await user.click(await screen.findByText("Confirm"));
+
+    await waitFor(() => expect(onStatusChange).toHaveBeenCalled());
+    // The typed amount/currency/reason must survive so the reviewer can fix them.
+    expect(screen.getByTestId("status-modal")).toBeInTheDocument();
+  });
+
   it("should_not_send_the_update_when_the_refetched_status_no_longer_allows_it", async () => {
     const user = userEvent.setup();
     const onStatusChange = vi.fn();
-    const onRefreshApplications = vi
+    const onFetchApplication = vi
       .fn()
-      .mockResolvedValue([createMockApplication({ status: "approved" })]);
+      .mockResolvedValue(createMockApplication({ status: "approved" }));
+    const onRefreshApplications = vi.fn().mockResolvedValue([]);
 
-    renderList({ onStatusChange, onRefreshApplications });
+    renderList({ onStatusChange, onFetchApplication, onRefreshApplications });
 
     await user.click(screen.getByText("Approve APP-001"));
 
     await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
-    expect(mockToastError).toHaveBeenCalledWith(STATUS_CONFLICT_MESSAGE);
+    expect(mockToastError).toHaveBeenCalledWith(STATUS_CONFLICT_MESSAGE, {
+      id: STATUS_CONFLICT_TOAST_ID,
+    });
+    expect(onFetchApplication).toHaveBeenCalledWith("APP-001");
     expect(onStatusChange).not.toHaveBeenCalled();
     expect(screen.queryByTestId("status-modal")).not.toBeInTheDocument();
+    // The stale row keeps rendering its dead actions until the list re-reads.
+    expect(onRefreshApplications).toHaveBeenCalledTimes(1);
+  });
+
+  it("should_issue_a_single_freshness_read_when_the_row_action_is_double_clicked", async () => {
+    const user = userEvent.setup();
+    let resolveFetch: (application: IFundingApplication) => void = () => undefined;
+    const onFetchApplication = vi.fn(
+      () =>
+        new Promise<IFundingApplication>((resolve) => {
+          resolveFetch = resolve;
+        })
+    );
+
+    renderList({ onStatusChange: vi.fn(), onFetchApplication });
+
+    const action = screen.getByText("Approve APP-001");
+    await user.click(action);
+    await user.click(action);
+    resolveFetch(createMockApplication());
+
+    await waitFor(() => expect(screen.getByTestId("status-modal")).toBeInTheDocument());
+    expect(onFetchApplication).toHaveBeenCalledTimes(1);
   });
 
   it("should_open_the_modal_when_the_refetched_status_still_allows_the_transition", async () => {
     const user = userEvent.setup();
-    const onRefreshApplications = vi.fn().mockResolvedValue([createMockApplication()]);
+    const onFetchApplication = vi.fn().mockResolvedValue(createMockApplication());
 
-    renderList({ onStatusChange: vi.fn(), onRefreshApplications });
+    renderList({ onStatusChange: vi.fn(), onFetchApplication });
+
+    await user.click(screen.getByText("Approve APP-001"));
+
+    expect(await screen.findByTestId("status-modal")).toBeInTheDocument();
+    expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it("should_fall_back_to_the_rendered_row_when_the_freshness_read_fails", async () => {
+    const user = userEvent.setup();
+    const onFetchApplication = vi.fn().mockResolvedValue(null);
+
+    renderList({ onStatusChange: vi.fn(), onFetchApplication });
 
     await user.click(screen.getByText("Approve APP-001"));
 
