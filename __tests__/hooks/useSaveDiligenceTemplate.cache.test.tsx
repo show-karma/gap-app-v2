@@ -115,4 +115,23 @@ describe("useSaveDiligenceTemplate cache invalidation", () => {
 
     expect(isInvalidated(diligenceTemplateQueryKey)).toBe(false);
   });
+
+  it("touches no cached copy when the save fails", async () => {
+    mockSaveDiligenceTemplate.mockRejectedValue(new Error("save failed"));
+    seed(diligenceTemplateQueryKey);
+    seed(reportDiligenceTemplateQueryKey("report-1"));
+    seed(reportDiligenceTemplateQueryKey("report-2"));
+
+    const { result } = renderHook(() => useSaveDiligenceTemplate("report-1"), { wrapper });
+    result.current.mutate({ questions: saved.questions });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    // A rejected save must not seed the target key with questions the server
+    // never accepted, nor sweep siblings that are still accurate.
+    expect(queryClient.getQueryData(reportDiligenceTemplateQueryKey("report-1"))).toEqual(stale);
+    expect(queryClient.getQueryData(diligenceTemplateQueryKey)).toEqual(stale);
+    expect(isInvalidated(diligenceTemplateQueryKey)).toBe(false);
+    expect(isInvalidated(reportDiligenceTemplateQueryKey("report-2"))).toBe(false);
+  });
 });

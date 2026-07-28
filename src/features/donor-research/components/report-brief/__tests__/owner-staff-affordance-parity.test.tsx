@@ -103,14 +103,25 @@ function buildReport(overrides: Partial<ResearchReportDetail> = {}): ResearchRep
   };
 }
 
-/** Accessible names of every interactive control, sorted and de-duplicated. */
+/**
+ * Accessible names of every interactive control, sorted. Duplicates are
+ * deliberately KEPT: the controls repeat per candidate, so collapsing them
+ * would let staff lose one of several identical "Connect" buttons and still
+ * look at parity. Callers compare multiplicity via {@link tally}.
+ */
 function affordancesFor(
   variant: "advisor" | "staff",
   report: ResearchReportDetail,
-  isTerminal: boolean
+  isTerminal: boolean,
+  canManageReport = true
 ): string[] {
   const view = renderWithProviders(
-    <ReportBrief canManageReport isTerminal={isTerminal} report={report} variant={variant} />
+    <ReportBrief
+      canManageReport={canManageReport}
+      isTerminal={isTerminal}
+      report={report}
+      variant={variant}
+    />
   );
   const names = INTERACTIVE_ROLES.flatMap((role) =>
     view
@@ -118,7 +129,15 @@ function affordancesFor(
       .map((el) => `${role}:${el.textContent?.trim() || el.getAttribute("aria-label") || ""}`)
   );
   view.unmount();
-  return [...new Set(names)].sort();
+  return names.sort();
+}
+
+/** How many times each control name appears in a render. */
+function tally(names: string[]): Record<string, number> {
+  return names.reduce<Record<string, number>>((acc, name) => {
+    acc[name] = (acc[name] ?? 0) + 1;
+    return acc;
+  }, {});
 }
 
 describe("owner ↔ super-admin affordance parity", () => {
@@ -139,11 +158,18 @@ describe("owner ↔ super-admin affordance parity", () => {
       isTerminal: true,
     },
   ])("exposes the same controls to both viewers — $label", ({ report, isTerminal }) => {
-    const owner = affordancesFor("advisor", report, isTerminal);
-    const staff = affordancesFor("staff", report, isTerminal);
+    const ownerCounts = tally(affordancesFor("advisor", report, isTerminal));
+    const staffCounts = tally(affordancesFor("staff", report, isTerminal));
 
-    const missingForStaff = owner.filter((n) => !staff.includes(n) && !justified.has(n));
-    const extraForStaff = staff.filter((n) => !owner.includes(n) && !justified.has(n));
+    // Compared by COUNT, not membership: the diligence footer repeats per
+    // candidate, so a regression that drops it from one candidate while
+    // leaving it on another still has to fail here.
+    const missingForStaff = Object.entries(ownerCounts)
+      .filter(([name, count]) => !justified.has(name) && (staffCounts[name] ?? 0) < count)
+      .map(([name, count]) => `${name} — owner ${count}, staff ${staffCounts[name] ?? 0}`);
+    const extraForStaff = Object.entries(staffCounts)
+      .filter(([name, count]) => !justified.has(name) && (ownerCounts[name] ?? 0) < count)
+      .map(([name, count]) => `${name} — staff ${count}, owner ${ownerCounts[name] ?? 0}`);
 
     expect(
       missingForStaff,
@@ -152,6 +178,20 @@ describe("owner ↔ super-admin affordance parity", () => {
         `If the difference is intentional, add it to JUSTIFIED_DIFFERENCES with a reason.`
     ).toEqual([]);
     expect(extraForStaff, "A super-admin has controls the owner does not.").toEqual([]);
+  });
+
+  it("denies every diligence control to a signed-in non-owner, non-staff viewer", () => {
+    const report = buildReport();
+
+    // The plain non-owner: `variant="staff"` only means "not the owner", so
+    // the denial has to come from the resolved authorization instead.
+    const denied = affordancesFor("staff", report, true, false);
+
+    expect(denied).not.toContain("button:Ask questions");
+    expect(denied).not.toContain("button:Connect");
+
+    const managed = affordancesFor("staff", report, true, true);
+    expect(managed.length).toBeGreaterThan(denied.length);
   });
 
   it("keeps the donor share view free of every management control", () => {
