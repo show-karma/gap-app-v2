@@ -8,6 +8,7 @@ import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { IApplicationListProps, IFundingApplication } from "@/types/funding-platform";
 import type { KycStatusResponse } from "@/types/kyc";
 import {
+  formatApplicationStatus,
   isStatusConflictError,
   STATUS_CONFLICT_MESSAGE,
   STATUS_CONFLICT_TOAST_ID,
@@ -188,7 +189,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
         if (pendingStatus === "approved") {
           toast.success("Application approved successfully!");
         } else {
-          toast.success(`Application status updated to ${pendingStatus}`);
+          toast.success(`Application status updated to ${formatApplicationStatus(pendingStatus)}`);
         }
       } catch (error) {
         // SUPPRESSED: the status mutation's onError owns the failure toast. Only
