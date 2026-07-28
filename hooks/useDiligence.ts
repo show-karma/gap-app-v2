@@ -28,13 +28,20 @@ import type {
 export const diligenceTemplateQueryKey = ["donor-research", "diligence", "template"] as const;
 
 /**
- * Report-owner-scoped template (see {@link useDiligenceTemplate}). Deliberately
- * NOT nested under {@link diligenceTemplateQueryKey} — invalidating the `/me`
- * template must not clobber (or refetch) every report-scoped copy, since React
- * Query matches keys by prefix.
+ * Prefix shared by every report-scoped template entry. Deliberately NOT nested
+ * under {@link diligenceTemplateQueryKey} — React Query matches keys by prefix,
+ * so nesting would make any `/me` invalidation sweep every report-scoped copy
+ * as a side effect rather than a decision.
  */
+const REPORT_DILIGENCE_TEMPLATE_KEY_PREFIX = [
+  "donor-research",
+  "diligence",
+  "report-template",
+] as const;
+
+/** Report-owner-scoped template (see {@link useDiligenceTemplate}). */
 export const reportDiligenceTemplateQueryKey = (reportId: string) =>
-  ["donor-research", "diligence", "report-template", reportId] as const;
+  [...REPORT_DILIGENCE_TEMPLATE_KEY_PREFIX, reportId] as const;
 
 export const candidateDiligenceQueryKey = (reportId: string, candidateId: string) =>
   ["donor-research", "diligence", "candidate", reportId, candidateId] as const;
@@ -70,21 +77,31 @@ export function useDiligenceTemplate(reportId?: string) {
  * result so the editor reflects the server's canonical copy. `reportId`
  * selects the report owner's template — see {@link useDiligenceTemplate}.
  *
- * A report-scoped save also drops the caller's `/me` copy: when the caller IS
- * the owner the two are the same row, and a staff caller's own template is
- * untouched either way, so invalidating is always safe and never stale.
+ * One row can be cached under several keys — the caller's `/me` copy, plus one
+ * per report that resolves to the same owner — so a save seeds the key it
+ * wrote and drops every OTHER copy. Nothing here can tell which reports share
+ * an owner, and a stale copy is a correctness bug (the empty-template guard
+ * would keep showing the first-run editor for up to `staleTime`), so the sweep
+ * is deliberately wide: these are cheap single-row reads.
  */
 export function useSaveDiligenceTemplate(reportId?: string) {
   const queryClient = useQueryClient();
   return useMutation<DiligenceTemplate, Error, SaveDiligenceTemplateRequest>({
     mutationFn: (body) => saveDiligenceTemplate(body, reportId),
     onSuccess: (saved) => {
-      if (!reportId) {
-        queryClient.setQueryData(diligenceTemplateQueryKey, saved);
-        return;
+      queryClient.setQueryData(
+        reportId ? reportDiligenceTemplateQueryKey(reportId) : diligenceTemplateQueryKey,
+        saved
+      );
+      // Skipped when the `/me` key IS the one just seeded, so the fresh copy
+      // doesn't get immediately marked stale and refetched.
+      if (reportId) {
+        queryClient.invalidateQueries({ queryKey: diligenceTemplateQueryKey });
       }
-      queryClient.setQueryData(reportDiligenceTemplateQueryKey(reportId), saved);
-      queryClient.invalidateQueries({ queryKey: diligenceTemplateQueryKey });
+      queryClient.invalidateQueries({
+        queryKey: REPORT_DILIGENCE_TEMPLATE_KEY_PREFIX,
+        predicate: (query) => query.queryKey[3] !== reportId,
+      });
     },
   });
 }
