@@ -1,0 +1,60 @@
+"use client";
+
+import { useIsFetching, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { permissionsKeys } from "../hooks/use-permissions";
+
+interface PermissionCheckErrorProps {
+  /**
+   * What the viewer was trying to reach, lowercase and article-free — e.g.
+   * "this report", "this page". Rendered mid-sentence.
+   */
+  subject?: string;
+}
+
+/**
+ * Terminal state for "we could not decide what you are allowed to do".
+ *
+ * Every RBAC-gated surface reads its verdict from a single permissions fetch,
+ * and `useStaff()` / `usePermissionContext()` report `false` for BOTH "denied"
+ * and "could not be decided". Rendering the denied UI for the second case tells
+ * a real super-admin they lack a role they actually hold, with no hint that
+ * anything failed and no way to retry — the failure looks like a policy
+ * decision. So any caller that gates on RBAC must branch on `isError` BEFORE
+ * `!isStaff` / `!can(...)` and render this instead.
+ *
+ * Retry refetches the permissions query rather than reloading the page, so a
+ * transient backend blip costs one request, not a full app boot.
+ */
+export function PermissionCheckError({ subject = "this page" }: PermissionCheckErrorProps) {
+  const queryClient = useQueryClient();
+  const isRetrying = useIsFetching({ queryKey: permissionsKeys.all }) > 0;
+
+  return (
+    <div className="mx-auto max-w-xl px-4 py-12" role="alert">
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+        </div>
+        <h1 className="text-xl font-semibold text-foreground">
+          We couldn&apos;t verify your access
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Checking your permissions took too long, so we can&apos;t show {subject} safely. Please
+          try again.
+        </p>
+        <button
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          disabled={isRetrying}
+          onClick={() => {
+            void queryClient.refetchQueries({ queryKey: permissionsKeys.all });
+          }}
+          type="button"
+        >
+          <RefreshCw className={isRetrying ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+          {isRetrying ? "Retrying…" : "Try again"}
+        </button>
+      </div>
+    </div>
+  );
+}
