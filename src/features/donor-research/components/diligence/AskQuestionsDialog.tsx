@@ -28,6 +28,7 @@ import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
 import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
 import { makeQuestionId } from "./question-id";
+import type { DiligenceViewer } from "./viewer";
 
 interface AskQuestionsDialogProps {
   reportId: string;
@@ -37,6 +38,8 @@ interface AskQuestionsDialogProps {
   view: CandidateDiligenceView;
   /** Nonprofit display name for the preview's To row (null → row hidden). */
   candidateName?: string | null;
+  /** The report's owner, or a super-admin acting as them. */
+  viewer: DiligenceViewer;
 }
 
 /**
@@ -55,6 +58,7 @@ export function AskQuestionsDialog({
   onOpenChange,
   view,
   candidateName,
+  viewer,
 }: AskQuestionsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,6 +72,7 @@ export function AskQuestionsDialog({
             candidateId={candidateId}
             view={view}
             candidateName={candidateName ?? null}
+            viewer={viewer}
             onClose={() => onOpenChange(false)}
           />
         ) : null}
@@ -81,6 +86,7 @@ interface AskQuestionsBodyProps {
   candidateId: string;
   view: CandidateDiligenceView;
   candidateName: string | null;
+  viewer: DiligenceViewer;
   onClose: () => void;
 }
 
@@ -89,12 +95,15 @@ function AskQuestionsBody({
   candidateId,
   view,
   candidateName,
+  viewer,
   onClose,
 }: AskQuestionsBodyProps) {
   // The template is only consulted for the empty guard — the email content
   // itself always comes from the backend preview, which composes from the
-  // live template exactly as delivery would.
-  const templateQuery = useDiligenceTemplate();
+  // live template exactly as delivery would. Read it through the REPORT so a
+  // super-admin sees the owner's questions (the ones the preview composes
+  // from), not their own — which they may not even have.
+  const templateQuery = useDiligenceTemplate(reportId);
   const askQuestions = useAskQuestions();
 
   const hasFrozenRequest = (view.request?.questions.length ?? 0) > 0;
@@ -171,7 +180,7 @@ function AskQuestionsBody({
           </div>
         ) : isTemplateError ? (
           <div className="flex flex-col items-start gap-2 rounded-md border border-border bg-muted/30 p-3">
-            <p className="text-sm text-muted-foreground">Couldn't load your questions.</p>
+            <p className="text-sm text-muted-foreground">{TEMPLATE_ERROR_COPY[viewer]}</p>
             <Button
               type="button"
               size="sm"
@@ -182,7 +191,7 @@ function AskQuestionsBody({
             </Button>
           </div>
         ) : isTemplateEmpty ? (
-          <InlineQuestionSetup />
+          <InlineQuestionSetup reportId={reportId} viewer={viewer} />
         ) : (
           <OutreachEmailPreview
             preview={preview}
@@ -193,7 +202,7 @@ function AskQuestionsBody({
             body={body}
             onBodyChange={setDraft}
             idPrefix="ask-questions"
-            hint="Editing the questions here changes the email text only — the answer form uses your saved question template."
+            hint={BODY_EDIT_HINT_COPY[viewer]}
           />
         )}
       </div>
@@ -215,17 +224,58 @@ function AskQuestionsBody({
   );
 }
 
+/**
+ * Copy that differs for a super-admin acting on the owner's behalf: the
+ * questions being sent are the OWNER's, so "your" would be wrong.
+ */
+const TEMPLATE_ERROR_COPY: Record<DiligenceViewer, string> = {
+  owner: "Couldn't load your questions.",
+  staff: "Couldn't load the report owner's questions.",
+};
+
+const BODY_EDIT_HINT_COPY: Record<DiligenceViewer, string> = {
+  owner:
+    "Editing the questions here changes the email text only — the answer form uses your saved question template.",
+  staff:
+    "Editing the questions here changes the email text only — the answer form uses the report owner's saved question template.",
+};
+
+const EMPTY_TEMPLATE_COPY: Record<DiligenceViewer, string> = {
+  owner:
+    "You haven't added any diligence questions yet. Write them here — they're saved to your question template and dropped into the email.",
+  staff:
+    "This report's owner hasn't added any diligence questions yet. Write them here — they're saved to the owner's question template and dropped into the email.",
+};
+
+const TEMPLATE_SAVED_COPY: Record<DiligenceViewer, string> = {
+  owner: "Questions saved to your template",
+  staff: "Questions saved to the report owner's template",
+};
+
+const TEMPLATE_SAVE_FAILED_COPY: Record<DiligenceViewer, string> = {
+  owner: "Couldn't save your questions. Please try again.",
+  staff: "Couldn't save the report owner's questions. Please try again.",
+};
+
 const { MAX_QUESTIONS, QUESTION_TEXT_MAX } = DILIGENCE_TEMPLATE_LIMITS;
 
+interface InlineQuestionSetupProps {
+  /** Scopes the save to the report OWNER's template, not the caller's. */
+  reportId: string;
+  viewer: DiligenceViewer;
+}
+
 /**
- * First-run question capture inside the dialog: lets the advisor write their
+ * First-run question capture inside the dialog: lets the advisor write the
  * diligence questions right here instead of detouring to the template page
- * (which stays available via the link below). Saving goes through the normal
- * template save, and the seeded cache flips the dialog straight into the email
- * preview — blank rows are dropped, so only real questions persist.
+ * (which stays available via the link below, for the owner — a super-admin's
+ * own template page would edit the wrong row, so they don't get the link).
+ * Saving goes through the report-scoped template save, and the seeded cache
+ * flips the dialog straight into the email preview — blank rows are dropped,
+ * so only real questions persist.
  */
-function InlineQuestionSetup() {
-  const save = useSaveDiligenceTemplate();
+function InlineQuestionSetup({ reportId, viewer }: InlineQuestionSetupProps) {
+  const save = useSaveDiligenceTemplate(reportId);
   const [rows, setRows] = useState<DiligenceQuestion[]>(() => [{ id: makeQuestionId(), text: "" }]);
 
   const filled = rows.filter((row) => row.text.trim().length > 0);
@@ -251,10 +301,10 @@ function InlineQuestionSetup() {
       { questions: filled.map((row) => ({ id: row.id, text: row.text.trim() })) },
       {
         onSuccess: () => {
-          toast.success("Questions saved to your template");
+          toast.success(TEMPLATE_SAVED_COPY[viewer]);
         },
         onError: () => {
-          toast.error("Couldn't save your questions. Please try again.");
+          toast.error(TEMPLATE_SAVE_FAILED_COPY[viewer]);
         },
       }
     );
@@ -262,10 +312,7 @@ function InlineQuestionSetup() {
 
   return (
     <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3">
-      <p className="text-sm text-muted-foreground">
-        You haven't added any diligence questions yet. Write them here — they're saved to your
-        question template and dropped into the email.
-      </p>
+      <p className="text-sm text-muted-foreground">{EMPTY_TEMPLATE_COPY[viewer]}</p>
 
       <div className="flex flex-col gap-2">
         {rows.map((row, index) => (
@@ -303,12 +350,14 @@ function InlineQuestionSetup() {
         </Button>
       </div>
 
-      <Link
-        href={PAGES.DONOR_RESEARCH.DILIGENCE_TEMPLATE}
-        className="text-sm font-medium text-brand-emphasis underline-offset-2 hover:underline dark:text-brand-subtle"
-      >
-        Edit your question template
-      </Link>
+      {viewer === "owner" ? (
+        <Link
+          href={PAGES.DONOR_RESEARCH.DILIGENCE_TEMPLATE}
+          className="text-sm font-medium text-brand-emphasis underline-offset-2 hover:underline dark:text-brand-subtle"
+        >
+          Edit your question template
+        </Link>
+      ) : null}
     </div>
   );
 }

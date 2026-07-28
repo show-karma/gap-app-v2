@@ -4,6 +4,7 @@ import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
+import type { DiligenceViewer } from "../diligence/viewer";
 import { FinancialsTable } from "../report-brief/FinancialsTable";
 import { compositeBand } from "../report-brief/scoring";
 import { formatEin, hostname, humanizeCase, truncate } from "../report-brief/text-utils";
@@ -24,8 +25,11 @@ interface CandidateCardProps {
   weights?: CompositeWeights | null;
   /** Report id — required to mount the advisor diligence actions. */
   reportId?: string;
-  /** Advisor-only: gates the Ask Questions / Connect footer. */
-  showDiligenceActions?: boolean;
+  /**
+   * Who may run the Ask Questions / Connect footer — the report owner or a
+   * super-admin acting as them. `null`/absent hides it entirely.
+   */
+  diligenceViewer?: DiligenceViewer | null;
 }
 
 /**
@@ -54,7 +58,7 @@ export function CandidateCard({
   variant,
   weights = null,
   reportId,
-  showDiligenceActions = false,
+  diligenceViewer = null,
 }: CandidateCardProps) {
   const [expanded, setExpanded] = useState(false);
   const isDisqualified = candidate.complianceVerdict === "disqualified";
@@ -160,7 +164,7 @@ export function CandidateCard({
           reportId={reportId}
           candidateId={candidate.id}
           candidateName={name}
-          show={showDiligenceActions}
+          viewer={diligenceViewer}
         />
       </div>
     </article>
@@ -171,25 +175,27 @@ interface CandidateDiligenceFooterProps {
   reportId: string | undefined;
   candidateId: string;
   candidateName: string | null;
-  show: boolean;
+  viewer: DiligenceViewer | null;
 }
 
 /**
- * Advisor-only diligence footer. Extracted so the conditional stays out of the
+ * Diligence footer for whoever may act on the report — its owner, or a
+ * super-admin acting as them. Extracted so the conditional stays out of the
  * already-dense {@link CandidateCard} body. Renders nothing on the donor shared
- * view (where `show` is false / `reportId` is absent).
+ * view (where `viewer` is null / `reportId` is absent).
  */
 function CandidateDiligenceFooter({
   reportId,
   candidateId,
   candidateName,
-  show,
+  viewer,
 }: CandidateDiligenceFooterProps) {
-  return show && reportId ? (
+  return viewer && reportId ? (
     <CandidateDiligenceActions
       reportId={reportId}
       candidateId={candidateId}
       candidateName={candidateName}
+      viewer={viewer}
     />
   ) : null;
 }

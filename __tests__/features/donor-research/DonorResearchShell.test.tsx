@@ -162,4 +162,63 @@ describe("DonorResearchShell", () => {
     );
     expect(within(breadcrumb).getByText("No. FB95F6")).toHaveAttribute("aria-current", "page");
   });
+
+  describe("super-admin without an advisor profile", () => {
+    function mockNoAdvisorRow() {
+      mockUseDonorAdvisor.mockReturnValue({
+        data: null,
+        isLoading: false,
+        isError: false,
+        isSuccess: true,
+      } as unknown as ReturnType<typeof useDonorAdvisor>);
+    }
+
+    it("gets the same sidebar and breadcrumbs as the report owner on a report route", () => {
+      mockNoAdvisorRow();
+
+      renderWithProviders(
+        <DonorResearchShell>
+          <div>Report content</div>
+        </DonorResearchShell>
+      );
+
+      expect(document.querySelector('[data-sidebar="sidebar"]')).toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Nonprofit research sections" })
+      ).toBeInTheDocument();
+      expect(screen.getByRole("navigation", { name: "breadcrumb" })).toBeInTheDocument();
+      expect(screen.getByText("Report content")).toBeInTheDocument();
+    });
+
+    it("omits the advisor-owned usage counter rather than shimmering a skeleton forever", () => {
+      mockNoAdvisorRow();
+
+      renderWithProviders(
+        <DonorResearchShell>
+          <div>Report content</div>
+        </DonorResearchShell>
+      );
+
+      // Only the collapsed-rail menu item remains; the advisor-scoped
+      // RateLimitCounter (mocked to the same label) is not mounted, and no
+      // loading skeleton is left in its place.
+      expect(screen.getAllByText("Usage limits")).toHaveLength(1);
+      expect(document.querySelector(".rounded-sf-tile")).not.toBeInTheDocument();
+    });
+
+    it("still redirects to onboarding away from report routes", () => {
+      mockNoAdvisorRow();
+      const replace = vi.fn();
+      mockUseRouter.mockReturnValue({ replace } as unknown as ReturnType<typeof useRouter>);
+      mockUsePathname.mockReturnValue(PAGES.DONOR_RESEARCH.INDEX);
+
+      renderWithProviders(
+        <DonorResearchShell>
+          <div>Reports list</div>
+        </DonorResearchShell>
+      );
+
+      expect(replace).toHaveBeenCalledWith(PAGES.DONOR_RESEARCH.ONBOARDING);
+    });
+  });
 });

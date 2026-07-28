@@ -6,7 +6,6 @@ import { ClipboardList, FileText, type LucideIcon, Plus, Sparkles, UsersRound } 
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { SoftShell } from "@/components/Pages/Dashboard/v3/SoftShell";
 import { SK } from "@/components/Pages/Dashboard/v3/soft-classes";
 import {
   Breadcrumb,
@@ -106,9 +105,12 @@ function SidebarNavItem({ item, pathname }: { item: NavItem; pathname: string })
 
 function DonorResearchSidebar({
   advisor,
+  advisorPending,
   pathname,
 }: {
   advisor: DonorAdvisor | null;
+  /** Distinguishes "still loading" from "resolved, and there is none". */
+  advisorPending: boolean;
   pathname: string;
 }) {
   return (
@@ -129,17 +131,22 @@ function DonorResearchSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="group-data-[collapsible=icon]:hidden">
-          {advisor ? (
-            <RateLimitCounter advisor={advisor} variant="sidebar" />
-          ) : (
-            <div className="flex flex-col gap-2 rounded-sf-tile border border-sf-line bg-sf-card p-3">
-              <span className={cn(SK, "h-3 w-24")} />
-              <span className={cn(SK, "h-2 w-full rounded-full")} />
-              <span className={cn(SK, "h-2 w-2/3")} />
-            </div>
-          )}
-        </div>
+        {/* Usage limits are advisor-owned. A staff viewer with no advisor row
+            of their own has none to show — render nothing rather than a
+            skeleton that would shimmer forever. */}
+        {advisor || advisorPending ? (
+          <div className="group-data-[collapsible=icon]:hidden">
+            {advisor ? (
+              <RateLimitCounter advisor={advisor} variant="sidebar" />
+            ) : (
+              <div className="flex flex-col gap-2 rounded-sf-tile border border-sf-line bg-sf-card p-3">
+                <span className={cn(SK, "h-3 w-24")} />
+                <span className={cn(SK, "h-2 w-full rounded-full")} />
+                <span className={cn(SK, "h-2 w-2/3")} />
+              </div>
+            )}
+          </div>
+        ) : null}
         <SidebarMenu className="hidden group-data-[collapsible=icon]:flex">
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Usage limits">
@@ -241,16 +248,18 @@ function getLoadingVariant(pathname: string): DonorResearchLoadingVariant {
 
 function DonorResearchAppShell({
   advisor,
+  advisorPending,
   children,
   pathname,
 }: {
   advisor: DonorAdvisor | null;
+  advisorPending: boolean;
   children: ReactNode;
   pathname: string;
 }) {
   return (
     <SidebarProvider className="dashv3 relative min-h-[calc(100vh-var(--navbar-height,64px))] bg-sf-panel">
-      <DonorResearchSidebar advisor={advisor} pathname={pathname} />
+      <DonorResearchSidebar advisor={advisor} advisorPending={advisorPending} pathname={pathname} />
       <SidebarInset className="bg-sf-panel">
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
           <SidebarTrigger className="-ml-2 size-11 md:-ml-1 md:size-7" />
@@ -268,7 +277,15 @@ interface DonorResearchShellProps {
   children: ReactNode;
 }
 
-/** Shared collapsible navigation shell for the advisor-facing research routes. */
+/**
+ * Shared collapsible navigation shell for the authenticated research routes.
+ *
+ * Report-detail routes are also reachable by staff who never onboarded as an
+ * advisor. They get the SAME chrome as the report's owner — sidebar,
+ * breadcrumbs, content pane — so the two views are indistinguishable; only the
+ * advisor-owned usage counter is omitted, since they have none. The
+ * onboarding redirect stays off those routes (`allowStaffViewer`).
+ */
 export function DonorResearchShell({ children }: DonorResearchShellProps) {
   const pathname = usePathname();
   const { replace } = useRouter();
@@ -287,12 +304,6 @@ export function DonorResearchShell({ children }: DonorResearchShellProps) {
     }
   }, [allowStaffViewer, advisorMissing, replace]);
 
-  // Staff viewing a report without their own advisor row get the plain Soft
-  // shell (no advisor-scoped sidebar) rather than the research navigation.
-  if (allowStaffViewer && (advisorQuery.isError || advisorMissing)) {
-    return <SoftShell>{children}</SoftShell>;
-  }
-
   // A genuine load failure on an advisor-owned route is unrecoverable here —
   // surface it to the route's error boundary.
   if (advisorQuery.isError && !allowStaffViewer) {
@@ -303,10 +314,23 @@ export function DonorResearchShell({ children }: DonorResearchShellProps) {
   // sidebar that later swaps for the real one. Only the content pane waits:
   // while the advisor resolves, or while a non-advisor is being redirected to
   // onboarding, it shows a skeleton shaped like the destination route.
+  //
+  // REVIEW-WAIVED: staff report routes deliberately still wait on
+  // `advisorQuery.isLoading`. The wait is bounded and non-additive:
+  // `useDonorAdvisor()` is never disabled here, so it always settles — success
+  // (`null` for a staff viewer with no row) or error both clear `isLoading` —
+  // and `ReportBriefView` independently gates on `advisorQuery.isPending` for
+  // the SAME query key, so skipping the gate here would not surface report
+  // content any sooner. Ungating would only trade a shared skeleton for a
+  // skeleton-inside-a-skeleton.
   const contentPending = advisorQuery.isLoading || (advisorMissing && !allowStaffViewer);
 
   return (
-    <DonorResearchAppShell advisor={advisor} pathname={pathname}>
+    <DonorResearchAppShell
+      advisor={advisor}
+      advisorPending={advisorQuery.isLoading}
+      pathname={pathname}
+    >
       {contentPending ? (
         <DonorResearchLoading variant={getLoadingVariant(pathname)} label="Loading…" />
       ) : (

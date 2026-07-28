@@ -2,6 +2,7 @@
 
 import type { useDonorReportStream } from "@/hooks/useDonorReportStream";
 import type { ResearchReportDetail } from "@/types/donor-research";
+import type { DiligenceViewer } from "../diligence/viewer";
 import { CandidateProgress } from "../report-viewer/CandidateProgress";
 import { DisqualificationSummary } from "../report-viewer/DisqualificationSummary";
 import { FailedReportBanner } from "../report-viewer/FailedReportBanner";
@@ -22,16 +23,15 @@ interface ReportBriefProps {
   report: ResearchReportDetail;
   isTerminal: boolean;
   /**
-   * "advisor" renders the owner-only weights/share controls and diligence
-   * actions — writes scoped to the report's advisor. "staff" keeps the
-   * full brief (including the query disclosure) but hides those write
-   * affordances and shows a breadcrumb back to the admin overview.
-   * "shared" additionally hides the query disclosure so the donor share
-   * view never reveals the advisor's search criteria.
+   * "advisor" is the report's owner. "staff" is any other signed-in viewer —
+   * a super-admin, or a plain non-owner; `canManageReport` is what separates
+   * them. "shared" is the donor share view, which additionally hides the
+   * query disclosure so it never reveals the advisor's search criteria.
    */
   variant?: "advisor" | "shared" | "staff";
   /**
-   * Shows the ranking-weights + share-token controls. Defaults to the owner
+   * Resolved write authorization: the ranking-weights + share-token controls
+   * and the per-candidate diligence actions. Defaults to the owner
    * (`variant === "advisor"`); the authenticated view also passes `true` for
    * staff, whose writes the BE resolves to the report owner. Never set on the
    * donor share view.
@@ -67,10 +67,15 @@ export function ReportBrief({
   const featured = candidates.filter((c) => c.featuredFlag);
   const remaining = candidates.filter((c) => !c.featuredFlag);
   const weights = report.weights ?? null;
-  // Diligence + intro actions are owner-only writes — the donor shared view
-  // must never surface them (they'd reveal that diligence is in flight) and
-  // staff can't use them (the endpoints are advisor-scoped).
-  const showDiligenceActions = variant === "advisor";
+  // Who may run the diligence + intro actions. The owner acts for themselves;
+  // staff act AS the owner (the backend resolves every report-scoped diligence
+  // endpoint to the report's advisor), so both get the same footer. Anyone
+  // else — the donor shared view, a signed-in non-owner — gets none: the
+  // actions would reveal that diligence is in flight.
+  //
+  // `variant` alone can't answer this: a plain non-owner also renders as
+  // "staff". `canManageReport` is the resolved authorization signal.
+  const diligenceViewer = resolveDiligenceViewer(variant, canManageReport);
 
   return (
     <div className="flex flex-col gap-6" data-brief>
@@ -128,7 +133,7 @@ export function ReportBrief({
           candidate={featured[0]}
           hasMore={candidates.length > 1}
           reportId={report.id}
-          showDiligenceActions={showDiligenceActions}
+          diligenceViewer={diligenceViewer}
           weights={weights}
         />
       ) : null}
@@ -140,7 +145,7 @@ export function ReportBrief({
           label={labelForRank(i + 2)}
           rank={i + 2}
           reportId={report.id}
-          showDiligenceActions={showDiligenceActions}
+          diligenceViewer={diligenceViewer}
           weights={weights}
         />
       ))}
@@ -151,7 +156,7 @@ export function ReportBrief({
         <AlsoConsidered
           candidates={remaining}
           reportId={report.id}
-          showDiligenceActions={showDiligenceActions}
+          diligenceViewer={diligenceViewer}
           startRank={featured.length + 1}
           weights={weights}
         />
@@ -167,6 +172,21 @@ export function ReportBrief({
       ) : null}
     </div>
   );
+}
+
+/**
+ * Resolves who is looking at the diligence actions. Returns null when nobody
+ * may act — the donor share view, or a signed-in viewer who owns neither the
+ * report nor staff access.
+ */
+function resolveDiligenceViewer(
+  variant: "advisor" | "shared" | "staff",
+  canManageReport: boolean | undefined
+): DiligenceViewer | null {
+  if (variant === "shared") return null;
+  const canManage = canManageReport ?? variant === "advisor";
+  if (!canManage) return null;
+  return variant === "advisor" ? "owner" : "staff";
 }
 
 function labelForRank(rank: number): string {
