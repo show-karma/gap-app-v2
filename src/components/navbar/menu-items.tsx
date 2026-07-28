@@ -106,7 +106,7 @@ export const forFundersItems: ForFundersItems = {
       title: "Donor Advisors",
       items: [
         {
-          href: PAGES.DONOR_RESEARCH.INDEX,
+          href: PAGES.DONOR_ADVISORS,
           icon: UserRoundSearch,
           title: "Nonprofit Deep Research",
         },
@@ -164,11 +164,9 @@ export const resourcesItems: MenuItem[] = [
     showArrow: true,
   },
   {
-    href: SOCIALS.PARAGRAPH,
+    href: PAGES.BLOG,
     icon: ScrollText,
     title: "Blog",
-    external: true,
-    showArrow: true,
   },
   {
     href: karmaLinks.skills,

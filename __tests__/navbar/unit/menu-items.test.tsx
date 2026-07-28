@@ -97,7 +97,7 @@ describe("Menu Items Configuration", () => {
       expect(foundations?.items[0].external).toBeUndefined();
     });
 
-    it('should point "Nonprofit Deep Research" at the donor-research index', () => {
+    it('should point "Nonprofit Deep Research" at the donor-advisors landing page', () => {
       const donorAdvisors = forFundersItems.groups.find(
         (group) => group.title === "Donor Advisors"
       );
@@ -105,7 +105,8 @@ describe("Menu Items Configuration", () => {
         (item) => item.title === "Nonprofit Deep Research"
       );
       expect(research).toBeDefined();
-      expect(research?.href).toBe(PAGES.DONOR_RESEARCH.INDEX);
+      expect(research?.href).toBe(PAGES.DONOR_ADVISORS);
+      expect(research?.href).not.toBe(PAGES.DONOR_RESEARCH.INDEX);
     });
 
     it('should contain "Case studies" item with anchor', () => {
@@ -222,11 +223,12 @@ describe("Menu Items Configuration", () => {
       expect(docsItem?.external).toBe(true);
     });
 
-    it('should contain "Blog" item', () => {
+    it('should contain "Blog" item as an internal link', () => {
       const blogItem = resourcesItems.find((item) => item.title === "Blog");
       expect(blogItem).toBeDefined();
-      expect(blogItem?.href).toBe(SOCIALS.PARAGRAPH);
-      expect(blogItem?.external).toBe(true);
+      expect(blogItem?.href).toBe(PAGES.BLOG);
+      expect(blogItem?.external).toBeFalsy();
+      expect(blogItem?.showArrow).toBeFalsy();
     });
 
     it('should contain "For AI Agents" item as an internal link', () => {

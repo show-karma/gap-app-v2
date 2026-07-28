@@ -80,6 +80,7 @@ import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { PAGES } from "@/utilities/pages";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   createMockPermissions,
@@ -410,13 +411,15 @@ describe("NavbarUserMenu", () => {
   });
 
   describe("Social Media Links", () => {
-    it("should render all 4 social media platforms", async () => {
+    it("should render all 4 follow links", async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
       expect(screen.getByLabelText("Twitter")).toBeInTheDocument();
       expect(screen.getByLabelText("Telegram")).toBeInTheDocument();
       expect(screen.getByLabelText("Discord")).toBeInTheDocument();
-      expect(screen.getByLabelText("Paragraph")).toBeInTheDocument();
+      const blog = screen.getByLabelText("Blog");
+      expect(blog).toHaveAttribute("href", PAGES.BLOG);
+      expect(blog).not.toHaveAttribute("target", "_blank");
     });
 
     it('should render "Follow" section title', async () => {
