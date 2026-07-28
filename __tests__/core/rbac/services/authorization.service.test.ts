@@ -1,7 +1,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import {
   authorizationService,
-  PERMISSIONS_TIMEOUT_MS,
+  PERMISSIONS_TRANSPORT_TIMEOUT_MS,
 } from "@/src/core/rbac/services/authorization.service";
 import { Permission, ReviewerType, Role } from "@/src/core/rbac/types";
 import { api } from "@/utilities/api/client";
@@ -17,7 +17,7 @@ const mockedApiGet = vi.mocked(api.get);
 /** See `PERMISSIONS_TIMEOUT_MS` — the lookup is always bounded and abortable. */
 const BOUNDED_REQUEST = {
   signal: expect.any(AbortSignal),
-  timeoutMs: PERMISSIONS_TIMEOUT_MS,
+  timeoutMs: PERMISSIONS_TRANSPORT_TIMEOUT_MS,
 };
 const mockedErrorManager = vi.mocked(errorManager);
 

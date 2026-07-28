@@ -3,7 +3,12 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { PermissionProvider } from "../context/permission-context";
 import { useStaff } from "../hooks/use-staff-bridge";
-import { PERMISSIONS_TIMEOUT_MS } from "../services/authorization.service";
+import {
+  authorizationService,
+  isPermissionsTimeoutError,
+  PERMISSIONS_TIMEOUT_MS,
+  PERMISSIONS_TRANSPORT_TIMEOUT_MS,
+} from "../services/authorization.service";
 
 /**
  * REGRESSION: `GET /v2/auth/permissions` had no meaningful deadline, so a
@@ -97,5 +102,63 @@ describe("permissions fetch that never resolves", () => {
 
     // A timeout is not retried: three more 15s waits only extend the freeze.
     expect(apiGet).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * The retry exemption keys off the error TYPE, so the type a stall produces
+ * must not depend on which of two timers happens to fire first.
+ *
+ * Both our deadline and the transport's own timeout are armed against the same
+ * request. If they shared a bound they would fire in the same tick and
+ * `Promise.race` would pick arbitrarily; when the transport won, the error was
+ * an ordinary retryable transport failure and the query retried — turning an
+ * intended 15s failure into a ~48s one, still skeleton the whole way. QA saw
+ * exactly that: the page never reached the error state within the expected
+ * window.
+ */
+describe("timeout ordering is deterministic", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    apiGet.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("gives the transport a strictly longer bound than the deadline", () => {
+    expect(PERMISSIONS_TRANSPORT_TIMEOUT_MS).toBeGreaterThan(PERMISSIONS_TIMEOUT_MS);
+  });
+
+  it("passes the transport bound (not the deadline) to the api client", async () => {
+    apiGet.mockImplementation(() => new Promise(() => {}));
+
+    const pending = authorizationService.getPermissions().catch((e) => e);
+    await vi.advanceTimersByTimeAsync(PERMISSIONS_TIMEOUT_MS + 1);
+    await pending;
+
+    expect(apiGet.mock.calls[0]?.[1]).toMatchObject({
+      timeoutMs: PERMISSIONS_TRANSPORT_TIMEOUT_MS,
+    });
+  });
+
+  it("reports a timeout even when the transport rejects first with its own error", async () => {
+    // The transport losing the race is the ordering we design for; this covers
+    // the inverse, where it rejects (e.g. reacting to our abort) before the
+    // deadline's rejection is observed. The outcome must still be a timeout.
+    apiGet.mockImplementation(
+      (_path: string, opts: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          opts.signal.addEventListener("abort", () => {
+            reject(new Error("Network Error"));
+          });
+        })
+    );
+
+    const settled = authorizationService.getPermissions().catch((error) => error);
+    await vi.advanceTimersByTimeAsync(PERMISSIONS_TIMEOUT_MS + 1);
+
+    expect(isPermissionsTimeoutError(await settled)).toBe(true);
   });
 });

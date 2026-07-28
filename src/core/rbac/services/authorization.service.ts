@@ -64,6 +64,20 @@ const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
  */
 export const PERMISSIONS_TIMEOUT_MS = 15_000;
 
+/**
+ * Transport ceiling handed to the api client. Deliberately LONGER than
+ * {@link PERMISSIONS_TIMEOUT_MS} so the two timers cannot tie.
+ *
+ * Both bounds are armed against the same stalled request. Set to the same
+ * value, axios' timer and ours fire in the same tick and `Promise.race`
+ * picks a winner arbitrarily — which decides the error *type*, which decides
+ * whether `usePermissionsQuery` retries. That coin flip is the difference
+ * between a 15s failure and a ~48s one. Giving the transport headroom makes
+ * our deadline deterministically first; the transport bound stays as a
+ * backstop that releases the socket if the abort somehow doesn't.
+ */
+export const PERMISSIONS_TRANSPORT_TIMEOUT_MS = PERMISSIONS_TIMEOUT_MS + 5_000;
+
 /** Raised when a permissions fetch blows {@link PERMISSIONS_TIMEOUT_MS}. */
 export class PermissionsTimeoutError extends Error {
   readonly timeoutMs: number;
@@ -94,23 +108,32 @@ async function fetchPermissionsWithDeadline(
 ): Promise<AuthPermissionsApiResponse | null> {
   const controller = new AbortController();
   let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
 
   const deadline = new Promise<never>((_, reject) => {
     deadlineTimer = setTimeout(() => {
+      timedOut = true;
       controller.abort();
       reject(new PermissionsTimeoutError(PERMISSIONS_TIMEOUT_MS));
     }, PERMISSIONS_TIMEOUT_MS);
   });
 
+  // Once the deadline has fired the outcome IS a timeout: whatever the
+  // transport reports afterwards (an abort, a socket error) is downstream of
+  // our own cancellation and must not be mistaken for a distinct, retryable
+  // failure. Normalising on the way out keeps the retry decision independent
+  // of rejection ordering.
   try {
     return await Promise.race([
       // TODO(#1775): add zod schema
       api.get<AuthPermissionsApiResponse>(INDEXER.V2.AUTH.PERMISSIONS(params), {
         signal: controller.signal,
-        timeoutMs: PERMISSIONS_TIMEOUT_MS,
+        timeoutMs: PERMISSIONS_TRANSPORT_TIMEOUT_MS,
       }),
       deadline,
     ]);
+  } catch (error) {
+    throw timedOut ? new PermissionsTimeoutError(PERMISSIONS_TIMEOUT_MS) : error;
   } finally {
     clearTimeout(deadlineTimer);
   }

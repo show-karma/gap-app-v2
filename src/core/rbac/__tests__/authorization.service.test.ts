@@ -1,4 +1,7 @@
-import { authorizationService, PERMISSIONS_TIMEOUT_MS } from "../services/authorization.service";
+import {
+  authorizationService,
+  PERMISSIONS_TRANSPORT_TIMEOUT_MS,
+} from "../services/authorization.service";
 import { ReviewerType, Role } from "../types/role";
 
 vi.mock("@/utilities/api/client", () => ({
@@ -17,7 +20,7 @@ const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
  */
 const BOUNDED_REQUEST = {
   signal: expect.any(AbortSignal),
-  timeoutMs: PERMISSIONS_TIMEOUT_MS,
+  timeoutMs: PERMISSIONS_TRANSPORT_TIMEOUT_MS,
 };
 
 describe("authorizationService", () => {
