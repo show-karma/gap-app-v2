@@ -1,7 +1,11 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { authorizationService, type GetPermissionsParams } from "../services/authorization.service";
+import {
+  authorizationService,
+  type GetPermissionsParams,
+  isPermissionsTimeoutError,
+} from "../services/authorization.service";
 
 export const permissionsKeys = {
   all: ["permissions"] as const,
@@ -39,7 +43,14 @@ export function usePermissionsQuery(
     // between programs). Prevents flash of "Access Denied" during query key transitions.
     placeholderData: keepPreviousData,
     // Avoid retry storms on rate limiting; retry other transient failures up to 2 times.
-    retry: (failureCount, error) => !isRateLimitError(error) && failureCount < 2,
+    //
+    // Timeouts are NOT retried. Every retry keeps the query pending, and every
+    // RBAC-gated surface holds its skeleton for the whole run — 3 × 15s plus
+    // backoff is another ~48s of an apparently-frozen page. Surfacing the
+    // failure immediately hands the user an explicit Retry control instead,
+    // which is both faster and visible.
+    retry: (failureCount, error) =>
+      !isRateLimitError(error) && !isPermissionsTimeoutError(error) && failureCount < 2,
     enabled, // Only fetch when user is authenticated
   });
 }
