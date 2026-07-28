@@ -16,12 +16,24 @@ import { Role } from "../types";
  * + import { useStaff } from "@/core/rbac/hooks/use-staff-bridge";
  * + const { isStaff, isLoading } = useStaff();
  * ```
+ *
+ * Tri-state, not boolean. `isLoading` means "undecided", `isError` means
+ * "could not be decided" (the permissions fetch timed out or failed). Both
+ * report `isStaff: false` — staff status is granted only on a resolved,
+ * successful answer. Callers must render `isError` as a visible, retryable
+ * failure rather than silently treating the viewer as a non-staff member,
+ * otherwise a real super-admin quietly loses their controls with no
+ * explanation.
  */
-export function useStaff(): { isStaff: boolean; isLoading: boolean } {
-  const { hasRoleOrHigher, isLoading } = usePermissionContext();
+export function useStaff(): { isStaff: boolean; isLoading: boolean; isError: boolean } {
+  const { hasRoleOrHigher, isLoading, isGuestDueToError } = usePermissionContext();
 
   return {
-    isStaff: !isLoading && hasRoleOrHigher(Role.SUPER_ADMIN),
+    // `isGuestDueToError` also covers the stale-data case: React Query keeps
+    // the last successful payload when a refetch fails, so without this guard
+    // an unresolvable refetch would keep granting privileges off a cached answer.
+    isStaff: !isLoading && !isGuestDueToError && hasRoleOrHigher(Role.SUPER_ADMIN),
     isLoading,
+    isError: isGuestDueToError,
   };
 }
