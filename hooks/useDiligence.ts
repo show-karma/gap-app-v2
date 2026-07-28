@@ -27,6 +27,15 @@ import type {
 
 export const diligenceTemplateQueryKey = ["donor-research", "diligence", "template"] as const;
 
+/**
+ * Report-owner-scoped template (see {@link useDiligenceTemplate}). Deliberately
+ * NOT nested under {@link diligenceTemplateQueryKey} — invalidating the `/me`
+ * template must not clobber (or refetch) every report-scoped copy, since React
+ * Query matches keys by prefix.
+ */
+export const reportDiligenceTemplateQueryKey = (reportId: string) =>
+  ["donor-research", "diligence", "report-template", reportId] as const;
+
 export const candidateDiligenceQueryKey = (reportId: string, candidateId: string) =>
   ["donor-research", "diligence", "candidate", reportId, candidateId] as const;
 
@@ -41,25 +50,41 @@ export const outreachPreviewQueryKey = (
 
 // -- Advisor: template -------------------------------------------------------
 
-/** Loads the advisor's diligence template. Always a stable shape (no 404). */
-export function useDiligenceTemplate() {
+/**
+ * Loads a diligence template. Always a stable shape (no 404).
+ *
+ * Pass `reportId` from inside a report to read the template of that report's
+ * OWNER — the one an outreach from this report will freeze. Omit it for the
+ * caller's own template (the standalone editor page).
+ */
+export function useDiligenceTemplate(reportId?: string) {
   return useQuery<DiligenceTemplate>({
-    queryKey: diligenceTemplateQueryKey,
-    queryFn: getDiligenceTemplate,
+    queryKey: reportId ? reportDiligenceTemplateQueryKey(reportId) : diligenceTemplateQueryKey,
+    queryFn: () => getDiligenceTemplate(reportId),
     staleTime: 60_000,
   });
 }
 
 /**
- * Wholesale-replaces the advisor's diligence template, seeding the cache with
- * the saved result so the editor reflects the server's canonical copy.
+ * Wholesale-replaces a diligence template, seeding the cache with the saved
+ * result so the editor reflects the server's canonical copy. `reportId`
+ * selects the report owner's template — see {@link useDiligenceTemplate}.
+ *
+ * A report-scoped save also drops the caller's `/me` copy: when the caller IS
+ * the owner the two are the same row, and a staff caller's own template is
+ * untouched either way, so invalidating is always safe and never stale.
  */
-export function useSaveDiligenceTemplate() {
+export function useSaveDiligenceTemplate(reportId?: string) {
   const queryClient = useQueryClient();
   return useMutation<DiligenceTemplate, Error, SaveDiligenceTemplateRequest>({
-    mutationFn: (body) => saveDiligenceTemplate(body),
+    mutationFn: (body) => saveDiligenceTemplate(body, reportId),
     onSuccess: (saved) => {
-      queryClient.setQueryData(diligenceTemplateQueryKey, saved);
+      if (!reportId) {
+        queryClient.setQueryData(diligenceTemplateQueryKey, saved);
+        return;
+      }
+      queryClient.setQueryData(reportDiligenceTemplateQueryKey(reportId), saved);
+      queryClient.invalidateQueries({ queryKey: diligenceTemplateQueryKey });
     },
   });
 }
