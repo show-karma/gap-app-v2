@@ -6,7 +6,7 @@ import type { FundingApplicationStatusV2 } from "@/types/funding-platform";
  * labels/styles/permissions but must agree on this adjacency, and the
  * pre-flight staleness check validates against it before sending a PUT.
  */
-export const ALLOWED_STATUS_TRANSITIONS: Record<
+const ALLOWED_STATUS_TRANSITIONS: Record<
   FundingApplicationStatusV2,
   readonly FundingApplicationStatusV2[]
 > = {
@@ -18,19 +18,17 @@ export const ALLOWED_STATUS_TRANSITIONS: Record<
   rejected: [],
 };
 
-export const getAllowedStatusTransitions = (
-  currentStatus: string | null | undefined
-): readonly FundingApplicationStatusV2[] => {
-  if (!currentStatus) return [];
-  return (
-    ALLOWED_STATUS_TRANSITIONS[currentStatus.toLowerCase() as FundingApplicationStatusV2] ?? []
-  );
-};
+// Set-backed mirror of the adjacency for constant-time checks in render loops.
+const ALLOWED_TARGET_SETS = new Map<string, ReadonlySet<FundingApplicationStatusV2>>(
+  Object.entries(ALLOWED_STATUS_TRANSITIONS).map(([from, targets]) => [from, new Set(targets)])
+);
 
 export const isAllowedStatusTransition = (
   currentStatus: string | null | undefined,
   targetStatus: string
 ): boolean =>
-  getAllowedStatusTransitions(currentStatus).includes(
+  !!currentStatus &&
+  (ALLOWED_TARGET_SETS.get(currentStatus.toLowerCase())?.has(
     targetStatus.toLowerCase() as FundingApplicationStatusV2
-  );
+  ) ??
+    false);
