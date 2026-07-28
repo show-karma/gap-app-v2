@@ -3,18 +3,16 @@
 import { ChevronDown } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
-import { ParagraphIcon } from "@/components/Icons/Paragraph";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
+import { followLinks } from "@/src/components/navbar/follow-links";
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
 import { PAGES } from "@/utilities/pages";
-import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 import { Logo } from "../shared/logo";
 import {
@@ -104,22 +102,17 @@ function ResourcesDropdown() {
           <div className="flex flex-col items-start justify-start w-full">
             <MenuSection title="Follow" variant="desktop" />
             <div className="flex flex-row items-center w-full justify-between gap-4 py-2">
-              {socialMediaLinks.map((social) => {
-                const IconComponent = social.icon;
-                return (
-                  <ExternalLink
-                    key={social.name}
-                    href={social.href}
-                    className={cn(
-                      menuStyles.itemText,
-                      "flex items-center justify-center rounded-full transition-colors"
-                    )}
-                    aria-label={social.name}
-                  >
-                    <IconComponent className="w-5 h-5" />
-                  </ExternalLink>
-                );
-              })}
+              {followLinks.map((link) => (
+                <FollowLinkAnchor
+                  key={link.name}
+                  link={link}
+                  className={cn(
+                    menuStyles.itemText,
+                    "flex items-center justify-center rounded-full transition-colors"
+                  )}
+                  iconClassName="w-5 h-5"
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -127,29 +120,6 @@ function ResourcesDropdown() {
     </DropdownMenu>
   );
 }
-
-const socialMediaLinks = [
-  {
-    name: "Twitter",
-    href: SOCIALS.TWITTER,
-    icon: TwitterIcon,
-  },
-  {
-    name: "Telegram",
-    href: SOCIALS.TELEGRAM,
-    icon: TelegramIcon,
-  },
-  {
-    name: "Discord",
-    href: SOCIALS.DISCORD,
-    icon: DiscordIcon,
-  },
-  {
-    name: "Paragraph",
-    href: SOCIALS.PARAGRAPH,
-    icon: ParagraphIcon,
-  },
-];
 
 export function NavbarDesktopNavigation() {
   const { isLoggedIn } = useNavbarPermissions();
