@@ -567,6 +567,77 @@ describe("KYC Hooks", () => {
       expect(mockToast.success).not.toHaveBeenCalled();
     });
 
+    it("should roll back only this application's batch entry, preserving interleaved updates to other entries in the same Map", async () => {
+      seedCaches();
+      let rejectPut!: (error: Error) => void;
+      mockApi.put.mockImplementation(
+        () =>
+          new Promise<KycStatusResponse>((_, reject) => {
+            rejectPut = reject;
+          })
+      );
+
+      const { result } = renderHook(() => useSetKycApplicability(), { wrapper });
+
+      act(() => {
+        result.current.mutate(notApplicableRequest);
+      });
+
+      await waitFor(() => {
+        expect(
+          queryClient.getQueryData<Map<string, KycStatusResponse | null>>(batchKey)?.get(APP_REF)
+            ?.status
+        ).toBe(KycVerificationStatus.NOT_APPLICABLE);
+      });
+
+      // Interleaved update to ANOTHER application sharing the same batch Map
+      // (e.g. a second admin toggle) lands while this mutation is in flight
+      const otherUpdated = createMockKycStatus({
+        status: KycVerificationStatus.NOT_APPLICABLE,
+        verifiedAt: undefined,
+        expiresAt: undefined,
+      });
+      queryClient.setQueryData<Map<string, KycStatusResponse | null>>(batchKey, (old) => {
+        const next = new Map(old);
+        next.set(OTHER_REF, otherUpdated);
+        return next;
+      });
+
+      await act(async () => {
+        rejectPut(httpError(500, "Internal error"));
+      });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+
+      const rolledBackMap =
+        queryClient.getQueryData<Map<string, KycStatusResponse | null>>(batchKey);
+      // This application's entry snaps back to its pre-mutation value...
+      expect(rolledBackMap?.get(APP_REF)?.status).toBe(KycVerificationStatus.NOT_STARTED);
+      // ...but the interleaved update to the other application survives
+      expect(rolledBackMap?.get(OTHER_REF)).toEqual(otherUpdated);
+    });
+
+    it("should remove the synthetic statusByAppRef entry on error when no cache entry existed before", async () => {
+      // No seedCaches() — the statusByAppRef cache starts empty
+      mockApi.put.mockRejectedValue(httpError(403, "Forbidden"));
+
+      const { result } = renderHook(() => useSetKycApplicability(), { wrapper });
+
+      act(() => {
+        result.current.mutate(notApplicableRequest);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+
+      // Rollback must not fabricate a "no KYC row" (null) cache entry for a
+      // query that never ran — the entry created by onMutate is removed
+      expect(queryClient.getQueryState(statusKey)).toBeUndefined();
+    });
+
     it("should invalidate all KYC queries on settle", async () => {
       seedCaches();
       const serverRow = createMockKycStatus({

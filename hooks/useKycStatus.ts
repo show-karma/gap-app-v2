@@ -403,7 +403,13 @@ const BATCH_BY_APP_REF_PREFIX = [...KYC_QUERY_KEYS.all, "batch-by-app-ref"] as c
 
 interface SetKycApplicabilityContext {
   previousStatus: KycStatusResponse | null | undefined;
-  previousBatches: [readonly unknown[], Map<string, KycStatusResponse | null> | undefined][];
+  /**
+   * Per-map snapshot of ONLY this application's entry (maps without the
+   * ref are never patched, so they are not snapshotted). Rolling back whole
+   * Maps would clobber interleaved optimistic updates for OTHER applications
+   * sharing the same batch Map.
+   */
+  previousBatchEntries: [readonly unknown[], KycStatusResponse | null][];
 }
 
 /**
@@ -435,9 +441,14 @@ export const useSetKycApplicability = () => {
         await queryClient.cancelQueries({ queryKey: KYC_QUERY_KEYS.all });
 
         const previousStatus = queryClient.getQueryData<KycStatusResponse | null>(statusKey);
-        const previousBatches = queryClient.getQueriesData<Map<string, KycStatusResponse | null>>({
-          queryKey: BATCH_BY_APP_REF_PREFIX,
-        });
+        const previousBatchEntries: SetKycApplicabilityContext["previousBatchEntries"] = [];
+        for (const [queryKey, data] of queryClient.getQueriesData<
+          Map<string, KycStatusResponse | null>
+        >({ queryKey: BATCH_BY_APP_REF_PREFIX })) {
+          if (data?.has(request.applicationReference)) {
+            previousBatchEntries.push([queryKey, data.get(request.applicationReference) ?? null]);
+          }
+        }
 
         const patchStatus = (
           existing: KycStatusResponse | null | undefined
@@ -465,16 +476,28 @@ export const useSetKycApplicability = () => {
           }
         );
 
-        return { previousStatus, previousBatches };
+        return { previousStatus, previousBatchEntries };
       },
       onError: (error, request, context) => {
         if (context) {
-          queryClient.setQueryData(
-            KYC_QUERY_KEYS.statusByAppRef(request.applicationReference),
-            context.previousStatus ?? null
-          );
-          for (const [queryKey, data] of context.previousBatches) {
-            queryClient.setQueryData(queryKey, data);
+          const statusKey = KYC_QUERY_KEYS.statusByAppRef(request.applicationReference);
+          if (context.previousStatus === undefined) {
+            // No cache entry existed before onMutate created one — remove the
+            // synthetic entry instead of fabricating a "no row" (null) result
+            queryClient.removeQueries({ queryKey: statusKey, exact: true });
+          } else {
+            queryClient.setQueryData(statusKey, context.previousStatus);
+          }
+          // Restore ONLY this application's entry in each batch Map, on top of
+          // the map's CURRENT state — other applications' entries (including
+          // interleaved optimistic updates) must survive this rollback
+          for (const [queryKey, previousEntry] of context.previousBatchEntries) {
+            queryClient.setQueryData<Map<string, KycStatusResponse | null>>(queryKey, (current) => {
+              if (!current?.has(request.applicationReference)) return current;
+              const next = new Map(current);
+              next.set(request.applicationReference, previousEntry);
+              return next;
+            });
           }
         }
         toast.error(error instanceof HttpError ? httpErrorMessage(error) : error.message);
