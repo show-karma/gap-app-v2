@@ -1,14 +1,56 @@
 "use client";
 
+import { useIsFetching, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorReportStream } from "@/hooks/useDonorReportStream";
 import { useDonorReport } from "@/hooks/useDonorReports";
+import { permissionsKeys } from "@/src/core/rbac/hooks/use-permissions";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
 import { ReportBrief } from "./ReportBrief";
 
 interface ReportBriefViewProps {
   reportId: string;
+}
+
+/**
+ * Terminal state for "we could not decide whether you may manage this report".
+ * Deliberately NOT a silent downgrade to the read-only variant: a super-admin
+ * whose permissions lookup timed out would otherwise see a report with its
+ * controls missing and no way to tell that anything had gone wrong.
+ */
+function ManageAuthorizationError() {
+  const queryClient = useQueryClient();
+  const isRetrying = useIsFetching({ queryKey: permissionsKeys.all }) > 0;
+
+  return (
+    <div className="mx-auto max-w-xl px-4 py-12" role="alert">
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+        </div>
+        <h1 className="text-xl font-semibold text-foreground">
+          We couldn&apos;t verify your access
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Checking your permissions took too long, so we can&apos;t show this report safely. Please
+          try again.
+        </p>
+        <button
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          disabled={isRetrying}
+          onClick={() => {
+            void queryClient.refetchQueries({ queryKey: permissionsKeys.all });
+          }}
+          type="button"
+        >
+          <RefreshCw className={isRetrying ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+          {isRetrying ? "Retrying…" : "Try again"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -27,7 +69,7 @@ interface ReportBriefViewProps {
 export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   const reportQuery = useDonorReport(reportId);
   const advisorQuery = useDonorAdvisor();
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { isStaff, isLoading: isStaffLoading, isError: isStaffError } = useStaff();
   const reportStatus = reportQuery.data?.status;
   const isTerminal =
     reportStatus === "complete" || reportStatus === "fast_complete" || reportStatus === "failed";
@@ -53,6 +95,13 @@ export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   }
 
   const isOwner = !!advisorQuery.data && advisorQuery.data.id === reportQuery.data!.advisorId;
+
+  // Staff authorization resolved to "unknown". Owners don't depend on it —
+  // their controls come from the advisor row — so only a viewer we can't
+  // confirm as the owner is actually blocked by it.
+  if (isStaffError && !isOwner) {
+    return <ManageAuthorizationError />;
+  }
 
   return (
     <ReportBrief
