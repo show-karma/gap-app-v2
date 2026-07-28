@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import type { ApplicationStatus } from "@/components/FundingPlatform/ApplicationView/HeaderActions";
 import { isAllowedStatusTransition } from "@/components/FundingPlatform/statusTransitions";
@@ -25,7 +25,11 @@ import { usePermissionContext } from "@/src/core/rbac/context/permission-context
 import { useMilestonesAdminRefetch } from "@/src/features/applications/hooks/use-milestones-admin-refetch";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
-import { isStatusConflictError, STATUS_CONFLICT_MESSAGE } from "@/utilities/application-status";
+import {
+  isStatusConflictError,
+  STATUS_CONFLICT_MESSAGE,
+  STATUS_CONFLICT_TOAST_ID,
+} from "@/utilities/application-status";
 import { PAGES } from "@/utilities/pages";
 
 // Whitelist used when seeding activeTabId from the `?tab=` query
@@ -96,6 +100,11 @@ export function useApplicationDetailView({
 
   // Status change inline form state
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
+  // Pre-flight freshness read that runs before the inline form opens. The ref
+  // rejects the second of two clicks landing in the same tick; the state drives
+  // the buttons' busy/disabled look so the first click never appears dead.
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const isCheckingStatusRef = useRef(false);
 
   const {
     application,
@@ -176,18 +185,26 @@ export function useApplicationDetailView({
   // application first: a tab left open can still render actions for a status
   // another reviewer already moved past, and the PUT would only 409.
   const handleStatusChangeClick = async (status: ApplicationStatus) => {
+    if (isCheckingStatusRef.current) return;
     if (selectedStatus === status) {
       setSelectedStatus(null);
       return;
     }
-    const refreshed = await refetchApplication();
-    const currentStatus = refreshed?.data?.status ?? application?.status;
-    if (!isAllowedStatusTransition(currentStatus, status)) {
-      toast.error(STATUS_CONFLICT_MESSAGE);
-      setSelectedStatus(null);
-      return;
+    isCheckingStatusRef.current = true;
+    setIsCheckingStatus(true);
+    try {
+      const refreshed = await refetchApplication();
+      const currentStatus = refreshed?.data?.status ?? application?.status;
+      if (!isAllowedStatusTransition(currentStatus, status)) {
+        toast.error(STATUS_CONFLICT_MESSAGE, { id: STATUS_CONFLICT_TOAST_ID });
+        setSelectedStatus(null);
+        return;
+      }
+      setSelectedStatus(status);
+    } finally {
+      isCheckingStatusRef.current = false;
+      setIsCheckingStatus(false);
     }
-    setSelectedStatus(status);
   };
 
   const handleStatusChangeConfirm = async (
@@ -205,8 +222,9 @@ export function useApplicationDetailView({
         toast.success(`Application status updated to ${selectedStatus}`);
       }
     } catch (error) {
-      // SUPPRESSED: the status mutation's onError owns the failure toast. A 409
-      // means the form can never succeed, so close it instead of inviting a retry.
+      // SUPPRESSED: the status mutation's onError owns the failure toast. Only a
+      // transition conflict can never succeed, so close the form then; a
+      // correctable failure (currency, amount, reason) keeps it open for a fix.
       if (isStatusConflictError(error)) {
         setSelectedStatus(null);
       }
@@ -351,9 +369,10 @@ export function useApplicationDetailView({
     setApplicationViewMode,
     activeTabId,
     setActiveTabId,
-    // Status form
+    // Status form. The pre-flight read is folded into the busy flag so the
+    // action buttons disable for its round-trip instead of looking dead.
     selectedStatus,
-    isUpdatingStatus,
+    isUpdatingStatus: isUpdatingStatus || isCheckingStatus,
     handleStatusChangeClick,
     handleStatusChangeConfirm,
     handleStatusChangeCancel,
