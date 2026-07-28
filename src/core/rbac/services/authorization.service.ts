@@ -116,29 +116,34 @@ async function fetchPermissionsWithDeadline(
   }
 }
 
+/** Forwards a permissions failure to Sentry via the shared error reporter. */
+function reportPermissionsFailure(error: unknown, params: GetPermissionsParams): void {
+  errorManager("Failed to fetch user permissions", error, {
+    context: "authorization.service.getPermissions",
+    params,
+  });
+}
+
 export const authorizationService = {
   async getPermissions(params: GetPermissionsParams = {}): Promise<PermissionsResponse> {
     let response: AuthPermissionsApiResponse | null;
+
+    // Every failure is reported and rethrown — never swallowed into a default.
+    // Rethrowing lets React Query retry transient failures and hold
+    // isLoading=true while it does (see `usePermissionsQuery`; timeouts are
+    // deliberately NOT retried). This previously returned
+    // DEFAULT_GUEST_PERMISSIONS, which React Query cached as "success" for 5
+    // minutes — a persistent "Access Denied" long after the API had recovered.
     try {
       response = await fetchPermissionsWithDeadline(params);
     } catch (error) {
-      errorManager("Failed to fetch user permissions", error, {
-        context: "authorization.service.getPermissions",
-        params,
-      });
-      // Throw so React Query retries transient failures and keeps isLoading=true
-      // during retries (see `usePermissionsQuery` — timeouts are NOT retried).
-      // Previously returned DEFAULT_GUEST_PERMISSIONS, which React Query cached as "success"
-      // for 5 minutes — causing persistent "Access Denied" even after the API recovered.
+      reportPermissionsFailure(error, params);
       throw error;
     }
 
     if (!response) {
       const emptyError = new Error("Failed to fetch permissions: empty response");
-      errorManager("Failed to fetch user permissions", emptyError, {
-        context: "authorization.service.getPermissions",
-        params,
-      });
+      reportPermissionsFailure(emptyError, params);
       throw emptyError;
     }
 
