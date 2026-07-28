@@ -8,6 +8,7 @@ import { OUTREACH_BODY_LIMITS } from "@/types/diligence";
 const mockAskMutate = vi.fn();
 const mockSaveTemplateMutate = vi.fn();
 const mockUseDiligenceTemplate = vi.fn();
+const mockUseSaveDiligenceTemplate = vi.fn();
 const mockUseOutreachPreview = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
@@ -28,10 +29,13 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/hooks/useDiligence", () => ({
-  useDiligenceTemplate: () => mockUseDiligenceTemplate(),
+  useDiligenceTemplate: (...args: unknown[]) => mockUseDiligenceTemplate(...args),
   useOutreachPreview: (...args: unknown[]) => mockUseOutreachPreview(...args),
   useAskQuestions: () => ({ mutate: mockAskMutate, isPending: false }),
-  useSaveDiligenceTemplate: () => ({ mutate: mockSaveTemplateMutate, isPending: false }),
+  useSaveDiligenceTemplate: (...args: unknown[]) => {
+    mockUseSaveDiligenceTemplate(...args);
+    return { mutate: mockSaveTemplateMutate, isPending: false };
+  },
 }));
 
 import { AskQuestionsDialog } from "../AskQuestionsDialog";
@@ -81,7 +85,7 @@ function buildView(overrides: Partial<CandidateDiligenceView> = {}): CandidateDi
   };
 }
 
-function renderDialog(view = buildView()) {
+function renderDialog(view = buildView(), viewer: "owner" | "staff" = "owner") {
   return render(
     <AskQuestionsDialog
       reportId="report-1"
@@ -90,8 +94,14 @@ function renderDialog(view = buildView()) {
       onOpenChange={vi.fn()}
       view={view}
       candidateName="Hope Shelter"
+      viewer={viewer}
     />
   );
+}
+
+function mockEmptyTemplate() {
+  const template: DiligenceTemplate = { questions: [], updatedAt: null };
+  mockUseDiligenceTemplate.mockReturnValue({ data: template, isLoading: false, isError: false });
 }
 
 afterEach(() => {
@@ -100,8 +110,7 @@ afterEach(() => {
 
 describe("AskQuestionsDialog", () => {
   it("guards on an empty template with the inline editor, keeps the page link, and disables send", () => {
-    const template: DiligenceTemplate = { questions: [], updatedAt: null };
-    mockUseDiligenceTemplate.mockReturnValue({ data: template, isLoading: false, isError: false });
+    mockEmptyTemplate();
     mockPreviewLoaded();
 
     renderDialog();
@@ -121,8 +130,7 @@ describe("AskQuestionsDialog", () => {
   });
 
   it("saves inline questions to the template, dropping blank rows", () => {
-    const template: DiligenceTemplate = { questions: [], updatedAt: null };
-    mockUseDiligenceTemplate.mockReturnValue({ data: template, isLoading: false, isError: false });
+    mockEmptyTemplate();
     mockPreviewLoaded();
     mockSaveTemplateMutate.mockImplementation((_vars, opts) => opts.onSuccess?.());
 
@@ -181,6 +189,7 @@ describe("AskQuestionsDialog", () => {
         onOpenChange={onOpenChange}
         view={buildView()}
         candidateName="Hope Shelter"
+        viewer="owner"
       />
     );
 
@@ -210,6 +219,7 @@ describe("AskQuestionsDialog", () => {
         onOpenChange={onOpenChange}
         view={buildView()}
         candidateName="Hope Shelter"
+        viewer="owner"
       />
     );
 
@@ -325,5 +335,45 @@ describe("AskQuestionsDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(refetch).toHaveBeenCalled();
+  });
+
+  describe("super-admin acting as the report owner", () => {
+    it("reads the template through the report so it shows the owner's questions", () => {
+      mockTemplateWithQuestions();
+      mockPreviewLoaded();
+
+      renderDialog(buildView(), "staff");
+
+      expect(mockUseDiligenceTemplate).toHaveBeenCalledWith("report-1");
+    });
+
+    it("seeds the OWNER's template from the inline editor, without the personal template link", () => {
+      mockEmptyTemplate();
+      mockPreviewLoaded();
+      mockSaveTemplateMutate.mockImplementation((_vars, opts) => opts.onSuccess?.());
+
+      renderDialog(buildView(), "staff");
+
+      expect(mockUseSaveDiligenceTemplate).toHaveBeenCalledWith("report-1");
+      expect(
+        screen.queryByRole("link", { name: "Edit your question template" })
+      ).not.toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText("Question 1"), {
+        target: { value: "What is your annual operating budget?" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save questions" }));
+
+      expect(toastSuccess).toHaveBeenCalledWith("Questions saved to the report owner's template");
+    });
+
+    it("offers the same Send questions action as the owner", () => {
+      mockTemplateWithQuestions();
+      mockPreviewLoaded();
+
+      renderDialog(buildView(), "staff");
+
+      expect(screen.getByRole("button", { name: "Send questions" })).toBeEnabled();
+    });
   });
 });

@@ -253,11 +253,21 @@ const withSentry = withSentryConfig(
     project: "gap-frontend",
     tunnelRoute: "/monitoring",
     reactComponentAnnotation: true,
-    debug: true,
+    // `silent: true` above already suppresses plugin logging; `debug: true`
+    // contradicted it and re-enabled verbose sourcemap diagnostics on every
+    // build for output nobody reads.
+    debug: false,
   },
   {
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
+    // Sentry's "widen" mode uploads source maps for a larger set of client
+    // files than the ones actually referenced by the emitted bundles — its
+    // own docs note this increases build time, and it grows the sourcemap
+    // set held/processed during the build. The Next 16 Turbopack build is
+    // already at the edge of the 8 GB build container, so the marginally
+    // prettier frames are not worth the headroom. Sourcemaps for the real
+    // bundles are still generated and uploaded, so stack traces stay
+    // symbolicated.
+    widenClientFileUpload: false,
 
     // Remove transpileClientSDK as it's deprecated in Next.js 15
     // transpileClientSDK: true,
@@ -282,4 +292,26 @@ const withSentry = withSentryConfig(
   }
 );
 
-export default withSentry;
+// The Sentry SDK is switched OFF at runtime on every non-production
+// deployment — sentry.server.config.ts, sentry.edge.config.ts and
+// instrumentation-client.ts all set `enabled: NEXT_PUBLIC_VERCEL_ENV ===
+// "production"`. Preview builds were still paying the full build-time cost
+// of the Sentry plugin (source map generation/processing/upload plus
+// reactComponentAnnotation, an SWC transform applied to every component in
+// the tree) to produce artifacts for an SDK that never initializes on those
+// deployments.
+//
+// That work happens inside the Turbopack compile phase, which is exactly
+// where the 8 GB preview build container is OOM-killed (exit 137), so
+// skipping it on previews removes pure waste rather than trading anything
+// away.
+//
+// Deliberately fail-safe: only an explicit "preview" opts out. If the
+// variable is missing or holds anything else — including a production build
+// or a local build — Sentry stays fully enabled, so production
+// instrumentation can never be dropped by accident.
+const isPreviewBuild =
+  process.env.VERCEL_ENV === "preview" ||
+  process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+
+export default isPreviewBuild ? bundleAnalyzer : withSentry;

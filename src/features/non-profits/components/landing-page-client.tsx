@@ -25,6 +25,7 @@ import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { INSTALL_CONFIGS, type InstallTab } from "../lib/install-configs";
 import { FILINGS_STATS } from "../lib/stats";
 import { useSearchSessionStore } from "../store/search-session";
+import { ConnectFloatingCard, ConnectLogos } from "./connect-cta";
 
 // ————————————————————————— Icons —————————————————————————
 
@@ -209,7 +210,9 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
       <div className="lp-container lp-hero-inner lp-fade-in">
         <div className="lp-eyebrow">
           <span className="lp-eyebrow-dot" />
-          <span>AI Agents for Funder Research &middot; Works in Claude &amp; ChatGPT</span>
+          <span>AI Agents for Funder Research &middot; Works in</span>
+          <ConnectLogos />
+          <span>Claude &amp; ChatGPT</span>
         </div>
         <h1 className="lp-hero-title">
           Stop hunting for funders.
@@ -287,16 +290,6 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="lp-hero-foot">
-            <span>Prefer to stay in your AI tool?</span>
-            <Link href={NON_PROFITS_PAGES.CONNECT_CLAUDE} className="lp-hero-foot-link">
-              Add to Claude <Icon.arrow />
-            </Link>
-            <Link href={NON_PROFITS_PAGES.CONNECT_CHATGPT} className="lp-hero-foot-link">
-              Add to ChatGPT <Icon.arrow />
-            </Link>
           </div>
         </div>
       </div>
@@ -1054,6 +1047,7 @@ export function LandingPageClient() {
       <TheData />
       <Audience />
       <FinalCTA onSearchFocus={scrollToHero} />
+      <ConnectFloatingCard />
     </div>
   );
 }

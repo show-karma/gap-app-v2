@@ -20,7 +20,7 @@ import {
 } from "@/src/features/applications/lib/milestone-status";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
-import { formatApplicationStatus } from "@/utilities/application-status";
+import { formatApplicationStatus, isStatusConflictError } from "@/utilities/application-status";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -142,25 +142,30 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     setStatusModalOpen(true);
   };
 
+  const closeStatusModal = () => {
+    setStatusModalOpen(false);
+    setPendingStatus("");
+  };
+
   const handleStatusChangeConfirm = async (
     reason?: string,
     approvedAmount?: string,
     approvedCurrency?: string
   ) => {
+    if (isUpdatingStatus) return;
     if (onStatusChange && pendingStatus) {
       try {
         setIsUpdatingStatus(true);
         await onStatusChange(pendingStatus, reason, approvedAmount, approvedCurrency);
-        setStatusModalOpen(false);
-        setPendingStatus("");
+        closeStatusModal();
         if (pendingStatus === "approved") {
           toast.success("Application approved successfully!");
         } else {
           toast.success(`Application status updated to ${formatApplicationStatus(pendingStatus)}`);
         }
       } catch (error) {
-        console.error("Failed to update status:", error);
-        toast.error("Failed to update application status");
+        // SUPPRESSED: mutation onError owns the failure toast; a 409 can never succeed, so close.
+        if (isStatusConflictError(error)) closeStatusModal();
       } finally {
         setIsUpdatingStatus(false);
       }
@@ -449,10 +454,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         {/* Status Change Modal */}
         <StatusChangeModal
           isOpen={statusModalOpen}
-          onClose={() => {
-            setStatusModalOpen(false);
-            setPendingStatus("");
-          }}
+          onClose={closeStatusModal}
           onConfirm={handleStatusChangeConfirm}
           status={pendingStatus}
           isSubmitting={isUpdatingStatus}
@@ -681,10 +683,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
       {/* Status Change Modal */}
       <StatusChangeModal
         isOpen={statusModalOpen}
-        onClose={() => {
-          setStatusModalOpen(false);
-          setPendingStatus("");
-        }}
+        onClose={closeStatusModal}
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}

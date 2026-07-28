@@ -44,6 +44,9 @@ vi.mock("lucide-react", () => ({
     <svg data-testid="alert-icon" {...props} />
   ),
   LogIn: (props: React.SVGProps<SVGSVGElement>) => <svg data-testid="login-icon" {...props} />,
+  UserRoundSearch: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="signin-icon" {...props} />
+  ),
 }));
 
 // The shared Link wrapper pulls in whitelabel + url-builder context; stub it to
@@ -106,6 +109,27 @@ describe("AccessDenied", () => {
       // window.location.href should never be set
       expect(locationSpy).not.toHaveBeenCalled();
       locationSpy.mockRestore();
+    });
+  });
+
+  describe("variant", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: false,
+        login: mockLogin,
+      } as ReturnType<typeof useAuth>);
+    });
+
+    it("shows the alert glyph by default", () => {
+      render(<AccessDenied />);
+      expect(screen.getByTestId("alert-icon")).toBeInTheDocument();
+      expect(screen.queryByTestId("signin-icon")).toBeNull();
+    });
+
+    it("swaps the alert glyph for a neutral mark on the signin variant", () => {
+      render(<AccessDenied variant="signin" title="Sign in to access nonprofit research" />);
+      expect(screen.getByTestId("signin-icon")).toBeInTheDocument();
+      expect(screen.queryByTestId("alert-icon")).toBeNull();
     });
   });
 

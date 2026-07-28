@@ -52,6 +52,14 @@ function defaultHandlers(): Record<string, RouteHandler> {
     // My reviewer programs
     "**/v2/funding-program-configs/my-reviewer-programs**": (route) => jsonResponse(route, []),
 
+    // Program reviewers. Left unmocked this reaches the live indexer for a
+    // program id that only exists in these fixtures, and SetupWizard blocks on
+    // it (`useProgramSetupProgress` = config + reviewers), so the setup page
+    // renders nothing but its spinner until the request resolves — T-MGMT-04
+    // then passes or fails on staging latency alone.
+    "**/v2/funding-program-configs/*/reviewers**": (route) =>
+      jsonResponse(route, { reviewers: [] }),
+
     // KYC config - default disabled
     "**/v2/communities/*/kyc-config**": (route) => jsonResponse(route, { enabled: false }),
 
