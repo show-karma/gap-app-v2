@@ -292,15 +292,9 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   };
 
   const handleConfirm = async () => {
-    // Belt-and-braces against a double submit racing the disabled state
-    if (isSubmitting) {
-      return;
-    }
-
-    // If reason is required but not provided, don't proceed
-    if (isReasonActuallyRequired && !reason.trim()) {
-      return;
-    }
+    // Guard against a double submit racing the disabled state
+    if (isSubmitting) return;
+    if (isReasonActuallyRequired && !reason.trim()) return;
 
     // If status is approved, validate amount and currency
     if (isApprovalStatus) {
