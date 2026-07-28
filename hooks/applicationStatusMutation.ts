@@ -1,14 +1,18 @@
 import type { QueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type { IFundingApplication } from "@/types/funding-platform";
-import { getStatusUpdateErrorMessage } from "@/utilities/application-status";
+import { getStatusUpdateErrorMessage, isStatusConflictError } from "@/utilities/application-status";
 import { QUERY_KEYS } from "./fundingPlatformQueryKeys";
 
-/** Shared onError for every application-status mutation: one toast, one log. */
+/** Shared onError for every application-status mutation: one toast, one report. */
 export function notifyStatusUpdateError(error: unknown): void {
-  console.error("Failed to update application status:", error);
   toast.error(getStatusUpdateErrorMessage(error));
+  // A transition conflict is an expected stale-UI event, not telemetry.
+  if (!isStatusConflictError(error)) {
+    errorManager("Failed to update application status", error);
+  }
 }
 
 /**
@@ -27,7 +31,7 @@ export async function fetchFreshApplicationByReference(
       staleTime: 0,
     });
   } catch (error) {
-    console.error("Failed to re-read application before status change:", error);
+    errorManager("Failed to re-read application before status change", error);
     return null;
   }
 }
