@@ -22,7 +22,10 @@ import type {
   IFundingApplication,
   IFundingProgramConfig,
 } from "@/types/funding-platform";
-import { getStatusUpdateErrorMessage } from "@/utilities/application-status";
+import {
+  fetchFreshApplicationByReference,
+  notifyStatusUpdateError,
+} from "./applicationStatusMutation";
 import { QUERY_KEYS } from "./fundingPlatformQueryKeys";
 import { useAuth } from "./useAuth";
 
@@ -319,12 +322,8 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
         approvedAmount,
         approvedCurrency,
       }),
-    onError: (error) => {
-      console.error("Failed to update application status:", error);
-      toast.error(getStatusUpdateErrorMessage(error));
-    },
-    // Re-sync on failure too: a 409 means another reviewer already moved the
-    // application, so the stale row must refresh instead of inviting a retry.
+    onError: notifyStatusUpdateError,
+    // Re-sync on failure too: a 409 means the stale row must refresh, not invite a retry.
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
@@ -337,31 +336,15 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
   const applications = applicationsQuery.data?.pages.flatMap((page) => page.applications) || [];
   const firstPage = applicationsQuery.data?.pages[0];
 
-  // Refreshes the rendered rows (every loaded page) — used to drop now-invalid
-  // row actions after a conflict, not on the hot path of opening a modal.
+  // Refreshes every loaded page — drops now-invalid row actions after a conflict.
   const refetchApplicationsData = applicationsQuery.refetch;
   const refetchApplications = useCallback(async (): Promise<IFundingApplication[]> => {
     const { data } = await refetchApplicationsData();
     return data?.pages.flatMap((page) => page.applications) || [];
   }, [refetchApplicationsData]);
 
-  // Single-row freshness read, so validating a pending status transition against
-  // server truth costs one request instead of refetching every loaded page.
-  // Resolves to null when the read fails — the backend still arbitrates.
   const fetchApplicationByReference = useCallback(
-    async (referenceNumber: string): Promise<IFundingApplication | null> => {
-      try {
-        return await queryClient.fetchQuery({
-          queryKey: QUERY_KEYS.applicationByReference(referenceNumber),
-          queryFn: () =>
-            fundingPlatformService.applications.getApplicationByReference(referenceNumber),
-          staleTime: 0,
-        });
-      } catch (error) {
-        console.error("Failed to re-read application before status change:", error);
-        return null;
-      }
-    },
+    (referenceNumber: string) => fetchFreshApplicationByReference(queryClient, referenceNumber),
     [queryClient]
   );
 
@@ -420,10 +403,7 @@ export const useFundingApplication = (applicationId: string) => {
         approvedAmount,
         approvedCurrency,
       }),
-    onError: (error) => {
-      console.error("Failed to update application status:", error);
-      toast.error(getStatusUpdateErrorMessage(error));
-    },
+    onError: notifyStatusUpdateError,
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
     },
@@ -650,10 +630,7 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
     onSuccess: (_, variables) => {
       toast.success(`Application ${variables.request.status.replace("_", " ")}`);
     },
-    onError: (error: unknown) => {
-      console.error("Failed to update application status:", error);
-      toast.error(getStatusUpdateErrorMessage(error));
-    },
+    onError: notifyStatusUpdateError,
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.application(variables.applicationId),
@@ -813,7 +790,7 @@ export const useApplication = (applicationId: string | null) => {
 /**
  * Hook for managing application status updates
  */
-export const useApplicationStatus = (programId?: string, _chainId?: number) => {
+export const useApplicationStatus = (_programId?: string, _chainId?: number) => {
   const queryClient = useQueryClient();
 
   const statusMutation = useMutation({
@@ -836,30 +813,18 @@ export const useApplicationStatus = (programId?: string, _chainId?: number) => {
         approvedAmount,
         approvedCurrency,
       }),
-    onError: (error: unknown) => {
-      toast.error(getStatusUpdateErrorMessage(error));
-      console.error("Failed to update application status:", error);
-    },
+    onError: notifyStatusUpdateError,
     // Runs on failure too: a 409 conflict means the cached status is stale, so
     // the detail view and every list must re-sync and drop their now-invalid
     // action buttons instead of leaving them up for another retry.
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(variables.applicationId) });
 
-      // Invalidate applications list if programId is provided
-      if (programId) {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
-        });
-      }
-
-      // Invalidate every program list regardless of its filter/limit suffix.
+      // Prefix-invalidates every program list regardless of its filter/limit suffix.
       queryClient.invalidateQueries({ queryKey: ["applications"] });
 
-      // Refresh the cross-program Reviewer Inbox feed + header stats. Uses the
-      // `["reviewer-inbox"]` prefix so every community/filter variant refetches.
-      // No-op when the inbox isn't mounted (e.g. the per-program "My
-      // Applications" page), so it doesn't change that surface's behavior.
+      // Refresh every Reviewer Inbox feed/stats variant; no-op when the inbox
+      // isn't mounted (e.g. the per-program "My Applications" page).
       queryClient.invalidateQueries({ queryKey: ["reviewer-inbox"] });
     },
   });

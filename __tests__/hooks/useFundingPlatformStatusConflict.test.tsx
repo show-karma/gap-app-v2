@@ -104,9 +104,7 @@ describe("useApplicationStatus", () => {
         queryKey: ["funding-application", APPLICATION_ID],
       });
     });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ["applications", PROGRAM_ID, { limit: 25 }],
-    });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["applications"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["reviewer-inbox"] });
   });
 
