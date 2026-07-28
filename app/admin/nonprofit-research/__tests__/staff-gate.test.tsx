@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminNonprofitResearchLayout from "../layout";
 
 /**
@@ -47,7 +48,9 @@ function renderGate() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <AdminNonprofitResearchLayout>{<div>admin content</div>}</AdminNonprofitResearchLayout>
+      <AdminNonprofitResearchLayout>
+        <div>admin content</div>
+      </AdminNonprofitResearchLayout>
     </QueryClientProvider>
   );
 }
