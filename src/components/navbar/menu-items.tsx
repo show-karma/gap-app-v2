@@ -167,11 +167,12 @@ export const resourcesItems: MenuItem[] = [
     showArrow: true,
   },
   {
-    href: SOCIALS.PARAGRAPH,
+    // The on-site blog, not the Paragraph publication it used to point at —
+    // internal, so no external arrow. Paragraph keeps its own entry in the
+    // "Follow" social row.
+    href: PAGES.BLOG,
     icon: ScrollText,
     title: "Blog",
-    external: true,
-    showArrow: true,
   },
   {
     href: karmaLinks.skills,

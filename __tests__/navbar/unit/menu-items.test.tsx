@@ -225,11 +225,14 @@ describe("Menu Items Configuration", () => {
       expect(docsItem?.external).toBe(true);
     });
 
-    it('should contain "Blog" item', () => {
+    it('should contain "Blog" item as an internal link', () => {
       const blogItem = resourcesItems.find((item) => item.title === "Blog");
       expect(blogItem).toBeDefined();
-      expect(blogItem?.href).toBe(SOCIALS.PARAGRAPH);
-      expect(blogItem?.external).toBe(true);
+      // The on-site blog, not the external Paragraph publication — so it
+      // carries no external arrow.
+      expect(blogItem?.href).toBe(PAGES.BLOG);
+      expect(blogItem?.external).toBeFalsy();
+      expect(blogItem?.showArrow).toBeFalsy();
     });
 
     it('should contain "For AI Agents" item as an internal link', () => {
