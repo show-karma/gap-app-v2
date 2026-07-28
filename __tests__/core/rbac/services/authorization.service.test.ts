@@ -1,5 +1,8 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import { authorizationService } from "@/src/core/rbac/services/authorization.service";
+import {
+  authorizationService,
+  PERMISSIONS_TIMEOUT_MS,
+} from "@/src/core/rbac/services/authorization.service";
 import { Permission, ReviewerType, Role } from "@/src/core/rbac/types";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
@@ -10,6 +13,12 @@ vi.mock("@/utilities/api/client", () => ({
 vi.mock("@/components/Utilities/errorManager");
 
 const mockedApiGet = vi.mocked(api.get);
+
+/** See `PERMISSIONS_TIMEOUT_MS` — the lookup is always bounded and abortable. */
+const BOUNDED_REQUEST = {
+  signal: expect.any(AbortSignal),
+  timeoutMs: PERMISSIONS_TIMEOUT_MS,
+};
 const mockedErrorManager = vi.mocked(errorManager);
 
 interface ApiResponseOverrides {
@@ -105,7 +114,10 @@ describe("authorizationService.getPermissions", () => {
 
       await authorizationService.getPermissions(params);
 
-      expect(mockedApiGet).toHaveBeenCalledWith(INDEXER.V2.AUTH.PERMISSIONS(params));
+      expect(mockedApiGet).toHaveBeenCalledWith(
+        INDEXER.V2.AUTH.PERMISSIONS(params),
+        BOUNDED_REQUEST
+      );
     });
 
     it("defaults to empty params when called with no arguments", async () => {
@@ -113,7 +125,7 @@ describe("authorizationService.getPermissions", () => {
 
       await authorizationService.getPermissions();
 
-      expect(mockedApiGet).toHaveBeenCalledWith(INDEXER.V2.AUTH.PERMISSIONS({}));
+      expect(mockedApiGet).toHaveBeenCalledWith(INDEXER.V2.AUTH.PERMISSIONS({}), BOUNDED_REQUEST);
     });
 
     it("does not invoke errorManager on a successful response", async () => {

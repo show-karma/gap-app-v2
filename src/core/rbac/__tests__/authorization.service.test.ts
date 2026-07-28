@@ -1,4 +1,4 @@
-import { authorizationService } from "../services/authorization.service";
+import { authorizationService, PERMISSIONS_TIMEOUT_MS } from "../services/authorization.service";
 import { ReviewerType, Role } from "../types/role";
 
 vi.mock("@/utilities/api/client", () => ({
@@ -8,6 +8,17 @@ vi.mock("@/utilities/api/client", () => ({
 import { api } from "@/utilities/api/client";
 
 const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
+
+/**
+ * Every permissions fetch is issued under a wall-clock deadline with an abort
+ * signal — an authorization lookup must never inherit the api client's 360s
+ * long-poll ceiling. Asserted on each call so the bound can't be dropped
+ * silently.
+ */
+const BOUNDED_REQUEST = {
+  signal: expect.any(AbortSignal),
+  timeoutMs: PERMISSIONS_TIMEOUT_MS,
+};
 
 describe("authorizationService", () => {
   beforeEach(() => {
@@ -105,11 +116,26 @@ describe("authorizationService", () => {
         chainId: 10,
       });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("communityId=community-123"));
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("programId=program-456"));
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("applicationId=app-789"));
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("milestoneId=milestone-012"));
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("chainId=10"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("communityId=community-123"),
+        BOUNDED_REQUEST
+      );
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("programId=program-456"),
+        BOUNDED_REQUEST
+      );
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("applicationId=app-789"),
+        BOUNDED_REQUEST
+      );
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("milestoneId=milestone-012"),
+        BOUNDED_REQUEST
+      );
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("chainId=10"),
+        BOUNDED_REQUEST
+      );
     });
 
     it("should handle empty params", async () => {
@@ -127,7 +153,7 @@ describe("authorizationService", () => {
       const result = await authorizationService.getPermissions();
 
       expect(result.roles.primaryRole).toBe("GUEST");
-      expect(mockApiGet).toHaveBeenCalledWith("/v2/auth/permissions");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/auth/permissions", BOUNDED_REQUEST);
     });
 
     it("should return isReviewer flag from API response", async () => {
