@@ -7,9 +7,9 @@ export {
   RequireReviewer,
   RequireRole,
 } from "./can";
+
 export {
   FundingPlatformGuard,
   useIsFundingPlatformAdmin,
   useIsFundingPlatformReviewer,
 } from "./funding-platform-guard";
-export { PermissionCheckError } from "./permission-check-error";
