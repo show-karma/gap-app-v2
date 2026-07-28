@@ -752,6 +752,7 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
+    SET_APPLICABILITY: "/v2/admin/kyc/applicability",
   },
   NOTIFICATION_CONFIG: {
     TEST_CONFIG: (communityIdOrSlug: string) =>
