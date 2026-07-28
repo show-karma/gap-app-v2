@@ -105,8 +105,6 @@ describe("Menu Items Configuration", () => {
         (item) => item.title === "Nonprofit Deep Research"
       );
       expect(research).toBeDefined();
-      // The public menu links to the marketing page, not the gated section
-      // index — an anonymous click must not land on a sign-in wall.
       expect(research?.href).toBe(PAGES.DONOR_ADVISORS);
       expect(research?.href).not.toBe(PAGES.DONOR_RESEARCH.INDEX);
     });
@@ -228,8 +226,6 @@ describe("Menu Items Configuration", () => {
     it('should contain "Blog" item as an internal link', () => {
       const blogItem = resourcesItems.find((item) => item.title === "Blog");
       expect(blogItem).toBeDefined();
-      // The on-site blog, not the external Paragraph publication — so it
-      // carries no external arrow.
       expect(blogItem?.href).toBe(PAGES.BLOG);
       expect(blogItem?.external).toBeFalsy();
       expect(blogItem?.showArrow).toBeFalsy();

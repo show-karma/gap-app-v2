@@ -106,9 +106,6 @@ export const forFundersItems: ForFundersItems = {
       title: "Donor Advisors",
       items: [
         {
-          // The marketing landing page, not the signed-in section index —
-          // the menu is public surface, so it points at the page that
-          // explains the product rather than one gated behind sign-in.
           href: PAGES.DONOR_ADVISORS,
           icon: UserRoundSearch,
           title: "Nonprofit Deep Research",
@@ -167,9 +164,6 @@ export const resourcesItems: MenuItem[] = [
     showArrow: true,
   },
   {
-    // The on-site blog, not the Paragraph publication it used to point at —
-    // internal, so no external arrow. Paragraph keeps its own entry in the
-    // "Follow" social row.
     href: PAGES.BLOG,
     icon: ScrollText,
     title: "Blog",

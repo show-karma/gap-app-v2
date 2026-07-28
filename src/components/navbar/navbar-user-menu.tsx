@@ -13,9 +13,6 @@ import {
 import Link from "next/link";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
-import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
-import { ParagraphIcon } from "@/components/Icons/Paragraph";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import {
   Menubar,
   MenubarContent,
@@ -26,10 +23,10 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { FollowLinkAnchor, followLinks } from "@/src/components/navbar/follow-links";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
-import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 import { MenuSection } from "./menu-components";
 import { useNavbarPermissions } from "./navbar-permissions-context";
@@ -39,29 +36,6 @@ const menuStyles = {
   itemIcon: "text-muted-foreground w-4 h-4",
   itemText: "text-foreground text-sm font-medium",
 };
-
-const socialMediaLinks = [
-  {
-    name: "Twitter",
-    href: SOCIALS.TWITTER,
-    icon: TwitterIcon,
-  },
-  {
-    name: "Telegram",
-    href: SOCIALS.TELEGRAM,
-    icon: TelegramIcon,
-  },
-  {
-    name: "Discord",
-    href: SOCIALS.DISCORD,
-    icon: DiscordIcon,
-  },
-  {
-    name: "Paragraph",
-    href: SOCIALS.PARAGRAPH,
-    icon: ParagraphIcon,
-  },
-];
 
 const _formatAddress = (addr: string) => {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -252,22 +226,17 @@ export function NavbarUserMenu() {
           <div className="flex flex-col w-full">
             <MenuSection title="Follow" variant="desktop" />
             <div className="flex flex-row items-center w-full justify-between gap-2">
-              {socialMediaLinks.map((social) => {
-                const IconComponent = social.icon;
-                return (
-                  <ExternalLink
-                    key={social.name}
-                    href={social.href}
-                    className={cn(
-                      menuStyles.itemText,
-                      "flex items-center justify-center rounded-full transition-colors p-2"
-                    )}
-                    aria-label={social.name}
-                  >
-                    <IconComponent className="w-5 h-5" />
-                  </ExternalLink>
-                );
-              })}
+              {followLinks.map((link) => (
+                <FollowLinkAnchor
+                  key={link.name}
+                  link={link}
+                  className={cn(
+                    menuStyles.itemText,
+                    "flex items-center justify-center rounded-full transition-colors p-2"
+                  )}
+                  iconClassName="w-5 h-5"
+                />
+              ))}
             </div>
           </div>
           <hr className="h-[1px] w-full border-border" />

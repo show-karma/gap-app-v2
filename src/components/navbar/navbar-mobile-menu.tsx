@@ -7,8 +7,6 @@ import { useTheme } from "next-themes";
 import { useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
-import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
-import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +19,7 @@ import {
 } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
+import { FollowLinkAnchor, followLinks } from "@/src/components/navbar/follow-links";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
@@ -42,29 +41,6 @@ const menuStyles = {
   itemText: "text-foreground text-sm font-medium",
   itemIcon: "text-muted-foreground w-4 h-4",
 };
-
-const socialMediaLinks = [
-  {
-    name: "Twitter",
-    href: SOCIALS.TWITTER,
-    icon: TwitterIcon,
-  },
-  {
-    name: "Telegram",
-    href: SOCIALS.TELEGRAM,
-    icon: TelegramIcon,
-  },
-  {
-    name: "Discord",
-    href: SOCIALS.DISCORD,
-    icon: DiscordIcon,
-  },
-  {
-    name: "Paragraph",
-    href: SOCIALS.PARAGRAPH,
-    icon: ParagraphIcon,
-  },
-];
 
 const _formatAddress = (addr: string) => {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -237,19 +213,15 @@ export function NavbarMobileMenu() {
                 <div className="mt-4 pt-4 border-t border-border">
                   <MenuSection title="Follow" variant="mobile" className="mb-4" />
                   <div className="flex items-center gap-2">
-                    {socialMediaLinks.map((social) => {
-                      const IconComponent = social.icon;
-                      return (
-                        <ExternalLink
-                          key={social.name}
-                          href={social.href}
-                          className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
-                          aria-label={social.name}
-                        >
-                          <IconComponent className="w-8 h-8 text-muted-foreground" />
-                        </ExternalLink>
-                      );
-                    })}
+                    {followLinks.map((link) => (
+                      <FollowLinkAnchor
+                        key={link.name}
+                        link={link}
+                        className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+                        iconClassName="w-8 h-8 text-muted-foreground"
+                        onClick={() => setMobileMenuOpen(false)}
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
