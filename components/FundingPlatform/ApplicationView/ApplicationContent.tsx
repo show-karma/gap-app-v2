@@ -164,7 +164,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           toast.success(`Application status updated to ${formatApplicationStatus(pendingStatus)}`);
         }
       } catch (error) {
-        // The mutation's onError owns the failure toast; a 409 can never succeed, so close.
+        // SUPPRESSED: mutation onError owns the failure toast; a 409 can never succeed, so close.
         if (isStatusConflictError(error)) closeStatusModal();
       } finally {
         setIsUpdatingStatus(false);

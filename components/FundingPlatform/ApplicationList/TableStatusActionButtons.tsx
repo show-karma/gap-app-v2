@@ -2,7 +2,7 @@
 
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
-import { getAllowedStatusTransitions } from "@/components/FundingPlatform/statusTransitions";
+import { isAllowedStatusTransition } from "@/components/FundingPlatform/statusTransitions";
 import { Button } from "@/components/Utilities/Button";
 import { Can } from "@/src/core/rbac/components/can";
 import { Permission } from "@/src/core/rbac/types";
@@ -139,9 +139,8 @@ export const TableStatusActionButtons: FC<TableStatusActionButtonsProps> = ({
   isUpdating = false,
   availableActions,
 }) => {
-  const allowedTargets = getAllowedStatusTransitions(currentStatus);
   const availableTransitions = (TABLE_STATUS_ACTIONS[currentStatus] || []).filter((transition) =>
-    allowedTargets.includes(transition.targetStatus)
+    isAllowedStatusTransition(currentStatus, transition.targetStatus)
   );
 
   if (availableTransitions.length === 0) {
