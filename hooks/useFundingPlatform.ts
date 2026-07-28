@@ -337,13 +337,33 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
   const applications = applicationsQuery.data?.pages.flatMap((page) => page.applications) || [];
   const firstPage = applicationsQuery.data?.pages[0];
 
-  // Returns the freshly fetched rows so callers can validate a pending status
-  // transition against server truth before opening a confirmation modal.
+  // Refreshes the rendered rows (every loaded page) — used to drop now-invalid
+  // row actions after a conflict, not on the hot path of opening a modal.
   const refetchApplicationsData = applicationsQuery.refetch;
   const refetchApplications = useCallback(async (): Promise<IFundingApplication[]> => {
     const { data } = await refetchApplicationsData();
     return data?.pages.flatMap((page) => page.applications) || [];
   }, [refetchApplicationsData]);
+
+  // Single-row freshness read, so validating a pending status transition against
+  // server truth costs one request instead of refetching every loaded page.
+  // Resolves to null when the read fails — the backend still arbitrates.
+  const fetchApplicationByReference = useCallback(
+    async (referenceNumber: string): Promise<IFundingApplication | null> => {
+      try {
+        return await queryClient.fetchQuery({
+          queryKey: QUERY_KEYS.applicationByReference(referenceNumber),
+          queryFn: () =>
+            fundingPlatformService.applications.getApplicationByReference(referenceNumber),
+          staleTime: 0,
+        });
+      } catch (error) {
+        console.error("Failed to re-read application before status change:", error);
+        return null;
+      }
+    },
+    [queryClient]
+  );
 
   return {
     applications,
@@ -362,6 +382,7 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
     isSubmitting: submitApplicationMutation.isPending,
     isUpdatingStatus: updateStatusMutation.isPending,
     refetchApplications,
+    fetchApplicationByReference,
     refetch: () => {
       applicationsQuery.refetch();
       statsQuery.refetch();
@@ -832,8 +853,8 @@ export const useApplicationStatus = (programId?: string, _chainId?: number) => {
         });
       }
 
-      // Invalidate all applications lists
-      queryClient.invalidateQueries({ queryKey: ["funding-applications"] });
+      // Invalidate every program list regardless of its filter/limit suffix.
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
 
       // Refresh the cross-program Reviewer Inbox feed + header stats. Uses the
       // `["reviewer-inbox"]` prefix so every community/filter variant refetches.
