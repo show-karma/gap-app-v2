@@ -252,6 +252,11 @@ const TEMPLATE_SAVED_COPY: Record<DiligenceViewer, string> = {
   staff: "Questions saved to the report owner's template",
 };
 
+const TEMPLATE_SAVE_FAILED_COPY: Record<DiligenceViewer, string> = {
+  owner: "Couldn't save your questions. Please try again.",
+  staff: "Couldn't save the report owner's questions. Please try again.",
+};
+
 const { MAX_QUESTIONS, QUESTION_TEXT_MAX } = DILIGENCE_TEMPLATE_LIMITS;
 
 interface InlineQuestionSetupProps {
@@ -299,7 +304,7 @@ function InlineQuestionSetup({ reportId, viewer }: InlineQuestionSetupProps) {
           toast.success(TEMPLATE_SAVED_COPY[viewer]);
         },
         onError: () => {
-          toast.error("Couldn't save your questions. Please try again.");
+          toast.error(TEMPLATE_SAVE_FAILED_COPY[viewer]);
         },
       }
     );
