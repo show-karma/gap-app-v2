@@ -22,6 +22,7 @@ import type {
   IFundingApplication,
   IFundingProgramConfig,
 } from "@/types/funding-platform";
+import { getStatusUpdateErrorMessage } from "@/utilities/application-status";
 import { QUERY_KEYS } from "./fundingPlatformQueryKeys";
 import { useAuth } from "./useAuth";
 
@@ -318,21 +319,31 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
         approvedAmount,
         approvedCurrency,
       }),
-    onSuccess: () => {
+    onError: (error) => {
+      console.error("Failed to update application status:", error);
+      toast.error(getStatusUpdateErrorMessage(error));
+    },
+    // Re-sync on failure too: a 409 means another reviewer already moved the
+    // application, so the stale row must refresh instead of inviting a retry.
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId) });
-    },
-    onError: (error) => {
-      console.error("Failed to update application status:", error);
-      toast.error("Failed to update application status");
     },
   });
 
   // Flatten the paginated data
   const applications = applicationsQuery.data?.pages.flatMap((page) => page.applications) || [];
   const firstPage = applicationsQuery.data?.pages[0];
+
+  // Returns the freshly fetched rows so callers can validate a pending status
+  // transition against server truth before opening a confirmation modal.
+  const refetchApplicationsData = applicationsQuery.refetch;
+  const refetchApplications = useCallback(async (): Promise<IFundingApplication[]> => {
+    const { data } = await refetchApplicationsData();
+    return data?.pages.flatMap((page) => page.applications) || [];
+  }, [refetchApplicationsData]);
 
   return {
     applications,
@@ -350,6 +361,7 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
     updateApplicationStatus: updateStatusMutation.mutateAsync,
     isSubmitting: submitApplicationMutation.isPending,
     isUpdatingStatus: updateStatusMutation.isPending,
+    refetchApplications,
     refetch: () => {
       applicationsQuery.refetch();
       statsQuery.refetch();
@@ -387,12 +399,12 @@ export const useFundingApplication = (applicationId: string) => {
         approvedAmount,
         approvedCurrency,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
-    },
     onError: (error) => {
       console.error("Failed to update application status:", error);
-      toast.error("Failed to update application status");
+      toast.error(getStatusUpdateErrorMessage(error));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
     },
   });
 
@@ -615,18 +627,19 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
     }) =>
       fundingPlatformService.applications.updateApplicationStatus(appId || applicationId!, request),
     onSuccess: (_, variables) => {
+      toast.success(`Application ${variables.request.status.replace("_", " ")}`);
+    },
+    onError: (error: unknown) => {
+      console.error("Failed to update application status:", error);
+      toast.error(getStatusUpdateErrorMessage(error));
+    },
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.application(variables.applicationId),
       });
       queryClient.invalidateQueries({
         queryKey: ["applications"], // Invalidate all application lists
       });
-
-      toast.success(`Application ${variables.request.status.replace("_", " ")}`);
-    },
-    onError: (error: any) => {
-      console.error("Failed to update application status:", error);
-      toast.error("Failed to update application status");
     },
   });
 
@@ -802,8 +815,14 @@ export const useApplicationStatus = (programId?: string, _chainId?: number) => {
         approvedAmount,
         approvedCurrency,
       }),
-    onSuccess: (_, variables) => {
-      // Invalidate and refetch application data
+    onError: (error: unknown) => {
+      toast.error(getStatusUpdateErrorMessage(error));
+      console.error("Failed to update application status:", error);
+    },
+    // Runs on failure too: a 409 conflict means the cached status is stale, so
+    // the detail view and every list must re-sync and drop their now-invalid
+    // action buttons instead of leaving them up for another retry.
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(variables.applicationId) });
 
       // Invalidate applications list if programId is provided
@@ -821,11 +840,6 @@ export const useApplicationStatus = (programId?: string, _chainId?: number) => {
       // No-op when the inbox isn't mounted (e.g. the per-program "My
       // Applications" page), so it doesn't change that surface's behavior.
       queryClient.invalidateQueries({ queryKey: ["reviewer-inbox"] });
-    },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || "Failed to update application status";
-      toast.error(errorMessage);
-      console.error("Failed to update application status:", error);
     },
   });
 

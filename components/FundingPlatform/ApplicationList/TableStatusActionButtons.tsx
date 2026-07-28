@@ -2,6 +2,7 @@
 
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
+import { getAllowedStatusTransitions } from "@/components/FundingPlatform/statusTransitions";
 import { Button } from "@/components/Utilities/Button";
 import { Can } from "@/src/core/rbac/components/can";
 import { Permission } from "@/src/core/rbac/types";
@@ -27,8 +28,10 @@ interface TableStatusTransition {
   permission: Permission;
 }
 
-// Configuration for allowed status transitions in table view with required permissions
-const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTransition[]> = {
+// Presentation only (label/icon/style/permission + display order). Which
+// transitions are actually offered comes from the shared adjacency in
+// `statusTransitions`.
+const TABLE_STATUS_ACTIONS: Record<FundingApplicationStatusV2, TableStatusTransition[]> = {
   pending: [
     {
       targetStatus: "under_review",
@@ -136,12 +139,10 @@ export const TableStatusActionButtons: FC<TableStatusActionButtonsProps> = ({
   isUpdating = false,
   availableActions,
 }) => {
-  const availableTransitions = TABLE_STATUS_TRANSITIONS[currentStatus] || [];
-
-  // Don't show actions for final states
-  if (["approved", "rejected"].includes(currentStatus)) {
-    return null;
-  }
+  const allowedTargets = getAllowedStatusTransitions(currentStatus);
+  const availableTransitions = (TABLE_STATUS_ACTIONS[currentStatus] || []).filter((transition) =>
+    allowedTargets.includes(transition.targetStatus)
+  );
 
   if (availableTransitions.length === 0) {
     return null;

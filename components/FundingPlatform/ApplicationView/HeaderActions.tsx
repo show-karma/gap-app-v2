@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+import { getAllowedStatusTransitions } from "@/components/FundingPlatform/statusTransitions";
 import { Button } from "@/components/ui/button";
 import { Can } from "@/src/core/rbac/components/can";
 import { Permission } from "@/src/core/rbac/types";
@@ -21,7 +22,9 @@ interface StatusTransition {
   permission: Permission;
 }
 
-const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
+// Presentation only (label/style/permission + display order). Which transitions
+// are actually offered comes from the shared adjacency in `statusTransitions`.
+const STATUS_TRANSITION_ACTIONS: Record<ApplicationStatus, StatusTransition[]> = {
   pending: [
     {
       targetStatus: "under_review",
@@ -84,7 +87,10 @@ export const HeaderActions: FC<HeaderActionsProps> = ({
   onStatusChange,
   isUpdating = false,
 }) => {
-  const availableTransitions = STATUS_TRANSITIONS[currentStatus] || [];
+  const allowedTargets = getAllowedStatusTransitions(currentStatus);
+  const availableTransitions = (STATUS_TRANSITION_ACTIONS[currentStatus] || []).filter(
+    (transition) => allowedTargets.includes(transition.targetStatus)
+  );
 
   if (availableTransitions.length === 0) {
     return null;

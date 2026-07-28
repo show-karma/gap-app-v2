@@ -292,6 +292,11 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   };
 
   const handleConfirm = async () => {
+    // Belt-and-braces against a double submit racing the disabled state
+    if (isSubmitting) {
+      return;
+    }
+
     // If reason is required but not provided, don't proceed
     if (isReasonActuallyRequired && !reason.trim()) {
       return;
