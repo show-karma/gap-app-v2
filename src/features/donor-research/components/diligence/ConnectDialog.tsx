@@ -20,6 +20,7 @@ import { useOutreachPreview, useRequestIntro, useUpdateAdvisorEmail } from "@/ho
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
 import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
+import type { DiligenceViewer } from "./viewer";
 
 interface ConnectDialogProps {
   reportId: string;
@@ -30,6 +31,8 @@ interface ConnectDialogProps {
   canConnect: boolean;
   /** Nonprofit display name for the preview's To row (null → row hidden). */
   candidateName?: string | null;
+  /** The report's owner, or a super-admin acting as them. */
+  viewer: DiligenceViewer;
 }
 
 const emailSchema = z.object({
@@ -38,7 +41,7 @@ const emailSchema = z.object({
 
 type EmailFormValues = z.infer<typeof emailSchema>;
 
-type Step = "confirm" | "email";
+type Step = "confirm" | "email" | "owner_email_missing";
 
 /**
  * Confirms a NAMED intro that reveals the advisor's identity (and any prior
@@ -60,6 +63,7 @@ export function ConnectDialog({
   onOpenChange,
   canConnect,
   candidateName,
+  viewer,
 }: ConnectDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -73,6 +77,7 @@ export function ConnectDialog({
             candidateId={candidateId}
             canConnect={canConnect}
             candidateName={candidateName ?? null}
+            viewer={viewer}
             onClose={() => onOpenChange(false)}
           />
         ) : null}
@@ -86,6 +91,7 @@ interface ConnectBodyProps {
   candidateId: string;
   canConnect: boolean;
   candidateName: string | null;
+  viewer: DiligenceViewer;
   onClose: () => void;
 }
 
@@ -94,6 +100,7 @@ function ConnectBody({
   candidateId,
   canConnect,
   candidateName,
+  viewer,
   onClose,
 }: ConnectBodyProps) {
   const [step, setStep] = useState<Step>("confirm");
@@ -158,7 +165,12 @@ function ConnectBody({
   const handleConfirm = () => {
     sendIntro((message) => {
       setEmailPrompt(message);
-      setStep("email");
+      // The capture step persists a reply-to onto the ADVISOR's shared
+      // contributor profile — global Karma identity, not report data. A
+      // super-admin acting for the owner must not write that on their behalf
+      // (and writing their OWN profile would resolve the wrong reply-to), so
+      // they get the blocked state instead of the form.
+      setStep(viewer === "staff" ? "owner_email_missing" : "email");
     });
   };
 
@@ -190,9 +202,9 @@ function ConnectBody({
         <DialogHeader>
           <DialogTitle>Send a named intro</DialogTitle>
           <DialogDescription>
-            Connecting reveals your identity to this nonprofit, along with any answers they've
-            already shared. Karma sends them the email below on your behalf — review it and edit if
-            needed before sending.
+            {viewer === "staff"
+              ? "Connecting reveals the report owner's identity to this nonprofit, along with any answers they've already shared. Karma sends them the email below on the owner's behalf — review it and edit if needed before sending."
+              : "Connecting reveals your identity to this nonprofit, along with any answers they've already shared. Karma sends them the email below on your behalf — review it and edit if needed before sending."}
           </DialogDescription>
         </DialogHeader>
 
@@ -220,6 +232,26 @@ function ConnectBody({
             isLoading={requestIntro.isPending}
           >
             Send intro
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  }
+
+  if (step === "owner_email_missing") {
+    return (
+      <>
+        <DialogHeader>
+          <DialogTitle>The report owner has no reply-to email</DialogTitle>
+          <DialogDescription>
+            A named intro is sent on the report owner's behalf and needs their reply-to address, so
+            it can't go out until they add one to their Karma profile. Nothing was sent.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <Button type="button" onClick={onClose}>
+            Close
           </Button>
         </DialogFooter>
       </>

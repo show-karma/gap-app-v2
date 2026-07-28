@@ -263,6 +263,11 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
   };
 
   const handleConfirm = async () => {
+    // Belt-and-braces against a double submit racing the disabled state
+    if (isSubmitting) {
+      return;
+    }
+
     if (isReasonActuallyRequired && !reason.trim()) {
       return;
     }
