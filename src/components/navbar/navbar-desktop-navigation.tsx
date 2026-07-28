@@ -9,7 +9,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FollowLinkAnchor, followLinks } from "@/src/components/navbar/follow-links";
+import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
+import { followLinks } from "@/src/components/navbar/follow-links";
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";

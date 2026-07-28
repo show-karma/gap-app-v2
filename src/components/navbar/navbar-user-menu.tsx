@@ -23,7 +23,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { FollowLinkAnchor, followLinks } from "@/src/components/navbar/follow-links";
+import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
+import { followLinks } from "@/src/components/navbar/follow-links";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
