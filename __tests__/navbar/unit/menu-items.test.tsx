@@ -97,7 +97,7 @@ describe("Menu Items Configuration", () => {
       expect(foundations?.items[0].external).toBeUndefined();
     });
 
-    it('should point "Nonprofit Deep Research" at the donor-research index', () => {
+    it('should point "Nonprofit Deep Research" at the donor-advisors landing page', () => {
       const donorAdvisors = forFundersItems.groups.find(
         (group) => group.title === "Donor Advisors"
       );
@@ -105,7 +105,10 @@ describe("Menu Items Configuration", () => {
         (item) => item.title === "Nonprofit Deep Research"
       );
       expect(research).toBeDefined();
-      expect(research?.href).toBe(PAGES.DONOR_RESEARCH.INDEX);
+      // The public menu links to the marketing page, not the gated section
+      // index — an anonymous click must not land on a sign-in wall.
+      expect(research?.href).toBe(PAGES.DONOR_ADVISORS);
+      expect(research?.href).not.toBe(PAGES.DONOR_RESEARCH.INDEX);
     });
 
     it('should contain "Case studies" item with anchor', () => {

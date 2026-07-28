@@ -106,7 +106,10 @@ export const forFundersItems: ForFundersItems = {
       title: "Donor Advisors",
       items: [
         {
-          href: PAGES.DONOR_RESEARCH.INDEX,
+          // The marketing landing page, not the signed-in section index —
+          // the menu is public surface, so it points at the page that
+          // explains the product rather than one gated behind sign-in.
+          href: PAGES.DONOR_ADVISORS,
           icon: UserRoundSearch,
           title: "Nonprofit Deep Research",
         },
