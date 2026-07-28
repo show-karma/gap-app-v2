@@ -5,6 +5,7 @@ import {
   ClockIcon,
   ExclamationCircleIcon,
   MinusCircleIcon,
+  NoSymbolIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -65,6 +66,12 @@ const statusConfig: Record<
     label: "Expired",
     description: "KYC verification has expired",
   },
+  [KycVerificationStatus.NOT_APPLICABLE]: {
+    icon: NoSymbolIcon,
+    color: "text-gray-400 dark:text-gray-600",
+    label: "Not applicable",
+    description: "KYC/KYB is not required for this application",
+  },
 };
 
 /**
@@ -92,7 +99,8 @@ export function KycTooltipContent({ status, showDates = true }: KycTooltipConten
     <div className="space-y-1 text-xs">
       <p className="font-medium">{config.label}</p>
       <p className="text-gray-400">{config.description}</p>
-      {status?.verificationType && (
+      {/* NOT_APPLICABLE is type-agnostic — the exemption covers both KYC and KYB */}
+      {status?.verificationType && effectiveStatus !== KycVerificationStatus.NOT_APPLICABLE && (
         <p>
           Type: <span className="font-medium">{status.verificationType}</span>
         </p>
@@ -144,7 +152,14 @@ export function KycStatusIcon({
   );
 }
 
-const badgeColors: Record<KycVerificationStatus, string> = {
+/**
+ * Base pill classes shared between the read-only badge and the
+ * admin-interactive badge (KycStatusBadgeWithActions).
+ */
+export const KYC_BADGE_BASE =
+  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium";
+
+export const kycBadgeColors: Record<KycVerificationStatus, string> = {
   [KycVerificationStatus.NOT_STARTED]:
     "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
   [KycVerificationStatus.PENDING]:
@@ -156,12 +171,15 @@ const badgeColors: Record<KycVerificationStatus, string> = {
   [KycVerificationStatus.REJECTED]: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   [KycVerificationStatus.EXPIRED]:
     "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  // The only outline chip — reads "out of scope" rather than "waiting"
+  [KycVerificationStatus.NOT_APPLICABLE]:
+    "bg-transparent text-gray-500 ring-1 ring-inset ring-gray-300 dark:bg-transparent dark:text-gray-500 dark:ring-zinc-700",
 };
 
 /**
  * Format the badge label - shows only status (the "KYC/KYB:" label is shown separately)
  */
-function getBadgeLabel(
+export function getKycBadgeLabel(
   status: KycStatusResponse | null,
   effectiveStatus: KycVerificationStatus,
   showValidityInLabel: boolean
@@ -180,8 +198,11 @@ function getBadgeLabel(
     return `${verificationType} ${statusLabel} (valid until ${expiresDate})`;
   }
 
-  // For NOT_STARTED, show only the label (type-agnostic)
-  if (effectiveStatus === KycVerificationStatus.NOT_STARTED) {
+  // For NOT_STARTED and NOT_APPLICABLE, show only the label (type-agnostic)
+  if (
+    effectiveStatus === KycVerificationStatus.NOT_STARTED ||
+    effectiveStatus === KycVerificationStatus.NOT_APPLICABLE
+  ) {
     return config.label;
   }
 
@@ -202,7 +223,7 @@ export function KycStatusBadge({
   showValidityInLabel?: boolean;
 }) {
   const effectiveStatus = getEffectiveKycStatus(status);
-  const badgeLabel = getBadgeLabel(status, effectiveStatus, showValidityInLabel);
+  const badgeLabel = getKycBadgeLabel(status, effectiveStatus, showValidityInLabel);
 
   return (
     <TooltipProvider>
@@ -210,8 +231,9 @@ export function KycStatusBadge({
         <TooltipTrigger asChild>
           <span
             className={cn(
-              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium cursor-help",
-              badgeColors[effectiveStatus],
+              KYC_BADGE_BASE,
+              "cursor-help",
+              kycBadgeColors[effectiveStatus],
               className
             )}
           >

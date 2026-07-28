@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle, Clock, MinusCircle, XCircle } from "lucide-react";
+import { AlertCircle, Ban, CheckCircle, Clock, MinusCircle, XCircle } from "lucide-react";
 import { KycVerificationStatus } from "@/types/kyc";
 
 /**
@@ -17,6 +17,8 @@ export const kycStatusStyles: Record<KycVerificationStatus, string> = {
     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   [KycVerificationStatus.EXPIRED]:
     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  [KycVerificationStatus.NOT_APPLICABLE]:
+    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-transparent text-gray-500 ring-1 ring-inset ring-gray-300 dark:text-gray-500 dark:ring-zinc-700",
 };
 
 /**
@@ -29,6 +31,7 @@ export const kycIconStyles: Record<KycVerificationStatus, string> = {
   [KycVerificationStatus.VERIFIED]: "h-3.5 w-3.5 text-green-500",
   [KycVerificationStatus.REJECTED]: "h-3.5 w-3.5 text-red-500",
   [KycVerificationStatus.EXPIRED]: "h-3.5 w-3.5 text-amber-500",
+  [KycVerificationStatus.NOT_APPLICABLE]: "h-3.5 w-3.5 text-gray-400 dark:text-gray-600",
 };
 
 /**
@@ -41,6 +44,7 @@ export const kycStatusIcons: Record<KycVerificationStatus, typeof CheckCircle> =
   [KycVerificationStatus.VERIFIED]: CheckCircle,
   [KycVerificationStatus.REJECTED]: XCircle,
   [KycVerificationStatus.EXPIRED]: AlertCircle,
+  [KycVerificationStatus.NOT_APPLICABLE]: Ban,
 };
 
 /**
@@ -53,6 +57,7 @@ export const kycStatusLabels: Record<KycVerificationStatus, string> = {
   [KycVerificationStatus.VERIFIED]: "Verified",
   [KycVerificationStatus.REJECTED]: "Rejected",
   [KycVerificationStatus.EXPIRED]: "Expired",
+  [KycVerificationStatus.NOT_APPLICABLE]: "Not applicable",
 };
 
 /**
@@ -70,6 +75,8 @@ export const kycStatusDescriptions: Record<KycVerificationStatus, string> = {
     "Your verification was not approved. Please contact the program administrator for more information.",
   [KycVerificationStatus.EXPIRED]:
     "Your verification has expired. Please contact the program administrator to receive a new verification link.",
+  [KycVerificationStatus.NOT_APPLICABLE]:
+    "Identity verification is not required for this application.",
 };
 
 /**
