@@ -83,7 +83,7 @@ describe("KycStatusIcon", () => {
         />
       );
 
-      const icon = screen.getByLabelText("Not applicable");
+      const icon = screen.getByLabelText("Not Applicable");
       expect(icon).toBeInTheDocument();
       expect(icon).toHaveClass("text-gray-400");
     });
@@ -245,7 +245,7 @@ describe("KycStatusBadge", () => {
       );
 
       // No "KYB" prefix — the exemption covers both KYC and KYB
-      expect(screen.getByText("Not applicable")).toBeInTheDocument();
+      expect(screen.getByText("Not Applicable")).toBeInTheDocument();
       expect(screen.queryByText(/KYB not applicable/)).not.toBeInTheDocument();
     });
 
@@ -300,7 +300,7 @@ describe("KycStatusBadge", () => {
         />
       );
 
-      const badge = screen.getByText("Not applicable").closest("span");
+      const badge = screen.getByText("Not Applicable").closest("span");
       await user.hover(badge!);
 
       const descriptions = await screen.findAllByText(

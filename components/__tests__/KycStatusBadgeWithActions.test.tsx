@@ -142,7 +142,7 @@ describe("KycStatusBadgeWithActions", () => {
       );
 
       expect(
-        screen.getByRole("button", { name: "Change Not applicable status" })
+        screen.getByRole("button", { name: "Change Not Applicable status" })
       ).toBeInTheDocument();
       expect(
         screen.queryByRole("menuitem", { name: /Mark as Not applicable/ })
@@ -208,7 +208,7 @@ describe("KycStatusBadgeWithActions", () => {
 
       renderBadge(createMockStatus({ status: KycVerificationStatus.NOT_APPLICABLE }));
 
-      expect(screen.getByText("Not applicable")).toBeInTheDocument();
+      expect(screen.getByText("Not Applicable")).toBeInTheDocument();
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
   });
