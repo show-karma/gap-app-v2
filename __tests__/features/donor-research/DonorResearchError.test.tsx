@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { DonorResearchError } from "@/src/features/donor-research/components/common/DonorResearchError";
 
 const authState = { authenticated: false, login: vi.fn() };
@@ -59,13 +59,23 @@ describe("DonorResearchError", () => {
     expect(errorManagerMock).not.toHaveBeenCalled();
   });
 
-  it("re-renders the segment once the visitor signs in", () => {
+  // The recovery path only matters as a transition: the gate is on screen,
+  // Privy then reports a session, and the segment re-renders on its own. Seeding
+  // `authenticated` before mount would assert the wrong thing — that a
+  // never-displayed gate resets — so sign in after the first render.
+  it("re-renders the segment once the visitor signs in", async () => {
     const reset = vi.fn();
+    const error = new Error("401 unauthorized");
+
+    const { rerender } = render(<DonorResearchError error={error} reset={reset} />);
+
+    expect(screen.getByText("Sign in to access nonprofit research")).toBeVisible();
+    expect(reset).not.toHaveBeenCalled();
+
     authState.authenticated = true;
+    rerender(<DonorResearchError error={error} reset={reset} />);
 
-    render(<DonorResearchError error={new Error("401 unauthorized")} reset={reset} />);
-
-    expect(reset).toHaveBeenCalledOnce();
+    await waitFor(() => expect(reset).toHaveBeenCalledOnce());
   });
 
   it("keeps the retry screen for non-auth failures", () => {
