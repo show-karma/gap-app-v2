@@ -7,7 +7,7 @@
 
 import { act, waitFor } from "@testing-library/react";
 import { renderHookWithProviders } from "@/__tests__/utils/render";
-import { STATUS_CONFLICT_MESSAGE } from "@/utilities/application-status";
+import { STATUS_CONFLICT_MESSAGE, STATUS_CONFLICT_TOAST_ID } from "@/utilities/application-status";
 
 const mockToastError = vi.fn();
 const mockUpdateStatusAsync = vi.fn();
@@ -98,7 +98,22 @@ const renderDetailView = () =>
     })
   );
 
-const conflictError = () => ({ response: { status: 409, data: { message: "conflict" } } });
+const conflictError = () => ({
+  response: {
+    status: 409,
+    data: { message: "Invalid status transition from 'approved' to 'approved'." },
+  },
+});
+
+// Same 409, different cause: the reviewer can fix this one in the open form.
+const currencyMismatchError = () => ({
+  response: {
+    status: 409,
+    data: {
+      message: "Currency mismatch: Approved currency 'USDC' does not match program currency 'ETH'.",
+    },
+  },
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -142,6 +157,21 @@ describe("useApplicationDetailView status conflict", () => {
     expect(mockToastError).not.toHaveBeenCalled();
   });
 
+  it("should_keep_the_inline_form_open_when_a_409_is_a_correctable_validation_error", async () => {
+    mockUpdateStatusAsync.mockRejectedValue(currencyMismatchError());
+    const { result } = renderDetailView();
+
+    await act(async () => {
+      await result.current.handleStatusChangeClick("approved");
+    });
+    await act(async () => {
+      await result.current.handleStatusChangeConfirm(undefined, "100", "USDC");
+    });
+
+    // The entered amount/currency must survive so the reviewer can correct them.
+    expect(result.current.selectedStatus).toBe("approved");
+  });
+
   it("should_not_open_the_form_when_the_refetched_status_no_longer_allows_the_transition", async () => {
     mockRefetchApplication.mockResolvedValue({
       data: { ...mockApplication, status: "approved" },
@@ -154,8 +184,62 @@ describe("useApplicationDetailView status conflict", () => {
 
     expect(result.current.selectedStatus).toBeNull();
     expect(mockToastError).toHaveBeenCalledTimes(1);
-    expect(mockToastError).toHaveBeenCalledWith(STATUS_CONFLICT_MESSAGE);
+    expect(mockToastError).toHaveBeenCalledWith(STATUS_CONFLICT_MESSAGE, {
+      id: STATUS_CONFLICT_TOAST_ID,
+    });
     expect(mockUpdateStatusAsync).not.toHaveBeenCalled();
+  });
+
+  it("should_report_the_actions_as_busy_while_the_pre_flight_read_is_in_flight", async () => {
+    let resolveRefetch: (value: { data: typeof mockApplication }) => void = () => undefined;
+    mockRefetchApplication.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveRefetch = resolve;
+        })
+    );
+    const { result } = renderDetailView();
+
+    let pending: Promise<void> = Promise.resolve();
+    await act(async () => {
+      pending = result.current.handleStatusChangeClick("approved");
+    });
+
+    expect(result.current.isUpdatingStatus).toBe(true);
+
+    await act(async () => {
+      resolveRefetch({ data: mockApplication });
+      await pending;
+    });
+
+    expect(result.current.isUpdatingStatus).toBe(false);
+    expect(result.current.selectedStatus).toBe("approved");
+  });
+
+  it("should_issue_a_single_pre_flight_read_when_the_action_is_double_clicked", async () => {
+    let resolveRefetch: (value: { data: typeof mockApplication }) => void = () => undefined;
+    mockRefetchApplication.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveRefetch = resolve;
+        })
+    );
+    const { result } = renderDetailView();
+
+    let first: Promise<void> = Promise.resolve();
+    let second: Promise<void> = Promise.resolve();
+    await act(async () => {
+      first = result.current.handleStatusChangeClick("approved");
+      second = result.current.handleStatusChangeClick("approved");
+    });
+
+    await act(async () => {
+      resolveRefetch({ data: { ...mockApplication, status: "approved" } });
+      await Promise.all([first, second]);
+    });
+
+    expect(mockRefetchApplication).toHaveBeenCalledTimes(1);
+    expect(mockToastError).toHaveBeenCalledTimes(1);
   });
 
   it("should_ignore_a_confirm_that_arrives_while_an_update_is_in_flight", async () => {

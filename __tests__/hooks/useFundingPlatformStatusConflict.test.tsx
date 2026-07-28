@@ -65,6 +65,14 @@ const serverError = () => ({
   response: { status: 500, data: { message: "Something exploded" } },
 });
 
+// The backend answers 409 for its whole validation family, so a correctable
+// input error shares the status code with a genuine transition conflict.
+const CURRENCY_MISMATCH_MESSAGE =
+  "Currency mismatch: Approved currency 'USDC' does not match program currency 'ETH'.";
+const currencyMismatchError = () => ({
+  response: { status: 409, data: { message: CURRENCY_MISMATCH_MESSAGE } },
+});
+
 const emptyPage = {
   applications: [],
   pagination: { page: 1, limit: 25, total: 0, totalPages: 1 },
@@ -126,6 +134,19 @@ describe("useApplicationStatus", () => {
 
     await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
     expect(mockToastError).toHaveBeenCalledWith("Something exploded");
+  });
+
+  it("should_show_the_backend_message_when_a_409_is_a_correctable_validation_error", async () => {
+    mockUpdateApplicationStatus.mockRejectedValue(currencyMismatchError());
+
+    const { result } = renderHookWithProviders(() => useApplicationStatus(PROGRAM_ID));
+
+    await expect(
+      result.current.updateStatusAsync({ applicationId: APPLICATION_ID, status: "approved" })
+    ).rejects.toBeTruthy();
+
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
+    expect(mockToastError).toHaveBeenCalledWith(CURRENCY_MISMATCH_MESSAGE);
   });
 });
 
