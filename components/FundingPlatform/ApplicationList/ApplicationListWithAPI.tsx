@@ -1,9 +1,7 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
 import pluralize from "pluralize";
 import { type FC, useCallback, useMemo } from "react";
-import { toast } from "react-hot-toast";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
   useApplicationExport,
@@ -67,6 +65,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     fetchNextPage,
     error,
     updateApplicationStatus,
+    refetchApplications,
+    fetchApplicationByReference,
     refetch,
   } = useFundingApplications(programId, queryParams);
 
@@ -133,22 +133,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     }
   );
 
-  const statusChangeMutation = useMutation({
-    mutationFn: (vars: {
-      applicationId: string;
-      status: string;
-      note?: string;
-      approvedAmount?: string;
-      approvedCurrency?: string;
-    }) => updateApplicationStatus(vars),
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {
-      toast.error("Failed to update application status. Please try again.");
-    },
-  });
-
+  // `updateApplicationStatus` is the list mutation's `mutateAsync`; its own
+  // `onSettled` already invalidates the applications and stats queries on both
+  // outcomes, so no second refetch is layered on here.
   const handleStatusChange = useCallback(
     async (
       applicationId: string,
@@ -157,7 +144,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       approvedAmount?: string,
       approvedCurrency?: string
     ): Promise<void> => {
-      await statusChangeMutation.mutateAsync({
+      await updateApplicationStatus({
         applicationId,
         status,
         note,
@@ -165,7 +152,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         approvedCurrency,
       });
     },
-    [statusChangeMutation]
+    [updateApplicationStatus]
   );
 
   const handleExport = useCallback(
@@ -247,6 +234,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           onApplicationSelect={onApplicationSelect}
           onApplicationHover={onApplicationHover}
           onStatusChange={showStatusActions ? handleStatusChange : undefined}
+          onRefreshApplications={refetchApplications}
+          onFetchApplication={fetchApplicationByReference}
           showStatusActions={showStatusActions}
           sortBy={sortBy}
           sortOrder={sortOrder}
