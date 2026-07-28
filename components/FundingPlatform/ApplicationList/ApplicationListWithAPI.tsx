@@ -3,7 +3,6 @@
 import { useMutation } from "@tanstack/react-query";
 import pluralize from "pluralize";
 import { type FC, useCallback, useMemo } from "react";
-import { toast } from "react-hot-toast";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
   useApplicationExport,
@@ -67,6 +66,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     fetchNextPage,
     error,
     updateApplicationStatus,
+    refetchApplications,
     refetch,
   } = useFundingApplications(programId, queryParams);
 
@@ -141,11 +141,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       approvedAmount?: string;
       approvedCurrency?: string;
     }) => updateApplicationStatus(vars),
-    onSuccess: () => {
+    // `updateApplicationStatus` already invalidates the list and owns the failure
+    // toast; this only pulls the stats bar back in sync on both outcomes.
+    onSettled: () => {
       refetch();
-    },
-    onError: () => {
-      toast.error("Failed to update application status. Please try again.");
     },
   });
 
@@ -247,6 +246,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           onApplicationSelect={onApplicationSelect}
           onApplicationHover={onApplicationHover}
           onStatusChange={showStatusActions ? handleStatusChange : undefined}
+          onRefreshApplications={refetchApplications}
           showStatusActions={showStatusActions}
           sortBy={sortBy}
           sortOrder={sortOrder}
