@@ -23,8 +23,10 @@ import type {
   ApplicationComment,
   FundingApplicationStatusV2,
   IApplicationVersion,
+  IFormSchema,
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
+import { createFieldLabelMap, getFieldLabel } from "@/utilities/fieldLabelMapping";
 import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 import CommentItem from "../CommentItem";
@@ -54,77 +56,82 @@ export interface TimelineContainerProps extends PendingScrollProps {
   programId?: string;
   /** Whether to enable @mention autocomplete */
   enableMentions?: boolean;
+  /** Form schema for mapping changed-field keys to human-readable labels */
+  formSchema?: IFormSchema;
 }
 
 interface TimelineVersionItemProps {
   version: IApplicationVersion;
+  fieldLabels: Record<string, string>;
   onVersionClick?: (versionId: string) => void;
 }
 
-const TimelineVersionItem: FC<TimelineVersionItemProps> = memo(({ version, onVersionClick }) => {
-  const isInitialVersion = version.versionNumber === 0;
-  const handleClick = () => onVersionClick?.(version.id);
+const TimelineVersionItem: FC<TimelineVersionItemProps> = memo(
+  ({ version, fieldLabels, onVersionClick }) => {
+    const isInitialVersion = version.versionNumber === 0;
+    const handleClick = () => onVersionClick?.(version.id);
 
-  return (
-    <div className="flex space-x-3">
-      <div className="flex-shrink-0">
-        <span className="h-8 w-8 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400">
-          {isInitialVersion ? (
-            <DocumentTextIcon className="h-5 w-5" />
-          ) : (
-            <PencilSquareIcon className="h-5 w-5" />
-          )}
-        </span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {isInitialVersion ? "Initial application submitted" : "Application edited"}
-              {version.submittedBy && (
-                <span className="ml-1 text-gray-600 dark:text-gray-400">
-                  by <EthereumAddressToProfileName address={version.submittedBy} />
-                </span>
-              )}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {renderRelativeTime(version.createdAt)} • Version {version.versionNumber}
-            </p>
+    return (
+      <div className="flex space-x-3">
+        <div className="flex-shrink-0">
+          <span className="h-8 w-8 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400">
+            {isInitialVersion ? (
+              <DocumentTextIcon className="h-5 w-5" />
+            ) : (
+              <PencilSquareIcon className="h-5 w-5" />
+            )}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {isInitialVersion ? "Initial application submitted" : "Application edited"}
+                {version.submittedBy && (
+                  <span className="ml-1 text-gray-600 dark:text-gray-400">
+                    by <EthereumAddressToProfileName address={version.submittedBy} />
+                  </span>
+                )}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {renderRelativeTime(version.createdAt)} • Version {version.versionNumber}
+              </p>
+            </div>
+            {onVersionClick && (
+              <button
+                type="button"
+                onClick={handleClick}
+                className="ml-2 inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+              >
+                <DocumentTextIcon className="h-3 w-3 mr-1" />
+                {isInitialVersion ? "View details" : "View changes"}
+              </button>
+            )}
           </div>
-          {onVersionClick && (
-            <button
-              type="button"
-              onClick={handleClick}
-              className="ml-2 inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
-            >
-              <DocumentTextIcon className="h-3 w-3 mr-1" />
-              {isInitialVersion ? "View details" : "View changes"}
-            </button>
+          {!isInitialVersion && version.hasChanges && (
+            <div className="mt-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                {version.changeCount} {pluralize("field", version.changeCount)} changed
+                {version.diffFromPrevious && version.diffFromPrevious.changedFields.length > 0 && (
+                  <span className="ml-1">
+                    (
+                    {version.diffFromPrevious.changedFields
+                      .slice(0, 2)
+                      .map((f) => getFieldLabel(f.fieldLabel, fieldLabels))
+                      .join(", ")}
+                    {version.diffFromPrevious.changedFields.length > 2 &&
+                      `, +${version.diffFromPrevious.changedFields.length - 2} more`}
+                    )
+                  </span>
+                )}
+              </p>
+            </div>
           )}
         </div>
-        {!isInitialVersion && version.hasChanges && (
-          <div className="mt-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-              {version.changeCount} {pluralize("field", version.changeCount)} changed
-              {version.diffFromPrevious && version.diffFromPrevious.changedFields.length > 0 && (
-                <span className="ml-1">
-                  (
-                  {version.diffFromPrevious.changedFields
-                    .slice(0, 2)
-                    .map((f) => f.fieldLabel)
-                    .join(", ")}
-                  {version.diffFromPrevious.changedFields.length > 2 &&
-                    `, +${version.diffFromPrevious.changedFields.length - 2} more`}
-                  )
-                </span>
-              )}
-            </p>
-          </div>
-        )}
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 TimelineVersionItem.displayName = "TimelineVersionItem";
 
@@ -145,6 +152,7 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
   isLoading = false,
   programId,
   enableMentions = false,
+  formSchema,
   pendingScrollAnchorId,
   onPendingScrollHandled,
 }) => {
@@ -152,6 +160,8 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
     () => buildTimelineItems({ comments, statusHistory, versionHistory }),
     [comments, statusHistory, versionHistory]
   );
+
+  const fieldLabels = useMemo(() => createFieldLabelMap(formSchema), [formSchema]);
 
   usePendingScroll(ACTIVITY_TIMELINE_ANCHOR_ID, {
     pendingScrollAnchorId,
@@ -186,9 +196,11 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
             Activity Timeline
           </h3>
         </div>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {timelineItems.length} {pluralize("item", timelineItems.length)}
-        </span>
+        {timelineItems.length > 0 && (
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {timelineItems.length} {pluralize("item", timelineItems.length)}
+          </span>
+        )}
       </div>
 
       {/* Timeline */}
@@ -228,7 +240,11 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
                         enableMentions={enableMentions}
                       />
                     ) : item.type === "version" ? (
-                      <TimelineVersionItem version={item.data} onVersionClick={onVersionClick} />
+                      <TimelineVersionItem
+                        version={item.data}
+                        fieldLabels={fieldLabels}
+                        onVersionClick={onVersionClick}
+                      />
                     ) : (
                       <TimelineStatusItem
                         status={item.data}

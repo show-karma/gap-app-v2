@@ -239,9 +239,11 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
             Activity Timeline
           </h3>
         </div>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {timelineItems.length} {pluralize("item", timelineItems.length)}
-        </span>
+        {timelineItems.length > 0 && (
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {timelineItems.length} {pluralize("item", timelineItems.length)}
+          </span>
+        )}
       </div>
 
       {/* Comment Input - Show for all users who have onCommentAdd handler */}
