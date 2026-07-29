@@ -81,7 +81,8 @@ const renderFieldValue = (
       );
     }
   } catch {
-    // Not JSON, continue with regular rendering
+    // SUPPRESSED: JSON.parse is a type probe here — non-JSON values are expected
+    // and fall through to markdown/text rendering below.
   }
 
   // For text values, check if it's markdown
@@ -116,6 +117,8 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({
   // the initial submission has nothing to diff and renders an explanation.
   const applicationFields = version.diffFromPrevious?.changedFields ?? [];
 
+  const handleViewDetails = () => onViewDetails?.();
+
   if (applicationFields.length === 0) {
     const isInitialVersion = version.versionNumber === 0;
 
@@ -141,7 +144,7 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({
         {onViewDetails && (
           <button
             type="button"
-            onClick={onViewDetails}
+            onClick={handleViewDetails}
             className="mt-4 inline-flex items-center rounded-md bg-brand-blue px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-blue/80"
           >
             View application details

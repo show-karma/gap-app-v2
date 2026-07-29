@@ -58,6 +58,10 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
 
   const handleShowDetails = useCallback(() => setViewMode("details"), [setViewMode]);
   const handleShowChanges = useCallback(() => setViewMode("changes"), [setViewMode]);
+  const handleBackToVersionSource = useCallback(
+    () => onBackToVersionSource?.(),
+    [onBackToVersionSource]
+  );
 
   // Version state from Zustand store
   const { selectedVersion, selectVersion } = useApplicationVersionsStore();
@@ -164,7 +168,7 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
               {showBackToComments && onBackToVersionSource && (
                 <button
                   type="button"
-                  onClick={onBackToVersionSource}
+                  onClick={handleBackToVersionSource}
                   className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 -ml-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-zinc-700 dark:hover:text-gray-100"
                 >
                   <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />

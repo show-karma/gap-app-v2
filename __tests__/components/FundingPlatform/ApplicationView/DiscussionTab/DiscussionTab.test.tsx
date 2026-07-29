@@ -155,6 +155,7 @@ describe("DiscussionTab", () => {
     it("renders the spinner instead of the timeline while loading", () => {
       render(<DiscussionTab {...mockProps} isLoading={true} />);
 
+      expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
       expect(screen.queryByText("Activity Timeline")).not.toBeInTheDocument();
     });
   });
