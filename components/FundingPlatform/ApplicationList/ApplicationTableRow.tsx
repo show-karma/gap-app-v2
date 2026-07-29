@@ -2,7 +2,7 @@
 
 import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/solid";
 import React, { type FC, useState } from "react";
-import { KycStatusBadge } from "@/components/KycStatusIcon";
+import { KycStatusBadgeWithActions } from "@/components/KycStatusBadgeWithActions";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
@@ -150,7 +150,14 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
             {isLoadingKycStatus ? (
               <Spinner className="w-4 h-4" />
             ) : (
-              <KycStatusBadge status={kycStatus ?? null} showValidityInLabel={false} />
+              /* biome-ignore lint/a11y/noStaticElementInteractions: This div only stops event propagation so the badge menu doesn't trigger the row's new-tab navigation */
+              <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <KycStatusBadgeWithActions
+                  status={kycStatus ?? null}
+                  applicationReference={application.referenceNumber}
+                  showValidityInLabel={false}
+                />
+              </div>
             )}
           </td>
         )}
