@@ -19,7 +19,7 @@ interface StatusPresentation {
   label: string;
 }
 
-export const TIMELINE_STATUS_CONFIG: Record<FundingApplicationStatusV2, StatusPresentation> = {
+const TIMELINE_STATUS_CONFIG: Record<FundingApplicationStatusV2, StatusPresentation> = {
   pending: {
     icon: ClockIcon,
     color: "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900",
@@ -52,7 +52,7 @@ export const TIMELINE_STATUS_CONFIG: Record<FundingApplicationStatusV2, StatusPr
   },
 };
 
-export const getStatusPresentation = (status: string): StatusPresentation =>
+const getStatusPresentation = (status: string): StatusPresentation =>
   TIMELINE_STATUS_CONFIG[status as FundingApplicationStatusV2] ?? TIMELINE_STATUS_CONFIG.pending;
 
 interface TimelineStatusItemProps {
