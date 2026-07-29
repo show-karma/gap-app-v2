@@ -32,7 +32,6 @@ export interface ContractAddressItemProps {
   onNetworkChange: (index: number, value: string) => void;
   onAddressChange: (index: number, value: string) => void;
   onRemove: (index: number) => void;
-  onVerify?: (index: number) => void;
   supportedNetworks: readonly string[];
   readOnly?: boolean;
 }

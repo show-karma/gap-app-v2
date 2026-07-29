@@ -2,10 +2,8 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, LinkIcon } from "@heroicons/react/24/outline";
-import { useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/Utilities/Button";
 import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +17,6 @@ import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
-import { ContractVerificationDialog } from "./ContractVerificationDialog";
 import type { LinkContractAddressesButtonProps } from "./types";
 
 export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = ({
@@ -32,7 +29,6 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useIsCommunityAdmin();
   const { authenticated } = useAuth();
   const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
@@ -42,19 +38,12 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
   // Compute effective read-only mode: external prop OR lack of authorization
   const isReadOnly = readOnlyProp ?? !isAuthorized;
   const [isOpen, setIsOpen] = useState(false);
-  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
-  const [contractToVerify, setContractToVerify] = useState<{
-    index: number;
-    network: string;
-    address: string;
-  } | null>(null);
 
   // Custom hooks for state and logic management
-  const { pairs, addPair, removePair, updateAddress, updateNetwork, updateVerified } =
-    useContractAddressPairs({
-      project,
-    });
+  const { pairs, addPair, removePair, updateAddress, updateNetwork } = useContractAddressPairs({
+    project,
+  });
   const { clearError } = useContractAddressValidation({
     projectUid: project.uid,
   });
@@ -111,23 +100,6 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
     await save(pairs);
   }, [pairs, save]);
 
-  const handleVerify = useCallback(
-    (index: number) => {
-      const pair = pairs[index];
-      if (pair?.network && pair.address) {
-        setContractToVerify({
-          index,
-          network: pair.network,
-          address: pair.address,
-        });
-        setVerificationDialogOpen(true);
-      }
-    },
-    [pairs]
-  );
-
-  const queryClient = useQueryClient();
-
   // Detect unsaved changes (must be before handleClose)
   const hasUnsavedChanges = useMemo(() => {
     const projectNetworkAddresses = project?.external?.network_addresses || [];
@@ -152,34 +124,6 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
       return !savedKeys.has(key);
     });
   }, [pairs, project?.external?.network_addresses]);
-
-  const handleVerificationSuccess = useCallback(
-    (result: { verified: boolean; verifiedAt?: string; verifiedBy?: string }) => {
-      // Update local state with verification result
-      if (contractToVerify) {
-        updateVerified(contractToVerify.network, contractToVerify.address, result);
-      }
-
-      // Refresh the project store to get updated verification data
-      refreshProject();
-
-      // Also invalidate queries to keep cache in sync
-      queryClient.invalidateQueries({
-        queryKey: ["project-instance", project.uid],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["project-instance", project.details?.slug],
-      });
-    },
-    [
-      contractToVerify,
-      updateVerified,
-      refreshProject,
-      queryClient,
-      project.uid,
-      project.details?.slug,
-    ]
-  );
 
   // Define a function to handle dialog close
   const handleClose = useCallback(() => {
@@ -232,12 +176,6 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
     return hasFormatErrors || hasBackendErrors || allPairsEmpty;
   }, [pairs, invalidContracts]);
 
-  // Count unverified contracts
-  const unverifiedCount = useMemo(() => {
-    return pairs.filter((pair) => pair.address.trim() && pair.network.trim() && !pair.verified)
-      .length;
-  }, [pairs]);
-
   return (
     <>
       {buttonElement !== null && (
@@ -248,12 +186,6 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         >
           <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
           Link Contracts
-          {unverifiedCount > 0 && (
-            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-              <ExclamationTriangleIcon className="h-3 w-3" />
-              {unverifiedCount} Unverified
-            </span>
-          )}
         </Button>
       )}
       <ContractAddressDialog
@@ -262,7 +194,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         title={isReadOnly ? "Contract Addresses" : "Link Contract Addresses"}
         description={
           isReadOnly
-            ? "View linked contract addresses for this project. You can verify contracts you deployed."
+            ? "View the contract addresses linked to this project."
             : "Add one or more contract addresses for the project. This will enable the project to retrieve its on-chain metrics for impact tracking."
         }
       >
@@ -273,7 +205,6 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
           onAddressChange={handleAddressChange}
           onRemove={handleRemovePair}
           onAdd={handleAddPair}
-          onVerify={handleVerify}
           supportedNetworks={SUPPORTED_CONTRACT_NETWORKS}
           error={error}
           readOnly={isReadOnly}
@@ -296,31 +227,6 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
           </Button>
         </div>
       </ContractAddressDialog>
-      {contractToVerify && (
-        <ErrorBoundary
-          fallback={
-            <div className="p-4 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="font-medium">Verification dialog encountered an error</p>
-              <p className="text-sm mt-1">Please close and try again</p>
-            </div>
-          }
-          onError={(error) => {
-            console.error("Contract verification dialog error:", error);
-          }}
-        >
-          <ContractVerificationDialog
-            isOpen={verificationDialogOpen}
-            onClose={() => {
-              setVerificationDialogOpen(false);
-              setContractToVerify(null);
-            }}
-            network={contractToVerify.network}
-            contractAddress={contractToVerify.address}
-            projectUid={project.uid}
-            onSuccess={handleVerificationSuccess}
-          />
-        </ErrorBoundary>
-      )}
       {/* Unsaved Changes Warning Dialog */}
       <Transition appear show={showUnsavedWarning} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setShowUnsavedWarning(false)}>
