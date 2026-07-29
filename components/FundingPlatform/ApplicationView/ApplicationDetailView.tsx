@@ -84,7 +84,11 @@ export default function ApplicationDetailView({
     applicationViewMode,
     setApplicationViewMode,
     activeTabId,
-    setActiveTabId,
+    handleUserTabChange,
+    versionViewSourceTab,
+    handleBackToVersionSource,
+    pendingScrollAnchorId,
+    handlePendingScrollHandled,
     selectedStatus,
     isUpdatingStatus,
     handleStatusChangeClick,
@@ -163,6 +167,10 @@ export default function ApplicationDetailView({
             program={program}
             viewMode={applicationViewMode}
             onViewModeChange={setApplicationViewMode}
+            versionViewSourceTab={versionViewSourceTab}
+            onBackToVersionSource={handleBackToVersionSource}
+            pendingScrollAnchorId={pendingScrollAnchorId}
+            onPendingScrollHandled={handlePendingScrollHandled}
           />
         </TabPanel>
       ),
@@ -220,6 +228,8 @@ export default function ApplicationDetailView({
             programId={programId}
             enableMentions
             referenceNumber={application.referenceNumber}
+            pendingScrollAnchorId={pendingScrollAnchorId}
+            onPendingScrollHandled={handlePendingScrollHandled}
           />
         </TabPanel>
       ),
@@ -255,9 +265,11 @@ export default function ApplicationDetailView({
     tabs.findIndex((tab) => tab.id === activeTabId)
   );
 
+  // Only fires for tab-bar clicks — Radix does not emit onValueChange for the
+  // programmatic switch `handleVersionClick` performs.
   const handleTabChange = (index: number) => {
     const tab = tabs[index];
-    if (tab && isKnownTabId(tab.id)) setActiveTabId(tab.id);
+    if (tab && isKnownTabId(tab.id)) handleUserTabChange(tab.id);
   };
 
   const detailBody = (

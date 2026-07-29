@@ -1,7 +1,12 @@
 "use client";
 
-import { ArrowPathIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
-import { type FC, useEffect, useState } from "react";
+import { ArrowLeftIcon, ArrowPathIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { type FC, useCallback, useEffect, useState } from "react";
+import {
+  APPLICATION_DETAILS_ANCHOR_ID,
+  type PendingScrollProps,
+  usePendingScroll,
+} from "@/components/FundingPlatform/ApplicationView/usePendingScroll";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
@@ -13,13 +18,17 @@ import { ApplicationDataView } from "./ApplicationDataView";
 import { ApplicationSubTabs, type SubTabId } from "./ApplicationSubTabs";
 import { PostApprovalDataView } from "./PostApprovalDataView";
 
-export interface ApplicationTabProps {
+export interface ApplicationTabProps extends PendingScrollProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
   /** Controlled view mode */
   viewMode?: "details" | "changes";
   /** Callback when view mode changes */
   onViewModeChange?: (mode: "details" | "changes") => void;
+  /** Tab the user opened this version diff from, if any. */
+  versionViewSourceTab?: string | null;
+  /** Returns the user to `versionViewSourceTab`. */
+  onBackToVersionSource?: () => void;
 }
 
 export const ApplicationTab: FC<ApplicationTabProps> = ({
@@ -27,6 +36,10 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
   program,
   viewMode: controlledViewMode,
   onViewModeChange,
+  versionViewSourceTab,
+  onBackToVersionSource,
+  pendingScrollAnchorId,
+  onPendingScrollHandled,
 }) => {
   // Sub-tab state
   const [activeSubTab, setActiveSubTab] = useState<SubTabId>("application");
@@ -35,6 +48,16 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
   const [internalViewMode, setInternalViewMode] = useState<"details" | "changes">("details");
   const viewMode = controlledViewMode ?? internalViewMode;
   const setViewMode = onViewModeChange ?? setInternalViewMode;
+
+  usePendingScroll(APPLICATION_DETAILS_ANCHOR_ID, {
+    pendingScrollAnchorId,
+    onPendingScrollHandled,
+  });
+
+  const showBackToComments = viewMode === "changes" && versionViewSourceTab === "comments";
+
+  const handleShowDetails = useCallback(() => setViewMode("details"), [setViewMode]);
+  const handleShowChanges = useCallback(() => setViewMode("changes"), [setViewMode]);
 
   // Version state from Zustand store
   const { selectedVersion, selectVersion } = useApplicationVersionsStore();
@@ -103,7 +126,7 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
           <div className="flex items-center bg-gray-100 dark:bg-zinc-700 rounded-lg p-1">
             <button
               type="button"
-              onClick={() => setViewMode("details")}
+              onClick={handleShowDetails}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                 viewMode === "details"
@@ -116,7 +139,7 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("changes")}
+              onClick={handleShowChanges}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                 viewMode === "changes"
@@ -132,18 +155,31 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
       </div>
 
       {/* Content based on active sub-tab and view mode */}
-      <div id="application-details">
+      <div id={APPLICATION_DETAILS_ANCHOR_ID}>
         {activeSubTab === "application" ? (
           viewMode === "details" ? (
             <ApplicationDataView application={application} program={program} />
           ) : (
             <div className="space-y-6">
+              {showBackToComments && onBackToVersionSource && (
+                <button
+                  type="button"
+                  onClick={onBackToVersionSource}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 -ml-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-zinc-700 dark:hover:text-gray-100"
+                >
+                  <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+                  Back to Comments
+                </button>
+              )}
               <ApplicationVersionSelector
                 applicationId={application.referenceNumber || application.id}
               />
               {selectedVersion && (
                 <div className="mt-6">
-                  <ApplicationVersionViewer version={selectedVersion} />
+                  <ApplicationVersionViewer
+                    version={selectedVersion}
+                    onViewDetails={handleShowDetails}
+                  />
                 </div>
               )}
             </div>

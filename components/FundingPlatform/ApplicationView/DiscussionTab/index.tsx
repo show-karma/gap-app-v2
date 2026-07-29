@@ -1,6 +1,7 @@
 "use client";
 
 import { type FC, useRef, useState } from "react";
+import type { PendingScrollProps } from "@/components/FundingPlatform/ApplicationView/usePendingScroll";
 import { CommentInput } from "@/src/features/application-comments/components/CommentInput";
 import type {
   ApplicationComment,
@@ -10,7 +11,7 @@ import type {
 } from "@/types/funding-platform";
 import { TimelineContainer } from "./TimelineContainer";
 
-export interface DiscussionTabProps {
+export interface DiscussionTabProps extends PendingScrollProps {
   /** Application ID */
   applicationId: string;
   /** Comments on the application */
@@ -63,6 +64,8 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
   programId,
   enableMentions = false,
   referenceNumber,
+  pendingScrollAnchorId,
+  onPendingScrollHandled,
 }) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [commentContent, setCommentContent] = useState("");
@@ -118,6 +121,8 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
         isLoading={isLoading}
         programId={programId}
         enableMentions={enableMentions}
+        pendingScrollAnchorId={pendingScrollAnchorId}
+        onPendingScrollHandled={onPendingScrollHandled}
       />
     </div>
   );
