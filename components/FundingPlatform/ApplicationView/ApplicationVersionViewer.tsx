@@ -1,5 +1,6 @@
 "use client";
 
+import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { IApplicationVersion } from "@/types/funding-platform";
@@ -9,6 +10,8 @@ import { cn } from "@/utilities/tailwind";
 interface ApplicationVersionViewerProps {
   version: IApplicationVersion;
   className?: string;
+  /** Switches the surrounding tab to the full application view. */
+  onViewDetails?: () => void;
 }
 
 // Function to render field value
@@ -78,7 +81,8 @@ const renderFieldValue = (
       );
     }
   } catch {
-    // Not JSON, continue with regular rendering
+    // SUPPRESSED: JSON.parse is a type probe here — non-JSON values are expected
+    // and fall through to markdown/text rendering below.
   }
 
   // For text values, check if it's markdown
@@ -104,26 +108,48 @@ const renderFieldValue = (
   return <span className={className}>{value}</span>;
 };
 
-const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({ version, className }) => {
-  // Get application data from the version
-  const getApplicationData = () => {
-    // If version has changes, reconstruct the full application data from changedFields
-    if (version.diffFromPrevious?.changedFields) {
-      const fields = version.diffFromPrevious.changedFields;
-      return fields;
-    }
-    return [];
-  };
+const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({
+  version,
+  className,
+  onViewDetails,
+}) => {
+  // A version only carries the fields that changed against its predecessor, so
+  // the initial submission has nothing to diff and renders an explanation.
+  const applicationFields = version.diffFromPrevious?.changedFields ?? [];
 
-  const applicationFields = getApplicationData();
+  const handleViewDetails = () => onViewDetails?.();
 
-  // Check if there's data to display
-  if (!applicationFields || applicationFields.length === 0) {
+  if (applicationFields.length === 0) {
+    const isInitialVersion = version.versionNumber === 0;
+
     return (
-      <div className={cn("text-center py-8 text-gray-500 dark:text-gray-400", className)}>
-        {version.versionNumber === 0
-          ? "Initial version data"
-          : "No application data available for this version"}
+      <div
+        className={cn(
+          "flex flex-col items-center rounded-lg border border-dashed border-gray-200 px-6 py-10 text-center dark:border-gray-700",
+          className
+        )}
+      >
+        <DocumentTextIcon
+          className="h-10 w-10 text-gray-400 dark:text-gray-600"
+          aria-hidden="true"
+        />
+        <h4 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+          {isInitialVersion ? "Original submission" : "No changes recorded"}
+        </h4>
+        <p className="mt-1 max-w-md text-sm text-gray-500 dark:text-gray-400">
+          {isInitialVersion
+            ? "This is the applicant's first submission, so there is no previous version to compare it against. Every field is original."
+            : "This version was recorded without any field-level changes against the previous version."}
+        </p>
+        {onViewDetails && (
+          <button
+            type="button"
+            onClick={handleViewDetails}
+            className="mt-4 inline-flex items-center rounded-md bg-brand-blue px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-blue/80"
+          >
+            View application details
+          </button>
+        )}
       </div>
     );
   }
