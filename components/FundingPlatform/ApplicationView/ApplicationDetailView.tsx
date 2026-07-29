@@ -228,6 +228,7 @@ export default function ApplicationDetailView({
             programId={programId}
             enableMentions
             referenceNumber={application.referenceNumber}
+            formSchema={config?.formSchema}
             pendingScrollAnchorId={pendingScrollAnchorId}
             onPendingScrollHandled={handlePendingScrollHandled}
           />

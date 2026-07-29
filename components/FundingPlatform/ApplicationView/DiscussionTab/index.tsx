@@ -7,6 +7,7 @@ import type {
   ApplicationComment,
   FundingApplicationStatusV2,
   IApplicationVersion,
+  IFormSchema,
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
 import { TimelineContainer } from "./TimelineContainer";
@@ -42,6 +43,8 @@ export interface DiscussionTabProps extends PendingScrollProps {
   enableMentions?: boolean;
   /** Application reference number used to fetch grantee contacts for @-mention */
   referenceNumber?: string;
+  /** Form schema for mapping changed-field keys to human-readable labels */
+  formSchema?: IFormSchema;
 }
 
 /**
@@ -64,6 +67,7 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
   programId,
   enableMentions = false,
   referenceNumber,
+  formSchema,
   pendingScrollAnchorId,
   onPendingScrollHandled,
 }) => {
@@ -121,6 +125,7 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
         isLoading={isLoading}
         programId={programId}
         enableMentions={enableMentions}
+        formSchema={formSchema}
         pendingScrollAnchorId={pendingScrollAnchorId}
         onPendingScrollHandled={onPendingScrollHandled}
       />
