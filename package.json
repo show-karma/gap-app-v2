@@ -254,5 +254,14 @@
     "**/*.{js,jsx,ts,tsx,json,css}": [
       "biome check --write --diagnostic-level=error"
     ]
+  },
+  "pnpm": {
+    "packageExtensions": {
+      "@ethereum-attestation-service/eas-sdk": {
+        "dependencies": {
+          "tslib": "^2"
+        }
+      }
+    }
   }
 }
