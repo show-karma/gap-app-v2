@@ -40,7 +40,6 @@ const updatesPayload = (recipient?: string) => ({
       recipient,
       completionDetails: null,
       verificationDetails: null,
-      fundingApplicationCompletion: null,
     },
   ],
 });
@@ -69,6 +68,21 @@ describe("fetchGrantMilestonesForProgram", () => {
     const milestones = await fetchGrantMilestonesForProgram("0xproject", "1013");
 
     expect(milestones[0].recipient).toBeUndefined();
+  });
+
+  it("does not carry a fundingApplicationCompletion through the mapper", async () => {
+    // The backend never writes this field; the FE fallback that read it made a
+    // never-populated shape look like a supported completion source.
+    const payload = updatesPayload(RECIPIENT);
+    (payload.grantMilestones[0] as Record<string, unknown>).fundingApplicationCompletion = {
+      completionText: "done via application",
+    };
+    mockApiGet.mockResolvedValue(payload);
+
+    const milestones = await fetchGrantMilestonesForProgram("0xproject", "1013");
+
+    expect(milestones[0]).not.toHaveProperty("fundingApplicationCompletion");
+    expect(milestones[0].completionDetails).toBeNull();
   });
 });
 
