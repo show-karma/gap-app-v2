@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -16,6 +18,8 @@ export const metadata: Metadata = customMetadata({
   ogType: "article",
 });
 
+const PUBLISHED_AT = getKnowledgeArticleDate("project-profiles-as-resumes");
+
 export default function ProjectProfilesAsResumesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
@@ -30,8 +34,7 @@ export default function ProjectProfilesAsResumesPage() {
         title={title}
         description={description}
         url="/knowledge/project-profiles-as-resumes"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
@@ -41,7 +44,12 @@ export default function ProjectProfilesAsResumesPage() {
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Project Profiles as a Global Resume for Funded Work</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">
+            Project Profiles as a Global Resume for Funded Work
+          </h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
