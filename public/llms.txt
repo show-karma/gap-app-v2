@@ -1,11 +1,11 @@
 # Karma
 
-> Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.
+> Foundations use Karma to run grant programs, donor advisors to research nonprofits, and nonprofits to find aligned funders.
 
 Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei.
 
 ## Landing Pages
-- [Home](https://www.karmahq.xyz/): Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.
+- [Home](https://www.karmahq.xyz/): Foundations use Karma to run grant programs, donor advisors to research nonprofits, and nonprofits to find aligned funders.
 - [For Funders](https://www.karmahq.xyz/funders): From intake to impact, Karma gives funders the tools to allocate grants, track milestones, measure outcomes, and grow their ecosystems.
 - [Projects](https://www.karmahq.xyz/projects): Discover projects with verified milestones and onchain reputation. Evaluate track records and traction.
 - [Communities](https://www.karmahq.xyz/communities): Explore DAOs, protocols, and organizations running funding programs on Karma.
