@@ -1,14 +1,35 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/utilities/meta";
 
+const WILDCARD_ALLOW = ["/", "/.well-known/"];
+const WILDCARD_DISALLOW = ["/api/", "/admin/", "/super-admin/", "/safe/", "/extended-sitemap.xml"];
+
+// Search and user-fetch agents. Google-Extended, ChatGPT-User and PerplexityBot are
+// deliberately absent: they already have their own groups below and their policy is
+// training-related, not search-related.
+const SEARCH_AND_USER_FETCH_BOTS = [
+  "Googlebot",
+  "Bingbot",
+  "DuckDuckBot",
+  "OAI-SearchBot",
+  "Applebot",
+];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/.well-known/"],
-        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/", "/extended-sitemap.xml"],
+        allow: WILDCARD_ALLOW,
+        disallow: WILDCARD_DISALLOW,
       },
+      // Search / user-fetch crawlers: pinned to the wildcard policy so AI-bot rule
+      // changes can never silently alter what search engines are allowed to fetch.
+      ...SEARCH_AND_USER_FETCH_BOTS.map((userAgent) => ({
+        userAgent,
+        allow: WILDCARD_ALLOW,
+        disallow: WILDCARD_DISALLOW,
+      })),
       {
         userAgent: "GPTBot",
         allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
