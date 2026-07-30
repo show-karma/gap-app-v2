@@ -36,5 +36,11 @@ export const wlQueryKeys = {
      */
     list: (communityId: string, address?: string | null) =>
       ["wl-programs-list", communityId, address ?? null] as const,
+    /**
+     * A single funding program. Shared by the server prefetch in
+     * `programs/[programId]/page.tsx` and the client `useProgram` hook — the
+     * hydrated cache entry only lands if both sides produce the same key.
+     */
+    detail: (programId: string) => ["wl-program", programId] as const,
   },
 };
