@@ -284,9 +284,36 @@ describe("Whitelabel programs/[programId]/apply page", () => {
   });
 });
 
-describe("Whitelabel programs/[programId] client page", () => {
-  it("/programs/[programId] renders loading state when useProgram is loading", async () => {
+describe("Whitelabel programs/[programId] page", () => {
+  // The page is an async server component that prefetches the program and
+  // hands it to the client tree as a hydrated React Query entry, so it is
+  // driven the same way as the other server components in this file.
+  const importProgramPage = async () => {
+    vi.doMock("next/navigation", () => ({
+      useParams: () => ({ communityId: "c1", programId: "prog-1" }),
+    }));
+    vi.resetModules();
+    return import("@/app/community/[communityId]/(whitelabel)/programs/[programId]/page");
+  };
+
+  afterEach(() => {
+    vi.doUnmock("@/features/programs/hooks/use-program");
+    vi.doUnmock("next/navigation");
+  });
+
+  it("/programs/[programId] renders the prefetched program instead of a skeleton", async () => {
+    const { default: Page } = await importProgramPage();
+    const result = await Page({
+      params: Promise.resolve({ communityId: "c1", programId: "prog-1" }),
+    });
+    const { container } = renderInQueryClient(result);
+    expect(screen.getByRole("heading", { name: "Test Program" })).toBeInTheDocument();
+    expect(container.querySelector(".animate-pulse")).toBeNull();
+  });
+
+  it("/programs/[programId] still renders the loading skeleton while the client fetches", async () => {
     vi.doMock("@/features/programs/hooks/use-program", () => ({
+      PROGRAM_DETAIL_STALE_TIME: 5 * 60 * 1000,
       useProgram: () => ({
         program: null,
         loading: true,
@@ -294,17 +321,12 @@ describe("Whitelabel programs/[programId] client page", () => {
         refetch: vi.fn(),
       }),
     }));
-    vi.doMock("next/navigation", () => ({
-      useParams: () => ({ communityId: "c1", programId: "prog-1" }),
-    }));
-    vi.resetModules();
-    const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/programs/[programId]/page"
-    );
-    const { container } = renderInQueryClient(<Page />);
+    const { default: Page } = await importProgramPage();
+    const result = await Page({
+      params: Promise.resolve({ communityId: "c1", programId: "prog-1" }),
+    });
+    const { container } = renderInQueryClient(result);
     expect(container.querySelector(".animate-pulse")).not.toBeNull();
-    vi.doUnmock("@/features/programs/hooks/use-program");
-    vi.doUnmock("next/navigation");
   });
 });
 
