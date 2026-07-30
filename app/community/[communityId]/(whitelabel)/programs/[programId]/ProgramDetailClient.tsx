@@ -8,7 +8,8 @@ import { ProgramDetailsSidebar } from "@/features/programs/components/ProgramDet
 import { useProgram } from "@/features/programs/hooks/use-program";
 import { Link } from "@/src/components/navigation/Link";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
-import { isProgramEnabled } from "@/utilities/funding-programs";
+import { getProgramStatusInfo, isProgramEnabled } from "@/utilities/funding-programs";
+import { cn } from "@/utilities/tailwind";
 
 function ProgramDetailContent() {
   const { communityId, programId } = useParams<{
@@ -81,6 +82,7 @@ function ProgramDetailContent() {
   }
 
   const isEnabled = isProgramEnabled(program);
+  const statusInfo = getProgramStatusInfo(program);
   const description = program.metadata?.description || "No description available";
 
   return (
@@ -112,6 +114,13 @@ function ProgramDetailContent() {
           <h1 className="mb-2 text-3xl font-bold text-foreground">
             {program.metadata?.title || program.name}
           </h1>
+
+          {/* Application status — stated in the page body, not just implied by
+              the sidebar's apply button, so it survives with JS disabled. */}
+          <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground">
+            <span className={cn("h-2 w-2 rounded-full", statusInfo.dotColor)} aria-hidden="true" />
+            {statusInfo.label}
+          </p>
 
           {/* Byline */}
           {program.communitySlug ? (

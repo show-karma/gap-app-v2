@@ -79,4 +79,23 @@ describe("wlQueryKeys.programs", () => {
       wlQueryKeys.programs.list("arbitrum", "0xdef")
     );
   });
+
+  // The server prefetch in programs/[programId]/page.tsx and the client
+  // `useProgram` hook both build their key from this factory — the hydrated
+  // cache entry is only picked up when the two hashes match, so the shape is
+  // pinned here.
+  it("detail returns the ['wl-program', programId] key shared with the server prefetch", () => {
+    expect(wlQueryKeys.programs.detail("prog-1")).toEqual(["wl-program", "prog-1"]);
+  });
+
+  it("detail keys differ per program", () => {
+    expect(wlQueryKeys.programs.detail("prog-1")).not.toEqual(
+      wlQueryKeys.programs.detail("prog-2")
+    );
+  });
+
+  it("detail and list keys have different prefixes", () => {
+    expect(wlQueryKeys.programs.detail("prog-1")[0]).toBe("wl-program");
+    expect(wlQueryKeys.programs.list("optimism")[0]).toBe("wl-programs-list");
+  });
 });
