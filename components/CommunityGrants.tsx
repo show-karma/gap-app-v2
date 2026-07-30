@@ -1,4 +1,5 @@
 "use client";
+import type { InfiniteData } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -8,6 +9,7 @@ import { useCommunityStore } from "@/store/community";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import type { CommunityProjects } from "@/types/v2/community";
 import { CategoryFilter } from "./CommunityGrants/CategoryFilter";
+import { CrawlableCommunityPagination } from "./CommunityGrants/CrawlableCommunityPagination";
 import { MaturityStageFilter } from "./CommunityGrants/MaturityStageFilter";
 import { ProjectsGrid } from "./CommunityGrants/ProjectsGrid";
 import { ProjectsGridSkeleton } from "./CommunityGrants/ProjectsGridSkeleton";
@@ -24,7 +26,14 @@ interface CommunityGrantsProps {
   defaultSelectedMaturityStage: MaturityStageOptions;
   communityUid: string;
   initialProjects: CommunityProjects;
+  /** Page the server fetched `initialProjects` for. Defaults to 1. */
+  initialPage?: number;
+  /** `PAGES.COMMUNITY.*` route the crawlable Previous/Next links point at. */
+  paginationBasePath: string;
 }
+
+const sameStringList = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((value, index) => value === b[index]);
 
 export const CommunityGrants = ({
   categoriesOptions,
@@ -33,6 +42,8 @@ export const CommunityGrants = ({
   defaultSelectedMaturityStage,
   communityUid,
   initialProjects,
+  initialPage = 1,
+  paginationBasePath,
 }: CommunityGrantsProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
@@ -55,6 +66,27 @@ export const CommunityGrants = ({
     defaultSelectedMaturityStage,
   });
 
+  // The server renders the hub with the filters at their defaults. Only seed the
+  // cache while the live URL state still matches, otherwise a filtered view
+  // would show the unfiltered server payload.
+  const matchesInitialState =
+    selectedSort === defaultSortBy &&
+    selectedMaturityStage === defaultSelectedMaturityStage &&
+    !selectedProgramId &&
+    !selectedTrackIds?.length &&
+    sameStringList(selectedCategories, defaultSelectedCategories);
+
+  // `getCommunityProjects` swallows every failure into an empty page, so an
+  // empty payload is indistinguishable from an indexer blip — don't seed it, and
+  // let the client refetch decide between "no projects" and real data.
+  const seededData: InfiniteData<CommunityProjects, number> | undefined = useMemo(
+    () =>
+      matchesInitialState && initialProjects.payload.length > 0
+        ? { pages: [initialProjects], pageParams: [initialPage] }
+        : undefined,
+    [matchesInitialState, initialProjects, initialPage]
+  );
+
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isRefetching } =
     useCommunityProjectsInfinite({
       communityId,
@@ -64,10 +96,18 @@ export const CommunityGrants = ({
       programId: selectedProgramId,
       trackIds: selectedTrackIds,
       enabled: !!communityId,
+      initialData: seededData,
+      initialPage: matchesInitialState ? initialPage : 1,
     });
 
-  // Check if we're loading due to filter changes
-  const isFilterLoading = isLoading || (isRefetching && !isFetchingNextPage);
+  // Check if we're loading due to filter changes. Every filter is part of the
+  // query key, so any data we hold already belongs to the current filters —
+  // keep rendering it through a same-key refetch instead of blanking to a
+  // skeleton. Without this the server-seeded page is never visible: React Query
+  // reports `isRefetching` optimistically on the very first render because of
+  // `refetchOnMount: "always"`.
+  const isFilterLoading =
+    (isLoading || (isRefetching && !isFetchingNextPage)) && !data?.pages?.length;
 
   const projects = useMemo(() => {
     // Don't show stale data when filters are changing
@@ -86,6 +126,12 @@ export const CommunityGrants = ({
     }
     return data.pages[0].pagination.totalCount;
   }, [data?.pages, initialProjects.pagination.totalCount]);
+
+  // Crawlable Previous/Next is only meaningful for the unfiltered, server-rendered
+  // view — filtered views stay client-only.
+  const totalPages =
+    data?.pages?.[0]?.pagination.totalPages ?? initialProjects.pagination.totalPages;
+  const showCrawlablePagination = matchesInitialState && projects.length > 0;
 
   useEffect(() => {
     // Update loading state in the store
@@ -222,6 +268,15 @@ export const CommunityGrants = ({
               <ProjectsGrid projects={projects} />
             </InfiniteScroll>
           ) : null}
+
+          {showCrawlablePagination && (
+            <CrawlableCommunityPagination
+              basePath={paginationBasePath}
+              currentPage={initialPage}
+              hasPrev={initialPage > 1}
+              hasNext={initialPage < totalPages}
+            />
+          )}
 
           {(isFilterLoading || isFetchingNextPage) && (
             <div className="w-full flex items-center justify-center">

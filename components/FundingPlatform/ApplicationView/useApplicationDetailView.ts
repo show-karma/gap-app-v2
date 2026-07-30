@@ -1,9 +1,15 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import type { ApplicationStatus } from "@/components/FundingPlatform/ApplicationView/HeaderActions";
+import {
+  ACTIVITY_TIMELINE_ANCHOR_ID,
+  APPLICATION_DETAILS_ANCHOR_ID,
+  type ScrollAnchorId,
+} from "@/components/FundingPlatform/ApplicationView/usePendingScroll";
+import { isAllowedStatusTransition } from "@/components/FundingPlatform/statusTransitions";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import {
@@ -24,6 +30,11 @@ import { usePermissionContext } from "@/src/core/rbac/context/permission-context
 import { useMilestonesAdminRefetch } from "@/src/features/applications/hooks/use-milestones-admin-refetch";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
+import {
+  isStatusConflictError,
+  STATUS_CONFLICT_MESSAGE,
+  STATUS_CONFLICT_TOAST_ID,
+} from "@/utilities/application-status";
 import { PAGES } from "@/utilities/pages";
 
 // Whitelist used when seeding activeTabId from the `?tab=` query
@@ -77,7 +88,7 @@ export function useApplicationDetailView({
 
   const { address: currentUserAddress } = useAuth();
 
-  // View mode state for ApplicationContent
+  // Details/Changes toggle owned by the Application tab
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
   // Active-tab id — used to gate the milestones admin refetch hook (don't poll
@@ -88,12 +99,22 @@ export function useApplicationDetailView({
     isKnownTabId(tabParam) ? tabParam : "application"
   );
 
+  // Tab the user was on when they opened a version diff, and the anchor waiting
+  // to be scrolled into view once its owning tab mounts.
+  const [versionViewSourceTab, setVersionViewSourceTab] = useState<KnownTabId | null>(null);
+  const [pendingScrollAnchorId, setPendingScrollAnchorId] = useState<ScrollAnchorId | null>(null);
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditPostApprovalModalOpen, setIsEditPostApprovalModalOpen] = useState(false);
 
   // Status change inline form state
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
+  // Pre-flight freshness read that runs before the inline form opens. The ref
+  // rejects the second of two clicks landing in the same tick; the state drives
+  // the buttons' busy/disabled look so the first click never appears dead.
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const isCheckingStatusRef = useRef(false);
 
   const {
     application,
@@ -170,9 +191,30 @@ export function useApplicationDetailView({
     });
   };
 
-  // Show inline form (toggle if the same status is clicked again)
-  const handleStatusChangeClick = (status: ApplicationStatus) => {
-    setSelectedStatus((current) => (current === status ? null : status));
+  // Show inline form (toggle if the same status is clicked again). Re-reads the
+  // application first: a tab left open can still render actions for a status
+  // another reviewer already moved past, and the PUT would only 409.
+  const handleStatusChangeClick = async (status: ApplicationStatus) => {
+    if (isCheckingStatusRef.current) return;
+    if (selectedStatus === status) {
+      setSelectedStatus(null);
+      return;
+    }
+    isCheckingStatusRef.current = true;
+    setIsCheckingStatus(true);
+    try {
+      const refreshed = await refetchApplication();
+      const currentStatus = refreshed?.data?.status ?? application?.status;
+      if (!isAllowedStatusTransition(currentStatus, status)) {
+        toast.error(STATUS_CONFLICT_MESSAGE, { id: STATUS_CONFLICT_TOAST_ID });
+        setSelectedStatus(null);
+        return;
+      }
+      setSelectedStatus(status);
+    } finally {
+      isCheckingStatusRef.current = false;
+      setIsCheckingStatus(false);
+    }
   };
 
   const handleStatusChangeConfirm = async (
@@ -180,7 +222,7 @@ export function useApplicationDetailView({
     approvedAmount?: string,
     approvedCurrency?: string
   ) => {
-    if (!selectedStatus) return;
+    if (!selectedStatus || isUpdatingStatus) return;
     try {
       await handleStatusChange(selectedStatus, reason, approvedAmount, approvedCurrency);
       setSelectedStatus(null);
@@ -189,8 +231,13 @@ export function useApplicationDetailView({
       } else {
         toast.success(`Application status updated to ${selectedStatus}`);
       }
-    } catch {
-      // SUPPRESSED: the status mutation's onError owns the failure toast; keep the form open to retry.
+    } catch (error) {
+      // SUPPRESSED: the status mutation's onError owns the failure toast. Only a
+      // transition conflict can never succeed, so close the form then; a
+      // correctable failure (currency, amount, reason) keeps it open for a fix.
+      if (isStatusConflictError(error)) {
+        setSelectedStatus(null);
+      }
     }
   };
 
@@ -264,18 +311,33 @@ export function useApplicationDetailView({
     await refetchApplication();
   };
 
+  // The version diff lives in the Application tab, so a click from the Comments
+  // tab has to cross tabs. `versionViewSourceTab` remembers where the user came
+  // from so the Changes view can offer a way back.
   const handleVersionClick = (versionId: string) => {
     selectVersion(versionId, versions);
-    // Switch to Changes view to show the selected version
     setApplicationViewMode("changes");
-    // Scroll to the Application Details section (delay lets the view mode change)
-    setTimeout(() => {
-      document.getElementById("application-details")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 100);
+    setVersionViewSourceTab(activeTabId);
+    setActiveTabId("application");
+    setPendingScrollAnchorId(APPLICATION_DETAILS_ANCHOR_ID);
   };
+
+  const handleBackToVersionSource = () => {
+    const target = versionViewSourceTab ?? "comments";
+    setVersionViewSourceTab(null);
+    setActiveTabId(target);
+    setPendingScrollAnchorId(ACTIVITY_TIMELINE_ANCHOR_ID);
+  };
+
+  // User-initiated tab changes only. `handleVersionClick` deliberately bypasses
+  // this so its own provenance flag survives the programmatic switch.
+  const handleUserTabChange = (tabId: KnownTabId) => {
+    setVersionViewSourceTab(null);
+    setPendingScrollAnchorId(null);
+    setActiveTabId(tabId);
+  };
+
+  const handlePendingScrollHandled = useCallback(() => setPendingScrollAnchorId(null), []);
 
   // Milestone review URL — only when approved and a projectUID exists
   const milestoneReviewUrl = useMemo(() => {
@@ -332,9 +394,15 @@ export function useApplicationDetailView({
     setApplicationViewMode,
     activeTabId,
     setActiveTabId,
-    // Status form
+    handleUserTabChange,
+    versionViewSourceTab,
+    handleBackToVersionSource,
+    pendingScrollAnchorId,
+    handlePendingScrollHandled,
+    // Status form. The pre-flight read is folded into the busy flag so the
+    // action buttons disable for its round-trip instead of looking dead.
     selectedStatus,
-    isUpdatingStatus,
+    isUpdatingStatus: isUpdatingStatus || isCheckingStatus,
     handleStatusChangeClick,
     handleStatusChangeConfirm,
     handleStatusChangeCancel,

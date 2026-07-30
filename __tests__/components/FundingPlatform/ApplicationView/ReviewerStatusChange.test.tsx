@@ -369,6 +369,9 @@ describe("Reviewer Status Change Functionality", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpdateStatusAsync.mockResolvedValue({});
+    // Opening the status form pre-flights a refetch; resolving with no data
+    // makes the check fall back to the status the test mounted with.
+    mockRefetchApplication.mockResolvedValue({ data: undefined });
 
     // Reset hooks to default values
     vi.mocked(useApplication).mockReturnValue({

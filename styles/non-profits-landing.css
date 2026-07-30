@@ -1167,19 +1167,10 @@
 }
 
 /* ———————— Responsive ———————— */
-/* ———————— Hero foot (nudge to connector) ———————— */
-.lp-hero-foot {
-  margin-top: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--lp-ink-3);
-}
+/* ———————— Hero foot (nudge to connector) ————————
+   `.lp-hero-foot` itself is gone — the hero's connector row was replaced by the
+   floating card. The link style below is still used by the install widget's
+   footer in section 05. */
 .lp-hero-foot-link {
   display: inline-flex;
   align-items: center;
@@ -1191,6 +1182,114 @@
   transition: color 0.15s, border-color 0.15s;
 }
 .lp-hero-foot-link:hover { color: var(--lp-primary); border-color: var(--lp-primary); }
+
+/* Brand marks — hero eyebrow and the floating connect card — the first "runs in your AI tool"
+   signal on the page, above the title. */
+.lp-brand-marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.lp-brand-mark-logo { width: 13px; height: 13px; }
+
+/* Scoped under `.landing` so these beat the `.landing a`/`.landing button`
+   resets at the top of this file, which would otherwise force `color: inherit`
+   and strip the border. */
+.landing .lp-connect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elev);
+  color: var(--lp-ink);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.landing .lp-connect-btn:hover {
+  border-color: var(--lp-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px -6px color-mix(in oklch, var(--lp-ink) 40%, transparent);
+}
+.lp-connect-btn-logo { width: 16px; height: 16px; flex-shrink: 0; }
+.landing .lp-connect-btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; }
+.lp-connect-btn-sm .lp-connect-btn-logo { width: 14px; height: 14px; }
+
+/* ———————— Floating connect card ————————
+   Bottom-right from page load; retires at the connector section, which makes
+   the same offer at full size. */
+.lp-connect-float {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 40;
+  width: 290px;
+  max-width: calc(100vw - 32px);
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-elev);
+  box-shadow: 0 12px 32px -12px color-mix(in oklch, var(--lp-ink) 45%, transparent),
+              0 2px 6px -2px color-mix(in oklch, var(--lp-ink) 20%, transparent);
+  animation: lp-float-in 0.3s ease both;
+}
+
+@keyframes lp-float-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-connect-float { animation: none; }
+  .lp-connect-btn:hover { transform: none; }
+}
+
+.lp-connect-float-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lp-connect-float-title {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lp-ink);
+}
+
+.lp-connect-float-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* Fill the card width evenly rather than leaving a ragged right edge. */
+.lp-connect-float-actions .lp-connect-btn {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.landing .lp-connect-float-close {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--lp-ink-3);
+  transition: background 0.15s, color 0.15s;
+}
+.landing .lp-connect-float-close:hover { background: var(--bg-sunken); color: var(--lp-ink); }
+
+@media (max-width: 640px) {
+  .lp-connect-float { right: 12px; left: 12px; width: auto; bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
 
 /* ———————— Nav ———————— */
 .lp-nav {

@@ -51,6 +51,11 @@ vi.mock("@/utilities/indexer", () => ({
     COMMUNITY: {
       PROGRAMS: (id: string) => `/communities/${id}/programs`,
     },
+    V2: {
+      COMMUNITIES: {
+        PROGRAMS: (uidOrSlug: string) => `/v2/communities/${uidOrSlug}/programs`,
+      },
+    },
   },
 }));
 

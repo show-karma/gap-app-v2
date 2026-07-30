@@ -1,14 +1,17 @@
 "use client";
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-  KycBatchStatusResponse,
-  KycConfigResponse,
-  KycFormUrlRequest,
-  KycFormUrlResponse,
-  KycProviderType,
-  KycStatusResponse,
-  KycVerificationType,
+import toast from "react-hot-toast";
+import {
+  type KycApplicabilityRequest,
+  type KycBatchStatusResponse,
+  type KycConfigResponse,
+  type KycFormUrlRequest,
+  type KycFormUrlResponse,
+  type KycProviderType,
+  type KycStatusResponse,
+  KycVerificationStatus,
+  type KycVerificationType,
 } from "@/types/kyc";
 import { api } from "@/utilities/api/client";
 import { HttpError, isApiError } from "@/utilities/api/errors";
@@ -394,6 +397,136 @@ export const useKycFormUrl = () => {
       });
     },
   });
+};
+
+const BATCH_BY_APP_REF_PREFIX = [...KYC_QUERY_KEYS.all, "batch-by-app-ref"] as const;
+
+interface SetKycApplicabilityContext {
+  previousStatus: KycStatusResponse | null | undefined;
+  /**
+   * Per-map snapshot of ONLY this application's entry (maps without the
+   * ref are never patched, so they are not snapshotted). Rolling back whole
+   * Maps would clobber interleaved optimistic updates for OTHER applications
+   * sharing the same batch Map.
+   */
+  previousBatchEntries: [readonly unknown[], KycStatusResponse | null][];
+}
+
+/**
+ * Hook for community admins to mark an application's KYC/KYB as Not applicable
+ * (or reset it back to Not started).
+ *
+ * Optimistic: flips the cached status immediately (single app-ref query AND
+ * every batch-by-app-ref Map), rolls back on error, and writes the server's
+ * authoritative row on success. Always invalidates on settle so truth wins.
+ */
+export const useSetKycApplicability = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<KycStatusResponse, Error, KycApplicabilityRequest, SetKycApplicabilityContext>(
+    {
+      mutationFn: async (request) => {
+        // TODO(#1775): add zod schema
+        const data = await api.put<KycStatusResponse>(INDEXER.KYC.SET_APPLICABILITY, request);
+
+        if (!data) {
+          throw new Error("No data returned from KYC applicability request");
+        }
+
+        return data;
+      },
+      onMutate: async (request) => {
+        const statusKey = KYC_QUERY_KEYS.statusByAppRef(request.applicationReference);
+
+        await queryClient.cancelQueries({ queryKey: KYC_QUERY_KEYS.all });
+
+        const previousStatus = queryClient.getQueryData<KycStatusResponse | null>(statusKey);
+        const previousBatchEntries: SetKycApplicabilityContext["previousBatchEntries"] = [];
+        for (const [queryKey, data] of queryClient.getQueriesData<
+          Map<string, KycStatusResponse | null>
+        >({ queryKey: BATCH_BY_APP_REF_PREFIX })) {
+          if (data?.has(request.applicationReference)) {
+            previousBatchEntries.push([queryKey, data.get(request.applicationReference) ?? null]);
+          }
+        }
+
+        const patchStatus = (
+          existing: KycStatusResponse | null | undefined
+        ): KycStatusResponse => ({
+          projectUID: existing?.projectUID ?? "",
+          communityUID: existing?.communityUID ?? "",
+          status: request.status,
+          verificationType: existing?.verificationType ?? request.verificationType,
+          // An exemption never expires; the undo resets to a clean Not started row
+          isExpired: false,
+        });
+
+        queryClient.setQueryData<KycStatusResponse | null>(statusKey, (old) => patchStatus(old));
+
+        queryClient.setQueriesData<Map<string, KycStatusResponse | null>>(
+          { queryKey: BATCH_BY_APP_REF_PREFIX },
+          (old) => {
+            if (!old?.has(request.applicationReference)) return old;
+            const next = new Map(old);
+            next.set(
+              request.applicationReference,
+              patchStatus(old.get(request.applicationReference))
+            );
+            return next;
+          }
+        );
+
+        return { previousStatus, previousBatchEntries };
+      },
+      onError: (error, request, context) => {
+        if (context) {
+          const statusKey = KYC_QUERY_KEYS.statusByAppRef(request.applicationReference);
+          if (context.previousStatus === undefined) {
+            // No cache entry existed before onMutate created one — remove the
+            // synthetic entry instead of fabricating a "no row" (null) result
+            queryClient.removeQueries({ queryKey: statusKey, exact: true });
+          } else {
+            queryClient.setQueryData(statusKey, context.previousStatus);
+          }
+          // Restore ONLY this application's entry in each batch Map, on top of
+          // the map's CURRENT state — other applications' entries (including
+          // interleaved optimistic updates) must survive this rollback
+          for (const [queryKey, previousEntry] of context.previousBatchEntries) {
+            queryClient.setQueryData<Map<string, KycStatusResponse | null>>(queryKey, (current) => {
+              if (!current?.has(request.applicationReference)) return current;
+              const next = new Map(current);
+              next.set(request.applicationReference, previousEntry);
+              return next;
+            });
+          }
+        }
+        toast.error(error instanceof HttpError ? httpErrorMessage(error) : error.message);
+      },
+      onSuccess: (data, request) => {
+        queryClient.setQueryData<KycStatusResponse | null>(
+          KYC_QUERY_KEYS.statusByAppRef(request.applicationReference),
+          data
+        );
+        queryClient.setQueriesData<Map<string, KycStatusResponse | null>>(
+          { queryKey: BATCH_BY_APP_REF_PREFIX },
+          (old) => {
+            if (!old?.has(request.applicationReference)) return old;
+            const next = new Map(old);
+            next.set(request.applicationReference, data);
+            return next;
+          }
+        );
+        toast.success(
+          request.status === KycVerificationStatus.NOT_APPLICABLE
+            ? "Marked as Not applicable"
+            : "Reset to Not started"
+        );
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: KYC_QUERY_KEYS.all });
+      },
+    }
+  );
 };
 
 /**

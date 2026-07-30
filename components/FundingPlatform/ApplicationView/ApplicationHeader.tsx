@@ -7,7 +7,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import type { FC, ReactNode } from "react";
-import { KycStatusBadge } from "@/components/KycStatusIcon";
+import { KycStatusBadgeWithActions } from "@/components/KycStatusBadgeWithActions";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import type { KycStatusResponse } from "@/types/kyc";
 import { formatApplicationStatus } from "@/utilities/application-status";
@@ -127,7 +127,10 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
           {isKycEnabled && (
             <div className="flex items-center gap-1.5">
               <span className="text-gray-500 dark:text-gray-500">KYC/KYB:</span>
-              <KycStatusBadge status={kycStatus ?? null} />
+              <KycStatusBadgeWithActions
+                status={kycStatus ?? null}
+                applicationReference={application.referenceNumber}
+              />
             </div>
           )}
         </div>

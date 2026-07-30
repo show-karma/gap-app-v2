@@ -1,11 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
 import { isPast, parseISO } from "date-fns";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { useEffect, useMemo, useState } from "react";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import type { Grant } from "@/types/v2/grant";
-import { api } from "@/utilities/api/client";
-import { INDEXER } from "@/utilities/indexer";
 import { GrantTitleDropdown } from "./GrantTitleDropdown";
 import { useGrantFormStore } from "./store";
 import { TrackSelection } from "./TrackSelection";
@@ -35,60 +33,41 @@ export function SearchGrantProgram({
   searchForProgram,
   canAdd = true,
 }: SearchGrantProgramProps) {
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<CommunityProgram | null>(null);
   const [hasAttemptedAutoSelect, setHasAttemptedAutoSelect] = useState<boolean>(false);
   const { formData, updateFormData, flowType } = useGrantFormStore();
   const pathname = usePathname();
   const isEditing = pathname.includes("/edit");
 
-  // Use React Query to fetch programs
-  const { data: allPrograms = [], isLoading } = useQuery({
-    queryKey: ["programs", communityUID, searchForProgram],
-    queryFn: async () => {
-      if (!communityUID) return [];
+  const { data: programs = [], isLoading, isError, refetch } = useCommunityPrograms(communityUID);
 
-      try {
-        // TODO(#1775): add zod schema
-        const result = await api.get<GrantProgram[]>(INDEXER.COMMUNITY.PROGRAMS(communityUID));
+  // Program-flow hides already-ended programs; an optional searchForProgram
+  // term narrows by title, otherwise the list is sorted alphabetically.
+  const allPrograms = useMemo(() => {
+    const active = programs.filter((program) => {
+      if (!program.metadata?.endsAt || flowType !== "program") return true;
+      const endsAt = parseISO(String(program.metadata.endsAt));
+      return !isPast(endsAt);
+    });
 
-        const filteredResult = result.filter((program: GrantProgram) => {
-          if (!program.metadata?.endsAt || flowType !== "program") return true;
-
-          const endsAt = parseISO(program.metadata.endsAt);
-          return !isPast(endsAt);
-        });
-
-        let programsList = filteredResult;
-
-        // Filter programs if searchForProgram is specified
-        if (searchForProgram) {
-          programsList = filteredResult.filter((program: GrantProgram) => {
-            const title = program.metadata?.title?.toLowerCase() || "";
-            if (Array.isArray(searchForProgram)) {
-              return searchForProgram.some((term) => title.includes(term.toLowerCase()));
-            }
-            return title.includes(searchForProgram.toLowerCase());
-          });
-        } else {
-          // Sort alphabetically
-          programsList = filteredResult.sort((a: GrantProgram, b: GrantProgram) => {
-            const aTitle = a.metadata?.title || "";
-            const bTitle = b.metadata?.title || "";
-            if (aTitle < bTitle) return -1;
-            if (aTitle > bTitle) return 1;
-            return 0;
-          });
+    if (searchForProgram) {
+      return active.filter((program) => {
+        const title = program.metadata?.title?.toLowerCase() || "";
+        if (Array.isArray(searchForProgram)) {
+          return searchForProgram.some((term) => title.includes(term.toLowerCase()));
         }
+        return title.includes(searchForProgram.toLowerCase());
+      });
+    }
 
-        return programsList;
-      } catch (err) {
-        console.error("Failed to fetch programs:", err);
-        return [];
-      }
-    },
-    enabled: !!communityUID,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+    return [...active].sort((a, b) => {
+      const aTitle = a.metadata?.title || "";
+      const bTitle = b.metadata?.title || "";
+      if (aTitle < bTitle) return -1;
+      if (aTitle > bTitle) return 1;
+      return 0;
+    });
+  }, [programs, flowType, searchForProgram]);
 
   // Handle auto-selection for editing mode
   useEffect(() => {
@@ -99,9 +78,7 @@ export function SearchGrantProgram({
       !hasAttemptedAutoSelect
     ) {
       const editingProgramId = grantToEdit.details.programId.split("_")[0];
-      const matchingProgram = allPrograms.find(
-        (program: GrantProgram) => program.programId === editingProgramId
-      );
+      const matchingProgram = allPrograms.find((program) => program.programId === editingProgramId);
 
       if (matchingProgram) {
         setSelectedProgram(matchingProgram);
@@ -118,6 +95,10 @@ export function SearchGrantProgram({
       setHasAttemptedAutoSelect(true);
     }
   }, [allPrograms, isEditing, grantToEdit, hasAttemptedAutoSelect, setValue, formData.title]);
+
+  const handleRetryPrograms = () => {
+    refetch();
+  };
 
   const programIdWatch = watch("programId");
 
@@ -137,6 +118,17 @@ export function SearchGrantProgram({
       ) : !communityUID ? (
         <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
           Select a community to proceed
+        </div>
+      ) : isError ? (
+        <div className="flex items-center justify-between gap-3 bg-red-50 p-3 text-sm ring-1 ring-red-200 rounded text-red-900 dark:bg-red-950 dark:ring-red-900 dark:text-red-100">
+          <span>Failed to load programs.</span>
+          <button
+            type="button"
+            onClick={handleRetryPrograms}
+            className="font-semibold underline underline-offset-2"
+          >
+            Retry
+          </button>
         </div>
       ) : (
         <>

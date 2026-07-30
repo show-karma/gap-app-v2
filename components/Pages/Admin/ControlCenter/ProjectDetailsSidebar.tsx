@@ -51,6 +51,11 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { DetailsSection } from "./DetailsSection";
 import { MilestonesSection } from "./MilestonesSection";
+import type {
+  InitialPaymentMilestone,
+  OnRequestDeleteDisbursement,
+  OnRequestRecordPayment,
+} from "./paymentRequestTypes";
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -141,11 +146,8 @@ export function ProjectDetailsSidebar({
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
-  const [initialPaymentMilestone, setInitialPaymentMilestone] = useState<{
-    milestoneLabel: string;
-    status: "awaiting_signatures" | "disbursed";
-    amount: string | null;
-  } | null>(null);
+  const [initialPaymentMilestone, setInitialPaymentMilestone] =
+    useState<InitialPaymentMilestone | null>(null);
   const configRef = useRef<PayoutConfigurationContentRef>(null);
   const [configIsDirty, setConfigIsDirty] = useState(false);
   const [configIsSaving, setConfigIsSaving] = useState(false);
@@ -466,6 +468,7 @@ export function ProjectDetailsSidebar({
       setRemovedFiles(new Set());
       toast.success(`Saved ${editCount} ${editCount === 1 ? "change" : "changes"}`);
     } catch {
+      // SUPPRESSED: saveMilestoneInvoices already reports to Sentry via errorManager
       toast.error("Failed to save changes");
     }
   }, [
@@ -515,33 +518,29 @@ export function ProjectDetailsSidebar({
     pendingActionRef.current = null;
   }, []);
 
-  const handleRequestRecordPayment = useCallback(
-    (milestoneLabel: string, targetStatus: "awaiting_signatures" | "disbursed") => {
-      const invoice = milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneLabel);
-      const amount =
-        invoice?.allocatedAmount ??
-        (invoice?.milestoneUID ? allocationByUID.get(invoice.milestoneUID) : undefined) ??
-        null;
-      setInitialPaymentMilestone({ milestoneLabel, status: targetStatus, amount });
+  const handleRequestRecordPayment = useCallback<OnRequestRecordPayment>(
+    (milestoneUID, milestoneLabel, targetStatus) => {
+      const invoice = milestoneUID
+        ? milestoneInvoices.find((inv) => inv.milestoneUID === milestoneUID)
+        : milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneLabel);
+      const allocated = milestoneUID ? allocationByUID.get(milestoneUID) : undefined;
+      const amount = invoice?.allocatedAmount ?? allocated ?? null;
+      setInitialPaymentMilestone({ milestoneUID, milestoneLabel, status: targetStatus, amount });
       guardAction(() => setRecordPaymentOpen(true));
     },
     [guardAction, milestoneInvoices, allocationByUID]
   );
 
-  const handleRequestDeleteDisbursement = useCallback(
-    (milestoneLabel: string) => {
+  const handleRequestDeleteDisbursement = useCallback<OnRequestDeleteDisbursement>(
+    (milestoneUID) => {
       if (!grant) return;
-      const invoice = milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneLabel);
-      if (!invoice?.milestoneUID) {
+      if (!milestoneUID) {
         toast.error("Cannot delete: milestone UID not found");
         return;
       }
-      deleteDisbursementMutation.mutate({
-        grantUID: grant.grantUid,
-        milestoneUID: invoice.milestoneUID,
-      });
+      deleteDisbursementMutation.mutate({ grantUID: grant.grantUid, milestoneUID });
     },
-    [grant, milestoneInvoices, deleteDisbursementMutation]
+    [grant, deleteDisbursementMutation]
   );
 
   const handleRequestClose = useCallback(() => {
@@ -818,6 +817,7 @@ export function ProjectDetailsSidebar({
           milestoneInvoices={milestoneInvoices}
           todayLocal={todayLocal}
           onSuccess={onConfigSuccess}
+          initialMilestoneUID={initialPaymentMilestone?.milestoneUID}
           initialMilestoneLabel={initialPaymentMilestone?.milestoneLabel}
           initialAmount={initialPaymentMilestone?.amount}
           initialStatus={

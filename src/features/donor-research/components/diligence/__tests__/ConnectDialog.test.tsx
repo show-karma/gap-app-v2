@@ -51,9 +51,11 @@ function mockPreviewLoaded(preview = buildPreview()) {
 function renderDialog({
   canConnect = true,
   onOpenChange = vi.fn(),
+  viewer = "owner",
 }: {
   canConnect?: boolean;
   onOpenChange?: (open: boolean) => void;
+  viewer?: "owner" | "staff";
 } = {}) {
   return render(
     <ConnectDialog
@@ -63,6 +65,7 @@ function renderDialog({
       onOpenChange={onOpenChange}
       canConnect={canConnect}
       candidateName="Hope Shelter"
+      viewer={viewer}
     />
   );
 }
@@ -272,5 +275,37 @@ describe("ConnectDialog", () => {
       expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
     });
     expect(mockEmailMutate).not.toHaveBeenCalled();
+  });
+
+  describe("super-admin acting as the report owner", () => {
+    it("frames the intro as revealing the OWNER's identity", () => {
+      mockPreviewLoaded();
+
+      renderDialog({ viewer: "staff" });
+
+      expect(
+        screen.getByText(/Connecting reveals the report owner's identity/)
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Send intro" })).toBeEnabled();
+    });
+
+    it("explains the missing reply-to instead of capturing an email onto the owner's profile", () => {
+      mockPreviewLoaded();
+      mockIntroMutate.mockImplementation((_vars, opts) =>
+        opts.onSuccess?.({
+          kind: "email_required",
+          message: "Add your email so we can send a named intro.",
+          requiredFields: ["email"],
+        })
+      );
+
+      renderDialog({ viewer: "staff" });
+
+      fireEvent.click(screen.getByRole("button", { name: "Send intro" }));
+
+      expect(screen.getByText("The report owner has no reply-to email")).toBeInTheDocument();
+      expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
+      expect(mockEmailMutate).not.toHaveBeenCalled();
+    });
   });
 });

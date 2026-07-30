@@ -3,6 +3,7 @@
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorReportStream } from "@/hooks/useDonorReportStream";
 import { useDonorReport } from "@/hooks/useDonorReports";
+import { PermissionCheckError } from "@/src/core/rbac/components/permission-check-error";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { DonorResearchLoading } from "../common/DonorResearchLoading";
 import { ReportBrief } from "./ReportBrief";
@@ -27,7 +28,7 @@ interface ReportBriefViewProps {
 export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   const reportQuery = useDonorReport(reportId);
   const advisorQuery = useDonorAdvisor();
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { isStaff, isLoading: isStaffLoading, isError: isStaffError } = useStaff();
   const reportStatus = reportQuery.data?.status;
   const isTerminal =
     reportStatus === "complete" || reportStatus === "fast_complete" || reportStatus === "failed";
@@ -53,6 +54,13 @@ export function ReportBriefView({ reportId }: ReportBriefViewProps) {
   }
 
   const isOwner = !!advisorQuery.data && advisorQuery.data.id === reportQuery.data!.advisorId;
+
+  // Staff authorization resolved to "unknown". Owners don't depend on it —
+  // their controls come from the advisor row — so only a viewer we can't
+  // confirm as the owner is actually blocked by it.
+  if (isStaffError && !isOwner) {
+    return <PermissionCheckError subject="this report" />;
+  }
 
   return (
     <ReportBrief

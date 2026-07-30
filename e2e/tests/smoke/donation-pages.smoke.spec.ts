@@ -4,6 +4,22 @@ import { expect, mockJson, test } from "../../fixtures";
 import { assertNoJsErrors, collectJsErrors } from "../../helpers/assertions";
 import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 
+// The donate page is a client component: `waitForPageReady` only waits for
+// `domcontentloaded` + a visible body, so it returns long before React has
+// hydrated and fired the `useCommunityPrograms` / community-details queries.
+// Until those resolve the page renders its "Loading programs..." spinner, so
+// any assertion on post-fetch UI is really a race against staging hydration —
+// measured at ~5.5 s from `goto`, which overruns Playwright's 5 s default
+// `expect` timeout. Matches the allowance T-DON-05 already uses for the same
+// page's post-hydration redirect.
+//
+// Only the *first* assertion after a navigation needs this — it absorbs the
+// hydration wait, and anything rendered in the same commit is already in the
+// DOM by the time it resolves. Follow-up assertions keep the 5 s default so a
+// copy regression still fails fast, and so a hung page can't chain 20 s waits
+// past Playwright's 30 s per-test budget and mask the real assertion error.
+const HYDRATED_QUERY_TIMEOUT = 20000;
+
 test.describe("Smoke Tests — Donation Pages", () => {
   const community = MOCK_COMMUNITIES.optimism;
   const programA = createMockProgram({
@@ -120,7 +136,9 @@ test.describe("Smoke Tests — Donation Pages", () => {
       await page.goto("/community/optimism/donate", GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      await expect(page.getByRole("heading", { name: /no programs available/i })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /no programs available/i })).toBeVisible({
+        timeout: HYDRATED_QUERY_TIMEOUT,
+      });
       await expect(page.getByText(/no programs available for donations/i)).toBeVisible();
     });
 
