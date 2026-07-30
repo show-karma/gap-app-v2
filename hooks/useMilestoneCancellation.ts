@@ -12,8 +12,7 @@ import type {
   GrantMilestoneWithCompletion,
   ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
-import { api } from "@/utilities/api/client";
-import { INDEXER } from "@/utilities/indexer";
+import { notifyIndexer } from "@/utilities/indexer-notification";
 import { requireMilestoneRecipient } from "@/utilities/milestones/attestationIdentity";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
@@ -59,11 +58,12 @@ export const useMilestoneCancellation = ({
   const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
 
   const notifyAndInvalidate = async (txHash: string | null | undefined, chainId: number) => {
-    if (txHash) {
-      // Best-effort indexer nudge; it also catches this via its own chain listener,
-      // so a failure must not abort the flow. Legacy fetchData discarded the error.
-      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {}).catch(() => undefined);
-    }
+    // Best-effort nudge — the indexer's own chain listener picks the tx up
+    // regardless, so a failure must not abort a flow whose tx already landed.
+    // `notifyIndexer` REPORTS that failure; the inline swallow it replaced left
+    // a failed nudge completely invisible.
+    await notifyIndexer({ txHash: txHash ?? undefined, chainId });
+
     await queryClient.invalidateQueries({ queryKey });
     await queryClient.invalidateQueries({ queryKey: ["reportMilestones"] });
     await queryClient.invalidateQueries({ queryKey: ["pendingVerificationMilestones"] });

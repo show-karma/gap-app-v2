@@ -17,10 +17,9 @@ import {
   type GrantMilestoneWithCompletion,
   type ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
-import { api } from "@/utilities/api/client";
 import { isApiError } from "@/utilities/api/errors";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
-import { INDEXER } from "@/utilities/indexer";
+import { notifyIndexer } from "@/utilities/indexer-notification";
 import {
   describeMilestoneFailure,
   type MilestoneAction,
@@ -68,6 +67,61 @@ interface MilestoneChainSetup {
 
 /** The multi-attest payload shape, taken from the SDK rather than re-declared. */
 type AttestationPayload = Awaited<ReturnType<MilestoneCompleted["payloadFor"]>>;
+
+interface AttestationOptions {
+  includeCompletion: boolean;
+  completionReason?: string;
+  verificationComment: string;
+}
+
+/**
+ * Builds the completion/verification attestation payloads.
+ *
+ * Module scope, not a closure: it reads nothing from the hook, so rebuilding it
+ * every render would be wasted work. `recipient` is passed in already validated
+ * — this function must never source it itself.
+ */
+const buildAttestationPayloads = async (
+  gapClient: GAP,
+  milestone: GrantMilestoneWithCompletion,
+  recipient: Hex,
+  options: AttestationOptions
+): Promise<AttestationPayload[]> => {
+  const milestoneCompletedSchema = gapClient.findSchema("MilestoneCompleted");
+  const payloads: AttestationPayload[] = [];
+  let payloadIndex = 0;
+
+  // Add completion attestation if requested
+  if (options.includeCompletion) {
+    const completionAttestation = new MilestoneCompleted({
+      data: sanitizeObject({
+        reason: options.completionReason || "",
+        proofOfWork: "",
+        type: "completed",
+      }),
+      refUID: milestone.uid as Hex,
+      schema: milestoneCompletedSchema,
+      recipient,
+    });
+    payloads.push(await completionAttestation.payloadFor(payloadIndex));
+    payloadIndex++;
+  }
+
+  // Always add verification attestation
+  const verificationAttestation = new MilestoneCompleted({
+    data: sanitizeObject({
+      reason: options.verificationComment || "",
+      proofOfWork: "",
+      type: "verified",
+    }),
+    refUID: milestone.uid as Hex,
+    schema: milestoneCompletedSchema,
+    recipient,
+  });
+  payloads.push(await verificationAttestation.payloadFor(payloadIndex));
+
+  return payloads;
+};
 
 /**
  * Hook for handling milestone completion and verification workflow
@@ -133,65 +187,20 @@ export const useMilestoneCompletionVerification = ({
     };
   };
 
-  const buildAttestationPayloads = async (
-    gapClient: GAP,
-    milestone: GrantMilestoneWithCompletion,
-    recipient: Hex,
-    options: {
-      includeCompletion: boolean;
-      completionReason?: string;
-      verificationComment: string;
-    }
-  ) => {
-    const milestoneCompletedSchema = gapClient.findSchema("MilestoneCompleted");
-    const payloads: AttestationPayload[] = [];
-    let payloadIndex = 0;
-
-    // Add completion attestation if requested
-    if (options.includeCompletion) {
-      const completionAttestation = new MilestoneCompleted({
-        data: sanitizeObject({
-          reason: options.completionReason || "",
-          proofOfWork: "",
-          type: "completed",
-        }),
-        refUID: milestone.uid as Hex,
-        schema: milestoneCompletedSchema,
-        recipient,
-      });
-      payloads.push(await completionAttestation.payloadFor(payloadIndex));
-      payloadIndex++;
-    }
-
-    // Always add verification attestation
-    const verificationAttestation = new MilestoneCompleted({
-      data: sanitizeObject({
-        reason: options.verificationComment || "",
-        proofOfWork: "",
-        type: "verified",
-      }),
-      refUID: milestone.uid as Hex,
-      schema: milestoneCompletedSchema,
-      recipient,
-    });
-    payloads.push(await verificationAttestation.payloadFor(payloadIndex));
-
-    return payloads;
-  };
-
   const notifyIndexerAndInvalidateCache = async (
     txHash: string | undefined,
     chainId: number,
     attestationCount: number
   ) => {
-    if (txHash) {
-      // Best-effort indexer nudge; it also catches this via its own chain listener,
-      // so a failure must not abort the flow. Legacy fetchData discarded the error.
-      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {}).catch(() => undefined);
-      // If multiple attestations, wait for the indexer to process all of them.
-      if (attestationCount > 1) {
-        await new Promise((resolve) => setTimeout(resolve, INDEXER_PROCESSING_DELAY_MS));
-      }
+    // Best-effort nudge — the indexer's own chain listener picks the tx up
+    // regardless, so a failure must not abort a flow whose tx already landed.
+    // `notifyIndexer` REPORTS that failure; the inline swallow it replaced left
+    // a failed nudge completely invisible.
+    await notifyIndexer({ txHash, chainId });
+
+    // If multiple attestations, wait for the indexer to process all of them.
+    if (txHash && attestationCount > 1) {
+      await new Promise((resolve) => setTimeout(resolve, INDEXER_PROCESSING_DELAY_MS));
     }
 
     await queryClient.invalidateQueries({

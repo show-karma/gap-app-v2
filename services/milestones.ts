@@ -157,6 +157,9 @@ async function fetchGrantByProgramId(
     const normalizedTarget = stripChainSuffix(programId);
     return grants.find((g) => stripChainSuffix(g.details?.programId) === normalizedTarget);
   } catch (error) {
+    // Reported, not swallowed: errorManager owns the Sentry capture. The grant
+    // is supplementary to the milestones, so a failure here degrades the
+    // response rather than failing the whole read.
     errorManager("Error fetching grant", error, { projectUid, programId });
     return undefined;
   }
