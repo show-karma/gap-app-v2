@@ -71,7 +71,6 @@ const fullApiResponse: UpdatesApiResponse = {
       },
       completionDetails: null,
       verificationDetails: null,
-      fundingApplicationCompletion: null,
     },
   ],
   grantUpdates: [],

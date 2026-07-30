@@ -1,5 +1,6 @@
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { isMilestoneCancelled } from "@/utilities/milestones/cancellation";
 import { MILESTONE_STATUS_LABEL } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
 export enum MilestoneReviewStatus {
@@ -114,8 +115,7 @@ export const FILTER_TABS: {
 export function getMilestoneStatus(milestone: GrantMilestoneWithCompletion): MilestoneReviewStatus {
   // Cancelled is terminal (DEV-523): the on-chain cancellation status takes
   // priority over any completion/verification, matching the backend derivation.
-  if (milestone.status === "cancelled" || milestone.cancellation != null)
-    return MilestoneReviewStatus.Cancelled;
+  if (isMilestoneCancelled(milestone)) return MilestoneReviewStatus.Cancelled;
   // Status hierarchy sourced from on-chain attestation chain only
   if (milestone.verificationDetails !== null) return MilestoneReviewStatus.Verified;
   if (milestone.completionDetails !== null) return MilestoneReviewStatus.PendingVerification;

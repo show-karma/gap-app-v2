@@ -25,6 +25,10 @@ import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
+import {
+  CANCELLED_MILESTONE_VERIFY_MESSAGE,
+  isMilestoneCancelled,
+} from "@/utilities/milestones/cancellation";
 import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 import { cn } from "@/utilities/tailwind";
 import { CancelledMilestoneBanner } from "./CancelledMilestoneBanner";
@@ -250,37 +254,30 @@ export function MilestoneCard({
     setIsEditOpen(false);
   }, []);
 
-  const useOnChainData = useMemo(
+  // Completions are on-chain only: the indexer never populates an off-chain
+  // funding-application completion on this payload.
+  const hasCompletion = useMemo(
     () => milestone.completionDetails !== null,
     [milestone.completionDetails]
   );
-
-  const completionData = useMemo(
-    () => (useOnChainData ? milestone.completionDetails : milestone.fundingApplicationCompletion),
-    [useOnChainData, milestone.completionDetails, milestone.fundingApplicationCompletion]
-  );
-
-  const hasCompletion = useMemo(() => completionData !== null, [completionData]);
   const isVerified = useMemo(
     () => milestone.verificationDetails !== null,
     [milestone.verificationDetails]
   );
   const isCancelled = useMemo(
-    () => milestone.status === "cancelled" || milestone.cancellation != null,
+    () => isMilestoneCancelled({ status: milestone.status, cancellation: milestone.cancellation }),
     [milestone.status, milestone.cancellation]
   );
 
   const completionDeliverables = useMemo(
-    () => (useOnChainData ? (milestone.completionDetails?.deliverables ?? []) : []),
-    [useOnChainData, milestone.completionDetails?.deliverables]
+    () => milestone.completionDetails?.deliverables ?? [],
+    [milestone.completionDetails?.deliverables]
   );
 
-  // Metrics (impact indicators) attached to this on-chain completion. The hook
-  // skips the fetch when no UID is passed, so funding-application-only
-  // completions don't trigger a request.
-  const shouldShowMetricsSection = useOnChainData && hasCompletion;
+  // Metrics (impact indicators) attached to this completion. The hook skips the
+  // fetch when no UID is passed, so an uncompleted milestone makes no request.
   const milestoneMetricsQuery = useMilestoneImpactAnswers({
-    milestoneUID: shouldShowMetricsSection ? milestone.uid : undefined,
+    milestoneUID: hasCompletion ? milestone.uid : undefined,
   });
   const milestoneMetrics = milestoneMetricsQuery.data;
 
@@ -293,7 +290,10 @@ export function MilestoneCard({
     milestone.cancellation,
     milestone.verificationDetails,
     milestone.completionDetails,
-    milestone.fundingApplicationCompletion,
+    // Late vs Pending is derived from the deadline, and on an uncompleted
+    // milestone every other input above is null — so without this the badge
+    // stays "Past Due" after the due date is moved forward.
+    milestone.dueDate,
   ]);
 
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
@@ -377,15 +377,10 @@ export function MilestoneCard({
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [isOverflowOpen]);
 
-  const completionText = useMemo(() => {
-    if (useOnChainData && milestone.completionDetails) {
-      return milestone.completionDetails.description;
-    }
-    if (milestone.fundingApplicationCompletion) {
-      return milestone.fundingApplicationCompletion.completionText;
-    }
-    return "";
-  }, [useOnChainData, milestone.completionDetails, milestone.fundingApplicationCompletion]);
+  const completionText = useMemo(
+    () => milestone.completionDetails?.description ?? "",
+    [milestone.completionDetails]
+  );
 
   // Re-measure rendered content height on mount, content change, or resize so
   // the "Show more" toggle stays in sync with the clamp height. The clamp
@@ -735,7 +730,7 @@ export function MilestoneCard({
                     ))}
                   </div>
                 )}
-                {shouldShowMetricsSection && (
+                {hasCompletion && (
                   <div className="mt-3 flex flex-col gap-2">
                     <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
                       Metrics
@@ -809,12 +804,7 @@ export function MilestoneCard({
               )}
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Submitted:{" "}
-              {formatDate(
-                useOnChainData
-                  ? milestone.completionDetails?.completedAt
-                  : milestone.fundingApplicationCompletion?.createdAt
-              )}
+              Submitted: {formatDate(milestone.completionDetails?.completedAt)}
             </p>
           </div>
 
@@ -842,6 +832,20 @@ export function MilestoneCard({
                 <AIEvaluationButton onClick={handleOpenEvaluation} className="mt-2" />
               )}
             </div>
+          ) : isCancelled ? (
+            // Cancelled is terminal: the indexer admits the verification
+            // attestation and then skips it, so a Verify button here would burn
+            // gas on a verification that silently never appears.
+            canVerifyMilestones && (
+              <div className="mb-3">
+                <p className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-gray-400">
+                  {CANCELLED_MILESTONE_VERIFY_MESSAGE}
+                </p>
+                {showAIEvaluationButton && (
+                  <AIEvaluationButton onClick={handleOpenEvaluation} className="mt-2" />
+                )}
+              </div>
+            )
           ) : (
             canVerifyMilestones &&
             hasCompletion &&

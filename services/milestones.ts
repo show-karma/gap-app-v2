@@ -11,22 +11,6 @@ const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 // Keep apiClient for mutations (PUT, POST)
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
-// Milestone completion data from funding applications
-export interface MilestoneCompletionData {
-  id: string;
-  referenceNumber: string;
-  milestoneFieldLabel: string;
-  milestoneTitle: string;
-  completionText: string;
-  ownerAddress: string;
-  isVerified: boolean;
-  verifiedBy?: string;
-  verifiedAt?: string;
-  verificationComment?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // Grant milestone completion details (on-chain data)
 export interface GrantMilestoneCompletionDetails {
   description: string;
@@ -75,7 +59,6 @@ export interface GrantMilestoneWithCompletion {
   recipient?: string;
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
-  fundingApplicationCompletion: MilestoneCompletionData | null;
   cancellation?: MilestoneCancellation | null;
 }
 
@@ -190,7 +173,6 @@ function mapGrantMilestones(
     recipient: milestone.recipient,
     completionDetails: milestone.completionDetails,
     verificationDetails: milestone.verificationDetails,
-    fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
     cancellation: milestone.cancellation ?? null,
   }));
 }

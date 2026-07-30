@@ -1,4 +1,3 @@
-import * as Sentry from "@sentry/nextjs";
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
@@ -24,6 +23,7 @@ import {
   describeMilestoneFailure,
   type MilestoneAction,
   type MilestoneFlowStep,
+  recordMilestoneFailureBreadcrumb,
 } from "@/utilities/milestones/attestationFailure";
 import {
   buildAttesterCandidates,
@@ -31,6 +31,7 @@ import {
   matchesSubmittedVerification,
   requireMilestoneRecipient,
 } from "@/utilities/milestones/attestationIdentity";
+import { rejectCancelledMilestone } from "@/utilities/milestones/cancellation";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
@@ -429,18 +430,14 @@ export const useMilestoneCompletionVerification = ({
     const failure = describeMilestoneFailure(error, action);
     showError(failure.message);
 
-    if (failure.expected) {
-      // Wallet not ready / indexer still catching up: guidance, not a defect.
-      // Capturing it would be noise, but staying entirely silent is how this
-      // flow lost its telemetry in the first place — leave a breadcrumb.
-      Sentry.addBreadcrumb({
-        category: "milestone-attestation",
-        level: "warning",
-        message: `${action} milestone stopped at ${step}: ${failure.kind}`,
-        data: { milestoneUID: milestone.uid, projectUid: projectUID, programId, step },
-      });
-      return;
-    }
+    recordMilestoneFailureBreadcrumb(action, step, failure.kind, {
+      milestoneUID: milestone.uid,
+      projectUid: projectUID,
+      programId,
+    });
+
+    // Wallet not ready / user-state guidance, not a defect.
+    if (failure.expected) return;
 
     errorManager(
       action === "verify" ? "Error verifying milestone" : "Error completing milestone",
@@ -474,6 +471,9 @@ export const useMilestoneCompletionVerification = ({
       return;
     }
 
+    if (rejectCancelledMilestone(milestone, "verify", showError, data.project?.uid, programId))
+      return;
+
     // Use chainId from milestone (where attestation will occur)
     const attestationChainId = milestone.chainId;
     const projectUID = data.project.uid;
@@ -503,7 +503,8 @@ export const useMilestoneCompletionVerification = ({
       if (!chainSetup) return;
 
       const alreadyCompleted = !!milestone.completionDetails;
-      const completionReason = milestone.fundingApplicationCompletion?.completionText;
+      // On-chain completion text is the only completion source on this payload.
+      const completionReason = milestone.completionDetails?.description;
 
       let includeCompletion = !alreadyCompleted;
 
@@ -580,6 +581,9 @@ export const useMilestoneCompletionVerification = ({
       showError("Cannot complete milestone without UID");
       return;
     }
+
+    if (rejectCancelledMilestone(milestone, "complete", showError, data.project?.uid, programId))
+      return;
 
     const projectUID = data.project.uid;
 

@@ -136,12 +136,9 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     const recipient =
       milestone.recipient ||
       milestone.completionDetails?.completedBy ||
-      milestone.fundingApplicationCompletion?.ownerAddress ||
       milestoneAny.data?.recipient ||
       "";
     const attester = milestoneAny.attester || milestoneAny.data?.attester || recipient;
-    // Off-chain completions use fundingApplicationCompletion instead of completionDetails
-    const appCompletion = milestone.fundingApplicationCompletion;
     const chainID =
       parseChainId(milestone.chainId) ||
       parseChainId(milestoneAny?.grant?.chainID) ||
@@ -180,14 +177,10 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       grantMilestoneOrder: serverOrder,
       completed: isCompleted
         ? {
-            createdAt:
-              milestone.completionDetails?.completedAt ||
-              appCompletion?.createdAt ||
-              milestone.createdAt ||
-              "",
+            createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
             data: {
               proofOfWork: milestone.completionDetails?.proofOfWork,
-              reason: milestone.completionDetails?.description || appCompletion?.completionText,
+              reason: milestone.completionDetails?.description,
               completionPercentage: milestone.completionDetails?.completionPercentage,
               deliverables: milestone.completionDetails?.deliverables,
             },
@@ -211,16 +204,11 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
             endsAt: milestoneEndsAt,
             completed: isCompleted
               ? {
-                  createdAt:
-                    milestone.completionDetails?.completedAt ||
-                    appCompletion?.createdAt ||
-                    milestone.createdAt ||
-                    "",
-                  attester: milestone.completionDetails?.completedBy || appCompletion?.ownerAddress,
+                  createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
+                  attester: milestone.completionDetails?.completedBy,
                   data: {
                     proofOfWork: milestone.completionDetails?.proofOfWork,
-                    reason:
-                      milestone.completionDetails?.description || appCompletion?.completionText,
+                    reason: milestone.completionDetails?.description,
                     completionPercentage: milestone.completionDetails?.completionPercentage,
                     deliverables: milestone.completionDetails?.deliverables,
                   },
