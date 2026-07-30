@@ -85,6 +85,11 @@ vi.mock("@/utilities/indexer", () => ({
     KYC: {
       GET_CONFIG: (id: string) => `/communities/${id}/kyc/config`,
     },
+    V2: {
+      FUNDING_PROGRAMS: {
+        GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
+      },
+    },
   },
 }));
 
