@@ -3,6 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
+import type { DiligenceViewer } from "../diligence/viewer";
 import { CandidateCard } from "../report-viewer/CandidateCard";
 import { formatLocale, humanizeCase } from "./text-utils";
 
@@ -14,8 +15,11 @@ interface AlsoConsideredProps {
   weights: CompositeWeights | null;
   /** Report id — required to mount the advisor diligence actions. */
   reportId?: string;
-  /** Advisor-only: gates the Ask Questions / Connect footer per candidate. */
-  showDiligenceActions?: boolean;
+  /**
+   * Who may run the Ask Questions / Connect footer on each candidate — the
+   * report owner or a super-admin acting as them. `null`/absent hides it.
+   */
+  diligenceViewer?: DiligenceViewer | null;
 }
 
 /**
@@ -29,7 +33,7 @@ export function AlsoConsidered({
   startRank,
   weights,
   reportId,
-  showDiligenceActions = false,
+  diligenceViewer = null,
 }: AlsoConsideredProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -110,7 +114,7 @@ export function AlsoConsidered({
                   <CandidateCard
                     candidate={candidate}
                     reportId={reportId}
-                    showDiligenceActions={showDiligenceActions}
+                    diligenceViewer={diligenceViewer}
                     variant="detail"
                     weights={weights}
                   />

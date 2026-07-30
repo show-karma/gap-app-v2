@@ -4,10 +4,10 @@ import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useLoadPrivy, usePrivyBridge } from "@/contexts/privy-bridge-context";
-import { AccessDenied } from "@/src/components/ui/AccessDenied";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
 import { DonorResearchShell } from "@/src/features/donor-research/components/common/DonorResearchShell";
+import { DonorResearchSignInGate } from "@/src/features/donor-research/components/common/DonorResearchSignInGate";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { isDonorResearchTokenRoute, PAGES } from "@/utilities/pages";
 
@@ -121,17 +121,11 @@ function DonorResearchSessionBoundary({
   }
 
   if (requiresAuth && !ready) {
-    return <AccessDenied isLoading />;
+    return <DonorResearchSignInGate isLoading />;
   }
 
   if (requiresAuth && !authenticated) {
-    return (
-      <AccessDenied
-        compactTitle
-        title="Sign in to access nonprofit research"
-        message="Sign in to create research reports, build donor profiles, and return to your saved work."
-      />
-    );
+    return <DonorResearchSignInGate />;
   }
 
   return children;
@@ -157,14 +151,20 @@ function DonorResearchSessionBoundary({
  * the authenticated sidebar/breadcrumb (and its route skeleton) for a beat
  * before the page resolves to its slim chrome — so they bypass it entirely,
  * matching the footer suppression keyed on the same `isDonorResearchTokenRoute`.
+ *
+ * Skipping the shell is not the same as skipping auth. Only the token routes
+ * are genuinely anonymous — their token *is* the credential. Onboarding creates
+ * the advisor row for the signed-in Privy user, so it stays gated: without the
+ * gate its advisor query threw a 401 straight into the error boundary, which
+ * showed a second, differently-worded sign-in screen for the same user state.
  */
 export default function DonorResearchLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isShellless =
-    pathname.startsWith(PAGES.DONOR_RESEARCH.ONBOARDING) || isDonorResearchTokenRoute(pathname);
+  const isTokenRoute = isDonorResearchTokenRoute(pathname);
+  const isShellless = pathname.startsWith(PAGES.DONOR_RESEARCH.ONBOARDING) || isTokenRoute;
 
   return (
-    <DonorResearchSessionBoundary requiresAuth={!isShellless}>
+    <DonorResearchSessionBoundary requiresAuth={!isTokenRoute}>
       <PermissionProvider>
         {isShellless ? children : <DonorResearchShell>{children}</DonorResearchShell>}
       </PermissionProvider>

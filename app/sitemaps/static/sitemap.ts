@@ -56,6 +56,22 @@ const staticPages = [
 
 const lowPriorityPages = ["/privacy-policy", "/terms-and-conditions"];
 
+// Self-healing ISR, mirroring the `revalidate = 60` ceiling on /blog and
+// /blog/[slug]. The Sanity webhook (app/api/blog/revalidate) stays the fast
+// path; without a ceiling here this route is fully static and only rebuilds on
+// deploy, so three failure modes leave published posts out of the sitemap with
+// no visible symptom:
+//   1. Webhook never fires — unset SANITY_WEBHOOK_SECRET (route 401s) or no
+//      webhook configured in Sanity. Post pages self-heal in 60s; this doesn't.
+//   2. Scheduled posts — the slug query filters `publishedAt <= now()`, so a
+//      future-dated post fires the webhook while still excluded and nothing
+//      fires again once its date arrives.
+//   3. Sanity blip — getPublishedSlugs resolves to `[]` on error, so a
+//      revalidation during an outage caches a post-less sitemap indefinitely.
+// An hour is well inside search engines' recrawl cadence and costs one extra
+// CMS query per hour.
+export const revalidate = 3600;
+
 // `lastModified` is intentionally omitted for the static pages below — we
 // have no accurate per-page modified date, and a fabricated "now" makes
 // Google distrust the signal (see utilities/sitemap.ts buildUrlsetXml).

@@ -7,7 +7,6 @@ import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerifi
 import { ReviewerFilterDropdown } from "@/components/Pages/Admin/ReviewerFilterDropdown";
 import { StatsGrid } from "@/components/Pages/Admin/StatsGrid";
 import { StatsTable, StatsTableSkeleton } from "@/components/Pages/Admin/StatsTable";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
@@ -28,6 +27,7 @@ import {
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
@@ -68,7 +68,7 @@ function MilestonesReportSkeleton() {
 
 interface ReportMilestonePageProps {
   community: Community;
-  grantPrograms: GrantProgram[];
+  grantPrograms: CommunityProgram[];
 }
 
 export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {

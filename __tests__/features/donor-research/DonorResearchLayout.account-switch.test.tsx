@@ -30,8 +30,10 @@ vi.mock("@/src/components/ui/AccessDenied", () => ({
     ),
 }));
 
+const routeState = { pathname: "/nonprofit-research" };
+
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/nonprofit-research",
+  usePathname: () => routeState.pathname,
 }));
 
 // The shell's advisor-gating behavior has its own suite
@@ -81,6 +83,7 @@ describe("DonorResearchLayout account isolation", () => {
     authState.ready = true;
     authState.authenticated = true;
     authState.user = { id: "user-a" };
+    routeState.pathname = "/nonprofit-research";
   });
 
   it("renders children in the first pass on first visit without an account-refresh pause", () => {
@@ -145,5 +148,43 @@ describe("DonorResearchLayout account isolation", () => {
     expect(screen.queryByText("Signed out")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Sign in" }));
     expect(authState.login).toHaveBeenCalledOnce();
+  });
+});
+
+// Onboarding renders without the advisor shell, but "no shell" must not mean
+// "no auth gate" — otherwise its advisor query 401s into the error boundary and
+// the visitor sees a second, differently-worded sign-in screen.
+describe("DonorResearchLayout sign-in gate coverage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authState.ready = true;
+    authState.authenticated = false;
+    authState.user = null;
+  });
+
+  it.each([
+    ["the section index", "/nonprofit-research"],
+    ["onboarding", "/nonprofit-research/onboarding"],
+  ])("gates %s with the same sign-in screen", (_label, pathname) => {
+    routeState.pathname = pathname;
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(<TestRoot queryClient={queryClient} />);
+
+    expect(screen.getByText("Sign in to access nonprofit research")).toBeVisible();
+    expect(screen.queryByText("Signed out")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["the donor share view", "/nonprofit-research/shared/token-abc"],
+    ["the diligence response page", "/nonprofit-research/diligence/token-abc"],
+  ])("leaves %s anonymous — the token is the credential", (_label, pathname) => {
+    routeState.pathname = pathname;
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(<TestRoot queryClient={queryClient} />);
+
+    expect(screen.getByText("Signed out")).toBeVisible();
+    expect(screen.queryByText("Sign in to access nonprofit research")).not.toBeInTheDocument();
   });
 });

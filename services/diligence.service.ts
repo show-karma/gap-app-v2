@@ -50,15 +50,19 @@ function httpErrorMessage(error: unknown): string {
 // -- Advisor: diligence template --------------------------------------------
 
 /**
- * Loads the advisor's diligence question template. Always returns a stable
- * shape — a brand-new advisor gets `{ questions: [], updatedAt: null }`, never
- * a 404.
+ * Loads a diligence question template. Always returns a stable shape — a
+ * brand-new advisor gets `{ questions: [], updatedAt: null }`, never a 404.
+ *
+ * With `reportId` the backend resolves the template of that report's OWNER, so
+ * the in-report dialog shows the questions the outreach will actually freeze
+ * (identical for the owner; the owner's for a staff member acting on their
+ * behalf). Without it, the caller's own template — the standalone editor page.
  */
-export const getDiligenceTemplate = async (): Promise<DiligenceTemplate> => {
+export const getDiligenceTemplate = async (reportId?: string): Promise<DiligenceTemplate> => {
   let data: DiligenceTemplate | null;
   try {
     // TODO(#1775): add zod schema
-    data = await api.get<DiligenceTemplate>(DILIGENCE_ENDPOINTS.TEMPLATE);
+    data = await api.get<DiligenceTemplate>(templateEndpoint(reportId));
   } catch (error) {
     throw new Error(httpErrorMessage(error) || "Failed to load diligence template");
   }
@@ -69,16 +73,18 @@ export const getDiligenceTemplate = async (): Promise<DiligenceTemplate> => {
 };
 
 /**
- * Wholesale-replaces the advisor's diligence template. Passing
- * `questions: []` clears it. Returns the saved template (same shape as GET).
+ * Wholesale-replaces a diligence template. Passing `questions: []` clears it.
+ * Returns the saved template (same shape as GET). `reportId` selects the
+ * report owner's template — see {@link getDiligenceTemplate}.
  */
 export const saveDiligenceTemplate = async (
-  body: SaveDiligenceTemplateRequest
+  body: SaveDiligenceTemplateRequest,
+  reportId?: string
 ): Promise<DiligenceTemplate> => {
   let data: DiligenceTemplate | null;
   try {
     // TODO(#1775): add zod schema
-    data = await api.put<DiligenceTemplate>(DILIGENCE_ENDPOINTS.TEMPLATE, body);
+    data = await api.put<DiligenceTemplate>(templateEndpoint(reportId), body);
   } catch (error) {
     throw new Error(httpErrorMessage(error) || "Failed to save diligence template");
   }
@@ -87,6 +93,9 @@ export const saveDiligenceTemplate = async (
   }
   return data;
 };
+
+const templateEndpoint = (reportId?: string): string =>
+  reportId ? DILIGENCE_ENDPOINTS.REPORT_TEMPLATE(reportId) : DILIGENCE_ENDPOINTS.TEMPLATE;
 
 // -- Advisor: per-candidate diligence ---------------------------------------
 

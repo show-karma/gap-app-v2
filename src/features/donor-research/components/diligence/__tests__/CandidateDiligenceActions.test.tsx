@@ -63,7 +63,9 @@ describe("CandidateDiligenceActions", () => {
   it("renders an inline loading state", () => {
     mockUseCandidateDiligence.mockReturnValue({ isLoading: true, isError: false, data: undefined });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("Loading actions…")).toBeInTheDocument();
   });
@@ -76,7 +78,9 @@ describe("CandidateDiligenceActions", () => {
       refetch: mockRefetch,
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("Couldn't load actions.")).toBeInTheDocument();
     screen.getByRole("button", { name: "Retry" }).click();
@@ -93,7 +97,9 @@ describe("CandidateDiligenceActions", () => {
       }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByRole("button", { name: "Ask questions" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Connect" })).not.toBeDisabled();
@@ -106,7 +112,9 @@ describe("CandidateDiligenceActions", () => {
       data: buildView({ coarseStatus: "intro_sent" }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("Intro sent")).toBeInTheDocument();
   });
@@ -121,7 +129,9 @@ describe("CandidateDiligenceActions", () => {
       }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("Intro queued")).toBeInTheDocument();
     expect(screen.queryByText(/Intro sent/)).not.toBeInTheDocument();
@@ -141,7 +151,9 @@ describe("CandidateDiligenceActions", () => {
       }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getAllByText(/Intro sent/).length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Intro queued")).not.toBeInTheDocument();
@@ -154,7 +166,9 @@ describe("CandidateDiligenceActions", () => {
       data: buildView({ coarseStatus: "not_requested" }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.queryByText("Questions sent")).not.toBeInTheDocument();
     expect(screen.queryByText("Answered")).not.toBeInTheDocument();
@@ -177,7 +191,9 @@ describe("CandidateDiligenceActions", () => {
       }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("What is your annual budget?")).toBeInTheDocument();
     expect(screen.getByText("$1.2M")).toBeInTheDocument();

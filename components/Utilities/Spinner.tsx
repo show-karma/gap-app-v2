@@ -6,9 +6,10 @@ interface SpinnerProps {
 }
 
 export const Spinner: FC<SpinnerProps> = ({ className = "" }) => (
-  <div
+  <output
+    aria-label="Loading"
     className={cn(
-      "h-16 w-16 animate-spin rounded-full border-4 border-dashed border-blue-300 dark:border-violet-400",
+      "block h-16 w-16 animate-spin rounded-full border-4 border-dashed border-blue-300 dark:border-violet-400",
       className
     )}
   />

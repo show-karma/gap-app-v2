@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
+import type { DiligenceViewer } from "../diligence/viewer";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import {
   CandidateCoverage,
@@ -35,8 +36,11 @@ interface RunnerUpCandidateProps {
   weights: CompositeWeights | null;
   /** Report id — required to mount the advisor diligence actions. */
   reportId?: string;
-  /** Advisor-only: gates the Ask Questions / Connect footer. */
-  showDiligenceActions?: boolean;
+  /**
+   * Who may run the Ask Questions / Connect footer — the report owner or a
+   * super-admin acting as them. `null`/absent hides it entirely.
+   */
+  diligenceViewer?: DiligenceViewer | null;
 }
 
 /**
@@ -52,7 +56,7 @@ export const RunnerUpCandidate = memo(function RunnerUpCandidate({
   label,
   weights,
   reportId,
-  showDiligenceActions = false,
+  diligenceViewer = null,
 }: RunnerUpCandidateProps) {
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   const name = humanizeCase(
@@ -123,11 +127,12 @@ export const RunnerUpCandidate = memo(function RunnerUpCandidate({
         </aside>
       </div>
 
-      {showDiligenceActions && reportId ? (
+      {diligenceViewer && reportId ? (
         <CandidateDiligenceActions
           candidateId={candidate.id}
           candidateName={name}
           reportId={reportId}
+          viewer={diligenceViewer}
         />
       ) : null}
     </section>

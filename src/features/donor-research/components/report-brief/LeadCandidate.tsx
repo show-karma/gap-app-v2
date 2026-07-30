@@ -2,6 +2,7 @@
 
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
 import { CandidateDiligenceActions } from "../diligence/CandidateDiligenceActions";
+import type { DiligenceViewer } from "../diligence/viewer";
 import { SocialPresence } from "../report-viewer/SocialPresence";
 import {
   CandidateCoverage,
@@ -36,8 +37,11 @@ interface LeadCandidateProps {
   hasMore: boolean;
   /** Report id — required to mount the advisor diligence actions. */
   reportId?: string;
-  /** Advisor-only: gates the Ask Questions / Connect footer. */
-  showDiligenceActions?: boolean;
+  /**
+   * Who may run the Ask Questions / Connect footer — the report owner or a
+   * super-admin acting as them. `null`/absent hides it entirely.
+   */
+  diligenceViewer?: DiligenceViewer | null;
 }
 
 /**
@@ -51,7 +55,7 @@ export function LeadCandidate({
   weights,
   hasMore,
   reportId,
-  showDiligenceActions = false,
+  diligenceViewer = null,
 }: LeadCandidateProps) {
   const isDisqualified = candidate.complianceVerdict === "disqualified";
   const name = humanizeCase(
@@ -148,11 +152,12 @@ export function LeadCandidate({
         </p>
       </div>
 
-      {showDiligenceActions && reportId ? (
+      {diligenceViewer && reportId ? (
         <CandidateDiligenceActions
           candidateId={candidate.id}
           candidateName={name}
           reportId={reportId}
+          viewer={diligenceViewer}
         />
       ) : null}
     </section>
