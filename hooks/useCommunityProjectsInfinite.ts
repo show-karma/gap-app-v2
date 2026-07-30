@@ -1,5 +1,5 @@
 "use client";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import type { CommunityProjects } from "@/types/v2/community";
 import {
@@ -18,6 +18,10 @@ interface UseInfiniteCommunityProjectsOptions {
   trackIds: string[] | null;
   limit?: number;
   enabled?: boolean;
+  /** SSR seed: the server-rendered page wrapped as InfiniteData. */
+  initialData?: InfiniteData<CommunityProjects, number>;
+  /** Page the seed (and any client retry) starts from. Defaults to 1. */
+  initialPage?: number;
 }
 
 export function useCommunityProjectsInfinite({
@@ -29,7 +33,11 @@ export function useCommunityProjectsInfinite({
   trackIds,
   limit = COMMUNITY_PROJECTS_PAGE_SIZE,
   enabled = true,
+  initialData,
+  initialPage = 1,
 }: UseInfiniteCommunityProjectsOptions) {
+  // initialPage is part of the key so a ?page=2 seed can never bleed into the
+  // page-1 cache entry (same policy as the /projects explorer).
   const queryKey = [
     "community-projects-infinite",
     communityId,
@@ -38,13 +46,20 @@ export function useCommunityProjectsInfinite({
     maturityStage,
     programId,
     trackIds,
+    initialPage,
   ];
 
-  return useInfiniteQuery<CommunityProjects, Error>({
+  return useInfiniteQuery<
+    CommunityProjects,
+    Error,
+    InfiniteData<CommunityProjects, number>,
+    readonly unknown[],
+    number
+  >({
     queryKey,
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam }) => {
       const response = await getCommunityProjects(communityId, {
-        page: pageParam as number,
+        page: pageParam,
         limit,
         sortBy: mapSortToApiValue(sortBy),
         status: getStatusFromMaturityStage(maturityStage),
@@ -58,7 +73,8 @@ export function useCommunityProjectsInfinite({
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined;
     },
-    initialPageParam: 1,
+    initialData,
+    initialPageParam: initialPage,
     enabled: enabled && !!communityId,
     staleTime: 0, // Always consider data stale when filters change
     gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)

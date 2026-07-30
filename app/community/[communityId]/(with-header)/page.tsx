@@ -4,7 +4,15 @@ import { notFound } from "next/navigation";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { PROJECT_NAME } from "@/constants/brand";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
+import { PAGES } from "@/utilities/pages";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+import {
+  COMMUNITY_PROJECTS_PAGE_SIZE,
+  type CommunityProjectsSearchParams,
+  DEFAULT_COMMUNITY_SORT,
+  mapSortToApiValue,
+  parseCommunityProjectsPage,
+} from "@/utilities/queries/v2/communityProjectsRequest";
 import {
   getCommunityCategories,
   getCommunityDetails,
@@ -15,6 +23,7 @@ type Props = {
   params: Promise<{
     communityId: string;
   }>;
+  searchParams: Promise<CommunityProjectsSearchParams>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -35,10 +44,19 @@ export default async function Page(props: Props) {
     return undefined;
   }
 
+  // Fetch the exact request the client's first query would issue (page + explicit
+  // sort) so the server payload can seed React Query instead of being replaced by
+  // a differently-ordered refetch.
+  const page = parseCommunityProjectsPage(await props.searchParams);
+
   const [communityDetails, categories, initialProjects] = await Promise.all([
     getCommunityDetails(communityId),
     getCommunityCategories(communityId),
-    getCommunityProjects(communityId, { page: 1, limit: 12 }),
+    getCommunityProjects(communityId, {
+      page,
+      limit: COMMUNITY_PROJECTS_PAGE_SIZE,
+      sortBy: mapSortToApiValue(DEFAULT_COMMUNITY_SORT),
+    }),
   ]);
 
   // Extract category names for the filter
@@ -50,7 +68,7 @@ export default async function Page(props: Props) {
     notFound();
   }
 
-  const defaultSortBy = "milestones" as SortByOptions;
+  const defaultSortBy: SortByOptions = DEFAULT_COMMUNITY_SORT;
   const defaultSelectedCategories: string[] = [];
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
@@ -63,6 +81,8 @@ export default async function Page(props: Props) {
         defaultSelectedMaturityStage={defaultSelectedMaturityStage}
         communityUid={communityDetails.uid}
         initialProjects={initialProjects}
+        initialPage={page}
+        paginationBasePath={PAGES.COMMUNITY.ALL_GRANTS(communityId)}
       />
     </div>
   );
