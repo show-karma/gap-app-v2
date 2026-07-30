@@ -1,6 +1,6 @@
 # Karma
 
-> Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.
+> Foundations use Karma to run grant programs, donor advisors to research nonprofits, and nonprofits to find aligned funders.
 
 Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei.
 
@@ -18,27 +18,8 @@ Karma is a platform where ecosystems allocate funding, track milestones, and mea
 
 ### Home
 
-Karma - Where builders get funded and ecosystems grow
-Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. Ecosystems use Karma to allocate funding, track milestones, and measure impact.
-Karma | Agentic funding software for foundations and donor advisors
-The funding platform foundation officers and donor advisors run from ChatGPT, Claude, or any AI agent. Fund nonprofits, follow updates, generate reports.
-Build reputation. Ship with proof.
-Create your project profile, find funding opportunities, track milestones, and get
-discovered for more grants, hackathons, and collaborations.
-Karma connects builders
-to funding opportunities
-We support builders across their lifecycle to access funding opportunities, grow their
-reputation and track their progress easily.
-Onchain Project Profile
-Create a comprehensive project profile and showcase your work across multiple funding programs, share updates and build reputation onchain.
-Link your project to multiple grant rounds, hackathons, and retro funding programs — all under one profile.
-Direct Funding & Donations
-Accept funding directly on your project page through fiat and onchain payments or ecosystem grant disbursals.
-Automatically track activity from GitHub, smart contracts, and other sources by easily linking your repos and contracts.
-Milestones & Updates
-Build your onchain reputation by documenting progress and milestones through Karma
-Endorsements & Reputation
-Receive onchain endorsements from supporters, funders, and collaborators that strengthen your credibility.
+Karma - Funding software for foundations, donor advisors, and nonprofits
+Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned foundations, grounded in every IRS 990 on record with every answer cited. Karma also runs onchain funding programs on Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, and Sei.
 
 ### For Funders
 
