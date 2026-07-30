@@ -299,8 +299,78 @@ describe("errorManager", () => {
       errorManager("Test error", error, { targetNetwork: "Base" });
 
       expect(Sentry.captureException).not.toHaveBeenCalled();
-      expect(Sentry.addBreadcrumb).not.toHaveBeenCalled();
       expect(Sentry.captureMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // Suppression breadcrumbs (super-gap #64) — a suppressed error used to be
+  // invisible in BOTH directions: generic toast, nothing in Sentry. Every
+  // early-return path must now leave a trace.
+  // ---------------------------------------------------------------------
+  describe("suppressed-error breadcrumbs (#64)", () => {
+    const expectSuppressedBreadcrumb = (reason: string) =>
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "suppressed-error",
+          level: "warning",
+          data: expect.objectContaining({ reason }),
+        })
+      );
+
+    it("breadcrumbs a suppressed transient network error", () => {
+      const networkErr = Object.assign(new Error("Network Error"), { code: "ERR_NETWORK" });
+
+      errorManager("Error verifying milestone", networkErr, { step: "poll" });
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expectSuppressedBreadcrumb("transient-network");
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Error verifying milestone",
+          data: expect.objectContaining({ step: "poll" }),
+        })
+      );
+    });
+
+    it("breadcrumbs a suppressed transient gateway error", () => {
+      const gatewayErr = Object.assign(new Error("Request failed with status code 504"), {
+        response: { status: 504 },
+      });
+
+      errorManager("Error verifying milestone", gatewayErr);
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expectSuppressedBreadcrumb("transient-http");
+    });
+
+    it("breadcrumbs a suppressed user rejection", () => {
+      errorManager("Error verifying milestone", { message: "User rejected the transaction" });
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expectSuppressedBreadcrumb("user-rejected");
+    });
+
+    it("breadcrumbs a suppressed switch-chain error", () => {
+      errorManager(
+        "Error verifying milestone",
+        { message: "could not switch chain" },
+        {
+          targetNetwork: "Base",
+        }
+      );
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expectSuppressedBreadcrumb("switch-chain");
+    });
+
+    it("breadcrumbs a suppressed expected wallet-lifecycle error", () => {
+      const error = Object.assign(new Error("No wallet is connected."), { expected: true });
+
+      errorManager("Error verifying milestone", error);
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expectSuppressedBreadcrumb("expected-state");
     });
   });
 

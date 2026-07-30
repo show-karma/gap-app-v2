@@ -1,8 +1,6 @@
-import type { GAP } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Signer } from "ethers";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -14,12 +12,10 @@ import type {
   GrantMilestoneWithCompletion,
   ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
-import { api } from "@/utilities/api/client";
-import { INDEXER } from "@/utilities/indexer";
+import { notifyIndexer } from "@/utilities/indexer-notification";
+import { requireMilestoneRecipient } from "@/utilities/milestones/attestationIdentity";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
-
-const normalizeProgramId = (id: string): string => (id.includes("_") ? id.split("_")[0] : id);
 
 // Thrown when wallet/chain setup does not complete (user aborted, or a
 // preparation failure). `setupChainAndWallet` already surfaces the reason
@@ -40,7 +36,6 @@ interface UseMilestoneCancellationParams {
 
 interface CancelArgs {
   milestone: GrantMilestoneWithCompletion;
-  data: ProjectGrantMilestonesResponse;
   reason?: string;
 }
 
@@ -63,52 +58,19 @@ export const useMilestoneCancellation = ({
   const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
 
   const notifyAndInvalidate = async (txHash: string | null | undefined, chainId: number) => {
-    if (txHash) {
-      // Best-effort indexer nudge; it also catches this via its own chain listener,
-      // so a failure must not abort the flow. Legacy fetchData discarded the error.
-      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {}).catch(() => undefined);
-    }
+    // Best-effort nudge — the indexer's own chain listener picks the tx up
+    // regardless, so a failure must not abort a flow whose tx already landed.
+    // `notifyIndexer` REPORTS that failure; the inline swallow it replaced left
+    // a failed nudge completely invisible.
+    await notifyIndexer({ txHash: txHash ?? undefined, chainId });
+
     await queryClient.invalidateQueries({ queryKey });
     await queryClient.invalidateQueries({ queryKey: ["reportMilestones"] });
     await queryClient.invalidateQueries({ queryKey: ["pendingVerificationMilestones"] });
   };
 
-  // Fetches the on-chain milestone recipient (needed to build the status
-  // attestation), mirroring the verify flow's SDK resolution.
-  const resolveMilestoneRecipient = async (
-    milestone: GrantMilestoneWithCompletion,
-    data: ProjectGrantMilestonesResponse
-  ): Promise<{ recipient: Hex; gapClient: GAP; walletSigner: Signer }> => {
-    const setup = await setupChainAndWallet({
-      targetChainId: +milestone.chainId,
-      currentChainId: chain?.id,
-      switchChainAsync,
-    });
-    if (!setup) throw new ChainSetupAbortedError();
-
-    const { gapClient, walletSigner } = setup;
-    const project = await gapClient.fetch.projectById(data.project.uid as Hex);
-    if (!project) throw new Error("Failed to fetch project data");
-
-    const normalizedInputId = normalizeProgramId(programId);
-    const grant = project.grants.find((g) => {
-      const storedId = g.details?.programId;
-      return storedId ? normalizeProgramId(storedId) === normalizedInputId : false;
-    });
-    const instance = grant?.milestones?.find(
-      (m) => m.uid.toLowerCase() === milestone.uid.toLowerCase()
-    );
-    if (!instance) throw new Error("Milestone not found on-chain");
-
-    return {
-      recipient: instance.recipient as Hex,
-      gapClient,
-      walletSigner,
-    };
-  };
-
   const cancelMutation = useMutation({
-    mutationFn: async ({ milestone, data, reason }: CancelArgs) => {
+    mutationFn: async ({ milestone, reason }: CancelArgs) => {
       if (
         milestone.completionDetails ||
         milestone.verificationDetails ||
@@ -121,12 +83,21 @@ export const useMilestoneCancellation = ({
       if (milestone.status === "cancelled" || milestone.cancellation != null) {
         throw new Error("This milestone is already cancelled.");
       }
+      // The on-chain recipient comes straight from the V2 milestone payload —
+      // validated BEFORE the wallet is touched, so a legacy row without one
+      // stops here instead of prompting for a signature it can't use.
+      const recipient = requireMilestoneRecipient(milestone);
+
       showLoading("Cancelling milestone...");
 
-      const { recipient, gapClient, walletSigner } = await resolveMilestoneRecipient(
-        milestone,
-        data
-      );
+      const setup = await setupChainAndWallet({
+        targetChainId: +milestone.chainId,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+      if (!setup) throw new ChainSetupAbortedError();
+
+      const { gapClient, walletSigner } = setup;
       const schema = gapClient.findSchema("MilestoneCompleted");
 
       const cancellationAttestation = new MilestoneCompleted({
