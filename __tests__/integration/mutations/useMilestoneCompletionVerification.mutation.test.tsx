@@ -322,6 +322,95 @@ describe("useMilestoneCompletionVerification — verify", () => {
     expect(errorManager).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["Base", 8453, "0x7177AdC0f924b695C0294A40C4C5FEFf5EE1E141"],
+    ["Arbitrum", 42161, "0x6dC1D6b864e8BEf815806f9e4677123496e12026"],
+  ])(
+    "matches the poll on the %s MultiAttester contract EAS records as attester",
+    async (_network, chainId, multiAttester) => {
+      // `GapContract.multiAttest` routes through the MultiAttester, so it is
+      // `msg.sender` at EAS and the indexer stores IT as `verifiedBy` — never
+      // the signer. Without it in the candidate set every verification polls to
+      // timeout on a transaction that already succeeded.
+      //
+      // `attestationUID` is deliberately absent (it is optional on the indexer
+      // row): it forces the poll through the attester-candidate path, so this
+      // asserts the MultiAttester wiring rather than the UID-change fallback.
+      mockApiGet.mockResolvedValue(
+        indexedResponse({
+          uid: MILESTONE_UID,
+          chainId,
+          title: "Milestone",
+          description: "desc",
+          dueDate: "2025-01-01",
+          status: "verified",
+          recipient: RECIPIENT,
+          completionDetails: { description: "done", completedAt: "", completedBy: RECIPIENT },
+          verificationDetails: {
+            description: "ok",
+            verifiedAt: "",
+            verifiedBy: multiAttester,
+          },
+          fundingApplicationCompletion: null,
+        })
+      );
+      const { result } = renderVerificationHook();
+
+      await act(async () => {
+        await result.current.verifyMilestone(milestone({ chainId }), false, projectData, "ok");
+      });
+
+      await waitFor(() =>
+        expect(toastSpies.showSuccess).toHaveBeenCalledWith(
+          "Milestone completed and verified successfully!"
+        )
+      );
+      expect(toastSpies.showError).not.toHaveBeenCalled();
+      expect(errorManager).not.toHaveBeenCalled();
+    }
+  );
+
+  it("does not accept a pre-existing verification by an unrecognised attester", async () => {
+    // Same attestation UID as before signing: nothing landed under OUR
+    // transaction, so the snapshot guard must keep the poll unsatisfied even
+    // though the milestone already carries a verification.
+    const preExisting = {
+      description: "someone else",
+      verifiedAt: "",
+      verifiedBy: WAGMI_ADDRESS,
+      attestationUID: `0x${"e".repeat(64)}`,
+    };
+    mockApiGet.mockResolvedValue(
+      indexedResponse({
+        uid: MILESTONE_UID,
+        chainId: 42161,
+        title: "Milestone",
+        description: "desc",
+        dueDate: "2025-01-01",
+        status: "verified",
+        recipient: RECIPIENT,
+        completionDetails: { description: "done", completedAt: "", completedBy: RECIPIENT },
+        verificationDetails: preExisting,
+        fundingApplicationCompletion: null,
+      })
+    );
+    const { result } = renderVerificationHook();
+
+    await act(async () => {
+      await result.current.verifyMilestone(
+        milestone({ verificationDetails: preExisting }),
+        false,
+        projectData,
+        "looks good"
+      );
+    });
+
+    expect(toastSpies.showSuccess).not.toHaveBeenCalled();
+    expect(toastSpies.showError).toHaveBeenCalledWith(
+      expect.stringContaining("still being indexed")
+    );
+  });
+
   it("tells the user the attestation is still indexing on poll timeout (#66)", async () => {
     // Indexer never surfaces the verification within the retry budget.
     mockApiGet.mockResolvedValue(
