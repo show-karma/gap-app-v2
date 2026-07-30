@@ -1,4 +1,4 @@
-import { HttpError, NetworkError } from "@/utilities/api/errors";
+import { ContractViolationError, HttpError, NetworkError } from "@/utilities/api/errors";
 import { describeMilestoneFailure } from "@/utilities/milestones/attestationFailure";
 import { MissingMilestoneRecipientError } from "@/utilities/milestones/attestationIdentity";
 import { RetryConditionNotMetError } from "@/utilities/retries";
@@ -65,6 +65,20 @@ describe("describeMilestoneFailure", () => {
 
     expect(result.kind).toBe("server");
     expect(result.message).toContain("HTTP 422");
+  });
+
+  it("separates a malformed response from a network failure", () => {
+    const result = describeMilestoneFailure(
+      new ContractViolationError({
+        endpoint: "/v2/projects/x/updates",
+        method: "GET",
+        issues: ["recipient: expected string"],
+      }),
+      "verify"
+    );
+
+    expect(result.kind).toBe("server");
+    expect(result.message).toContain("unexpected response");
   });
 
   it("names a transient network failure", () => {

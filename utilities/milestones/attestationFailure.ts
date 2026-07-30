@@ -121,6 +121,14 @@ export const describeMilestoneFailure = (
     };
   }
 
+  if (isApiError(error) && error.kind === "contract") {
+    return {
+      kind: "server",
+      message: `${label}: the server returned an unexpected response.`,
+      expected: false,
+    };
+  }
+
   if (isTransientNetworkError(error) || isTransientHttpError(error) || isApiError(error)) {
     return {
       kind: "network",

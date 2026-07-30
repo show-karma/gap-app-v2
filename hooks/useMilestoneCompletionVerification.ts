@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
@@ -17,6 +18,7 @@ import {
   type ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
 import { api } from "@/utilities/api/client";
+import { isApiError } from "@/utilities/api/errors";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
 import { INDEXER } from "@/utilities/indexer";
 import {
@@ -120,11 +122,13 @@ export const useMilestoneCompletionVerification = ({
     return {
       gapClient: setup.gapClient,
       walletSigner: setup.walletSigner,
+      // wagmi's address is deliberately NOT a candidate: it can be an unlinked
+      // wallet left connected from a previous session, and accepting it would
+      // widen the match beyond this identity.
       attesterCandidates: buildAttesterCandidates([
         signerAddress,
         smartWalletAddress,
         ...(user ? getLinkedWalletAddresses(user) : []),
-        address,
       ]),
     };
   };
@@ -397,7 +401,10 @@ export const useMilestoneCompletionVerification = ({
     milestone: GrantMilestoneWithCompletion,
     projectUID: string | undefined
   ) => {
-    if (isUserRejectionError(error)) {
+    // `isUserRejectionError` is a substring match, and an ApiError's message
+    // embeds the endpoint path — so an API failure must never be mistaken for a
+    // wallet rejection just because its route happens to contain "reject".
+    if (!isApiError(error) && isUserRejectionError(error)) {
       showError(action === "verify" ? "Verification cancelled" : "Completion cancelled");
       return;
     }
@@ -407,7 +414,14 @@ export const useMilestoneCompletionVerification = ({
 
     if (failure.expected) {
       // Wallet not ready / indexer still catching up: guidance, not a defect.
-      // errorManager would drop these anyway; skip it rather than pretend.
+      // Capturing it would be noise, but staying entirely silent is how this
+      // flow lost its telemetry in the first place — leave a breadcrumb.
+      Sentry.addBreadcrumb({
+        category: "milestone-attestation",
+        level: "warning",
+        message: `${action} milestone stopped at ${step}: ${failure.kind}`,
+        data: { milestoneUID: milestone.uid, projectUid: projectUID, programId, step },
+      });
       return;
     }
 

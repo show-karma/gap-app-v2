@@ -162,6 +162,15 @@ async function fetchGrantByProgramId(
   }
 }
 
+/**
+ * The single grant-milestones endpoint. Shared by the full read and the
+ * poll-friendly read so the two can never drift apart on query params.
+ */
+function grantMilestonesEndpoint(projectUid: string, programId: string): string {
+  const normalizedProgramId = stripChainSuffix(programId) ?? programId;
+  return `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`;
+}
+
 function mapGrantMilestones(
   updatesResponse: ProjectUpdatesResponse
 ): GrantMilestoneWithCompletion[] {
@@ -195,10 +204,9 @@ export async function fetchGrantMilestonesForProgram(
   projectUid: string,
   programId: string
 ): Promise<GrantMilestoneWithCompletion[]> {
-  const normalizedProgramId = stripChainSuffix(programId) ?? programId;
   // TODO(#1775): add zod schema
   const updatesResponse = await api.get<ProjectUpdatesResponse>(
-    `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`
+    grantMilestonesEndpoint(projectUid, programId)
   );
 
   return mapGrantMilestones(updatesResponse);
@@ -220,9 +228,7 @@ export async function fetchProjectGrantMilestones(
       }),
     // TODO(#1775): add zod schema
     api
-      .get<ProjectUpdatesResponse>(
-        `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`
-      )
+      .get<ProjectUpdatesResponse>(grantMilestonesEndpoint(projectUid, normalizedProgramId))
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         throw new Error(`Failed to fetch milestones: ${message}`);
