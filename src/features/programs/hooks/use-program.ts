@@ -1,16 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
+import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
+import { INDEXER } from "@/utilities/indexer";
 import type { UseProgramReturn } from "../types";
+
+/**
+ * Shared with the server prefetch in `programs/[programId]/page.tsx`. The
+ * hydrated cache entry is only considered fresh — and therefore not refetched
+ * on mount — while both sides agree on this window.
+ */
+export const PROGRAM_DETAIL_STALE_TIME = 5 * 60 * 1000;
 
 export function useProgram(programId: string): UseProgramReturn {
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["wl-program", programId],
+    queryKey: wlQueryKeys.programs.detail(programId),
     queryFn: async () => {
       // TODO(#1775): add zod schema
       try {
-        return await api.get<FundingProgram>(`/v2/funding-program-configs/${programId}`);
+        return await api.get<FundingProgram>(
+          INDEXER.V2.FUNDING_PROGRAMS.GET(encodeURIComponent(programId))
+        );
       } catch (err) {
         // A missing program is an expected "not found" outcome, not a
         // failure — resolve to null so the component renders its
@@ -22,7 +33,7 @@ export function useProgram(programId: string): UseProgramReturn {
       }
     },
     enabled: !!programId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: PROGRAM_DETAIL_STALE_TIME,
   });
 
   return {

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -12,6 +14,8 @@ export const metadata: Metadata = customMetadata({
   path: "/knowledge/grant-kyc",
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("grant-kyc");
 
 export default function GrantKycPage() {
   return (
@@ -27,8 +31,7 @@ export default function GrantKycPage() {
         title="KYC in Grant and Funding Programs"
         description="Learn how identity verification integrates into grant workflows without slowing down funding. Explore KYC best practices for compliance and operational efficiency."
         url="/knowledge/grant-kyc"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
@@ -38,7 +41,10 @@ export default function GrantKycPage() {
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">KYC in Grant and Funding Programs</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">KYC in Grant and Funding Programs</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
