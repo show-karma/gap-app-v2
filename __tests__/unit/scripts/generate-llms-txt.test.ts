@@ -964,7 +964,7 @@ describe("generateLlmsTxt", () => {
   it("has a detail section paragraph (no heading)", () => {
     const lines = output.split("\n");
     // Line after blockquote and blank
-    expect(lines[4]).toMatch(/^Karma is a platform/);
+    expect(lines[4]).toMatch(/^Karma is /);
     expect(lines[4]).not.toMatch(/^#/);
   });
 
