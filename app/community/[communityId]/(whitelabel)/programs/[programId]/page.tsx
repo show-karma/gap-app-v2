@@ -62,9 +62,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     ? `/programs/${programId}`
     : `/community/${communityId}/programs/${programId}`;
 
-  // Metadata degrades to generic copy on any fetch failure — the canonical
-  // above does not depend on the program body.
-  const program = await getProgramDetails(programId).catch(() => null);
+  const program = await getProgramDetails(programId).catch(() => {
+    // SUPPRESSED: metadata must still render when the indexer is unavailable.
+    // The canonical above does not depend on the program body, so the page
+    // degrades to generic copy rather than failing the whole route.
+    return null;
+  });
   const programName = program?.metadata?.title || program?.name || "Funding Program";
   const description =
     cleanMarkdownForPlainText(
