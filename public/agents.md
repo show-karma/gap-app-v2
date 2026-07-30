@@ -1,12 +1,15 @@
 # Karma — agent instructions
 
-Karma is a platform for funding programs: ecosystems run grants, builders apply, milestones get tracked, and impact gets measured on-chain. Connect via MCP at https://gapapi.karmahq.xyz/mcp.
+Karma is funding infrastructure for philanthropy: foundations run grant programs, donor advisors research and compare nonprofits, and nonprofits find aligned funders. It also runs onchain funding programs where ecosystems fund builders and impact is attested on-chain. Connect via MCP at https://gapapi.karmahq.xyz/mcp.
 
 ## When to use Karma tools
 
 Use Karma when the user asks about:
 
 - **Funding programs** — discovery, eligibility, deadlines, budgets
+- **Funder discovery** — finding foundations and grantmaking nonprofits aligned to a mission, grounded in IRS 990 filings
+- **Nonprofit research** — ranked shortlists for a cause, geography, or grant size; compliance checks, activity scores, mission match
+- **Grant program operations** — application evaluation, RFPs, hackathons, impact reporting
 - **Projects** — profiles, teams, milestones, grants, impact indicators
 - **Applications** — drafting, submitting, status, reviewer feedback
 - **Milestones** — tracking, completion evidence, overdue audits
@@ -22,7 +25,7 @@ The live tool catalog (single source of truth, auto-derived from the MCP server)
 
 - Generic web search — use a search tool instead
 - Code generation, code review — Karma has no code surface
-- Anything unrelated to funding programs, grants, projects, milestones, applications, or impact
+- Anything unrelated to funding programs, grants, projects, milestones, applications, impact, nonprofit research, or funder discovery
 
 ## Authentication
 
