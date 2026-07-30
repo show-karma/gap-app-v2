@@ -19,6 +19,10 @@ import type {
   ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
 import { HttpError } from "@/utilities/api/errors";
+import {
+  CANCELLED_MILESTONE_COMPLETE_MESSAGE,
+  CANCELLED_MILESTONE_VERIFY_MESSAGE,
+} from "@/utilities/milestones/cancellation";
 import { renderHookWithProviders } from "../../utils/render";
 
 // Hoisted so the `vi.mock` factories below (which run before the module body)
@@ -166,7 +170,6 @@ const milestone = (
   recipient: RECIPIENT,
   completionDetails: null,
   verificationDetails: null,
-  fundingApplicationCompletion: null,
   ...overrides,
 });
 
@@ -198,7 +201,6 @@ const verifiedBySigner = () =>
       verifiedBy: SIGNER_ADDRESS,
       attestationUID: `0x${"f".repeat(64)}`,
     },
-    fundingApplicationCompletion: null,
   });
 
 const privyUser = {
@@ -351,7 +353,6 @@ describe("useMilestoneCompletionVerification — verify", () => {
             verifiedAt: "",
             verifiedBy: multiAttester,
           },
-          fundingApplicationCompletion: null,
         })
       );
       const { result } = renderVerificationHook();
@@ -391,7 +392,6 @@ describe("useMilestoneCompletionVerification — verify", () => {
         recipient: RECIPIENT,
         completionDetails: { description: "done", completedAt: "", completedBy: RECIPIENT },
         verificationDetails: preExisting,
-        fundingApplicationCompletion: null,
       })
     );
     const { result } = renderVerificationHook();
@@ -411,7 +411,7 @@ describe("useMilestoneCompletionVerification — verify", () => {
     );
   });
 
-  it("tells the user the attestation is still indexing on poll timeout (#66)", async () => {
+  it("reports poll exhaustion after a submitted transaction instead of promising success (#66)", async () => {
     // Indexer never surfaces the verification within the retry budget.
     mockApiGet.mockResolvedValue(
       indexedResponse({
@@ -424,7 +424,6 @@ describe("useMilestoneCompletionVerification — verify", () => {
         recipient: RECIPIENT,
         completionDetails: null,
         verificationDetails: null,
-        fundingApplicationCompletion: null,
       })
     );
     const { result } = renderVerificationHook();
@@ -433,11 +432,64 @@ describe("useMilestoneCompletionVerification — verify", () => {
       await result.current.verifyMilestone(milestone(), false, projectData, "looks good");
     });
 
-    expect(toastSpies.showError).toHaveBeenCalledWith(
-      expect.stringContaining("still being indexed")
+    const [message] = toastSpies.showError.mock.calls.at(-1) ?? [];
+    expect(message).toContain("still being indexed");
+    // The copy must not promise the write will land: the same symptom covers
+    // an attestation the indexer admitted and then skipped, which never
+    // appears at all.
+    expect(message).not.toMatch(/no need to/i);
+    // ...and that state must not be invisible to telemetry.
+    expect(errorManager).toHaveBeenCalledWith(
+      "Error verifying milestone",
+      expect.anything(),
+      expect.objectContaining({ step: "poll", failureKind: "indexing-timeout" })
     );
-    // Indexer lag is not a defect — guidance only, never Sentry.
-    expect(errorManager).not.toHaveBeenCalled();
+  });
+
+  it("refuses to sign for a cancelled milestone (belt-and-braces for stale data)", async () => {
+    const { result } = renderVerificationHook();
+
+    await act(async () => {
+      await result.current.verifyMilestone(
+        milestone({
+          status: "cancelled",
+          completionDetails: { description: "done", completedAt: "", completedBy: RECIPIENT },
+        }),
+        false,
+        projectData,
+        "looks good"
+      );
+    });
+
+    expect(mockMultiAttest).not.toHaveBeenCalled();
+    expect(mockAttestAsReviewer).not.toHaveBeenCalled();
+    expect(toastSpies.showError).toHaveBeenCalledWith(CANCELLED_MILESTONE_VERIFY_MESSAGE);
+  });
+
+  it("refuses to sign when only the cancellation overlay is present", async () => {
+    // Optimistic cancel writes the overlay before the indexer re-derives
+    // `status`, so the overlay alone must already block the signature.
+    const { result } = renderVerificationHook();
+
+    await act(async () => {
+      await result.current.verifyMilestone(
+        milestone({
+          cancellation: {
+            uid: `0x${"c".repeat(64)}`,
+            cancelledBy: "0xadmin",
+            cancelledAt: null,
+            reason: null,
+          },
+          completionDetails: { description: "done", completedAt: "", completedBy: RECIPIENT },
+        }),
+        false,
+        projectData,
+        "looks good"
+      );
+    });
+
+    expect(mockMultiAttest).not.toHaveBeenCalled();
+    expect(toastSpies.showError).toHaveBeenCalledWith(CANCELLED_MILESTONE_VERIFY_MESSAGE);
   });
 
   it("names the cause and reports the step marker on a signing failure (#64)", async () => {
@@ -547,6 +599,21 @@ describe("useMilestoneCompletionVerification — complete", () => {
     expect(toastSpies.showError).toHaveBeenCalledWith(
       expect.stringContaining("missing its on-chain recipient")
     );
+  });
+
+  it("blocks completion of a cancelled milestone before any transaction", async () => {
+    const { result } = renderVerificationHook();
+
+    await act(async () => {
+      await result.current.completeMilestone(
+        milestone({ status: "cancelled" }),
+        projectData,
+        "all done"
+      );
+    });
+
+    expect(mockMultiAttest).not.toHaveBeenCalled();
+    expect(toastSpies.showError).toHaveBeenCalledWith(CANCELLED_MILESTONE_COMPLETE_MESSAGE);
   });
 
   it("names the cause on a completion failure (#64)", async () => {

@@ -27,8 +27,10 @@ export interface MilestoneFailureDescription {
   /** Full user-facing toast text, naming the cause rather than just the action. */
   message: string;
   /**
-   * Expected user/lifecycle state (wallet not ready, indexer lag). Guidance,
-   * not a defect — callers must skip Sentry reporting for these.
+   * Expected user/lifecycle state (e.g. a wallet that hasn't hydrated yet).
+   * Guidance, not a defect — callers must skip Sentry reporting for these.
+   * A poll that exhausts AFTER a transaction was submitted is deliberately
+   * NOT expected: it can mean the write never landed.
    */
   expected: boolean;
 }
@@ -84,14 +86,20 @@ export const describeMilestoneFailure = (
     return { kind: "missing-recipient", message: error.message, expected: false };
   }
 
+  // Poll exhaustion after a submitted transaction. It is NOT `expected`: the
+  // same symptom covers benign indexer lag AND an attestation the indexer
+  // admitted and then skipped (e.g. a cancelled milestone), which never
+  // appears at all. Suppressing it made that second case invisible in both
+  // directions, so the copy stops promising the write will land and the
+  // classification lets it reach Sentry.
   if (isRetryConditionNotMetError(error)) {
     return {
       kind: "indexing-timeout",
       message:
         action === "verify"
-          ? "Your verification was submitted on-chain and is still being indexed. It will appear shortly — no need to verify again."
-          : "Your completion was submitted on-chain and is still being indexed. It will appear shortly — no need to complete again.",
-      expected: true,
+          ? "Your verification was submitted on-chain and is still being indexed. If it doesn't appear after a few minutes, contact support before verifying again."
+          : "Your completion was submitted on-chain and is still being indexed. If it doesn't appear after a few minutes, contact support before completing again.",
+      expected: false,
     };
   }
 

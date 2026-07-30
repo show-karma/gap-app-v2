@@ -97,8 +97,7 @@ const InlineEvaluationCard = memo(function InlineEvaluationCard({
 });
 
 function InlineAIEvaluation({ milestone }: { milestone: GrantMilestoneWithCompletion }) {
-  const hasCompletion =
-    milestone.completionDetails !== null || milestone.fundingApplicationCompletion !== null;
+  const hasCompletion = milestone.completionDetails !== null;
   const { data, isLoading, error, refetch } = useMilestoneEvaluation(milestone.uid, hasCompletion);
   const evaluations = data?.evaluations ?? [];
 
