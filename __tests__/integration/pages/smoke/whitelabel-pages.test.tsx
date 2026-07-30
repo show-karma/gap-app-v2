@@ -67,6 +67,13 @@ vi.mock("@/utilities/queries/v2/getCommunityData", () => ({
 
 vi.mock("@/utilities/funding-programs", () => ({
   isProgramEnabled: () => true,
+  getProgramStatusInfo: () => ({
+    status: "open",
+    label: "Open for Applications",
+    color: "success",
+    dotColor: "bg-green-600",
+    endsSoon: false,
+  }),
 }));
 
 vi.mock("@/utilities/community-flags", () => ({
