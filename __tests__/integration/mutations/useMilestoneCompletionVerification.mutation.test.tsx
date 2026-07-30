@@ -18,6 +18,7 @@ import type {
   GrantMilestoneWithCompletion,
   ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
+import { HttpError } from "@/utilities/api/errors";
 import { renderHookWithProviders } from "../../utils/render";
 
 // Hoisted so the `vi.mock` factories below (which run before the module body)
@@ -387,6 +388,26 @@ describe("useMilestoneCompletionVerification — verify", () => {
 
     expect(toastSpies.showError).toHaveBeenCalledWith("Verification cancelled");
     expect(errorManager).not.toHaveBeenCalled();
+  });
+
+  it("does not mistake an API error whose route contains 'reject' for a cancellation (#64)", async () => {
+    mockAttestAsReviewer.mockRejectedValue(
+      new HttpError(500, { endpoint: "/v2/milestones/x/reject-completion", method: "POST" })
+    );
+    const { result } = renderVerificationHook();
+
+    await act(async () => {
+      await result.current.verifyMilestone(milestone(), true, projectData, "looks good");
+    });
+
+    expect(toastSpies.showError).toHaveBeenCalledWith(
+      "Failed to verify milestone: the server rejected the request (HTTP 500)."
+    );
+    expect(errorManager).toHaveBeenCalledWith(
+      "Error verifying milestone",
+      expect.anything(),
+      expect.objectContaining({ step: "backend", failureKind: "server" })
+    );
   });
 
   it("does not re-read the milestone after the backend completion (reviewer flow, #63)", async () => {
