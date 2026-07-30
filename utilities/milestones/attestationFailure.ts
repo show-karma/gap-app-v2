@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 import { isMissingMilestoneRecipientError } from "@/utilities/milestones/attestationIdentity";
 import { isRetryConditionNotMetError } from "@/utilities/retries";
@@ -27,8 +28,10 @@ export interface MilestoneFailureDescription {
   /** Full user-facing toast text, naming the cause rather than just the action. */
   message: string;
   /**
-   * Expected user/lifecycle state (wallet not ready, indexer lag). Guidance,
-   * not a defect — callers must skip Sentry reporting for these.
+   * Expected user/lifecycle state (e.g. a wallet that hasn't hydrated yet).
+   * Guidance, not a defect — callers must skip Sentry reporting for these.
+   * A poll that exhausts AFTER a transaction was submitted is deliberately
+   * NOT expected: it can mean the write never landed.
    */
   expected: boolean;
 }
@@ -84,14 +87,20 @@ export const describeMilestoneFailure = (
     return { kind: "missing-recipient", message: error.message, expected: false };
   }
 
+  // Poll exhaustion after a submitted transaction. It is NOT `expected`: the
+  // same symptom covers benign indexer lag AND an attestation the indexer
+  // admitted and then skipped (e.g. a cancelled milestone), which never
+  // appears at all. Suppressing it made that second case invisible in both
+  // directions, so the copy stops promising the write will land and the
+  // classification lets it reach Sentry.
   if (isRetryConditionNotMetError(error)) {
     return {
       kind: "indexing-timeout",
       message:
         action === "verify"
-          ? "Your verification was submitted on-chain and is still being indexed. It will appear shortly — no need to verify again."
-          : "Your completion was submitted on-chain and is still being indexed. It will appear shortly — no need to complete again.",
-      expected: true,
+          ? "Your verification was submitted on-chain and is still being indexed. If it doesn't appear after a few minutes, contact support before verifying again."
+          : "Your completion was submitted on-chain and is still being indexed. If it doesn't appear after a few minutes, contact support before completing again.",
+      expected: false,
     };
   }
 
@@ -150,4 +159,24 @@ export const describeMilestoneFailure = (
     message: `${label}: an unexpected error occurred.`,
     expected: false,
   };
+};
+
+/**
+ * Every verify/complete failure leaves a breadcrumb, reported to Sentry or not:
+ * staying entirely silent is how this flow lost its telemetry in the first
+ * place. For an `expected` failure (wallet not hydrated yet) this breadcrumb is
+ * the whole telemetry record — capturing it as well would be pure noise.
+ */
+export const recordMilestoneFailureBreadcrumb = (
+  action: MilestoneAction,
+  step: MilestoneFlowStep,
+  kind: MilestoneFailureKind,
+  context: { milestoneUID: string; projectUid: string | undefined; programId: string | undefined }
+): void => {
+  Sentry.addBreadcrumb({
+    category: "milestone-attestation",
+    level: "warning",
+    message: `${action} milestone stopped at ${step}: ${kind}`,
+    data: { ...context, step },
+  });
 };

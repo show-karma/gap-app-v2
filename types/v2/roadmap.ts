@@ -82,21 +82,6 @@ export type GrantMilestoneVerificationDetails = {
   attestationUID?: string;
 };
 
-export type FundingApplicationMilestoneCompletion = {
-  id: string;
-  referenceNumber: string;
-  milestoneFieldLabel: string;
-  milestoneTitle: string;
-  completionText: string;
-  ownerAddress: string;
-  isVerified: boolean;
-  verifiedBy?: string;
-  verifiedAt?: string | null;
-  verificationComment?: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export type GrantInfo = {
   uid: string;
   title?: string;
@@ -119,7 +104,6 @@ export type GrantMilestoneWithDetails = {
   grant?: GrantInfo;
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
-  fundingApplicationCompletion?: FundingApplicationMilestoneCompletion | null;
   invoiceInfo?: {
     status: string;
     receivedAt: string | null;

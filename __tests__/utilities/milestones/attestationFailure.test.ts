@@ -27,15 +27,33 @@ describe("describeMilestoneFailure", () => {
     expect(result.message).toMatch(/missing its on-chain recipient/);
   });
 
-  it("distinguishes an indexing timeout from a failure", () => {
+  it("names an indexing timeout without promising the write will land", () => {
     const verify = describeMilestoneFailure(new RetryConditionNotMetError(), "verify");
     const complete = describeMilestoneFailure(new RetryConditionNotMetError(), "complete");
 
     expect(verify.kind).toBe("indexing-timeout");
-    expect(verify.expected).toBe(true);
     expect(verify.message).toMatch(/submitted on-chain and is still being indexed/);
     expect(verify.message).not.toMatch(/Failed to/);
     expect(complete.message).toMatch(/completion was submitted on-chain/);
+
+    // The old copy ("It will appear shortly — no need to verify again") is
+    // false whenever the indexer admitted the attestation and then skipped it
+    // (e.g. a cancelled milestone): it never appears at all.
+    for (const result of [verify, complete]) {
+      expect(result.message).not.toMatch(/no need to/i);
+      expect(result.message).toMatch(/contact support/i);
+    }
+  });
+
+  it("keeps poll exhaustion after a submitted transaction visible to Sentry", () => {
+    // Expected:true would suppress the capture — which is exactly how the
+    // admitted-then-skipped case lost its telemetry.
+    expect(describeMilestoneFailure(new RetryConditionNotMetError(), "verify").expected).toBe(
+      false
+    );
+    expect(describeMilestoneFailure(new RetryConditionNotMetError(), "complete").expected).toBe(
+      false
+    );
   });
 
   it("names a network-switch failure", () => {

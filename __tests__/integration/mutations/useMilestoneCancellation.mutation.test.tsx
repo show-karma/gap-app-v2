@@ -107,7 +107,6 @@ const baseMilestone = (
   recipient: RECIPIENT,
   completionDetails: null,
   verificationDetails: null,
-  fundingApplicationCompletion: null,
   ...overrides,
 });
 
@@ -163,23 +162,6 @@ describe("useMilestoneCancellation", () => {
               completedAt: "2025-01-02",
               completedBy: "0xgrantee",
             },
-          }),
-        });
-      })
-    ).rejects.toThrow(/already been completed or verified/);
-    expect(mockMultiAttest).not.toHaveBeenCalled();
-  });
-
-  it("blocks cancelling a funding-application-completed milestone", async () => {
-    const { result } = renderCancellationHook();
-
-    await expect(
-      act(async () => {
-        await result.current.cancelMilestone({
-          milestone: baseMilestone({
-            fundingApplicationCompletion: {
-              description: "done via application",
-            } as GrantMilestoneWithCompletion["fundingApplicationCompletion"],
           }),
         });
       })

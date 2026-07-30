@@ -14,6 +14,7 @@ import type {
 } from "@/services/milestones";
 import { notifyIndexer } from "@/utilities/indexer-notification";
 import { requireMilestoneRecipient } from "@/utilities/milestones/attestationIdentity";
+import { isMilestoneCancelled } from "@/utilities/milestones/cancellation";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
 
@@ -71,16 +72,12 @@ export const useMilestoneCancellation = ({
 
   const cancelMutation = useMutation({
     mutationFn: async ({ milestone, reason }: CancelArgs) => {
-      if (
-        milestone.completionDetails ||
-        milestone.verificationDetails ||
-        milestone.fundingApplicationCompletion
-      ) {
+      if (milestone.completionDetails || milestone.verificationDetails) {
         throw new Error(
           "This milestone has already been completed or verified and cannot be cancelled."
         );
       }
-      if (milestone.status === "cancelled" || milestone.cancellation != null) {
+      if (isMilestoneCancelled(milestone)) {
         throw new Error("This milestone is already cancelled.");
       }
       // The on-chain recipient comes straight from the V2 milestone payload —
