@@ -20,6 +20,7 @@ import {
   docsPageTitle,
   extractMainHtml,
   extractTitleFromHtml,
+  fetchSitemapEntries,
   findMetaContent,
   generateLlmsFullTxt,
   generateLlmsTxt,
@@ -40,8 +41,11 @@ import {
   normalizeMultilineText,
   normalizeWhitespace,
   PROJECT_NAME,
+  parseSitemapIndexLocs,
+  parseUrlSetEntries,
   SITE_URL,
   SITEMAP_DESCRIPTION_MAP,
+  SITEMAP_INDEX_CHILD_ALLOWLIST,
   SITEMAP_LABEL_MAP,
   sentenceOverlap,
   sitemapUrlToLabel,
@@ -1510,5 +1514,176 @@ describe("constants integrity", () => {
     expect(DOCS_CATEGORY_ORDER).toContain("For Builders");
     expect(DOCS_CATEGORY_ORDER).toContain("Partners");
     expect(DOCS_CATEGORY_ORDER.length).toBeGreaterThanOrEqual(8);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Sitemap parsing — /sitemap.xml is an INDEX, its children are the urlsets
+// ---------------------------------------------------------------------------
+
+const SITEMAP_INDEX_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://www.karmahq.xyz/sitemaps/static/sitemap.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.karmahq.xyz/sitemaps/communities/sitemap.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.karmahq.xyz/sitemaps/projects/sitemap.xml</loc>
+  </sitemap>
+</sitemapindex>
+`;
+
+const STATIC_URLSET_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>https://www.karmahq.xyz</loc>
+<changefreq>daily</changefreq>
+<priority>1</priority>
+</url>
+<url>
+<loc>https://www.karmahq.xyz/about</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+<url>
+<loc>https://www.karmahq.xyz/blog/hello-world</loc>
+<lastmod>2026-01-02T00:00:00.000Z</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.6</priority>
+</url>
+</urlset>
+`;
+
+const EMPTY_URLSET_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+</urlset>
+`;
+
+function xmlResponse(xml: string) {
+  return { ok: true, status: 200, text: async () => xml };
+}
+
+describe("parseSitemapIndexLocs", () => {
+  it("extracts child <loc> values from a sitemap index", () => {
+    expect(parseSitemapIndexLocs(SITEMAP_INDEX_XML)).toEqual([
+      "https://www.karmahq.xyz/sitemaps/static/sitemap.xml",
+      "https://www.karmahq.xyz/sitemaps/communities/sitemap.xml",
+      "https://www.karmahq.xyz/sitemaps/projects/sitemap.xml",
+    ]);
+  });
+
+  it("decodes HTML entities in child locs", () => {
+    const xml =
+      "<sitemapindex><sitemap><loc>https://www.karmahq.xyz/s?a=1&amp;b=2</loc></sitemap></sitemapindex>";
+    expect(parseSitemapIndexLocs(xml)).toEqual(["https://www.karmahq.xyz/s?a=1&b=2"]);
+  });
+
+  it("returns an empty list for a plain urlset document", () => {
+    expect(parseSitemapIndexLocs(STATIC_URLSET_XML)).toEqual([]);
+  });
+});
+
+describe("parseUrlSetEntries", () => {
+  it("parses <url> blocks into sitemap entries", () => {
+    const entries = parseUrlSetEntries(STATIC_URLSET_XML);
+    expect(entries).toHaveLength(3);
+    expect(entries[0]).toEqual({
+      url: "https://www.karmahq.xyz",
+      lastModified: "",
+      changeFrequency: "daily",
+      priority: "1",
+    });
+    expect(entries[2]).toEqual({
+      url: "https://www.karmahq.xyz/blog/hello-world",
+      lastModified: "2026-01-02T00:00:00.000Z",
+      changeFrequency: "weekly",
+      priority: "0.6",
+    });
+  });
+
+  it("skips blocks without a loc", () => {
+    const xml = "<urlset><url><priority>0.5</priority></url></urlset>";
+    expect(parseUrlSetEntries(xml)).toEqual([]);
+  });
+
+  it("returns an empty list for a sitemap index document", () => {
+    expect(parseUrlSetEntries(SITEMAP_INDEX_XML)).toEqual([]);
+  });
+});
+
+describe("fetchSitemapEntries", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("allowlists the static child sitemap", () => {
+    expect(SITEMAP_INDEX_CHILD_ALLOWLIST).toEqual(["/sitemaps/static/sitemap.xml"]);
+  });
+
+  it("recurses into the allowlisted index children only", async () => {
+    const fetchMock = vi.fn(async (url: string) =>
+      url.includes("/sitemaps/static/")
+        ? xmlResponse(STATIC_URLSET_XML)
+        : xmlResponse(SITEMAP_INDEX_XML)
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const entries = await fetchSitemapEntries();
+
+    const requested = fetchMock.mock.calls.map((call) => call[0]);
+    expect(requested).toEqual([
+      "https://www.karmahq.xyz/sitemap.xml",
+      "https://www.karmahq.xyz/sitemaps/static/sitemap.xml",
+    ]);
+    expect(entries.map((entry) => entry.url)).toEqual([
+      "https://www.karmahq.xyz",
+      "https://www.karmahq.xyz/about",
+      "https://www.karmahq.xyz/blog/hello-world",
+    ]);
+  });
+
+  it("parses a direct urlset response without a second fetch", async () => {
+    const fetchMock = vi.fn(async () => xmlResponse(STATIC_URLSET_XML));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const entries = await fetchSitemapEntries();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(entries).toHaveLength(3);
+  });
+
+  it("rejects when the allowlisted children yield no URLs — no silent fallback", async () => {
+    const fetchMock = vi.fn(async (url: string) =>
+      url.includes("/sitemaps/static/")
+        ? xmlResponse(EMPTY_URLSET_XML)
+        : xmlResponse(SITEMAP_INDEX_XML)
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchSitemapEntries()).rejects.toThrow(/no <url> entries/);
+  });
+
+  it("rejects when the index lists no allowlisted child", async () => {
+    const indexWithoutStatic = SITEMAP_INDEX_XML.replace(
+      "<loc>https://www.karmahq.xyz/sitemaps/static/sitemap.xml</loc>",
+      "<loc>https://www.karmahq.xyz/sitemaps/grants/sitemap.xml</loc>"
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => xmlResponse(indexWithoutStatic))
+    );
+
+    await expect(fetchSitemapEntries()).rejects.toThrow(/no children matching/);
+  });
+
+  it("rejects on a non-OK response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false, status: 503, text: async () => "" }))
+    );
+
+    await expect(fetchSitemapEntries()).rejects.toThrow(/\(503\)/);
   });
 });
