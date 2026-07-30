@@ -71,8 +71,12 @@ const DEFAULT_DESCRIPTION =
   "with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked " +
   "nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, " +
   "and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned " +
-  "foundations, grounded in every IRS 990 on record with every answer cited. Karma also runs onchain funding " +
-  "programs on Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, and Sei.";
+  "foundations, grounded in every IRS 990 on record with every answer cited.";
+
+// The document intro adds the onchain lane, whose chain list is derived from
+// SUPPORTED_NETWORKS so it cannot drift from the networks actually supported.
+const buildOverviewParagraph = (networkNames: string) =>
+  `${DEFAULT_DESCRIPTION} Karma also runs onchain funding programs where ecosystems fund builders and impact is attested on-chain, on ${networkNames}.`;
 
 const HOME_SUMMARY =
   "Foundations use Karma to run grant programs, donor advisors to research nonprofits, " +
@@ -1705,9 +1709,7 @@ function generateLlmsTxt(
   const networkNames = SUPPORTED_NETWORKS.filter((n) => !n.name.includes("testnet"))
     .map((n) => n.name)
     .join(", ");
-  lines.push(
-    `Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports ${networkNames}.`
-  );
+  lines.push(buildOverviewParagraph(networkNames));
   lines.push("");
 
   // Landing Pages: includes Funding Map and Knowledge Base (no separate Product Pages section)
@@ -1797,9 +1799,7 @@ function generateLlmsFullTxt(
   const networkNames = SUPPORTED_NETWORKS.filter((n) => !n.name.includes("testnet"))
     .map((n) => n.name)
     .join(", ");
-  lines.push(
-    `Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports ${networkNames}.`
-  );
+  lines.push(buildOverviewParagraph(networkNames));
   lines.push("");
 
   // --- Table of Contents ---
@@ -2067,6 +2067,9 @@ function generateMarkdownFiles(
 // --- Exports for testing ---
 export {
   BOILERPLATE_LINE_PATTERNS,
+  DEFAULT_DESCRIPTION,
+  HOME_SUMMARY,
+  buildOverviewParagraph,
   SITEMAP_LABEL_MAP,
   SITEMAP_DESCRIPTION_MAP,
   PROJECT_NAME,
