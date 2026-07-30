@@ -1010,46 +1010,97 @@ function parseTagValue(xmlChunk: string, tagName: string): string {
   return match ? decodeHtmlEntities(normalizeWhitespace(match[1])) : "";
 }
 
-async function fetchSitemapEntries(): Promise<SitemapEntry[]> {
-  try {
-    const response = await fetch(SITEMAP_URL, {
-      headers: { "User-Agent": "Karma-LLMS-Generator/1.0" },
-      signal: AbortSignal.timeout(15_000),
+function parseUrlSetEntries(xml: string): SitemapEntry[] {
+  const entries: SitemapEntry[] = [];
+
+  for (const match of xml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
+    const block = match[1];
+    const url = parseTagValue(block, "loc");
+    if (!url) continue;
+
+    entries.push({
+      url,
+      lastModified: parseTagValue(block, "lastmod"),
+      changeFrequency: parseTagValue(block, "changefreq"),
+      priority: parseTagValue(block, "priority"),
     });
-
-    if (!response.ok) {
-      throw new Error(`Sitemap fetch failed (${response.status})`);
-    }
-
-    const xml = await response.text();
-    const entries: SitemapEntry[] = [];
-
-    for (const match of xml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
-      const block = match[1];
-      const url = parseTagValue(block, "loc");
-      if (!url) continue;
-
-      entries.push({
-        url,
-        lastModified: parseTagValue(block, "lastmod"),
-        changeFrequency: parseTagValue(block, "changefreq"),
-        priority: parseTagValue(block, "priority"),
-      });
-    }
-
-    if (entries.length > 0) {
-      return entries;
-    }
-  } catch (error) {
-    console.warn(`Sitemap fetch failed: ${(error as Error).message}`);
   }
 
-  return STATIC_PAGES.map((page) => ({
-    url: `${SITE_URL}${page.path}`,
-    lastModified: BUILD_TIMESTAMP,
-    changeFrequency: "",
-    priority: "",
-  }));
+  return entries;
+}
+
+function parseSitemapIndexLocs(xml: string): string[] {
+  const locs: string[] = [];
+
+  for (const match of xml.matchAll(/<sitemap>([\s\S]*?)<\/sitemap>/g)) {
+    const loc = parseTagValue(match[1], "loc");
+    if (loc) locs.push(loc);
+  }
+
+  return locs;
+}
+
+// /sitemap.xml is a sitemap INDEX whose children are the real <urlset>
+// documents (utilities/sitemap.ts buildSitemapIndexBody). Only the static
+// child belongs in this curated index: it holds the ~50 top-level site pages
+// plus blog posts, which is what "Site URL Index" means here and what
+// SITEMAP_LABEL_MAP/SITEMAP_DESCRIPTION_MAP are written for. The entity
+// children (communities, projects, funding-programs) hold up to
+// MAX_URLS_PER_SITEMAP (45,000) near-identically-labeled URLs each and would
+// swamp the file, so recursion is allowlisted rather than blanket.
+const SITEMAP_INDEX_CHILD_ALLOWLIST = ["/sitemaps/static/sitemap.xml"];
+
+function isAllowlistedSitemapChild(loc: string): boolean {
+  try {
+    return SITEMAP_INDEX_CHILD_ALLOWLIST.includes(new URL(loc).pathname);
+  } catch {
+    return false;
+  }
+}
+
+async function fetchSitemapXml(url: string): Promise<string> {
+  const response = await fetch(url, {
+    headers: { "User-Agent": "Karma-LLMS-Generator/1.0" },
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Sitemap fetch failed for ${url} (${response.status})`);
+  }
+
+  return response.text();
+}
+
+// Throws rather than falling back to a hardcoded page list: a silent fallback
+// is what let the generated "Site URL Index" ship empty for months.
+async function fetchSitemapEntries(): Promise<SitemapEntry[]> {
+  const xml = await fetchSitemapXml(SITEMAP_URL);
+
+  if (!xml.includes("<sitemapindex")) {
+    const entries = parseUrlSetEntries(xml);
+    if (entries.length === 0) {
+      throw new Error(`Sitemap ${SITEMAP_URL} contained no <url> entries`);
+    }
+    return entries;
+  }
+
+  const childLocs = parseSitemapIndexLocs(xml).filter(isAllowlistedSitemapChild);
+  if (childLocs.length === 0) {
+    throw new Error(
+      `Sitemap index ${SITEMAP_URL} listed no children matching ${SITEMAP_INDEX_CHILD_ALLOWLIST.join(", ")}`
+    );
+  }
+
+  const entries: SitemapEntry[] = [];
+  for (const loc of childLocs) {
+    entries.push(...parseUrlSetEntries(await fetchSitemapXml(loc)));
+  }
+
+  if (entries.length === 0) {
+    throw new Error(`Sitemap index children (${childLocs.join(", ")}) contained no <url> entries`);
+  }
+
+  return entries;
 }
 
 async function extractLandingPages(): Promise<LandingPageContent[]> {
@@ -1989,6 +2040,10 @@ export {
   isNoisyLandingText,
   sentenceOverlap,
   sitemapUrlToLabel,
+  parseUrlSetEntries,
+  parseSitemapIndexLocs,
+  fetchSitemapEntries,
+  SITEMAP_INDEX_CHILD_ALLOWLIST,
   generateSitemapSection,
   generateLlmsTxt,
   generateLlmsFullTxt,
