@@ -2,7 +2,7 @@
 
 > Foundations use Karma to run grant programs, donor advisors to research nonprofits, and nonprofits to find aligned funders.
 
-Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei.
+Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned foundations, grounded in every IRS 990 on record with every answer cited. Karma also runs onchain funding programs where ecosystems fund builders and impact is attested on-chain, on Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ Karma is a platform where ecosystems allocate funding, track milestones, and mea
 ### Home
 
 Karma - Funding software for foundations, donor advisors, and nonprofits
-Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned foundations, grounded in every IRS 990 on record with every answer cited. Karma also runs onchain funding programs on Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, and Sei.
+Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned foundations, grounded in every IRS 990 on record with every answer cited.
 
 ### For Funders
 
