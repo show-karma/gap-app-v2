@@ -65,6 +65,14 @@ export interface GrantMilestoneWithCompletion {
   startsAt?: number;
   priority?: number;
   status: string;
+  /**
+   * On-chain recipient of the milestone attestation, resolved by the indexer
+   * from the attestation record. This is the value every follow-up attestation
+   * (completion / verification / cancellation) must reuse verbatim — it is the
+   * reason the flows no longer re-fetch the whole project through the SDK.
+   * Optional because legacy rows predate the indexer's recipient backfill.
+   */
+  recipient?: string;
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
   fundingApplicationCompletion: MilestoneCompletionData | null;
@@ -154,6 +162,48 @@ async function fetchGrantByProgramId(
   }
 }
 
+function mapGrantMilestones(
+  updatesResponse: ProjectUpdatesResponse
+): GrantMilestoneWithCompletion[] {
+  return updatesResponse.grantMilestones.map((milestone) => ({
+    uid: milestone.uid,
+    programId: milestone.programId,
+    chainId: milestone.chainId,
+    title: milestone.title,
+    description: milestone.description,
+    dueDate: milestone.dueDate,
+    startsAt: milestone.startsAt,
+    priority: milestone.priority,
+    status: milestone.status,
+    recipient: milestone.recipient,
+    completionDetails: milestone.completionDetails,
+    verificationDetails: milestone.verificationDetails,
+    fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
+    cancellation: milestone.cancellation ?? null,
+  }));
+}
+
+/**
+ * Fetches ONLY the grant milestones for a program — a single V2 request, unlike
+ * `fetchProjectGrantMilestones` which also resolves the project and grant.
+ *
+ * Used by the attestation flows' indexing polls: they re-read one milestone
+ * every ~1.5s, so the extra project/grant round-trips (and, previously, an
+ * SDK-driven V1 `GET /projects/:uid`) were pure overhead and a crash site.
+ */
+export async function fetchGrantMilestonesForProgram(
+  projectUid: string,
+  programId: string
+): Promise<GrantMilestoneWithCompletion[]> {
+  const normalizedProgramId = stripChainSuffix(programId) ?? programId;
+  // TODO(#1775): add zod schema
+  const updatesResponse = await api.get<ProjectUpdatesResponse>(
+    `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`
+  );
+
+  return mapGrantMilestones(updatesResponse);
+}
+
 export async function fetchProjectGrantMilestones(
   projectUid: string,
   programId: string
@@ -180,23 +230,7 @@ export async function fetchProjectGrantMilestones(
     fetchGrantByProgramId(projectUid, normalizedProgramId),
   ]);
 
-  const grantMilestones: GrantMilestoneWithCompletion[] = updatesResponse.grantMilestones.map(
-    (milestone) => ({
-      uid: milestone.uid,
-      programId: milestone.programId,
-      chainId: milestone.chainId,
-      title: milestone.title,
-      description: milestone.description,
-      dueDate: milestone.dueDate,
-      startsAt: milestone.startsAt,
-      priority: milestone.priority,
-      status: milestone.status,
-      completionDetails: milestone.completionDetails,
-      verificationDetails: milestone.verificationDetails,
-      fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
-      cancellation: milestone.cancellation ?? null,
-    })
-  );
+  const grantMilestones = mapGrantMilestones(updatesResponse);
 
   return {
     project,

@@ -40,6 +40,30 @@ const errorContains = (error: ErrorLike | null | undefined, needle: string): boo
   );
 };
 
+// Every suppression path below leaves this breadcrumb. Without it a suppressed
+// error was invisible in BOTH directions — the user got a generic toast and
+// Sentry got nothing at all, so a class of failures (network-class errors in the
+// milestone verification flow) had zero telemetry. The breadcrumb attaches to
+// whatever event the session eventually reports, and keeps the suppressed
+// error's own noise out of Sentry issues.
+const breadcrumbSuppressed = (
+  reason: string,
+  errorMessage: string,
+  error: unknown,
+  extra?: unknown
+): void => {
+  Sentry.addBreadcrumb({
+    category: "suppressed-error",
+    level: "warning",
+    message: errorMessage,
+    data: {
+      reason,
+      error: (error as { message?: string } | null)?.message ?? String(error),
+      ...(extra && typeof extra === "object" ? (extra as Record<string, unknown>) : {}),
+    },
+  });
+};
+
 // Fires the standard "Try again shortly" failure toast. Shared by the typed
 // ApiError branch and the legacy wallet-error fallback below so both paths
 // give the user the same feedback for a failed action.
@@ -133,13 +157,16 @@ export const errorManager = (
 
   if (error?.originalError || error?.message) {
     if (errorContains(error, "reject")) {
+      breadcrumbSuppressed("user-rejected", errorMessage, error, extra);
       return;
     }
     if (handleSwitchChainError(error, extra)) {
+      breadcrumbSuppressed("switch-chain", errorMessage, error, extra);
       return;
     }
   }
   if (handleExpectedError(error, toastError)) {
+    breadcrumbSuppressed("expected-state", errorMessage, error, extra);
     return;
   }
   if (toastError?.error) {
@@ -163,6 +190,7 @@ export const errorManager = (
   // Query and surface to the user as an error UI, so drop them on the
   // floor for Sentry. See DEV-236 / GAP-FRONTEND-13P.
   if (isTransientNetworkError(error)) {
+    breadcrumbSuppressed("transient-network", errorMessage, error, extra);
     return;
   }
 
@@ -171,6 +199,7 @@ export const errorManager = (
   // are tracked on the infra/indexer side, not here. See DEV-271 /
   // GAP-FRONTEND-1R1.
   if (isTransientHttpError(error)) {
+    breadcrumbSuppressed("transient-http", errorMessage, error, extra);
     return;
   }
 
