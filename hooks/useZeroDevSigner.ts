@@ -35,8 +35,8 @@ import { wait } from "@/utilities/wait";
 import { SignerUnavailableError } from "@/utilities/wallet/signerReadiness";
 import {
   selectUsableWallet,
-  type WalletStateSnapshot,
   waitForUsableWallet,
+  type WalletStateSnapshot,
 } from "@/utilities/wallet/waitForUsableWallet";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
