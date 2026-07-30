@@ -533,10 +533,9 @@ function MilestonesReviewPageContent({
 
   const handleCancelMilestone = useCallback(
     async (milestone: GrantMilestoneWithCompletion, reason?: string) => {
-      if (!data) return;
-      await cancelMilestone({ milestone, data, reason });
+      await cancelMilestone({ milestone, reason });
     },
-    [cancelMilestone, data]
+    [cancelMilestone]
   );
 
   const handleUncancelMilestone = useCallback(
