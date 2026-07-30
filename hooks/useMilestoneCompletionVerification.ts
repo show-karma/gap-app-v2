@@ -27,6 +27,7 @@ import {
 } from "@/utilities/milestones/attestationFailure";
 import {
   buildAttesterCandidates,
+  getMultiAttesterAddress,
   matchesSubmittedVerification,
   requireMilestoneRecipient,
 } from "@/utilities/milestones/attestationIdentity";
@@ -179,10 +180,17 @@ export const useMilestoneCompletionVerification = ({
       // wagmi's address is deliberately NOT a candidate: it can be an unlinked
       // wallet left connected from a previous session, and accepting it would
       // widen the match beyond this identity.
+      //
+      // The chain's MultiAttester IS a candidate, and in practice the one that
+      // actually lands: `GapContract.multiAttest` submits through it, so EAS
+      // sees the contract as `msg.sender` and the indexer stores it — not the
+      // signer — as `verifiedBy`. Without it every verification polls until it
+      // times out on a transaction that already succeeded.
       attesterCandidates: buildAttesterCandidates([
         signerAddress,
         smartWalletAddress,
         ...(user ? getLinkedWalletAddresses(user) : []),
+        getMultiAttesterAddress(targetChainId),
       ]),
     };
   };

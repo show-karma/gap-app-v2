@@ -1,3 +1,5 @@
+import type { TNetwork } from "@show-karma/karma-gap-sdk";
+import { chainIdToNetwork, Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 
 const EVM_ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
@@ -50,6 +52,29 @@ export const requireMilestoneRecipient = (
 };
 
 /**
+ * The MultiAttester ("multicall") contract for a chain, lower-cased, or null
+ * for a chain the SDK does not support.
+ *
+ * `GapContract.multiAttest` — the flow's only live attestation path, since the
+ * app sets no gelatoOpts and the EAS-direct path was removed — routes through
+ * `GAP.getMulticall(signer).multiSequentialAttest`. That contract is therefore
+ * `msg.sender` at EAS, so the indexer records IT as `verifiedBy`, never the
+ * user's wallet. Resolved from the SDK per chain rather than hardcoded so a new
+ * network needs no change here.
+ */
+export const getMultiAttesterAddress = (
+  chainId: number | string | null | undefined
+): string | null => {
+  const id = typeof chainId === "string" ? Number(chainId) : chainId;
+  if (typeof id !== "number" || !Number.isFinite(id)) return null;
+
+  const network = chainIdToNetwork[id as keyof typeof chainIdToNetwork] as TNetwork | undefined;
+  const multicall = network ? Networks[network]?.contracts?.multicall : undefined;
+
+  return isEvmAddress(multicall) ? multicall.toLowerCase() : null;
+};
+
+/**
  * Builds the lower-cased set of addresses that may legitimately appear as the
  * attester of an attestation this session just submitted.
  *
@@ -86,9 +111,13 @@ interface VerificationMatchInput {
  * True once the indexer shows a verification that this session plausibly
  * created.
  *
- * Strict path: the indexed attester matches one of our candidate addresses.
- * Tolerant path: the indexer has not resolved an attester yet, but the
- * verification attestation is a different one from what we saw before signing.
+ * Strict path: the indexed attester matches one of our candidate addresses
+ * (the signer, its linked wallets, or the chain's MultiAttester contract).
+ * Tolerant path: the attester is unresolved OR unrecognised, but the
+ * verification attestation is a different one from what we saw before signing
+ * — a UID that changed under a transaction we just sent is ours regardless of
+ * who the indexer attributes it to. The snapshot guard keeps a pre-existing
+ * verification (unchanged UID) from ever satisfying this branch.
  */
 export const matchesSubmittedVerification = ({
   verificationDetails,
@@ -98,9 +127,7 @@ export const matchesSubmittedVerification = ({
   if (!verificationDetails) return false;
 
   const verifiedBy = verificationDetails.verifiedBy?.toLowerCase();
-  if (verifiedBy) {
-    return candidates.includes(verifiedBy);
-  }
+  if (verifiedBy && candidates.includes(verifiedBy)) return true;
 
   const attestationUID = verificationDetails.attestationUID;
   return !!attestationUID && attestationUID !== previousAttestationUID;
