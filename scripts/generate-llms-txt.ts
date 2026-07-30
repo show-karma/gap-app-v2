@@ -1409,6 +1409,14 @@ function cleanDocsMarkdown(markdown: string): string {
       // Deprecated v1 API reference (plain text or markdown link form)
       .replace(/^(?:\[)?API DOCS \(v1\).*deprecated.*$/gim, "")
       .replace(/^Last updated\s+\d+\s+\w+\s+ago\s*$/gm, "")
+      // Docs-site chrome: copy-to-clipboard button label and the table-of-contents
+      // heading. Both are navigation affordances with no content value, and they
+      // survive onlyMainContent because they sit inside the article element.
+      .replace(/^Copy\s*$/gm, "")
+      .replace(/^On this page\s*$/gm, "")
+      // Docs-site footer pointing readers at llms.txt. Circular inside a generated
+      // LLM file, and repeated once per page.
+      .replace(/^For the complete documentation index, see llms\.txt\s*\..*$/gm, "")
       // Collapse orphan double spaces left by stripped markdown links (within lines only)
       .replace(/ {2,}/g, " ")
       .replace(/\n{3,}/g, "\n\n")
@@ -1475,7 +1483,7 @@ async function fetchSingleDocsPage(url: string): Promise<DocsPage | null> {
           url,
           formats: ["markdown"],
           onlyMainContent: true,
-          excludeTags: ["nav", "footer", "aside", "img"],
+          excludeTags: ["nav", "footer", "aside", "img", "button"],
           removeBase64Images: true,
         }),
         signal: AbortSignal.timeout(20_000),
