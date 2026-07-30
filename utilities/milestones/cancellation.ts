@@ -1,4 +1,6 @@
+import * as Sentry from "@sentry/nextjs";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import type { MilestoneAction } from "@/utilities/milestones/attestationFailure";
 
 /**
  * The only two fields that decide the terminal cancelled state (DEV-523): the
@@ -31,3 +33,33 @@ export const CANCELLED_MILESTONE_VERIFY_MESSAGE =
 /** Completion counterpart of {@link CANCELLED_MILESTONE_VERIFY_MESSAGE}. */
 export const CANCELLED_MILESTONE_COMPLETE_MESSAGE =
   "This milestone was cancelled, so it can no longer be completed. Un-cancel it first if the work is still expected.";
+
+/**
+ * Pre-signature guard for the verify/complete attestation flows. Cancelled is
+ * terminal, and the indexer ADMITS the attestation and then skips it — so a
+ * signature here costs gas and then never surfaces, which the poll can only
+ * report as an indexing timeout. The card already hides the buttons; this
+ * catches the stale-data race.
+ *
+ * Tells the user why (via the caller's toast) and leaves a breadcrumb, then
+ * returns `true` when the caller must stop before touching the wallet.
+ */
+export const rejectCancelledMilestone = (
+  milestone: CancellableMilestone & Pick<GrantMilestoneWithCompletion, "uid">,
+  action: MilestoneAction,
+  showError: (message: string) => void,
+  projectUid: string | undefined,
+  programId: string | undefined
+): boolean => {
+  if (!isMilestoneCancelled(milestone)) return false;
+  showError(
+    action === "verify" ? CANCELLED_MILESTONE_VERIFY_MESSAGE : CANCELLED_MILESTONE_COMPLETE_MESSAGE
+  );
+  Sentry.addBreadcrumb({
+    category: "milestone-attestation",
+    level: "warning",
+    message: `${action} milestone blocked: milestone is cancelled`,
+    data: { milestoneUID: milestone.uid, projectUid, programId },
+  });
+  return true;
+};

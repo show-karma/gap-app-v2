@@ -1,4 +1,3 @@
-import * as Sentry from "@sentry/nextjs";
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
@@ -24,6 +23,7 @@ import {
   describeMilestoneFailure,
   type MilestoneAction,
   type MilestoneFlowStep,
+  recordMilestoneFailureBreadcrumb,
 } from "@/utilities/milestones/attestationFailure";
 import {
   buildAttesterCandidates,
@@ -31,11 +31,7 @@ import {
   matchesSubmittedVerification,
   requireMilestoneRecipient,
 } from "@/utilities/milestones/attestationIdentity";
-import {
-  CANCELLED_MILESTONE_COMPLETE_MESSAGE,
-  CANCELLED_MILESTONE_VERIFY_MESSAGE,
-  isMilestoneCancelled,
-} from "@/utilities/milestones/cancellation";
+import { rejectCancelledMilestone } from "@/utilities/milestones/cancellation";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
@@ -434,20 +430,14 @@ export const useMilestoneCompletionVerification = ({
     const failure = describeMilestoneFailure(error, action);
     showError(failure.message);
 
-    // Every failure leaves a breadcrumb, reported or not: staying entirely
-    // silent is how this flow lost its telemetry in the first place.
-    Sentry.addBreadcrumb({
-      category: "milestone-attestation",
-      level: "warning",
-      message: `${action} milestone stopped at ${step}: ${failure.kind}`,
-      data: { milestoneUID: milestone.uid, projectUid: projectUID, programId, step },
+    recordMilestoneFailureBreadcrumb(action, step, failure.kind, {
+      milestoneUID: milestone.uid,
+      projectUid: projectUID,
+      programId,
     });
 
-    if (failure.expected) {
-      // Wallet not ready / user-state guidance, not a defect. The breadcrumb
-      // above is the whole telemetry record; capturing would be pure noise.
-      return;
-    }
+    // Wallet not ready / user-state guidance, not a defect.
+    if (failure.expected) return;
 
     errorManager(
       action === "verify" ? "Error verifying milestone" : "Error completing milestone",
@@ -481,20 +471,8 @@ export const useMilestoneCompletionVerification = ({
       return;
     }
 
-    // Cancelled is terminal, and the indexer ADMITS the verification
-    // attestation and then skips it — so a signature here costs gas and then
-    // never surfaces, which the poll can only report as an indexing timeout.
-    // The card already hides the button; this catches the stale-data race.
-    if (isMilestoneCancelled(milestone)) {
-      showError(CANCELLED_MILESTONE_VERIFY_MESSAGE);
-      Sentry.addBreadcrumb({
-        category: "milestone-attestation",
-        level: "warning",
-        message: "verify milestone blocked: milestone is cancelled",
-        data: { milestoneUID: milestone.uid, projectUid: data.project?.uid, programId },
-      });
+    if (rejectCancelledMilestone(milestone, "verify", showError, data.project?.uid, programId))
       return;
-    }
 
     // Use chainId from milestone (where attestation will occur)
     const attestationChainId = milestone.chainId;
@@ -604,18 +582,8 @@ export const useMilestoneCompletionVerification = ({
       return;
     }
 
-    // Same terminal-state guard as verify: the indexer skips completion
-    // attestations on a cancelled milestone, so signing one is pure gas burn.
-    if (isMilestoneCancelled(milestone)) {
-      showError(CANCELLED_MILESTONE_COMPLETE_MESSAGE);
-      Sentry.addBreadcrumb({
-        category: "milestone-attestation",
-        level: "warning",
-        message: "complete milestone blocked: milestone is cancelled",
-        data: { milestoneUID: milestone.uid, projectUid: data.project?.uid, programId },
-      });
+    if (rejectCancelledMilestone(milestone, "complete", showError, data.project?.uid, programId))
       return;
-    }
 
     const projectUID = data.project.uid;
 

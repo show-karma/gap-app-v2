@@ -290,6 +290,10 @@ export function MilestoneCard({
     milestone.cancellation,
     milestone.verificationDetails,
     milestone.completionDetails,
+    // Late vs Pending is derived from the deadline, and on an uncompleted
+    // milestone every other input above is null — so without this the badge
+    // stays "Past Due" after the due date is moved forward.
+    milestone.dueDate,
   ]);
 
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);

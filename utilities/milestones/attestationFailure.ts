@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 import { isMissingMilestoneRecipientError } from "@/utilities/milestones/attestationIdentity";
 import { isRetryConditionNotMetError } from "@/utilities/retries";
@@ -158,4 +159,24 @@ export const describeMilestoneFailure = (
     message: `${label}: an unexpected error occurred.`,
     expected: false,
   };
+};
+
+/**
+ * Every verify/complete failure leaves a breadcrumb, reported to Sentry or not:
+ * staying entirely silent is how this flow lost its telemetry in the first
+ * place. For an `expected` failure (wallet not hydrated yet) this breadcrumb is
+ * the whole telemetry record — capturing it as well would be pure noise.
+ */
+export const recordMilestoneFailureBreadcrumb = (
+  action: MilestoneAction,
+  step: MilestoneFlowStep,
+  kind: MilestoneFailureKind,
+  context: { milestoneUID: string; projectUid: string | undefined; programId: string | undefined }
+): void => {
+  Sentry.addBreadcrumb({
+    category: "milestone-attestation",
+    level: "warning",
+    message: `${action} milestone stopped at ${step}: ${kind}`,
+    data: { ...context, step },
+  });
 };

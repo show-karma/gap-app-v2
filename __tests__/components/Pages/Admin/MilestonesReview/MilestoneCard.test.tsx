@@ -9,7 +9,13 @@ function render(ui: ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return rtlRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  // Provider passed as a `wrapper` (not inlined into `ui`) so `rerender` keeps
+  // the same client — a rerender is how memo staleness is observed.
+  return rtlRender(ui, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+  });
 }
 
 vi.mock("next/dynamic", () => ({
@@ -342,6 +348,33 @@ describe("MilestoneCard (admin review) — cancellation banner", () => {
 
     expect(screen.queryByText("Cancelled")).not.toBeInTheDocument();
     expect(screen.queryByText(CANCELLER)).not.toBeInTheDocument();
+  });
+});
+
+describe("MilestoneCard (admin review) — status badge freshness", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should_recompute_the_status_badge_when_only_the_due_date_changes", () => {
+    const overdue = createMilestone({ dueDate: "2020-01-01T00:00:00Z" });
+    const { rerender } = render(<MilestoneCard {...DEFAULT_PROPS} milestone={overdue} />);
+
+    expect(screen.getByText("Past Due")).toBeInTheDocument();
+
+    // Only the deadline moves. `status`, `cancellation`, `completionDetails`
+    // and `verificationDetails` are byte-identical (and null) across both
+    // renders, so a memo keyed on those alone never recomputes and the badge
+    // stays "Past Due" after an admin extends the due date.
+    rerender(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({ dueDate: "2030-01-01T00:00:00Z" })}
+      />
+    );
+
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+    expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
   });
 });
 
