@@ -1,23 +1,13 @@
 "use client";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import type { MaturityStageOptions, SortByOptions, StatusOptions } from "@/types";
+import type { MaturityStageOptions, SortByOptions } from "@/types";
 import type { CommunityProjects } from "@/types/v2/community";
+import {
+  COMMUNITY_PROJECTS_PAGE_SIZE,
+  getStatusFromMaturityStage,
+  mapSortToApiValue,
+} from "@/utilities/queries/v2/communityProjectsRequest";
 import { getCommunityProjects } from "@/utilities/queries/v2/getCommunityData";
-
-const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
-  if (stage === "all") return undefined;
-  return `maturity-stage-${stage}` as StatusOptions;
-};
-
-const mapSortToApiValue = (sortOption: SortByOptions): string => {
-  const sortMappings: Record<SortByOptions, string> = {
-    recent: "recent",
-    completed: "completed",
-    milestones: "milestones",
-    txnCount: "transactions_desc",
-  };
-  return sortMappings[sortOption];
-};
 
 interface UseInfiniteCommunityProjectsOptions {
   communityId: string;
@@ -37,7 +27,7 @@ export function useCommunityProjectsInfinite({
   maturityStage,
   programId,
   trackIds,
-  limit = 12,
+  limit = COMMUNITY_PROJECTS_PAGE_SIZE,
   enabled = true,
 }: UseInfiniteCommunityProjectsOptions) {
   const queryKey = [
