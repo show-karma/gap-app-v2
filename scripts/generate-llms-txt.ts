@@ -1925,6 +1925,44 @@ function generateLlmsFullTxt(
   return lines.join("\n");
 }
 
+// Sections that must never render with zero link bullets. Generation aborts
+// (non-zero exit) instead of committing a document with an empty section, so
+// the monthly workflow goes red rather than silently publishing a hollow file.
+const REQUIRED_SECTIONS: Record<string, string[]> = {
+  "llms.txt": ["## Landing Pages", "## Site URL Index", "## Optional"],
+  "llms-full.txt": ["## Site URL Index"],
+};
+
+function assertRequiredSections(name: string, content: string): void {
+  const requiredSections = REQUIRED_SECTIONS[name];
+  if (!requiredSections) {
+    throw new Error(`No required-section rules defined for ${name}`);
+  }
+
+  const lines = content.split("\n");
+
+  for (const header of requiredSections) {
+    const start = lines.indexOf(header);
+    if (start === -1) {
+      throw new Error(`${name}: required section "${header}" is missing`);
+    }
+
+    let hasBullet = false;
+    for (let index = start + 1; index < lines.length; index++) {
+      const line = lines[index];
+      if (line.startsWith("## ")) break;
+      if (line.startsWith("- [")) {
+        hasBullet = true;
+        break;
+      }
+    }
+
+    if (!hasBullet) {
+      throw new Error(`${name}: required section "${header}" rendered with no entries`);
+    }
+  }
+}
+
 async function main() {
   console.info("Generating llms.txt and llms-full.txt...");
 
@@ -1943,6 +1981,9 @@ async function main() {
 
   const llmsTxt = generateLlmsTxt(articles, landingPages, sitemapEntries, docsPages);
   const llmsFullTxt = generateLlmsFullTxt(articles, landingPages, sitemapEntries, docsPages);
+
+  assertRequiredSections("llms.txt", llmsTxt);
+  assertRequiredSections("llms-full.txt", llmsFullTxt);
 
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   fs.writeFileSync(path.join(OUTPUT_DIR, "llms.txt"), llmsTxt, "utf-8");
@@ -2043,6 +2084,8 @@ export {
   parseUrlSetEntries,
   parseSitemapIndexLocs,
   fetchSitemapEntries,
+  assertRequiredSections,
+  REQUIRED_SECTIONS,
   SITEMAP_INDEX_CHILD_ALLOWLIST,
   generateSitemapSection,
   generateLlmsTxt,

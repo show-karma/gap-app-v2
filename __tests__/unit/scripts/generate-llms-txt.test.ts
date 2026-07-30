@@ -5,6 +5,7 @@ import type {
   SitemapEntry,
 } from "../../../scripts/generate-llms-txt";
 import {
+  assertRequiredSections,
   BOILERPLATE_LINE_PATTERNS,
   buildSnippet,
   categorizeDocsPage,
@@ -43,6 +44,7 @@ import {
   PROJECT_NAME,
   parseSitemapIndexLocs,
   parseUrlSetEntries,
+  REQUIRED_SECTIONS,
   SITE_URL,
   SITEMAP_DESCRIPTION_MAP,
   SITEMAP_INDEX_CHILD_ALLOWLIST,
@@ -1685,5 +1687,103 @@ describe("fetchSitemapEntries", () => {
     );
 
     await expect(fetchSitemapEntries()).rejects.toThrow(/\(503\)/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// assertRequiredSections — the generated documents cannot ship an empty section
+// ---------------------------------------------------------------------------
+
+describe("assertRequiredSections", () => {
+  const articles = [makeArticle()];
+  const landingPages = [
+    makeLandingPage({ path: "/", label: "Home" }),
+    makeLandingPage({
+      path: "/funders",
+      label: "For Funders",
+      url: "https://karmahq.xyz/funders",
+    }),
+  ];
+
+  it("throws when the Site URL Index renders empty", () => {
+    // The exact silent-regression input: every sitemap entry is also a landing
+    // page, so the URL index section filters down to nothing.
+    const output = generateLlmsTxt(
+      articles,
+      landingPages,
+      [
+        makeSitemapEntry({ url: "https://karmahq.xyz" }),
+        makeSitemapEntry({ url: "https://karmahq.xyz/funders" }),
+      ],
+      []
+    );
+
+    expect(output).toContain("## Site URL Index");
+    expect(() => assertRequiredSections("llms.txt", output)).toThrow(/Site URL Index/);
+  });
+
+  it("passes when the Site URL Index has at least one entry", () => {
+    const output = generateLlmsTxt(
+      articles,
+      landingPages,
+      [
+        makeSitemapEntry({ url: "https://karmahq.xyz" }),
+        makeSitemapEntry({ url: "https://www.karmahq.xyz/about", priority: "0.8" }),
+      ],
+      []
+    );
+
+    expect(() => assertRequiredSections("llms.txt", output)).not.toThrow();
+  });
+
+  it("validates llms-full.txt output too", () => {
+    const emptyIndex = generateLlmsFullTxt(
+      articles,
+      landingPages,
+      [makeSitemapEntry({ url: "https://karmahq.xyz" })],
+      []
+    );
+    expect(() => assertRequiredSections("llms-full.txt", emptyIndex)).toThrow(/Site URL Index/);
+
+    const populatedIndex = generateLlmsFullTxt(
+      articles,
+      landingPages,
+      [makeSitemapEntry({ url: "https://www.karmahq.xyz/about", priority: "0.8" })],
+      []
+    );
+    expect(() => assertRequiredSections("llms-full.txt", populatedIndex)).not.toThrow();
+  });
+
+  it("throws when a required section has no link bullets", () => {
+    const output = [
+      "# Karma",
+      "",
+      "## Landing Pages",
+      "",
+      "## Site URL Index",
+      "- [Home](https://www.karmahq.xyz)",
+      "",
+      "## Optional",
+      "- [Complete LLM Reference](https://www.karmahq.xyz/llms-full.txt)",
+    ].join("\n");
+
+    expect(() => assertRequiredSections("llms.txt", output)).toThrow(/Landing Pages/);
+  });
+
+  it("throws when a required section is missing entirely", () => {
+    expect(() => assertRequiredSections("llms.txt", "# Karma\n")).toThrow(
+      /required section "## Landing Pages" is missing/
+    );
+  });
+
+  it("throws for an unknown document name", () => {
+    expect(() => assertRequiredSections("unknown.txt", "# Karma\n")).toThrow(
+      /No required-section rules/
+    );
+  });
+
+  it("requires the Site URL Index in both documents", () => {
+    expect(REQUIRED_SECTIONS["llms.txt"]).toContain("## Site URL Index");
+    expect(REQUIRED_SECTIONS["llms-full.txt"]).toContain("## Site URL Index");
   });
 });
