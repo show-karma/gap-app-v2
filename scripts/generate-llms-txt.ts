@@ -67,8 +67,16 @@ const OUTPUT_DIR = path.resolve(__dirname, "../public");
 const BUILD_TIMESTAMP = new Date().toISOString();
 
 const DEFAULT_DESCRIPTION =
-  "Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. " +
-  "Ecosystems use Karma to allocate funding, track milestones, and measure impact.";
+  "Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, " +
+  "with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked " +
+  "nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, " +
+  "and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned " +
+  "foundations, grounded in every IRS 990 on record with every answer cited. Karma also runs onchain funding " +
+  "programs on Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, and Sei.";
+
+const HOME_SUMMARY =
+  "Foundations use Karma to run grant programs, donor advisors to research nonprofits, " +
+  "and nonprofits to find aligned funders.";
 
 const SITEMAP_LABEL_MAP: Record<string, string> = {
   "/": "Home",
@@ -84,7 +92,7 @@ const SITEMAP_LABEL_MAP: Record<string, string> = {
 };
 
 const SITEMAP_DESCRIPTION_MAP: Record<string, string> = {
-  "/": "Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.",
+  "/": HOME_SUMMARY,
   "/communities": "Explore DAOs, protocols, and organizations running funding programs on Karma",
   "/create-project-profile":
     "Create a public project profile to track funding, milestones, and updates",
@@ -128,10 +136,9 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
   {
     path: "/",
     label: "Home",
-    fallbackTitle: "Karma - Where builders get funded and ecosystems grow",
+    fallbackTitle: "Karma - Funding software for foundations, donor advisors, and nonprofits",
     fallbackDescription: DEFAULT_DESCRIPTION,
-    curatedDescription:
-      "Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.",
+    curatedDescription: HOME_SUMMARY,
     minContentChars: 400,
     maxContentChars: 4200,
     sourceFallbackFiles: [
