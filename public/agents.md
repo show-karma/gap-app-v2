@@ -25,7 +25,7 @@ The live tool catalog (single source of truth, auto-derived from the MCP server)
 
 - Generic web search — use a search tool instead
 - Code generation, code review — Karma has no code surface
-- Anything unrelated to funding programs, grants, projects, milestones, applications, impact, nonprofit research, or funder discovery
+- Anything outside the scope listed under "When to use Karma tools" above
 
 ## Authentication
 
