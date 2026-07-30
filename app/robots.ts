@@ -15,6 +15,20 @@ const SEARCH_AND_USER_FETCH_BOTS = [
   "Applebot",
 ];
 
+// AI crawlers get the wildcard policy plus the agent-facing files, which are
+// the surfaces written for them.
+const AI_CRAWLER_ALLOW = [...WILDCARD_ALLOW, "/llms.txt", "/llms-full.txt", "/agents.md"];
+
+const AI_CRAWLERS = [
+  "GPTBot",
+  "ChatGPT-User",
+  "ClaudeBot",
+  "PerplexityBot",
+  "Google-Extended",
+  "CCBot",
+  "Bytespider",
+];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -30,40 +44,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: WILDCARD_ALLOW,
         disallow: WILDCARD_DISALLOW,
       })),
-      {
-        userAgent: "GPTBot",
-        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
-        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/", "/extended-sitemap.xml"],
-      },
-      {
-        userAgent: "ChatGPT-User",
-        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
-        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/", "/extended-sitemap.xml"],
-      },
-      {
-        userAgent: "ClaudeBot",
-        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
-        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/", "/extended-sitemap.xml"],
-      },
-      {
-        userAgent: "PerplexityBot",
-        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
-        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/", "/extended-sitemap.xml"],
-      },
-      {
-        userAgent: "Google-Extended",
-        allow: ["/", "/.well-known/", "/llms.txt", "/llms-full.txt", "/agents.md"],
-        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/", "/extended-sitemap.xml"],
-      },
-      // Training-only crawlers: no answer-engine value, full disallow.
-      {
-        userAgent: "CCBot",
-        disallow: ["/"],
-      },
-      {
-        userAgent: "Bytespider",
-        disallow: ["/"],
-      },
+      ...AI_CRAWLERS.map((userAgent) => ({
+        userAgent,
+        allow: AI_CRAWLER_ALLOW,
+        disallow: WILDCARD_DISALLOW,
+      })),
     ],
     // Only the fresh index URL is advertised: Google's stored sitemap state is
     // keyed per URL, and the old /sitemap.xml + /sitemap-index.xml entries are

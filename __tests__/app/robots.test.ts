@@ -10,6 +10,16 @@ const SEARCH_AND_USER_FETCH_BOTS = [
   "Applebot",
 ];
 
+const AI_CRAWLERS = [
+  "GPTBot",
+  "ChatGPT-User",
+  "ClaudeBot",
+  "PerplexityBot",
+  "Google-Extended",
+  "CCBot",
+  "Bytespider",
+];
+
 describe("robots", () => {
   const result = robots();
 
@@ -34,7 +44,7 @@ describe("robots", () => {
 
   it("should allow /.well-known/ for every AI crawler rule", () => {
     const rules = result.rules as Array<Record<string, unknown>>;
-    const aiCrawlers = ["GPTBot", "ChatGPT-User", "ClaudeBot", "PerplexityBot", "Google-Extended"];
+    const aiCrawlers = AI_CRAWLERS;
     for (const crawler of aiCrawlers) {
       const rule = rules.find((r) => r.userAgent === crawler);
       expect(rule?.allow).toContain("/.well-known/");
@@ -72,7 +82,7 @@ describe("robots", () => {
 
   describe("AI crawler rules", () => {
     const rules = result.rules as Array<Record<string, unknown>>;
-    const aiCrawlers = ["GPTBot", "ChatGPT-User", "ClaudeBot", "PerplexityBot", "Google-Extended"];
+    const aiCrawlers = AI_CRAWLERS;
 
     for (const crawler of aiCrawlers) {
       it(`should have a rule for ${crawler}`, () => {
@@ -136,14 +146,14 @@ describe("robots", () => {
     }
   });
 
-  describe("training-only crawler blocks", () => {
+  describe("crawler rule inventory", () => {
     const rules = result.rules as Array<Record<string, unknown>>;
 
-    it("should block the whole site for exactly CCBot and Bytespider", () => {
+    it("should not block the whole site for any crawler", () => {
       const fullyBlocked = rules
         .filter((r) => (r.disallow as string[] | undefined)?.includes("/"))
         .map((r) => r.userAgent);
-      expect(fullyBlocked.sort()).toEqual(["Bytespider", "CCBot"]);
+      expect(fullyBlocked).toEqual([]);
     });
 
     it("should declare exactly the expected user agents", () => {
@@ -177,17 +187,17 @@ describe("robots", () => {
       expect(googlebot?.allow).not.toContain("/llms.txt");
     });
 
-    it("should disallow the entire site for CCBot", () => {
-      const rule = rules.find((r) => r.userAgent === "CCBot");
-      expect(rule).toBeDefined();
-      expect(rule?.disallow).toContain("/");
-    });
-
-    it("should disallow the entire site for Bytespider", () => {
-      const rule = rules.find((r) => r.userAgent === "Bytespider");
-      expect(rule).toBeDefined();
-      expect(rule?.disallow).toContain("/");
-    });
+    it.each(["CCBot", "Bytespider"])(
+      "should grant %s the same access as other AI crawlers",
+      (bot) => {
+        const rule = rules.find((r) => r.userAgent === bot);
+        const gptbot = rules.find((r) => r.userAgent === "GPTBot");
+        expect(rule).toBeDefined();
+        expect(rule?.allow).toContain("/");
+        expect(rule?.allow).toEqual(gptbot?.allow);
+        expect(rule?.disallow).toEqual(gptbot?.disallow);
+      }
+    );
 
     it("should explicitly list ChatGPT-User as an allowed crawler", () => {
       const rule = rules.find((r) => r.userAgent === "ChatGPT-User");
