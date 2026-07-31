@@ -1,17 +1,29 @@
 /**
  * Pure, framework-free (Edge-safe) client for the project indexability decision.
- * No Node/Next imports — only the sibling path helper, globalThis.fetch,
+ * No Node/Next imports — only the sibling path helpers, globalThis.fetch,
  * AbortController, and timers — so it runs on the Edge runtime as well as in
  * server/metadata code. It is strict on the wire and fails closed: any failure
  * degrades to noindex,follow at the request's normalized path (ADR 0001, D5/D9).
+ *
+ * Amendment to that fail-closed rule: a transient indexer blip must not
+ * de-index a page that was just known to be indexable, so a failed lookup
+ * first replays the last successful decision for the same endpoint when one is
+ * less than PROJECT_INDEXABILITY_LKG_TTL_MS old. Fail-closed remains the
+ * behavior whenever no fresh-enough decision is known. The cache is per runtime
+ * instance (see project-indexability-lkg-cache.ts) — it covers warm instances
+ * only, so a cold instance during an outage still fails closed.
  */
 import {
   buildProjectIndexabilityEndpoint,
   type ProjectIndexabilityRequest,
 } from "./project-indexability";
+import {
+  createProjectIndexabilityLkgCache,
+  type ProjectIndexabilityLkgCache,
+} from "./project-indexability-lkg-cache";
 
 /** The exact indexability decision union returned by the backend. */
-type ProjectIndexabilityDecision =
+export type ProjectIndexabilityDecision =
   | { outcome: "canonical-indexable"; url: string }
   | { outcome: "duplicate-alias"; url: string; canonicalUrl: string }
   | { outcome: "noindex-follow"; url: string }
@@ -24,9 +36,31 @@ interface FetchProjectIndexabilityOptions {
   baseUrl: string;
   fetcher?: ProjectIndexabilityFetcher;
   timeoutMs?: number;
+  /** Overridable last-known-good store; defaults to the module-level cache. */
+  lkgCache?: ProjectIndexabilityLkgCache<ProjectIndexabilityDecision>;
 }
 
 const DEFAULT_TIMEOUT_MS = 2500;
+
+/**
+ * How long a successful decision may be replayed after a failed lookup. Kept
+ * deliberately short: serving a stale "indexable" indefinitely is not
+ * acceptable, but indexer blips last seconds to minutes, which this covers.
+ */
+export const PROJECT_INDEXABILITY_LKG_TTL_MS = 5 * 60 * 1000;
+
+/** Bounds instance memory; entries are one small decision object each. */
+const PROJECT_INDEXABILITY_LKG_MAX_ENTRIES = 500;
+
+const projectIndexabilityLkgCache = createProjectIndexabilityLkgCache<ProjectIndexabilityDecision>({
+  ttlMs: PROJECT_INDEXABILITY_LKG_TTL_MS,
+  maxEntries: PROJECT_INDEXABILITY_LKG_MAX_ENTRIES,
+});
+
+/** Drop every remembered decision (operational reset; test isolation). */
+export function clearProjectIndexabilityLkgCache(): void {
+  projectIndexabilityLkgCache.clear();
+}
 
 /**
  * Strictly parse an unknown value into a ProjectIndexabilityDecision, or null.
@@ -91,9 +125,22 @@ export function parseProjectIndexabilityDecision(
 
 /**
  * Fetch the authoritative indexability decision for a parsed request. HTTP
- * 404/410 map directly to `gone`; a valid 200 body is strictly parsed; every
- * other case — missing baseUrl, 5xx, invalid JSON/shape, network error, or
- * timeout/abort — silently fails closed to noindex,follow at normalizedPath.
+ * 404/410 map directly to `gone`; a valid 200 body is strictly parsed and
+ * remembered as the endpoint's last-known-good decision. Every other case —
+ * 5xx, invalid JSON/shape, network error, or timeout/abort — replays that
+ * remembered decision while it is younger than PROJECT_INDEXABILITY_LKG_TTL_MS,
+ * and otherwise fails closed to noindex,follow at normalizedPath. A missing
+ * baseUrl is a config error, not a blip, so it fails closed without consulting
+ * the cache.
+ *
+ * `gone` is never remembered and never overridden by the cache: it is a
+ * definitive fresh answer, so in either of its forms — an HTTP 404/410 or a 200
+ * body saying `gone` — it invalidates whatever was remembered for the endpoint.
+ * A removed route can then neither be resurrected as indexable from memory nor
+ * keep answering 404/410 once the indexer stops saying so.
+ *
+ * The lookup is stamped with the cache's clock *before* the request goes out,
+ * so a slow response cannot overwrite a decision observed after it started.
  */
 export async function fetchProjectIndexabilityDecision(
   parsed: ProjectIndexabilityRequest,
@@ -118,6 +165,16 @@ export async function fetchProjectIndexabilityDecision(
       : DEFAULT_TIMEOUT_MS;
 
   const endpoint = buildProjectIndexabilityEndpoint(baseUrl, parsed);
+  const lkgCache = options.lkgCache ?? projectIndexabilityLkgCache;
+  // The endpoint already encodes identifier + route + grantUid, so it is the
+  // cache key. Every remembered decision was validated by the parser, so a
+  // replay can never introduce an unvalidated redirect target.
+  const lastKnownGood = (): ProjectIndexabilityDecision => lkgCache.get(endpoint) ?? failClosed;
+  // Stamped before the request is issued: the decision describes the endpoint as
+  // of this moment, and ordering writes by it keeps a delayed response from
+  // overwriting one observed later.
+  const observedAt = lkgCache.now();
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -129,17 +186,27 @@ export async function fetchProjectIndexabilityDecision(
     });
 
     if (response.status === 404 || response.status === 410) {
+      lkgCache.invalidate(endpoint, observedAt);
       return { outcome: "gone", status: response.status };
     }
 
     if (response.status !== 200) {
-      return failClosed;
+      return lastKnownGood();
     }
 
     const body: unknown = await response.json();
-    return parseProjectIndexabilityDecision(body) ?? failClosed;
+    const decision = parseProjectIndexabilityDecision(body);
+    if (!decision) {
+      return lastKnownGood();
+    }
+    if (decision.outcome === "gone") {
+      lkgCache.invalidate(endpoint, observedAt);
+    } else {
+      lkgCache.set(endpoint, decision, observedAt);
+    }
+    return decision;
   } catch {
-    return failClosed;
+    return lastKnownGood();
   } finally {
     clearTimeout(timer);
   }

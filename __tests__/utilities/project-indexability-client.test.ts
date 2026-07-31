@@ -1,9 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildProjectIndexabilityEndpoint } from "@/utilities/project-indexability";
 import {
+  clearProjectIndexabilityLkgCache,
   fetchProjectIndexabilityDecision,
+  PROJECT_INDEXABILITY_LKG_TTL_MS,
+  type ProjectIndexabilityDecision,
   parseProjectIndexabilityDecision,
 } from "@/utilities/project-indexability-client";
+import { createProjectIndexabilityLkgCache } from "@/utilities/project-indexability-lkg-cache";
 
 /**
  * RED (Edge-safe project indexability client, ADR 0001, D5). A strict runtime
@@ -34,7 +38,15 @@ function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status });
 }
 
+// The last-known-good store is module state shared by every test in this file,
+// so it is reset around each one: fail-closed expectations must not be served a
+// decision cached by an earlier success.
+beforeEach(() => {
+  clearProjectIndexabilityLkgCache();
+});
+
 afterEach(() => {
+  clearProjectIndexabilityLkgCache();
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
@@ -352,6 +364,16 @@ describe("fetchProjectIndexabilityDecision", () => {
     await expect(promise).resolves.toEqual(FAIL_CLOSED);
   });
 
+  it("does not remember a failed lookup: two consecutive 5xx both fail closed", async () => {
+    const fetcher = vi.fn<Fetcher>(async () => new Response("boom", { status: 500 }));
+
+    const first = await fetchProjectIndexabilityDecision(parsed, { baseUrl: BASE_URL, fetcher });
+    const second = await fetchProjectIndexabilityDecision(parsed, { baseUrl: BASE_URL, fetcher });
+
+    expect(first).toEqual(FAIL_CLOSED);
+    expect(second).toEqual(FAIL_CLOSED);
+  });
+
   it("clears the timeout timer on success", async () => {
     vi.useFakeTimers();
     const decision = {
@@ -369,5 +391,288 @@ describe("fetchProjectIndexabilityDecision", () => {
     expect(result).toEqual(decision);
     // A cleared timeout leaves no pending fake timers.
     expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+/**
+ * Last-known-good fallback. Fail-closed is the right default when nothing is
+ * known, but it is the wrong answer when the same endpoint answered
+ * "indexable" seconds ago and the indexer has merely blipped — that de-indexes
+ * a healthy page. A successful decision is therefore replayed for at most
+ * PROJECT_INDEXABILITY_LKG_TTL_MS after a failed lookup, and never longer.
+ */
+describe("fetchProjectIndexabilityDecision last-known-good fallback", () => {
+  const INDEXABLE = {
+    outcome: "canonical-indexable",
+    url: "/project/paraswap/team",
+  };
+
+  function respondOnce(...responses: Array<() => Response>) {
+    let index = 0;
+    return vi.fn<Fetcher>(async () => {
+      const factory = responses[Math.min(index, responses.length - 1)];
+      index += 1;
+      return factory();
+    });
+  }
+
+  async function primeIndexable(): Promise<void> {
+    const fetcher = vi.fn<Fetcher>(async () => jsonResponse(200, INDEXABLE));
+    const result = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher,
+      timeoutMs: 5000,
+    });
+    expect(result).toEqual(INDEXABLE);
+  }
+
+  it("replays the last successful decision when the indexer returns 5xx", async () => {
+    await primeIndexable();
+
+    const result = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+      timeoutMs: 5000,
+    });
+
+    expect(result).toEqual(INDEXABLE);
+  });
+
+  it("replays the last successful decision when the indexer request times out", async () => {
+    vi.useFakeTimers();
+    await primeIndexable();
+
+    const hangingFetcher = vi.fn<Fetcher>(
+      (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          });
+        })
+    );
+
+    const promise = fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: hangingFetcher,
+      timeoutMs: 5000,
+    });
+    await vi.advanceTimersByTimeAsync(5000);
+
+    await expect(promise).resolves.toEqual(INDEXABLE);
+  });
+
+  it("replays the last successful decision when the indexer returns an unparseable 200", async () => {
+    await primeIndexable();
+
+    const result = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("{not-json", { status: 200 })),
+      timeoutMs: 5000,
+    });
+
+    expect(result).toEqual(INDEXABLE);
+  });
+
+  it("replays the last successful decision one millisecond before the TTL expires", async () => {
+    vi.useFakeTimers();
+    await primeIndexable();
+    await vi.advanceTimersByTimeAsync(PROJECT_INDEXABILITY_LKG_TTL_MS - 1);
+
+    const result = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+      timeoutMs: 5000,
+    });
+
+    expect(result).toEqual(INDEXABLE);
+  });
+
+  it("falls back to noindex-follow once the TTL has elapsed", async () => {
+    vi.useFakeTimers();
+    await primeIndexable();
+    await vi.advanceTimersByTimeAsync(PROJECT_INDEXABILITY_LKG_TTL_MS);
+
+    const result = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+      timeoutMs: 5000,
+    });
+
+    expect(result).toEqual(FAIL_CLOSED);
+  });
+
+  it("keeps a fresh gone answer authoritative over a cached indexable decision", async () => {
+    await primeIndexable();
+
+    const result = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("gone", { status: 410 })),
+      timeoutMs: 5000,
+    });
+
+    expect(result).toEqual({ outcome: "gone", status: 410 });
+  });
+
+  it("never remembers a gone answer: a later failure fails closed rather than replaying 404", async () => {
+    const fetcher = respondOnce(
+      () => new Response("gone", { status: 404 }),
+      () => new Response("boom", { status: 500 })
+    );
+
+    const gone = await fetchProjectIndexabilityDecision(parsed, { baseUrl: BASE_URL, fetcher });
+    const afterFailure = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher,
+    });
+
+    expect(gone).toEqual({ outcome: "gone", status: 404 });
+    expect(afterFailure).toEqual(FAIL_CLOSED);
+  });
+
+  it("forgets a remembered decision once the route is authoritatively gone", async () => {
+    await primeIndexable();
+
+    const gone = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("gone", { status: 410 })),
+      timeoutMs: 5000,
+    });
+    // The removal happened; a blip right after it must not resurrect the page.
+    const afterFailure = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+      timeoutMs: 5000,
+    });
+
+    expect(gone).toEqual({ outcome: "gone", status: 410 });
+    expect(afterFailure).toEqual(FAIL_CLOSED);
+  });
+
+  it("forgets a remembered decision on a 200 body that says gone", async () => {
+    await primeIndexable();
+
+    const gone = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => jsonResponse(200, { outcome: "gone", status: 404 })),
+      timeoutMs: 5000,
+    });
+    const afterFailure = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+      timeoutMs: 5000,
+    });
+
+    expect(gone).toEqual({ outcome: "gone", status: 404 });
+    // Neither the old indexable decision nor the gone answer itself is replayed.
+    expect(afterFailure).toEqual(FAIL_CLOSED);
+  });
+
+  it("does not let a delayed lookup overwrite a decision observed after it started", async () => {
+    // A manual clock makes the two observation stamps unambiguous; the shared
+    // module cache is bypassed so nothing else can interfere.
+    let currentTime = 1_000_000;
+    const lkgCache = createProjectIndexabilityLkgCache<ProjectIndexabilityDecision>({
+      ttlMs: PROJECT_INDEXABILITY_LKG_TTL_MS,
+      maxEntries: 10,
+      now: () => currentTime,
+    });
+    const noindex: ProjectIndexabilityDecision = {
+      outcome: "noindex-follow",
+      url: parsed.normalizedPath,
+    };
+
+    let releaseSlowLookup: (() => void) | undefined;
+    const slow = fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      timeoutMs: 60_000,
+      lkgCache,
+      fetcher: () =>
+        new Promise<Response>((resolve) => {
+          releaseSlowLookup = () => resolve(jsonResponse(200, INDEXABLE));
+        }),
+    });
+    await vi.waitFor(() => expect(releaseSlowLookup).toBeDefined());
+
+    // The project stops being indexable while the first lookup is still open.
+    currentTime += 1000;
+    await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      timeoutMs: 60_000,
+      lkgCache,
+      fetcher: respondOnce(() => jsonResponse(200, noindex)),
+    });
+
+    releaseSlowLookup?.();
+    await expect(slow).resolves.toEqual(INDEXABLE);
+
+    const duringOutage = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      timeoutMs: 60_000,
+      lkgCache,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+    });
+
+    expect(duringOutage).toEqual(noindex);
+  });
+
+  it("keys the cache per endpoint, so one route's success cannot rescue another route", async () => {
+    await primeIndexable();
+
+    const otherRoute = {
+      identifier: "paraswap",
+      query: { route: "root" as const },
+      normalizedPath: "/project/paraswap",
+    };
+    const result = await fetchProjectIndexabilityDecision(otherRoute, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+      timeoutMs: 5000,
+    });
+
+    expect(result).toEqual({
+      outcome: "noindex-follow",
+      url: otherRoute.normalizedPath,
+    });
+  });
+
+  it("fails closed on a missing baseUrl even when a decision is cached", async () => {
+    await primeIndexable();
+    const fetcher = vi.fn<Fetcher>(async () => jsonResponse(200, INDEXABLE));
+
+    const result = await fetchProjectIndexabilityDecision(parsed, { baseUrl: "", fetcher });
+
+    expect(result).toEqual(FAIL_CLOSED);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("uses an injected cache instead of the module-level one when provided", async () => {
+    const injected = createProjectIndexabilityLkgCache<ProjectIndexabilityDecision>({
+      ttlMs: PROJECT_INDEXABILITY_LKG_TTL_MS,
+      maxEntries: 10,
+    });
+    await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => jsonResponse(200, INDEXABLE)),
+      lkgCache: injected,
+    });
+
+    // The module-level cache saw nothing, so the shared path still fails closed.
+    const fromModuleCache = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+    });
+    // The injected cache did remember it.
+    const fromInjectedCache = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+      lkgCache: injected,
+    });
+
+    expect(fromModuleCache).toEqual(FAIL_CLOSED);
+    expect(fromInjectedCache).toEqual(INDEXABLE);
+  });
+
+  it("pins the TTL to five minutes", () => {
+    expect(PROJECT_INDEXABILITY_LKG_TTL_MS).toBe(5 * 60 * 1000);
   });
 });
