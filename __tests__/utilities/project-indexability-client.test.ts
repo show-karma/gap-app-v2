@@ -438,6 +438,34 @@ describe("fetchProjectIndexabilityDecision last-known-good fallback", () => {
     expect(result).toEqual(INDEXABLE);
   });
 
+  // proxy.ts turns a `redirect` outcome into a 308, which browsers and crawlers
+  // cache hard. Replaying a remembered relocation during an outage would move
+  // users to a possibly-stale URL that outlives the outage, so redirects fail
+  // closed even though indexability outcomes are replayed.
+  it("never replays a remembered redirect: a later failure fails closed", async () => {
+    const REDIRECT = {
+      outcome: "redirect",
+      from: "/project/paraswap-old/team",
+      to: "/project/paraswap/team",
+    };
+
+    const primed = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: vi.fn<Fetcher>(async () => jsonResponse(200, REDIRECT)),
+      timeoutMs: 5000,
+    });
+    expect(primed).toEqual(REDIRECT);
+
+    const result = await fetchProjectIndexabilityDecision(parsed, {
+      baseUrl: BASE_URL,
+      fetcher: respondOnce(() => new Response("boom", { status: 500 })),
+      timeoutMs: 5000,
+    });
+
+    expect(result).toEqual({ outcome: "noindex-follow", url: parsed.normalizedPath });
+    expect(result.outcome).not.toBe("redirect");
+  });
+
   it("replays the last successful decision when the indexer request times out", async () => {
     vi.useFakeTimers();
     await primeIndexable();

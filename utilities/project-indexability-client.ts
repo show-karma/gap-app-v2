@@ -169,7 +169,18 @@ export async function fetchProjectIndexabilityDecision(
   // The endpoint already encodes identifier + route + grantUid, so it is the
   // cache key. Every remembered decision was validated by the parser, so a
   // replay can never introduce an unvalidated redirect target.
-  const lastKnownGood = (): ProjectIndexabilityDecision => lkgCache.get(endpoint) ?? failClosed;
+  //
+  // `redirect` is deliberately NOT replayed. proxy.ts turns that outcome into a
+  // 308 (see the isAliasHost and finalPath branches), and a 308 is cached hard
+  // by browsers and crawlers — so replaying a stale relocation would move users
+  // to a possibly-wrong URL long after the indexer recovered. Failing closed
+  // costs one request a noindex; a wrongly cached 308 outlives the outage.
+  // Indexability outcomes carry no such risk: the worst case is a page that
+  // stays indexable or noindexed a few minutes longer than it should.
+  const lastKnownGood = (): ProjectIndexabilityDecision => {
+    const remembered = lkgCache.get(endpoint);
+    return remembered && remembered.outcome !== "redirect" ? remembered : failClosed;
+  };
   // Stamped before the request is issued: the decision describes the endpoint as
   // of this moment, and ordering writes by it keeps a delayed response from
   // overwriting one observed later.
