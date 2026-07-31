@@ -8,6 +8,13 @@ export const DEFAULT_DESCRIPTION =
   "AI-powered software for grants, hackathons, and RFPs. Automated evaluation, milestone tracking, and impact reporting for lean teams.";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/images/homepage/funder-benefit-01.png`;
 
+// Entity-level description for Organization JSON-LD, which the root layout
+// renders on every route. Kept separate from DEFAULT_DESCRIPTION, which is a
+// per-page metadata fallback: this one has to describe everything Karma does,
+// not what any single page is about.
+export const ORGANIZATION_DESCRIPTION =
+  "Karma is funding infrastructure for philanthropy. Foundations run grant programs end to end — applications, evaluation, milestone tracking, disbursement, and impact reporting. Donor advisors build ranked nonprofit shortlists with compliance checks, activity scores, and mission match. Nonprofits build funder-facing profiles and find aligned foundations, grounded in IRS 990 filings. Available in-app and to AI agents via MCP.";
+
 export const ogMeta = {
   url: SITE_URL,
   siteName: DEFAULT_TITLE,
