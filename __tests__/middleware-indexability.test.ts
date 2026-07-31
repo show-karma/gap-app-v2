@@ -45,6 +45,10 @@ vi.mock("@/utilities/chosenCommunities", () => ({
 }));
 
 import { proxy } from "@/proxy";
+import {
+  clearProjectIndexabilityLkgCache,
+  PROJECT_INDEXABILITY_LKG_TTL_MS,
+} from "@/utilities/project-indexability-client";
 
 const INDEXER_BASE = "https://indexer.test";
 
@@ -75,11 +79,16 @@ function decisionResponse(decision: unknown, status = 200): Response {
 
 beforeEach(() => {
   fetchMock.mockReset();
+  // Decisions are remembered per runtime instance; drop them between tests so
+  // each case starts from a cold instance instead of inheriting a neighbour's
+  // successful lookup.
+  clearProjectIndexabilityLkgCache();
   vi.stubGlobal("fetch", fetchMock);
   vi.stubEnv("NEXT_PUBLIC_GAP_INDEXER_URL", INDEXER_BASE);
 });
 
 afterEach(() => {
+  clearProjectIndexabilityLkgCache();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
@@ -441,5 +450,114 @@ describe("middleware canonical-host origin policy", () => {
     expect(response?.headers.get("location")).toBe(
       "http://localhost:3000/project/abc123-1?utm_source=x"
     );
+  });
+});
+
+/**
+ * Last-known-good fallback at the middleware seam (DEV-594). A transient
+ * indexer outage used to de-index healthy project pages: the client failed
+ * closed, so the proxy stamped noindex on a page the indexer had called
+ * canonical-indexable moments earlier. A warm instance now replays its last
+ * successful decision for a bounded window instead. Nothing is replayed on a
+ * cold instance, and nothing is replayed past the TTL.
+ */
+describe("middleware indexability last-known-good fallback", () => {
+  const PROJECT_PATH = "/project/paraswap";
+  const INDEXER_TIMEOUT_MS = 2500;
+
+  // Never resolves: the request hangs until the client's own AbortController
+  // fires, which is exactly what an indexer timeout looks like from here.
+  const hangUntilAborted: Fetcher = (_url, init) =>
+    new Promise<Response>((_resolve, reject) => {
+      init.signal?.addEventListener("abort", () => {
+        reject(new DOMException("The operation was aborted.", "AbortError"));
+      });
+    });
+
+  async function primeIndexableProject(): Promise<void> {
+    fetchMock.mockResolvedValue(
+      decisionResponse({ outcome: "canonical-indexable", url: PROJECT_PATH })
+    );
+
+    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("X-Robots-Tag")).toBeNull();
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("keeps a known-indexable project indexable when the indexer request times out", async () => {
+    vi.useFakeTimers();
+    await primeIndexableProject();
+
+    fetchMock.mockImplementation(hangUntilAborted);
+    const pending = proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    await vi.advanceTimersByTimeAsync(INDEXER_TIMEOUT_MS);
+    const response = await pending;
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("X-Robots-Tag")).toBeNull();
+  });
+
+  it("keeps a known-indexable project indexable when the indexer returns 5xx", async () => {
+    await primeIndexableProject();
+
+    fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
+    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("X-Robots-Tag")).toBeNull();
+  });
+
+  it("still fails closed when the indexer times out on a cold instance", async () => {
+    vi.useFakeTimers();
+    fetchMock.mockImplementation(hangUntilAborted);
+
+    const pending = proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    await vi.advanceTimersByTimeAsync(INDEXER_TIMEOUT_MS);
+    const response = await pending;
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
+  });
+
+  it("fails closed again once the remembered decision has expired", async () => {
+    vi.useFakeTimers();
+    await primeIndexableProject();
+    await vi.advanceTimersByTimeAsync(PROJECT_INDEXABILITY_LKG_TTL_MS);
+
+    fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
+    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
+  });
+
+  it("does not replay a remembered decision over a fresh gone answer", async () => {
+    await primeIndexableProject();
+
+    fetchMock.mockResolvedValue(new Response("gone", { status: 410 }));
+    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+
+    expect(response?.status).toBe(410);
+    expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
+  });
+
+  it("stops replaying a project that has since been removed", async () => {
+    await primeIndexableProject();
+
+    fetchMock.mockResolvedValue(new Response("gone", { status: 410 }));
+    await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+
+    // The blip lands after the removal: the deleted project must not come back
+    // as an indexable 200 just because this instance once saw it healthy.
+    fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
+    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
   });
 });
