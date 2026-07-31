@@ -1,8 +1,8 @@
 # Karma
 
-> Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.
+> Foundations use Karma to run grant programs, donor advisors to research nonprofits, and nonprofits to find aligned funders.
 
-Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei.
+Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned foundations, grounded in every IRS 990 on record with every answer cited. Karma also runs onchain funding programs where ecosystems fund builders and impact is attested on-chain, on Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei.
 
 ## Table of Contents
 
@@ -18,27 +18,8 @@ Karma is a platform where ecosystems allocate funding, track milestones, and mea
 
 ### Home
 
-Karma - Where builders get funded and ecosystems grow
-Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. Ecosystems use Karma to allocate funding, track milestones, and measure impact.
-Karma | Funding Software That Does the Work for Funders
-AI-powered software for grants, hackathons, and RFPs. Automated evaluation, milestone tracking, and impact reporting. Funding software that does the work.
-Build reputation. Ship with proof.
-Create your project profile, find funding opportunities, track milestones, and get
-discovered for more grants, hackathons, and collaborations.
-Karma connects builders
-to funding opportunities
-We support builders across their lifecycle to access funding opportunities, grow their
-reputation and track their progress easily.
-Onchain Project Profile
-Create a comprehensive project profile and showcase your work across multiple funding programs, share updates and build reputation onchain.
-Link your project to multiple grant rounds, hackathons, and retro funding programs — all under one profile.
-Direct Funding & Donations
-Accept funding directly on your project page through fiat and onchain payments or ecosystem grant disbursals.
-Automatically track activity from GitHub, smart contracts, and other sources by easily linking your repos and contracts.
-Milestones & Updates
-Build your onchain reputation by documenting progress and milestones through Karma
-Endorsements & Reputation
-Receive onchain endorsements from supporters, funders, and collaborators that strengthen your credibility.
+Karma - Funding software for foundations, donor advisors, and nonprofits
+Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned foundations, grounded in every IRS 990 on record with every answer cited.
 
 ### For Funders
 
@@ -112,10 +93,6 @@ Add your organization
 
 #### Why Karma
 
-Copy
-On this page
-
-Why Karma
 A brief introduction to why we are building Karma and Grantee Accountability Protocol
 Problem
 Grant programs in the crypto ecosystem lack a standardized method for grantees to publish progress updates and milestones, leading to several issues:
@@ -137,10 +114,6 @@ Endorsing teams and team members working on projects
 
 #### How does it work?
 
-Copy
-On this page
-
-How does it work?
 High level overview of Karma system
 Structure of a project on Karma
 Project
@@ -159,19 +132,12 @@ If you are a builder who has created impact through your project, you can create
 
 #### Supported Networks
 
-Copy
-On this page
-
-Supported Networks
 Karma is currently deployed on Optimism , Arbitrum , Celo , Scroll and Lisk networks. Any community can utilize one or more networks for their programs.
 Reach out to us on Telegram if you would like us to deploy Karma on any other network.
 
 ### For Builders
 
 #### For Builders
-
-Copy
-On this page
 
 Build Your Reputation and Showcase Your Work with Karma
 Karma with Grantee Accountability Protocol is here to empower you as a grantee and streamline the grant reporting process. Here's how Karma can benefit you:
@@ -183,10 +149,6 @@ Unlock New Opportunities: Karma's on-chain data paves the way for innovative app
 
 #### Add Grant to Project
 
-Copy
-On this page
-
-Add Grant to Project
 Once you've created your project, you can now add a grant you've received. You can add all the grants you have received from various ecosystems. This will help build your reputation. All the grants will be linked to your project
 Follow the steps below to add your grant
 Step 1: Add new grant
@@ -200,10 +162,6 @@ Provide comprehensive answers to all questions regarding impact measurement. Thi
 
 #### Add Milestone
 
-Copy
-On this page
-
-Add Milestone
 This is where you create milestones explaining everything you plan to accomplish through this grant.
 Step 1: Select grant to add milestone
 Select your grant where you want to add your milestone and click on "Add a new milestone"
@@ -214,10 +172,6 @@ Milestone update : If the milestone is already complete, offer details on the ac
 
 #### Add Team members
 
-Copy
-On this page
-
-Add Team members
 Adding Team Members & Setting Admin Permissions
 This page explains how project owners can add team members to their Karma project and grant admin privileges that allow those members to manage the profile and post updates.
 Step 1: Generate an Invitation
@@ -240,10 +194,6 @@ Note: Only the project owner and designated admins can manage team members and a
 
 #### Create Project
 
-Copy
-On this page
-
-Create your Karma project profile
 Creating a project is the first big step and you have to do this only once. Follow the steps to create your project profile.
 Don't add your grant details here. This is to just tell the entire world how awesome your project is :)
 We have partnered with many grant platforms such as Gitcoin and Octant to automatically sync your project to Karma. If your project is on one of these platforms, it is highly likely that your project already exists in Karma and you won't have to create it again.
@@ -262,18 +212,10 @@ Fill in all the details and click "Create Project" button. Your project is store
 
 #### Login with Safe
 
-Copy
-On this page
-
-Login with Safe
 Karma supports logging in with Safe wallet. Follow the instructions in the video below to login with Safe.
 
 #### Merge projects
 
-Copy
-On this page
-
-Merge projects
 Merge multiple projects into one unified project profile
 Overview
 When syncing projects from third-party grant systems, duplicate projects may be created due to slight variations in names, different wallet addresses, or other discrepancies. To streamline project management, Karma provides a Project Merge feature that allows project owners to consolidate duplicate projects into a single project profile.
@@ -299,10 +241,6 @@ This feature enhances project management efficiency by providing a seamless way 
 
 #### Post grant update
 
-Copy
-On this page
-
-Post grant update
 Occasionally, it's beneficial to keep the grant manager and community informed between milestones. There are also times when you don't have specific milestones but still wish to provide biweekly or monthly updates. The Grant Update feature is an excellent way to share your progress and maintain transparency with stakeholders.
 To post a grant update:
 Choose your grant
@@ -311,10 +249,6 @@ Click on "Post a grant update" to post updates.
 
 #### Post Milestone update
 
-Copy
-On this page
-
-Post Milestone update
 When you complete a milestone, you can post an update on that milestone! This is a great way to keep the community and program managers updated on your progress.
 To post an update on milestone:
 Select the grant
@@ -324,10 +258,6 @@ Click "Post an update" to post update and mark milestone as complete.
 
 #### Transfer Ownership
 
-Copy
-On this page
-
-Transfer Ownership
 How to Manage Project Ownership in Karma
 Projects in Karma are owned by an Ethereum wallet account. Sometimes when your project is automatically synced by our system, we might have made your multisig wallet the owner of the project or another cold wallet that you prefer not to use for posting updates. While Karma supports multisig login, making updates can be cumbersome. You can choose to transfer ownership of your Project to another account (EOA). Here are the options to manage or transfer project ownership effectively:
 Transfer Ownership to an EOA
@@ -345,10 +275,6 @@ If needed, message our team on Telegram or Discord . We can assist in transferri
 
 #### For Grant Managers
 
-Copy
-On this page
-
-For Grant Managers
 What is the Grant Manager's role in Karma?
 Review grant proposals: You can leverage the information grantees provide in their project profiles and grant details to assess the potential impact of their projects.
 Evaluate milestone updates: Karma allows you to review milestone updates submitted by grantees, including any proof of work provided. This helps you track progress and ensure that grant funds are being used effectively.
@@ -358,10 +284,6 @@ Increased transparency: Karma fosters transparency between grantors and grantees
 
 #### Categorize grants
 
-Copy
-On this page
-
-Categorize grants
 Grant managers can categorize various grants issued in their community. Categorizing grants has two benefits:
 Benefit 1
 In the community page, anyone can view grants filtered by categories. This is useful for any community members who are interested in only certain types of projects (DeFi, NFT etc.)
@@ -375,10 +297,6 @@ All your grants will be displayed in the page. Simply select one or more categor
 
 #### Grant review
 
-Copy
-On this page
-
-Grant review
 Karma has the review feature that can be utilized by grant managers to review grants. Reviewing a grant involves configuring a series of questions the grantee, community members and grant operators can answer to better understand the impact of the grant.
 Before reviewing a grant, managers can configure the questions they would like answered. Questions can be assigned to each category of grants. To assign a question
 Navigate to the "Assign questions" in the admin portal
@@ -387,10 +305,6 @@ Assign questions to each category and save.
 
 #### Impact Measurement
 
-Copy
-On this page
-
-Impact Measurement
 Karma’s impact measurement system helps program operators define, collect, and analyze the outputs and outcomes of funded projects using standardized and custom indicators.
 Karma includes built-in impact measurement features that help program operators and grantees track, verify, and communicate the real-world impact of funded projects.
 The system is inspired by the Common Impact Data Standard ( CIDS ) , a widely used framework for structuring impact around outputs , outcomes , and indicators .
@@ -506,10 +420,6 @@ Impact measurement is not just reporting — it’s how programs learn, improve,
 
 #### Verify grant update
 
-Copy
-On this page
-
-Verify grant update
 As grant manager, you can verify a milestone or grant update posted by grantee. Each verification is an onchain attestation. Follow the steps to verify an update.
 Find the project and navigate to the grants tab.
 Click on Milestones and Updates
@@ -520,20 +430,12 @@ Anyone can view the verification comment next to the milestone
 
 #### For Reviewers
 
-Copy
-On this page
-
-For Reviewers
 Karma funding platform supports two types of reviewers:
 Application Reviewers
 Milestone Reviewers
 
 #### Application Review Guide
 
-Copy
-On this page
-
-Application Review Guide
 Application reviewers are responsible for evaluating incoming grant applications and making approve/reject decisions. This guide walks you through the review process step by step.
 Getting Started
 Step 1: Log In
@@ -561,10 +463,6 @@ The applicant is automatically notified of your decision. If approved, they'll r
 
 #### For Community Members
 
-Copy
-On this page
-
-For Community Members
 How can you participate in Karma?
 Endorse projects: If you believe in a project and its potential impact, you can endorse it on Karma. This is a way to signal your support and help the project gain visibility.
 Stay informed: Karma allows you to follow projects you're interested in and receive updates on their progress.
@@ -574,10 +472,6 @@ Discovery: Karma can help you discover new and innovative projects that align wi
 
 #### Endorse project
 
-Copy
-On this page
-
-Endorse project
 Endorsing a project means publicly expressing your support for it. This is typically done because you believe the project is worthwhile and will have a positive impact. Here are some key points about endorsing a project:
 Credibility: Your endorsement carries weight if you have relevant experience or expertise in the project's area.
 Publicity: An endorsement can help raise awareness of the project and attract more supporters.
@@ -596,18 +490,10 @@ By endorsing a project, you can play a valuable role in helping it to succeed.
 
 #### Verify grant update
 
-Copy
-On this page
-
-Verify grant update
 Community members can verify grant updates too. Follow the steps here to verify grant update.
 
 #### Verify Impact
 
-Copy
-On this page
-
-Verify Impact
 Grantees have the ability to document the impact they have created by creating impact attestations onchain. Community members can verify that impact onchain as well.
 To verify impact, navigate to a project's impact tab and click verify impact button and add verification comment.
 
@@ -615,10 +501,6 @@ To verify impact, navigate to a project's impact tab and click verify impact but
 
 #### Developers
 
-Copy
-On this page
-
-Developers
 If you are a developer interested in integration of Karma into your application, you can find the APIs docs below:
 API DOCS (v2)
 
@@ -627,9 +509,6 @@ Contact our tech team on Telegram if you have any questions.
 ### FAQs
 
 #### FAQs
-
-Copy
-On this page
 
 What is the difference between a Project and a Grant in Karma?
 Project: This is a profile for your overall work or initiative. It can encompass various grants you've received. Think of it as your permanent portfolio within Karma.
@@ -650,10 +529,6 @@ Follow Karma on the X platform for announcements and project developments.
 
 #### Partners
 
-Copy
-On this page
-
-Partners
 Karma has been integrated into following platforms:
 Octant - Milestones and updates posted by Octant grantees in Karma are displayed in Octant's platform.
 Gitcoin - Milestones and updates posted on Karma by grantees funded by any communities who run their rounds on Gitcoin Grants Stack are displayed in Gitcoin's platform.
@@ -661,10 +536,6 @@ Ecosystem.vision - All the grants related data such as Grant Programs and projec
 
 #### Celo - Proof of Ship
 
-Copy
-On this page
-
-Celo - Proof of Ship
 Instructions for submitting your project for Celo - Proof of Ship program
 Proof-of-Ship is a monthly contest that rewards builders for actively building on Celo. The impact metrics in your Karma project profile are used to automtically calculate builder rewards, which you can claim each month here .
 Before creating a project profile, ensure you have:
@@ -698,10 +569,6 @@ Add a link to Video explaining your work (4 min max) and link to your Presentati
 
 #### CeloPG - Proof of Impact
 
-Copy
-On this page
-
-CeloPG - Proof of Impact
 Instructions for submitting your project for Celo - Proof of Ship program
 The Proof of Impact campaign, powered by CeloPG, rewards builders based on the gas fees their users generate on the Celo network.
 Follow the steps below to Submit your project for Proof of Impact program
@@ -725,18 +592,10 @@ Add a link to Video explaining your work (4 min max) and link to your Presentati
 
 #### Filecoin
 
-Copy
-On this page
-
-Filecoin
 ProPGF Batch 1 Grantee Guide ProPGF Grantee Guide Milestone Reviewer Guide
 
 #### Milestone Reviewer Guide
 
-Copy
-On this page
-
-Milestone Reviewer Guide
 Milestone reviewers are responsible for verifying that grantees have completed the milestones defined in their approved grants. This guide walks you through the milestone review process step by step.
 Getting Started
 Step 1: Log In
@@ -773,10 +632,6 @@ Click Verify to submit your verification.
 
 #### ProPGF Batch 1 Grantee Guide
 
-Copy
-On this page
-
-ProPGF Batch 1 Grantee Guide
 Filecoin ProPGF Grantee Guide
 Welcome to Karma! Filecoin has partnered with Karma to manage ProPGF grants going forward. If you're a grantee from ProPGF Batch 1, this guide will walk you through everything you need to know to access your project, submit milestone updates, and stay on track with your grant.
 What's Changed?
@@ -833,17 +688,13 @@ We're excited to support your work on Filecoin. Good luck with your milestones!
 
 #### ProPGF Grantee Guide
 
-Copy
-On this page
-
-ProPGF Grantee Guide
 Filecoin ProPGF Grantee Guide
 Welcome! As a grantee, this guide will walk you through everything you need to know to access your project, submit milestone updates, and stay on track with your grant.
 Getting Started
 Step 1: Log In to FilPGF
 Go to https://app.filpgf.io
 Click the Login button (located in the top-right corner of the page) and enter your email address you used to submit the application.
-If you don't find your application when you login, you will find a link to lookup your application by the reference ID (it looks like APP-XXXXXXXX-XXXXXX). If you're still unable to log in, contact the Karma team on Telegram https://t.me/karmahq or email [email protected]
+If you don't find your application when you login, you will find a link to lookup your application by the reference ID (it looks like APP-XXXXXXXX-XXXXXX). If you're still unable to log in, contact the Karma team on Telegram https://t.me/karmahq or email support@karmahq.xyz
 Step 2: Find Your Application
 Once logged in, navigate to Dashboard
 You'll see your approved grant application listed under My Applications section
@@ -872,14 +723,14 @@ Once the milestone is completed, upload the invoice right in the dashboard
 A reviewer will review the milestone and notify the admins
 The admins release payment upon successful verification of milestone
 You will receive email notification when payment is complete
-Have additional questions regarding the invoice or payment process? You can contact our team by email at [email protected] .
+Have additional questions regarding the invoice or payment process? You can contact our team by email at finance@blueshift.foundation.
 Tips for Successful Updates
 Be specific: Clearly describe what was delivered and how it meets the milestone requirements
 Include proof: Link to tangible outputs — GitHub repos, deployed applications, documentation, demos, or reports
 Update regularly: Don't wait until the last minute; post updates as you make meaningful progress
 Troubleshooting
 I don't see my application
-After logging in, make sure you're on the My Applications tab. If your application doesn't appear, most likely you submitted your application with a different email address. You can lookup your application on the dashboard to find the email you used to login. If you still have trouble, reach out to the Karma on Telegram or [email protected]
+After logging in, make sure you're on the My Applications tab. If your application doesn't appear, most likely you submitted your application with a different email address. You can lookup your application on the dashboard to find the email you used to login. If you still have trouble, reach out to the Karma on Telegram or support@karmahq.xyz
 My milestones don't look right
 If any milestone information appears incorrect or incomplete, contact the Filecoin team to request corrections.
 Need Help?
@@ -890,18 +741,10 @@ We're excited to support your work on Filecoin. Good luck with your milestones!
 
 #### Gitcoin
 
-Copy
-On this page
-
-Gitcoin
 Gitcoin has integrated Karma into their application. Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin. For example, here is a project on Karma with milestones that are also visible in Gitcoin , ensuring seamless updates and visibility in both platforms.
 
 #### Global Stablecoin Hackathon
 
-Copy
-On this page
-
-Global Stablecoin Hackathon
 Instructions for submitting your project for Global Stablecoin Hackathon
 Global Stablecoin Hackathon is a 3-week virtual hackathon from April 11 to May 2 with $25K prize pool!
 Follow the steps below to Submit your project for Global Stablecoin Hackathon
@@ -929,10 +772,6 @@ Add a link to Video explaining your work (4 min max) and link to your Presentati
 
 #### Octant
 
-Copy
-On this page
-
-Octant
 Octant has integrated Karma into their application. Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant. For example, here is a project on Karma with milestones that are also visible in Octant , ensuring seamless updates and visibility in both platforms.
 If you don't see your Epoch specific milestones in Octant, follow the steps below to link Karma grant to Octant's Epoch.
 Login to your Karma profile and navigate to your Octant Epoch grant and click on the "Link Octant Address" button.
@@ -942,10 +781,6 @@ If you still don't see the milestones, contact us on Telegram or Discord and we 
 
 #### UNICEF
 
-Copy
-On this page
-
-UNICEF
 The UNICEF Venture Fund provides funding to projects on a biannual basis. Funded projects are required to create a Karma project profile, add funding details, define milestones, and share progress updates regularly. Below you'll find step-by-step instructions for completing each of these tasks.
 Follow the step by step instructions
 Step 1: Create your project profile
@@ -966,6 +801,47 @@ Step 4: Final project submission
 At the end of the funding cycle, mark the grant as complete and submit a link to all assets (such as logos, screenshots, and other deliverables).
 
 ## Site URL Index
+- [About](https://www.karmahq.xyz/about)
+- [Blog](https://www.karmahq.xyz/blog)
+- [Contact](https://www.karmahq.xyz/contact)
+- [Create Project Profile](https://www.karmahq.xyz/create-project-profile): Create a public project profile to track funding, milestones, and updates
+- [Donor Advisors](https://www.karmahq.xyz/donor-advisors)
+- [For Agents](https://www.karmahq.xyz/for-agents)
+- [Foundations](https://www.karmahq.xyz/foundations)
+- [Connect](https://www.karmahq.xyz/mcp/connect)
+- [Nonprofits](https://www.karmahq.xyz/nonprofits)
+- [Find Funders](https://www.karmahq.xyz/nonprofits/find-funders)
+- [Connect](https://www.karmahq.xyz/nonprofits/find-funders/connect)
+- [Chatgpt](https://www.karmahq.xyz/nonprofits/find-funders/connect/chatgpt)
+- [Claude](https://www.karmahq.xyz/nonprofits/find-funders/connect/claude)
+- [Seeds](https://www.karmahq.xyz/seeds): Seed funding and early-stage project support
+- [August 2025](https://www.karmahq.xyz/blog/august-2025)
+- [Building Sustainable Web3 Funding Solutions A Kokonut Network Case Study](https://www.karmahq.xyz/blog/building-sustainable-web3-funding-solutions-a-kokonut-network-case-study)
+- [Expanding Celos Proof Of Ship Program](https://www.karmahq.xyz/blog/expanding-celos-proof-of-ship-program)
+- [Giveth Is Now Integrated With Karma Gap](https://www.karmahq.xyz/blog/giveth-is-now-integrated-with-karma-gap)
+- [Gooddollar Partners With Karma Gap](https://www.karmahq.xyz/blog/gooddollar-partners-with-karma-gap)
+- [Introducing Karma V2](https://www.karmahq.xyz/blog/introducing-karma-v2)
+- [Karma Activity Report November 2025](https://www.karmahq.xyz/blog/karma-activity-report-november-2025)
+- [Karma Ai Is The Future](https://www.karmahq.xyz/blog/karma-ai-is-the-future)
+- [Karma For Philanthropic Funding](https://www.karmahq.xyz/blog/karma-for-philanthropic-funding)
+- [Karma October 2025 Activity Report](https://www.karmahq.xyz/blog/karma-october-2025-activity-report)
+- [Karma September Activity Report](https://www.karmahq.xyz/blog/karma-september-activity-report)
+- [Karma Ships April Edition](https://www.karmahq.xyz/blog/karma-ships-april-edition)
+- [Karma Ships February 2026](https://www.karmahq.xyz/blog/karma-ships-february-2026)
+- [Karma Ships January 2026](https://www.karmahq.xyz/blog/karma-ships-january-2026)
+- [Karma Ships June Edition](https://www.karmahq.xyz/blog/karma-ships-june-edition)
+- [Karma Ships May Edition](https://www.karmahq.xyz/blog/karma-ships-may-edition)
+- [Karma Skills Making The Entire Karma Platform Agent Friendly](https://www.karmahq.xyz/blog/karma-skills-making-the-entire-karma-platform-agent-friendly)
+- [Launching Nonprofit Research For Donor Advisors](https://www.karmahq.xyz/blog/launching-nonprofit-research-for-donor-advisors)
+- [Livepeer Partners With Karma Gap](https://www.karmahq.xyz/blog/livepeer-partners-with-karma-gap)
+- [Optimism Grants Partners With Karma For Season 8](https://www.karmahq.xyz/blog/optimism-grants-partners-with-karma-for-season-8)
+- [Pl Filecoin Impact Fund Partners With Karma](https://www.karmahq.xyz/blog/pl-filecoin-impact-fund-partners-with-karma)
+- [Polygon Partners With Karma](https://www.karmahq.xyz/blog/polygon-partners-with-karma)
+- [Revolutionizing Impact Measurement](https://www.karmahq.xyz/blog/revolutionizing-impact-measurement)
+- [Scaling Ecosystem Success Celo Case Study](https://www.karmahq.xyz/blog/scaling-ecosystem-success-celo-case-study)
+- [Welcome To The Karma Newsletter](https://www.karmahq.xyz/blog/welcome-to-the-karma-newsletter)
+- [Privacy Policy](https://www.karmahq.xyz/privacy-policy): Privacy policy for the Karma platform
+- [Terms and Conditions](https://www.karmahq.xyz/terms-and-conditions): Terms and conditions for using the Karma platform
 
 ## Knowledge Base - Core Concepts
 
