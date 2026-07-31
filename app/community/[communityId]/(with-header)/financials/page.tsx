@@ -8,6 +8,7 @@ import { api } from "@/utilities/api/client";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { INDEXER } from "@/utilities/indexer";
+import { communitySubpageMetadata } from "@/utilities/metadata/communityCanonical";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
@@ -23,10 +24,16 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     return {};
   }
 
-  const community = await getCachedCommunity(communityId);
+  // Self-canonical: only flagged communities are submitted to the sitemap, and
+  // that URL must not inherit the community layout's `/community/<id>` canonical.
+  const [community, canonicalMetadata] = await Promise.all([
+    getCachedCommunity(communityId),
+    communitySubpageMetadata(communityId, "financials"),
+  ]);
   const communityName = community?.details?.name || communityId;
 
   return {
+    ...canonicalMetadata,
     title: `Financials - ${communityName}`,
     description: `View financial overview, project agreements, milestones, and payment status for ${communityName}.`,
   };
