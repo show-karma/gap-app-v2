@@ -1,23 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { fundingProgramsKeys } from "../constants/query-keys";
 import { fundingProgramsService } from "../services/funding-programs.service";
 import type { FetchFundingProgramsParams } from "../types/funding-program";
 
-/**
- * Query key factory for funding programs
- * Enables proper cache management and invalidation
- */
-export const fundingProgramsKeys = {
-  all: ["fundingPrograms"] as const,
-  lists: () => [...fundingProgramsKeys.all, "list"] as const,
-  list: (params: FetchFundingProgramsParams) => [...fundingProgramsKeys.lists(), params] as const,
-  details: () => [...fundingProgramsKeys.all, "detail"] as const,
-  detail: (programId: string) => [...fundingProgramsKeys.details(), programId] as const,
-  organizationFilters: () => [...fundingProgramsKeys.all, "organizationFilters"] as const,
-  typeCounts: (options?: { onlyOnKarma?: boolean }) =>
-    [...fundingProgramsKeys.all, "typeCounts", options] as const,
-};
+// Note: fundingProgramsKeys lives in ../constants/query-keys so the
+// /funding-map server component can build the same key when prefetching
+// the default list for hydration.
 
 /**
  * Hook to fetch paginated funding programs with filters
