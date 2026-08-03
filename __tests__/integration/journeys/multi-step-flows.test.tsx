@@ -659,8 +659,11 @@ describe("Multi-Step Navigation Journey Tests", () => {
 
   describe("Flow 3: Program Browse → Filter → Select", () => {
     async function importPage() {
+      // The route's page.tsx is now an async server component that prefetches
+      // the program list; this journey exercises the client-side flow, so it
+      // drives the client component directly.
       const mod = await import(
-        "@/app/community/[communityId]/(with-header)/funding-opportunities/page"
+        "@/app/community/[communityId]/(with-header)/funding-opportunities/FundingOpportunitiesClient"
       );
       return mod.default;
     }
