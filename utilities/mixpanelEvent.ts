@@ -1,4 +1,5 @@
 import mp from "mixpanel-browser";
+import { getAiFirstTouchProps } from "@/utilities/aiReferrer";
 
 export interface IMixpanelEvent {
   event: string;
@@ -14,8 +15,12 @@ export const mixpanelEvent = (data: IMixpanelEvent) => {
   }
   mp.init(process.env.NEXT_PUBLIC_MIXPANEL_KEY);
   const mixpanel = mp;
+  // First-touch AI attribution rides along on every event, so a conversion
+  // several navigations after the landing still knows it started at an answer
+  // engine. Event-level properties win on key collision.
+  const properties = { ...getAiFirstTouchProps(), ...(data.properties || {}) };
   return new Promise<void>((resolve, reject) => {
-    mixpanel?.track(`gap:${data.event}`, data.properties || {}, (err) => {
+    mixpanel?.track(`gap:${data.event}`, properties, (err) => {
       if (err && err !== 1) {
         reject(err);
       } else {
