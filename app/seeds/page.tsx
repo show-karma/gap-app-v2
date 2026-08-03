@@ -11,6 +11,15 @@ export const metadata: Metadata = {
   title: "Karma Seeds - Raise Funds Without Launching a Token",
   description:
     "Raise funds from your community without launching a token. Karma Seeds let you build community and stay focused on building.",
+  // Self-referential canonical: /seeds is submitted in the static sitemap, so
+  // it has to be the canonical of its own content. Without this it inherits
+  // the root layout's `alternates.canonical: "/"` and points every crawler at
+  // the homepage instead (DEV-586). Set inline rather than via customMetadata
+  // because this page's openGraph/twitter copy is deliberately different from
+  // its <title>/description, which that helper collapses into one pair.
+  alternates: {
+    canonical: "/seeds",
+  },
   openGraph: {
     title: "Karma Seeds - Accept Support Without a Token",
     description:
