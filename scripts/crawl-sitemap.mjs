@@ -16,7 +16,11 @@ import {
 } from "node:fs/promises";
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
-import { CRAWL_DEFAULTS, crawlSitemap } from "./indexability/crawl-sitemap.mjs";
+import {
+  assertVisibilityMode,
+  CRAWL_DEFAULTS,
+  crawlSitemap,
+} from "./indexability/crawl-sitemap.mjs";
 
 /**
  * URLs that are knowingly not yet "200 + indexable + self-canonical + meaningful
@@ -47,6 +51,7 @@ const DEFAULTS = Object.freeze({
   delayMs: String(CRAWL_DEFAULTS.delayMs),
   timeoutMs: String(CRAWL_DEFAULTS.timeoutMs),
   minContentChars: String(CRAWL_DEFAULTS.minContentChars),
+  visibilityMode: CRAWL_DEFAULTS.visibilityMode,
 });
 
 const FLAG_TO_KEY = Object.freeze({
@@ -58,6 +63,7 @@ const FLAG_TO_KEY = Object.freeze({
   "--delay-ms": "delayMs",
   "--timeout-ms": "timeoutMs",
   "--min-content-chars": "minContentChars",
+  "--visibility-mode": "visibilityMode",
   "--known-issues": "knownIssues",
   "--output": "output",
 });
@@ -71,6 +77,7 @@ const ENV_NAMES = Object.freeze({
   delayMs: "CRAWL_DELAY_MS",
   timeoutMs: "CRAWL_TIMEOUT_MS",
   minContentChars: "CRAWL_MIN_CONTENT_CHARS",
+  visibilityMode: "CRAWL_VISIBILITY_MODE",
   knownIssues: "CRAWL_KNOWN_ISSUES",
   output: "CRAWL_OUTPUT",
 });
@@ -147,6 +154,10 @@ export function resolveConfig(flags, env) {
       "--min-content-chars",
       0
     ),
+    // "no-js" measures what a scripting-disabled renderer displays (hidden
+    // streamed chunks excluded, noscript included); "raw" preserves the
+    // pre-DEV-586 raw-markup counting for comparison with older reports.
+    visibilityMode: assertVisibilityMode(pick("visibilityMode", DEFAULTS.visibilityMode)),
     knownIssues: pick("knownIssues", undefined),
     output: pick("output", undefined),
   };
@@ -192,6 +203,7 @@ export async function main({
       delayMs: config.delayMs,
       timeoutMs: config.timeoutMs,
       minContentChars: config.minContentChars,
+      visibilityMode: config.visibilityMode,
       knownIssues,
     });
   } catch (err) {
