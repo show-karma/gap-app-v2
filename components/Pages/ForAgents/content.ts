@@ -24,6 +24,16 @@ interface UseCaseCard {
 
 export const AGENT_FAQS: AgentFaqEntry[] = [
   {
+    question: "Does Karma's MCP server work with Claude and ChatGPT?",
+    answer:
+      "Yes. The server is exposed over Streamable HTTP at gapapi.karmahq.xyz/mcp and works with Claude (claude.ai and the desktop app, via custom connectors), ChatGPT (via Developer-mode connectors on Plus, Pro, Business, Enterprise, and Edu plans), Cursor, Codex, and any MCP client supporting protocol version 2025-11-25 or later.",
+  },
+  {
+    question: "Which MCP operations require authentication?",
+    answer:
+      "Tool discovery is public — /mcp, /mcp/info, /mcp/tools, and /.well-known/mcp-tools.json need no credentials. Every tool call requires a signed-in session: OAuth 2.1 (your AI app walks you through Karma sign-in) or a Karma API key sent as the x-api-key header. The agent then inherits exactly your account's permissions.",
+  },
+  {
     question: "What can a Karma-connected AI agent do?",
     answer:
       "Read projects, grants, milestones, programs, and impact data. With OAuth and your permission, agents can also submit applications, draft updates, comment on reviews, and propose milestone evidence on your behalf.",
@@ -36,7 +46,7 @@ export const AGENT_FAQS: AgentFaqEntry[] = [
   {
     question: "How do I limit what an agent can do?",
     answer:
-      "Public reads require no auth. For mutating actions, the agent uses your OAuth token — meaning it inherits exactly the permissions of your Karma account, nothing more. Generate scoped API keys in settings for headless agents that should be even more limited.",
+      "Every tool call runs under your session — OAuth token or API key — so the agent inherits exactly the permissions of your Karma account, nothing more. Reads of public data work for any signed-in account; mutating actions additionally require the roles your account holds. Generate scoped API keys in settings for headless agents that should be even more limited.",
   },
   {
     question: "Where do I see what the agent has done?",

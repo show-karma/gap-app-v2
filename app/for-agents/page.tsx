@@ -6,9 +6,9 @@ import { SoftwareApplicationJsonLd } from "@/components/Seo/SoftwareApplicationJ
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "For AI Agents — Karma",
+  title: "Karma MCP Server for AI Agents — Claude, ChatGPT, Cursor & Codex",
   description:
-    "Karma works with Claude, Cursor, and Codex. Connect via MCP to read projects, grants, and impact data — or take action on your behalf.",
+    "Karma provides a public MCP server at gapapi.karmahq.xyz/mcp. Connect Claude, ChatGPT, Cursor, or Codex to search funding programs, nonprofit and IRS 990 data, and grant history — with OAuth for actions on your behalf.",
   path: "/for-agents",
 });
 
