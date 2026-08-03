@@ -68,8 +68,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const title = 'Scheduled llms.txt regeneration failed';
+            // Identifies the tracker this workflow owns. Matching on title alone
+            // would let an unrelated issue of the same name collect these comments.
+            const marker = '<!-- llms-txt-regeneration-failure -->';
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = [
+              marker,
               `The **${context.workflow}** workflow failed, so \`public/llms.txt\` and`,
               '`public/llms-full.txt` were not regenerated.',
               '',
@@ -90,7 +94,8 @@ jobs:
               per_page: 100,
             });
             const openIssue = existing.find(
-              (issue) => !issue.pull_request && issue.title === title
+              (issue) =>
+                !issue.pull_request && issue.title === title && issue.body?.includes(marker)
             );
 
             if (openIssue) {
