@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getDomainInfo } from "./src/infrastructure/config/domain-constants";
 import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
-import { COMMUNITY_SUB_ROUTE_SEGMENTS, PAGES } from "./utilities/pages";
+import { COMMUNITY_SUB_ROUTE_SEGMENTS, NON_PROFITS_PAGES, PAGES } from "./utilities/pages";
 import {
   classifyProjectQuery,
   parseProjectIndexabilityRequest,
@@ -259,6 +259,17 @@ export async function proxy(request: NextRequest) {
       const newPath = path.replace(/^\/([^/]+)/, "/community/$1");
       return NextResponse.redirect(new URL(newPath, request.url));
     }
+  }
+
+  // --- Crawler-visible hero for /nonprofits/find-funders (DEV-586) ---
+  // The root layout renders a <noscript> hero for this one route, and layouts
+  // cannot read the pathname on their own — so the proxy tags the request.
+  // Set narrowly on purpose: only this path carries the header today, and the
+  // layout treats its absence as "render nothing extra".
+  if (path === NON_PROFITS_PAGES.HOME) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-pathname", path);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   // The explorer listing at exactly /projects (or /projects/) is a static route
