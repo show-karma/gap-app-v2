@@ -41,11 +41,11 @@ vi.mock("@/src/features/homepage/components/create-project-button", () => ({
 vi.mock("@/components/Pages/Projects/ProjectsExplorer", () => ({
   ProjectsExplorer: () => null,
 }));
-// `/communities` has no server-rendered equivalent of the /projects hero: the
-// whole listing is `CommunitiesPage`, a client component whose no-JS output is
-// a text-free skeleton. Stubbing it changes nothing a crawler would have seen,
-// and the assertions below are scoped accordingly — see the note on the
-// `/communities` case for what is and is not proven here.
+// `CommunitiesPage` is stubbed because its React Query hooks need a provider
+// this file does not set up. Its no-JS output — the heading and lead paragraph
+// it now renders above every query-state branch — is covered in
+// aeo-crawl-eligibility.test.tsx; the assertions below stay scoped to the
+// server-rendered shell around it.
 vi.mock("@/components/Pages/Communities/CommunitiesPage", () => ({
   CommunitiesPage: () => null,
 }));
@@ -191,15 +191,14 @@ describe("collection templates — no-JS rendering", () => {
   });
 
   /**
-   * Deliberately narrower than the /projects case above. `/communities` is
-   * listed in the static sitemap but its listing is entirely client-rendered,
-   * so there is no server prose to assert and this test does NOT claim the page
-   * is meaningful without JavaScript — the sitemap crawl reports it as `thin`,
-   * which is the honest signal and is not suppressed by any allowlist entry.
+   * Deliberately narrower than the /projects case above, because
+   * `CommunitiesPage` is stubbed out here (see the mock above). The heading and
+   * prose it contributes to the no-JS render are asserted in
+   * aeo-crawl-eligibility.test.tsx.
    *
-   * What is asserted: the route still emits a server-rendered shell (an empty
-   * body to a crawler fails here), its CollectionPage facts match the metadata
-   * the page advertises, and it points its canonical at itself.
+   * What is asserted here: the route still emits a server-rendered shell (an
+   * empty body to a crawler fails this), its CollectionPage facts match the
+   * metadata the page advertises, and it points its canonical at itself.
    */
   it("/communities server-renders a shell whose CollectionPage facts match its metadata", async () => {
     const { default: Page, metadata } = await import("@/app/communities/page");

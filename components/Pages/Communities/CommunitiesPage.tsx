@@ -27,9 +27,10 @@ export const CommunitiesPage = () => {
     isLoading: communitiesLoading,
     isError: communitiesError,
     error: communitiesErrorMessage,
+    refetch: refetchCommunities,
   } = useCommunities({ limit: 12, includeStats: true });
 
-  const { data: summaryStats, isLoading: statsLoading, isError: statsError } = useCommunityStats();
+  const { data: summaryStats, isError: statsError } = useCommunityStats();
 
   const communities = useMemo(() => {
     return data?.pages.flatMap((page) => page.payload) || [];
@@ -41,28 +42,16 @@ export const CommunitiesPage = () => {
     }
   };
 
-  // Show skeleton if both communities and stats are loading
-  if (communitiesLoading && statsLoading) {
-    return <CommunitiesSkeleton />;
-  }
-
-  if (communitiesError) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-red-500 dark:text-red-400">
-          Error loading communities: {communitiesErrorMessage?.message}
-        </p>
-      </div>
-    );
-  }
-
-  if (communitiesLoading) {
-    return <CommunitiesSkeleton />;
-  }
-
   return (
     <div className="flex flex-col gap-8 w-full max-w-full overflow-hidden">
-      {/* Page Title */}
+      {/*
+        Page title — rendered unconditionally, above every query-state branch.
+        This block used to sit below the loading/error early returns, so the
+        server render (where both queries are always loading) emitted no <h1>
+        at all and a crawler that does not execute JavaScript saw a headingless
+        page. Only the stats row and the organization grid below depend on
+        query state (DEV-586).
+      */}
       <div className="flex flex-col gap-2 items-center justify-center">
         <div className="flex flex-row gap-2 items-center justify-center rounded-full w-fit h-[40px] px-4 mx-auto">
           <Image width={24} height={24} src="/icons/impact.png" alt="Rocket icon" />
@@ -84,129 +73,150 @@ export const CommunitiesPage = () => {
         </a>
       </div>
 
-      {/* Summary Stats Row - Only show if stats loaded successfully */}
-      {summaryStats && !statsError && (
-        <div className="w-full overflow-hidden">
-          <AutoSizer disableHeight>
-            {({ width }) => {
-              const columns = getResponsiveColumns(width);
-              const gap = 24;
-              const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
-              const rowHeight = 113 + gap;
-              const rowCount = Math.ceil(summaryStats.length / columns);
-              const height = rowHeight * rowCount;
-
-              return (
-                <Grid
-                  key={`stats-grid-${width}-${columns}`}
-                  height={height}
-                  width={width}
-                  rowCount={rowCount}
-                  rowHeight={rowHeight}
-                  columnWidth={actualCardWidth + gap}
-                  columnCount={columns}
-                  style={{ overflow: "visible" }}
-                  cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                    const itemIndex = rowIndex * columns + columnIndex;
-                    const stat = summaryStats[itemIndex];
-
-                    if (!stat) return null;
-
-                    return (
-                      <div
-                        key={key}
-                        style={{
-                          ...style,
-                          width: actualCardWidth,
-                          paddingRight: columnIndex < columns - 1 ? gap : 0,
-                          paddingBottom: gap,
-                          overflow: "visible",
-                        }}
-                      >
-                        <StatsCard
-                          title={stat.title}
-                          value={stat.value}
-                          shouldRound={stat.shouldRound}
-                        />
-                      </div>
-                    );
-                  }}
-                />
-              );
-            }}
-          </AutoSizer>
-        </div>
-      )}
-
-      {/* Communities Grid with Infinite Scroll */}
-      <div className="w-full overflow-hidden">
-        {communitiesLoading && communities.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-gray-500 dark:text-gray-400">Loading communities...</p>
-          </div>
-        ) : communities.length > 0 ? (
-          <InfiniteScroll
-            dataLength={communities.length}
-            next={loadMore}
-            hasMore={hasNextPage || false}
-            loader={null}
-            style={{
-              width: "100%",
-              overflow: "visible",
+      {communitiesError ? (
+        <div className="flex flex-col items-center justify-center gap-4 py-20" role="alert">
+          <p className="text-red-500 dark:text-red-400">
+            Error loading communities: {communitiesErrorMessage?.message}
+          </p>
+          <Button
+            type="button"
+            className="text-xs sm:text-base font-bold rounded-sm px-4 py-2 w-fit"
+            onClick={() => {
+              refetchCommunities();
             }}
           >
-            <AutoSizer disableHeight>
-              {({ width }) => {
-                const columns = getResponsiveColumns(width);
-                const gap = 24;
-                const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
-                const rowHeight = 318 + gap; // Card height + gap
-                const rowCount = Math.ceil(communities.length / columns);
-                const height = rowCount * rowHeight;
+            Try again
+          </Button>
+        </div>
+      ) : communitiesLoading ? (
+        <CommunitiesSkeleton withHeader={false} />
+      ) : (
+        <>
+          {/* Summary Stats Row - Only show if stats loaded successfully */}
+          {summaryStats && !statsError && (
+            <div className="w-full overflow-hidden">
+              <AutoSizer disableHeight>
+                {({ width }) => {
+                  const columns = getResponsiveColumns(width);
+                  const gap = 24;
+                  const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
+                  const rowHeight = 113 + gap;
+                  const rowCount = Math.ceil(summaryStats.length / columns);
+                  const height = rowHeight * rowCount;
 
-                return (
-                  <Grid
-                    key={`grid-${width}-${columns}`}
-                    height={height + 60}
-                    width={width}
-                    rowCount={rowCount}
-                    rowHeight={rowHeight}
-                    columnWidth={actualCardWidth + gap}
-                    columnCount={columns}
-                    style={{ overflow: "visible" }}
-                    cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                      const itemIndex = rowIndex * columns + columnIndex;
-                      const community = communities[itemIndex];
+                  return (
+                    <Grid
+                      key={`stats-grid-${width}-${columns}`}
+                      height={height}
+                      width={width}
+                      rowCount={rowCount}
+                      rowHeight={rowHeight}
+                      columnWidth={actualCardWidth + gap}
+                      columnCount={columns}
+                      style={{ overflow: "visible" }}
+                      cellRenderer={({ columnIndex, key, rowIndex, style }) => {
+                        const itemIndex = rowIndex * columns + columnIndex;
+                        const stat = summaryStats[itemIndex];
 
-                      if (!community) return null;
+                        if (!stat) return null;
 
-                      return (
-                        <div
-                          key={key}
-                          style={{
-                            ...style,
-                            width: actualCardWidth,
-                            paddingRight: columnIndex < columns - 1 ? gap : 0,
-                            paddingBottom: gap,
-                            overflow: "visible",
-                          }}
-                        >
-                          <CommunityCard community={community} />
-                        </div>
-                      );
-                    }}
-                  />
-                );
-              }}
-            </AutoSizer>
-          </InfiniteScroll>
-        ) : (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-gray-500 dark:text-gray-400">No communities found.</p>
+                        return (
+                          <div
+                            key={key}
+                            style={{
+                              ...style,
+                              width: actualCardWidth,
+                              paddingRight: columnIndex < columns - 1 ? gap : 0,
+                              paddingBottom: gap,
+                              overflow: "visible",
+                            }}
+                          >
+                            <StatsCard
+                              title={stat.title}
+                              value={stat.value}
+                              shouldRound={stat.shouldRound}
+                            />
+                          </div>
+                        );
+                      }}
+                    />
+                  );
+                }}
+              </AutoSizer>
+            </div>
+          )}
+
+          {/* Communities Grid with Infinite Scroll */}
+          <div className="w-full overflow-hidden">
+            {communities.length > 0 ? (
+              <InfiniteScroll
+                dataLength={communities.length}
+                next={loadMore}
+                hasMore={hasNextPage || false}
+                loader={null}
+                style={{
+                  width: "100%",
+                  overflow: "visible",
+                }}
+              >
+                <AutoSizer disableHeight>
+                  {({ width }) => {
+                    const columns = getResponsiveColumns(width);
+                    const gap = 24;
+                    const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
+                    const rowHeight = 318 + gap; // Card height + gap
+                    const rowCount = Math.ceil(communities.length / columns);
+                    const height = rowCount * rowHeight;
+
+                    return (
+                      <Grid
+                        key={`grid-${width}-${columns}`}
+                        height={height + 60}
+                        width={width}
+                        rowCount={rowCount}
+                        rowHeight={rowHeight}
+                        columnWidth={actualCardWidth + gap}
+                        columnCount={columns}
+                        style={{ overflow: "visible" }}
+                        cellRenderer={({ columnIndex, key, rowIndex, style }) => {
+                          const itemIndex = rowIndex * columns + columnIndex;
+                          const community = communities[itemIndex];
+
+                          if (!community) return null;
+
+                          return (
+                            <div
+                              key={key}
+                              style={{
+                                ...style,
+                                width: actualCardWidth,
+                                paddingRight: columnIndex < columns - 1 ? gap : 0,
+                                paddingBottom: gap,
+                                overflow: "visible",
+                              }}
+                            >
+                              <CommunityCard community={community} />
+                            </div>
+                          );
+                        }}
+                      />
+                    );
+                  }}
+                </AutoSizer>
+              </InfiniteScroll>
+            ) : (
+              <div className="flex items-center justify-center py-20">
+                <p className="text-gray-500 dark:text-gray-400">No communities found.</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
+      {/*
+        Static marketing block — kept outside the query-state branches so it is
+        part of the server-rendered HTML alongside the heading above.
+      */}
       <div className="relative w-full bg-gradient-to-r from-[#D6DFFF] to-white dark:from-slate-800 dark:to-slate-700 rounded-2xl p-8 overflow-hidden mb-10">
         <div className="absolute right-0 top-0 w-1/2 h-full pointer-events-none">
           <div className="absolute top-[100px] right-0 md:top-20 md:right-20 transform rotate-[20deg]">
