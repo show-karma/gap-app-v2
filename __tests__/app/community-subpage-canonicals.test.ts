@@ -1,10 +1,23 @@
 /**
  * Sitemap-membership <-> canonical consistency gate (DEV-586).
  *
- * A URL only belongs in a sitemap if it is the canonical of its own content.
- * The sub-page path set here is DERIVED from the communities sitemap module, so
- * adding a sub-page to the sitemap without giving it self-canonical, unique
- * metadata fails this test — the two can never drift apart silently.
+ * A URL only belongs in a sitemap if it is the canonical of its own crawlable
+ * content. Every community sub-page is a client-rendered shell today — a
+ * production crawl (2026-08-03, Googlebot UA, JavaScript disabled) measured
+ * funding-opportunities at 406 chars of visible text, updates 475, impact 613,
+ * financials 501 and reports 406, while /projects returned 5578 chars that are
+ * 99.9% identical to the community root's 5570, with no unique words at all.
+ *
+ * So the communities sitemap submits roots only, and the sub-pages consolidate
+ * onto the community root canonical they inherit from the layout. This file
+ * pins both halves of that contract:
+ *
+ *   1. the sitemap contains community roots and nothing else;
+ *   2. no shell sub-page declares a self-canonical.
+ *
+ * Re-adding a sub-page to the sitemap fails (1) until it also declares a
+ * canonical, and adding a canonical fails (2) until it is also submitted — so
+ * server-rendered content, canonical and sitemap entry can only move together.
  */
 import type { Metadata } from "next";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -83,9 +96,8 @@ type MetadataModule = {
 };
 
 /**
- * Every sub-page the communities sitemap can emit, mapped to the route module
- * that owns its metadata. `assertsCoversSitemap` below proves this registry is
- * exhaustive.
+ * Every sub-page route under /community/<id>/, mapped to the module that owns
+ * its metadata. None of these is submitted to the sitemap today.
  */
 const SUBPAGE_METADATA_MODULES: Record<string, () => Promise<MetadataModule>> = {
   "funding-opportunities": () =>
@@ -97,195 +109,117 @@ const SUBPAGE_METADATA_MODULES: Record<string, () => Promise<MetadataModule>> = 
   reports: () => import("@/app/community/[communityId]/(with-header)/reports/page"),
 };
 
-type SitemapEntry = { communityId: string; subpath: string; url: string };
+/**
+ * Shells whose canonical must stay inherited. `reports` is deliberately absent:
+ * it already declared its own canonical before DEV-586 and that predates this
+ * change, so it is left alone — it is still kept out of the sitemap below.
+ */
+const SHELL_SUBPAGES = ["funding-opportunities", "projects", "updates", "impact", "financials"];
 
-async function sitemapSubpageEntries(): Promise<SitemapEntry[]> {
+/** Sub-pages that always return a title (financials returns {} when unflagged). */
+const TITLED_SUBPAGES = ["funding-opportunities", "projects", "updates", "impact"];
+
+async function sitemapUrls(): Promise<string[]> {
   const { default: communitiesSitemap } = await import("@/app/sitemaps/communities/sitemap");
   const entries = await communitiesSitemap();
-  return entries
-    .map((entry) => {
-      const { pathname } = new URL(entry.url);
-      const [, , communityId, ...rest] = pathname.split("/");
-      return { communityId, subpath: rest.join("/"), url: entry.url };
-    })
-    .filter((entry) => entry.subpath !== "");
+  return entries.map((entry) => entry.url);
 }
 
 async function metadataFor(subpath: string, communityId: string): Promise<Metadata> {
-  const loader = SUBPAGE_METADATA_MODULES[subpath];
-  if (!loader) {
-    throw new Error(`No metadata module registered for sub-page "${subpath}"`);
-  }
-  const mod = await loader();
+  const mod = await SUBPAGE_METADATA_MODULES[subpath]();
   return mod.generateMetadata({ params: Promise.resolve({ communityId }) });
 }
 
-function communityFixture(name: string) {
-  return { uid: `0x${name}`, details: { name, slug: name } };
-}
-
-describe("community sub-pages listed in the sitemap", () => {
+describe("community sitemap membership and canonicals", () => {
   beforeEach(() => {
+    vi.resetModules();
     chosenCommunitiesMock.mockReturnValue(COMMUNITIES);
-    getWhitelabelContextMock.mockResolvedValue({
-      isWhitelabel: false,
-      communitySlug: null,
-      config: null,
-      tenantConfig: null,
-    });
-    getCommunityDetailsMock.mockImplementation(async (slug: string) => communityFixture(slug));
-    apiGetMock.mockResolvedValue(null);
+    getCommunityDetailsMock.mockResolvedValue({ details: { name: "Celo" } });
+    getWhitelabelContextMock.mockResolvedValue({ isWhitelabel: false, config: null });
+    apiGetMock.mockResolvedValue({});
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it("has a metadata module registered for every sub-page the sitemap emits", async () => {
-    const entries = await sitemapSubpageEntries();
-    const subpaths = [...new Set(entries.map((entry) => entry.subpath))];
+  describe("the sitemap submits community roots only", () => {
+    it("emits exactly one entry per chosen community", async () => {
+      expect(await sitemapUrls()).toEqual([
+        `${SITE_URL}/community/celo`,
+        `${SITE_URL}/community/filecoin`,
+      ]);
+    });
 
-    expect(subpaths.length).toBeGreaterThan(0);
-    for (const subpath of subpaths) {
-      expect(
-        Object.keys(SUBPAGE_METADATA_MODULES),
-        `sitemap emits /${subpath} but no route owns its metadata`
-      ).toContain(subpath);
-    }
-  });
+    it("submits no sub-page URLs at all", async () => {
+      const subPageUrls = (await sitemapUrls()).filter((url) => /\/community\/[^/]+\/.+/.test(url));
+      expect(subPageUrls).toEqual([]);
+    });
 
-  it("serves a self-referential canonical for every sitemap URL", async () => {
-    const entries = await sitemapSubpageEntries();
-
-    for (const entry of entries) {
-      const metadata = await metadataFor(entry.subpath, entry.communityId);
-      const expectedPath = new URL(entry.url).pathname;
-
-      expect(metadata.alternates?.canonical, `${entry.url} must declare itself canonical`).toBe(
-        expectedPath
-      );
-    }
-  });
-
-  it("never marks a sitemap URL noindex", async () => {
-    const entries = await sitemapSubpageEntries();
-
-    for (const entry of entries) {
-      const metadata = await metadataFor(entry.subpath, entry.communityId);
-      const robots = metadata.robots;
-      const directive =
-        typeof robots === "string"
-          ? robots
-          : robots && typeof robots === "object" && robots.index === false
-            ? "noindex"
-            : "";
-
-      expect(directive, `${entry.url} must stay indexable`).not.toContain("noindex");
-    }
-  });
-
-  it("gives each crawlable sub-page a title distinct from the community root", async () => {
-    const entries = (await sitemapSubpageEntries()).filter((entry) => entry.communityId === "celo");
-    const rootTitle = "Celo Community Grants | Karma";
-    const titles = new Map<string, string>();
-
-    for (const entry of entries) {
-      const metadata = await metadataFor(entry.subpath, entry.communityId);
-      // `reports` intentionally inherits the community layout's copy; it only
-      // corrects the canonical. Everything else must say what it is.
-      if (entry.subpath === "reports") {
-        continue;
+    // Named one by one so re-adding any of them is a deliberate, reviewed act
+    // rather than a silent regression.
+    it.each(Object.keys(SUBPAGE_METADATA_MODULES))(
+      "does not submit /%s while it is a client-rendered shell",
+      async (subPage) => {
+        expect(await sitemapUrls()).not.toContain(`${SITE_URL}/community/celo/${subPage}`);
       }
-      const title = metadata.title;
-      expect(typeof title, `${entry.url} must set its own title`).toBe("string");
-      expect(title).not.toBe(rootTitle);
-      titles.set(entry.subpath, title as string);
-    }
-
-    expect(new Set(titles.values()).size).toBe(titles.size);
-    for (const [subpath, title] of titles) {
-      expect(title.toLowerCase(), `${subpath} title should name the community`).toContain("celo");
-    }
-  });
-
-  it("gives each crawlable sub-page its own description", async () => {
-    const entries = (await sitemapSubpageEntries()).filter(
-      (entry) => entry.communityId === "celo" && entry.subpath !== "reports"
     );
-    const descriptions: string[] = [];
 
-    for (const entry of entries) {
-      const metadata = await metadataFor(entry.subpath, entry.communityId);
-      expect(typeof metadata.description, `${entry.url} must set a description`).toBe("string");
-      descriptions.push(metadata.description as string);
-    }
-
-    expect(new Set(descriptions).size).toBe(descriptions.length);
-  });
-
-  it("strips the /community/<slug> prefix from the canonical on a whitelabel domain", async () => {
-    getWhitelabelContextMock.mockResolvedValue({
-      isWhitelabel: true,
-      communitySlug: "celo",
-      config: { domain: "grants.celo.org", communitySlug: "celo" },
-      tenantConfig: null,
+    it("still submits the community root, which carries the real content", async () => {
+      expect(await sitemapUrls()).toContain(`${SITE_URL}/community/celo`);
     });
 
-    const entries = (await sitemapSubpageEntries()).filter((entry) => entry.communityId === "celo");
-
-    for (const entry of entries) {
-      const metadata = await metadataFor(entry.subpath, entry.communityId);
-      expect(metadata.alternates?.canonical).toBe(`/${entry.subpath}`);
-    }
-  });
-
-  it("keeps the canonical self-referential when the community lookup fails", async () => {
-    getCommunityDetailsMock.mockResolvedValue(null);
-
-    const metadata = await metadataFor("projects", "celo");
-
-    expect(metadata.alternates?.canonical).toBe("/community/celo/projects");
-    expect(metadata.title).toContain("celo");
-  });
-
-  it("does not list browse-applications — it has nothing to serve a crawler", async () => {
-    const entries = await sitemapSubpageEntries();
-
-    expect(entries.some((entry) => entry.subpath === "browse-applications")).toBe(false);
-  });
-});
-
-describe("funding-program detail pages listed in the sitemap", () => {
-  beforeEach(() => {
-    getWhitelabelContextMock.mockResolvedValue({
-      isWhitelabel: false,
-      communitySlug: null,
-      config: null,
-      tenantConfig: null,
+    it("falls back to uid when a community has no slug", async () => {
+      chosenCommunitiesMock.mockReturnValue([{ name: "X", slug: undefined, uid: "uid-only" }]);
+      expect(await sitemapUrls()).toEqual([`${SITE_URL}/community/uid-only`]);
     });
-    apiGetMock.mockResolvedValue({
-      programId: "42",
-      name: "Public Goods Fund",
-      metadata: { title: "Public Goods Fund", shortDescription: "Funding public goods." },
+
+    it("emits no query strings and no duplicate URLs", async () => {
+      const urls = await sitemapUrls();
+      expect(urls.every((url) => !url.includes("?"))).toBe(true);
+      expect(new Set(urls).size).toBe(urls.length);
+    });
+
+    it("omits lastModified rather than fabricating one", async () => {
+      const { default: communitiesSitemap } = await import("@/app/sitemaps/communities/sitemap");
+      const entries = await communitiesSitemap();
+      expect(entries.every((entry) => entry.lastModified === undefined)).toBe(true);
     });
   });
 
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
+  describe("shell sub-pages consolidate onto the community root", () => {
+    it.each(SHELL_SUBPAGES)("%s declares no canonical of its own", async (subPage) => {
+      const metadata = await metadataFor(subPage, "celo");
+      expect(metadata.alternates?.canonical).toBeUndefined();
+    });
 
-  it("self-canonicals at the /community/<id>/programs/<programId> sitemap shape", async () => {
-    const mod = await import(
-      "@/app/community/[communityId]/(whitelabel)/programs/[programId]/page"
+    it("financials declares no canonical even for a flagged community", async () => {
+      const metadata = await metadataFor("financials", "filecoin");
+      expect(metadata.alternates?.canonical).toBeUndefined();
+    });
+
+    it.each(TITLED_SUBPAGES)(
+      "%s still sets a distinct title, so the copy is ready when it earns a canonical",
+      async (subPage) => {
+        const metadata = await metadataFor(subPage, "celo");
+        expect(typeof metadata.title).toBe("string");
+        expect(String(metadata.title).length).toBeGreaterThan(0);
+      }
     );
-    const metadata = await mod.generateMetadata({
-      params: Promise.resolve({ communityId: "celo", programId: "42" }),
+
+    it("sub-page titles are unique across routes", async () => {
+      const titles = await Promise.all(
+        TITLED_SUBPAGES.map(async (subPage) => (await metadataFor(subPage, "celo")).title)
+      );
+      expect(new Set(titles).size).toBe(titles.length);
     });
 
-    expect(metadata.alternates?.canonical).toBe("/community/celo/programs/42");
-    expect(new URL(`${SITE_URL}/community/celo/programs/42`).pathname).toBe(
-      metadata.alternates?.canonical
-    );
-    expect(metadata.robots).toBeUndefined();
+    // Production served "Celo Community Grants | Karma | Karma" on several of
+    // these before DEV-586, from a title that already carried the brand suffix
+    // being wrapped by the layout template.
+    it.each(TITLED_SUBPAGES)("%s title carries no doubled brand suffix", async (subPage) => {
+      const metadata = await metadataFor(subPage, "celo");
+      expect(String(metadata.title)).not.toMatch(/\|\s*Karma\s*\|\s*Karma/);
+    });
   });
 });
