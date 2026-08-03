@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Impact Measurement for Funded Projects",
   description:
     "Discover how funded work connects to verifiable outputs and outcomes. Learn practical approaches to measuring impact and improving capital allocation decisions.",
-  path: "/knowledge/impact-measurement",
+  path: PAGES.KNOWLEDGE.ARTICLE("impact-measurement"),
   ogType: "article",
 });
 
@@ -23,21 +24,21 @@ export default function ImpactMeasurementPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Impact Measurement", href: "/knowledge/impact-measurement" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Impact Measurement", href: PAGES.KNOWLEDGE.ARTICLE("impact-measurement") },
         ]}
       />
       <ArticleJsonLd
         title="Impact Measurement for Funded Projects"
         description="Discover how funded work connects to verifiable outputs and outcomes. Learn practical approaches to measuring impact and improving capital allocation decisions."
-        url="/knowledge/impact-measurement"
+        url={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Impact Measurement", url: "/knowledge/impact-measurement" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Impact Measurement", url: PAGES.KNOWLEDGE.ARTICLE("impact-measurement") },
         ]}
       />
       <article className="space-y-8">
@@ -94,25 +95,25 @@ export default function ImpactMeasurementPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/milestones-vs-impact"
+              href={PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Milestones vs impact
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/impact-verification"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-verification")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact verification
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability

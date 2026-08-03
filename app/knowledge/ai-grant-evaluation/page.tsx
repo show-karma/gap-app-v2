@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "AI-Assisted Grant Evaluation at Scale",
   description:
     "Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling.",
-  path: "/knowledge/ai-grant-evaluation",
+  path: PAGES.KNOWLEDGE.ARTICLE("ai-grant-evaluation"),
   ogType: "article",
 });
 
@@ -23,21 +24,27 @@ export default function AiGrantEvaluationPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "AI-Assisted Grant Evaluation", href: "/knowledge/ai-grant-evaluation" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          {
+            label: "AI-Assisted Grant Evaluation",
+            href: PAGES.KNOWLEDGE.ARTICLE("ai-grant-evaluation"),
+          },
         ]}
       />
       <ArticleJsonLd
         title="AI-Assisted Grant Evaluation at Scale"
         description="Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling."
-        url="/knowledge/ai-grant-evaluation"
+        url={PAGES.KNOWLEDGE.ARTICLE("ai-grant-evaluation")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "AI-Assisted Grant Evaluation", url: "/knowledge/ai-grant-evaluation" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "AI-Assisted Grant Evaluation",
+            url: PAGES.KNOWLEDGE.ARTICLE("ai-grant-evaluation"),
+          },
         ]}
       />
       <article className="space-y-8">
@@ -98,25 +105,25 @@ export default function AiGrantEvaluationPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
             </Link>
             <Link
-              href="/knowledge/dao-grant-milestones"
+              href={PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → DAO grant milestones
             </Link>
             <Link
-              href="/knowledge/why-grant-programs-fail"
+              href={PAGES.KNOWLEDGE.ARTICLE("why-grant-programs-fail")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Why grant programs fail

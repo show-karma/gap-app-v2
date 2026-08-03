@@ -6,6 +6,7 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "How Projects Build Reputation Through Public Updates";
 const description =
@@ -14,7 +15,7 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/project-updates-and-reputation",
+  path: PAGES.KNOWLEDGE.ARTICLE("project-updates-and-reputation"),
   ogType: "article",
 });
 
@@ -26,26 +27,26 @@ export default function ProjectUpdatesAndReputationPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
           {
             label: "Project Updates and Reputation",
-            href: "/knowledge/project-updates-and-reputation",
+            href: PAGES.KNOWLEDGE.ARTICLE("project-updates-and-reputation"),
           },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/project-updates-and-reputation"
+        url={PAGES.KNOWLEDGE.ARTICLE("project-updates-and-reputation")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
           {
             name: "Project Updates and Reputation",
-            url: "/knowledge/project-updates-and-reputation",
+            url: PAGES.KNOWLEDGE.ARTICLE("project-updates-and-reputation"),
           },
         ]}
       />
@@ -117,7 +118,7 @@ export default function ProjectUpdatesAndReputationPage() {
           </p>
           <p className="pt-2">
             <Link
-              href="/create-project-profile"
+              href={PAGES.CREATE_PROJECT_PROFILE}
               className="text-blue-600 hover:underline dark:text-blue-400 font-semibold"
             >
               → Create your project profile
@@ -129,13 +130,13 @@ export default function ProjectUpdatesAndReputationPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/reputation-compounding"
+              href={PAGES.KNOWLEDGE.ARTICLE("reputation-compounding")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → How reputation compounds in open funding
             </Link>
             <Link
-              href="/knowledge/project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What are project profiles?
