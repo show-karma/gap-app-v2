@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "KYC in Grant and Funding Programs",
   description:
     "Learn how identity verification integrates into grant workflows without slowing down funding. Explore KYC best practices for compliance and operational efficiency.",
-  path: "/knowledge/grant-kyc",
+  path: PAGES.KNOWLEDGE.ARTICLE("grant-kyc"),
   ogType: "article",
 });
 
@@ -23,21 +24,21 @@ export default function GrantKycPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "KYC in Grant Programs", href: "/knowledge/grant-kyc" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "KYC in Grant Programs", href: PAGES.KNOWLEDGE.ARTICLE("grant-kyc") },
         ]}
       />
       <ArticleJsonLd
         title="KYC in Grant and Funding Programs"
         description="Learn how identity verification integrates into grant workflows without slowing down funding. Explore KYC best practices for compliance and operational efficiency."
-        url="/knowledge/grant-kyc"
+        url={PAGES.KNOWLEDGE.ARTICLE("grant-kyc")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "KYC in Grant Programs", url: "/knowledge/grant-kyc" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "KYC in Grant Programs", url: PAGES.KNOWLEDGE.ARTICLE("grant-kyc") },
         ]}
       />
       <article className="space-y-8">
@@ -88,25 +89,25 @@ export default function GrantKycPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/grant-fund-disbursement"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-fund-disbursement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant fund disbursement
             </Link>
             <Link
-              href="/knowledge/grant-document-signing"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-document-signing")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Document signing in grants
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability

@@ -1,17 +1,38 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Grant Funding Knowledge Base",
   description:
     "A reference guide to modern funding systems. Learn about grant accountability, impact verification, onchain reputation, project profiles, and capital allocation.",
-  path: "/knowledge",
+  path: PAGES.KNOWLEDGE.ROOT,
   ogType: "website",
 });
+
+interface ArticleLinkProps {
+  slug: string;
+  children: ReactNode;
+}
+
+/** Shared markup for every article link in the index list. */
+function ArticleLink({ slug, children }: ArticleLinkProps) {
+  return (
+    <p>
+      <Link
+        href={PAGES.KNOWLEDGE.ARTICLE(slug)}
+        className="text-blue-600 hover:underline dark:text-blue-400"
+      >
+        {children}
+      </Link>
+    </p>
+  );
+}
 
 export default function KnowledgePage() {
   return (
@@ -19,18 +40,18 @@ export default function KnowledgePage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
         ]}
       />
       <CollectionPageJsonLd
         name="Grant Funding Knowledge Base"
         description="A reference guide to modern funding systems. Learn about grant accountability, impact verification, onchain reputation, project profiles, and capital allocation."
-        url="/knowledge"
+        url={PAGES.KNOWLEDGE.ROOT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
         ]}
       />
       <article className="space-y-12">
@@ -90,14 +111,7 @@ export default function KnowledgePage() {
               How funded projects are tracked after money is disbursed, and why post-funding
               execution matters more than selection alone.
             </p>
-            <p>
-              <Link
-                href="/knowledge/grant-accountability"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Grant accountability
-              </Link>
-            </p>
+            <ArticleLink slug="grant-accountability">→ Grant accountability</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -106,14 +120,7 @@ export default function KnowledgePage() {
               A structural analysis of why many funding programs struggle to produce consistent
               outcomes despite strong applicant pools.
             </p>
-            <p>
-              <Link
-                href="/knowledge/why-grant-programs-fail"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Why grant programs fail
-              </Link>
-            </p>
+            <ArticleLink slug="why-grant-programs-fail">→ Why grant programs fail</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -122,14 +129,7 @@ export default function KnowledgePage() {
               A practical breakdown of how DAOs define, track, and evaluate grant milestones — and
               the tradeoffs of different approaches.
             </p>
-            <p>
-              <Link
-                href="/knowledge/dao-grant-milestones"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → DAO grant milestones
-              </Link>
-            </p>
+            <ArticleLink slug="dao-grant-milestones">→ DAO grant milestones</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -138,14 +138,7 @@ export default function KnowledgePage() {
               What reputation actually means in open systems, how it differs from tokens or
               identity, and why execution history matters.
             </p>
-            <p>
-              <Link
-                href="/knowledge/onchain-reputation"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Onchain reputation
-              </Link>
-            </p>
+            <ArticleLink slug="onchain-reputation">→ Onchain reputation</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -154,14 +147,7 @@ export default function KnowledgePage() {
               How projects build credibility over time by documenting work, completing milestones,
               and creating verifiable records.
             </p>
-            <p>
-              <Link
-                href="/knowledge/project-reputation"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Project reputation
-              </Link>
-            </p>
+            <ArticleLink slug="project-reputation">→ Project reputation</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -170,14 +156,7 @@ export default function KnowledgePage() {
               Why execution milestones and real-world impact must be treated as separate but related
               concepts.
             </p>
-            <p>
-              <Link
-                href="/knowledge/milestones-vs-impact"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Milestones vs impact
-              </Link>
-            </p>
+            <ArticleLink slug="milestones-vs-impact">→ Milestones vs impact</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -186,14 +165,7 @@ export default function KnowledgePage() {
               How impact can be measured and verified without relying solely on centralized auditors
               or one-off reports.
             </p>
-            <p>
-              <Link
-                href="/knowledge/impact-verification"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Impact verification
-              </Link>
-            </p>
+            <ArticleLink slug="impact-verification">→ Impact verification</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -202,14 +174,9 @@ export default function KnowledgePage() {
               A comparison of spreadsheets, documents, and dedicated funding platforms — and when
               each breaks down.
             </p>
-            <p>
-              <Link
-                href="/knowledge/manual-vs-platform-grant-tracking"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Manual vs platform tracking
-              </Link>
-            </p>
+            <ArticleLink slug="manual-vs-platform-grant-tracking">
+              → Manual vs platform tracking
+            </ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -218,14 +185,7 @@ export default function KnowledgePage() {
               Why reputation acts as cumulative memory in open funding systems, and how it improves
               decision-making over time.
             </p>
-            <p>
-              <Link
-                href="/knowledge/reputation-compounding"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Reputation compounding
-              </Link>
-            </p>
+            <ArticleLink slug="reputation-compounding">→ Reputation compounding</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -234,14 +194,7 @@ export default function KnowledgePage() {
               A complete view of the grant process, from proposal to verified impact and long-term
               learning.
             </p>
-            <p>
-              <Link
-                href="/knowledge/grant-lifecycle"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Grant lifecycle
-              </Link>
-            </p>
+            <ArticleLink slug="grant-lifecycle">→ Grant lifecycle</ArticleLink>
           </div>
         </section>
 
@@ -257,7 +210,7 @@ export default function KnowledgePage() {
             <li>
               Start with the{" "}
               <Link
-                href="/knowledge/grant-lifecycle"
+                href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 grant lifecycle
@@ -267,7 +220,7 @@ export default function KnowledgePage() {
             <li>
               Start with{" "}
               <Link
-                href="/knowledge/grant-accountability"
+                href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 grant accountability
@@ -277,7 +230,7 @@ export default function KnowledgePage() {
             <li>
               Start with{" "}
               <Link
-                href="/knowledge/onchain-reputation"
+                href={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 onchain reputation
@@ -388,14 +341,7 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How funding programs scale application review without sacrificing rigor.
             </p>
-            <p>
-              <Link
-                href="/knowledge/ai-grant-evaluation"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → AI-assisted grant evaluation
-              </Link>
-            </p>
+            <ArticleLink slug="ai-grant-evaluation">→ AI-assisted grant evaluation</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -403,14 +349,7 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               Why communities maintain public records of funded projects and their progress.
             </p>
-            <p>
-              <Link
-                href="/knowledge/project-registry"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Project registries
-              </Link>
-            </p>
+            <ArticleLink slug="project-registry">→ Project registries</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -418,14 +357,7 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How identity verification is coordinated without slowing down funding.
             </p>
-            <p>
-              <Link
-                href="/knowledge/grant-kyc"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → KYC and compliance
-              </Link>
-            </p>
+            <ArticleLink slug="grant-kyc">→ KYC and compliance</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -433,14 +365,7 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               Why grant agreements must be tracked as part of the funding workflow.
             </p>
-            <p>
-              <Link
-                href="/knowledge/grant-document-signing"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Document signing
-              </Link>
-            </p>
+            <ArticleLink slug="grant-document-signing">→ Document signing</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -448,14 +373,9 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How payments are safely triggered once requirements are met.
             </p>
-            <p>
-              <Link
-                href="/knowledge/grant-fund-disbursement"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Fund disbursement coordination
-              </Link>
-            </p>
+            <ArticleLink slug="grant-fund-disbursement">
+              → Fund disbursement coordination
+            </ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -463,14 +383,7 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How funded work is connected to verifiable outputs and outcomes.
             </p>
-            <p>
-              <Link
-                href="/knowledge/impact-measurement"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Impact measurement
-              </Link>
-            </p>
+            <ArticleLink slug="impact-measurement">→ Impact measurement</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -478,14 +391,9 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               Why ecosystems run funding programs under their own brand using shared infrastructure.
             </p>
-            <p>
-              <Link
-                href="/knowledge/whitelabel-funding-platforms"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Whitelabel funding platforms
-              </Link>
-            </p>
+            <ArticleLink slug="whitelabel-funding-platforms">
+              → Whitelabel funding platforms
+            </ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -493,14 +401,9 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How different funding goals require different payment structures.
             </p>
-            <p>
-              <Link
-                href="/knowledge/funding-distribution-mechanisms"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Funding distribution mechanisms
-              </Link>
-            </p>
+            <ArticleLink slug="funding-distribution-mechanisms">
+              → Funding distribution mechanisms
+            </ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -530,14 +433,7 @@ export default function KnowledgePage() {
               A public, shareable page where projects document funding, milestones, updates, and
               outcomes over time.
             </p>
-            <p>
-              <Link
-                href="/knowledge/project-profiles"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → What is a project profile?
-              </Link>
-            </p>
+            <ArticleLink slug="project-profiles">→ What is a project profile?</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -545,14 +441,9 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How profiles help grantees show funders what happens after funding.
             </p>
-            <p>
-              <Link
-                href="/knowledge/why-grantees-need-project-profiles"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Why grantees need project profiles
-              </Link>
-            </p>
+            <ArticleLink slug="why-grantees-need-project-profiles">
+              → Why grantees need project profiles
+            </ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -560,14 +451,9 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               Why project profiles serve as global resumes for funded work.
             </p>
-            <p>
-              <Link
-                href="/knowledge/project-profiles-as-resumes"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Project profiles as resumes
-              </Link>
-            </p>
+            <ArticleLink slug="project-profiles-as-resumes">
+              → Project profiles as resumes
+            </ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -575,14 +461,9 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How consistent public updates build trust more than perfect outcomes.
             </p>
-            <p>
-              <Link
-                href="/knowledge/project-updates-and-reputation"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Building reputation through updates
-              </Link>
-            </p>
+            <ArticleLink slug="project-updates-and-reputation">
+              → Building reputation through updates
+            </ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -590,14 +471,9 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How project profiles work for both technical and non-technical work.
             </p>
-            <p>
-              <Link
-                href="/knowledge/project-profiles-software-vs-nonsoftware"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Software vs non-software projects
-              </Link>
-            </p>
+            <ArticleLink slug="project-profiles-software-vs-nonsoftware">
+              → Software vs non-software projects
+            </ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -605,14 +481,7 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How onchain storage provides credibility without blockchain complexity.
             </p>
-            <p>
-              <Link
-                href="/knowledge/onchain-project-profiles"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → Onchain project profiles
-              </Link>
-            </p>
+            <ArticleLink slug="onchain-project-profiles">→ Onchain project profiles</ArticleLink>
           </div>
 
           <div className="space-y-4">
@@ -620,14 +489,9 @@ export default function KnowledgePage() {
             <p className="text-gray-700 dark:text-gray-300">
               How funders evaluate projects based on execution history, not just proposals.
             </p>
-            <p>
-              <Link
-                href="/knowledge/how-funders-use-project-profiles"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
-                → How funders use project profiles
-              </Link>
-            </p>
+            <ArticleLink slug="how-funders-use-project-profiles">
+              → How funders use project profiles
+            </ArticleLink>
           </div>
         </section>
 

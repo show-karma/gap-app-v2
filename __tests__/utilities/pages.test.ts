@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { PAGES } from "@/utilities/pages";
 
 describe("PAGES constants", () => {
@@ -139,6 +141,48 @@ describe("PAGES constants", () => {
       const path1 = PAGES.BLOG_POST("post-a");
       const path2 = PAGES.BLOG_POST("post-b");
       expect(path1).not.toBe(path2);
+    });
+  });
+
+  describe("PAGES.KNOWLEDGE", () => {
+    it("ROOT is /knowledge", () => {
+      expect(PAGES.KNOWLEDGE.ROOT).toBe("/knowledge");
+    });
+
+    it("ARTICLE builds a slug path under the index route", () => {
+      expect(PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")).toBe("/knowledge/grant-lifecycle");
+      expect(PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")).toBe("/knowledge/onchain-reputation");
+    });
+
+    it("ARTICLE resolves every article directory to its own route", () => {
+      const dir = path.resolve(__dirname, "../../app/knowledge");
+      const slugs = readdirSync(dir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
+
+      expect(slugs.length).toBeGreaterThan(0);
+      for (const slug of slugs) {
+        expect(PAGES.KNOWLEDGE.ARTICLE(slug)).toBe(`${PAGES.KNOWLEDGE.ROOT}/${slug}`);
+      }
+      expect(new Set(slugs.map(PAGES.KNOWLEDGE.ARTICLE)).size).toBe(slugs.length);
+    });
+
+    it("is the only source of knowledge routes in the article pages", () => {
+      const dir = path.resolve(__dirname, "../../app/knowledge");
+      const pages = readdirSync(dir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => path.join(dir, entry.name, "page.tsx"))
+        .concat(path.join(dir, "page.tsx"));
+
+      // A quote immediately before the path catches a hardcoded route in any
+      // string form — "/knowledge", '/knowledge' and `/knowledge`. Asserting on
+      // the bare substring would not work: every article imports
+      // `@/app/knowledge/articleDates`, so the path appears legitimately.
+      const hardcodedRoute = /["'`]\/knowledge/;
+
+      for (const page of pages) {
+        expect(readFileSync(page, "utf8")).not.toMatch(hardcodedRoute);
+      }
     });
   });
 });

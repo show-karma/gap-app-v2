@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "What Is Grant Accountability in Open Funding?",
   description:
     "Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time.",
-  path: "/knowledge/grant-accountability",
+  path: PAGES.KNOWLEDGE.ARTICLE("grant-accountability"),
   ogType: "article",
 });
 
@@ -23,21 +24,21 @@ export default function GrantAccountabilityPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Grant Accountability", href: "/knowledge/grant-accountability" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Grant Accountability", href: PAGES.KNOWLEDGE.ARTICLE("grant-accountability") },
         ]}
       />
       <ArticleJsonLd
         title="What Is Grant Accountability in Open Funding?"
         description="Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time."
-        url="/knowledge/grant-accountability"
+        url={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Grant Accountability", url: "/knowledge/grant-accountability" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Grant Accountability", url: PAGES.KNOWLEDGE.ARTICLE("grant-accountability") },
         ]}
       />
       <article className="space-y-8">
@@ -105,37 +106,37 @@ export default function GrantAccountabilityPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/why-grant-programs-fail"
+              href={PAGES.KNOWLEDGE.ARTICLE("why-grant-programs-fail")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Why grant programs fail
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/impact-measurement"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact measurement
             </Link>
             <Link
-              href="/knowledge/project-registry"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-registry")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Public project registries
             </Link>
             <Link
-              href="/knowledge/grant-document-signing"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-document-signing")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Document signing in grants
             </Link>
             <Link
-              href="/knowledge/funding-distribution-mechanisms"
+              href={PAGES.KNOWLEDGE.ARTICLE("funding-distribution-mechanisms")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Funding distribution mechanisms

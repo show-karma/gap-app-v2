@@ -6,6 +6,7 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "Whitelabel Funding Platforms for DAO Ecosystems";
 const description =
@@ -14,7 +15,7 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/whitelabel-funding-platforms",
+  path: PAGES.KNOWLEDGE.ARTICLE("whitelabel-funding-platforms"),
   ogType: "article",
 });
 
@@ -26,24 +27,27 @@ export default function WhitelabelFundingPlatformsPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
           {
             label: "Whitelabel Funding Platforms",
-            href: "/knowledge/whitelabel-funding-platforms",
+            href: PAGES.KNOWLEDGE.ARTICLE("whitelabel-funding-platforms"),
           },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/whitelabel-funding-platforms"
+        url={PAGES.KNOWLEDGE.ARTICLE("whitelabel-funding-platforms")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Whitelabel Funding Platforms", url: "/knowledge/whitelabel-funding-platforms" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "Whitelabel Funding Platforms",
+            url: PAGES.KNOWLEDGE.ARTICLE("whitelabel-funding-platforms"),
+          },
         ]}
       />
       <article className="space-y-8">
@@ -93,19 +97,19 @@ export default function WhitelabelFundingPlatformsPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
             </Link>
             <Link
-              href="/knowledge/funding-distribution-mechanisms"
+              href={PAGES.KNOWLEDGE.ARTICLE("funding-distribution-mechanisms")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Funding distribution mechanisms

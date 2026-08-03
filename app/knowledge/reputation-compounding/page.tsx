@@ -6,6 +6,7 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "How Reputation Compounds in Open Funding Systems";
 const description =
@@ -14,7 +15,7 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/reputation-compounding",
+  path: PAGES.KNOWLEDGE.ARTICLE("reputation-compounding"),
   ogType: "article",
 });
 
@@ -26,21 +27,27 @@ export default function ReputationCompoundingPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Reputation Compounding", href: "/knowledge/reputation-compounding" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          {
+            label: "Reputation Compounding",
+            href: PAGES.KNOWLEDGE.ARTICLE("reputation-compounding"),
+          },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/reputation-compounding"
+        url={PAGES.KNOWLEDGE.ARTICLE("reputation-compounding")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Reputation Compounding", url: "/knowledge/reputation-compounding" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "Reputation Compounding",
+            url: PAGES.KNOWLEDGE.ARTICLE("reputation-compounding"),
+          },
         ]}
       />
       <article className="space-y-8">
@@ -83,25 +90,25 @@ export default function ReputationCompoundingPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/onchain-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What is onchain reputation?
             </Link>
             <Link
-              href="/knowledge/project-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → How projects build reputation through funding
             </Link>
             <Link
-              href="/knowledge/project-updates-and-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-updates-and-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Project updates and reputation
             </Link>
             <Link
-              href="/knowledge/impact-measurement"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact measurement

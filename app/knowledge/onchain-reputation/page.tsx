@@ -6,6 +6,7 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "What Is Onchain Reputation in Open Funding?";
 const description =
@@ -14,7 +15,7 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/onchain-reputation",
+  path: PAGES.KNOWLEDGE.ARTICLE("onchain-reputation"),
   ogType: "article",
 });
 
@@ -26,21 +27,21 @@ export default function OnchainReputationPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Onchain Reputation", href: "/knowledge/onchain-reputation" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Onchain Reputation", href: PAGES.KNOWLEDGE.ARTICLE("onchain-reputation") },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/onchain-reputation"
+        url={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Onchain Reputation", url: "/knowledge/onchain-reputation" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Onchain Reputation", url: PAGES.KNOWLEDGE.ARTICLE("onchain-reputation") },
         ]}
       />
       <article className="space-y-8">
@@ -150,25 +151,25 @@ export default function OnchainReputationPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What are project profiles?
             </Link>
             <Link
-              href="/knowledge/reputation-compounding"
+              href={PAGES.KNOWLEDGE.ARTICLE("reputation-compounding")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → How reputation compounds in open funding
             </Link>
             <Link
-              href="/knowledge/project-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → How projects build reputation through funding
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability

@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "How to Verify Impact Without Centralized Auditors",
   description:
     "Learn how impact can be verified through transparent documentation, peer review, and public evidence instead of relying solely on centralized audits.",
-  path: "/knowledge/impact-verification",
+  path: PAGES.KNOWLEDGE.ARTICLE("impact-verification"),
   ogType: "article",
 });
 
@@ -23,21 +24,21 @@ export default function ImpactVerificationPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Impact Verification", href: "/knowledge/impact-verification" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Impact Verification", href: PAGES.KNOWLEDGE.ARTICLE("impact-verification") },
         ]}
       />
       <ArticleJsonLd
         title="How to Verify Impact Without Centralized Auditors"
         description="Learn how impact can be verified through transparent documentation, peer review, and public evidence instead of relying solely on centralized audits."
-        url="/knowledge/impact-verification"
+        url={PAGES.KNOWLEDGE.ARTICLE("impact-verification")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Impact Verification", url: "/knowledge/impact-verification" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Impact Verification", url: PAGES.KNOWLEDGE.ARTICLE("impact-verification") },
         ]}
       />
       <article className="space-y-8">
@@ -85,25 +86,25 @@ export default function ImpactVerificationPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/impact-measurement"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact measurement
             </Link>
             <Link
-              href="/knowledge/milestones-vs-impact"
+              href={PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Milestones vs impact
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle

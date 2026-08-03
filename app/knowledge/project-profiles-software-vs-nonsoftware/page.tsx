@@ -6,6 +6,7 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "Project Profiles for Software vs Non-Software Projects";
 const description =
@@ -14,7 +15,7 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/project-profiles-software-vs-nonsoftware",
+  path: PAGES.KNOWLEDGE.ARTICLE("project-profiles-software-vs-nonsoftware"),
   ogType: "article",
 });
 
@@ -26,26 +27,26 @@ export default function ProjectProfilesSoftwareVsNonsoftwarePage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
           {
             label: "Software vs Non-Software Profiles",
-            href: "/knowledge/project-profiles-software-vs-nonsoftware",
+            href: PAGES.KNOWLEDGE.ARTICLE("project-profiles-software-vs-nonsoftware"),
           },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/project-profiles-software-vs-nonsoftware"
+        url={PAGES.KNOWLEDGE.ARTICLE("project-profiles-software-vs-nonsoftware")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
           {
             name: "Software vs Non-Software Profiles",
-            url: "/knowledge/project-profiles-software-vs-nonsoftware",
+            url: PAGES.KNOWLEDGE.ARTICLE("project-profiles-software-vs-nonsoftware"),
           },
         ]}
       />
@@ -119,7 +120,7 @@ export default function ProjectProfilesSoftwareVsNonsoftwarePage() {
           </p>
           <p className="pt-2">
             <Link
-              href="/create-project-profile"
+              href={PAGES.CREATE_PROJECT_PROFILE}
               className="text-blue-600 hover:underline dark:text-blue-400 font-semibold"
             >
               → Create your project profile
@@ -131,13 +132,13 @@ export default function ProjectProfilesSoftwareVsNonsoftwarePage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What are project profiles?
             </Link>
             <Link
-              href="/knowledge/onchain-project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Onchain project profiles explained
