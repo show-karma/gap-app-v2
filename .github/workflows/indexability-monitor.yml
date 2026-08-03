@@ -33,12 +33,16 @@ jobs:
         with:
           node-version: "20"
 
+      # Unit tests only — no network. scripts/crawl-sitemap.mjs itself is
+      # manual-only (it crawls production) and is deliberately never run here.
       - name: Run Node test suites
         run: >
           node --test
           scripts/indexability/__tests__/audit-sitemaps.test.mjs
           scripts/indexability/__tests__/verify-indexability.test.mjs
           scripts/indexability/__tests__/cli.test.mjs
+          scripts/indexability/__tests__/crawl-sitemap.test.mjs
+          scripts/indexability/__tests__/crawl-sitemap-robustness.test.mjs
 
       - name: Run indexability verification
         id: verify

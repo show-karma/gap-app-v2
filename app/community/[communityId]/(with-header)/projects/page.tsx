@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CommunityGrants } from "@/components/CommunityGrants";
+import { PROJECT_NAME } from "@/constants/brand";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import { PAGES } from "@/utilities/pages";
 import {
@@ -21,6 +23,24 @@ type Props = {
   }>;
   searchParams: Promise<CommunityProjectsSearchParams>;
 };
+
+// Self-canonical with its own title/description. Without this the page inherits
+// the community layout's metadata, so a sitemap-listed URL pointed its canonical
+// at `/community/<id>` and duplicated the root's title.
+export async function generateMetadata({ params }: { params: Props["params"] }): Promise<Metadata> {
+  const { communityId } = await params;
+  const community = await getCommunityDetails(communityId);
+  const communityName = community?.details?.name || communityId;
+
+  // No self-canonical: this route is a client-rendered shell, so it is absent
+  // from the sitemap and consolidates onto the community root canonical it
+  // inherits from the layout. Give it server-rendered content first, then a
+  // canonical and a sitemap entry together.
+  return {
+    title: `${communityName} Funded Projects | ${PROJECT_NAME}`,
+    description: `Browse every project funded by ${communityName}. Filter by category and maturity stage, and follow grantee milestones and impact on ${PROJECT_NAME}.`,
+  };
+}
 
 export default async function CommunityProjectsPage(props: Props) {
   const { communityId } = await props.params;
