@@ -1,0 +1,7 @@
+date,route_cohort,issue,commit,expected_metric,notes
+2026-07-30,"/community/[communityId], /community/[communityId]/projects",AEO-01 (DEV-584),6d9226303,AI crawler citation of project entities,"Server-rendered entity list plus crawlable pagination; merged via PR #1957"
+2026-07-30,/programs/[programId],AEO-02 (DEV-585),df70aff91,Program pages citable without JS,"SSR with React Query hydration; merged via PR #1956"
+2026-07-30,site-wide (/robots.txt),AEO-07 (DEV-590),d3c76d879,AI search and user-fetch crawler access,"SearchUser crawler rules plus robots tests; merged via PR #1953"
+2026-07-30,/knowledge/*,AEO-08 (DEV-591),65c4b44da,Truthful Article JSON-LD dates,"Per-article date model replacing build-time dates; merged via PR #1954"
+2026-07-31,/llms.txt,AEO-10 (DEV-593),8a06d27cd,Populated LLM URL index,"Sitemap-index resolution plus empty-section abort; merged via PR #1955"
+2026-07-31,"/agents.md, /llms.txt, Organization JSON-LD",AEO-15 (DEV-609),3acd44c0b,Consistent three-audience self-description,"Rode the AEO-10 branch, so it reached main in the same merge (8a06d27cd); commit cited is the feature commit, not a separate merge"

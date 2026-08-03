@@ -6,6 +6,10 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import mp from "mixpanel-browser";
 import { useMixpanel } from "@/hooks/useMixpanel";
+import {
+  __resetAiFirstTouchCacheForTests,
+  AI_FIRST_TOUCH_STORAGE_KEY,
+} from "@/utilities/aiReferrer";
 
 // Mock mixpanel-browser
 vi.mock("mixpanel-browser");
@@ -19,6 +23,7 @@ describe("useMixpanel", () => {
     vi.clearAllMocks();
     // Reset environment variables
     process.env = { ...originalEnv };
+    __resetAiFirstTouchCacheForTests();
   });
 
   afterEach(() => {
@@ -336,6 +341,83 @@ describe("useMixpanel", () => {
 
       expect(mockMixpanel.track).toHaveBeenCalledWith("prefix1:event1", {}, expect.any(Function));
       expect(mockMixpanel.track).toHaveBeenCalledWith("prefix2:event2", {}, expect.any(Function));
+    });
+  });
+
+  describe("AI First-Touch Attribution", () => {
+    const storeFirstTouch = () => {
+      window.localStorage.setItem(
+        AI_FIRST_TOUCH_STORAGE_KEY,
+        JSON.stringify({
+          source: "chatgpt",
+          medium: "utm",
+          landingPath: "/programs",
+          firstSeenAt: "2026-07-31T10:00:00.000Z",
+        })
+      );
+    };
+
+    afterEach(() => {
+      window.localStorage.clear();
+    });
+
+    it("should merge the stored AI first touch into reported events", async () => {
+      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
+      process.env.NEXT_PUBLIC_ENV = "production";
+      storeFirstTouch();
+
+      mockMixpanel.track = vi.fn((_event, _props, callback) => {
+        if (typeof callback === "function") {
+          callback(1);
+        }
+      });
+
+      const { result } = renderHook(() => useMixpanel());
+
+      await waitFor(() => {
+        expect(mockMixpanel.init).toHaveBeenCalled();
+      });
+
+      await result.current.mixpanel.reportEvent({
+        event: "donation_completed",
+        properties: { amount: 100 },
+      });
+
+      expect(mockMixpanel.track).toHaveBeenCalledWith(
+        "gap:donation_completed",
+        {
+          amount: 100,
+          ai_source: "chatgpt",
+          ai_source_medium: "utm",
+          ai_first_touch_at: "2026-07-31T10:00:00.000Z",
+        },
+        expect.any(Function)
+      );
+    });
+
+    it("should let an explicit event property win over the first-touch value", async () => {
+      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
+      process.env.NEXT_PUBLIC_ENV = "production";
+      storeFirstTouch();
+
+      mockMixpanel.track = vi.fn((_event, _props, callback) => {
+        if (typeof callback === "function") {
+          callback(1);
+        }
+      });
+
+      const { result } = renderHook(() => useMixpanel());
+
+      await waitFor(() => {
+        expect(mockMixpanel.init).toHaveBeenCalled();
+      });
+
+      await result.current.mixpanel.reportEvent({
+        event: "override_event",
+        properties: { ai_source: "perplexity" },
+      });
+
+      expect(mockMixpanel.track.mock.calls[0][1]).toMatchObject({ ai_source: "perplexity" });
     });
   });
 });
