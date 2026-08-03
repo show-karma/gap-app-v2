@@ -14,6 +14,8 @@
  * effects and resolves no queries, so what it produces is what a non-executing
  * crawler receives.
  */
+import fs from "node:fs";
+import path from "node:path";
 import type { Metadata } from "next";
 import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -183,26 +185,81 @@ describe("/communities — heading survives every query state", () => {
 });
 
 describe("/nonprofits/find-funders — server-rendered landing page", () => {
-  async function renderFindFunders(): Promise<string> {
+  const HERO_H1 = "Stop hunting for funders. Ask an agent.";
+
+  /**
+   * Two renders, matching the two audiences of a streamed dynamic route:
+   *
+   * - `noscriptHtml` — the <noscript> hero the ROOT layout renders for this
+   *   route (behind the proxy's x-pathname tag). On this app's dynamic routes
+   *   the page's own HTML is streamed as a `<div hidden id="S:n">` chunk that
+   *   only client-side script reveals, and WHICH ancestor loading.tsx fallback
+   *   ends up visible shifts between builds — the root layout's output is the
+   *   only region React guarantees into the initially visible HTML. So the
+   *   no-JS reader's hero lives there.
+   * - `pageHtml` — the real page, revealed on hydration, which JS-executing
+   *   crawlers and users read.
+   */
+  async function renderFindFunders(): Promise<{ noscriptHtml: string; pageHtml: string }> {
+    const { FindFundersNoscriptHero } = await import(
+      "@/src/features/non-profits/components/find-funders-noscript-hero"
+    );
     const { default: Page } = await import("@/app/nonprofits/find-funders/page");
-    return renderToString(<>{Page()}</>);
+    return {
+      noscriptHtml: renderToString(FindFundersNoscriptHero()),
+      pageHtml: renderToString(Page()),
+    };
   }
 
-  it("server-renders the hero h1", async () => {
-    expect(headings(await renderFindFunders())).toContain(
-      "Stop hunting for funders. Ask an agent."
-    );
+  /**
+   * What a no-JS browser renders: the content INSIDE the <noscript> wrapper.
+   * `visibleText` deliberately strips whole noscript blocks (they are
+   * invisible to a JS-executing reader), so these assertions unwrap first.
+   */
+  function noscriptInner(html: string): string {
+    const match = html.match(/^<noscript>([\s\S]*)<\/noscript>$/);
+    return match ? match[1] : "";
+  }
+
+  it("the noscript hero — the no-JS reader's page — carries the h1, lead copy and prompts", async () => {
+    const { noscriptHtml } = await renderFindFunders();
+
+    expect(noscriptHtml).toMatch(/^<noscript>/);
+    const inner = noscriptInner(noscriptHtml);
+    expect(headings(inner)).toEqual([HERO_H1]);
+
+    const text = visibleText(inner);
+    expect(text).toContain("AI agents that find the right foundations and funders");
+    expect(text.length).toBeGreaterThan(600);
   });
 
-  it("emits exactly one h1", async () => {
-    expect(headings(await renderFindFunders())).toHaveLength(1);
+  it("the noscript h1 matches the page h1 exactly, so both audiences read the same heading", async () => {
+    const { noscriptHtml, pageHtml } = await renderFindFunders();
+
+    expect(headings(pageHtml)).toEqual(headings(noscriptInner(noscriptHtml)));
+  });
+
+  it("the noscript hero lists every example chip from lib/hero-content verbatim", async () => {
+    const { HERO_CHIPS } = await import("@/src/features/non-profits/lib/hero-content");
+    const { noscriptHtml } = await renderFindFunders();
+    const text = visibleText(noscriptInner(noscriptHtml));
+
+    for (const chip of HERO_CHIPS) {
+      expect(text).toContain(chip.text);
+    }
+  });
+
+  it("the page emits exactly one h1", async () => {
+    const { pageHtml } = await renderFindFunders();
+
+    expect(headings(pageHtml)).toHaveLength(1);
   });
 
   // The route previously served ~1.1k chars of navbar and footer chrome and
   // none of the landing copy, because `dynamic(..., { ssr: false })` rendered
   // nothing at all on the server.
   it("server-renders the landing sections a crawler indexes, not just a spinner", async () => {
-    const text = visibleText(await renderFindFunders());
+    const text = visibleText((await renderFindFunders()).pageHtml);
 
     expect(text.length).toBeGreaterThan(2000);
     expect(text).toContain("grounded in every");
@@ -216,5 +273,29 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
     const { metadata } = await import("@/app/nonprofits/find-funders/page");
 
     expect(canonicalOf(metadata)).toBe("/nonprofits/find-funders");
+  });
+
+  /**
+   * Structural guard: the workbench subroutes each keep their own loading.tsx,
+   * so a navigation inside find-funders never degrades to an ancestor
+   * fallback, and the segment keeps its instant loading state for the landing
+   * page itself.
+   */
+  it("keeps the segment loading boundary and per-subroute loading states in place", () => {
+    const segment = path.join(process.cwd(), "app/nonprofits/find-funders");
+
+    expect(fs.existsSync(path.join(segment, "loading.tsx"))).toBe(true);
+
+    for (const subroute of [
+      "connect/loading.tsx",
+      "connect/claude/loading.tsx",
+      "connect/chatgpt/loading.tsx",
+      "search/[id]/loading.tsx",
+      "foundations/[id]/loading.tsx",
+      "grants/[id]/loading.tsx",
+      "nonprofits/[id]/loading.tsx",
+    ]) {
+      expect(fs.existsSync(path.join(segment, subroute)), subroute).toBe(true);
+    }
   });
 });

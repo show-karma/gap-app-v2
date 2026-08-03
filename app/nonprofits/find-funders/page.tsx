@@ -18,8 +18,12 @@ export const metadata: Metadata = customMetadata({
  * the eight content sections (DEV-586). Nothing in `LandingPageClient` blocks
  * SSR: every `document` / `sessionStorage` / `IntersectionObserver` touch lives
  * in an effect or an event handler, and the search-session store's `persist`
- * middleware no-ops on the server. So the component is imported directly and
- * the whole page is in the server HTML.
+ * middleware no-ops on the server.
+ *
+ * Everything this page renders still streams behind the segment's loading.tsx
+ * Suspense boundary as a hidden chunk — which is why that loading.tsx is a
+ * static replica of the hero rather than a spinner: the fallback is the part
+ * of this route a no-JS reader actually sees. See ./loading.tsx.
  */
 export default function NonProfitsPage() {
   return <LandingPageClient />;
