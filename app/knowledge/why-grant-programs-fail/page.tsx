@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Why Most Grant Programs Fail After Funding",
   description:
     "Grant programs fail at post-funding follow-through, not project selection. Learn the structural reasons and how to build systems that learn from outcomes.",
-  path: "/knowledge/why-grant-programs-fail",
+  path: PAGES.KNOWLEDGE.ARTICLE("why-grant-programs-fail"),
   ogType: "article",
 });
 
@@ -23,21 +24,27 @@ export default function WhyGrantProgramsFailPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Why Grant Programs Fail", href: "/knowledge/why-grant-programs-fail" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          {
+            label: "Why Grant Programs Fail",
+            href: PAGES.KNOWLEDGE.ARTICLE("why-grant-programs-fail"),
+          },
         ]}
       />
       <ArticleJsonLd
         title="Why Most Grant Programs Fail After Funding"
         description="Grant programs fail at post-funding follow-through, not project selection. Learn the structural reasons and how to build systems that learn from outcomes."
-        url="/knowledge/why-grant-programs-fail"
+        url={PAGES.KNOWLEDGE.ARTICLE("why-grant-programs-fail")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Why Grant Programs Fail", url: "/knowledge/why-grant-programs-fail" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "Why Grant Programs Fail",
+            url: PAGES.KNOWLEDGE.ARTICLE("why-grant-programs-fail"),
+          },
         ]}
       />
       <article className="space-y-8">
@@ -100,31 +107,31 @@ export default function WhyGrantProgramsFailPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/impact-measurement"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact measurement
             </Link>
             <Link
-              href="/knowledge/dao-grant-milestones"
+              href={PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → DAO grant milestones
             </Link>
             <Link
-              href="/knowledge/manual-vs-platform-grant-tracking"
+              href={PAGES.KNOWLEDGE.ARTICLE("manual-vs-platform-grant-tracking")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Manual vs platform grant tracking

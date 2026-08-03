@@ -6,6 +6,7 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "What Are Project Profiles for Funded Work?";
 const description =
@@ -14,7 +15,7 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/project-profiles",
+  path: PAGES.KNOWLEDGE.ARTICLE("project-profiles"),
   ogType: "article",
 });
 
@@ -26,21 +27,21 @@ export default function ProjectProfilesPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Project Profiles", href: "/knowledge/project-profiles" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Project Profiles", href: PAGES.KNOWLEDGE.ARTICLE("project-profiles") },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/project-profiles"
+        url={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Project Profiles", url: "/knowledge/project-profiles" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Project Profiles", url: PAGES.KNOWLEDGE.ARTICLE("project-profiles") },
         ]}
       />
       <article className="space-y-8">
@@ -148,7 +149,7 @@ export default function ProjectProfilesPage() {
           </p>
           <p className="pt-2">
             <Link
-              href="/create-project-profile"
+              href={PAGES.CREATE_PROJECT_PROFILE}
               className="text-blue-600 hover:underline dark:text-blue-400 font-semibold"
             >
               → Create your project profile
@@ -160,19 +161,19 @@ export default function ProjectProfilesPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/why-grantees-need-project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("why-grantees-need-project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Why grantees need project profiles
             </Link>
             <Link
-              href="/knowledge/how-funders-use-project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("how-funders-use-project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → How funders use project profiles
             </Link>
             <Link
-              href="/knowledge/onchain-project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Onchain project profiles explained
