@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DEFAULT_KNOWN_ISSUES, main, parseArgs, resolveConfig } from "../../crawl-sitemap.mjs";
 import {
+  assertVisibilityMode,
   CLASSIFICATIONS,
   classify,
   crawlSitemap,
   extractCanonical,
   extractFirstTagText,
   extractMetaRobots,
+  extractNoJsVisibleHtml,
   hasNoindex,
   inspectUrl,
   isSelfCanonical,
@@ -140,6 +142,176 @@ describe("HTML extraction", () => {
       ),
       "Impact & Outcomes"
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// No-JS visibility model (DEV-586, follow-up to the PR #1967 QA finding)
+// ---------------------------------------------------------------------------
+
+describe("extractNoJsVisibleHtml", () => {
+  // The exact shape that motivated this model: Next streams the page segment
+  // as a hidden div revealed only by client-side script, with a loading
+  // fallback as the visible page. Raw counting saw the hidden prose and passed
+  // find-funders; a no-JS renderer showed only the spinner.
+  const STREAMED_SHELL =
+    `<body><main class="spinner">Loading</main>` +
+    `<div hidden id="S:0"><h1>Streamed heading</h1><p>${PARAGRAPH}</p></div>` +
+    `<script>$RC("B:0","S:0")</script></body>`;
+
+  it("excludes text inside a hidden streamed chunk", () => {
+    const visible = extractNoJsVisibleHtml(STREAMED_SHELL);
+    assert.equal(visibleTextLength(visible), "Loading".length);
+    assert.equal(extractFirstTagText(visible, "h1"), null);
+  });
+
+  it("counts noscript content as visible, for both text and h1", () => {
+    const visible = extractNoJsVisibleHtml(
+      `<body><noscript><h1>NoJS hero</h1><p>${PARAGRAPH}</p></noscript>` +
+        `<div hidden id="S:0"><h1>Streamed heading</h1></div></body>`
+    );
+    assert.equal(extractFirstTagText(visible, "h1"), "NoJS hero");
+    assert.ok(visibleTextLength(visible) > 200);
+  });
+
+  it("an h1 in a hidden chunk plus an h1 in noscript is satisfied by the noscript one only", () => {
+    const visible = extractNoJsVisibleHtml(
+      `<body><div hidden id="S:0"><h1>Hidden first</h1></div>` +
+        `<noscript><h1>Visible second</h1></noscript></body>`
+    );
+    assert.equal(extractFirstTagText(visible, "h1"), "Visible second");
+  });
+
+  // Precedence: `hidden` always wins. A hidden element inside a noscript is
+  // parsed as normal DOM by a scripting-disabled renderer and its `hidden`
+  // attribute is honored; a noscript inside a hidden element is inside a
+  // subtree that never renders at all.
+  it("keeps a hidden element inside noscript invisible (noscript > div[hidden])", () => {
+    const visible = extractNoJsVisibleHtml(
+      "<body><noscript><div hidden>secret</div><p>shown</p></noscript></body>"
+    );
+    assert.equal(visibleTextLength(visible), "shown".length);
+  });
+
+  it("keeps a noscript inside a hidden element invisible (div[hidden] > noscript)", () => {
+    const visible = extractNoJsVisibleHtml(
+      "<body><div hidden><noscript><h1>never rendered</h1></noscript></div><p>ok</p></body>"
+    );
+    assert.equal(extractFirstTagText(visible, "h1"), null);
+    assert.equal(visibleTextLength(visible), "ok".length);
+  });
+
+  it('treats hidden="", hidden="hidden" and hidden="until-found" all as hidden', () => {
+    for (const variant of ['hidden=""', 'hidden="hidden"', 'hidden="until-found"', "hidden"]) {
+      const visible = extractNoJsVisibleHtml(`<body><div ${variant}>gone</div><p>kept</p></body>`);
+      assert.equal(visibleTextLength(visible), "kept".length, variant);
+    }
+  });
+
+  it('does not false-positive on attribute VALUES containing "hidden"', () => {
+    const visible = extractNoJsVisibleHtml(
+      '<body><p class="is hidden" data-state="hidden">visible text</p></body>'
+    );
+    assert.equal(visibleTextLength(visible), "visible text".length);
+  });
+
+  it("still drops script/style/template content, including inside noscript", () => {
+    const visible = extractNoJsVisibleHtml(
+      `<body><noscript><style>.a{color:red}</style>real</noscript>` +
+        `<template><h1>inert</h1></template></body>`
+    );
+    assert.equal(visibleTextLength(visible), "real".length);
+    assert.equal(extractFirstTagText(visible, "h1"), null);
+  });
+
+  it("handles nested hidden elements without resurrecting inner content", () => {
+    const visible = extractNoJsVisibleHtml(
+      "<body><div hidden><section><div hidden><p>deep</p></div><p>mid</p></section></div><p>out</p></body>"
+    );
+    assert.equal(visibleTextLength(visible), "out".length);
+  });
+
+  it("is not fooled by void elements inside a hidden subtree", () => {
+    const visible = extractNoJsVisibleHtml(
+      '<body><div hidden><img src="x"><br><p>still hidden</p></div><p>seen</p></body>'
+    );
+    assert.equal(visibleTextLength(visible), "seen".length);
+  });
+
+  it("returns an empty string for empty input", () => {
+    assert.equal(extractNoJsVisibleHtml(""), "");
+    assert.equal(extractNoJsVisibleHtml(null), "");
+  });
+});
+
+describe("inspectUrl visibility modes", () => {
+  const url = `${CANONICAL}/streamed`;
+  // Everything meaningful hidden; a noscript h1 + prose present. The two modes
+  // must disagree about this page: raw counts the hidden prose (and finds the
+  // hidden h1 first), no-js sees only fallback + noscript.
+  const STREAMED_PAGE =
+    `<!doctype html><html><head><title>Streamed</title>` +
+    `<link rel="canonical" href="${url}"/></head>` +
+    `<body><main>Loading</main>` +
+    `<noscript><h1>Crawler hero</h1></noscript>` +
+    `<div hidden id="S:0"><h1>Streamed heading</h1><p>${PARAGRAPH}</p></div></body></html>`;
+
+  const request = async (requested, consume) =>
+    consume(
+      new Response(STREAMED_PAGE, {
+        status: 200,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      })
+    );
+
+  it("no-js mode (the default) classifies a hidden-chunk page as thin", async () => {
+    const record = await inspectUrl(request, url);
+
+    assert.equal(record.visibilityMode, "no-js");
+    assert.equal(record.h1, "Crawler hero");
+    assert.ok(record.textLength < 100, `textLength ${record.textLength}`);
+    assert.ok(record.rawTextLength > 200, `rawTextLength ${record.rawTextLength}`);
+    assert.equal(record.meaningful, false);
+    assert.equal(classify(record, url), CLASSIFICATIONS.THIN);
+  });
+
+  it("raw mode preserves the historical counting for old-report comparability", async () => {
+    const record = await inspectUrl(request, url, { visibilityMode: "raw" });
+
+    assert.equal(record.visibilityMode, "raw");
+    // Historical semantics exactly: the first h1 in raw document order (here
+    // the noscript one — the old extractor never modeled visibility at all)
+    // and a text length that counts the hidden chunk's prose.
+    assert.equal(record.h1, "Crawler hero");
+    assert.equal(record.textLength, record.rawTextLength);
+    assert.ok(record.rawTextLength > 200, `rawTextLength ${record.rawTextLength}`);
+    assert.equal(record.meaningful, true);
+    assert.equal(classify(record, url), CLASSIFICATIONS.OK);
+  });
+
+  it("a page whose h1 and prose live in noscript is meaningful in no-js mode", async () => {
+    const noscriptUrl = `${CANONICAL}/noscript-page`;
+    const noscriptRequest = async (_requested, consume) =>
+      consume(
+        new Response(
+          `<!doctype html><html><head><title>T</title>` +
+            `<link rel="canonical" href="${noscriptUrl}"/></head>` +
+            `<body><noscript><h1>Hero</h1><p>${PARAGRAPH}</p></noscript></body></html>`,
+          { status: 200, headers: { "content-type": "text/html; charset=utf-8" } }
+        )
+      );
+
+    const record = await inspectUrl(noscriptRequest, noscriptUrl);
+    assert.equal(record.meaningful, true);
+    assert.equal(classify(record, noscriptUrl), CLASSIFICATIONS.OK);
+  });
+
+  it("rejects an unknown visibility mode", async () => {
+    await assert.rejects(
+      () => inspectUrl(request, url, { visibilityMode: "rendered" }),
+      /Invalid visibilityMode/
+    );
+    assert.throws(() => assertVisibilityMode("rendered"), /Invalid visibilityMode/);
   });
 });
 
@@ -681,6 +853,17 @@ describe("crawl-sitemap CLI", () => {
     assert.equal(fromDefaults.concurrency, 3);
     assert.equal(fromDefaults.delayMs, 250);
     assert.equal(fromDefaults.rootSitemapUrl, `${CANONICAL}/sitemap.xml`);
+  });
+
+  it("defaults to no-js visibility, accepts raw, and rejects anything else", () => {
+    assert.equal(resolveConfig({}, {}).visibilityMode, "no-js");
+    assert.equal(resolveConfig({ visibilityMode: "raw" }, {}).visibilityMode, "raw");
+    assert.equal(resolveConfig({}, { CRAWL_VISIBILITY_MODE: "raw" }).visibilityMode, "raw");
+    assert.equal(parseArgs(["--visibility-mode", "raw"]).visibilityMode, "raw");
+    assert.throws(
+      () => resolveConfig({ visibilityMode: "rendered" }, {}),
+      /Invalid visibilityMode/
+    );
   });
 
   it("rejects non-numeric numeric flags", () => {
