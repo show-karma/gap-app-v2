@@ -3,7 +3,7 @@ import { cache } from "react";
 import {
   DEFAULT_PROGRAMS_LIMIT,
   PROGRAMS_LIST_STALE_TIME,
-} from "@/src/features/programs/hooks/use-programs";
+} from "@/src/features/programs/lib/constants";
 import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
