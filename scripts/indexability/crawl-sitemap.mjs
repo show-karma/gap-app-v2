@@ -37,6 +37,23 @@ const DEFAULT_MAX_URLS_PER_SITEMAP = 50000;
 const DEFAULT_USER_AGENT =
   "KarmaSitemapCrawler/1.0 (+https://www.karmahq.xyz; internal SEO audit; contact=engineering@karmahq.xyz)";
 
+// How `textLength` / `h1` model the reader. `no-js` is the truthful default:
+// it excludes `hidden` subtrees (streamed Suspense chunks) and includes
+// `<noscript>` content. `raw` preserves the historical raw-markup counting for
+// comparison against older reports.
+export const VISIBILITY_MODES = Object.freeze({
+  NO_JS: "no-js",
+  RAW: "raw",
+});
+const DEFAULT_VISIBILITY_MODE = VISIBILITY_MODES.NO_JS;
+
+export function assertVisibilityMode(value) {
+  if (value !== VISIBILITY_MODES.NO_JS && value !== VISIBILITY_MODES.RAW) {
+    throw new Error(`Invalid visibilityMode: "${value}" (expected "no-js" or "raw")`);
+  }
+  return value;
+}
+
 export const CLASSIFICATIONS = Object.freeze({
   OK: "ok",
   NON_200: "non-200",
@@ -67,6 +84,7 @@ export async function crawlSitemap({
   delayMs = DEFAULT_DELAY_MS,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   minContentChars = DEFAULT_MIN_CONTENT_CHARS,
+  visibilityMode = DEFAULT_VISIBILITY_MODE,
   knownIssues = [],
   userAgent = DEFAULT_USER_AGENT,
   maxSitemapDepth = DEFAULT_MAX_SITEMAP_DEPTH,
@@ -78,6 +96,7 @@ export async function crawlSitemap({
   if (typeof fetch !== "function") {
     throw new Error("crawlSitemap requires an injected `fetch`");
   }
+  assertVisibilityMode(visibilityMode);
   const allowlist = normalizeKnownIssues(knownIssues);
   const root = safeUrl(rootSitemapUrl);
   if (!root) {
@@ -163,7 +182,7 @@ export async function crawlSitemap({
     selected,
     concurrency,
     async ({ url, sitemap }) => {
-      const inspected = await inspectUrl(request, url, { minContentChars });
+      const inspected = await inspectUrl(request, url, { minContentChars, visibilityMode });
       const classification = classify(inspected, url);
       const allowed =
         classification === CLASSIFICATIONS.OK
@@ -186,6 +205,7 @@ export async function crawlSitemap({
   return {
     timestamp,
     root: root.href,
+    visibilityMode,
     children,
     results,
     summary,
@@ -231,12 +251,21 @@ export function selectSample(
 /**
  * Fetch one page and extract everything a non-rendering crawler would see.
  * Never throws: a transport failure becomes `{ error }` on the record.
+ *
+ * `visibilityMode` selects the content model:
+ * - `"no-js"` (default): text and h1 come from the markup a scripting-disabled
+ *   renderer displays — `hidden` subtrees excluded, `<noscript>` content
+ *   included (see extractNoJsVisibleHtml). `rawTextLength` is still recorded
+ *   so a report shows how much content sits in hidden streamed chunks.
+ * - `"raw"`: the pre-existing raw-markup measure, for comparability with
+ *   older reports.
  */
 export async function inspectUrl(
   request,
   url,
-  { minContentChars = DEFAULT_MIN_CONTENT_CHARS } = {}
+  { minContentChars = DEFAULT_MIN_CONTENT_CHARS, visibilityMode = DEFAULT_VISIBILITY_MODE } = {}
 ) {
+  assertVisibilityMode(visibilityMode);
   let fetched;
   try {
     fetched = await request(url, async (response) => ({
@@ -258,14 +287,23 @@ export async function inspectUrl(
       title: null,
       h1: null,
       textLength: 0,
+      rawTextLength: 0,
+      visibilityMode,
       meaningful: false,
     };
   }
 
   const html = fetched.body ?? "";
   const canonicalHref = extractCanonical(html);
-  const textLength = visibleTextLength(html);
-  const h1 = extractFirstTagText(html, "h1");
+  const rawTextLength = visibleTextLength(html);
+  // Head-level signals (canonical, robots, title) are read from the raw markup
+  // in both modes: they live in <head>, are never inside a hidden streamed
+  // chunk, and a crawler reads them regardless of rendering.
+  const contentHtml =
+    visibilityMode === VISIBILITY_MODES.NO_JS ? extractNoJsVisibleHtml(html) : html;
+  const textLength =
+    visibilityMode === VISIBILITY_MODES.NO_JS ? visibleTextLength(contentHtml) : rawTextLength;
+  const h1 = extractFirstTagText(contentHtml, "h1");
 
   return {
     url,
@@ -278,6 +316,8 @@ export async function inspectUrl(
     title: extractFirstTagText(html, "title"),
     h1,
     textLength,
+    rawTextLength,
+    visibilityMode,
     meaningful: textLength >= minContentChars && Boolean(h1),
   };
 }
@@ -519,10 +559,12 @@ const HTML_COMMENT = /<!--[\s\S]*?-->/g;
 const TAG = /<[^>]*>/g;
 
 /**
- * Length of the text a reader sees with JavaScript disabled: script, style,
- * noscript, template and JSON-LD payloads are removed first so a page whose
- * only "content" is a serialized RSC payload or structured data is not counted
- * as meaningful.
+ * Length of the text present in the raw markup outside script, style, noscript,
+ * template and JSON-LD payloads. This is the RAW measure: it does not model the
+ * `hidden` attribute, so text inside a streamed Suspense chunk
+ * (`<div hidden id="S:n">…</div>`) still counts. Kept as-is for
+ * `visibilityMode: "raw"` and for comparability with pre-existing crawl
+ * reports; the truth-telling measure is `extractNoJsVisibleHtml` below.
  */
 export function visibleTextLength(html) {
   if (!html) {
@@ -534,6 +576,161 @@ export function visibleTextLength(html) {
     .replace(TAG, " ")
     .replace(/&nbsp;/gi, " ");
   return decodeHtmlEntities(stripped).replace(/\s+/g, " ").trim().length;
+}
+
+// Elements that never contribute rendered text, in any mode. `noscript` is
+// deliberately NOT here — see extractNoJsVisibleHtml.
+const RAW_TEXT_CONTAINERS = new Set(["script", "style", "template"]);
+
+// Void elements never take a closing tag, so they must not be pushed onto the
+// open-element stack (an unclosed <img> would otherwise swallow the document).
+const VOID_ELEMENTS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
+// One start/end tag, capturing: [ , closingSlash, tagName, attributes,
+// selfClosingSlash]. Quoted attribute runs are consumed as units so a `>`
+// inside an attribute value does not terminate the tag early.
+const TAG_TOKEN = /<(\/)?([a-zA-Z][a-zA-Z0-9-]*)((?:"[^"]*"|'[^']*'|[^"'>])*)(\/)?>/g;
+
+const ATTRIBUTE_TOKEN = /([^\s=/]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*))?/g;
+
+/**
+ * True when the tag's attribute string carries the `hidden` attribute (bare,
+ * `hidden=""`, `hidden="hidden"`, or `hidden="until-found"` — none of them is
+ * displayed by a renderer, so all of them count as hidden here). Attribute
+ * NAMES are tokenized rather than substring-matched, so `class="is hidden"`
+ * does not false-positive.
+ */
+function hasHiddenAttribute(attributes) {
+  if (!attributes) {
+    return false;
+  }
+  ATTRIBUTE_TOKEN.lastIndex = 0;
+  let match = ATTRIBUTE_TOKEN.exec(attributes);
+  while (match !== null) {
+    if (match[1].toLowerCase() === "hidden") {
+      return true;
+    }
+    match = ATTRIBUTE_TOKEN.exec(attributes);
+  }
+  return false;
+}
+
+/**
+ * Reduce raw HTML to the markup a renderer with JavaScript DISABLED actually
+ * displays. This is the crawler's model of the no-JS reader, and it exists
+ * because raw-text counting has a proven blind spot: on this app every dynamic
+ * route streams its page segment as a `<div hidden id="S:n">` chunk that only
+ * client-side script reveals, so a page whose whole body is hidden passed the
+ * old meaningful-content check while a no-JS renderer showed just a loading
+ * fallback (PR #1967's QA round caught exactly this on find-funders).
+ *
+ * Visibility rules, in precedence order:
+ *
+ * 1. Content inside any element carrying the `hidden` attribute is INVISIBLE,
+ *    unconditionally. This includes a `<noscript>` nested inside a hidden
+ *    element: `hidden` removes the subtree from rendering before the noscript
+ *    question ever arises.
+ * 2. `<noscript>` content is VISIBLE — it is precisely what a scripting-
+ *    disabled renderer shows — so the wrapper tags are unwrapped and the inner
+ *    markup is kept. A hidden element INSIDE a noscript stays invisible (a
+ *    no-JS renderer parses noscript children as normal DOM and honors their
+ *    attributes), which is rule 1 applying inside rule 2.
+ * 3. `script`, `style` and `template` content is never rendered text, in any
+ *    context — including inside a noscript.
+ *
+ * Tag handling is a single-pass stack scan (this module is dependency-free by
+ * design — no HTML parser). Closing tags pop to the nearest matching open tag,
+ * so benign mis-nesting self-corrects; a truly unclosed hidden element hides
+ * the rest of its enclosing document, which matches what a forgiving HTML
+ * parser building that DOM would do. Comments are stripped up front so
+ * commented-out markup can not open or close anything.
+ */
+export function extractNoJsVisibleHtml(html) {
+  if (!html) {
+    return "";
+  }
+  const source = html.replace(HTML_COMMENT, " ");
+  const stack = [];
+  let hiddenDepth = 0;
+  let rawTextDepth = 0;
+  const out = [];
+  let cursor = 0;
+
+  TAG_TOKEN.lastIndex = 0;
+  let match = TAG_TOKEN.exec(source);
+  while (match !== null) {
+    const [tag, closing, rawName, attributes, selfClosing] = match;
+    const name = rawName.toLowerCase();
+
+    // Text run before this tag.
+    if (match.index > cursor && hiddenDepth === 0 && rawTextDepth === 0) {
+      out.push(source.slice(cursor, match.index));
+    }
+    cursor = match.index + tag.length;
+
+    // A tag is emitted only while its element is visible: the noscript wrapper
+    // is unwrapped (tags dropped, content kept); raw-text containers and
+    // anything hidden contribute no markup at all.
+    if (closing) {
+      const visibleBefore = hiddenDepth === 0 && rawTextDepth === 0;
+      for (let index = stack.length - 1; index >= 0; index -= 1) {
+        if (stack[index].name === name) {
+          for (let popped = stack.length - 1; popped >= index; popped -= 1) {
+            if (stack[popped].hidden) {
+              hiddenDepth -= 1;
+            }
+            if (stack[popped].rawText) {
+              rawTextDepth -= 1;
+            }
+          }
+          stack.length = index;
+          break;
+        }
+      }
+      const visibleAfter = hiddenDepth === 0 && rawTextDepth === 0;
+      if (visibleBefore && visibleAfter && name !== "noscript") {
+        out.push(tag);
+      }
+    } else {
+      if (!selfClosing && !VOID_ELEMENTS.has(name)) {
+        const hidden = hasHiddenAttribute(attributes);
+        const rawText = RAW_TEXT_CONTAINERS.has(name);
+        stack.push({ name, hidden, rawText });
+        if (hidden) {
+          hiddenDepth += 1;
+        }
+        if (rawText) {
+          rawTextDepth += 1;
+        }
+      }
+      if (hiddenDepth === 0 && rawTextDepth === 0 && name !== "noscript") {
+        out.push(tag);
+      }
+    }
+
+    match = TAG_TOKEN.exec(source);
+  }
+
+  if (cursor < source.length && hiddenDepth === 0 && rawTextDepth === 0) {
+    out.push(source.slice(cursor));
+  }
+
+  return out.join("");
 }
 
 export function extractFirstTagText(html, tagName) {
@@ -796,6 +993,7 @@ export const CRAWL_DEFAULTS = Object.freeze({
   delayMs: DEFAULT_DELAY_MS,
   timeoutMs: DEFAULT_TIMEOUT_MS,
   minContentChars: DEFAULT_MIN_CONTENT_CHARS,
+  visibilityMode: DEFAULT_VISIBILITY_MODE,
   userAgent: DEFAULT_USER_AGENT,
   maxSitemapDepth: DEFAULT_MAX_SITEMAP_DEPTH,
   maxSitemapBytes: DEFAULT_MAX_SITEMAP_BYTES,
