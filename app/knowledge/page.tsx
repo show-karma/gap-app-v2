@@ -15,8 +15,13 @@ export const metadata: Metadata = customMetadata({
   ogType: "website",
 });
 
+interface ArticleLinkProps {
+  slug: string;
+  children: ReactNode;
+}
+
 /** Shared markup for every article link in the index list. */
-function ArticleLink({ slug, children }: { slug: string; children: ReactNode }) {
+function ArticleLink({ slug, children }: ArticleLinkProps) {
   return (
     <p>
       <Link

@@ -174,8 +174,14 @@ describe("PAGES constants", () => {
         .map((entry) => path.join(dir, entry.name, "page.tsx"))
         .concat(path.join(dir, "page.tsx"));
 
+      // A quote immediately before the path catches a hardcoded route in any
+      // string form — "/knowledge", '/knowledge' and `/knowledge`. Asserting on
+      // the bare substring would not work: every article imports
+      // `@/app/knowledge/articleDates`, so the path appears legitimately.
+      const hardcodedRoute = /["'`]\/knowledge/;
+
       for (const page of pages) {
-        expect(readFileSync(page, "utf8")).not.toContain('"/knowledge');
+        expect(readFileSync(page, "utf8")).not.toMatch(hardcodedRoute);
       }
     });
   });
