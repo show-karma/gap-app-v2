@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
-import { communitySubpageMetadata } from "@/utilities/metadata/communityCanonical";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
 type LayoutProps = {
@@ -17,14 +16,14 @@ export async function generateMetadata({
   params: Promise<{ communityId: string }>;
 }): Promise<Metadata> {
   const { communityId } = await params;
-  const [community, canonicalMetadata] = await Promise.all([
-    getCommunityDetails(communityId),
-    communitySubpageMetadata(communityId, "funding-opportunities"),
-  ]);
+  const community = await getCommunityDetails(communityId);
   const communityName = community?.details?.name || communityId;
 
+  // No self-canonical: this route is a client-rendered shell, so it is absent
+  // from the sitemap and consolidates onto the community root canonical it
+  // inherits from the layout. Give it server-rendered content first, then a
+  // canonical and a sitemap entry together.
   return {
-    ...canonicalMetadata,
     title: `${communityName} Funding Opportunities | ${PROJECT_NAME}`,
     description: `Find open, upcoming, and closed grant programs from ${communityName}. Compare funding amounts, deadlines, and eligibility before you apply on ${PROJECT_NAME}.`,
   };

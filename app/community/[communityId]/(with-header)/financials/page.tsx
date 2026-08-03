@@ -8,7 +8,6 @@ import { api } from "@/utilities/api/client";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { INDEXER } from "@/utilities/indexer";
-import { communitySubpageMetadata } from "@/utilities/metadata/communityCanonical";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
@@ -24,16 +23,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     return {};
   }
 
-  // Self-canonical: only flagged communities are submitted to the sitemap, and
-  // that URL must not inherit the community layout's `/community/<id>` canonical.
-  const [community, canonicalMetadata] = await Promise.all([
-    getCachedCommunity(communityId),
-    communitySubpageMetadata(communityId, "financials"),
-  ]);
+  const community = await getCachedCommunity(communityId);
   const communityName = community?.details?.name || communityId;
 
+  // No self-canonical: this route is a client-rendered shell, so it is absent
+  // from the sitemap and consolidates onto the community root canonical it
+  // inherits from the layout. Give it server-rendered content first, then a
+  // canonical and a sitemap entry together.
   return {
-    ...canonicalMetadata,
     title: `Financials - ${communityName}`,
     description: `View financial overview, project agreements, milestones, and payment status for ${communityName}.`,
   };

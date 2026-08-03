@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { CommunityImpactFilterRow } from "@/components/Pages/Communities/Impact/FilterRow";
 import { ImpactTabNavigator } from "@/components/Pages/Communities/Impact/ImpactTabNavigator";
 import { PROJECT_NAME } from "@/constants/brand";
-import { communitySubpageMetadata } from "@/utilities/metadata/communityCanonical";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
 type LayoutProps = {
@@ -16,16 +15,14 @@ export async function generateMetadata({
   params: Promise<{ communityId: string }>;
 }): Promise<Metadata> {
   const { communityId } = await params;
-  // Self-canonical: this page is in the sitemap, so it must not inherit the
-  // community layout's `/community/<id>` canonical.
-  const [community, canonicalMetadata] = await Promise.all([
-    getCommunityDetails(communityId),
-    communitySubpageMetadata(communityId, "impact"),
-  ]);
+  const community = await getCommunityDetails(communityId);
   const communityName = community?.details?.name || communityId;
 
+  // No self-canonical: this route is a client-rendered shell, so it is absent
+  // from the sitemap and consolidates onto the community root canonical it
+  // inherits from the layout. Give it server-rendered content first, then a
+  // canonical and a sitemap entry together.
   return {
-    ...canonicalMetadata,
     title: `${communityName} Impact & Outcomes | ${PROJECT_NAME}`,
     description: `Measure the impact of grants funded by ${communityName}. Explore project outcomes, performance metrics, and community-driven results on ${PROJECT_NAME}.`,
   };
