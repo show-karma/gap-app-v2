@@ -294,3 +294,36 @@ Sanity is a CMS connector and has no measurement role; it is unrelated to the AE
 5. Decide whether the citation-earning docs pages (`/overview/how-does-it-work`,
    `/how-to-guides/*`) should be adopted into the route map, or whether the primary audience
    routes should be strengthened to take those citations. This is the AEO-06 decision.
+
+## Addendum (2026-08-03)
+
+Point-in-time corrections from the 2026-08-03 platform audit; the body above is preserved as
+written on 2026-07-31.
+
+1. **The 9 auto-generated prompts are deleted.** The "59 / 50 over the plan limit" row above
+   described the state before 2026-08-03. The nine platform-generated *"Evaluate the Blockchain
+   company Karma on \<topic\>"* Sentiment prompts (one per topic except Karma vs Competitors)
+   were permanently deleted on 2026-08-03 (release `R2026-08-03-e`). The active set is now
+   **50 / 50 and matches `prompts.csv` v1 exactly** — verified by a full text diff of the
+   Prompt Designer against the CSV: 0 CSV prompts missing from the platform, 0 platform
+   prompts missing from the CSV.
+2. **The post-mapping visibility reading did not persist.** The Day-0 section records
+   Visibility Score jumping to 100% immediately after alias mapping, with a warning not to
+   treat it as a result. That warning was correct: as of 2026-08-03 the unbranded Visibility
+   Score reads a flat **0% across Jul 31 – Aug 2** and Karma is absent from the 82-asset
+   Visibility Score Rank (top competitors: Candid 49.1%, Submittable 30.9%, Charity Navigator
+   23.6%, Fluxx 23.6%, Instrumentl 20%). **The honest visibility baseline is 0%.**
+3. **Agent Analytics is now live.** The "locked on this tier" row reflected the pre-install
+   state. Profound Agent Analytics was installed via the Vercel Marketplace on the karma-devs
+   team on 2026-08-03 (release `R2026-08-03-f`), the `www.karmahq.xyz` site is configured, and
+   the setup page shows **"Data flow confirmed"**. Crawler-behaviour data populates within
+   ~24 hours.
+4. **C02/C04 are no longer controls.** The canonical consolidation shipped in `v1.8.20`
+   (`R2026-08-03-c`, PR 1962) rewrote every community sub-page canonical, including the two
+   cohorts designated as controls for C01/C03. `url-cohorts.csv` now reclassifies C02/C04 as
+   changed and adds C17 (`/project/[projectId]`) as the shared replacement control.
+5. **Eligibility timeline for the baseline window.** Five P0/P1 fixes shipped in `v1.8.19`
+   (2026-07-30) and the remainder — AEO-10, AEO-15, AEO-03, AEO-09, AEO-11 — in `v1.8.20`
+   (2026-08-03). The first Profound data day (2026-07-31) therefore sits *between* the two
+   eligibility releases: treat **2026-08-04 as day 1** of the clean 14-day baseline window and
+   the Jul 31 – Aug 3 rows as configuration-shakedown days, not baseline data.
