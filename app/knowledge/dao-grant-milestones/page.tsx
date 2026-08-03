@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "How DAOs Track Grant Milestones",
   description:
     "Explore how DAOs define, track, and evaluate grant milestones. Compare approaches from spreadsheets to modular platforms and learn the tradeoffs of each method.",
-  path: "/knowledge/dao-grant-milestones",
+  path: PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones"),
   ogType: "article",
 });
 
@@ -23,21 +24,21 @@ export default function DaoGrantMilestonesPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "DAO Grant Milestones", href: "/knowledge/dao-grant-milestones" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "DAO Grant Milestones", href: PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones") },
         ]}
       />
       <ArticleJsonLd
         title="How DAOs Track Grant Milestones"
         description="Explore how DAOs define, track, and evaluate grant milestones. Compare approaches from spreadsheets to modular platforms and learn the tradeoffs of each method."
-        url="/knowledge/dao-grant-milestones"
+        url={PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "DAO Grant Milestones", url: "/knowledge/dao-grant-milestones" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "DAO Grant Milestones", url: PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones") },
         ]}
       />
       <article className="space-y-8">
@@ -116,31 +117,31 @@ export default function DaoGrantMilestonesPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/ai-grant-evaluation"
+              href={PAGES.KNOWLEDGE.ARTICLE("ai-grant-evaluation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → AI-assisted grant evaluation
             </Link>
             <Link
-              href="/knowledge/milestones-vs-impact"
+              href={PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Milestones vs impact
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/manual-vs-platform-grant-tracking"
+              href={PAGES.KNOWLEDGE.ARTICLE("manual-vs-platform-grant-tracking")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Manual vs platform grant tracking
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability

@@ -6,6 +6,7 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "Onchain Project Profiles (Without Blockchain Complexity)";
 const description =
@@ -14,7 +15,7 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/onchain-project-profiles",
+  path: PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles"),
   ogType: "article",
 });
 
@@ -26,21 +27,27 @@ export default function OnchainProjectProfilesPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Onchain Project Profiles", href: "/knowledge/onchain-project-profiles" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          {
+            label: "Onchain Project Profiles",
+            href: PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles"),
+          },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/onchain-project-profiles"
+        url={PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Onchain Project Profiles", url: "/knowledge/onchain-project-profiles" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "Onchain Project Profiles",
+            url: PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles"),
+          },
         ]}
       />
       <article className="space-y-8">
@@ -108,7 +115,7 @@ export default function OnchainProjectProfilesPage() {
           </p>
           <p className="pt-2">
             <Link
-              href="/create-project-profile"
+              href={PAGES.CREATE_PROJECT_PROFILE}
               className="text-blue-600 hover:underline dark:text-blue-400 font-semibold"
             >
               → Create your project profile
@@ -120,13 +127,13 @@ export default function OnchainProjectProfilesPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What are project profiles?
             </Link>
             <Link
-              href="/knowledge/onchain-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What is onchain reputation?

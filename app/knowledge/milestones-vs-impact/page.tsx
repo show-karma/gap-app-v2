@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Grant Milestones vs Impact",
   description:
     "Milestones track work done while impact tracks change created. Learn why separating these concepts is critical for honest evaluation of funded projects.",
-  path: "/knowledge/milestones-vs-impact",
+  path: PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact"),
   ogType: "article",
 });
 
@@ -23,21 +24,21 @@ export default function MilestonesVsImpactPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Milestones vs Impact", href: "/knowledge/milestones-vs-impact" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Milestones vs Impact", href: PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact") },
         ]}
       />
       <ArticleJsonLd
         title="Grant Milestones vs Impact"
         description="Milestones track work done while impact tracks change created. Learn why separating these concepts is critical for honest evaluation of funded projects."
-        url="/knowledge/milestones-vs-impact"
+        url={PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Milestones vs Impact", url: "/knowledge/milestones-vs-impact" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Milestones vs Impact", url: PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact") },
         ]}
       />
       <article className="space-y-8">
@@ -91,31 +92,31 @@ export default function MilestonesVsImpactPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/impact-measurement"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact measurement
             </Link>
             <Link
-              href="/knowledge/impact-verification"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-verification")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact verification
             </Link>
             <Link
-              href="/knowledge/dao-grant-milestones"
+              href={PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → DAO grant milestones
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability

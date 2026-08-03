@@ -6,12 +6,13 @@ import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDat
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Grant Fund Disbursement Coordination",
   description:
     "Learn how grant payments are safely triggered once KYC, signing, and approvals are complete. Explore best practices for coordinating fund disbursement at scale.",
-  path: "/knowledge/grant-fund-disbursement",
+  path: PAGES.KNOWLEDGE.ARTICLE("grant-fund-disbursement"),
   ogType: "article",
 });
 
@@ -23,21 +24,21 @@ export default function GrantFundDisbursementPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Fund Disbursement", href: "/knowledge/grant-fund-disbursement" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Fund Disbursement", href: PAGES.KNOWLEDGE.ARTICLE("grant-fund-disbursement") },
         ]}
       />
       <ArticleJsonLd
         title="Grant Fund Disbursement Coordination"
         description="Learn how grant payments are safely triggered once KYC, signing, and approvals are complete. Explore best practices for coordinating fund disbursement at scale."
-        url="/knowledge/grant-fund-disbursement"
+        url={PAGES.KNOWLEDGE.ARTICLE("grant-fund-disbursement")}
         datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Fund Disbursement", url: "/knowledge/grant-fund-disbursement" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Fund Disbursement", url: PAGES.KNOWLEDGE.ARTICLE("grant-fund-disbursement") },
         ]}
       />
       <article className="space-y-8">
@@ -90,25 +91,25 @@ export default function GrantFundDisbursementPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-kyc"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-kyc")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → KYC in grant programs
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/grant-document-signing"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-document-signing")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Document signing in grants
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
