@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+
+# Keep using the CodeRabbit UI settings for everything not set in this file.
+# Without `inheritance: true` a repository .coderabbit.yaml becomes the only
+# configuration source, and every value configured in the UI silently reverts
+# to the schema default.
+inheritance: true
+
+reviews:
+  pre_merge_checks:
+    docstrings:
+      # The schema default is 80%, which does not describe this codebase:
+      # 607 of 1862 files under app/, components/, utilities/ and hooks/
+      # contain any /** */ block (~32%). No CLAUDE.md here requires docstrings
+      # and the project prefers sparse commenting, so an 80% bar flags ordinary
+      # PRs. The check is scored per-PR from the changed files, so it still has
+      # signal: 30% sits just under the measured rate, catching a PR that adds
+      # a large block of wholly undocumented code without penalising routine
+      # changes. Re-measure before raising this.
+      threshold: 30
