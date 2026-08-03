@@ -27,21 +27,10 @@ import {
  * without JavaScript". Every entry needs a written justification: this list is
  * the record of what is queued for a fix or for removal, not a mute button.
  */
-export const DEFAULT_KNOWN_ISSUES = Object.freeze([
-  {
-    pathnameEndsWith: "/funding-opportunities",
-    classifications: ["thin"],
-    // The floor is what keeps this from muting a whole route class. The entry
-    // only excuses the gap between the server-rendered community header and the
-    // 200-char threshold; if a page drops below the header's own worth of prose,
-    // the header has regressed too and that is a failure this entry does not
-    // cover. Calibrate against the post-deploy crawl report, never upward to
-    // make a red run go green.
-    minTextLength: 120,
-    reason:
-      "Client-rendered program directory. It is self-canonical with unique metadata (DEV-586) and the community header gives it a heading and prose, but the program cards themselves only exist after hydration, so a stricter content threshold can classify it thin. Queued for SSR seeding as a follow-up; only that failure mode, and only while the header still renders, is excused.",
-  },
-]);
+// Currently empty: the last entry (/funding-opportunities, excused as a
+// client-rendered program directory) was removed in DEV-611 when the route
+// started server-rendering the program cards into the initial HTML.
+export const DEFAULT_KNOWN_ISSUES = Object.freeze([]);
 
 const DEFAULTS = Object.freeze({
   rootSitemapUrl: CRAWL_DEFAULTS.rootSitemapUrl,
