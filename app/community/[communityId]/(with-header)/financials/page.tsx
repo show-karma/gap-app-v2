@@ -26,6 +26,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const community = await getCachedCommunity(communityId);
   const communityName = community?.details?.name || communityId;
 
+  // No self-canonical: this route is a client-rendered shell, so it is absent
+  // from the sitemap and consolidates onto the community root canonical it
+  // inherits from the layout. Give it server-rendered content first, then a
+  // canonical and a sitemap entry together.
   return {
     title: `Financials - ${communityName}`,
     description: `View financial overview, project agreements, milestones, and payment status for ${communityName}.`,

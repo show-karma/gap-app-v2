@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { CommunityImpactFilterRow } from "@/components/Pages/Communities/Impact/FilterRow";
-import { ImpactTabNavigator } from "@/components/Pages/Communities/Impact/ImpactTabNavigator";
 import { PROJECT_NAME } from "@/constants/brand";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
@@ -9,6 +7,9 @@ type LayoutProps = {
   params: Promise<{ communityId: string }>;
 };
 
+// The page itself is a client component, so its metadata lives here. Without it
+// the funding directory inherits the community layout's canonical and title,
+// which made a sitemap-listed URL point at `/community/<id>`.
 export async function generateMetadata({
   params,
 }: {
@@ -23,17 +24,11 @@ export async function generateMetadata({
   // inherits from the layout. Give it server-rendered content first, then a
   // canonical and a sitemap entry together.
   return {
-    title: `${communityName} Impact & Outcomes | ${PROJECT_NAME}`,
-    description: `Measure the impact of grants funded by ${communityName}. Explore project outcomes, performance metrics, and community-driven results on ${PROJECT_NAME}.`,
+    title: `${communityName} Funding Opportunities | ${PROJECT_NAME}`,
+    description: `Find open, upcoming, and closed grant programs from ${communityName}. Compare funding amounts, deadlines, and eligibility before you apply on ${PROJECT_NAME}.`,
   };
 }
 
-export default function ImpactLayout({ children }: LayoutProps) {
-  return (
-    <div className="flex flex-col gap-5 sm:px-3 md:px-4 px-6  py-2">
-      <ImpactTabNavigator />
-      <CommunityImpactFilterRow />
-      {children}
-    </div>
-  );
+export default function FundingOpportunitiesLayout({ children }: LayoutProps) {
+  return children;
 }
