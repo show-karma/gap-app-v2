@@ -10,6 +10,7 @@ authoritative record of what was measured and when.
 | `releases.csv` | Every shipped AEO change, its cohort, what it is expected to move, and the window in which to read the result. This is what lets a change in answer-engine traffic be attributed to a release. |
 | `url-cohorts.csv` | The changed / control URL cohorts (DEV-589, AEO-06). Defines the `cohort_id` values that `releases.csv` refers to, and pairs each changed cohort with a comparable untouched control route. |
 | `prompts.csv` | The 50 live Profound prompts verbatim (DEV-587 / AEO-04), with audience lane, intent, target page, citation and recommendation goals, and control flag. The frozen copy of a set that has no export. |
+| `experiments.md` | The pre-registered AEO-12 (DEV-595) experiment contracts: one hypothesis / target-prompt / changed-vs-control / pass-fail contract per slate page, written before the content ships. |
 | `baseline-report.md` | The measurement baseline write-up: platform configuration as observed, the day-0 findings (broken name matching, branded-prompt inflation), the day-0 citation landscape, and what is still missing before a baseline can be read. |
 
 Release dates cross-reference the `ai_source` / `ai_source_medium` / `ai_first_touch_at`
