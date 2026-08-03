@@ -139,21 +139,33 @@ export const FilterByProgramsSkeleton = () => {
   );
 };
 
-export const CommunitiesSkeleton = () => {
+interface CommunitiesSkeletonProps {
+  /**
+   * Whether to render the page-title placeholder. `CommunitiesPage` renders the
+   * real title (icon pill, <h1> and description) unconditionally so it reaches
+   * crawlers that do not execute JavaScript, and passes `false` here so the
+   * heading is not duplicated by a placeholder underneath it.
+   */
+  withHeader?: boolean;
+}
+
+export const CommunitiesSkeleton = ({ withHeader = true }: CommunitiesSkeletonProps = {}) => {
   // Render 4 summary stats placeholders (same as real component)
   const summaryStats = Array(4).fill(null);
   // Render 12 community card placeholders for skeleton
   const communities = Array(12).fill(null);
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-full overflow-hidden">
+    <div className="flex flex-col gap-8 w-full max-w-full overflow-hidden" aria-busy="true">
       {/* Page Title Skeleton */}
-      <div className="flex flex-col gap-2 items-center justify-center animate-pulse">
-        <div className="h-10 w-64 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-        <div className="h-18 w-80 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
-        <div className="h-5 w-96 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
-        <div className="h-5 w-80 bg-gray-300 dark:bg-gray-600 rounded"></div>
-      </div>
+      {withHeader ? (
+        <div className="flex flex-col gap-2 items-center justify-center animate-pulse">
+          <div className="h-10 w-64 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+          <div className="h-18 w-80 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
+          <div className="h-5 w-96 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
+          <div className="h-5 w-80 bg-gray-300 dark:bg-gray-600 rounded"></div>
+        </div>
+      ) : null}
 
       {/* Summary Stats Row Skeleton - Using same Grid system */}
       <div className="w-full overflow-hidden">
