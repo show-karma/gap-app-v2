@@ -285,8 +285,10 @@ export async function proxy(request: NextRequest) {
  * from the indexer; this collapses the alias-host switch, legacy segment
  * normalization (grants → funding, create-grant → new), roadmap collapse, and
  * old-identifier redirects into exactly one 308 hop when the request is not
- * already at its canonical www URL. Any decision failure fails closed to
- * noindex,follow via the client.
+ * already at its canonical www URL. A failed lookup replays this instance's
+ * last-known-good decision for the same endpoint when one is fresh enough, and
+ * otherwise fails closed to noindex,follow — both handled inside the client, so
+ * nothing here changes.
  */
 async function handleProjectIndexability(
   request: NextRequest,
