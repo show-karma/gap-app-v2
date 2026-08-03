@@ -9,7 +9,7 @@ export function HeroSection() {
         Karma for AI agents
       </p>
       <h1 className="text-balance text-4xl font-semibold text-foreground sm:text-5xl">
-        Karma works with Claude, ChatGPT, Cursor, and Codex.
+        Karma works with Claude, Cursor, and Codex.
       </h1>
       <p className="text-balance text-lg text-muted-foreground">
         Connect Karma's Model Context Protocol server to your AI app to read projects, grants, and

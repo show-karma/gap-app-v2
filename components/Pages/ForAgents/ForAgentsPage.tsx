@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { AnswerSection } from "./sections/AnswerSection";
 import { CapabilitiesSection } from "./sections/CapabilitiesSection";
 import { CtaSection } from "./sections/CtaSection";
 import { FaqSection } from "./sections/FaqSection";
@@ -30,13 +29,11 @@ export function ForAgentsPage() {
     <main className="flex w-full flex-col items-center bg-background">
       <div className="flex w-full max-w-[1920px] flex-col gap-4">
         <HeroSection />
-        <AnswerSection />
         <CapabilitiesSection />
         {/* The tool catalog awaits the indexer's /mcp/tools fetch. Isolating it
-            in its own Suspense boundary keeps the rest of the page — the
-            answer-first copy above all — in the visible server-rendered shell
-            instead of dragging the whole segment into a hidden streamed chunk
-            (DEV-612). */}
+            in its own Suspense boundary keeps the rest of the page — the FAQ
+            answers above all — from being dragged into a hidden streamed chunk
+            on this page's own account (DEV-612). */}
         <Suspense fallback={<ToolCatalogFallback />}>
           <ToolCatalogSection />
         </Suspense>

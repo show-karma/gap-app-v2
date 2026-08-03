@@ -5,12 +5,19 @@ import { FAQJsonLd } from "@/components/Seo/FAQJsonLd";
 import { SoftwareApplicationJsonLd } from "@/components/Seo/SoftwareApplicationJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
-export const metadata: Metadata = customMetadata({
-  title: "Karma MCP Server for AI Agents — Claude, ChatGPT, Cursor & Codex",
-  description:
-    "Karma provides a public MCP server at gapapi.karmahq.xyz/mcp. Connect Claude, ChatGPT, Cursor, or Codex to search funding programs, nonprofit and IRS 990 data, and grant history — with OAuth for actions on your behalf.",
-  path: "/for-agents",
-});
+const PAGE_TITLE = "Connect Karma to your AI Agents — Karma";
+
+export const metadata: Metadata = {
+  ...customMetadata({
+    title: PAGE_TITLE,
+    description:
+      "Connect Karma to your Claude, Cursor, or Codex to search funding programs, nonprofit and IRS 990 data, and grant history — or take actions on your behalf.",
+    path: "/for-agents",
+  }),
+  // The root layout applies a `%s | Karma` title template; the reviewed title
+  // already carries the brand, so opt out to avoid "— Karma | Karma".
+  title: { absolute: PAGE_TITLE },
+};
 
 export default function Page() {
   return (

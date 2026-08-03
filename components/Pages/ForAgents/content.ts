@@ -24,9 +24,14 @@ interface UseCaseCard {
 
 export const AGENT_FAQS: AgentFaqEntry[] = [
   {
-    question: "Does Karma's MCP server work with Claude and ChatGPT?",
+    question: "Which AI apps does Karma's MCP server work with?",
     answer:
-      "Yes. The server is exposed over Streamable HTTP at gapapi.karmahq.xyz/mcp and works with Claude (claude.ai and the desktop app, via custom connectors), ChatGPT (via Developer-mode connectors on Plus, Pro, Business, Enterprise, and Edu plans), Cursor, Codex, and any MCP client supporting protocol version 2025-11-25 or later.",
+      "Karma provides a public MCP (Model Context Protocol) server over Streamable HTTP at gapapi.karmahq.xyz/mcp. It works with Claude (claude.ai and the desktop app, via custom connectors), Cursor, Codex, and any MCP client supporting protocol version 2025-11-25 or later.",
+  },
+  {
+    question: "How do I connect Karma to Claude?",
+    answer:
+      "In Claude, open Settings, choose Connectors, click Add custom connector, paste gapapi.karmahq.xyz/mcp as the remote MCP server URL, and sign in to Karma when prompted. Other MCP clients such as Cursor and Codex take the same URL as a remote server. The step-by-step guide with troubleshooting lives at karmahq.xyz/mcp/connect.",
   },
   {
     question: "Which MCP operations require authentication?",
@@ -36,7 +41,12 @@ export const AGENT_FAQS: AgentFaqEntry[] = [
   {
     question: "What can a Karma-connected AI agent do?",
     answer:
-      "Read projects, grants, milestones, programs, and impact data. With OAuth and your permission, agents can also submit applications, draft updates, comment on reviews, and propose milestone evidence on your behalf.",
+      "Read projects, grants, milestones, programs, and impact data; search Karma's funding-program registry; run natural-language research across nonprofits, foundations, funders, and IRS 990 filings; and pull program financials — the same data that powers the Karma dashboard. A grants team can run day-to-day program work from a chat: list the applications submitted to a program, summarize a project's grant and milestone history, and research prospective grantees. With OAuth and your permission, agents can also submit applications, draft updates, comment on reviews, and propose milestone evidence on your behalf.",
+  },
+  {
+    question: "Can an AI agent draft and submit a grant application on our behalf?",
+    answer:
+      "Yes, with your permission. An agent can read a funding program's details and draft application copy against them, and with OAuth authorization it can submit the application on your behalf. You approve which capabilities the agent gets when you connect, every action is logged against your account, and you can revoke access at any time from your Karma settings.",
   },
   {
     question: "Can the agent take actions in my account?",
@@ -52,6 +62,11 @@ export const AGENT_FAQS: AgentFaqEntry[] = [
     question: "Where do I see what the agent has done?",
     answer:
       "Every action the agent takes is logged against your account in the same activity history you already use. Applications, comments, and updates are clearly attributed to your account.",
+  },
+  {
+    question: "How does Karma compare to conventional grant platforms for AI agents?",
+    answer:
+      "Conventional grants-management platforms are typically operated through their own web dashboards. Karma additionally exposes its funding-program registry, project and grant data, and nonprofit research through a documented, publicly discoverable MCP server, so foundations and nonprofits can work with the same data directly from Claude, Cursor, Codex, or any other MCP-compatible AI app.",
   },
 ];
 
