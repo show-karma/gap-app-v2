@@ -39,7 +39,6 @@ import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
-import { headers } from "next/headers";
 import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
@@ -54,7 +53,7 @@ import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { toHslToken, type WhitelabelDomain } from "@/utilities/whitelabel-config";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
-import { getWhitelabelContext } from "@/utilities/whitelabel-server";
+import { getRequestPathname, getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { isWhitelabel, config, tenantConfig } = await getWhitelabelContext();
@@ -156,7 +155,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // layout — the only part of a streamed response that is guaranteed into the
   // initially visible HTML — can render that route's <noscript> crawler hero.
   // See FindFundersNoscriptHero for the full rationale (DEV-586).
-  const requestPathname = (await headers()).get("x-pathname");
+  const requestPathname = await getRequestPathname();
   const showFindFundersNoscriptHero = requestPathname === NON_PROFITS_PAGES.HOME;
 
   return (
