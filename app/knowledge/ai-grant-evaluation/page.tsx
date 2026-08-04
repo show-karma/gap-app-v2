@@ -1,22 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
+import {
+  getKnowledgeArticleDate,
+  getKnowledgeArticleUpdatedDate,
+} from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
+import { FAQJsonLd } from "@/components/Seo/FAQJsonLd";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
+import { AI_GRANT_EVALUATION_FAQS } from "./content";
+
+const TITLE = "AI-Assisted Grant Evaluation at Scale";
+const DESCRIPTION =
+  "How AI-assisted application review works with human sign-off: consistent first-pass scoring, reviewer-only evaluations, and the oversight that keeps grant decisions with people.";
 
 export const metadata: Metadata = customMetadata({
-  title: "AI-Assisted Grant Evaluation at Scale",
-  description:
-    "Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling.",
+  title: TITLE,
+  description: DESCRIPTION,
   path: PAGES.KNOWLEDGE.ARTICLE("ai-grant-evaluation"),
   ogType: "article",
 });
 
 const PUBLISHED_AT = getKnowledgeArticleDate("ai-grant-evaluation");
+const UPDATED_AT = getKnowledgeArticleUpdatedDate("ai-grant-evaluation");
 
 export default function AiGrantEvaluationPage() {
   return (
@@ -32,10 +41,11 @@ export default function AiGrantEvaluationPage() {
         ]}
       />
       <ArticleJsonLd
-        title="AI-Assisted Grant Evaluation at Scale"
-        description="Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling."
+        title={TITLE}
+        description={DESCRIPTION}
         url={PAGES.KNOWLEDGE.ARTICLE("ai-grant-evaluation")}
         datePublished={PUBLISHED_AT}
+        dateModified={UPDATED_AT}
       />
       <BreadcrumbJsonLd
         items={[
@@ -47,57 +57,45 @@ export default function AiGrantEvaluationPage() {
           },
         ]}
       />
+      <FAQJsonLd questions={[...AI_GRANT_EVALUATION_FAQS]} />
       <article className="space-y-8">
         <header className="space-y-2">
-          <h1 className="text-3xl font-bold">AI-Assisted Grant Evaluation at Scale</h1>
-          <ArticlePublishedDate date={PUBLISHED_AT} />
+          <h1 className="text-3xl font-bold">{TITLE}</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} updated={UPDATED_AT} />
         </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
           <p className="text-gray-700 dark:text-gray-300">
-            AI-assisted evaluation helps grant programs process high volumes of applications without
-            sacrificing review quality.
+            AI-assisted evaluation gives grant programs a consistent, auditable first pass over
+            every application, while approval and rejection stay human decisions.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Short answer</h2>
           <p className="text-gray-700 dark:text-gray-300">
-            When programs receive hundreds of applications, fully manual review does not scale.
-            AI-assisted evaluation provides first-pass filtering, automated summaries, and risk
-            signals while preserving human judgment for final decisions.
+            When programs receive hundreds of applications, fully manual review does not scale:
+            reviewer fatigue produces inconsistent scores, missed red flags, and slow decisions.
+            AI-assisted evaluation handles the first-pass work — summaries, criteria-based scoring,
+            risk signals — and human reviewers keep sign-off on every decision.
           </p>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Why this matters</h2>
-          <p className="text-gray-700 dark:text-gray-300">
-            Grant programs often face a tradeoff between speed and rigor. Reviewer fatigue leads to
-            inconsistent evaluations, missed red flags, and delayed decisions.
-          </p>
-          <p className="text-gray-700 dark:text-gray-300">
-            AI assistance addresses this by handling repetitive analysis while keeping humans in
-            control of judgment calls.
-          </p>
-        </section>
-
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold">What AI-assisted evaluation enables</h2>
-          <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
-            <li>Automated summaries of long applications</li>
-            <li>Consistency checks across submissions</li>
-            <li>Risk signal detection</li>
-            <li>Reduced reviewer fatigue</li>
-            <li>Faster turnaround without cutting corners</li>
-          </ul>
-        </section>
+        {AI_GRANT_EVALUATION_FAQS.map((faq) => (
+          <section key={faq.question} className="space-y-4">
+            <h2 className="text-xl font-semibold">{faq.question}</h2>
+            <p className="text-gray-700 dark:text-gray-300">{faq.answer}</p>
+          </section>
+        ))}
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">What it does not replace</h2>
           <p className="text-gray-700 dark:text-gray-300">
             AI does not replace human judgment. Final decisions, nuanced evaluation, and
-            context-sensitive assessments remain with reviewers.
+            context-sensitive assessments remain with reviewers — and on Karma that is enforced in
+            the platform, not just recommended: evaluation failures never block a submission, and no
+            evaluation outcome moves an application forward or backward on its own.
           </p>
         </section>
 
@@ -142,8 +140,9 @@ export default function AiGrantEvaluationPage() {
             >
               Karma
             </a>{" "}
-            integrates AI-assisted evaluation into the grant workflow, helping programs scale review
-            without losing accountability.
+            builds AI-assisted evaluation into the grant workflow: programs define their own
+            evaluation criteria, evaluations run automatically on submission, and reviewers keep
+            sign-off on every status change.
           </p>
         </section>
       </article>
