@@ -14,14 +14,10 @@ import { SolutionBridge } from "@/src/features/home/components/solution-bridge";
 import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
-// Rendered as "Grant Management Software for Foundations | Karma" by the
-// root layout's `%s | Karma` title template.
-const PAGE_TITLE = "Grant Management Software for Foundations";
-
 export const metadata: Metadata = customMetadata({
-  title: PAGE_TITLE,
+  title: "For foundations: AI-powered funding software that does the work for you",
   description:
-    "Grant management software for foundations: application intake, AI-assisted review against your rubric, milestone tracking with proof of work, milestone-based payments, and board-ready impact reporting — run by a lean team.",
+    "AI-powered funding software for foundations running grants, hackathons, and RFPs. Karma's AI agents handle evaluation, milestone tracking, and impact reporting, so a lean team runs enterprise-grade programs.",
   path: "/foundations",
 });
 

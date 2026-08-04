@@ -11,6 +11,25 @@ describe("FOUNDATION_FAQS content", () => {
     }
   });
 
+  it("keeps every pre-existing /foundations question alongside the new ones", () => {
+    const legacyQuestions = [
+      "What is Karma for foundations?",
+      "How is Karma different from other grant management tools?",
+      "How do AI agents work in Karma?",
+      "Can we migrate from our current setup?",
+      "Do we have to use everything?",
+      "Do I still need a grants team?",
+      "Do we get reports for our board?",
+      "Can we run it under our own brand?",
+    ];
+    const questions = FOUNDATION_FAQS.map((f) => f.question);
+    for (const legacy of legacyQuestions) {
+      expect(questions).toContain(legacy);
+    }
+    // The new grants-lifecycle questions are additions, not replacements.
+    expect(questions.length).toBeGreaterThan(legacyQuestions.length);
+  });
+
   it("answers grantee tracking and impact reporting (P002/P027)", () => {
     const tracking = FOUNDATION_FAQS.find((f) =>
       f.question.includes("grantee tracking and impact reporting")
