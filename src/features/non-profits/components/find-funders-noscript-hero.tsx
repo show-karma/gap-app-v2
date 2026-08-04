@@ -1,4 +1,5 @@
 import { HERO_CHIPS, HERO_SUB, HERO_TITLE_LINE_1, HERO_TITLE_LINE_2 } from "../lib/hero-content";
+import { LandingFaq } from "./landing-faq";
 
 /**
  * The find-funders hero for readers that do not execute JavaScript — rendered
@@ -54,6 +55,11 @@ export function FindFundersNoscriptHero() {
             </div>
           </div>
         </section>
+        {/* The direct-answer FAQ (DEV-595 experiment E5) must reach no-JS
+            readers too: the page's own copy of it streams inside the hidden
+            Suspense chunk, so the replica renders the same component here.
+            Same module, same data — the two cannot drift. */}
+        <LandingFaq />
       </div>
     </noscript>
   );
