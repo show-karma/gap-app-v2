@@ -36,29 +36,38 @@ describe("app/sitemaps/communities/sitemap.ts", () => {
     vi.clearAllMocks();
   });
 
-  // Community roots only: every sub-page is a client-rendered shell, and
-  // /projects is a byte-for-byte near-duplicate of the root. See
-  // __tests__/app/community-subpage-canonicals.test.ts for the crawl numbers
-  // and the canonical half of the contract.
-  it("emits the community root and nothing beneath it", async () => {
+  // Community roots plus the sub-pages that server-render their own content.
+  // `funding-opportunities` earned its entry in DEV-611 (server-rendered
+  // program directory + self-canonical); the remaining sub-pages are
+  // client-rendered shells, and /projects is a byte-for-byte near-duplicate of
+  // the root. See __tests__/app/community-subpage-canonicals.test.ts for the
+  // crawl numbers and the canonical half of the contract.
+  it("emits the community root and its funding-opportunities directory", async () => {
     const entries = await loadSitemap();
 
-    expect(urlsFor(entries, "celo")).toEqual([`${SITE_URL}/community/celo`]);
+    expect(urlsFor(entries, "celo")).toEqual([
+      `${SITE_URL}/community/celo`,
+      `${SITE_URL}/community/celo/funding-opportunities`,
+    ]);
   });
 
-  it.each([
-    "funding-opportunities",
-    "projects",
-    "updates",
-    "impact",
-    "reports",
-    "financials",
-    "browse-applications",
-  ])("omits /%s — no server-rendered content to index", async (subPage) => {
+  it.each(["projects", "updates", "impact", "reports", "financials", "browse-applications"])(
+    "omits /%s — no server-rendered content to index",
+    async (subPage) => {
+      const entries = await loadSitemap();
+      const urls = entries.map((entry) => entry.url);
+
+      expect(urls.some((url) => url.endsWith(`/${subPage}`))).toBe(false);
+    }
+  );
+
+  it("submits /funding-opportunities now that it server-renders the program directory", async () => {
     const entries = await loadSitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls.some((url) => url.endsWith(`/${subPage}`))).toBe(false);
+    for (const community of ["celo", "filecoin"]) {
+      expect(urls).toContain(`${SITE_URL}/community/${community}/funding-opportunities`);
+    }
   });
 
   it("falls back to the uid when a community has no slug", async () => {
@@ -82,12 +91,14 @@ describe("app/sitemaps/communities/sitemap.ts", () => {
     expect(new Set(urls).size).toBe(urls.length);
   });
 
-  it("gives every community root the same priority and change frequency", async () => {
+  it("prioritizes community roots above their sub-pages", async () => {
     const entries = await loadSitemap();
 
-    expect(entries).toHaveLength(3);
+    // 3 communities x (root + funding-opportunities)
+    expect(entries).toHaveLength(6);
     for (const entry of entries) {
-      expect(entry.priority).toBe(0.9);
+      const isSubPage = /\/community\/[^/]+\/.+/.test(entry.url);
+      expect(entry.priority).toBe(isSubPage ? 0.8 : 0.9);
       expect(entry.changeFrequency).toBe("daily");
     }
   });

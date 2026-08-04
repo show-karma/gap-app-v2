@@ -98,4 +98,24 @@ describe("wlQueryKeys.programs", () => {
     expect(wlQueryKeys.programs.detail("prog-1")[0]).toBe("wl-program");
     expect(wlQueryKeys.programs.list("optimism")[0]).toBe("wl-programs-list");
   });
+
+  // The server prefetch in funding-opportunities/page.tsx and the client
+  // `usePrograms` hook both build their key from this factory — the hydrated
+  // cache entry is only picked up when the two hashes match, so the shape is
+  // pinned here.
+  it("communityList returns the ['wl-programs', communityId] key shared with the server prefetch", () => {
+    expect(wlQueryKeys.programs.communityList("celo")).toEqual(["wl-programs", "celo"]);
+  });
+
+  it("communityList keys differ per community and from the other program keys", () => {
+    expect(wlQueryKeys.programs.communityList("celo")).not.toEqual(
+      wlQueryKeys.programs.communityList("optimism")
+    );
+    expect(wlQueryKeys.programs.communityList("celo")[0]).not.toBe(
+      wlQueryKeys.programs.list("celo")[0]
+    );
+    expect(wlQueryKeys.programs.communityList("celo")[0]).not.toBe(
+      wlQueryKeys.programs.detail("celo")[0]
+    );
+  });
 });

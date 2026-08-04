@@ -2,20 +2,27 @@
  * Sitemap-membership <-> canonical consistency gate (DEV-586).
  *
  * A URL only belongs in a sitemap if it is the canonical of its own crawlable
- * content. Every community sub-page is a client-rendered shell today — a
- * production crawl (2026-08-03, Googlebot UA, JavaScript disabled) measured
- * funding-opportunities at 406 chars of visible text, updates 475, impact 613,
- * financials 501 and reports 406, while /projects returned 5578 chars that are
- * 99.9% identical to the community root's 5570, with no unique words at all.
+ * content. Most community sub-pages are client-rendered shells — a production
+ * crawl (2026-08-03, Googlebot UA, JavaScript disabled) measured updates at
+ * 475 chars of visible text, impact 613, financials 501 and reports 406, while
+ * /projects returned 5578 chars that are 99.9% identical to the community
+ * root's 5570, with no unique words at all.
  *
- * So the communities sitemap submits roots only, and the sub-pages consolidate
+ * So the communities sitemap submits community roots plus only the sub-pages
+ * that server-render their own content, and the remaining shells consolidate
  * onto the community root canonical they inherit from the layout. This file
  * pins both halves of that contract:
  *
- *   1. the sitemap contains community roots and nothing else;
- *   2. no shell sub-page declares a self-canonical.
+ *   1. the sitemap contains community roots and self-canonical sub-pages only;
+ *   2. no shell sub-page declares a self-canonical, and every submitted
+ *      sub-page does.
  *
- * Re-adding a sub-page to the sitemap fails (1) until it also declares a
+ * `funding-opportunities` crossed over in DEV-611: the program directory is
+ * prefetched server-side into the initial HTML (see
+ * funding-opportunities-ssr.test.tsx), so it declares a whitelabel-aware
+ * self-canonical and ships in the sitemap again — both halves moved together.
+ *
+ * Re-adding a shell sub-page to the sitemap fails (1) until it also declares a
  * canonical, and adding a canonical fails (2) until it is also submitted — so
  * server-rendered content, canonical and sitemap entry can only move together.
  */
@@ -97,7 +104,7 @@ type MetadataModule = {
 
 /**
  * Every sub-page route under /community/<id>/, mapped to the module that owns
- * its metadata. None of these is submitted to the sitemap today.
+ * its metadata.
  */
 const SUBPAGE_METADATA_MODULES: Record<string, () => Promise<MetadataModule>> = {
   "funding-opportunities": () =>
@@ -113,8 +120,18 @@ const SUBPAGE_METADATA_MODULES: Record<string, () => Promise<MetadataModule>> = 
  * Shells whose canonical must stay inherited. `reports` is deliberately absent:
  * it already declared its own canonical before DEV-586 and that predates this
  * change, so it is left alone — it is still kept out of the sitemap below.
+ * `funding-opportunities` graduated in DEV-611: it server-renders the program
+ * directory, so it now lives in SELF_CANONICAL_SUBPAGES instead.
  */
-const SHELL_SUBPAGES = ["funding-opportunities", "projects", "updates", "impact", "financials"];
+const SHELL_SUBPAGES = ["projects", "updates", "impact", "financials"];
+
+/**
+ * Sub-pages that server-render their own content: they declare a
+ * self-referential canonical AND ship in the communities sitemap. Both halves
+ * are asserted below, so an entry can only be added here once the route
+ * genuinely carries its own crawlable content.
+ */
+const SELF_CANONICAL_SUBPAGES = ["funding-opportunities"];
 
 /** Sub-pages that always return a title (financials returns {} when unflagged). */
 const TITLED_SUBPAGES = ["funding-opportunities", "projects", "updates", "impact"];
@@ -143,25 +160,40 @@ describe("community sitemap membership and canonicals", () => {
     vi.clearAllMocks();
   });
 
-  describe("the sitemap submits community roots only", () => {
-    it("emits exactly one entry per chosen community", async () => {
+  describe("the sitemap submits community roots and self-canonical sub-pages only", () => {
+    it("emits the root plus each self-canonical sub-page per chosen community", async () => {
       expect(await sitemapUrls()).toEqual([
         `${SITE_URL}/community/celo`,
+        `${SITE_URL}/community/celo/funding-opportunities`,
         `${SITE_URL}/community/filecoin`,
+        `${SITE_URL}/community/filecoin/funding-opportunities`,
       ]);
     });
 
-    it("submits no sub-page URLs at all", async () => {
+    it("submits no sub-page URLs beyond the self-canonical ones", async () => {
       const subPageUrls = (await sitemapUrls()).filter((url) => /\/community\/[^/]+\/.+/.test(url));
-      expect(subPageUrls).toEqual([]);
+      expect(subPageUrls).toEqual([
+        `${SITE_URL}/community/celo/funding-opportunities`,
+        `${SITE_URL}/community/filecoin/funding-opportunities`,
+      ]);
     });
 
     // Named one by one so re-adding any of them is a deliberate, reviewed act
     // rather than a silent regression.
-    it.each(Object.keys(SUBPAGE_METADATA_MODULES))(
+    it.each(SHELL_SUBPAGES.concat(["reports"]))(
       "does not submit /%s while it is a client-rendered shell",
       async (subPage) => {
         expect(await sitemapUrls()).not.toContain(`${SITE_URL}/community/celo/${subPage}`);
+      }
+    );
+
+    // The other half of this pair — the self-referential canonical — is
+    // asserted in the canonicals block below, so content, canonical and
+    // sitemap entry can only move together.
+    it.each(SELF_CANONICAL_SUBPAGES)(
+      "submits /%s now that it server-renders its content",
+      async (subPage) => {
+        expect(await sitemapUrls()).toContain(`${SITE_URL}/community/celo/${subPage}`);
       }
     );
 
@@ -171,7 +203,10 @@ describe("community sitemap membership and canonicals", () => {
 
     it("falls back to uid when a community has no slug", async () => {
       chosenCommunitiesMock.mockReturnValue([{ name: "X", slug: undefined, uid: "uid-only" }]);
-      expect(await sitemapUrls()).toEqual([`${SITE_URL}/community/uid-only`]);
+      expect(await sitemapUrls()).toEqual([
+        `${SITE_URL}/community/uid-only`,
+        `${SITE_URL}/community/uid-only/funding-opportunities`,
+      ]);
     });
 
     it("emits no query strings and no duplicate URLs", async () => {
@@ -185,6 +220,27 @@ describe("community sitemap membership and canonicals", () => {
       const entries = await communitiesSitemap();
       expect(entries.every((entry) => entry.lastModified === undefined)).toBe(true);
     });
+  });
+
+  describe("self-canonical sub-pages declare themselves", () => {
+    it.each(SELF_CANONICAL_SUBPAGES)(
+      "%s declares a self-referential canonical on the main site",
+      async (subPage) => {
+        const metadata = await metadataFor(subPage, "celo");
+        expect(metadata.alternates?.canonical).toBe(`/community/celo/${subPage}`);
+      }
+    );
+
+    // On a whitelabel domain the `/community/<slug>` prefix is stripped from
+    // URLs, so the canonical must be the bare sub-path.
+    it.each(SELF_CANONICAL_SUBPAGES)(
+      "%s declares the bare sub-path canonical on a whitelabel domain",
+      async (subPage) => {
+        getWhitelabelContextMock.mockResolvedValue({ isWhitelabel: true, config: {} });
+        const metadata = await metadataFor(subPage, "celo");
+        expect(metadata.alternates?.canonical).toBe(`/${subPage}`);
+      }
+    );
   });
 
   describe("shell sub-pages consolidate onto the community root", () => {
