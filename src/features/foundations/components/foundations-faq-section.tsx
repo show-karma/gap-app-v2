@@ -1,15 +1,25 @@
+import { MinusCircle, PlusCircle } from "lucide-react";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { FOUNDATION_FAQS } from "@/src/features/foundations/content";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 
 /**
- * Visible FAQ for /foundations, server-rendered on purpose: the shared
- * accordion keeps closed answers out of the server HTML, so answer
- * engines never saw them. This section renders every question and answer
- * as a definition list (the reviewed E1 pattern), from the same
- * `FOUNDATION_FAQS` source the page's FAQPage JSON-LD uses — the two can
- * never drift.
+ * Visible FAQ for /foundations: native `<details>`/`<summary>` styled to
+ * match the site's accordion (border-separated rows, plus/minus
+ * affordance — the same look the shared Radix accordion gives the
+ * homepage; `QueryDisclosure` is the existing details/summary precedent).
+ *
+ * Why not the shared Radix accordion: it unmounts closed answers, so
+ * they never reach the server HTML and answer engines cannot read them.
+ * `<details>` keeps every answer in the DOM and the served HTML — merely
+ * visually collapsed, never `[hidden]` — with zero JS, working
+ * expand/collapse before hydration, and native find-in-page
+ * auto-expansion. All entries start collapsed, matching the previous
+ * accordion's default state (its `defaultValue` matched no item).
+ *
+ * Content comes from the same `FOUNDATION_FAQS` source as the page's
+ * FAQPage JSON-LD, so the two can never drift (E1 pattern).
  */
 export function FoundationsFaqSection() {
   return (
@@ -22,16 +32,24 @@ export function FoundationsFaqSection() {
             reporting on Karma.
           </p>
         </div>
-        <dl className="max-w-4xl mx-auto mb-8 md:mb-12 px-4 mt-10 space-y-3">
+        <div className="max-w-4xl mx-auto mb-8 md:mb-12 px-4 mt-10">
           {FOUNDATION_FAQS.map((faq) => (
-            <div key={faq.question} className="rounded-xl border border-border bg-card p-5">
-              <dt className="text-base font-semibold text-foreground">{faq.question}</dt>
-              <dd className="mt-1 text-base font-normal leading-6 text-muted-foreground">
+            <details key={faq.question} className="group border-b border-border last:border-b-0">
+              <summary className="flex cursor-pointer list-none items-center py-4 [&::-webkit-details-marker]:hidden">
+                <span className="flex-1 pr-4 text-left text-base font-medium leading-[28px] tracking-normal text-foreground">
+                  {faq.question}
+                </span>
+                <span aria-hidden="true" className="relative ml-2 h-6 w-6 flex-shrink-0">
+                  <PlusCircle className="absolute inset-0 h-6 w-6 text-muted-foreground group-open:hidden" />
+                  <MinusCircle className="absolute inset-0 hidden h-6 w-6 text-muted-foreground group-open:block" />
+                </span>
+              </summary>
+              <p className="pb-4 pt-0 text-base font-normal leading-6 tracking-normal text-muted-foreground">
                 {faq.answer}
-              </dd>
-            </div>
+              </p>
+            </details>
           ))}
-        </dl>
+        </div>
       </SectionContainer>
     </section>
   );
