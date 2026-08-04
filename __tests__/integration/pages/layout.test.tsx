@@ -90,9 +90,6 @@ vi.mock("@/utilities/whitelabel-server", () => ({
     communitySlug: null,
     tenantConfig: null,
   }),
-  // Null = the proxy did not tag the request, so the layout renders no
-  // route-scoped extras (e.g. the find-funders <noscript> crawler hero).
-  getRequestPathname: vi.fn().mockResolvedValue(null),
 }));
 
 describe("RootLayout", () => {

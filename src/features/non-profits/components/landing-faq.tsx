@@ -39,12 +39,9 @@ function FaqAnswer({ text }: { text: string }) {
  * FAQ section for the find-funders landing page.
  *
  * Deliberately NOT a `"use client"` module: it renders no hooks and no
- * handlers, so the same component serves both trees that must stay in sync —
- * the interactive landing page (client tree, via LandingPageClient) and the
- * root layout's <noscript> replica (Server Component tree, via
- * FindFundersNoscriptHero). The copy comes from lib/faq-content, the same
- * array that feeds the page's FAQPage JSON-LD, so the structured data, the
- * interactive page, and the no-JS page can never drift apart.
+ * handlers, so it server-renders into the initially visible HTML. The copy
+ * comes from lib/faq-content, the same array that feeds the page's FAQPage
+ * JSON-LD, so the structured data and the visible FAQ can never drift apart.
  */
 export function LandingFaq() {
   return (
