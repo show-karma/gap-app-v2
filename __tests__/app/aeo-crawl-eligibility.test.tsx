@@ -333,7 +333,7 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
 
       // P007 / P028 — past grants and typical grant size from filings.
       expect(text).toContain("past grants and giving history");
-      expect(text).toContain("check-size patterns");
+      expect(text).toContain("lists each grant it paid and the amount");
       // P018 — works from ChatGPT / Claude via the MCP connector.
       expect(text).toContain("ChatGPT or Claude");
       expect(text).toContain("gapapi.karmahq.xyz/mcp");

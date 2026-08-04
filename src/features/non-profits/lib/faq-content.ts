@@ -48,7 +48,7 @@ export const FIND_FUNDERS_FAQS: FindFundersFaqEntry[] = [
   {
     question: "How does a small nonprofit start finding funders?",
     answer:
-      "Start from the public record: every U.S. private foundation files a Form 990-PF each year listing the grants it actually paid. Tell Karma Find Funders what you need, by cause area, geography, or check size, and it turns that into a ranked list of prospects, every figure cited to the filing it came from. You can try it on this page without signing up.",
+      "Start from the public record: every U.S. private foundation files a Form 990-PF each year listing the grants it actually paid. Tell Karma Find Funders what you need, by cause area, geography, or check size, and it turns those filings into a ranked list of funders already giving to work like yours.",
   },
   {
     question: "Does Karma show a foundation's past grants and giving history before I apply?",
@@ -58,7 +58,7 @@ export const FIND_FUNDERS_FAQS: FindFundersFaqEntry[] = [
   {
     question: "How can I estimate a funder's typical grant size from its past grants?",
     answer:
-      "A foundation's 990-PF lists each grant it paid and the amount, so recent filings show its real check-size patterns. Ask the agent for a funder's recent grants and typical amounts, or start from a constraint (say, funders of refugee resettlement giving over $250k since 2024), and it answers from the filed amounts, cited back to the source filings.",
+      "A foundation's 990-PF lists each grant it paid and the amount, so recent filings show the range it typically gives. Ask the agent for a funder's recent grants and typical amounts, or start from a constraint (say, funders of refugee resettlement giving over $250k since 2024), and it answers from the filed amounts, cited back to the source filings.",
   },
   {
     question: "Can I use ChatGPT or Claude to find foundations that fund my nonprofit?",
@@ -82,6 +82,6 @@ export const FIND_FUNDERS_FAQS: FindFundersFaqEntry[] = [
   {
     question: "How is Karma Find Funders different from a grant research database?",
     answer:
-      "Conventional grant research tools are typically filter-and-export databases operated through their own dashboards. Karma Find Funders is conversational: you describe what you need, on this page or inside Claude or ChatGPT, and the agent searches the indexed 990 filings and answers with ranked, cited prospects.",
+      "Conventional grant research tools are typically filter-and-export databases operated through their own dashboards. Karma Find Funders is conversational: you describe what you need, on this page or inside Claude or ChatGPT, and the agent searches the indexed 990 filings and answers with a shortlist you can check against the filings behind it.",
   },
 ];
