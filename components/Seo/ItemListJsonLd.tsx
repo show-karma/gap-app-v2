@@ -1,7 +1,7 @@
 import { safeJsonLdStringify } from "@/utilities/jsonLd";
 import { SITE_URL } from "@/utilities/meta";
 
-export interface ItemListJsonLdItem {
+interface ItemListJsonLdItem {
   /** Visible name of the entry, exactly as the page renders it. */
   name: string;
   /** Path (or absolute URL) the entry links to, exactly as the page links it. */
