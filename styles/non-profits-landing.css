@@ -32,6 +32,12 @@
   --lp-accent-soft: oklch(0.95 0.04 75);
   --lp-success: oklch(0.65 0.14 155);
   --lp-focus: oklch(0.7 0.14 230);
+  /* Body-copy link blue — same values as the app-wide convention
+     (Tailwind blue-600/blue-700, as used by the connect guides and
+     knowledge pages), tokenized here so the noscript replica and the
+     interactive section share one source with a dark-mode variant. */
+  --lp-link: #2563eb;
+  --lp-link-hover: #1d4ed8;
   font-family: "Geist", -apple-system, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01", "cv11";
@@ -54,6 +60,8 @@
   --lp-primary-soft: oklch(0.26 0.04 265);
   --lp-accent: oklch(0.82 0.13 75);
   --lp-accent-soft: oklch(0.28 0.04 75);
+  --lp-link: #60a5fa;
+  --lp-link-hover: #93c5fd;
 }
 
 .landing * { box-sizing: border-box; }
@@ -684,15 +692,18 @@
   margin: 0;
 }
 
-.lp-faq-link {
-  color: var(--lp-ink);
+/* `.landing a` (0,1,1) resets links to inherit/none, so this rule needs the
+   higher-specificity form to actually win — blue and always underlined, in
+   both the interactive section and the noscript replica (plain CSS only). */
+.landing a.lp-faq-link {
+  color: var(--lp-link);
   text-decoration: underline;
   text-underline-offset: 3px;
   overflow-wrap: anywhere;
 }
 
-.lp-faq-link:hover {
-  color: var(--lp-ink-2);
+.landing a.lp-faq-link:hover {
+  color: var(--lp-link-hover);
 }
 
 /* ———————— Connector / MCP ———————— */
