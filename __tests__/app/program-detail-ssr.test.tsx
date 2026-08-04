@@ -56,6 +56,13 @@ vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "light", theme: "light", setTheme: vi.fn() }),
 }));
 
+// `getWhitelabelContext` reads request headers, which have no request scope
+// under renderToString. The non-whitelabel default mirrors what resolves on
+// the main karmahq domain.
+vi.mock("@/utilities/whitelabel-server", () => ({
+  getWhitelabelContext: async () => ({ isWhitelabel: false, config: null }),
+}));
+
 const PROGRAM_DESCRIPTION =
   "Funding for open-source public goods teams building on the Celo network.";
 
@@ -200,5 +207,75 @@ describe("funding-program detail page — server-rendered content", () => {
     // retries.
     expect(html).toContain("animate-pulse");
     expect(html).not.toContain("Program not found");
+  });
+});
+
+/** Parse every JSON-LD script the page emitted. */
+function extractJsonLd(html: string): Array<Record<string, unknown>> {
+  return [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) =>
+    JSON.parse(m[1])
+  );
+}
+
+describe("funding-program detail page — Grant JSON-LD (DEV-596)", () => {
+  it("emits a Grant whose every fact appears in the rendered HTML", async () => {
+    mockGet.mockResolvedValue(createMockProgram());
+
+    const html = await renderPageToHtml();
+    const grant = extractJsonLd(html).find((schema) => schema["@type"] === "Grant") as
+      | Record<string, unknown>
+      | undefined;
+
+    expect(grant).toBeDefined();
+
+    // Every structured fact must be traceable to the visible server HTML —
+    // JSON-LD claiming content the page does not render is the E3 defect
+    // class this program fixed.
+    expect(grant?.name).toBe("Public Goods Fund");
+    expect(html).toContain("Public Goods Fund");
+
+    expect(grant?.description).toBe(PROGRAM_DESCRIPTION);
+    expect(html).toContain(PROGRAM_DESCRIPTION);
+
+    // Funder mirrors the visible "by celo" byline.
+    expect(grant?.funder).toEqual({ "@type": "Organization", name: "celo" });
+    expect(html).toContain("celo");
+
+    // Canonical URL of this page.
+    expect(grant?.url).toMatch(/\/community\/c1\/programs\/prog-1$/);
+
+    // Deliberately absent: the program budget is the round's pool, not a
+    // single grant's amount, so it must not be claimed as one.
+    expect(grant).not.toHaveProperty("amount");
+  });
+
+  it("omits the funder when the program has no community byline", async () => {
+    mockGet.mockResolvedValue(createMockProgram({ communitySlug: undefined }));
+
+    const html = await renderPageToHtml();
+    const grant = extractJsonLd(html).find((schema) => schema["@type"] === "Grant");
+
+    expect(grant).toBeDefined();
+    expect(grant).not.toHaveProperty("funder");
+  });
+
+  it("ships no Grant schema when the program is not found", async () => {
+    mockGet.mockRejectedValue(
+      new HttpError(404, { endpoint: "/v2/funding-program-configs/prog-1", method: "GET" })
+    );
+
+    const html = await renderPageToHtml();
+
+    expect(extractJsonLd(html).find((schema) => schema["@type"] === "Grant")).toBeUndefined();
+  });
+
+  it("ships no Grant schema when the indexer fails", async () => {
+    mockGet.mockRejectedValue(
+      new HttpError(500, { endpoint: "/v2/funding-program-configs/prog-1", method: "GET" })
+    );
+
+    const html = await renderPageToHtml();
+
+    expect(extractJsonLd(html).find((schema) => schema["@type"] === "Grant")).toBeUndefined();
   });
 });
