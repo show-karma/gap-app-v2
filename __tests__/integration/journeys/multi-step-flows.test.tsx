@@ -658,31 +658,14 @@ describe("Multi-Step Navigation Journey Tests", () => {
   });
 
   describe("Flow 3: Program Browse → Filter → Select", () => {
+    // The route's page.tsx is an async server component that prefetches the
+    // program list; this journey exercises the client-side flow directly.
     async function importPage() {
       const mod = await import(
-        "@/app/community/[communityId]/(with-header)/funding-opportunities/page"
+        "@/app/community/[communityId]/(with-header)/funding-opportunities/FundingOpportunitiesClient"
       );
       return mod.default;
     }
-
-    // FundingMapCard mock
-    vi.mock("@/src/features/funding-map/components/funding-map-card", () => ({
-      FundingMapCard: ({
-        program,
-        href,
-        statusSlot,
-      }: {
-        program: { metadata: { title?: string; description?: string } };
-        href?: string;
-        statusSlot?: React.ReactNode;
-      }) => (
-        <a href={href} data-testid={`program-card-${program.metadata?.title}`}>
-          <span>{program.metadata?.title}</span>
-          <span>{program.metadata?.description}</span>
-          {statusSlot}
-        </a>
-      ),
-    }));
 
     vi.mock("@/src/features/programs/components/ProgramCardSkeleton", () => ({
       ProgramCardSkeleton: () => <div data-testid="skeleton" />,

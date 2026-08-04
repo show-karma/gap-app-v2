@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
+import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram, ProgramFilters, ProgramStatus } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
+import { INDEXER } from "@/utilities/indexer";
+import { DEFAULT_PROGRAMS_LIMIT, PROGRAMS_LIST_STALE_TIME } from "../lib/constants";
 import { useProgramsStore } from "../lib/store";
 import type { UseProgramsReturn } from "../types";
 
@@ -46,16 +49,16 @@ export function usePrograms(
     programs: FundingProgram[];
     limit: number;
   }>({
-    queryKey: ["wl-programs", communityId],
+    queryKey: wlQueryKeys.programs.communityList(communityId),
     queryFn: async () => {
-      const limit = filters.limit || 20;
+      const limit = filters.limit || DEFAULT_PROGRAMS_LIMIT;
       // TODO(#1775): add zod schema
       const res = await api.get<FundingProgram[]>(
-        `/v2/funding-program-configs/community/${communityId}`
+        INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(encodeURIComponent(communityId))
       );
       return { programs: res ?? [], limit };
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: PROGRAMS_LIST_STALE_TIME,
     enabled: !!communityId,
   });
 

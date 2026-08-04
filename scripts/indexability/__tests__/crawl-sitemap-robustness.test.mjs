@@ -322,7 +322,11 @@ describe("known-issue content floor", () => {
     assert.equal(report.ok, false);
   });
 
-  it("still excuses the documented near-threshold case", async () => {
+  // The near-threshold excuse for /funding-opportunities was retired in
+  // DEV-611: the route now server-renders the program directory, so a page
+  // that comes back with only the community header's worth of prose is a real
+  // regression the default list must NOT mute.
+  it("no longer excuses a header-only funding-opportunities page by default", async () => {
     const target = `${CANONICAL}/community/celo/funding-opportunities`;
     const header =
       "Celo Community Grants funds public goods across the Celo ecosystem, and this directory lists every open program.";
@@ -335,9 +339,9 @@ describe("known-issue content floor", () => {
     );
 
     assert.equal(report.results[0].classification, CLASSIFICATIONS.THIN);
-    assert.equal(report.results[0].allowlisted, true);
-    assert.equal(report.summary.failing.length, 0);
-    assert.equal(report.ok, true);
+    assert.equal(report.results[0].allowlisted, false);
+    assert.equal(report.summary.failing.length, 1);
+    assert.equal(report.ok, false);
   });
 
   it("ships a floor on every default thin excuse", () => {
