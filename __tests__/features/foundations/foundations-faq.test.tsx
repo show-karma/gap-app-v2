@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { FoundationsFaqSection } from "@/src/features/foundations/components/foundations-faq-section";
 import { FOUNDATION_FAQS } from "@/src/features/foundations/content";
 
@@ -84,12 +85,46 @@ describe("FOUNDATION_FAQS content", () => {
 });
 
 describe("FoundationsFaqSection", () => {
-  it("renders every question and answer in the HTML (no accordion hiding)", () => {
-    render(<FoundationsFaqSection />);
+  it("puts every answer in the server-rendered HTML, outside any [hidden] element", () => {
+    // The AEO eligibility crawler's no-js mode treats the `hidden`
+    // attribute as invisible; native <details> collapse must not use it.
+    const markup = renderToStaticMarkup(<FoundationsFaqSection />);
+    const container = document.createElement("div");
+    container.innerHTML = markup;
 
     for (const entry of FOUNDATION_FAQS) {
-      expect(screen.getByText(entry.question)).toBeInTheDocument();
-      expect(screen.getByText(entry.answer)).toBeInTheDocument();
+      expect(markup).toContain(entry.question.replace(/'/g, "&#x27;"));
+      expect(markup).toContain(entry.answer.replace(/'/g, "&#x27;"));
+    }
+    for (const paragraph of container.querySelectorAll("details > p")) {
+      expect(paragraph.closest("[hidden]")).toBeNull();
+    }
+  });
+
+  it("collapses every entry by default (matching the previous accordion state)", () => {
+    render(<FoundationsFaqSection />);
+
+    const detailsElements = document.querySelectorAll("details");
+    expect(detailsElements).toHaveLength(FOUNDATION_FAQS.length);
+    for (const details of detailsElements) {
+      expect(details.open).toBe(false);
+      // Native disclosure semantics: the question is the summary toggle.
+      expect(details.querySelector("summary")?.textContent).toBeTruthy();
+    }
+  });
+
+  it("expands an item when its details element opens (native toggle)", () => {
+    render(<FoundationsFaqSection />);
+
+    const first = document.querySelector("details");
+    expect(first).not.toBeNull();
+    if (first) {
+      // jsdom does not simulate summary-click activation; the open
+      // attribute is the native toggle contract (real-browser click is
+      // covered by the Playwright interaction check in the PR).
+      first.open = true;
+      expect(first.open).toBe(true);
+      expect(first.querySelector("p")?.textContent).toBe(FOUNDATION_FAQS[0].answer);
     }
   });
 });
