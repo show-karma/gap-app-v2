@@ -7,13 +7,15 @@ C05,changed,foundations-lifecycle,/knowledge/*,C06,R2026-07-30-c,Truthful articl
 C06,control,foundations-lifecycle,/knowledge/grant-lifecycle,,,Held out of the date-model change as the unchanged knowledge-page control
 C07,changed,all,/llms.txt,,R2026-07-31-a,"LLM URL index populated, docs chrome stripped, all three audiences covered (PR 1955)"
 C08,changed,all,/robots.txt,,R2026-07-30-d,Explicit search/user crawler groups; CCBot and Bytespider allowed (PR 1953)
-C09,control,foundations-lifecycle,/foundations,,,Primary foundations lifecycle route; unchanged at baseline. Becomes a changed cohort only when an AEO-12 experiment ships.
+C09,changed,foundations-lifecycle,/foundations,C16,R2026-08-04-d,Primary foundations lifecycle route; became a changed cohort when E3 shipped (v1.8.24). Control: C16 per the E3 contract (high-baseline caveat documented in experiments.md).
 C10,control,foundations-agentic,/for-agents,,,Primary foundations agentic route; unchanged at baseline
 C11,control,foundations-agentic,/mcp/connect,,,Agent connection route; unchanged at baseline
 C12,control,donor-advisors,/donor-advisors,,,Primary donor-advisor route; unchanged at baseline
-C13,control,donor-advisors,/nonprofit-research,,,Primary donor-advisor research route; unchanged at baseline
+C13,changed,donor-advisors,/nonprofit-research,C12,R2026-08-04-e,"Primary donor-advisor research route; became a changed cohort when E4 shipped (v1.8.24): public/indexable with buyer-intent title/meta, informational content at C19. Control: C12 (interference caveat in experiments.md)."
 C14,control,nonprofits,/nonprofits,,,Primary nonprofit route; unchanged at baseline
-C15,control,nonprofits,/nonprofits/find-funders,,,Primary funder-search route; unchanged at baseline
+C15,control,nonprofits,/nonprofits/find-funders,C14,R2026-08-03-g;R2026-08-04-f,"Primary funder-search route; eligibility SSR fix R2026-08-03-g then experiment E5 R2026-08-04-f. E5 windows read from its own ship date with the SSR effect as starting state (per contract). Control: C14 (shared with E2, documented)."
 C16,control,foundations-lifecycle,/funders,,,Secondary foundations lifecycle route; unchanged at baseline
 C17,control,foundations-lifecycle,/project/[projectId],,,"Replacement control for C01 and C03 after C02/C04 were contaminated by R2026-08-03-c. Project detail pages are entity pages untouched by the shipped eligibility releases in normal operation (R2026-08-03-b only alters behaviour during indexer outages, when the page would otherwise fail closed). Shared control for both pairs - an imperfect but documented compromise: no untouched community sub-page class remains."
 C18,control,nonprofits,/funding-map,C14,,"Program-registry directory page; unchanged at baseline. The site's largest GSC opportunity in the 2026-05..2026-08 export: 12,619 impressions at average position 8.0 with only 30 clicks. Becomes a changed cohort when its AEO-12 experiment ships (DEV-595); C14 (/nonprofits) is its pre-registered untouched control - same nonprofits audience, not in the AEO-12 experiment slate. Contract in experiments.md."
+C19,changed,donor-advisors,/knowledge/nonprofit-due-diligence,C12,R2026-08-04-e,New knowledge article created by E4 (v1.8.24) housing the diligence Q&A moved off /nonprofit-research per review. New URL with zero baseline; gains knowledge-index/sitemap/llms.txt distribution C13 never had (documented confound). Read as the informational half of the E4 pair.
+C20,changed,foundations-lifecycle,/knowledge/ai-grant-evaluation,C06,R2026-08-04-g,"Page-level cohort for E6 (v1.8.24) so the page reads separately from the rest of C05 (which changed earlier via the date model, R2026-07-30-c). Control: C06, the held-out knowledge page."
