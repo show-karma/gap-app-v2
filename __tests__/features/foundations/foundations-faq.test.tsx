@@ -15,9 +15,10 @@ describe("FOUNDATION_FAQS content", () => {
     }
   });
 
-  it("keeps every pre-existing question (union, not replacement)", () => {
-    const questions = FOUNDATION_FAQS.map((f) => f.question);
-    for (const legacy of [
+  it("keeps every pre-existing question alongside the new ones (union, not replacement)", () => {
+    // Union of the previous FAQ JSON-LD set and the two questions that
+    // lived only in the previous visible accordion.
+    const legacyQuestions = [
       "What is Karma?",
       "Who is Karma for?",
       "What is Karma for foundations?",
@@ -28,9 +29,13 @@ describe("FOUNDATION_FAQS content", () => {
       "Do I still need a grants team?",
       "Do we get reports for our board?",
       "Can we run it under our own brand?",
-    ]) {
+    ];
+    const questions = FOUNDATION_FAQS.map((f) => f.question);
+    for (const legacy of legacyQuestions) {
       expect(questions).toContain(legacy);
     }
+    // The new grants-lifecycle questions are additions, not replacements.
+    expect(questions.length).toBeGreaterThan(legacyQuestions.length);
   });
 
   it("answers grantee tracking and impact reporting (P002/P027)", () => {
