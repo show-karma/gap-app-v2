@@ -2,7 +2,11 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { ComponentType } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { getKnowledgeArticleDate, KNOWLEDGE_ARTICLE_DATES } from "@/app/knowledge/articleDates";
+import {
+  getKnowledgeArticleDate,
+  KNOWLEDGE_ARTICLE_DATES,
+  KNOWLEDGE_ARTICLE_UPDATED_DATES,
+} from "@/app/knowledge/articleDates";
 import GrantKycPage from "@/app/knowledge/grant-kyc/page";
 import GrantLifecyclePage from "@/app/knowledge/grant-lifecycle/page";
 import ProjectProfilesPage from "@/app/knowledge/project-profiles/page";
@@ -86,13 +90,33 @@ describe("knowledge article publication dates", () => {
   });
 
   describe("page sources", () => {
-    it("never hardcode a date literal and never claim a modified date", () => {
+    it("never hardcode a date literal — published or modified dates come only from the maps", () => {
       for (const slug of knowledgeSlugs()) {
         const source = fs.readFileSync(path.join(KNOWLEDGE_DIR, slug, "page.tsx"), "utf8");
 
-        expect(source, slug).not.toMatch(/dateModified/);
+        expect(source, slug).not.toMatch(/dateModified\s*=\s*"/);
         expect(source, slug).not.toMatch(/datePublished\s*=\s*"/);
       }
+    });
+  });
+
+  describe("revision map", () => {
+    it("only records revisions for published articles, dated on or after publication", () => {
+      const today = new Date().toISOString().slice(0, 10);
+
+      for (const [slug, updated] of Object.entries(KNOWLEDGE_ARTICLE_UPDATED_DATES)) {
+        expect(KNOWLEDGE_ARTICLE_DATES, slug).toHaveProperty(slug);
+        expect(updated, slug).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(updated.localeCompare(KNOWLEDGE_ARTICLE_DATES[slug]), slug).toBeGreaterThan(0);
+        expect(updated.localeCompare(today), slug).toBeLessThanOrEqual(0);
+        expect(FABRICATED_DATES, slug).not.toContain(updated);
+      }
+    });
+
+    it("never touches the held-out control article", () => {
+      // /knowledge/grant-lifecycle is the untouched control cohort (C06) for
+      // the knowledge-page experiments — it must not gain a revision entry.
+      expect(KNOWLEDGE_ARTICLE_UPDATED_DATES).not.toHaveProperty("grant-lifecycle");
     });
   });
 

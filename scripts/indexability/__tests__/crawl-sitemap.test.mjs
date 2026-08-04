@@ -602,10 +602,10 @@ describe("normalizeKnownIssues", () => {
     assert.equal(matchKnownIssue(allowlist, `${CANONICAL}/y`, CLASSIFICATIONS.THIN), null);
   });
 
-  // The default list may be empty — that is the goal state (the last entry,
-  // /funding-opportunities, was removed in DEV-611 when the route started
-  // server-rendering its content). Any entry that IS shipped must be scoped
-  // and justified.
+  // An empty default list is the goal state (/funding-opportunities left it in
+  // DEV-611 when the route started server-rendering its content; the current
+  // /nonprofit-research entry documents a deliberately auth-gated workspace,
+  // PR #1984). Any entry that IS shipped must be scoped and justified.
   it("every shipped default allowlist entry is scoped and justified", () => {
     const normalized = normalizeKnownIssues(DEFAULT_KNOWN_ISSUES);
     for (const entry of normalized) {
