@@ -38,6 +38,7 @@ const staticPages = [
   "/knowledge/project-profiles-software-vs-nonsoftware",
   "/knowledge/onchain-project-profiles",
   "/knowledge/how-funders-use-project-profiles",
+  "/knowledge/nonprofit-due-diligence",
   "/mcp/connect",
   PAGES.BLOG,
   "/foundations",

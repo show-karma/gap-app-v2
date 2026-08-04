@@ -497,6 +497,29 @@ export default function KnowledgePage() {
 
         <hr className="border-gray-200 dark:border-gray-700" />
 
+        <section className="space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Nonprofit research</h2>
+            <p className="text-gray-700 dark:text-gray-300">
+              Funding decisions in the nonprofit world rest on the same primitive as everywhere
+              else: verifiable execution history. These articles cover how donor advisors vet
+              organizations before recommending grants.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Nonprofit due diligence for donor advisors</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How advisors verify a nonprofit is legitimate and active before recommending a grant:
+              IRS Pub 78 status, Form 990 recency, state charity registries, governance signals, and
+              ranked shortlists.
+            </p>
+            <ArticleLink slug="nonprofit-due-diligence">→ Nonprofit due diligence</ArticleLink>
+          </div>
+        </section>
+
+        <hr className="border-gray-200 dark:border-gray-700" />
+
         <footer className="pt-4">
           <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600 dark:border-gray-600 dark:text-gray-400">
             Funding systems improve when execution is visible.
