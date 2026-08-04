@@ -50,9 +50,22 @@ const FundingMapPage = async () => {
         description={PAGE_DESCRIPTION}
         url="/funding-map"
       />
-      <Suspense fallback={null}>
-        <FundingMapSearch />
-      </Suspense>
+      {/* The heading renders here, in the server component and OUTSIDE the
+          Suspense boundary, so it is part of the initially visible HTML for
+          no-JS readers (DEV-612). Only the interactive search input and quick
+          categories stream behind the boundary. */}
+      <section className="flex w-full justify-center my-16">
+        <div className="flex w-full max-w-xl flex-col gap-8">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <h1 className="text-center text-3xl font-semibold tracking-tight lg:text-4xl">
+              Find funding opportunities
+            </h1>
+            <Suspense fallback={null}>
+              <FundingMapSearch />
+            </Suspense>
+          </div>
+        </div>
+      </section>
       <div className="flex w-full flex-col gap-6 px-6 py-8 lg:flex-row lg:px-8">
         <HydrationBoundary state={dehydrate(queryClient)}>
           <Suspense fallback={<FundingMapLoading />}>
