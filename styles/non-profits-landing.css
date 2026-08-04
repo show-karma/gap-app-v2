@@ -32,6 +32,12 @@
   --lp-accent-soft: oklch(0.95 0.04 75);
   --lp-success: oklch(0.65 0.14 155);
   --lp-focus: oklch(0.7 0.14 230);
+  /* Body-copy link blue — same values as the app-wide convention
+     (Tailwind blue-600/blue-700, as used by the connect guides and
+     knowledge pages), tokenized here so the noscript replica and the
+     interactive section share one source with a dark-mode variant. */
+  --lp-link: #2563eb;
+  --lp-link-hover: #1d4ed8;
   font-family: "Geist", -apple-system, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01", "cv11";
@@ -54,6 +60,8 @@
   --lp-primary-soft: oklch(0.26 0.04 265);
   --lp-accent: oklch(0.82 0.13 75);
   --lp-accent-soft: oklch(0.28 0.04 75);
+  --lp-link: #60a5fa;
+  --lp-link-hover: #93c5fd;
 }
 
 .landing * { box-sizing: border-box; }
@@ -651,6 +659,52 @@
   gap: 8px;
 }
 .lp-aud-q::before { content: "\203A"; color: var(--lp-ink-4); flex-shrink: 0; }
+
+/* ———————— FAQ ———————— */
+.lp-faq-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}
+
+.lp-faq-item {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-faq-q {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--lp-ink);
+  font-weight: 400;
+}
+
+.lp-faq-a {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--lp-ink-2);
+  margin: 0;
+}
+
+/* `.landing a` (0,1,1) resets links to inherit/none, so this rule needs the
+   higher-specificity form to actually win — blue and always underlined, in
+   both the interactive section and the noscript replica (plain CSS only). */
+.landing a.lp-faq-link {
+  color: var(--lp-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.landing a.lp-faq-link:hover {
+  color: var(--lp-link-hover);
+}
 
 /* ———————— Connector / MCP ———————— */
 .lp-connector {
@@ -1433,6 +1487,7 @@
   .lp-agents-grid { grid-template-columns: 1fr; }
   .lp-agents-grid .lp-aud { border-right: none !important; border-bottom: 1px solid var(--line) !important; }
   .lp-agents-grid .lp-aud:last-child { border-bottom: none !important; }
+  .lp-faq-item { grid-template-columns: 1fr; gap: 10px; }
   .lp-anti-row { grid-template-columns: 1fr; gap: 8px; padding: 18px 20px; }
   .lp-anti-x, .lp-anti-arrow { display: none; }
   .lp-data-grid { grid-template-columns: 1fr 1fr; }

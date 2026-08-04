@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { FAQJsonLd } from "@/components/Seo/FAQJsonLd";
 import { LandingPageClient } from "@/src/features/non-profits/components/landing-page-client";
+import { FIND_FUNDERS_FAQS } from "@/src/features/non-profits/lib/faq-content";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
@@ -26,5 +28,13 @@ export const metadata: Metadata = customMetadata({
  * of this route a no-JS reader actually sees. See ./loading.tsx.
  */
 export default function NonProfitsPage() {
-  return <LandingPageClient />;
+  return (
+    <>
+      {/* Fed from the same array as the visible FAQ section (and the root
+          layout's noscript replica), so the structured data never claims
+          something a reader cannot see. */}
+      <FAQJsonLd questions={FIND_FUNDERS_FAQS} />
+      <LandingPageClient />
+    </>
+  );
 }

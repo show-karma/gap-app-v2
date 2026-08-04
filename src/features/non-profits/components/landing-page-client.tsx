@@ -22,6 +22,7 @@ import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { INSTALL_CONFIGS, type InstallTab } from "../lib/install-configs";
 import { FILINGS_STATS } from "../lib/stats";
 import { ConnectFloatingCard } from "./connect-cta";
+import { LandingFaq } from "./landing-faq";
 import { LandingHero } from "./landing-hero";
 import { ArrowIcon } from "./landing-icons";
 
@@ -702,7 +703,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
       <div className="lp-container">
         <div className="lp-section-head">
           <div>
-            <div className="lp-section-label">08 &mdash; START</div>
+            <div className="lp-section-label">09 &mdash; START</div>
             <h2 className="lp-section-title">
               Two ways in.
               <br />
@@ -760,6 +761,7 @@ export function LandingPageClient() {
       <Connector />
       <TheData />
       <Audience />
+      <LandingFaq />
       <FinalCTA onSearchFocus={scrollToHero} />
       <ConnectFloatingCard />
     </div>
