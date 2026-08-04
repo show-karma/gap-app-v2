@@ -77,8 +77,8 @@ export default function AiGrantEvaluationPage() {
           <p className="text-gray-700 dark:text-gray-300">
             When programs receive hundreds of applications, fully manual review does not scale:
             reviewer fatigue produces inconsistent scores, missed red flags, and slow decisions.
-            AI-assisted evaluation handles the first-pass work — summaries, criteria-based scoring,
-            risk signals — and human reviewers keep sign-off on every decision.
+            AI-assisted evaluation handles the first-pass work (summaries, criteria-based scoring,
+            risk signals) while human reviewers keep sign-off on every decision.
           </p>
         </section>
 
@@ -93,7 +93,7 @@ export default function AiGrantEvaluationPage() {
           <h2 className="text-xl font-semibold">What it does not replace</h2>
           <p className="text-gray-700 dark:text-gray-300">
             AI does not replace human judgment. Final decisions, nuanced evaluation, and
-            context-sensitive assessments remain with reviewers — and on Karma that is enforced in
+            context-sensitive assessments remain with reviewers, and on Karma that is enforced in
             the platform, not just recommended: evaluation failures never block a submission, and no
             evaluation outcome moves an application forward or backward on its own.
           </p>
