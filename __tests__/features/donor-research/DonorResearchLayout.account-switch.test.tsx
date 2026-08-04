@@ -30,7 +30,11 @@ vi.mock("@/src/components/ui/AccessDenied", () => ({
     ),
 }));
 
-const routeState = { pathname: "/nonprofit-research" };
+// A layout-gated route. The section index ("/nonprofit-research") is no
+// longer gated by the layout — its page owns the gate so its public FAQ
+// content can be server-rendered (E4, DEV-595) — so the account-isolation
+// suite runs on a route that still is.
+const routeState = { pathname: "/nonprofit-research/new" };
 
 vi.mock("next/navigation", () => ({
   usePathname: () => routeState.pathname,
@@ -83,7 +87,7 @@ describe("DonorResearchLayout account isolation", () => {
     authState.ready = true;
     authState.authenticated = true;
     authState.user = { id: "user-a" };
-    routeState.pathname = "/nonprofit-research";
+    routeState.pathname = "/nonprofit-research/new";
   });
 
   it("renders children in the first pass on first visit without an account-refresh pause", () => {
@@ -163,7 +167,7 @@ describe("DonorResearchLayout sign-in gate coverage", () => {
   });
 
   it.each([
-    ["the section index", "/nonprofit-research"],
+    ["a gated section route", "/nonprofit-research/new"],
     ["onboarding", "/nonprofit-research/onboarding"],
   ])("gates %s with the same sign-in screen", (_label, pathname) => {
     routeState.pathname = pathname;
@@ -173,6 +177,19 @@ describe("DonorResearchLayout sign-in gate coverage", () => {
 
     expect(screen.getByText("Sign in to access nonprofit research")).toBeVisible();
     expect(screen.queryByText("Signed out")).not.toBeInTheDocument();
+  });
+
+  it("leaves the section index to its page — the page renders the gate plus public content", () => {
+    // The index page (ResearchIndexExperience) shows the same sign-in gate
+    // for anonymous visitors; the layout just stops swallowing the page's
+    // server-rendered FAQ content. Covered by ResearchIndexExperience tests.
+    routeState.pathname = "/nonprofit-research";
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(<TestRoot queryClient={queryClient} />);
+
+    expect(screen.getByText("Signed out")).toBeVisible();
+    expect(screen.queryByText("Sign in to access nonprofit research")).not.toBeInTheDocument();
   });
 
   it.each([
