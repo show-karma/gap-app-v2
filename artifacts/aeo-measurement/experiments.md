@@ -75,7 +75,7 @@ Metrics glossary:
 | Primary metric | Citation share for /foundations on target prompts vs C16 movement. |
 | Secondary metric | Recommendation rate on the comparison prompts (P001/P006/P008/P022/P040); appearance of /foundations in GSC top pages. |
 | Pass/fail | Pass = /foundations earns citations on target prompts and outperforms C16's citation-share movement in both W1 and W2. |
-| Evaluation dates | Ship date: TBD (not started). W1/W2: TBD at ship. |
+| Evaluation dates | Shipped 2026-08-04 (v1.8.24). W1 = 2026-08-05..2026-08-11, W2 = 2026-08-12..2026-08-18. |
 
 ## E4 — /nonprofit-research
 
@@ -90,7 +90,7 @@ Metrics glossary:
 | Primary metric | Citation share for /nonprofit-research on target prompts vs C12 movement. |
 | Secondary metric | Recommendation rate on P009/P017/P041 (the Candid/Charity Navigator comparison prompts). |
 | Pass/fail | Pass = /nonprofit-research earns citations on target prompts and outperforms C12's citation-share movement in both W1 and W2. |
-| Evaluation dates | Ship date: TBD (not started). W1/W2: TBD at ship. |
+| Evaluation dates | Shipped 2026-08-04 (v1.8.24). W1 = 2026-08-05..2026-08-11, W2 = 2026-08-12..2026-08-18. |
 
 ## E5 — /nonprofits/find-funders
 
@@ -105,7 +105,7 @@ Metrics glossary:
 | Primary metric | Citation share for /nonprofits/find-funders on target prompts vs C14 movement. |
 | Secondary metric | Recommendation rate on P011/P030/P035 (comparison/category prompts). |
 | Pass/fail | Pass = /nonprofits/find-funders earns citations on target prompts and outperforms C14's citation-share movement in both W1 and W2. |
-| Evaluation dates | Ship date: TBD (not started). W1/W2: TBD at ship. |
+| Evaluation dates | Shipped 2026-08-04 (v1.8.24). W1 = 2026-08-05..2026-08-11, W2 = 2026-08-12..2026-08-18. |
 
 ## E6 — /knowledge/ai-grant-evaluation
 
@@ -120,7 +120,7 @@ Metrics glossary:
 | Primary metric | Citation share for /knowledge/ai-grant-evaluation on target prompts vs C06 movement. |
 | Secondary metric | Recommendation rate on P046 (category-discovery). |
 | Pass/fail | Pass = the page earns citations on target prompts and outperforms C06's citation-share movement in both W1 and W2. |
-| Evaluation dates | Ship date: TBD (not started). W1/W2: TBD at ship. |
+| Evaluation dates | Shipped 2026-08-04 (v1.8.24). W1 = 2026-08-05..2026-08-11, W2 = 2026-08-12..2026-08-18. |
 
 ---
 
