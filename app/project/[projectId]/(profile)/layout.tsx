@@ -1,7 +1,6 @@
-import { type ReactNode, Suspense } from "react";
+import type { ReactNode } from "react";
 import { ProjectProfileLayout } from "@/components/Pages/Project/v2/Layout/ProjectProfileLayout";
 import { SidebarProfileCardStatic } from "@/components/Pages/Project/v2/SidePanel/SidebarProfileCardStatic";
-import { ProjectProfileLayoutSkeleton } from "@/components/Pages/Project/v2/Skeletons";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 type Params = Promise<{ projectId: string }>;
@@ -12,8 +11,14 @@ type Params = Promise<{ projectId: string }>;
  * Async RSC that fetches project data server-side and renders a static sidebar card
  * into the initial HTML, eliminating the blank-content LCP problem.
  *
- * Suspense boundary required because ProjectProfileLayout uses useSearchParams(),
- * which needs a Suspense boundary in Next.js App Router production builds.
+ * Deliberately NO Suspense boundary here (DEV-612): project routes are
+ * sitemap-crawlable and render dynamically, so a boundary here made the whole
+ * profile (including the server-rendered sidebar card) stream as a hidden
+ * late chunk that no-JS readers never see. The old comment claimed the
+ * boundary was required for useSearchParams(); that requirement only applies
+ * to statically prerendered routes, and every route in this app is dynamic
+ * (root layout reads headers()). Verified against the production build: the
+ * build passes and the profile content lands in the initially visible HTML.
  */
 export default async function ProfileLayout({
   children,
@@ -35,9 +40,5 @@ export default async function ProfileLayout({
     // Client-side hooks will fetch data as fallback.
   }
 
-  return (
-    <Suspense fallback={<ProjectProfileLayoutSkeleton />}>
-      <ProjectProfileLayout serverSidePanel={serverSidePanel}>{children}</ProjectProfileLayout>
-    </Suspense>
-  );
+  return <ProjectProfileLayout serverSidePanel={serverSidePanel}>{children}</ProjectProfileLayout>;
 }
