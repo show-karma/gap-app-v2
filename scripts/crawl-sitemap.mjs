@@ -27,10 +27,26 @@ import {
  * without JavaScript". Every entry needs a written justification: this list is
  * the record of what is queued for a fix or for removal, not a mute button.
  */
-// Currently empty: the last entry (/funding-opportunities, excused as a
-// client-rendered program directory) was removed in DEV-611 when the route
-// started server-rendering the program cards into the initial HTML.
-export const DEFAULT_KNOWN_ISSUES = Object.freeze([]);
+// The previous entry (/funding-opportunities, excused as a client-rendered
+// program directory) was removed in DEV-611 when the route started
+// server-rendering the program cards into the initial HTML.
+export const DEFAULT_KNOWN_ISSUES = Object.freeze([
+  {
+    pathnameEndsWith: "/nonprofit-research",
+    classifications: ["thin"],
+    // Calibrated against a local production build (PR #1984): in the truthful
+    // no-js mode this page measures 264 chars and no <h1>, because the page
+    // segment (sr-only h1 + the footnote link) streams as a hidden Suspense
+    // chunk (the app-wide DEV-612 class) and only the layout chrome is
+    // no-js-visible. Raw mode sees 439 chars and the sr-only h1. The floor
+    // sits just below the no-js reality so the entry only excuses this exact
+    // shape; a regression that collapses the page below it (or any non-thin
+    // failure) still fails loudly. Never recalibrate upward to green a run.
+    minTextLength: 250,
+    reason:
+      "Auth-gated advisor workspace by design (E4, PR #1984). The public surface is deliberately small: indexable title/meta, an sr-only h1, and a footnote link to /knowledge/nonprofit-due-diligence, after review moved the descriptive answer content to that knowledge article and removed the intro sentence. The workspace and sign-in gate render client-side only, so a no-js reader sees little text and no h1 and the crawl classifies the page thin. Only that failure mode is excused; the informational content this page would otherwise carry lives at /knowledge/nonprofit-due-diligence on purpose.",
+  },
+]);
 
 const DEFAULTS = Object.freeze({
   rootSitemapUrl: CRAWL_DEFAULTS.rootSitemapUrl,

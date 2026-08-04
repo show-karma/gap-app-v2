@@ -357,3 +357,72 @@ describe("known-issue content floor", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Default allowlist: /nonprofit-research (PR #1984)
+// ---------------------------------------------------------------------------
+
+describe("default nonprofit-research thin excuse", () => {
+  const target = `${CANONICAL}/nonprofit-research`;
+  // What the route actually serves to a no-JS reader: layout chrome only (the
+  // page segment, sr-only h1 included, streams as a hidden Suspense chunk), so
+  // no h1 and a text length just above the entry's 250-char floor.
+  const CHROME_TEXT =
+    "For Projects For Funders For Nonprofits Explore Resources Ask Karma Blog Guide API Docs " +
+    "Skills Governance llms.txt Terms Privacy Karma. All rights reserved. For how the compliance " +
+    "checks and shortlist rankings work, read the knowledge-base guide to nonprofit due diligence " +
+    "for donor advisors.";
+
+  const shell = (body) =>
+    `<!doctype html><html><head><title>Nonprofit Research | Karma</title>` +
+    `<link rel="canonical" href="${target}"/></head><body><p>${body}</p></body></html>`;
+
+  it("excuses the documented shape: thin for lack of an h1, above the floor", async () => {
+    const report = await crawl(
+      makeFetch({
+        [ROOT]: () => xml(urlSet([target])),
+        [target]: () => html(shell(CHROME_TEXT)),
+      }),
+      { knownIssues: DEFAULT_KNOWN_ISSUES }
+    );
+
+    assert.equal(report.results[0].classification, CLASSIFICATIONS.THIN);
+    assert.equal(report.results[0].allowlisted, true);
+    assert.equal(report.summary.failing.length, 0);
+    assert.equal(report.ok, true);
+  });
+
+  it("fails a page that collapses below the floor instead of allowlisting it", async () => {
+    const report = await crawl(
+      makeFetch({
+        [ROOT]: () => xml(urlSet([target])),
+        [target]: () => html(shell("Sign in.")),
+      }),
+      { knownIssues: DEFAULT_KNOWN_ISSUES }
+    );
+
+    assert.equal(report.results[0].classification, CLASSIFICATIONS.THIN);
+    assert.equal(report.results[0].allowlisted, false);
+    assert.equal(report.summary.failing.length, 1);
+    assert.equal(report.ok, false);
+  });
+
+  it("does not excuse non-thin failures on the same route", async () => {
+    const noindexPage =
+      `<!doctype html><html><head><title>Nonprofit Research | Karma</title>` +
+      `<meta name="robots" content="noindex">` +
+      `<link rel="canonical" href="${target}"/></head><body><h1>Research</h1>` +
+      `<p>${CHROME_TEXT}</p></body></html>`;
+    const report = await crawl(
+      makeFetch({
+        [ROOT]: () => xml(urlSet([target])),
+        [target]: () => html(noindexPage),
+      }),
+      { knownIssues: DEFAULT_KNOWN_ISSUES }
+    );
+
+    assert.equal(report.results[0].classification, CLASSIFICATIONS.NOINDEX);
+    assert.equal(report.results[0].allowlisted, false);
+    assert.equal(report.ok, false);
+  });
+});
