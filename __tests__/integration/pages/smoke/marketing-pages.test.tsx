@@ -23,6 +23,9 @@ vi.mock("@/src/features/foundations/components/cta-section", () => ({
 vi.mock("@/src/features/foundations/components/hero", () => ({
   Hero: () => <div data-testid="foundations-hero" />,
 }));
+vi.mock("@/src/features/foundations/components/foundations-faq-section", () => ({
+  FoundationsFaqSection: () => <div data-testid="foundations-faq" />,
+}));
 vi.mock("@/components/Seo/FAQJsonLd", () => ({
   FAQJsonLd: () => <div data-testid="foundations-faq-jsonld" />,
 }));
@@ -224,7 +227,9 @@ describe("/foundations marketing page", () => {
       "home-case-studies",
       "home-how-it-works",
       "home-objections",
-      "home-faq",
+      // /foundations renders its own server-visible FAQ section instead of
+      // the shared home accordion (E3, DEV-595).
+      "foundations-faq",
       "foundations-cta",
     ].forEach((id) => {
       expect(screen.getByTestId(id)).toBeInTheDocument();
