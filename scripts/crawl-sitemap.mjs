@@ -37,8 +37,10 @@ export const DEFAULT_KNOWN_ISSUES = Object.freeze([
     // Calibrated against a local production build (PR #1984): in the truthful
     // no-js mode this page measures 264 chars and no <h1>, because the page
     // segment (sr-only h1 + the footnote link) streams as a hidden Suspense
-    // chunk (the app-wide DEV-612 class) and only the layout chrome is
-    // no-js-visible. Raw mode sees 439 chars and the sr-only h1. The floor
+    // chunk and only the layout chrome is no-js-visible. DEV-612 removed the
+    // loading boundaries on every other sitemap route; this auth-gated
+    // workspace keeps its own loading.tsx on purpose, so this route alone
+    // still streams behind a fallback. Raw mode sees 439 chars and the sr-only h1. The floor
     // sits just below the no-js reality so the entry only excuses this exact
     // shape; a regression that collapses the page below it (or any non-thin
     // failure) still fails loudly. Never recalibrate upward to green a run.
