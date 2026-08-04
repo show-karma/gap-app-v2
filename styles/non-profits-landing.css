@@ -652,6 +652,38 @@
 }
 .lp-aud-q::before { content: "\203A"; color: var(--lp-ink-4); flex-shrink: 0; }
 
+/* ———————— FAQ ———————— */
+.lp-faq-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}
+
+.lp-faq-item {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-faq-q {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--lp-ink);
+  font-weight: 400;
+}
+
+.lp-faq-a {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--lp-ink-2);
+  margin: 0;
+}
+
 /* ———————— Connector / MCP ———————— */
 .lp-connector {
   background: var(--lp-ink);
@@ -1433,6 +1465,7 @@
   .lp-agents-grid { grid-template-columns: 1fr; }
   .lp-agents-grid .lp-aud { border-right: none !important; border-bottom: 1px solid var(--line) !important; }
   .lp-agents-grid .lp-aud:last-child { border-bottom: none !important; }
+  .lp-faq-item { grid-template-columns: 1fr; gap: 10px; }
   .lp-anti-row { grid-template-columns: 1fr; gap: 8px; padding: 18px 20px; }
   .lp-anti-x, .lp-anti-arrow { display: none; }
   .lp-data-grid { grid-template-columns: 1fr 1fr; }
