@@ -115,7 +115,6 @@ const ERROR_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
   "community/[communityId]/manage/tracks",
   "create-project-profile",
   "funders",
-  "funding-map",
   "funding-map/add-program",
   "funding-map/manage-programs",
   "knowledge",
