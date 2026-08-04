@@ -42,6 +42,7 @@ const staticPages = [
   PAGES.BLOG,
   "/foundations",
   "/donor-advisors",
+  "/nonprofit-research",
   "/nonprofits",
   "/nonprofits/find-funders",
   "/nonprofits/find-funders/connect",
