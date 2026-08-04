@@ -9,9 +9,13 @@
  * effects — whatever it produces is exactly what a crawler or a reader with
  * JavaScript disabled receives.
  */
+import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen, waitFor } from "@testing-library/react";
+import type React from "react";
 import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useProgramsStore } from "@/src/features/programs/lib/store";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 
 const mockGet = vi.fn();
@@ -82,7 +86,7 @@ function createPrograms(): FundingProgram[] {
   ] as FundingProgram[];
 }
 
-async function renderPageToHtml(): Promise<string> {
+async function buildPageUi(): Promise<React.ReactElement> {
   const { default: Page } = await import(
     "@/app/community/[communityId]/(with-header)/funding-opportunities/page"
   );
@@ -90,11 +94,19 @@ async function renderPageToHtml(): Promise<string> {
   // A fresh client per render, mirroring the per-request client the app
   // provider creates — nothing is carried over between tests.
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return renderToString(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>;
+}
+
+async function renderPageToHtml(): Promise<string> {
+  return renderToString(await buildPageUi());
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The client's URL-seeding effect mutates the module-level filter store on
+  // mount (clearing the SSR-time "active" default); reset it so every test
+  // starts from the store's initial state.
+  useProgramsStore.getState().reset();
 });
 
 describe("funding-opportunities directory — server-rendered content", () => {
@@ -129,15 +141,17 @@ describe("funding-opportunities directory — server-rendered content", () => {
     expect(html).not.toContain("animate-pulse");
   });
 
-  it("lists open programs only under the default filter", async () => {
+  it("paints open programs only in the server-rendered card list", async () => {
     mockGet.mockResolvedValue(createPrograms());
 
     const html = await renderPageToHtml();
 
-    // The default view is the answer to "what can I apply to now" — a closed
-    // round is reachable through the Closed tab after hydration, not in the
-    // crawlable default HTML.
-    expect(html).not.toContain("Closed Round");
+    // The server paints the store's "active" default — a closed round's card
+    // appears after hydration lands on the All tab, not in the server-painted
+    // markup. The JSON-LD (which describes the hydrated All view, see the
+    // DEV-596 describe block) is stripped so this pins the visible cards.
+    const visibleMarkup = html.replace(/<script type="application\/ld\+json">.*?<\/script>/g, "");
+    expect(visibleMarkup).not.toContain("Closed Round");
   });
 
   it("serves the hydrated directory from a single indexer round-trip", async () => {
@@ -188,7 +202,7 @@ function extractJsonLd(html: string): Array<Record<string, unknown>> {
 type ListItem = { "@type": string; position: number; name: string; url: string };
 
 describe("funding-opportunities directory — ItemList JSON-LD (DEV-596)", () => {
-  it("emits an ItemList whose every entry is backed by the rendered HTML", async () => {
+  it("emits an ItemList describing every program the default All view shows", async () => {
     mockGet.mockResolvedValue(createPrograms());
 
     const html = await renderPageToHtml();
@@ -198,26 +212,23 @@ describe("funding-opportunities directory — ItemList JSON-LD (DEV-596)", () =>
 
     expect(itemList).toBeDefined();
 
-    // The default view lists the two open programs; the ItemList describes
-    // exactly that view.
-    expect(itemList?.numberOfItems).toBe(2);
+    // The client's default view is the All tab (the URL-seeding effect clears
+    // the store's SSR-time "active" filter when the URL has no `status`
+    // param), so the schema lists every fetched program in rendered order —
+    // nothing shown is omitted, nothing hidden is claimed.
+    expect(itemList?.numberOfItems).toBe(3);
     expect(itemList?.itemListElement.map((item) => item.name)).toEqual([
       "Public Goods Fund",
       "Evergreen Grants",
+      "Closed Round",
     ]);
-
-    // Every structured fact must be traceable to the visible server HTML —
-    // JSON-LD claiming content the page does not render is the E3 defect
-    // class this program fixed. Names appear as card titles, urls as the
-    // cards' anchors.
+    expect(itemList?.itemListElement.map((item) => item.position)).toEqual([1, 2, 3]);
     for (const item of itemList?.itemListElement ?? []) {
-      expect(html).toContain(item.name);
-      const path = new URL(item.url).pathname;
-      expect(html).toContain(`href="${path}"`);
+      expect(new URL(item.url).pathname).toMatch(/^\/community\/celo\/programs\/prog-/);
     }
   });
 
-  it("keeps closed programs out of the ItemList, matching the default view", async () => {
+  it("backs every ItemList entry with the hydrated default view a JS-executing crawler sees", async () => {
     mockGet.mockResolvedValue(createPrograms());
 
     const html = await renderPageToHtml();
@@ -225,9 +236,42 @@ describe("funding-opportunities directory — ItemList JSON-LD (DEV-596)", () =>
       | { itemListElement: ListItem[] }
       | undefined;
 
-    // "Closed Round" is not in the default server HTML (previous describe
-    // block), so it must not be claimed in the schema either.
-    expect(itemList?.itemListElement.map((item) => item.name)).not.toContain("Closed Round");
+    // Every structured fact must be traceable to rendered output — JSON-LD
+    // claiming content the page does not render is the E3 defect class this
+    // program fixed. The server HTML paints the active subset; hydration
+    // lands on the All tab and reveals the rest, which is what users and
+    // JS-executing crawlers (Google renders JavaScript) see.
+    render(await buildPageUi());
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "All" })).toHaveAttribute("aria-selected", "true");
+    });
+
+    for (const item of itemList?.itemListElement ?? []) {
+      const path = new URL(item.url).pathname;
+      // Rendered as a card title in the hydrated DOM, linking to the same
+      // detail path the schema claims.
+      expect(screen.getAllByText(item.name).length).toBeGreaterThan(0);
+      expect(
+        document.querySelector(`a[href="${path}"]`),
+        `expected an anchor to ${path}`
+      ).not.toBeNull();
+    }
+  });
+
+  it("keeps the open programs of the server-painted subset in the ItemList head positions", async () => {
+    mockGet.mockResolvedValue(createPrograms());
+
+    const html = await renderPageToHtml();
+    const itemList = extractJsonLd(html).find((schema) => schema["@type"] === "ItemList") as
+      | { itemListElement: ListItem[] }
+      | undefined;
+
+    // The server HTML renders the two open programs; both are claimed and
+    // both names are present in the server response body.
+    for (const name of ["Public Goods Fund", "Evergreen Grants"]) {
+      expect(itemList?.itemListElement.map((item) => item.name)).toContain(name);
+      expect(html).toContain(name);
+    }
   });
 
   it("ships no ItemList when the community has no programs", async () => {
