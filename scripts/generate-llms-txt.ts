@@ -242,6 +242,7 @@ const CATEGORY_MAP: Record<string, string> = {
   "project-profiles-software-vs-nonsoftware": "Project Profiles",
   "onchain-project-profiles": "Project Profiles",
   "how-funders-use-project-profiles": "Project Profiles",
+  "nonprofit-due-diligence": "Nonprofit Research",
 };
 
 const BOILERPLATE_LINE_PATTERNS = [
