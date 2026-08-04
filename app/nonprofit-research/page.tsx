@@ -22,6 +22,10 @@ export default function Page() {
           visitors get the sign-in gate. The one-liner below is deliberately
           footnote-sized (reviewer call); the full diligence Q&A lives in the
           knowledge base at /knowledge/nonprofit-due-diligence. */}
+      {/* Server-render exactly one <h1> for SEO without disturbing the visual
+          design (the project-layout sr-only pattern): the workspace and the
+          sign-in gate render their own visible headings client-side. */}
+      <h1 className="sr-only">Nonprofit research for donor advisors</h1>
       <ResearchIndexExperience />
       <p className="mx-auto w-full max-w-3xl px-4 py-3 text-center text-xs text-muted-foreground">
         For how the compliance checks and shortlist rankings work, read the knowledge-base guide to{" "}
