@@ -161,10 +161,18 @@ function DonorResearchSessionBoundary({
 export default function DonorResearchLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isTokenRoute = isDonorResearchTokenRoute(pathname);
-  const isShellless = pathname.startsWith(PAGES.DONOR_RESEARCH.ONBOARDING) || isTokenRoute;
+  // The section index carries public, server-rendered answer content (E4,
+  // DEV-595), so the layout neither auth-gates nor shell-wraps it — the
+  // index page renders the sign-in gate for anonymous visitors and the
+  // advisor shell + workspace for signed-in advisors itself
+  // (ResearchIndexExperience). Every other non-token route stays gated
+  // here exactly as before.
+  const isPublicIndex = pathname === PAGES.DONOR_RESEARCH.INDEX;
+  const isShellless =
+    pathname.startsWith(PAGES.DONOR_RESEARCH.ONBOARDING) || isTokenRoute || isPublicIndex;
 
   return (
-    <DonorResearchSessionBoundary requiresAuth={!isTokenRoute}>
+    <DonorResearchSessionBoundary requiresAuth={!isTokenRoute && !isPublicIndex}>
       <PermissionProvider>
         {isShellless ? children : <DonorResearchShell>{children}</DonorResearchShell>}
       </PermissionProvider>
