@@ -190,71 +190,33 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
   const HERO_H1 = "Stop hunting for funders. Ask an agent.";
 
   /**
-   * Two renders, matching the two audiences of a streamed dynamic route:
-   *
-   * - `noscriptHtml` — the <noscript> hero the ROOT layout renders for this
-   *   route (behind the proxy's x-pathname tag). On this app's dynamic routes
-   *   the page's own HTML is streamed as a `<div hidden id="S:n">` chunk that
-   *   only client-side script reveals, and WHICH ancestor loading.tsx fallback
-   *   ends up visible shifts between builds — the root layout's output is the
-   *   only region React guarantees into the initially visible HTML. So the
-   *   no-JS reader's hero lives there.
-   * - `pageHtml` — the real page, revealed on hydration, which JS-executing
-   *   crawlers and users read.
+   * The page's server output IS the no-JS reader's page since DEV-612: the
+   * route (and every ancestor) has no loading.tsx, so nothing above it creates
+   * a Suspense boundary and the whole page renders into the initially visible
+   * HTML. The earlier DEV-586 <noscript> hero replica in the root layout is
+   * gone — it existed only because a loading boundary used to stream the page
+   * as a hidden `<div hidden id="S:n">` chunk.
    */
-  async function renderFindFunders(): Promise<{ noscriptHtml: string; pageHtml: string }> {
-    const { FindFundersNoscriptHero } = await import(
-      "@/src/features/non-profits/components/find-funders-noscript-hero"
-    );
+  async function renderFindFunders(): Promise<{ pageHtml: string }> {
     const { default: Page } = await import("@/app/nonprofits/find-funders/page");
-    return {
-      noscriptHtml: renderToString(FindFundersNoscriptHero()),
-      pageHtml: renderToString(Page()),
-    };
+    return { pageHtml: renderToString(Page()) };
   }
 
-  /**
-   * What a no-JS browser renders: the content INSIDE the <noscript> wrapper.
-   * `visibleText` deliberately strips whole noscript blocks (they are
-   * invisible to a JS-executing reader), so these assertions unwrap first.
-   */
-  function noscriptInner(html: string): string {
-    const match = html.match(/^<noscript>([\s\S]*)<\/noscript>$/);
-    return match ? match[1] : "";
-  }
+  it("the page h1 is the hero heading, and there is exactly one h1", async () => {
+    const { pageHtml } = await renderFindFunders();
 
-  it("the noscript hero — the no-JS reader's page — carries the h1, lead copy and prompts", async () => {
-    const { noscriptHtml } = await renderFindFunders();
-
-    expect(noscriptHtml).toMatch(/^<noscript>/);
-    const inner = noscriptInner(noscriptHtml);
-    expect(headings(inner)).toEqual([HERO_H1]);
-
-    const text = visibleText(inner);
-    expect(text).toContain("AI agents that find the right foundations and funders");
-    expect(text.length).toBeGreaterThan(600);
+    expect(headings(pageHtml)).toEqual([HERO_H1]);
   });
 
-  it("the noscript h1 matches the page h1 exactly, so both audiences read the same heading", async () => {
-    const { noscriptHtml, pageHtml } = await renderFindFunders();
-
-    expect(headings(pageHtml)).toEqual(headings(noscriptInner(noscriptHtml)));
-  });
-
-  it("the noscript hero lists every example chip from lib/hero-content verbatim", async () => {
+  it("the hero carries the lead copy and every example chip from lib/hero-content", async () => {
     const { HERO_CHIPS } = await import("@/src/features/non-profits/lib/hero-content");
-    const { noscriptHtml } = await renderFindFunders();
-    const text = visibleText(noscriptInner(noscriptHtml));
+    const { pageHtml } = await renderFindFunders();
+    const text = visibleText(pageHtml);
 
+    expect(text).toContain("AI agents that find the right foundations and funders");
     for (const chip of HERO_CHIPS) {
       expect(text).toContain(chip.text);
     }
-  });
-
-  it("the page emits exactly one h1", async () => {
-    const { pageHtml } = await renderFindFunders();
-
-    expect(headings(pageHtml)).toHaveLength(1);
   });
 
   // The route previously served ~1.1k chars of navbar and footer chrome and
@@ -285,18 +247,7 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
      */
     const faqProse = (html: string) => visibleText(html).replace(/\s+([.,;:!?])/g, "$1");
 
-    it("the noscript replica carries every FAQ question and answer for no-JS readers", async () => {
-      const { FIND_FUNDERS_FAQS } = await import("@/src/features/non-profits/lib/faq-content");
-      const { noscriptHtml } = await renderFindFunders();
-      const text = faqProse(noscriptInner(noscriptHtml));
-
-      for (const faq of FIND_FUNDERS_FAQS) {
-        expect(text).toContain(faq.question);
-        expect(text).toContain(visibleText(faq.answer));
-      }
-    });
-
-    it("the page itself renders the same FAQ section", async () => {
+    it("the page renders every FAQ question and answer", async () => {
       const { FIND_FUNDERS_FAQS } = await import("@/src/features/non-profits/lib/faq-content");
       const { pageHtml } = await renderFindFunders();
       const text = faqProse(pageHtml);
@@ -328,8 +279,8 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
     });
 
     it("answers the funder-discovery facts the experiment targets, in visible text", async () => {
-      const { noscriptHtml } = await renderFindFunders();
-      const text = visibleText(noscriptInner(noscriptHtml));
+      const { pageHtml } = await renderFindFunders();
+      const text = visibleText(pageHtml);
 
       // P007 / P028 — past grants and typical grant size from filings.
       expect(text).toContain("past grants and giving history");
@@ -344,10 +295,10 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
       expect(text).toContain(`over ${FILINGS_STATS.countLong} filings`);
     });
 
-    it("renders the URL mentions as anchors in the page and the noscript replica", async () => {
+    it("renders the URL mentions as anchors in the page", async () => {
       const { FIND_FUNDERS_FAQ_LINKS } = await import("@/src/features/non-profits/lib/faq-content");
       const { NON_PROFITS_PAGES } = await import("@/utilities/pages");
-      const { noscriptHtml, pageHtml } = await renderFindFunders();
+      const { pageHtml } = await renderFindFunders();
 
       // The internal link resolves through the route constant, not a
       // hardcoded path; the MCP endpoint is external and absolute.
@@ -355,10 +306,8 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
         NON_PROFITS_PAGES.CONNECT
       );
 
-      for (const html of [noscriptInner(noscriptHtml), pageHtml]) {
-        expect(html).toContain('href="https://gapapi.karmahq.xyz/mcp"');
-        expect(html).toContain(`href="${NON_PROFITS_PAGES.CONNECT}"`);
-      }
+      expect(pageHtml).toContain('href="https://gapapi.karmahq.xyz/mcp"');
+      expect(pageHtml).toContain(`href="${NON_PROFITS_PAGES.CONNECT}"`);
     });
 
     it("keeps the JSON-LD answers plain text even where the visible FAQ links", async () => {
@@ -380,20 +329,26 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
   });
 
   /**
-   * Structural guard: the workbench subroutes each keep their own loading.tsx,
-   * so a navigation inside find-funders never degrades to an ancestor
-   * fallback, and the segment keeps its instant loading state for the landing
-   * page itself.
+   * Structural guard, updated for DEV-612: the sitemap-listed routes in this
+   * segment (the landing page and the /connect trio) must have NO loading.tsx
+   * — a loading boundary would stream their HTML as a hidden Suspense chunk
+   * and no-JS readers would see only the fallback. The non-sitemap workbench
+   * subroutes each keep their own loading.tsx so a navigation inside
+   * find-funders keeps its instant loading state.
    */
-  it("keeps the segment loading boundary and per-subroute loading states in place", () => {
+  it("keeps loading boundaries off the sitemap routes and on the workbench subroutes", () => {
     const segment = path.join(process.cwd(), "app/nonprofits/find-funders");
 
-    expect(fs.existsSync(path.join(segment, "loading.tsx"))).toBe(true);
-
-    for (const subroute of [
+    for (const forbidden of [
+      "loading.tsx",
       "connect/loading.tsx",
       "connect/claude/loading.tsx",
       "connect/chatgpt/loading.tsx",
+    ]) {
+      expect(fs.existsSync(path.join(segment, forbidden)), forbidden).toBe(false);
+    }
+
+    for (const subroute of [
       "search/[id]/loading.tsx",
       "foundations/[id]/loading.tsx",
       "grants/[id]/loading.tsx",

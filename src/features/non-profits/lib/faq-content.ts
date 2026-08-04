@@ -6,19 +6,17 @@ import { FILINGS_STATS } from "./stats";
  * the funder-discovery questions the page is meant to answer (DEV-595,
  * experiment E5 in artifacts/aeo-measurement/experiments.md).
  *
- * Three renderers share this array and must stay in sync word for word:
+ * Two renderers share this array and must stay in sync word for word:
  *
- * - `components/landing-faq.tsx` — the FAQ section inside the interactive
- *   landing page;
- * - `components/find-funders-noscript-hero.tsx` — the root layout's
- *   crawler-visible replica for readers that do not execute JavaScript
- *   (the page's own HTML streams as a hidden chunk, see that file);
+ * - `components/landing-faq.tsx` — the FAQ section on the landing page,
+ *   server-rendered into the initially visible HTML (no loading boundary on
+ *   this route since DEV-612, so no-JS readers see it too);
  * - the FAQPage JSON-LD emitted by `app/nonprofits/find-funders/page.tsx`,
  *   so the structured data never claims something a reader cannot see.
  *
- * Lives in lib/ (not next to a client component) because the noscript replica
- * is a Server Component: importing values from a `"use client"` module would
- * turn them into client references it cannot read.
+ * Lives in lib/ (not next to a client component) because Server Components
+ * consume it: importing values from a `"use client"` module would turn them
+ * into client references they cannot read.
  *
  * Every factual claim below traces to already-reviewed copy or code:
  * data coverage and freshness from `./stats` and the landing data section;
