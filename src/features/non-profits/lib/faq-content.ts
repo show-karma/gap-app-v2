@@ -1,3 +1,4 @@
+import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { FILINGS_STATS } from "./stats";
 
 /**
@@ -31,20 +32,33 @@ export interface FindFundersFaqEntry {
   answer: string;
 }
 
+/**
+ * Answer substrings the visible FAQ renders as anchors (see landing-faq.tsx).
+ * The key is the literal text as it appears in the answer; the value is the
+ * href it links to. Answers stay plain strings because the FAQPage JSON-LD
+ * consumes them as-is: schema.org acceptedAnswer text is plain text, and the
+ * existing FAQJsonLd component serializes the string verbatim.
+ */
+export const FIND_FUNDERS_FAQ_LINKS: Record<string, string> = {
+  "gapapi.karmahq.xyz/mcp": "https://gapapi.karmahq.xyz/mcp",
+  "karmahq.xyz/nonprofits/find-funders/connect": NON_PROFITS_PAGES.CONNECT,
+};
+
 export const FIND_FUNDERS_FAQS: FindFundersFaqEntry[] = [
   {
     question: "How does a small nonprofit start finding funders?",
-    answer: `Start from the public record: every U.S. private foundation files a Form 990-PF each year listing the grants it actually paid. Karma Find Funders indexes over ${FILINGS_STATS.countLong} IRS 990 and 990-PF filings, so you can ask in plain English — by cause area, geography, or check size — and get a ranked prospect list with every figure cited to the filing it came from. You can try it on this page without signing up.`,
+    answer:
+      "Start from the public record: every U.S. private foundation files a Form 990-PF each year listing the grants it actually paid. Tell Karma Find Funders what you need, by cause area, geography, or check size, and it turns that into a ranked list of prospects, every figure cited to the filing it came from. You can try it on this page without signing up.",
   },
   {
     question: "Does Karma show a foundation's past grants and giving history before I apply?",
     answer:
-      "Yes. The research agent pulls a funder's giving history, officers, peer co-funders, and historical priorities from its 990 record, and every funder, grant, and dollar figure links back to the actual filing.",
+      "Yes. Ask about a foundation before you apply and the research agent assembles its giving history from the 990 record: past grantees, officers, peer co-funders, and how its priorities have shifted over time, each cited to the source filing.",
   },
   {
     question: "How can I estimate a funder's typical grant size from its past grants?",
     answer:
-      "A foundation's 990-PF lists each grant it paid and the amount, so recent filings show its real check-size patterns. Ask the agent for a funder's recent grants and typical amounts — or start from a constraint, like funders of refugee resettlement giving over $250k since 2024 — and it answers from the filed amounts, cited back to the source filings.",
+      "A foundation's 990-PF lists each grant it paid and the amount, so recent filings show its real check-size patterns. Ask the agent for a funder's recent grants and typical amounts, or start from a constraint (say, funders of refugee resettlement giving over $250k since 2024), and it answers from the filed amounts, cited back to the source filings.",
   },
   {
     question: "Can I use ChatGPT or Claude to find foundations that fund my nonprofit?",
@@ -54,20 +68,20 @@ export const FIND_FUNDERS_FAQS: FindFundersFaqEntry[] = [
   {
     question: "Is Karma Find Funders free for nonprofits?",
     answer:
-      "Connecting and asking questions is free. A paid tier may be added later for high-volume usage, but the core prospecting agent stays free for nonprofits. You can also try a search on this page without creating an account.",
+      "Connecting and asking questions is free. A paid tier may be added later for high-volume usage, but the core prospecting agent stays free for nonprofits.",
   },
   {
     question: "What data does Karma Find Funders search?",
-    answer: `IRS 990 and 990-PF filings for U.S. private foundations and public charities that file annually — over ${FILINGS_STATS.countLong} filings covering ${FILINGS_STATS.dollarsTracked} in philanthropic assets and seven years of giving history, kept current as new filings are published. Every answer cites the filing it came from.`,
+    answer: `IRS 990 and 990-PF filings for U.S. private foundations and public charities that file annually: over ${FILINGS_STATS.countLong} filings covering ${FILINGS_STATS.dollarsTracked} in philanthropic assets and seven years of giving history, kept current as new filings are published. Every answer cites the filing it came from.`,
   },
   {
     question: "How do we screen out funders whose geographic or budget limits rule us out?",
     answer:
-      "Put the constraints in the question — geography, foundation asset size, check size, cause area — and the agent filters against what the filings show, for example family foundations under $50M that funded youth literacy in the Midwest. Funders whose actual giving does not match your profile drop off the list before you spend time on an application.",
+      "Put the constraints in the question (geography, foundation asset size, check size, cause area) and the agent filters against what the filings show, for example foundations under $50M that funded food security work in the Midwest. Funders whose actual giving does not match your profile drop off the list before you spend time on an application.",
   },
   {
     question: "How is Karma Find Funders different from a grant research database?",
     answer:
-      "Conventional grant research tools are typically filter-and-export databases operated through their own dashboards. Karma Find Funders is conversational: you describe what you need in plain English — on this page or inside Claude or ChatGPT — and the agent searches the indexed 990 filings and returns a ranked, cited prospect list.",
+      "Conventional grant research tools are typically filter-and-export databases operated through their own dashboards. Karma Find Funders is conversational: you describe what you need, on this page or inside Claude or ChatGPT, and the agent searches the indexed 990 filings and answers with ranked, cited prospects.",
   },
 ];

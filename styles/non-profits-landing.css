@@ -684,6 +684,17 @@
   margin: 0;
 }
 
+.lp-faq-link {
+  color: var(--lp-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.lp-faq-link:hover {
+  color: var(--lp-ink-2);
+}
+
 /* ———————— Connector / MCP ———————— */
 .lp-connector {
   background: var(--lp-ink);

@@ -1,4 +1,39 @@
-import { FIND_FUNDERS_FAQS } from "../lib/faq-content";
+import { FIND_FUNDERS_FAQ_LINKS, FIND_FUNDERS_FAQS } from "../lib/faq-content";
+
+const LINK_TARGETS = Object.keys(FIND_FUNDERS_FAQ_LINKS).sort((a, b) => b.length - a.length);
+
+const LINK_SPLITTER = new RegExp(
+  `(${LINK_TARGETS.map((target) => target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`
+);
+
+/**
+ * Renders an FAQ answer, turning the URL mentions listed in
+ * FIND_FUNDERS_FAQ_LINKS into anchors. The answer string itself stays plain
+ * text because the FAQPage JSON-LD serializes it verbatim; only the two
+ * visible renderings (landing page and noscript replica) get real links.
+ */
+function FaqAnswer({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(LINK_SPLITTER).map((part) => {
+        const href = FIND_FUNDERS_FAQ_LINKS[part];
+        if (!href) return part;
+        const external = href.startsWith("https://");
+        return (
+          <a
+            // Answers never repeat a URL, so the linked part is a stable key.
+            key={part}
+            href={href}
+            className="lp-faq-link"
+            {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+          >
+            {part}
+          </a>
+        );
+      })}
+    </>
+  );
+}
 
 /**
  * FAQ section for the find-funders landing page.
@@ -30,7 +65,9 @@ export function LandingFaq() {
           {FIND_FUNDERS_FAQS.map((faq) => (
             <div key={faq.question} className="lp-faq-item">
               <dt className="lp-faq-q">{faq.question}</dt>
-              <dd className="lp-faq-a">{faq.answer}</dd>
+              <dd className="lp-faq-a">
+                <FaqAnswer text={faq.answer} />
+              </dd>
             </div>
           ))}
         </dl>

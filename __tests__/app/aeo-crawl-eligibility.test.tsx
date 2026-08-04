@@ -278,10 +278,17 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
   });
 
   describe("direct-answer FAQ (DEV-595 experiment E5)", () => {
+    /**
+     * `visibleText` replaces tags with a space, so an answer that ends in a
+     * linked URL renders as "…connect ." — collapse the space the anchor's
+     * closing tag left before punctuation so prose comparisons still hold.
+     */
+    const faqProse = (html: string) => visibleText(html).replace(/\s+([.,;:!?])/g, "$1");
+
     it("the noscript replica carries every FAQ question and answer for no-JS readers", async () => {
       const { FIND_FUNDERS_FAQS } = await import("@/src/features/non-profits/lib/faq-content");
       const { noscriptHtml } = await renderFindFunders();
-      const text = visibleText(noscriptInner(noscriptHtml));
+      const text = faqProse(noscriptInner(noscriptHtml));
 
       for (const faq of FIND_FUNDERS_FAQS) {
         expect(text).toContain(faq.question);
@@ -292,7 +299,7 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
     it("the page itself renders the same FAQ section", async () => {
       const { FIND_FUNDERS_FAQS } = await import("@/src/features/non-profits/lib/faq-content");
       const { pageHtml } = await renderFindFunders();
-      const text = visibleText(pageHtml);
+      const text = faqProse(pageHtml);
 
       for (const faq of FIND_FUNDERS_FAQS) {
         expect(text).toContain(faq.question);
@@ -335,6 +342,40 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
       // Data coverage claim stays tied to the reviewed stats module.
       const { FILINGS_STATS } = await import("@/src/features/non-profits/lib/stats");
       expect(text).toContain(`over ${FILINGS_STATS.countLong} filings`);
+    });
+
+    it("renders the URL mentions as anchors in the page and the noscript replica", async () => {
+      const { FIND_FUNDERS_FAQ_LINKS } = await import("@/src/features/non-profits/lib/faq-content");
+      const { NON_PROFITS_PAGES } = await import("@/utilities/pages");
+      const { noscriptHtml, pageHtml } = await renderFindFunders();
+
+      // The internal link resolves through the route constant, not a
+      // hardcoded path; the MCP endpoint is external and absolute.
+      expect(FIND_FUNDERS_FAQ_LINKS["karmahq.xyz/nonprofits/find-funders/connect"]).toBe(
+        NON_PROFITS_PAGES.CONNECT
+      );
+
+      for (const html of [noscriptInner(noscriptHtml), pageHtml]) {
+        expect(html).toContain('href="https://gapapi.karmahq.xyz/mcp"');
+        expect(html).toContain(`href="${NON_PROFITS_PAGES.CONNECT}"`);
+      }
+    });
+
+    it("keeps the JSON-LD answers plain text even where the visible FAQ links", async () => {
+      const { FIND_FUNDERS_FAQS } = await import("@/src/features/non-profits/lib/faq-content");
+
+      for (const faq of FIND_FUNDERS_FAQS) {
+        expect(faq.answer).not.toMatch(/<[a-z]/i);
+      }
+    });
+
+    it("keeps the FAQ prose free of em-dashes", async () => {
+      const { FIND_FUNDERS_FAQS } = await import("@/src/features/non-profits/lib/faq-content");
+
+      for (const faq of FIND_FUNDERS_FAQS) {
+        expect(faq.question).not.toContain("—");
+        expect(faq.answer).not.toContain("—");
+      }
     });
   });
 
