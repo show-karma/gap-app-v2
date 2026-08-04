@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { FAQJsonLd } from "@/components/Seo/FAQJsonLd";
-import { ResearchFaqSection } from "@/src/features/donor-research/components/common/ResearchFaqSection";
+import Link from "next/link";
 import { ResearchIndexExperience } from "@/src/features/donor-research/components/common/ResearchIndexExperience";
-import { RESEARCH_FAQS } from "@/src/features/donor-research/content";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 // Rendered as "Nonprofit Research & Due Diligence for Donor Advisors | Karma"
 // by the root layout's `%s | Karma` title template.
@@ -19,13 +18,26 @@ export const metadata: Metadata = customMetadata({
 export default function Page() {
   return (
     <>
-      <FAQJsonLd questions={RESEARCH_FAQS} />
       {/* Signed-in advisors get the workspace exactly as before; signed-out
-          visitors get the sign-in gate with the public answer content below
-          it. The FAQ is a server component, so it is in the server HTML —
-          the workspace itself is client-only and never was. */}
+          visitors get the sign-in gate. The short intro below is the page's
+          server-rendered content; the full diligence Q&A lives in the
+          knowledge base at /knowledge/nonprofit-due-diligence. */}
       <ResearchIndexExperience />
-      <ResearchFaqSection />
+      <section className="mx-auto w-full max-w-3xl px-4 py-10">
+        <p className="text-sm text-muted-foreground">
+          Karma Nonprofit Research builds ranked, compliance-checked nonprofit shortlists for donor
+          advisors, verifying IRS Publication 78 status, Form 990 recency, California AG registry
+          status, and governance signals across more than 2 million IRS filings. For how the checks
+          and rankings work, read the knowledge-base guide to{" "}
+          <Link
+            href={PAGES.KNOWLEDGE.ARTICLE("nonprofit-due-diligence")}
+            className="text-blue-600 hover:underline dark:text-blue-400"
+          >
+            nonprofit due diligence for donor advisors
+          </Link>
+          .
+        </p>
+      </section>
     </>
   );
 }

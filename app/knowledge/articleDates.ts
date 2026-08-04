@@ -17,6 +17,10 @@
  *   363e897ea "checkin missing files"  2026-01-07T22:57:37Z -> 2026-01-07
  *   840b81144 "more knowledge pages"   2026-01-14T07:12:20Z -> 2026-01-14
  *
+ * Articles added after the provenance map exists record the date of the
+ * commit that adds them:
+ *   nonprofit-due-diligence  added 2026-08-04 (moved from /nonprofit-research)
+ *
  * Rules for maintaining this map:
  *   - Every date must be copied from a real commit. Never approximate, backfill,
  *     or stamp "today" onto an existing article.
@@ -41,6 +45,7 @@ export const KNOWLEDGE_ARTICLE_DATES: Readonly<Record<string, string>> = {
   "impact-verification": "2026-01-06",
   "manual-vs-platform-grant-tracking": "2026-01-06",
   "milestones-vs-impact": "2026-01-06",
+  "nonprofit-due-diligence": "2026-08-04",
   "onchain-project-profiles": "2026-01-14",
   "onchain-reputation": "2026-01-06",
   "project-profiles": "2026-01-14",
