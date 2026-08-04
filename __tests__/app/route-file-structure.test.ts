@@ -5,11 +5,16 @@ import { describe, expect, it } from "vitest";
 /**
  * Structural ratchet for the App Router "route trio" rule.
  *
- * Every `app/**​/page.tsx` directory must also contain `loading.tsx` and
- * `error.tsx` so each route renders loading, empty, AND error states locally
- * (CLAUDE.md: "Every app/ route needs page.tsx + loading.tsx + error.tsx").
+ * Every `app/**​/page.tsx` directory must also contain `error.tsx`, and
+ * non-crawlable routes must also contain `loading.tsx` so each route renders
+ * loading, empty, AND error states locally (CLAUDE.md route-trio rule).
  *
- * The two allowlists below freeze the legacy offenders that predate this test.
+ * Three sets below shape the loading.tsx rule:
+ *   - SITEMAP_NO_LOADING: sitemap-crawlable routes where loading.tsx is
+ *     FORBIDDEN along the whole segment chain (DEV-612) — a loading boundary
+ *     hides the page HTML from no-JS readers.
+ *   - LOADING_LEGACY_ALLOWLIST / ERROR_LEGACY_ALLOWLIST: frozen legacy
+ *     offenders that predate this test.
  * The test fails in BOTH directions:
  *   1. A NEW route missing loading/error fails immediately — the rule finally
  *      blocks merges instead of being a non-blocking bot comment.
@@ -97,7 +102,6 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
 
 // Routes known to be missing loading.tsx at the time this ratchet was added.
 const LOADING_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
-  "admin",
   "admin/communities",
   "admin/communities/stats",
   "admin/faucet",
@@ -105,19 +109,7 @@ const LOADING_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
   "admin/sumup",
   "community/[communityId]/(whitelabel)/applications/[applicationId]/success",
   "community/[communityId]/(whitelabel)/programs",
-  "community/[communityId]/(whitelabel)/programs/[programId]/apply",
   "community/[communityId]/(with-header)/browse-applications/[referenceNumber]",
-  "community/[communityId]/admin/kyc-settings",
-  "community/[communityId]/donate",
-  "funding-map/add-program",
-  "funding-map/manage-programs",
-  "old-home",
-  "project/[projectId]/(profile)/funding",
-  "project/[projectId]/(profile)/impact",
-  "project/[projectId]/(profile)/team",
-  "seeds/fund",
-  "stats",
-  "super-admin",
 ]);
 
 // Routes known to be missing error.tsx at the time this ratchet was added.
