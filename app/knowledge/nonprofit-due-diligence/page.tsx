@@ -125,7 +125,7 @@ export default function NonprofitDueDiligencePage() {
           <p className="text-gray-700 dark:text-gray-300">
             The checks described here are implemented in{" "}
             <Link
-              href="/nonprofit-research"
+              href={PAGES.DONOR_RESEARCH.INDEX}
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma Nonprofit Research
