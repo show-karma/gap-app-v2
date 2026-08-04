@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CommunityGrants } from "@/components/CommunityGrants";
+import { ItemListJsonLd } from "@/components/Seo/ItemListJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import { PAGES } from "@/utilities/pages";
@@ -37,6 +38,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// Filter query params the client hub reads through nuqs. When any is present
+// the server payload (fetched unfiltered) is not what the page renders — the
+// client refetches with the filters applied — so the JSON-LD ItemList below
+// must not describe it (DEV-596).
+const FILTER_SEARCH_PARAMS = [
+  "categories",
+  "sortBy",
+  "maturityStage",
+  "programId",
+  "trackIds",
+] as const;
+
 export default async function Page(props: Props) {
   const { communityId } = await props.params;
 
@@ -47,7 +60,8 @@ export default async function Page(props: Props) {
   // Fetch the exact request the client's first query would issue (page + explicit
   // sort) so the server payload can seed React Query instead of being replaced by
   // a differently-ordered refetch.
-  const page = parseCommunityProjectsPage(await props.searchParams);
+  const searchParams = (await props.searchParams) ?? {};
+  const page = parseCommunityProjectsPage(searchParams);
 
   const [communityDetails, categories, initialProjects] = await Promise.all([
     getCommunityDetails(communityId),
@@ -72,8 +86,24 @@ export default async function Page(props: Props) {
   const defaultSelectedCategories: string[] = [];
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
+  // JSON-LD ItemList of exactly the project entities the server renders
+  // (DEV-596): the seeded page of the hub, in its rendered order. With filter
+  // params in the URL the server ships a skeleton (the seed is rejected), so
+  // no schema ships either.
+  const hasFilterParams = FILTER_SEARCH_PARAMS.some((key) => searchParams[key] !== undefined);
+  const listedProjects = hasFilterParams
+    ? []
+    : (initialProjects?.payload ?? []).filter((project) => Boolean(project.details?.title));
+
   return (
     <div className="-my-4 flex flex-col w-full max-w-full py-2">
+      <ItemListJsonLd
+        name={`${communityDetails.details?.name || communityId} funded projects`}
+        items={listedProjects.map((project) => ({
+          name: project.details.title,
+          url: PAGES.PROJECT.OVERVIEW(project.details.slug || project.uid),
+        }))}
+      />
       <CommunityGrants
         categoriesOptions={categoriesOptions}
         defaultSelectedCategories={defaultSelectedCategories}

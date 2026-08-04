@@ -1,37 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { wlQueryKeys } from "@/src/lib/query-keys";
-import type { FundingProgram, ProgramFilters, ProgramStatus } from "@/types/whitelabel-entities";
+import type { FundingProgram, ProgramFilters } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { DEFAULT_PROGRAMS_LIMIT, PROGRAMS_LIST_STALE_TIME } from "../lib/constants";
+import { matchesStatus } from "../lib/program-status";
 import { useProgramsStore } from "../lib/store";
 import type { UseProgramsReturn } from "../types";
-
-function matchesStatus(program: FundingProgram, status: ProgramStatus): boolean {
-  const now = new Date();
-  const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
-  const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
-  const isEnabled = program.applicationConfig?.isEnabled ?? false;
-  const hasDeadlinePassed = !!endsAt && now > endsAt;
-  const isUpcoming = !!startsAt && now < startsAt;
-
-  switch (status) {
-    case "ended":
-      // A program is "ended" if its deadline has passed, or if applications are
-      // closed (isEnabled=false) and it's not an upcoming program.
-      return hasDeadlinePassed || (!isEnabled && !isUpcoming);
-    case "upcoming":
-      return isUpcoming;
-    case "active":
-      // A program is only "active" if it's within its date range AND accepting
-      // applications (isEnabled). Programs with closed applications should not
-      // appear in the active list.
-      return !hasDeadlinePassed && !isUpcoming && isEnabled;
-    default:
-      return true;
-  }
-}
 
 export function usePrograms(
   communityId: string,

@@ -177,3 +177,72 @@ describe("funding-opportunities directory — server-rendered content", () => {
     expect(html).not.toContain("More opportunities are on the way");
   });
 });
+
+/** Parse every JSON-LD script the page emitted. */
+function extractJsonLd(html: string): Array<Record<string, unknown>> {
+  return [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) =>
+    JSON.parse(m[1])
+  );
+}
+
+type ListItem = { "@type": string; position: number; name: string; url: string };
+
+describe("funding-opportunities directory — ItemList JSON-LD (DEV-596)", () => {
+  it("emits an ItemList whose every entry is backed by the rendered HTML", async () => {
+    mockGet.mockResolvedValue(createPrograms());
+
+    const html = await renderPageToHtml();
+    const itemList = extractJsonLd(html).find((schema) => schema["@type"] === "ItemList") as
+      | { numberOfItems: number; itemListElement: ListItem[] }
+      | undefined;
+
+    expect(itemList).toBeDefined();
+
+    // The default view lists the two open programs; the ItemList describes
+    // exactly that view.
+    expect(itemList?.numberOfItems).toBe(2);
+    expect(itemList?.itemListElement.map((item) => item.name)).toEqual([
+      "Public Goods Fund",
+      "Evergreen Grants",
+    ]);
+
+    // Every structured fact must be traceable to the visible server HTML —
+    // JSON-LD claiming content the page does not render is the E3 defect
+    // class this program fixed. Names appear as card titles, urls as the
+    // cards' anchors.
+    for (const item of itemList?.itemListElement ?? []) {
+      expect(html).toContain(item.name);
+      const path = new URL(item.url).pathname;
+      expect(html).toContain(`href="${path}"`);
+    }
+  });
+
+  it("keeps closed programs out of the ItemList, matching the default view", async () => {
+    mockGet.mockResolvedValue(createPrograms());
+
+    const html = await renderPageToHtml();
+    const itemList = extractJsonLd(html).find((schema) => schema["@type"] === "ItemList") as
+      | { itemListElement: ListItem[] }
+      | undefined;
+
+    // "Closed Round" is not in the default server HTML (previous describe
+    // block), so it must not be claimed in the schema either.
+    expect(itemList?.itemListElement.map((item) => item.name)).not.toContain("Closed Round");
+  });
+
+  it("ships no ItemList when the community has no programs", async () => {
+    mockGet.mockResolvedValue([]);
+
+    const html = await renderPageToHtml();
+
+    expect(extractJsonLd(html).find((schema) => schema["@type"] === "ItemList")).toBeUndefined();
+  });
+
+  it("ships no ItemList when the indexer fails", async () => {
+    mockGet.mockRejectedValue(new Error("indexer unavailable"));
+
+    const html = await renderPageToHtml();
+
+    expect(extractJsonLd(html).find((schema) => schema["@type"] === "ItemList")).toBeUndefined();
+  });
+});

@@ -1,13 +1,13 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { cache } from "react";
-import {
-  DEFAULT_PROGRAMS_LIMIT,
-  PROGRAMS_LIST_STALE_TIME,
-} from "@/src/features/programs/lib/constants";
+import { ItemListJsonLd } from "@/components/Seo/ItemListJsonLd";
+import { DEFAULT_PROGRAMS_LIMIT } from "@/src/features/programs/lib/constants";
+import { matchesStatus } from "@/src/features/programs/lib/program-status";
 import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import FundingOpportunitiesClient from "./FundingOpportunitiesClient";
 
@@ -25,17 +25,11 @@ const getCommunityPrograms = cache(async (communityId: string): Promise<FundingP
   return programs ?? [];
 });
 
-// The program directory is prefetched here and handed to the client tree as a
+// The program directory is fetched here and handed to the client tree as a
 // hydrated React Query cache entry, so each opportunity's title, status,
 // deadline and funding facts are in the initial HTML instead of behind a
 // client fetch — crawlers and no-JS readers see the real directory, not the
 // loading skeleton.
-//
-// `prefetchQuery` swallows a rejected fetch and `dehydrate` omits failed
-// queries, so an indexer outage degrades to exactly the previous behaviour:
-// the client fetches and shows the skeleton. `retry: false` keeps a failing
-// prefetch from blocking the response on React Query's backoff — the client
-// still retries under its own defaults.
 export default async function FundingOpportunitiesPage({ params }: { params: Params }) {
   const { communityId } = await params;
 
@@ -43,20 +37,40 @@ export default async function FundingOpportunitiesPage({ params }: { params: Par
     defaultOptions: { queries: defaultQueryOptions },
   });
 
-  await queryClient.prefetchQuery({
-    queryKey: wlQueryKeys.programs.communityList(communityId),
-    queryFn: async () => ({
-      programs: await getCommunityPrograms(communityId),
+  // One server-side fetch feeds both the hydrated React Query entry and the
+  // JSON-LD ItemList below. A failed fetch hydrates nothing and ships no
+  // schema — exactly the previous degradation: the client fetches and shows
+  // the skeleton.
+  const programs = await getCommunityPrograms(communityId).catch(
+    // SUPPRESSED: an indexer outage here must degrade to the client fetch
+    // path, not fail the whole route; the client surfaces the error state.
+    (): FundingProgram[] | null => null
+  );
+
+  if (programs) {
+    queryClient.setQueryData(wlQueryKeys.programs.communityList(communityId), {
+      programs,
       // The server has no filter store; hydrate with the same default limit
       // the client hook computes when no limit filter is set.
       limit: DEFAULT_PROGRAMS_LIMIT,
-    }),
-    staleTime: PROGRAMS_LIST_STALE_TIME,
-    retry: false,
-  });
+    });
+  }
+
+  // JSON-LD ItemList of the programs the default view server-renders (DEV-596).
+  // The default filter is "active" (the store's initial state), so only
+  // programs the default HTML actually lists are described — closed or
+  // upcoming rounds live behind hydrated tabs and stay out.
+  const listedPrograms = (programs ?? []).filter((program) => matchesStatus(program, "active"));
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <ItemListJsonLd
+        name="Funding opportunities"
+        items={listedPrograms.map((program) => ({
+          name: program.metadata?.title ?? program.name ?? "Untitled program",
+          url: PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, program.programId),
+        }))}
+      />
       <FundingOpportunitiesClient />
     </HydrationBoundary>
   );
