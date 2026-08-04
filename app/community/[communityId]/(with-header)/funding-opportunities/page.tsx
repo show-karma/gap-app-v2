@@ -2,7 +2,6 @@ import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query
 import { cache } from "react";
 import { ItemListJsonLd } from "@/components/Seo/ItemListJsonLd";
 import { DEFAULT_PROGRAMS_LIMIT } from "@/src/features/programs/lib/constants";
-import { matchesStatus } from "@/src/features/programs/lib/program-status";
 import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
@@ -56,11 +55,16 @@ export default async function FundingOpportunitiesPage({ params }: { params: Par
     });
   }
 
-  // JSON-LD ItemList of the programs the default view server-renders (DEV-596).
-  // The default filter is "active" (the store's initial state), so only
-  // programs the default HTML actually lists are described — closed or
-  // upcoming rounds live behind hydrated tabs and stay out.
-  const listedPrograms = (programs ?? []).filter((program) => matchesStatus(program, "active"));
+  // JSON-LD ItemList of the programs the default view shows (DEV-596).
+  //
+  // The default view is "All": the client's URL-seeding effect treats an
+  // absent `status` query param as the All tab and clears the store's
+  // SSR-time "active" filter on mount, so every fetched program renders for
+  // users and JS-executing crawlers alike. The server HTML paints the active
+  // subset first and hydration reveals the rest — a pre-existing divergence
+  // (the server tablist marks Open selected, the client lands on All) noted
+  // on the PR; the schema describes the post-hydration default view.
+  const listedPrograms = programs ?? [];
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
