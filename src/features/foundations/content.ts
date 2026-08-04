@@ -15,7 +15,19 @@ export interface FoundationFaqEntry {
 }
 
 export const FOUNDATION_FAQS: FoundationFaqEntry[] = [
-  // Existing approved copy (previous /foundations FAQ JSON-LD).
+  // Existing approved copy: the union of the page's previous FAQ JSON-LD
+  // and the previous visible accordion (which carried two questions the
+  // JSON-LD did not). Duplicated questions appear once.
+  {
+    question: "What is Karma?",
+    answer:
+      "Karma is funding software that does the work, not just a dashboard. It automates intake, AI-powered evaluation, milestone tracking, impact reporting, and fund distribution for grants, hackathons, and RFPs.",
+  },
+  {
+    question: "Who is Karma for?",
+    answer:
+      "Any organization that funds projects: foundations, ecosystems, corporate programs, DAOs, government agencies. Whether you manage $100K or $100M, Karma scales with you. Especially useful for lean teams that need enterprise-grade programs without adding headcount.",
+  },
   {
     question: "What is Karma for foundations?",
     answer:

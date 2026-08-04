@@ -4,10 +4,32 @@ import { FOUNDATION_FAQS } from "@/src/features/foundations/content";
 
 describe("FOUNDATION_FAQS content", () => {
   it("has a question and a non-empty answer for every entry", () => {
-    expect(FOUNDATION_FAQS.length).toBeGreaterThanOrEqual(8);
+    // Union of the pre-existing JSON-LD set (8), the two accordion-only
+    // questions, and the four new lifecycle answers.
+    expect(FOUNDATION_FAQS).toHaveLength(14);
+    const questions = FOUNDATION_FAQS.map((f) => f.question);
+    expect(new Set(questions).size).toBe(questions.length);
     for (const entry of FOUNDATION_FAQS) {
       expect(entry.question).toMatch(/\?$/);
       expect(entry.answer.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps every pre-existing question (union, not replacement)", () => {
+    const questions = FOUNDATION_FAQS.map((f) => f.question);
+    for (const legacy of [
+      "What is Karma?",
+      "Who is Karma for?",
+      "What is Karma for foundations?",
+      "How is Karma different from other grant management tools?",
+      "How do AI agents work in Karma?",
+      "Can we migrate from our current setup?",
+      "Do we have to use everything?",
+      "Do I still need a grants team?",
+      "Do we get reports for our board?",
+      "Can we run it under our own brand?",
+    ]) {
+      expect(questions).toContain(legacy);
     }
   });
 
