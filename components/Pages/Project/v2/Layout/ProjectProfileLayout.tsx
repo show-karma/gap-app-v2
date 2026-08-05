@@ -122,20 +122,10 @@ export function ProjectProfileLayout({
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
   const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
 
-  /**
-   * The `invite-code` reader lives in its own Suspense-wrapped component
-   * because `useSearchParams` bails the entire enclosing subtree out to
-   * client-side rendering. That subtree is this layout — the project's
-   * semantic identity shell — which DEV-612 requires in the server-rendered
-   * HTML. Rendered in every branch below (including loading and error) so the
-   * invite modal still opens while the project is resolving, matching the
-   * behaviour of the effect this replaced.
-   *
-   * The open-once latch stays HERE rather than inside the watcher: the branch
-   * returns below have different root element types, so React remounts the
-   * watcher when the project resolves. Local state in the child would reset on
-   * that remount and re-open a modal the user had already closed.
-   */
+  // Rendered in every branch below (including loading and error) so the invite
+  // modal still opens while the project resolves. The latch stays here, not in
+  // the watcher: the branches have different root element types, so React
+  // remounts it and child state would reset. See ProjectInviteCodeWatcher.
   const [hasOpenedInviteModal, setHasOpenedInviteModal] = useState(false);
   const markInviteModalOpened = useCallback(() => setHasOpenedInviteModal(true), []);
   const inviteCodeWatcher = (

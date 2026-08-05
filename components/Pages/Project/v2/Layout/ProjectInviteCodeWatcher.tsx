@@ -15,26 +15,16 @@ interface ProjectInviteCodeWatcherProps {
  * Opens the contributor-profile modal once when the URL carries an
  * `invite-code` query parameter.
  *
- * This is its own component, rendered inside a local <Suspense>, purely
- * because of `useSearchParams`. Reading search params anywhere in a subtree
- * that is not wrapped in Suspense opts that whole subtree into a client-side
- * rendering bailout. In `ProjectProfileLayout` the subtree in question is the
- * project's semantic identity shell — the sr-only h1, the sidebar name and
- * description, the profile navigation — which DEV-612 requires to be in the
- * server-rendered, no-JS-visible HTML. Confining the reader to a component
- * that renders nothing keeps the boundary off the identity shell and off the
- * tab-body boundary in `(profile)/layout.tsx`.
+ * Isolated behind its own <Suspense> because `useSearchParams` bails the whole
+ * enclosing subtree out to client rendering, and here that subtree is the
+ * project's server-rendered identity shell (DEV-612).
  *
- * The open-once guard deliberately lives in the CALLER, not here.
- * ProjectProfileLayout renders this from inside branch returns whose root
- * element type changes (a <div> while loading, an <ErrorBoundary> once the
- * project resolves), so React unmounts and remounts this component on that
- * transition. Local state would reset with it and re-open a modal the user had
- * just closed. Keeping the latch in the parent — which persists across those
- * branches — makes the behaviour independent of where this gets rendered.
+ * The open-once latch lives in the CALLER: ProjectProfileLayout renders this
+ * from branch returns with different root element types, so React remounts it
+ * when the project resolves and local state would reset, re-opening a modal the
+ * user had closed.
  *
- * Returns null by design: this is an effect host, not UI. It fetches nothing,
- * so it has no loading/empty/error states to render.
+ * Returns null by design — an effect host, not UI.
  */
 export function ProjectInviteCodeWatcher({ hasOpened, onOpen }: ProjectInviteCodeWatcherProps) {
   const searchParams = useSearchParams();
