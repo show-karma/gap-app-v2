@@ -1694,11 +1694,26 @@ jobs:
 
             let criticalCount = 0;
             let highCount = 0;
+            let preexistingCount = 0;
 
             // Aggregate qa-results-*.json from all sharded qa-execution jobs
             // (qa-results-public.json, qa-results-auth.json, ...). A missing
             // file means that shard didn't upload — counted as exec failure
             // already via QA_EXEC_RESULT, so we silently skip here.
+            //
+            // Only PR-CAUSED failures gate the merge. A scenario can also fail
+            // because of a pre-existing bug in code the PR never touched, and
+            // blocking on those makes a green pipeline unreachable by working
+            // on the PR at all — the author would have to fix unrelated bugs to
+            // ship. Dogfood already scores this way (it counts pr_caused only);
+            // this brings qa-execution in line. Pre-existing failures are still
+            // surfaced in the verdict comment so they get filed, not lost.
+            //
+            // Absent/unknown classification counts as PR-CAUSED on purpose:
+            // the safe default is to block, so an agent that forgets the field
+            // cannot silently wave a real regression through.
+            const isPreexisting = (s) =>
+              String(s.classification || '').toLowerCase() === 'pre-existing';
             try {
               const shardFiles = fs.readdirSync('.').filter(f =>
                 /^qa-results-.+\.json$/.test(f)
@@ -1711,8 +1726,15 @@ jobs:
                   const r = JSON.parse(fs.readFileSync(file, 'utf8'));
                   for (const s of (r.scenarios || [])) {
                     if (s.result === 'FAIL') {
-                      if (s.severity?.toLowerCase() === 'critical') criticalCount++;
-                      if (s.severity?.toLowerCase() === 'high') highCount++;
+                      const sev = s.severity?.toLowerCase();
+                      if (sev !== 'critical' && sev !== 'high') continue;
+                      if (isPreexisting(s)) {
+                        preexistingCount++;
+                        console.log(`Pre-existing (non-blocking): ${s.id} ${s.name}`);
+                        continue;
+                      }
+                      if (sev === 'critical') criticalCount++;
+                      if (sev === 'high') highCount++;
                     }
                   }
                 } catch (e) {
@@ -1723,11 +1745,14 @@ jobs:
               console.log('Could not enumerate qa-results-*.json: ' + e.message);
             }
 
-            // Read aggregated dogfood results (produced by dogfood-aggregate job)
+            // Read aggregated dogfood results (produced by dogfood-aggregate job).
+            // Its critical/high are already PR-caused-only; `preexisting` is a
+            // count it reports separately.
             try {
               const dogfoodResults = JSON.parse(fs.readFileSync('dogfood-results.json', 'utf8'));
               criticalCount += (dogfoodResults.critical || 0);
               highCount += (dogfoodResults.high || 0);
+              preexistingCount += (dogfoodResults.preexisting || 0);
             } catch (e) {
               console.log('Could not parse dogfood-results.json: ' + e.message);
             }
@@ -1743,6 +1768,8 @@ jobs:
               description = `${failed} — check workflow logs`;
             } else if (criticalCount > 0 || highCount > 0) {
               description = `${criticalCount} critical, ${highCount} high issues found`;
+            } else if (preexistingCount > 0) {
+              description = `No PR-caused critical/high issues (${preexistingCount} pre-existing)`;
             } else {
               description = 'No critical/high issues found';
             }
@@ -1759,7 +1786,11 @@ jobs:
 
             // Update the single consolidated pipeline comment with final verdict
             const verdictIcon = hasBlockingIssues ? '❌' : '✅';
-            const verdictText = hasBlockingIssues ? `FAIL — ${description}` : 'PASS — no blocking issues';
+            const verdictText = hasBlockingIssues
+              ? `FAIL — ${description}`
+              : preexistingCount > 0
+                ? `PASS — no PR-caused blocking issues (${preexistingCount} pre-existing, file them)`
+                : 'PASS — no blocking issues';
 
             const { data: cmts } = await github.rest.issues.listComments({
               owner, repo, issue_number: prNumber, per_page: 100
