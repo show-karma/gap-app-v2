@@ -11,12 +11,17 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
+import { useAutoTour } from "@/src/features/onboarding/hooks/use-tour";
+import { useTourFromUrl } from "@/src/features/onboarding/hooks/use-tour-from-url";
+import { dataTour, TOUR_ANCHORS } from "@/src/features/onboarding/lib/tour-anchors";
+import { REVIEWER_INBOX_TOUR } from "@/src/features/onboarding/lib/tours";
 import type { Community } from "@/types/v2/community";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import ApplicationDetailView from "../FundingPlatform/ApplicationView/ApplicationDetailView";
 import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
+import { ReviewerScopeNotice } from "./ReviewerScopeNotice";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -73,6 +78,12 @@ export function ReviewerInboxPage({
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
+
+  // Both anchors are part of the inbox chrome, so they exist as soon as the
+  // authorized view renders — no need to wait for the queue to have items.
+  const inboxReady = isAuthorized && !isCheckingPermissions && !error;
+  useAutoTour(REVIEWER_INBOX_TOUR, inboxReady);
+  useTourFromUrl(REVIEWER_INBOX_TOUR, inboxReady);
 
   // Selection synced to the URL hash so detail views are shareable / survive
   // back-forward — unless the host owns the hash (see syncSelectionToHash).
@@ -164,6 +175,7 @@ export function ReviewerInboxPage({
   return (
     <div className="w-full space-y-4">
       <InboxHeader stats={stats} />
+      <ReviewerScopeNotice />
 
       {error ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
@@ -176,7 +188,10 @@ export function ReviewerInboxPage({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(320px,400px)_minmax(0,1fr)]">
-          <aside className="min-w-0 xl:sticky xl:top-4 xl:self-start">
+          <aside
+            className="min-w-0 xl:sticky xl:top-4 xl:self-start"
+            {...dataTour(TOUR_ANCHORS.reviewerInboxQueue)}
+          >
             {isLoading && items.length === 0 ? (
               <div className="flex items-center justify-center rounded-2xl border border-gray-200 bg-white py-16 dark:border-zinc-700 dark:bg-zinc-900">
                 <Spinner />

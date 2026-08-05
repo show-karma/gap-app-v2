@@ -22,6 +22,12 @@ export interface TourDefinition {
    */
   version: number;
   steps: TourStep[];
+  /**
+   * Skip below the `lg` breakpoint. For tours anchored to chrome that collapses
+   * into the mobile sheet, where the target is neither rendered nor reachable
+   * without first opening a menu the spotlight would then be fighting.
+   */
+  desktopOnly?: boolean;
 }
 
 export const TOUR_IDS = {
@@ -40,6 +46,9 @@ export const TOUR_IDS = {
 export const GETTING_STARTED_TOUR: TourDefinition = {
   id: TOUR_IDS.gettingStarted,
   version: 1,
+  // The profile menu is inside the mobile sheet below `lg`, so there is nothing
+  // to point at; mobile gets the same signpost inline on the dashboard instead.
+  desktopOnly: true,
   steps: [
     {
       anchor: TOUR_ANCHORS.gettingStarted,
