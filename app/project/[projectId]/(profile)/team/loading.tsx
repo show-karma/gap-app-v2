@@ -4,8 +4,12 @@
 // no sitemap-listed route lives at or below this segment.
 export default function Loading() {
   return (
-    <main className="flex w-full min-h-[60vh] items-center justify-center bg-background">
-      <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary" />
-    </main>
+    <div className="flex w-full min-h-[60vh] items-center justify-center bg-background">
+      <output
+        aria-label="Loading team"
+        aria-busy="true"
+        className="block h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary"
+      />
+    </div>
   );
 }

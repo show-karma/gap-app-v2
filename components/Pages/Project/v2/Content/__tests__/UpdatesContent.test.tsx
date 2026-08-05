@@ -68,6 +68,7 @@ function mockProjectProfile(overrides: Record<string, unknown> = {}) {
     completedCount: 0,
     isUpdating: false,
     isUpdatesError: false,
+    hasUpdatesData: true,
     refetch: vi.fn(),
     ...overrides,
   });
@@ -364,7 +365,7 @@ describe("UpdatesContent — feed resilience", () => {
   });
 
   it("keeps the server-rendered feed while the client updates query is still in flight", () => {
-    mockProjectProfile({ allUpdates: [], isUpdating: true });
+    mockProjectProfile({ allUpdates: [], isUpdating: true, hasUpdatesData: false });
 
     render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
 
@@ -388,7 +389,7 @@ describe("UpdatesContent — feed resilience", () => {
   });
 
   it("shows the error affordance alongside the server feed rather than hiding either", () => {
-    mockProjectProfile({ allUpdates: [], isUpdatesError: true });
+    mockProjectProfile({ allUpdates: [], isUpdatesError: true, hasUpdatesData: false });
 
     render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
 
@@ -417,5 +418,31 @@ describe("UpdatesContent — feed resilience", () => {
 
     expect(screen.getByTestId("activity-feed")).toBeInTheDocument();
     expect(screen.queryByTestId("server-feed")).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * A filtered query can succeed with zero results. Gating the server feed on item
+ * count rather than on the query having returned kept the UNFILTERED server feed
+ * on screen in that case, so the user saw stale content instead of "no results".
+ */
+describe("UpdatesContent — successful empty filtered query", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    capturedFiltersProps = {};
+    (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
+    (useRouter as vi.Mock).mockReturnValue({ replace: vi.fn() });
+    (useSearchParams as vi.Mock).mockReturnValue(buildSearchParams({ filter: "milestones" }));
+    mockStores();
+    mockProjectProfile();
+  });
+
+  it("drops the server feed once the filtered query returns, even with zero items", () => {
+    mockProjectProfile({ allUpdates: [], isUpdating: false, hasUpdatesData: true });
+
+    render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
+
+    expect(screen.queryByTestId("server-feed")).not.toBeInTheDocument();
+    expect(screen.getByTestId("activity-feed")).toBeInTheDocument();
   });
 });

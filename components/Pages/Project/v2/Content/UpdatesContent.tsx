@@ -89,8 +89,15 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
 
   // Pass milestoneStatus to useProjectProfile so filtering happens server-side
   const apiMilestoneStatus = milestoneStatusFilter !== "all" ? milestoneStatusFilter : undefined;
-  const { allUpdates, milestonesCount, completedCount, isUpdating, isUpdatesError, refetch } =
-    useProjectProfile(projectId as string, apiMilestoneStatus, feedFilters);
+  const {
+    allUpdates,
+    milestonesCount,
+    completedCount,
+    isUpdating,
+    isUpdatesError,
+    hasUpdatesData,
+    refetch,
+  } = useProjectProfile(projectId as string, apiMilestoneStatus, feedFilters);
 
   // Count items per filter category for badge counters
   const counts = useMemo(() => {
@@ -221,10 +228,12 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
 
   const hasUpdates = (allUpdates?.length ?? 0) > 0;
 
-  // Keep the server feed until the client query produces something. It used to
-  // be discarded at hydration, so a slow or hanging request made real content
-  // vanish into a skeleton that never cleared.
-  const showServerFeed = Boolean(serverFeed) && !hasUpdates;
+  // Keep the server feed until the client query RETURNS — not until it returns
+  // items. It used to be discarded at hydration, so a slow or hanging request
+  // made real content vanish into a skeleton that never cleared; keying on item
+  // count instead would keep the unfiltered server feed on screen when a filter
+  // legitimately matches nothing.
+  const showServerFeed = Boolean(serverFeed) && !hasUpdatesData;
 
   // Skeleton while a fetch is genuinely in flight (initial load or a filter
   // change). Distinct from the error branch below, which is terminal.
