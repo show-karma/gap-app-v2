@@ -42,10 +42,15 @@ vi.mock("@/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({}),
 }));
 
+// Mutable so a test can flip the layout from its loading branch to its success
+// branch, which is where the watcher remounts (different root element type).
+let mockProject: { uid: string; details: { title: string } } | null = null;
+
 vi.mock("@/hooks/v2/useProjectProfile", () => ({
   useProjectProfile: () => ({
-    project: null,
-    isLoading: true,
+    project: mockProject,
+    isProjectLoading: false,
+    isLoading: false,
     isError: false,
     isVerified: false,
     stats: { grantsCount: 0, endorsementsCount: 0, lastUpdate: null },
@@ -141,6 +146,7 @@ import { ProjectProfileLayout } from "@/components/Pages/Project/v2/Layout/Proje
 describe("ProjectProfileLayout - Invite Code Detection", () => {
   beforeEach(() => {
     mockInviteCode = null;
+    mockProject = null;
     mockOpenContributorProfileModal = vi.fn();
   });
 
@@ -184,6 +190,32 @@ describe("ProjectProfileLayout - Invite Code Detection", () => {
     );
 
     // Should still only have been called once — the state guard prevents re-opening
+    expect(mockOpenContributorProfileModal).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not re-open when the project resolves and the layout swaps branches", () => {
+    // The loading and success branches return different root element types
+    // (<div> vs <ErrorBoundary>), so React remounts the invite-code watcher on
+    // this transition. The open-once latch lives in the layout precisely so it
+    // survives that remount — otherwise a modal the user just closed re-opens.
+    mockInviteCode = "0x7232abc123";
+    mockProject = null;
+
+    const { rerender } = render(
+      <ProjectProfileLayout>
+        <div>Content</div>
+      </ProjectProfileLayout>
+    );
+
+    expect(mockOpenContributorProfileModal).toHaveBeenCalledTimes(1);
+
+    mockProject = { uid: "0xabc", details: { title: "Resolved Project" } };
+    rerender(
+      <ProjectProfileLayout>
+        <div>Content</div>
+      </ProjectProfileLayout>
+    );
+
     expect(mockOpenContributorProfileModal).toHaveBeenCalledTimes(1);
   });
 });
