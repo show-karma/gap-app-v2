@@ -57,7 +57,7 @@ const ENTRIES: ChooserEntry[] = [
     icon: ScanEye,
     title: "Reviewing applications",
     body: "How the review queue works, and where a reviewer's remit ends.",
-    href: withTourParam(PAGES.MY_REVIEWS, TOUR_IDS.reviewerInbox),
+    href: withTourParam(PAGES.DASHBOARD_MODULE("reviews"), TOUR_IDS.reviewerInbox),
   },
 ];
 
