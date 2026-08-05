@@ -2,8 +2,13 @@
 
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import {
+  type UseFormGetValues,
+  type UseFormRegisterReturn,
+  type UseFormSetValue,
+  useForm,
+} from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -18,6 +23,7 @@ import {
   useReportConfigs,
   useUpdateReportConfig,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
+import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import type { CommunityProgram } from "@/types/v2/community-program";
@@ -37,13 +43,82 @@ interface Props {
   grantPrograms: CommunityProgram[];
 }
 
-const AVAILABLE_MODELS = [
-  { id: "gpt-5.5", label: "GPT-5.5 (OpenAI)" },
-  { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (Anthropic)" },
-  { id: "grok-4-1-fast-reasoning", label: "Grok 4.1 (xAI)" },
+const MODEL_PROVIDER_BY_PREFIX: ReadonlyArray<[string, string]> = [
+  ["gpt", "OpenAI"],
+  ["claude", "Anthropic"],
+  ["grok", "xAI"],
+  ["gemini", "Google"],
 ];
 
-const MODEL_IDS = AVAILABLE_MODELS.map((m) => m.id) as [string, ...string[]];
+function formatModelLabel(modelId: string): string {
+  const match = MODEL_PROVIDER_BY_PREFIX.find(([prefix]) => modelId.startsWith(prefix));
+  return match ? `${modelId} (${match[1]})` : modelId;
+}
+
+// Keeps the stored model selectable when editing a config whose model was
+// since removed from the backend settings list.
+function buildModelOptions(availableModels: string[], currentModelId?: string): string[] {
+  if (currentModelId && !availableModels.includes(currentModelId)) {
+    return [...availableModels, currentModelId];
+  }
+  return availableModels;
+}
+
+function ModelSelectField({
+  modelOptions,
+  isLoadingModels,
+  registration,
+  error,
+}: {
+  modelOptions: string[];
+  isLoadingModels: boolean;
+  registration: UseFormRegisterReturn<"modelId">;
+  error?: string;
+}) {
+  return (
+    <div>
+      <label
+        htmlFor="modelId"
+        className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+      >
+        LLM Model
+      </label>
+      <select
+        id="modelId"
+        disabled={isLoadingModels}
+        className={`w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 ${isLoadingModels ? "cursor-not-allowed opacity-50" : ""}`}
+        {...registration}
+      >
+        {isLoadingModels ? (
+          <option value="">Loading models...</option>
+        ) : (
+          modelOptions.map((modelId) => (
+            <option key={modelId} value={modelId}>
+              {formatModelLabel(modelId)}
+            </option>
+          ))
+        )}
+      </select>
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+// The form can mount (via ?new=1) before the models query resolves; backfill
+// the default model once the list arrives.
+function useDefaultModelBackfill(
+  availableModels: string[],
+  isLoadingModels: boolean,
+  getValues: UseFormGetValues<FormValues>,
+  setValue: UseFormSetValue<FormValues>
+) {
+  useEffect(() => {
+    if (isLoadingModels || availableModels.length === 0) return;
+    if (!getValues("modelId")) {
+      setValue("modelId", availableModels[0]);
+    }
+  }, [availableModels, isLoadingModels, getValues, setValue]);
+}
 
 const PROMPT_PLACEHOLDER = `Example: Generate a markdown portfolio report covering the last 30 days of activity (please always specify a date range — the agent defaults to the last 30 days when none is given).
 
@@ -93,7 +168,7 @@ const scheduleZod = z.object({
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(128),
   programIds: z.array(z.string().min(1)).min(1, "Select at least one program"),
-  modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
+  modelId: z.string().trim().min(1, "Pick a model"),
   prompt: z.string().trim().min(1, "A prompt is required"),
   chartIndicatorIds: z.array(z.string().min(1)).max(50).default([]),
   schedule: scheduleZod,
@@ -105,18 +180,22 @@ type FormValues = z.infer<typeof formSchema>;
 const EMPTY_FORM_VALUES: FormValues = {
   name: "",
   programIds: [],
-  modelId: AVAILABLE_MODELS[0].id,
+  modelId: "",
   prompt: "",
   chartIndicatorIds: [],
   schedule: defaultScheduleForPreset("monthly"),
   isActive: true,
 };
 
+function emptyFormValues(defaultModelId: string | undefined): FormValues {
+  return { ...EMPTY_FORM_VALUES, modelId: defaultModelId ?? "" };
+}
+
 function buildFormValues(cfg: ReportConfig): FormValues {
   return {
     name: cfg.name,
     programIds: cfg.programIds,
-    modelId: cfg.modelId as FormValues["modelId"],
+    modelId: cfg.modelId,
     prompt: cfg.prompt,
     chartIndicatorIds: cfg.chartIndicatorIds ?? [],
     schedule: cfg.schedule,
@@ -230,11 +309,14 @@ function ReportConfigPageLoaded({
   const updateMutation = useUpdateReportConfig(slug, editingConfig?.id ?? "");
   const deleteMutation = useDeleteReportConfig(slug);
 
+  const { data: availableModels = [], isLoading: isLoadingModels } = useAvailableAIModels();
+
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    getValues,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
@@ -242,9 +324,16 @@ function ReportConfigPageLoaded({
     defaultValues: editingConfig ? buildFormValues(editingConfig) : EMPTY_FORM_VALUES,
   });
 
+  const modelOptions = useMemo(
+    () => buildModelOptions(availableModels, editingConfig?.modelId),
+    [availableModels, editingConfig]
+  );
+
+  useDefaultModelBackfill(availableModels, isLoadingModels, getValues, setValue);
+
   const openNewForm = () => {
     setEditingId("new");
-    reset(EMPTY_FORM_VALUES);
+    reset(emptyFormValues(availableModels[0]));
   };
 
   const openEditForm = (configId: string) => {
@@ -547,25 +636,12 @@ function ReportConfigPageLoaded({
           </div>
 
           {/* Model */}
-          <div>
-            <label
-              htmlFor="modelId"
-              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              LLM Model
-            </label>
-            <select
-              id="modelId"
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-              {...register("modelId")}
-            >
-              {AVAILABLE_MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ModelSelectField
+            modelOptions={modelOptions}
+            isLoadingModels={isLoadingModels}
+            registration={register("modelId")}
+            error={errors.modelId?.message}
+          />
 
           {/* Schedule */}
           <SchedulePicker
