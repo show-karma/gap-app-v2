@@ -2,17 +2,21 @@
 
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import {
-  type UseFormGetValues,
-  type UseFormRegisterReturn,
-  type UseFormSetValue,
-  useForm,
-} from "react-hook-form";
+import { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ChartSectionPicker } from "@/components/Pages/Admin/PortfolioReports/ChartSectionPicker";
+import {
+  ModelSelectField,
+  useDefaultModelBackfill,
+} from "@/components/Pages/Admin/PortfolioReports/ModelSelectField";
+import {
+  CalendarBiweekly,
+  CalendarSmall,
+  SlidersIcon,
+} from "@/components/Pages/Admin/PortfolioReports/scheduleIcons";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -29,7 +33,7 @@ import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types
 import type { Community } from "@/types/v2/community";
 import type { CommunityProgram } from "@/types/v2/community-program";
 import { PAGES } from "@/utilities/pages";
-import { buildModelOptions, formatModelLabel } from "@/utilities/portfolio-reports/modelOptions";
+import { buildModelOptions } from "@/utilities/portfolio-reports/modelOptions";
 import {
   computeNextRuns,
   defaultScheduleForPreset,
@@ -43,62 +47,6 @@ import { zodResolver } from "@/utilities/zodResolver";
 interface Props {
   community: Community;
   grantPrograms: CommunityProgram[];
-}
-
-function ModelSelectField({
-  modelOptions,
-  isLoadingModels,
-  registration,
-  error,
-}: {
-  modelOptions: string[];
-  isLoadingModels: boolean;
-  registration: UseFormRegisterReturn<"modelId">;
-  error?: string;
-}) {
-  return (
-    <div>
-      <label
-        htmlFor="modelId"
-        className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        LLM Model
-      </label>
-      <select
-        id="modelId"
-        disabled={isLoadingModels}
-        className={`w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 ${isLoadingModels ? "cursor-not-allowed opacity-50" : ""}`}
-        {...registration}
-      >
-        {isLoadingModels ? (
-          <option value="">Loading models...</option>
-        ) : (
-          modelOptions.map((modelId) => (
-            <option key={modelId} value={modelId}>
-              {formatModelLabel(modelId)}
-            </option>
-          ))
-        )}
-      </select>
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-    </div>
-  );
-}
-
-// The form can mount (via ?new=1) before the models query resolves; backfill
-// the default model once the list arrives.
-function useDefaultModelBackfill(
-  availableModels: string[],
-  isLoadingModels: boolean,
-  getValues: UseFormGetValues<FormValues>,
-  setValue: UseFormSetValue<FormValues>
-) {
-  useEffect(() => {
-    if (isLoadingModels || availableModels.length === 0) return;
-    if (!getValues("modelId")) {
-      setValue("modelId", availableModels[0]);
-    }
-  }, [availableModels, isLoadingModels, getValues, setValue]);
 }
 
 const PROMPT_PLACEHOLDER = `Example: Generate a markdown portfolio report covering the last 30 days of activity (please always specify a date range — the agent defaults to the last 30 days when none is given).
@@ -297,7 +245,6 @@ function ReportConfigPageLoaded({
     handleSubmit,
     reset,
     setValue,
-    getValues,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
@@ -310,7 +257,8 @@ function ReportConfigPageLoaded({
     [availableModels, editingConfig]
   );
 
-  useDefaultModelBackfill(availableModels, isLoadingModels, getValues, setValue);
+  const backfillModel = useCallback((modelId: string) => setValue("modelId", modelId), [setValue]);
+  useDefaultModelBackfill(availableModels, isLoadingModels, watch("modelId"), backfillModel);
 
   const openNewForm = () => {
     setEditingId("new");
@@ -939,38 +887,4 @@ function parseIsoOrToday(iso: string): Date {
   if (!RUN_DATE_REGEX.test(iso)) return new Date();
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d);
-}
-
-function CalendarSmall({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <rect x="2" y="4" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2 8H16" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="6" cy="11" r="1.2" fill="currentColor" />
-    </svg>
-  );
-}
-
-function CalendarBiweekly({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <rect x="2" y="4" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2 8H16" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="5.5" cy="11" r="1.1" fill="currentColor" />
-      <circle cx="12.5" cy="11" r="1.1" fill="currentColor" />
-    </svg>
-  );
-}
-
-function SlidersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <path d="M3 5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M14 5L15 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="12" cy="5" r="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M3 13L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M9 13H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="7" cy="13" r="2" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
 }
