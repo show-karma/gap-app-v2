@@ -1,8 +1,8 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { cache } from "react";
+import { GrantJsonLd } from "@/components/Seo/GrantJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
-import { PROGRAM_DETAIL_STALE_TIME } from "@/features/programs/hooks/use-program";
 import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
@@ -101,32 +101,57 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-// The program body is prefetched here and handed to the client tree as a
+// The program body is fetched here and handed to the client tree as a
 // hydrated React Query cache entry, so the title, status, description and
 // sidebar facts are in the initial HTML instead of behind a client fetch —
 // crawlers and no-JS readers see the real page, not the loading skeleton.
 //
-// `prefetchQuery` swallows a rejected fetch and `dehydrate` omits failed
-// queries, so an indexer outage degrades to exactly today's behaviour: the
-// client fetches and shows the skeleton. `retry: false` keeps a failing
-// prefetch from blocking the response on React Query's backoff — the client
-// still retries under its own defaults.
+// An indexer failure hydrates nothing, so the outage degrades to exactly
+// today's behaviour: the client fetches and shows the skeleton, then retries
+// under its own defaults. A 404 resolves to null and IS hydrated — the client
+// renders its not-found state from the cache without refetching.
 export default async function ProgramDetailPage({ params }: { params: Params }) {
-  const { programId } = await params;
+  const { communityId, programId } = await params;
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: defaultQueryOptions },
   });
 
-  await queryClient.prefetchQuery({
-    queryKey: wlQueryKeys.programs.detail(programId),
-    queryFn: () => getProgramDetails(programId),
-    staleTime: PROGRAM_DETAIL_STALE_TIME,
-    retry: false,
-  });
+  // One server-side fetch (deduped with generateMetadata by React.cache) feeds
+  // both the hydrated React Query entry and the Grant JSON-LD below. The
+  // schema only ships when the page body renders the program, and it only
+  // carries facts that body states — the title (h1), the description, and the
+  // "by <community>" byline as funder.
+  const program = await getProgramDetails(programId).catch(
+    // SUPPRESSED: a transient indexer failure must degrade to the client fetch
+    // path, not fail the whole route; the client surfaces the error state.
+    (): undefined => undefined
+  );
+
+  if (program !== undefined) {
+    queryClient.setQueryData(wlQueryKeys.programs.detail(programId), program);
+  }
+
+  const { isWhitelabel, config: wlConfig } = await getWhitelabelContext();
+  const siteUrl = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : SITE_URL;
+  const canonicalPath = isWhitelabel
+    ? `/programs/${programId}`
+    : `/community/${communityId}/programs/${programId}`;
+  const grantDescription = cleanMarkdownForPlainText(program?.metadata?.description || "", 300);
+  // The h1 renders `metadata.title || name`; a program with neither would show
+  // an empty heading, so it gets no schema either.
+  const grantName = program?.metadata?.title || program?.name || "";
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      {program && grantName ? (
+        <GrantJsonLd
+          name={grantName}
+          url={`${siteUrl}${canonicalPath}`}
+          description={grantDescription || undefined}
+          funderName={program.communitySlug || undefined}
+        />
+      ) : null}
       <ProgramDetailClient />
     </HydrationBoundary>
   );
