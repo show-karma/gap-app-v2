@@ -196,10 +196,6 @@ export const MESSAGES = {
         SUCCESS: "Grant Update successfully removed",
         ERROR: "There was an error undoing the grant update.",
       },
-      VERIFY: {
-        SUCCESS: "You have successfully verified the grant update.",
-        ERROR: "There was an error verifying the grant update.",
-      },
     },
     UPDATE: {
       SUCCESS: "Your grant was edited successfully!",
@@ -260,10 +256,6 @@ export const MESSAGES = {
     CREATE: {
       SUCCESS: "Milestone was successfully added to the grant.",
       ERROR: (title: string) => `There was an error creating ${title} milestone.`,
-    },
-    VERIFY: {
-      SUCCESS: "You have successfully verified the milestone.",
-      ERROR: "There was an error verifying the milestone.",
     },
     APPROVE: {
       SUCCESS: "You have successfully approved the milestone.",
@@ -357,10 +349,6 @@ export const MESSAGES = {
         IMPACT: "Impact is required",
         DATE: "Date is required",
         PROOF: "Proof is required",
-      },
-      VERIFY: {
-        SUCCESS: "You have successfully verified the milestone.",
-        ERROR: "There was an error verifying the milestone.",
       },
     },
     TRANSFER_OWNERSHIP: {

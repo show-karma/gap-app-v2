@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "Project Profiles as a Global Resume for Funded Work";
 const description =
@@ -12,9 +15,11 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/project-profiles-as-resumes",
+  path: PAGES.KNOWLEDGE.ARTICLE("project-profiles-as-resumes"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("project-profiles-as-resumes");
 
 export default function ProjectProfilesAsResumesPage() {
   return (
@@ -22,26 +27,36 @@ export default function ProjectProfilesAsResumesPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Project Profiles as Resumes", href: "/knowledge/project-profiles-as-resumes" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          {
+            label: "Project Profiles as Resumes",
+            href: PAGES.KNOWLEDGE.ARTICLE("project-profiles-as-resumes"),
+          },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/project-profiles-as-resumes"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("project-profiles-as-resumes")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Project Profiles as Resumes", url: "/knowledge/project-profiles-as-resumes" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "Project Profiles as Resumes",
+            url: PAGES.KNOWLEDGE.ARTICLE("project-profiles-as-resumes"),
+          },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Project Profiles as a Global Resume for Funded Work</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">
+            Project Profiles as a Global Resume for Funded Work
+          </h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -99,7 +114,7 @@ export default function ProjectProfilesAsResumesPage() {
           </p>
           <p className="pt-2">
             <Link
-              href="/create-project-profile"
+              href={PAGES.CREATE_PROJECT_PROFILE}
               className="text-blue-600 hover:underline dark:text-blue-400 font-semibold"
             >
               → Create your project profile
@@ -111,13 +126,13 @@ export default function ProjectProfilesAsResumesPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What are project profiles?
             </Link>
             <Link
-              href="/knowledge/why-grantees-need-project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("why-grantees-need-project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Why grantees need project profiles

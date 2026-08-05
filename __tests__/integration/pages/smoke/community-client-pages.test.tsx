@@ -286,8 +286,14 @@ describe("Community client pages", () => {
   });
 
   it("/(with-header)/funding-opportunities renders the funding hero", async () => {
+    // The page itself is now an async server component that prefetches the
+    // program list (covered in __tests__/app/funding-opportunities-ssr.test.tsx);
+    // the client smoke check drives the client component directly.
     await renderClientPage(
-      () => import("@/app/community/[communityId]/(with-header)/funding-opportunities/page")
+      () =>
+        import(
+          "@/app/community/[communityId]/(with-header)/funding-opportunities/FundingOpportunitiesClient"
+        )
     );
     // With no programs the page renders its hero (PageHero <h1>) plus the
     // empty state — assert the hero heading and empty-state copy are present.

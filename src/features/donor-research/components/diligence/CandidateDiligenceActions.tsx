@@ -9,28 +9,37 @@ import { AskQuestionsDialog } from "./AskQuestionsDialog";
 import { ConnectDialog } from "./ConnectDialog";
 import { DiligenceAnswers } from "./DiligenceAnswers";
 import { DiligenceStatusBadge } from "./DiligenceStatusBadge";
+import type { DiligenceViewer } from "./viewer";
 
 interface CandidateDiligenceActionsProps {
   reportId: string;
   candidateId: string;
   /** Nonprofit display name for the outreach previews' To row. */
   candidateName?: string | null;
+  /**
+   * The report's owner, or a super-admin acting as them. Both get the same
+   * actions — the backend attributes either to the report's advisor — so this
+   * only reaches the one step that cannot be done on someone else's behalf
+   * (the Connect email capture, see {@link ConnectDialog}).
+   */
+  viewer: DiligenceViewer;
 }
 
 /**
- * Per-candidate diligence footer for the advisor report view. Self-contained:
- * fetches its own candidate-diligence view and renders the status badge, the
- * two gated actions (Ask Questions / Connect), any collected answers, and the
- * intro state. Rendered per-candidate inside maps, so memoized.
+ * Per-candidate diligence footer for the authenticated report view.
+ * Self-contained: fetches its own candidate-diligence view and renders the
+ * status badge, the two gated actions (Ask Questions / Connect), any collected
+ * answers, and the intro state. Rendered per-candidate inside maps, so memoized.
  *
- * Anonymity: this component is mounted ONLY on the advisor surface (the donor
- * shared view never passes `showDiligenceActions`), so the actions cannot leak
- * onto a public share.
+ * Anonymity: this component is mounted ONLY where `diligenceViewer` resolves
+ * (owner or staff) — the donor shared view never passes one, so the actions
+ * cannot leak onto a public share.
  */
 export const CandidateDiligenceActions = memo(function CandidateDiligenceActions({
   reportId,
   candidateId,
   candidateName,
+  viewer,
 }: CandidateDiligenceActionsProps) {
   const [askOpen, setAskOpen] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
@@ -111,6 +120,7 @@ export const CandidateDiligenceActions = memo(function CandidateDiligenceActions
         onOpenChange={setAskOpen}
         view={view}
         candidateName={candidateName}
+        viewer={viewer}
       />
       <ConnectDialog
         reportId={reportId}
@@ -119,6 +129,7 @@ export const CandidateDiligenceActions = memo(function CandidateDiligenceActions
         onOpenChange={setConnectOpen}
         canConnect={actions.canConnect}
         candidateName={candidateName}
+        viewer={viewer}
       />
     </div>
   );

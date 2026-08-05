@@ -187,6 +187,13 @@ export const PAGES = {
     PUBLIC_SCORECARD: (slug: string) => `/s/${slug}`,
     OG_IMAGE: (slug: string) => `/api/scanner/og/${slug}`,
   },
+  KNOWLEDGE: {
+    ROOT: `/knowledge`,
+    ARTICLE: (slug: string) => `/knowledge/${slug}`,
+  },
+  DATA: {
+    FOUNDATION_FUNDING: `/data/foundation-funding`,
+  },
   BLOG: `/blog`,
   BLOG_POST: (slug: string) => `/blog/${slug}`,
   BLOG_PREVIEW_EXIT: `/api/blog/preview/exit`,

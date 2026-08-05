@@ -393,8 +393,7 @@ const InlineEvaluationCard = memo(function InlineEvaluationCard({
 });
 
 function InlineAIEvaluation({ milestone }: { milestone: GrantMilestoneWithCompletion }) {
-  const hasCompletion =
-    milestone.completionDetails !== null || milestone.fundingApplicationCompletion !== null;
+  const hasCompletion = milestone.completionDetails !== null;
   const { data, isLoading, error, refetch } = useMilestoneEvaluation(milestone.uid, hasCompletion);
   const evaluations = data?.evaluations ?? [];
 
@@ -533,10 +532,9 @@ function MilestonesReviewPageContent({
 
   const handleCancelMilestone = useCallback(
     async (milestone: GrantMilestoneWithCompletion, reason?: string) => {
-      if (!data) return;
-      await cancelMilestone({ milestone, data, reason });
+      await cancelMilestone({ milestone, reason });
     },
-    [cancelMilestone, data]
+    [cancelMilestone]
   );
 
   const handleUncancelMilestone = useCallback(

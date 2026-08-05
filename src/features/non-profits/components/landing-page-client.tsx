@@ -5,300 +5,28 @@
  *
  * Ported from grant-atlas src/features/grant-atlas/components/landing-page.tsx.
  *
- * Phase 2 changes:
- * - Router: useNavigate (TanStack Router) → useRouter (next/navigation)
- * - Search: createSession(query) in the store, then navigate to SEARCH(id)
- * - Nav: lp-nav section removed — renders inside gap-app-v2 global chrome
- * - Clipboard: navigator.clipboard → useCopyToClipboard hook
- * - CSS: lp-* classes from styles/non-profits-landing.css (route-scoped import)
- * - No streaming in Phase 2; streaming wired in Phase 3
+ * The hero (eyebrow, <h1>, lead copy, search box, chips) lives in
+ * ./landing-hero.tsx and is rendered as the first child here. Everything this
+ * component renders streams behind the route's loading.tsx Suspense boundary
+ * as a hidden chunk on this app's dynamic routes — which is why that
+ * loading.tsx is a static replica of the hero rather than a spinner: the
+ * fallback is the crawler-visible half of this route (DEV-586).
  */
 
 import "../../../../styles/non-profits-landing.css";
 
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Input } from "@/components/ui/input";
+import { useCallback, useState } from "react";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { Link } from "@/src/components/navigation/Link";
 import { useTourFromUrl } from "@/src/features/onboarding/hooks/use-tour-from-url";
-import { dataTour, TOUR_ANCHORS } from "@/src/features/onboarding/lib/tour-anchors";
 import { FIND_FUNDERS_TOUR } from "@/src/features/onboarding/lib/tours";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { INSTALL_CONFIGS, type InstallTab } from "../lib/install-configs";
 import { FILINGS_STATS } from "../lib/stats";
-import { useSearchSessionStore } from "../store/search-session";
-import { ConnectFloatingCard, ConnectLogos } from "./connect-cta";
-
-// ————————————————————————— Icons —————————————————————————
-
-const Icon = {
-  search: (p: React.SVGProps<SVGSVGElement>) => (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...p}
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
-  ),
-  arrow: (p: React.SVGProps<SVGSVGElement>) => (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...p}
-    >
-      <path d="M5 12h14M13 6l6 6-6 6" />
-    </svg>
-  ),
-};
-
-// ————————————————————————— Rotating Placeholder —————————————————————————
-
-const PLACEHOLDER_EXAMPLES = [
-  "Find foundations funding youth literacy in Ohio under $10M…",
-  "Draft an LOI to the Hewlett Foundation for our climate program…",
-  "Family foundations in Georgia that funded peers like us…",
-  "Funders of refugee resettlement giving over $250k since 2024…",
-  "Build me a prospect list for a $2M capital campaign…",
-];
-
-function RotatingPlaceholder({ visible }: { visible: boolean }) {
-  const [i, setI] = useState(0);
-  const [sub, setSub] = useState("");
-  const [phase, setPhase] = useState<"typing" | "holding" | "deleting">("typing");
-
-  useEffect(() => {
-    if (!visible) return;
-    const full = PLACEHOLDER_EXAMPLES[i];
-    let t: ReturnType<typeof setTimeout>;
-    if (phase === "typing") {
-      if (sub.length < full.length) {
-        t = setTimeout(() => setSub(full.slice(0, sub.length + 1)), 35 + Math.random() * 30);
-      } else {
-        t = setTimeout(() => setPhase("holding"), 1800);
-      }
-    } else if (phase === "holding") {
-      t = setTimeout(() => setPhase("deleting"), 900);
-    } else if (phase === "deleting") {
-      if (sub.length > 0) {
-        t = setTimeout(() => setSub(sub.slice(0, -1)), 18);
-      } else {
-        setPhase("typing");
-        setI((i + 1) % PLACEHOLDER_EXAMPLES.length);
-      }
-    }
-    return () => clearTimeout(t);
-  }, [sub, phase, i, visible]);
-
-  if (!visible) return <div className="lp-search-placeholder" />;
-  return (
-    <div className="lp-search-placeholder">
-      <span>{sub}</span>
-      <span className="lp-typing-cursor" />
-    </div>
-  );
-}
-
-// ————————————————————————— Chip Data —————————————————————————
-
-const CHIP_DATA = [
-  {
-    cat: "PROSPECTING",
-    text: "Family foundations under $50M that funded youth literacy in the Midwest",
-  },
-  {
-    cat: "PROSPECTING",
-    text: "Funders of refugee resettlement giving over $250k since 2024",
-  },
-  {
-    cat: "PROSPECTING",
-    text: "Foundations that funded our peers in the climate justice space last year",
-  },
-  {
-    cat: "RESEARCH",
-    text: "Top 10 foundations by total grants paid in 2025",
-  },
-  {
-    cat: "PROSPECTING",
-    text: "Build a tiered prospect list for a $2M environmental capital campaign",
-  },
-  {
-    cat: "RESEARCH",
-    text: "Foundations with a history of multi-year general operating support",
-  },
-] as const;
-
-// ————————————————————————— Hero —————————————————————————
-
-function Hero({ onSearch }: { onSearch: (query: string) => void }) {
-  const [query, setQuery] = useState("");
-  const [focused, setFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [animating, setAnimating] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  const onChipClick = useCallback(
-    (text: string, e: React.MouseEvent<HTMLButtonElement>) => {
-      const chipEl = e.currentTarget;
-      const inputEl = inputRef.current;
-      if (!chipEl || !inputEl) return;
-
-      if (intervalRef.current) clearInterval(intervalRef.current);
-
-      const chipRect = chipEl.getBoundingClientRect();
-      const inputRect = inputEl.getBoundingClientRect();
-      const dx = inputRect.left + 20 - chipRect.left;
-      const dy = inputRect.top + inputRect.height / 2 - chipRect.height / 2 - chipRect.top;
-      chipEl.style.setProperty("--fly-transform", `translate(${dx}px, ${dy}px)`);
-      chipEl.classList.add("flying");
-
-      setAnimating(true);
-      inputEl.focus();
-      let charIdx = 0;
-      setQuery("");
-      intervalRef.current = setInterval(() => {
-        charIdx++;
-        if (charIdx <= text.length) {
-          setQuery(text.slice(0, charIdx));
-        } else {
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          intervalRef.current = null;
-          setAnimating(false);
-          onSearch(text);
-        }
-      }, 16);
-      timeoutRef.current = setTimeout(() => chipEl.classList.remove("flying"), 600);
-    },
-    [onSearch]
-  );
-
-  const handleSubmit = () => {
-    if (query.trim()) onSearch(query.trim());
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && query.trim()) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  const showPlaceholder = !focused && query.length === 0 && !animating;
-
-  return (
-    <section className="lp-hero" id="hero">
-      <div className="lp-hero-grid" />
-      <div className="lp-container lp-hero-inner lp-fade-in">
-        <div className="lp-eyebrow">
-          <span className="lp-eyebrow-dot" />
-          <span>AI Agents for Funder Research &middot; Works in</span>
-          <ConnectLogos />
-          <span>Claude &amp; ChatGPT</span>
-        </div>
-        <h1 className="lp-hero-title">
-          Stop hunting for funders.
-          <br />
-          <span className="italic">Ask an agent.</span>
-        </h1>
-        <p className="lp-hero-sub">
-          AI agents that find the right foundations and funders for your mission, grounded in every
-          IRS 990 on record. Ask in plain English, get a cited prospect list. Use it here, or take
-          the agent with you to Claude or ChatGPT.
-        </p>
-
-        <div className="lp-search-shell">
-          <div className="lp-search-meta">
-            <div className="lp-search-meta-left">
-              <span className="lp-search-meta-chip">
-                <span className="lp-status-dot" style={{ background: "var(--lp-accent)" }} />
-                <span>ASK IN PLAIN ENGLISH</span>
-              </span>
-              <span>&middot;</span>
-              <span>{FILINGS_STATS.indexedShortLabel}</span>
-            </div>
-            <span>&#8984; K</span>
-          </div>
-
-          <div className="lp-search-box" {...dataTour(TOUR_ANCHORS.findFundersSearch)}>
-            <div className="lp-search-row">
-              <span className="lp-search-icon">
-                <Icon.search />
-              </span>
-              <div className="lp-search-input-wrap">
-                <Input
-                  ref={inputRef}
-                  className="lp-search-input h-auto rounded-none border-0 bg-transparent px-0 py-3 text-base shadow-none focus-visible:ring-0 md:text-base"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  onKeyDown={handleKeyDown}
-                  aria-label="Ask the prospecting agent"
-                />
-                <RotatingPlaceholder visible={showPlaceholder} />
-              </div>
-              <div className="lp-search-actions">
-                <span className="lp-search-kbd">&crarr;</span>
-                <button
-                  className="lp-search-submit"
-                  disabled={query.length === 0}
-                  onClick={handleSubmit}
-                  type="button"
-                >
-                  Ask agent <Icon.arrow />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="lp-chips">
-            <div className="lp-chips-label">TRY AN EXAMPLE</div>
-            <div className="lp-chips-grid">
-              {CHIP_DATA.map((c, idx) => (
-                <button
-                  key={`${c.cat}-${idx}`}
-                  className="lp-chip"
-                  onClick={(e) => onChipClick(c.text, e)}
-                  type="button"
-                >
-                  <div className="lp-chip-content">
-                    <span className="lp-chip-category">{`// ${c.cat}`}</span>
-                    <span className="lp-chip-text">{c.text}</span>
-                  </div>
-                  <span className="lp-chip-arrow">
-                    <Icon.arrow />
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+import { ConnectFloatingCard } from "./connect-cta";
+import { LandingFaq } from "./landing-faq";
+import { LandingHero } from "./landing-hero";
+import { ArrowIcon } from "./landing-icons";
 
 // ————————————————————————— The Shift (pitch) —————————————————————————
 
@@ -837,7 +565,7 @@ function Connector() {
                 }
                 className="lp-hero-foot-link"
               >
-                Open full {cfg.label} setup guide <Icon.arrow />
+                Open full {cfg.label} setup guide <ArrowIcon />
               </Link>
             )}
           </div>
@@ -977,7 +705,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
       <div className="lp-container">
         <div className="lp-section-head">
           <div>
-            <div className="lp-section-label">08 &mdash; START</div>
+            <div className="lp-section-label">09 &mdash; START</div>
             <h2 className="lp-section-title">
               Two ways in.
               <br />
@@ -995,7 +723,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
               see if it&apos;s real.
             </div>
             <div className="lp-cta-card-action">
-              Start a search <Icon.arrow />
+              Start a search <ArrowIcon />
             </div>
           </button>
           <Link href={NON_PROFITS_PAGES.CONNECT} className="lp-cta-card lp-cta-card-alt">
@@ -1006,7 +734,7 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
               the agents ready.
             </div>
             <div className="lp-cta-card-action">
-              See setup steps <Icon.arrow />
+              See setup steps <ArrowIcon />
             </div>
           </Link>
         </div>
@@ -1018,23 +746,10 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
 // ————————————————————————— Main Export —————————————————————————
 
 export function LandingPageClient() {
-  const router = useRouter();
   // Only the search box exists here — the results and tray steps resolve once a
   // search has run, so a walkthrough requested from the profile menu starts on
   // what this page can actually show.
   useTourFromUrl(FIND_FUNDERS_TOUR);
-
-  const handleSearch = useCallback(
-    (query: string) => {
-      const trimmed = query.trim();
-      if (!trimmed) return;
-      // Persist the query so the workbench (ChatView) can read it via
-      // getSession(searchId) and run it; skipping this drops the query.
-      const sessionId = useSearchSessionStore.getState().createSession(trimmed);
-      router.push(NON_PROFITS_PAGES.SEARCH(sessionId), { scroll: false });
-    },
-    [router]
-  );
 
   const scrollToHero = useCallback(() => {
     const el = document.getElementById("hero");
@@ -1045,7 +760,7 @@ export function LandingPageClient() {
 
   return (
     <div className="landing">
-      <Hero onSearch={handleSearch} />
+      <LandingHero />
       <TheShift />
       <Agents />
       <HowItWorks />
@@ -1053,6 +768,7 @@ export function LandingPageClient() {
       <Connector />
       <TheData />
       <Audience />
+      <LandingFaq />
       <FinalCTA onSearchFocus={scrollToHero} />
       <ConnectFloatingCard />
     </div>

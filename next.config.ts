@@ -72,41 +72,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  webpack: (config, { isServer, webpack }) => {
-    // Fix for browserslist and other Node.js modules
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        path: false,
-        os: false,
-        crypto: false,
-        stream: false,
-        http: false,
-        https: false,
-        zlib: false,
-        querystring: false,
-        events: false,
-        url: false,
-        buffer: false,
-        util: false,
-      };
-    }
-
-    // Add external modules that should not be bundled
-    config.externals.push("pino-pretty", "lokijs", "encoding");
-
-    // Exclude Storybook story files from the build
-    config.plugins.push(
-      new webpack.IgnorePlugin({
-        resourceRegExp: /\.stories\.(tsx?|jsx?)$/,
-      })
-    );
-
-    return config;
-  },
   transpilePackages: ["@show-karma/karma-gap-sdk"],
   images: {
     remotePatterns: [
@@ -311,7 +276,6 @@ const withSentry = withSentryConfig(
 // or a local build — Sentry stays fully enabled, so production
 // instrumentation can never be dropped by accident.
 const isPreviewBuild =
-  process.env.VERCEL_ENV === "preview" ||
-  process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+  process.env.VERCEL_ENV === "preview" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
 
 export default isPreviewBuild ? bundleAnalyzer : withSentry;

@@ -404,10 +404,6 @@ export const INDEXER = {
     },
     CONTRACTS: {
       CHECK_ADDRESS: () => `/v2/projects/contracts/address-availability`,
-      DEPLOYER: (network: string, contractAddress: string) =>
-        `/v2/projects/contracts/deployer?network=${encodeURIComponent(network)}&contractAddress=${encodeURIComponent(contractAddress)}`,
-      VERIFY_MESSAGE: () => `/v2/projects/contracts/verify-message`,
-      VERIFY_SIGNATURE: () => `/v2/projects/contracts/verify-signature`,
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
@@ -752,6 +748,7 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
+    SET_APPLICABILITY: "/v2/admin/kyc/applicability",
   },
   NOTIFICATION_CONFIG: {
     TEST_CONFIG: (communityIdOrSlug: string) =>

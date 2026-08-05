@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Grant Milestones vs Impact",
   description:
     "Milestones track work done while impact tracks change created. Learn why separating these concepts is critical for honest evaluation of funded projects.",
-  path: "/knowledge/milestones-vs-impact",
+  path: PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("milestones-vs-impact");
 
 export default function MilestonesVsImpactPage() {
   return (
@@ -19,26 +24,28 @@ export default function MilestonesVsImpactPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Milestones vs Impact", href: "/knowledge/milestones-vs-impact" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Milestones vs Impact", href: PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact") },
         ]}
       />
       <ArticleJsonLd
         title="Grant Milestones vs Impact"
         description="Milestones track work done while impact tracks change created. Learn why separating these concepts is critical for honest evaluation of funded projects."
-        url="/knowledge/milestones-vs-impact"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Milestones vs Impact", url: "/knowledge/milestones-vs-impact" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Milestones vs Impact", url: PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact") },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Grant Milestones vs Impact</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">Grant Milestones vs Impact</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -85,31 +92,31 @@ export default function MilestonesVsImpactPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/impact-measurement"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact measurement
             </Link>
             <Link
-              href="/knowledge/impact-verification"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-verification")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact verification
             </Link>
             <Link
-              href="/knowledge/dao-grant-milestones"
+              href={PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → DAO grant milestones
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability

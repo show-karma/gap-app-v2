@@ -45,7 +45,7 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       description: "Browse active programs accepting applications",
       links: [
         { label: "View open rounds", href: PAGES.REGISTRY.ROOT },
-        { label: "How applications work", href: "/knowledge/grant-lifecycle" },
+        { label: "How applications work", href: PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle") },
       ],
     },
     {
@@ -60,7 +60,7 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       links: [
         { label: "Submit a milestone update", href: PAGES.MY_PROJECTS },
         { label: "Update project profile", href: PAGES.MY_PROJECTS },
-        { label: "FAQs", href: "/knowledge/project-updates-and-reputation" },
+        { label: "FAQs", href: PAGES.KNOWLEDGE.ARTICLE("project-updates-and-reputation") },
       ],
     },
   ],

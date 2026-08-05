@@ -8,10 +8,7 @@
  */
 import { act, waitFor } from "@testing-library/react";
 import { useMilestoneCancellation } from "@/hooks/useMilestoneCancellation";
-import type {
-  GrantMilestoneWithCompletion,
-  ProjectGrantMilestonesResponse,
-} from "@/services/milestones";
+import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { HttpError } from "@/utilities/api/errors";
 import { renderHookWithProviders } from "../../utils/render";
 
@@ -107,27 +104,14 @@ const baseMilestone = (
   description: "desc",
   dueDate: "2025-01-01",
   status: "pending",
+  recipient: RECIPIENT,
   completionDetails: null,
   verificationDetails: null,
-  fundingApplicationCompletion: null,
   ...overrides,
 });
 
-const data = {
-  project: { uid: "0xproject" },
-  grantMilestones: [],
-} as unknown as ProjectGrantMilestonesResponse;
-
 beforeEach(() => {
   vi.clearAllMocks();
-  mockProjectById.mockResolvedValue({
-    grants: [
-      {
-        details: { programId: "1013" },
-        milestones: [{ uid: MILESTONE_UID, recipient: RECIPIENT }],
-      },
-    ],
-  });
 });
 
 const renderCancellationHook = () =>
@@ -140,7 +124,6 @@ describe("useMilestoneCancellation", () => {
     await act(async () => {
       await result.current.cancelMilestone({
         milestone: baseMilestone(),
-        data,
         reason: "superseded",
       });
     });
@@ -149,6 +132,22 @@ describe("useMilestoneCancellation", () => {
     expect(mockPayloadFor).toHaveBeenCalledWith(0);
     // Indexer notified with the attestation tx hash.
     expect(mockApiPost).toHaveBeenCalledWith(expect.stringContaining("0xattesttx"), {});
+    // The recipient comes from the V2 milestone payload — no V1 project refetch (#63).
+    expect(mockProjectById).not.toHaveBeenCalled();
+  });
+
+  it("blocks cancelling with no recipient and never signs (#63)", async () => {
+    const { result } = renderCancellationHook();
+
+    await expect(
+      act(async () => {
+        await result.current.cancelMilestone({
+          milestone: baseMilestone({ recipient: undefined }),
+        });
+      })
+    ).rejects.toThrow(/missing its on-chain recipient/);
+    expect(mockMultiAttest).not.toHaveBeenCalled();
+    expect(mockProjectById).not.toHaveBeenCalled();
   });
 
   it("blocks cancelling a completed milestone", async () => {
@@ -164,25 +163,6 @@ describe("useMilestoneCancellation", () => {
               completedBy: "0xgrantee",
             },
           }),
-          data,
-        });
-      })
-    ).rejects.toThrow(/already been completed or verified/);
-    expect(mockMultiAttest).not.toHaveBeenCalled();
-  });
-
-  it("blocks cancelling a funding-application-completed milestone", async () => {
-    const { result } = renderCancellationHook();
-
-    await expect(
-      act(async () => {
-        await result.current.cancelMilestone({
-          milestone: baseMilestone({
-            fundingApplicationCompletion: {
-              description: "done via application",
-            } as GrantMilestoneWithCompletion["fundingApplicationCompletion"],
-          }),
-          data,
         });
       })
     ).rejects.toThrow(/already been completed or verified/);
@@ -204,7 +184,6 @@ describe("useMilestoneCancellation", () => {
               reason: null,
             },
           }),
-          data,
         });
       })
     ).rejects.toThrow(/already cancelled/);
@@ -253,7 +232,7 @@ describe("useMilestoneCancellation", () => {
     const { result } = renderCancellationHook();
 
     await act(async () => {
-      await result.current.cancelMilestone({ milestone: baseMilestone(), data });
+      await result.current.cancelMilestone({ milestone: baseMilestone() });
     });
 
     expect(mockMultiAttest).toHaveBeenCalledTimes(1);

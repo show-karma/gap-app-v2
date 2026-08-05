@@ -1,13 +1,20 @@
 "use client";
 
-import React, { type FC, useCallback, useMemo, useState } from "react";
+import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { IApplicationListProps, IFundingApplication } from "@/types/funding-platform";
 import type { KycStatusResponse } from "@/types/kyc";
+import {
+  formatApplicationStatus,
+  isStatusConflictError,
+  STATUS_CONFLICT_MESSAGE,
+  STATUS_CONFLICT_TOAST_ID,
+} from "@/utilities/application-status";
 import StatusChangeModal from "../ApplicationView/StatusChangeModal";
+import { isAllowedStatusTransition } from "../statusTransitions";
 import { ApplicationTable } from "./ApplicationTable";
 
 const EMPTY_KYC_MAP = new Map<string, KycStatusResponse | null>();
@@ -25,6 +32,13 @@ interface IApplicationListComponentProps extends IApplicationListProps {
     approvedCurrency?: string
   ) => Promise<void>;
   onExport?: () => void;
+  /** Re-reads the list from the API. Used to drop row actions after a conflict. */
+  onRefreshApplications?: () => Promise<IFundingApplication[]>;
+  /**
+   * Re-reads a single application from the API, resolving with `null` when the
+   * read fails. Backs the pre-flight transition check.
+   */
+  onFetchApplication?: (referenceNumber: string) => Promise<IFundingApplication | null>;
   showStatusActions?: boolean;
   sortBy?: IApplicationFilters["sortBy"];
   sortOrder?: IApplicationFilters["sortOrder"];
@@ -64,6 +78,8 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   onApplicationSelect,
   onApplicationHover,
   onStatusChange,
+  onRefreshApplications,
+  onFetchApplication,
   showStatusActions = false,
   sortBy,
   sortOrder,
@@ -86,6 +102,11 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   isLoadingKycStatuses = false,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  // Pre-flight freshness read that runs before the modal opens. The ref rejects
+  // the second of two clicks landing in the same tick; the state disables the
+  // row actions so the first click never appears dead.
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const isCheckingStatusRef = useRef(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingApplicationId, setPendingApplicationId] = useState<string>("");
@@ -100,19 +121,52 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   const showAppReviewersColumn = useMemo(() => !!programId, [programId]);
   const showMilestoneReviewersColumn = useMemo(() => !!programId, [programId]);
 
+  const closeStatusModal = useCallback(() => {
+    setStatusModalOpen(false);
+    setPendingStatus("");
+    setPendingApplicationId("");
+    setPendingApplication(undefined);
+  }, []);
+
   const handleStatusChangeClick = useCallback(
-    (applicationId: string, newStatus: string, e: React.MouseEvent) => {
+    async (applicationId: string, newStatus: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      // Find the application to pass to modal
-      const application = applications.find(
-        (app) => app.referenceNumber === applicationId || app.id === applicationId
-      );
+      if (isCheckingStatusRef.current) return;
+
+      const matches = (app: IFundingApplication) =>
+        app.referenceNumber === applicationId || app.id === applicationId;
+      const renderedApplication = applications.find(matches);
+
+      // Re-read this one row first: a long-lived tab can still render actions
+      // for a status another reviewer already moved past, and the PUT would only
+      // 409. Reading the row directly (rather than refetching the list) also
+      // survives an active status filter having dropped it from the results.
+      let application = renderedApplication;
+      if (onFetchApplication) {
+        isCheckingStatusRef.current = true;
+        setIsCheckingStatus(true);
+        try {
+          application =
+            (await onFetchApplication(renderedApplication?.referenceNumber ?? applicationId)) ??
+            renderedApplication;
+        } finally {
+          isCheckingStatusRef.current = false;
+          setIsCheckingStatus(false);
+        }
+      }
+
+      if (application && !isAllowedStatusTransition(application.status, newStatus)) {
+        toast.error(STATUS_CONFLICT_MESSAGE, { id: STATUS_CONFLICT_TOAST_ID });
+        // Pull the table back in sync so the now-dead row actions disappear.
+        onRefreshApplications?.();
+        return;
+      }
       setPendingApplicationId(applicationId);
       setPendingStatus(newStatus);
       setPendingApplication(application);
       setStatusModalOpen(true);
     },
-    [applications]
+    [applications, onFetchApplication, onRefreshApplications]
   );
 
   const handleStatusChangeConfirm = async (
@@ -120,6 +174,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
     approvedAmount?: string,
     approvedCurrency?: string
   ) => {
+    if (isUpdatingStatus) return;
     if (onStatusChange && pendingApplicationId && pendingStatus) {
       try {
         setIsUpdatingStatus(true);
@@ -130,20 +185,21 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
           approvedAmount,
           approvedCurrency
         );
-        setIsUpdatingStatus(false);
-        setStatusModalOpen(false);
-        setPendingStatus("");
-        setPendingApplicationId("");
-        setPendingApplication(undefined);
+        closeStatusModal();
         if (pendingStatus === "approved") {
           toast.success("Application approved successfully!");
         } else {
-          toast.success(`Application status updated to ${pendingStatus}`);
+          toast.success(`Application status updated to ${formatApplicationStatus(pendingStatus)}`);
         }
       } catch (error) {
-        console.error("Failed to update status:", error);
+        // SUPPRESSED: the status mutation's onError owns the failure toast. Only
+        // a transition conflict can never succeed, so close the modal then; a
+        // correctable failure (currency, amount, reason) stays open for a fix.
+        if (isStatusConflictError(error)) {
+          closeStatusModal();
+        }
+      } finally {
         setIsUpdatingStatus(false);
-        toast.error("Failed to update application status");
       }
     }
   };
@@ -196,7 +252,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
             onApplicationHover={onApplicationHover}
             onStatusChange={handleStatusChangeClick}
             onReviewerAssignmentChange={onReviewerAssignmentChange}
-            isUpdatingStatus={isUpdatingStatus}
+            isUpdatingStatus={isUpdatingStatus || isCheckingStatus}
             isKycEnabled={isKycEnabled}
             kycStatuses={kycStatuses}
             isLoadingKycStatuses={isLoadingKycStatuses}
@@ -209,12 +265,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
       {/* Status Change Modal */}
       <StatusChangeModal
         isOpen={statusModalOpen}
-        onClose={() => {
-          setStatusModalOpen(false);
-          setPendingStatus("");
-          setPendingApplicationId("");
-          setPendingApplication(undefined);
-        }}
+        onClose={closeStatusModal}
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}

@@ -6,31 +6,40 @@ import { useEffect, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import {
   attestMilestoneCompletionAsReviewer,
+  fetchGrantMilestonesForProgram,
   type GrantMilestoneWithCompletion,
   type ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
-import { api } from "@/utilities/api/client";
-import { INDEXER } from "@/utilities/indexer";
+import { isApiError } from "@/utilities/api/errors";
+import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
+import { notifyIndexer } from "@/utilities/indexer-notification";
+import {
+  describeMilestoneFailure,
+  type MilestoneAction,
+  type MilestoneFlowStep,
+  recordMilestoneFailureBreadcrumb,
+} from "@/utilities/milestones/attestationFailure";
+import {
+  buildAttesterCandidates,
+  getMultiAttesterAddress,
+  matchesSubmittedVerification,
+  requireMilestoneRecipient,
+} from "@/utilities/milestones/attestationIdentity";
+import { rejectCancelledMilestone } from "@/utilities/milestones/cancellation";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { isUserRejectionError } from "@/utilities/wallet/signerReadiness";
 
 // Constants
 const INDEXER_PROCESSING_DELAY_MS = 2000;
-
-/**
- * Normalize programId by stripping the chainId suffix if present
- * Supports both "programId" and legacy "programId_chainId" formats
- */
-const normalizeProgramId = (id: string): string => {
-  return id.includes("_") ? id.split("_")[0] : id;
-};
 
 interface UseMilestoneCompletionVerificationParams {
   projectId: string;
@@ -46,13 +55,75 @@ interface UseMilestoneCompletionVerificationParams {
   onCachesInvalidated?: () => void;
 }
 
-interface MilestoneInstance {
-  uid: string;
-  recipient: `0x${string}`;
-  completed: boolean | { data: any; attester: string };
-  verified?: Array<{ attester: string }>;
-  chainID: number;
+/**
+ * The wallet/chain context resolved once per flow. `attesterCandidates` are the
+ * addresses the indexing poll may accept as the attester — the Privy-resolved
+ * signer first, never wagmi's `useAccount().address` (which lags the signer and
+ * is null often enough to matter).
+ */
+interface MilestoneChainSetup {
+  gapClient: GAP;
+  walletSigner: Signer;
+  attesterCandidates: string[];
 }
+
+/** The multi-attest payload shape, taken from the SDK rather than re-declared. */
+type AttestationPayload = Awaited<ReturnType<MilestoneCompleted["payloadFor"]>>;
+
+interface AttestationOptions {
+  includeCompletion: boolean;
+  completionReason?: string;
+  verificationComment: string;
+}
+
+/**
+ * Builds the completion/verification attestation payloads.
+ *
+ * Module scope, not a closure: it reads nothing from the hook, so rebuilding it
+ * every render would be wasted work. `recipient` is passed in already validated
+ * — this function must never source it itself.
+ */
+const buildAttestationPayloads = async (
+  gapClient: GAP,
+  milestone: GrantMilestoneWithCompletion,
+  recipient: Hex,
+  options: AttestationOptions
+): Promise<AttestationPayload[]> => {
+  const milestoneCompletedSchema = gapClient.findSchema("MilestoneCompleted");
+  const payloads: AttestationPayload[] = [];
+  let payloadIndex = 0;
+
+  // Add completion attestation if requested
+  if (options.includeCompletion) {
+    const completionAttestation = new MilestoneCompleted({
+      data: sanitizeObject({
+        reason: options.completionReason || "",
+        proofOfWork: "",
+        type: "completed",
+      }),
+      refUID: milestone.uid as Hex,
+      schema: milestoneCompletedSchema,
+      recipient,
+    });
+    payloads.push(await completionAttestation.payloadFor(payloadIndex));
+    payloadIndex++;
+  }
+
+  // Always add verification attestation
+  const verificationAttestation = new MilestoneCompleted({
+    data: sanitizeObject({
+      reason: options.verificationComment || "",
+      proofOfWork: "",
+      type: "verified",
+    }),
+    refUID: milestone.uid as Hex,
+    schema: milestoneCompletedSchema,
+    recipient,
+  });
+  payloads.push(await verificationAttestation.payloadFor(payloadIndex));
+
+  return payloads;
+};
 
 /**
  * Hook for handling milestone completion and verification workflow
@@ -66,10 +137,11 @@ export const useMilestoneCompletionVerification = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const { address, chain } = useAccount();
+  const { user } = usePrivyBridge();
   const { switchChainAsync } = useWallet();
   const { startAttestation, showLoading, showSuccess, showError, changeStepperStep, dismiss } =
     useAttestationToast();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
 
   // AbortController owns the in-flight verification's polling loop (refreshed at
   // every verifyMilestone call, aborted on cleanup) so post-unmount state updates
@@ -82,9 +154,8 @@ export const useMilestoneCompletionVerification = ({
   }, []);
 
   const setupChainAndWalletForMilestone = async (
-    milestone: GrantMilestoneWithCompletion,
-    _data: ProjectGrantMilestonesResponse
-  ): Promise<{ gapClient: GAP; walletSigner: Signer } | null> => {
+    milestone: GrantMilestoneWithCompletion
+  ): Promise<MilestoneChainSetup | null> => {
     const targetChainId = +milestone.chainId;
 
     const setup = await setupChainAndWallet({
@@ -94,116 +165,51 @@ export const useMilestoneCompletionVerification = ({
     });
 
     if (!setup) {
-      setIsVerifying(false);
       dismiss();
       return null;
     }
 
-    return { gapClient: setup.gapClient, walletSigner: setup.walletSigner };
-  };
-
-  const fetchMilestoneInstance = async (
-    gapClient: GAP,
-    data: ProjectGrantMilestonesResponse,
-    milestone: GrantMilestoneWithCompletion
-  ): Promise<{
-    milestoneInstance: MilestoneInstance;
-    communityUID: string;
-  }> => {
-    const fetchedProject = await gapClient.fetch.projectById(data.project.uid);
-    if (!fetchedProject) {
-      throw new Error("Failed to fetch project data");
-    }
-
-    // Normalize programId for comparison (supports both formats)
-    const normalizedInputId = normalizeProgramId(programId);
-    const grantInstance = fetchedProject.grants.find((g) => {
-      const storedId = g.details?.programId;
-      if (!storedId) return false;
-      return normalizeProgramId(storedId) === normalizedInputId;
-    });
-
-    if (!grantInstance) {
-      throw new Error("Grant not found");
-    }
-
-    const milestoneInstance = grantInstance.milestones?.find(
-      (m) => m.uid.toLowerCase() === milestone.uid.toLowerCase()
-    );
-
-    if (!milestoneInstance) {
-      throw new Error("Milestone not found");
-    }
-
-    // Extract communityUID from grant data
-    const communityUID = grantInstance.data?.communityUID || "";
+    // The address that will actually sign. `getAddress()` is authoritative (it
+    // covers the gasless/EIP-7702 signer too); `smartWalletAddress` is the
+    // pre-resolved Privy attestation address and the linked set is the tolerant
+    // fallback for accounts where Privy surfaces a different active wallet.
+    const signerAddress = await setup.walletSigner.getAddress().catch(() => null);
 
     return {
-      milestoneInstance: milestoneInstance as MilestoneInstance,
-      communityUID,
+      gapClient: setup.gapClient,
+      walletSigner: setup.walletSigner,
+      // wagmi's address is deliberately NOT a candidate: it can be an unlinked
+      // wallet left connected from a previous session, and accepting it would
+      // widen the match beyond this identity.
+      //
+      // The chain's MultiAttester IS a candidate, and in practice the one that
+      // actually lands: `GapContract.multiAttest` submits through it, so EAS
+      // sees the contract as `msg.sender` and the indexer stores it — not the
+      // signer — as `verifiedBy`. Without it every verification polls until it
+      // times out on a transaction that already succeeded.
+      attesterCandidates: buildAttesterCandidates([
+        signerAddress,
+        smartWalletAddress,
+        ...(user ? getLinkedWalletAddresses(user) : []),
+        getMultiAttesterAddress(targetChainId),
+      ]),
     };
-  };
-
-  const buildAttestationPayloads = async (
-    gapClient: GAP,
-    milestone: GrantMilestoneWithCompletion,
-    milestoneInstance: MilestoneInstance,
-    options: {
-      includeCompletion: boolean;
-      completionReason?: string;
-      verificationComment: string;
-    }
-  ) => {
-    const milestoneCompletedSchema = gapClient.findSchema("MilestoneCompleted");
-    const payloads: any[] = [];
-    let payloadIndex = 0;
-
-    // Add completion attestation if requested
-    if (options.includeCompletion) {
-      const completionAttestation = new MilestoneCompleted({
-        data: sanitizeObject({
-          reason: options.completionReason || "",
-          proofOfWork: "",
-          type: "completed",
-        }),
-        refUID: milestone.uid as Hex,
-        schema: milestoneCompletedSchema,
-        recipient: milestoneInstance.recipient,
-      });
-      payloads.push(await completionAttestation.payloadFor(payloadIndex));
-      payloadIndex++;
-    }
-
-    // Always add verification attestation
-    const verificationAttestation = new MilestoneCompleted({
-      data: sanitizeObject({
-        reason: options.verificationComment || "",
-        proofOfWork: "",
-        type: "verified",
-      }),
-      refUID: milestone.uid as Hex,
-      schema: milestoneCompletedSchema,
-      recipient: milestoneInstance.recipient,
-    });
-    payloads.push(await verificationAttestation.payloadFor(payloadIndex));
-
-    return payloads;
   };
 
   const notifyIndexerAndInvalidateCache = async (
     txHash: string | undefined,
     chainId: number,
-    attestationCount: number,
-    communityUID: string
+    attestationCount: number
   ) => {
-    if (txHash) {
-      // Best-effort indexer nudge; it also catches this via its own chain listener,
-      // so a failure must not abort the flow. Legacy fetchData discarded the error.
-      await api.post(INDEXER.ATTESTATION_LISTENER(txHash, chainId), {}).catch(() => undefined);
-      // If multiple attestations, wait for the indexer to process all of them.
-      if (attestationCount > 1) {
-        await new Promise((resolve) => setTimeout(resolve, INDEXER_PROCESSING_DELAY_MS));
-      }
+    // Best-effort nudge — the indexer's own chain listener picks the tx up
+    // regardless, so a failure must not abort a flow whose tx already landed.
+    // `notifyIndexer` REPORTS that failure; the inline swallow it replaced left
+    // a failed nudge completely invisible.
+    await notifyIndexer({ txHash, chainId });
+
+    // If multiple attestations, wait for the indexer to process all of them.
+    if (txHash && attestationCount > 1) {
+      await new Promise((resolve) => setTimeout(resolve, INDEXER_PROCESSING_DELAY_MS));
     }
 
     await queryClient.invalidateQueries({
@@ -226,63 +232,45 @@ export const useMilestoneCompletionVerification = ({
     onCachesInvalidated?.();
   };
 
-  // Re-fetch the milestone from the SDK and locate it within its grant, used by
-  // the post-attestation polls to observe on-chain → indexer state transitions.
-  // Returns null until the project, grant, and milestone are all present.
+  // Re-reads the milestone from the V2 project-updates endpoint. Replaces the
+  // old SDK `projectById` refetch (a V1 `GET /projects/:uid` per poll iteration,
+  // and the crash site of GAP-FRONTEND-261): the V2 payload already carries the
+  // completion, verification and recipient the flow needs.
   const findIndexedMilestone = async (
-    gapClient: GAP,
-    data: ProjectGrantMilestonesResponse,
-    milestone: GrantMilestoneWithCompletion,
-    inputProgramId: string
-  ) => {
-    const normalizedInputId = normalizeProgramId(inputProgramId);
-    const updatedProject = await gapClient.fetch.projectById(data.project.uid);
-
-    if (!updatedProject) return null;
-
-    const updatedGrant = updatedProject.grants.find((g) => {
-      const storedId = g.details?.programId;
-      if (!storedId) return false;
-      return normalizeProgramId(storedId) === normalizedInputId;
-    });
-
-    if (!updatedGrant) return null;
-
-    return updatedGrant.milestones?.find((m) => m.uid === milestone.uid) ?? null;
+    projectUID: string,
+    milestoneUID: string
+  ): Promise<GrantMilestoneWithCompletion | null> => {
+    const milestones = await fetchGrantMilestonesForProgram(projectUID, programId);
+    return milestones.find((m) => m.uid.toLowerCase() === milestoneUID.toLowerCase()) ?? null;
   };
 
   const pollForMilestoneStatus = async (
-    gapClient: GAP,
-    data: ProjectGrantMilestonesResponse,
+    projectUID: string,
     milestone: GrantMilestoneWithCompletion,
     checkCompletion: boolean,
-    userAddress: string,
-    inputProgramId: string,
+    attesterCandidates: string[],
+    previousVerificationUID: string | undefined,
     signal?: AbortSignal
   ) => {
     await retryUntilConditionMet(
       async () => {
-        const updatedMilestone = await findIndexedMilestone(
-          gapClient,
-          data,
-          milestone,
-          inputProgramId
-        );
+        const updatedMilestone = await findIndexedMilestone(projectUID, milestone.uid);
 
         if (!updatedMilestone) return false;
 
-        const isVerified = updatedMilestone.verified?.find(
-          (v) => v.attester?.toLowerCase() === userAddress.toLowerCase()
-        );
+        const isVerified = matchesSubmittedVerification({
+          verificationDetails: updatedMilestone.verificationDetails,
+          candidates: attesterCandidates,
+          previousAttestationUID: previousVerificationUID,
+        });
 
         // If checking completion, ensure both are indexed
         if (checkCompletion) {
-          const isCompleted = updatedMilestone.completed;
-          return !!(isCompleted && isVerified);
+          return !!(updatedMilestone.completionDetails && isVerified);
         }
 
         // Otherwise just check verification
-        return !!isVerified;
+        return isVerified;
       },
       undefined,
       undefined,
@@ -292,22 +280,14 @@ export const useMilestoneCompletionVerification = ({
   };
 
   const pollForCompletionStatus = async (
-    gapClient: GAP,
-    data: ProjectGrantMilestonesResponse,
+    projectUID: string,
     milestone: GrantMilestoneWithCompletion,
-    inputProgramId: string,
     signal?: AbortSignal
   ) => {
     await retryUntilConditionMet(
       async () => {
-        const updatedMilestone = await findIndexedMilestone(
-          gapClient,
-          data,
-          milestone,
-          inputProgramId
-        );
-
-        return !!updatedMilestone?.completed;
+        const updatedMilestone = await findIndexedMilestone(projectUID, milestone.uid);
+        return !!updatedMilestone?.completionDetails;
       },
       undefined,
       undefined,
@@ -319,8 +299,7 @@ export const useMilestoneCompletionVerification = ({
   const completeViaBackend = async (
     milestone: GrantMilestoneWithCompletion,
     completionComment: string,
-    attestationChainId: number,
-    communityUID: string
+    attestationChainId: number
   ): Promise<void> => {
     showLoading("Completing milestone...");
 
@@ -337,7 +316,7 @@ export const useMilestoneCompletionVerification = ({
       );
 
       changeStepperStep("indexing");
-      await notifyIndexerAndInvalidateCache(txHash, attestationChainId, 1, communityUID);
+      await notifyIndexerAndInvalidateCache(txHash, attestationChainId, 1);
       changeStepperStep("indexed");
 
       showSuccess("Milestone completed successfully!");
@@ -348,17 +327,16 @@ export const useMilestoneCompletionVerification = ({
   };
 
   const attestMilestonesOnChain = async (
-    milestoneInstance: MilestoneInstance,
+    recipient: Hex,
     milestone: GrantMilestoneWithCompletion,
-    walletSigner: Signer,
-    gapClient: GAP,
-    data: ProjectGrantMilestonesResponse,
+    setup: MilestoneChainSetup,
+    projectUID: string,
     options: {
       includeCompletion: boolean;
       completionReason?: string;
       verificationComment: string;
     },
-    communityUID: string,
+    reportStep: (step: MilestoneFlowStep) => void,
     signal?: AbortSignal
   ): Promise<boolean> => {
     const isVerificationOnly = !options.includeCompletion;
@@ -371,38 +349,35 @@ export const useMilestoneCompletionVerification = ({
       changeStepperStep("preparing");
 
       const payloads = await buildAttestationPayloads(
-        gapClient,
+        setup.gapClient,
         milestone,
-        milestoneInstance,
+        recipient,
         options
       );
 
+      // Captured before signing so the poll can tell a NEW verification apart
+      // from one this milestone already carried.
+      const previousVerificationUID = milestone.verificationDetails?.attestationUID;
+
       changeStepperStep("pending");
 
-      const result = await GapContract.multiAttest(walletSigner, payloads, changeStepperStep);
+      const result = await GapContract.multiAttest(setup.walletSigner, payloads, changeStepperStep);
 
       changeStepperStep("indexing");
 
       const txHash = result?.tx[0]?.hash || undefined;
-      await notifyIndexerAndInvalidateCache(
-        txHash,
-        milestoneInstance.chainID,
-        payloads.length,
-        communityUID
-      );
+      await notifyIndexerAndInvalidateCache(txHash, +milestone.chainId, payloads.length);
 
-      // Poll for milestone status
-      if (!address) {
-        throw new Error("User address not available");
-      }
-
+      // Nothing past this point may depend on wagmi's `useAccount().address`:
+      // it can be null while the Privy signer works fine, which previously threw
+      // "User address not available" AFTER a successful transaction (#67).
+      reportStep("poll");
       await pollForMilestoneStatus(
-        gapClient,
-        data,
+        projectUID,
         milestone,
         options.includeCompletion,
-        address,
-        programId,
+        setup.attesterCandidates,
+        previousVerificationUID,
         signal
       );
 
@@ -420,7 +395,7 @@ export const useMilestoneCompletionVerification = ({
       );
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (isAbortError(error)) {
         // Silent — caller's finally already dismisses the toast.
         return false;
@@ -428,6 +403,55 @@ export const useMilestoneCompletionVerification = ({
       dismiss();
       throw error;
     }
+  };
+
+  /**
+   * Single exit point for a failed verify/complete run. Maps the error onto a
+   * concrete user-facing cause and enriches the Sentry context with the project,
+   * chain, program and the step the flow died on — the generic
+   * "Failed to verify milestone" toast plus `{milestoneUID, address}` told
+   * neither the user nor us anything (#64).
+   */
+  const reportMilestoneFailure = (
+    error: unknown,
+    action: MilestoneAction,
+    step: MilestoneFlowStep,
+    milestone: GrantMilestoneWithCompletion,
+    projectUID: string | undefined
+  ) => {
+    // `isUserRejectionError` is a substring match, and an ApiError's message
+    // embeds the endpoint path — so an API failure must never be mistaken for a
+    // wallet rejection just because its route happens to contain "reject".
+    if (!isApiError(error) && isUserRejectionError(error)) {
+      showError(action === "verify" ? "Verification cancelled" : "Completion cancelled");
+      return;
+    }
+
+    const failure = describeMilestoneFailure(error, action);
+    showError(failure.message);
+
+    recordMilestoneFailureBreadcrumb(action, step, failure.kind, {
+      milestoneUID: milestone.uid,
+      projectUid: projectUID,
+      programId,
+    });
+
+    // Wallet not ready / user-state guidance, not a defect.
+    if (failure.expected) return;
+
+    errorManager(
+      action === "verify" ? "Error verifying milestone" : "Error completing milestone",
+      error,
+      {
+        milestoneUID: milestone.uid,
+        projectUid: projectUID,
+        chainId: milestone.chainId,
+        programId,
+        step,
+        failureKind: failure.kind,
+        address,
+      }
+    );
   };
 
   const verifyMilestone = async (
@@ -447,8 +471,12 @@ export const useMilestoneCompletionVerification = ({
       return;
     }
 
+    if (rejectCancelledMilestone(milestone, "verify", showError, data.project?.uid, programId))
+      return;
+
     // Use chainId from milestone (where attestation will occur)
     const attestationChainId = milestone.chainId;
+    const projectUID = data.project.uid;
 
     // Abort any prior in-flight verification and start a fresh controller.
     controllerRef.current?.abort();
@@ -459,28 +487,24 @@ export const useMilestoneCompletionVerification = ({
     setIsVerifying(true);
     startAttestation("Verifying milestone...");
 
+    let step: MilestoneFlowStep = "fetch";
+
     try {
       changeStepperStep("preparing");
 
-      // Step 1: Setup chain and wallet
-      const chainSetup = await setupChainAndWalletForMilestone(milestone, data);
+      // Step 1: the on-chain recipient is part of the attested payload, so it is
+      // resolved (and validated) BEFORE any wallet interaction — a legacy row
+      // without one must never reach a transaction.
+      const recipient = requireMilestoneRecipient(milestone);
+
+      // Step 2: Setup chain and wallet
+      step = "setup";
+      const chainSetup = await setupChainAndWalletForMilestone(milestone);
       if (!chainSetup) return;
 
-      const { gapClient, walletSigner } = chainSetup;
-
-      // Step 2: Fetch milestone instance and communityUID
-      let { milestoneInstance, communityUID } = await fetchMilestoneInstance(
-        gapClient,
-        data,
-        milestone
-      );
-
-      const alreadyCompleted =
-        typeof milestoneInstance.completed === "boolean"
-          ? milestoneInstance.completed
-          : !!milestoneInstance.completed;
-
-      const completionReason = milestone.fundingApplicationCompletion?.completionText;
+      const alreadyCompleted = !!milestone.completionDetails;
+      // On-chain completion text is the only completion source on this payload.
+      const completionReason = milestone.completionDetails?.description;
 
       let includeCompletion = !alreadyCompleted;
 
@@ -488,33 +512,26 @@ export const useMilestoneCompletionVerification = ({
       if (isMilestoneReviewer && !alreadyCompleted) {
         // Reviewer flow: Complete via backend, then verify on-chain (verification only)
         // Pass full programId (composite format) and attestation chainId to backend
-        await completeViaBackend(
-          milestone,
-          completionReason ?? "",
-          attestationChainId,
-          communityUID
-        );
-
-        // Re-fetch milestone to get updated completion status
-        const refetchedData = await fetchMilestoneInstance(gapClient, data, milestone);
-        milestoneInstance = refetchedData.milestoneInstance;
-        communityUID = refetchedData.communityUID;
+        step = "backend";
+        await completeViaBackend(milestone, completionReason ?? "", attestationChainId);
 
         includeCompletion = false;
       }
 
+      step = "attest";
       const onChainConfirmed = await attestMilestonesOnChain(
-        milestoneInstance,
+        recipient,
         milestone,
-        walletSigner,
-        gapClient,
-        data,
+        chainSetup,
+        projectUID,
         {
           includeCompletion,
           completionReason,
           verificationComment,
         },
-        communityUID,
+        (nextStep) => {
+          step = nextStep;
+        },
         signal
       );
 
@@ -530,23 +547,12 @@ export const useMilestoneCompletionVerification = ({
 
       // Success callback - backend will sync to off-chain database automatically
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (isAbortError(error)) {
         // Silent — component unmounted during the flow.
         return;
       }
-      console.error("Error verifying milestone:", error);
-
-      // Check if user cancelled
-      if (error?.message?.includes("User rejected") || error?.code === 4001) {
-        showError("Verification cancelled");
-      } else {
-        showError("Failed to verify milestone");
-        errorManager("Error verifying milestone", error, {
-          milestoneUID: milestone.uid,
-          address,
-        });
-      }
+      reportMilestoneFailure(error, "verify", step, milestone, projectUID);
     } finally {
       if (!signal.aborted) {
         setIsVerifying(false);
@@ -576,6 +582,11 @@ export const useMilestoneCompletionVerification = ({
       return;
     }
 
+    if (rejectCancelledMilestone(milestone, "complete", showError, data.project?.uid, programId))
+      return;
+
+    const projectUID = data.project.uid;
+
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
@@ -584,20 +595,20 @@ export const useMilestoneCompletionVerification = ({
     setIsCompleting(true);
     startAttestation("Completing milestone...");
 
+    let step: MilestoneFlowStep = "fetch";
+
     try {
       changeStepperStep("preparing");
 
-      const chainSetup = await setupChainAndWalletForMilestone(milestone, data);
+      const recipient = requireMilestoneRecipient(milestone);
+
+      step = "setup";
+      const chainSetup = await setupChainAndWalletForMilestone(milestone);
       if (!chainSetup) return;
 
       const { gapClient, walletSigner } = chainSetup;
 
-      const { milestoneInstance, communityUID } = await fetchMilestoneInstance(
-        gapClient,
-        data,
-        milestone
-      );
-
+      step = "attest";
       const milestoneCompletedSchema = gapClient.findSchema("MilestoneCompleted");
       const completionAttestation = new MilestoneCompleted({
         data: sanitizeObject({
@@ -607,7 +618,7 @@ export const useMilestoneCompletionVerification = ({
         }),
         refUID: milestone.uid as Hex,
         schema: milestoneCompletedSchema,
-        recipient: milestoneInstance.recipient,
+        recipient,
       });
       const payloads = [await completionAttestation.payloadFor(0)];
 
@@ -618,14 +629,10 @@ export const useMilestoneCompletionVerification = ({
       changeStepperStep("indexing");
 
       const txHash = result?.tx[0]?.hash || undefined;
-      await notifyIndexerAndInvalidateCache(
-        txHash,
-        milestoneInstance.chainID,
-        payloads.length,
-        communityUID
-      );
+      await notifyIndexerAndInvalidateCache(txHash, +milestone.chainId, payloads.length);
 
-      await pollForCompletionStatus(gapClient, data, milestone, programId, signal);
+      step = "poll";
+      await pollForCompletionStatus(projectUID, milestone, signal);
 
       if (signal.aborted) return;
 
@@ -637,18 +644,7 @@ export const useMilestoneCompletionVerification = ({
       if (isAbortError(error)) {
         return;
       }
-      console.error("Error completing milestone:", error);
-
-      const walletError = error as { message?: string; code?: number };
-      if (walletError?.message?.includes("User rejected") || walletError?.code === 4001) {
-        showError("Completion cancelled");
-      } else {
-        showError("Failed to complete milestone");
-        errorManager("Error completing milestone", error, {
-          milestoneUID: milestone.uid,
-          address,
-        });
-      }
+      reportMilestoneFailure(error, "complete", step, milestone, projectUID);
     } finally {
       if (!signal.aborted) {
         setIsCompleting(false);

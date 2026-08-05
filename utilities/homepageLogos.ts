@@ -44,8 +44,13 @@ type MarqueeLeadEntry = { communitySlug: string } | MarqueeLogo;
  * The opening run of the carousel, in order. Everything not named here follows
  * in `chosenCommunities` order, so the first faces a visitor sees are the ones
  * we chose rather than whichever community happens to sit at the top of the list.
+ *
+ * The marquee starts scrolling on mount, so whatever sits first has already
+ * drifted off-screen by the time the page has settled. Regen Coordination leads
+ * as that buffer, which keeps UNICEF in view during the first read.
  */
 const MARQUEE_LEAD: MarqueeLeadEntry[] = [
+  { communitySlug: "regen-coordination" },
   { communitySlug: "unicef" },
   PARTNER_LOGOS.sanFranciscoFoundation,
   PARTNER_LOGOS.trinityCenter,

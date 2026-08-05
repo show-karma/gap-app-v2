@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "Whitelabel Funding Platforms for DAO Ecosystems";
 const description =
@@ -12,9 +15,11 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/whitelabel-funding-platforms",
+  path: PAGES.KNOWLEDGE.ARTICLE("whitelabel-funding-platforms"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("whitelabel-funding-platforms");
 
 export default function WhitelabelFundingPlatformsPage() {
   return (
@@ -22,29 +27,34 @@ export default function WhitelabelFundingPlatformsPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
           {
             label: "Whitelabel Funding Platforms",
-            href: "/knowledge/whitelabel-funding-platforms",
+            href: PAGES.KNOWLEDGE.ARTICLE("whitelabel-funding-platforms"),
           },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/whitelabel-funding-platforms"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("whitelabel-funding-platforms")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Whitelabel Funding Platforms", url: "/knowledge/whitelabel-funding-platforms" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "Whitelabel Funding Platforms",
+            url: PAGES.KNOWLEDGE.ARTICLE("whitelabel-funding-platforms"),
+          },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Whitelabel Funding Platforms for DAO Ecosystems</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">Whitelabel Funding Platforms for DAO Ecosystems</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -87,19 +97,19 @@ export default function WhitelabelFundingPlatformsPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
             </Link>
             <Link
-              href="/knowledge/funding-distribution-mechanisms"
+              href={PAGES.KNOWLEDGE.ARTICLE("funding-distribution-mechanisms")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Funding distribution mechanisms

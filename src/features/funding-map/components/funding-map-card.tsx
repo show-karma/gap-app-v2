@@ -218,13 +218,36 @@ export function FundingMapCard({
   );
 
   if (href) {
+    // Progressive enhancement when both href and onClick are provided
+    // (funding-map list): the server HTML carries a real, followable
+    // anchor to the program detail page, while a JS click is intercepted
+    // to keep the existing dialog behavior. Without onClick (community
+    // funding-opportunities grid) the anchor navigates as before.
+    const opensDialog = Boolean(onClick);
     return (
-      <Link href={href} className="no-underline" tabIndex={-1}>
+      <Link
+        href={href}
+        className="no-underline"
+        tabIndex={opensDialog ? 0 : -1}
+        onClick={
+          opensDialog
+            ? (event) => {
+                event.preventDefault();
+                handleClick();
+              }
+            : undefined
+        }
+        aria-label={
+          opensDialog ? `View funding program: ${title ?? "Untitled program"}` : undefined
+        }
+      >
         <Card
           className={cardClassName}
-          onClick={handleClick}
-          tabIndex={0}
-          aria-label={`View funding program: ${title ?? "Untitled program"}`}
+          onClick={opensDialog ? undefined : handleClick}
+          tabIndex={opensDialog ? -1 : 0}
+          aria-label={
+            opensDialog ? undefined : `View funding program: ${title ?? "Untitled program"}`
+          }
         >
           {cardContent}
         </Card>
