@@ -39,6 +39,7 @@ const staticPages = [
   "/knowledge/onchain-project-profiles",
   "/knowledge/how-funders-use-project-profiles",
   "/knowledge/nonprofit-due-diligence",
+  "/data/foundation-funding",
   "/mcp/connect",
   PAGES.BLOG,
   "/foundations",

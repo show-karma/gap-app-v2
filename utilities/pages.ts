@@ -189,6 +189,9 @@ export const PAGES = {
     ROOT: `/knowledge`,
     ARTICLE: (slug: string) => `/knowledge/${slug}`,
   },
+  DATA: {
+    FOUNDATION_FUNDING: `/data/foundation-funding`,
+  },
   BLOG: `/blog`,
   BLOG_POST: (slug: string) => `/blog/${slug}`,
   BLOG_PREVIEW_EXIT: `/api/blog/preview/exit`,
