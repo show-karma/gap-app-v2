@@ -3,6 +3,7 @@ import type { MockUserRole } from "../data/users";
 import { type AnvilConfig, anvilFixture } from "./anvil.fixture";
 import { mock404, mockError, mockJson, setupApiMocks } from "./api-mocks";
 import { type LoginOptions, loginAs, logout } from "./auth";
+import { suppressOnboardingTours } from "./onboarding";
 import { type RpcFailureOptions, rpcFixture } from "./rpc.fixture";
 import { type WalletConfig, walletFixture } from "./wallet.fixture";
 import { setupWhitelabelContext, TENANTS, type TenantConfig } from "./whitelabel";
@@ -31,10 +32,21 @@ export const test = base.extend<{
   withWallet: (overrides?: Partial<WalletConfig>) => Promise<WalletConfig>;
   withRpcFailure: (options: RpcFailureOptions) => Promise<() => Promise<void>>;
   withRpcFailures: (failures: RpcFailureOptions[]) => Promise<() => Promise<void>>;
+  suppressTours: void;
 }>({
   loginAs: async ({ page }, use) => {
     await use((role: MockUserRole, options?: LoginOptions) => loginAs(page, role, options));
   },
+
+  // Auto-used: a walkthrough spotlight would cover the page and swallow clicks
+  // in specs that have nothing to do with onboarding.
+  suppressTours: [
+    async ({ page }, use) => {
+      await suppressOnboardingTours(page);
+      await use();
+    },
+    { auto: true },
+  ],
 
   withApiMocks: async ({ page }, use) => {
     await use((overrides?: Record<string, RouteHandler>) => setupApiMocks(page, overrides));
@@ -88,5 +100,6 @@ export type { TenantConfig, MockUserRole, WalletConfig, RpcFailureOptions, Anvil
 // Re-export standalone fixtures for tests that need only the Anvil fork
 // without the full GAP fixture set (e.g., *.anvil.spec.ts files).
 export { anvilFixture } from "./anvil.fixture";
+export { allowOnboardingTours } from "./onboarding";
 export { rpcFixture } from "./rpc.fixture";
 export { walletFixture } from "./wallet.fixture";
