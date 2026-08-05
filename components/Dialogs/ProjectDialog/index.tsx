@@ -85,25 +85,34 @@ const socialMediaInputStyle =
   "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm rounded-md";
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
+type ProjectDialogButton = {
+  text?: string;
+  icon?: ReactNode;
+  iconSide?: "left" | "right";
+  styleClass: string;
+  /** Fired alongside opening the dialog, for callers that track the entry point. */
+  onClick?: () => void;
+};
+
 type ProjectDialogProps = {
-  buttonElement?: {
-    text?: string;
-    icon?: ReactNode;
-    iconSide?: "left" | "right";
-    styleClass: string;
-  } | null;
+  buttonElement?: ProjectDialogButton | null;
   projectToUpdate?: ProjectResponse;
   previousContacts?: Contact[];
   useEditModalStore?: boolean; // New prop to control which modal state to use
 };
 
+// Annotated rather than inlined in the parameter list: an inline default widens
+// `buttonElement` to a union with the literal's own type, which then drops the
+// optional members the caller may pass.
+const DEFAULT_BUTTON: ProjectDialogButton = {
+  icon: <PlusIcon className="h-4 w-4 text-white" />,
+  iconSide: "left",
+  text: "Add Project",
+  styleClass: "",
+};
+
 export const ProjectDialog: FC<ProjectDialogProps> = ({
-  buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-white" />,
-    iconSide: "left",
-    text: "Add Project",
-    styleClass: "",
-  },
+  buttonElement = DEFAULT_BUTTON,
   projectToUpdate,
   previousContacts,
   useEditModalStore = false, // Default to false for create mode
@@ -1529,7 +1538,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       {buttonElement ? (
         <Button
           type="button"
-          onClick={openModal}
+          onClick={() => {
+            buttonElement.onClick?.();
+            openModal();
+          }}
           id="new-project-button"
           className={buttonElement.styleClass}
         >

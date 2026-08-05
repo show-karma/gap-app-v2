@@ -1,8 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { memo } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { Link } from "@/src/components/navigation/Link";
+import { useOnboardingScope } from "@/src/features/onboarding/hooks/use-onboarding-scope";
+import {
+  type OnboardingPersona,
+  trackPersonaSelected,
+  trackPickerShown,
+} from "@/src/features/onboarding/lib/analytics";
 import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import type { DashboardModuleKey } from "./module";
@@ -21,6 +27,8 @@ interface GettingStartedCard {
    * module, the card is redundant and is filtered out of the secondary row.
    */
   moduleKey?: DashboardModuleKey;
+  /** Reported when the card is chosen, so the funnel can be split by persona. */
+  persona?: OnboardingPersona;
   icon: string;
   title: string;
   body: string;
@@ -29,11 +37,33 @@ interface GettingStartedCard {
 
 const CARDS: GettingStartedCard[] = [
   {
+    key: "advisor",
+    moduleKey: "advisor",
+    persona: "advisor",
+    icon: "compass",
+    title: "Research nonprofits to fund",
+    body: "Build a ranked shortlist for any cause, place, or grant size — every pick backed by IRS 990 filings.",
+    cta: {
+      label: "Set up Nonprofit Research",
+      icon: "arrow",
+      href: PAGES.DONOR_RESEARCH.ONBOARDING,
+    },
+  },
+  {
+    key: "find-funders",
+    persona: "nonprofit",
+    icon: "search",
+    title: "Find funders for your nonprofit",
+    body: "Search foundations and grants aligned to your mission, and build a prospect list from what you find.",
+    cta: { label: "Open Find Funders", icon: "arrow", href: NON_PROFITS_PAGES.HOME },
+  },
+  {
     key: "project",
     moduleKey: "projects",
+    persona: "project-owner",
     icon: "rocket",
-    title: "Create a project",
-    body: "Set up a project profile to track grants and share milestone progress with funders.",
+    title: "Track a funded project",
+    body: "Set up a project profile to record grants and share milestone progress with the funders backing you.",
     cta: { label: "Create project", icon: "plus", dialog: "project" },
   },
   {
@@ -52,18 +82,17 @@ const CARDS: GettingStartedCard[] = [
     body: "Discover grant communities on Karma and the projects they fund.",
     cta: { label: "Browse communities", icon: "arrow", href: PAGES.COMMUNITIES },
   },
-  {
-    key: "funders",
-    moduleKey: "advisor",
-    icon: "compass",
-    title: "Find funders",
-    body: "Search foundations and grants aligned to a mission — grounded in IRS 990 filings.",
-    cta: { label: "Browse Find Funders", icon: "arrow", href: NON_PROFITS_PAGES.HOME },
-  },
 ];
 
-const Card = memo(function Card({ card }: { card: GettingStartedCard }) {
+const Card = memo(function Card({
+  card,
+  onSelect,
+}: {
+  card: GettingStartedCard;
+  onSelect: (card: GettingStartedCard) => void;
+}) {
   const ctaClass = cn(BTN_BASE, BTN_SM, BTN_OUTLINE, "mt-auto self-start");
+  const handleSelect = () => onSelect(card);
   return (
     <div className="flex flex-col gap-3 rounded-sf-card bg-sf-card p-5">
       <div className="flex items-center gap-2.5">
@@ -85,10 +114,11 @@ const Card = memo(function Card({ card }: { card: GettingStartedCard }) {
             // sets the custom `shadow-primary-button`, which twMerge doesn't treat
             // as a shadow-group conflict, so a plain `shadow-none` wouldn't win.
             styleClass: cn(ctaClass, "!shadow-none"),
+            onClick: handleSelect,
           }}
         />
       ) : (
-        <Link className={ctaClass} href={card.cta.href}>
+        <Link className={ctaClass} href={card.cta.href} onClick={handleSelect}>
           <SoftIcon name={card.cta.icon} className="h-4 w-4" />
           {card.cta.label}
         </Link>
@@ -121,16 +151,34 @@ export function GettingStartedView({
   activeModuleKeys,
   variant = "full",
 }: GettingStartedViewProps = {}) {
+  const { scope, isAuthenticated } = useOnboardingScope();
+  const userId = isAuthenticated ? scope : undefined;
+  const isSecondary = variant === "secondary";
+
   const active = new Set(activeModuleKeys ?? []);
   const cards = CARDS.filter((card) => !card.moduleKey || !active.has(card.moduleKey));
 
+  // Reported once per first-run render. The secondary row is a browse surface
+  // rather than a choice, so it stays out of the funnel.
+  useEffect(() => {
+    if (isSecondary || cards.length === 0) return;
+    trackPickerShown({ userId, source: "cold" });
+  }, [isSecondary, cards.length, userId]);
+
+  const handleSelect = useCallback(
+    (card: GettingStartedCard) => {
+      if (!card.persona) return;
+      trackPersonaSelected({ userId, persona: card.persona, source: "picker" });
+    },
+    [userId]
+  );
+
   if (cards.length === 0) return null;
 
-  const isSecondary = variant === "secondary";
-  const heading = isSecondary ? "Explore more on Karma" : "Get started with Karma";
+  const heading = isSecondary ? "Explore more on Karma" : "What brings you to Karma?";
   const subtitle = isSecondary
     ? "Other ways to make the most of your dashboard."
-    : "Pick a starting point — your dashboard fills in as you go.";
+    : "Pick where you want to start — your dashboard fills in as you go.";
 
   return (
     <section
@@ -155,7 +203,7 @@ export function GettingStartedView({
         )}
       >
         {cards.map((card) => (
-          <Card key={card.key} card={card} />
+          <Card key={card.key} card={card} onSelect={handleSelect} />
         ))}
       </div>
     </section>

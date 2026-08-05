@@ -227,7 +227,7 @@ describe("Dashboard", () => {
 
     // With no role modules the authenticated shell renders the getting-started
     // cards rather than a loading skeleton.
-    expect(screen.getByText("Get started with Karma")).toBeInTheDocument();
+    expect(screen.getByText("What brings you to Karma?")).toBeInTheDocument();
   });
 
   it("hides the projects tile when the user has no projects and no roles", () => {
@@ -316,7 +316,7 @@ describe("Dashboard", () => {
 
       // Farcaster users have no wallet address but are authenticated.
       // The dashboard should NOT be permanently stuck on the loading skeleton.
-      expect(screen.getByText("Get started with Karma")).toBeInTheDocument();
+      expect(screen.getByText("What brings you to Karma?")).toBeInTheDocument();
     });
 
     it("should not show loading skeleton when authenticated without address", () => {
@@ -555,11 +555,21 @@ describe("Dashboard", () => {
     it("shows getting-started cards when the user matches no role module", () => {
       render(<Dashboard />, { wrapper: createWrapper() });
 
-      expect(screen.getByText("Get started with Karma")).toBeInTheDocument();
-      expect(screen.getByText("Create a project")).toBeInTheDocument();
+      expect(screen.getByText("What brings you to Karma?")).toBeInTheDocument();
+      expect(screen.getByText("Track a funded project")).toBeInTheDocument();
       expect(screen.getByText("Apply for funding")).toBeInTheDocument();
       expect(screen.getByText("Explore communities")).toBeInTheDocument();
-      expect(screen.getByText("Find funders")).toBeInTheDocument();
+      expect(screen.getByText("Research nonprofits to fund")).toBeInTheDocument();
+      expect(screen.getByText("Find funders for your nonprofit")).toBeInTheDocument();
+    });
+
+    it("sends an advisor to onboarding rather than the nonprofits' funder search", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByRole("link", { name: /Set up Nonprofit Research/ })).toHaveAttribute(
+        "href",
+        "/nonprofit-research/onboarding"
+      );
     });
 
     it("holds a skeleton instead of getting-started cards while the advisor check is undecided", () => {
@@ -567,7 +577,7 @@ describe("Dashboard", () => {
 
       const { container } = render(<Dashboard />, { wrapper: createWrapper() });
 
-      expect(screen.queryByText("Get started with Karma")).not.toBeInTheDocument();
+      expect(screen.queryByText("What brings you to Karma?")).not.toBeInTheDocument();
       expect(container.querySelectorAll(".animate-dashv3-pulse").length).toBeGreaterThan(0);
     });
 
@@ -584,13 +594,13 @@ describe("Dashboard", () => {
 
       expect(screen.getByText("My projects")).toBeInTheDocument();
       // Secondary variant heading, not the first-run one.
-      expect(screen.queryByText("Get started with Karma")).not.toBeInTheDocument();
+      expect(screen.queryByText("What brings you to Karma?")).not.toBeInTheDocument();
       expect(screen.getByText("Explore more on Karma")).toBeInTheDocument();
       // The user already has projects, so that card is filtered out; the rest remain.
-      expect(screen.queryByText("Create a project")).not.toBeInTheDocument();
+      expect(screen.queryByText("Track a funded project")).not.toBeInTheDocument();
       expect(screen.getByText("Apply for funding")).toBeInTheDocument();
       expect(screen.getByText("Explore communities")).toBeInTheDocument();
-      expect(screen.getByText("Find funders")).toBeInTheDocument();
+      expect(screen.getByText("Research nonprofits to fund")).toBeInTheDocument();
     });
 
     it("shows My reviews for a community admin/owner with pending applications, even without an explicit reviewer role", () => {
