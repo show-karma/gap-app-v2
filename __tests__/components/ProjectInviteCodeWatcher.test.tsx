@@ -28,13 +28,19 @@ vi.mock("@/store/modals/contributorProfile", () => ({
 
 import { ProjectInviteCodeWatcher } from "@/components/Pages/Project/v2/Layout/ProjectInviteCodeWatcher";
 
-/** Mirrors how ProjectProfileLayout renders it: inside a local Suspense. */
-function renderWatcher() {
-  return render(
+/**
+ * Mirrors how ProjectProfileLayout renders it: inside a local Suspense, with
+ * the open-once latch owned by the caller.
+ */
+function renderWatcher(hasOpened = false) {
+  const onOpen = vi.fn();
+  const ui = (opened: boolean) => (
     <Suspense fallback={null}>
-      <ProjectInviteCodeWatcher />
+      <ProjectInviteCodeWatcher hasOpened={opened} onOpen={onOpen} />
     </Suspense>
   );
+  const result = render(ui(hasOpened));
+  return { ...result, onOpen, ui };
 }
 
 describe("ProjectInviteCodeWatcher", () => {
@@ -45,29 +51,39 @@ describe("ProjectInviteCodeWatcher", () => {
 
   it("opens the contributor profile modal when invite-code is in the URL", () => {
     mockInviteCode = "0x7232abc123";
-    renderWatcher();
+    const { onOpen } = renderWatcher();
 
     expect(mockOpenContributorProfileModal).toHaveBeenCalledTimes(1);
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
   it("does not open the modal when no invite-code is present", () => {
     mockInviteCode = null;
-    renderWatcher();
+    const { onOpen } = renderWatcher();
+
+    expect(mockOpenContributorProfileModal).not.toHaveBeenCalled();
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it("does not open the modal when the caller says it has already opened", () => {
+    mockInviteCode = "0x7232abc123";
+    renderWatcher(true);
 
     expect(mockOpenContributorProfileModal).not.toHaveBeenCalled();
   });
 
-  it("opens the modal only once, so closing it does not immediately re-open it", () => {
+  it("stays closed after a remount once the caller has latched — the caller owns the guard", () => {
+    // ProjectProfileLayout renders this from branch returns with different root
+    // element types, so React remounts it when the project resolves. A guard
+    // held in local state would reset here and re-open the modal.
     mockInviteCode = "0x7232abc123";
-    const { rerender } = renderWatcher();
+    const { unmount, ui } = renderWatcher(false);
 
     expect(mockOpenContributorProfileModal).toHaveBeenCalledTimes(1);
 
-    rerender(
-      <Suspense fallback={null}>
-        <ProjectInviteCodeWatcher />
-      </Suspense>
-    );
+    // Remount with the caller's latch now set, as the layout would.
+    unmount();
+    render(ui(true));
 
     expect(mockOpenContributorProfileModal).toHaveBeenCalledTimes(1);
   });

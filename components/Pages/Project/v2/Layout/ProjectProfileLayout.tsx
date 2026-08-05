@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { type ReactNode, Suspense, useEffect, useState } from "react";
+import { type ReactNode, Suspense, useCallback, useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const ProgressDialog = dynamic(
@@ -130,10 +130,17 @@ export function ProjectProfileLayout({
    * HTML. Rendered in every branch below (including loading and error) so the
    * invite modal still opens while the project is resolving, matching the
    * behaviour of the effect this replaced.
+   *
+   * The open-once latch stays HERE rather than inside the watcher: the branch
+   * returns below have different root element types, so React remounts the
+   * watcher when the project resolves. Local state in the child would reset on
+   * that remount and re-open a modal the user had already closed.
    */
+  const [hasOpenedInviteModal, setHasOpenedInviteModal] = useState(false);
+  const markInviteModalOpened = useCallback(() => setHasOpenedInviteModal(true), []);
   const inviteCodeWatcher = (
     <Suspense fallback={null}>
-      <ProjectInviteCodeWatcher />
+      <ProjectInviteCodeWatcher hasOpened={hasOpenedInviteModal} onOpen={markInviteModalOpened} />
     </Suspense>
   );
 
