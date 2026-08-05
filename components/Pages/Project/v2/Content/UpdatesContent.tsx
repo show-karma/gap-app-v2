@@ -229,7 +229,7 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
    * array, so the old `!allUpdates` guard was dead and only `isUpdating`
    * drove the skeleton, and a request that never settles never clears it.
    */
-  const showServerFeed = Boolean(serverFeed) && !hasUpdates && !isUpdatesError;
+  const showServerFeed = Boolean(serverFeed) && !hasUpdates;
 
   // Skeleton while a fetch is genuinely in flight (initial load or a filter
   // change). Distinct from the error branch below, which is terminal.
@@ -258,26 +258,43 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
       {/* Activity Feed with Suspense boundary. Before hydration we render the
           server-rendered twin (serverFeed) so SSR and the client's first render
           match; after mount the interactive feed takes over. */}
+      {/* The error affordance is ALWAYS rendered when the updates query fails,
+          even if stale or server-prefetched data is still on screen. QA found
+          that suppressing it whenever data existed left a blocked request
+          looking like an ordinary page — the filters quietly went inert with no
+          message and no way to retry. Content stays below; this sits above it. */}
+      {isUpdatesError ? (
+        <div
+          className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-border p-6 text-center"
+          role="alert"
+          data-testid="updates-content-error"
+        >
+          <p className="text-sm text-muted-foreground">
+            {hasUpdates
+              ? "We couldn't refresh this project's updates, so you may be seeing older activity."
+              : "We couldn't load this project's updates."}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              void refetch();
+            }}
+            className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-blue/90"
+          >
+            Try again
+          </button>
+        </div>
+      ) : null}
+
       <div className="mt-6">
         {(!hydrated || showServerFeed) && serverFeed ? (
           serverFeed
         ) : isUpdatesError && !hasUpdates ? (
           <div
             className="flex flex-col items-center gap-3 rounded-xl border border-border p-8 text-center"
-            data-testid="updates-content-error"
+            data-testid="updates-content-empty-after-error"
           >
-            <p className="text-sm text-muted-foreground">
-              We couldn&apos;t load this project&apos;s updates.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                void refetch();
-              }}
-              className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-blue/90"
-            >
-              Try again
-            </button>
+            <p className="text-sm text-muted-foreground">No updates to show right now.</p>
           </div>
         ) : isLoading ? (
           <ActivityFeedSkeleton itemCount={4} />

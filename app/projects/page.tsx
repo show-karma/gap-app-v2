@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import {
   ProjectsExplorer,
   ProjectsHeroSection,
-  ProjectsLoading,
   ProjectsStatsSection,
 } from "@/components/Pages/Projects";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
@@ -29,9 +27,14 @@ export default async function Projects({
 }: {
   searchParams: Promise<ProjectsExplorerSearchParams>;
 }) {
-  // Parse the request up front, then stream: the hero + JSON-LD render
-  // immediately while the indexer fetch is deferred into the Suspense boundary
-  // below (Vercel async-defer guidance). The route never blocks on the network.
+  // /projects ships in the sitemap, so the project list itself has to be in
+  // the initially visible HTML (DEV-612). The list used to sit behind an
+  // in-page <Suspense>, which streamed all ~3k projects into a hidden
+  // `<div hidden id="S:0">` chunk while the visible document showed only a
+  // skeleton — the exact pattern this route set exists to remove, just
+  // expressed with an explicit boundary instead of a loading.tsx. Awaiting the
+  // loader here trades the instant skeleton for a crawler-readable list, the
+  // same trade every other route in SITEMAP_NO_LOADING makes.
   const initialState = parseProjectsExplorerRequest(await searchParams);
 
   return (
@@ -42,9 +45,7 @@ export default async function Projects({
         url="/projects"
       />
       <ProjectsHeroSection />
-      <Suspense fallback={<ProjectsLoading />}>
-        <ProjectsExplorerLoader initialState={initialState} />
-      </Suspense>
+      <ProjectsExplorerLoader initialState={initialState} />
       <ProjectsStatsSection />
     </main>
   );

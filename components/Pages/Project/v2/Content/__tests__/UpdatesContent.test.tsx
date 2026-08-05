@@ -387,12 +387,27 @@ describe("UpdatesContent — feed resilience", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it("prefers the error state over a stale server feed once the query has failed", () => {
+  it("shows the error affordance alongside the server feed rather than hiding either", () => {
     mockProjectProfile({ allUpdates: [], isUpdatesError: true });
 
     render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
 
+    // Content stays readable AND the failure is visible with a way to recover.
+    expect(screen.getByTestId("server-feed")).toBeInTheDocument();
     expect(screen.getByTestId("updates-content-error")).toBeInTheDocument();
+  });
+
+  it("still surfaces the error when stale data is on screen, so a failed refresh is never silent", () => {
+    // QA scenario A1: blocking the /updates request left the filters inert with
+    // no message and no retry, because the error was suppressed whenever data
+    // existed (including data seeded by the server prefetch).
+    mockProjectProfile({ allUpdates: [{ uid: "1" }], isUpdatesError: true });
+
+    render(<UpdatesContent />);
+
+    expect(screen.getByTestId("updates-content-error")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.getByTestId("activity-feed")).toBeInTheDocument();
   });
 
   it("shows the interactive feed once the client query returns data", () => {
