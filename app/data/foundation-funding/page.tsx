@@ -81,6 +81,30 @@ const METHODOLOGY_SECTIONS: ReadonlyArray<{ heading: string; body: React.ReactNo
   },
 ];
 
+/**
+ * Renders "Find Funders" inside a plain-text FAQ answer as a link to the
+ * product page. Visible-only enhancement: the FAQPage JSON-LD keeps the raw
+ * string, since schema.org answers are text (same convention as the
+ * find-funders FAQ). First occurrence only; answers without the phrase pass
+ * through unchanged.
+ */
+function linkifyFindFunders(answer: string, linkClass: string): React.ReactNode {
+  const phrase = "Find Funders";
+  const index = answer.indexOf(phrase);
+  if (index === -1) {
+    return answer;
+  }
+  return (
+    <>
+      {answer.slice(0, index)}
+      <Link href={NON_PROFITS_PAGES.HOME} className={linkClass}>
+        {phrase}
+      </Link>
+      {answer.slice(index + phrase.length)}
+    </>
+  );
+}
+
 const CANNOT_TELL_YOU: ReadonlyArray<string> = [
   "What a funder will do next. Filings record grants already paid, not future priorities or open funding opportunities.",
   "What happened in the last year or two. The filing lag means the newest grants are often not yet on record.",
@@ -236,7 +260,7 @@ export default function FoundationFundingDataPage() {
               <div key={faq.question}>
                 <dt className="text-lg font-semibold text-foreground">{faq.question}</dt>
                 <dd className="m-0 mt-2 max-w-[68ch] text-base leading-7 text-muted-foreground">
-                  {faq.answer}
+                  {linkifyFindFunders(faq.answer, linkClass)}
                 </dd>
               </div>
             ))}
@@ -244,9 +268,11 @@ export default function FoundationFundingDataPage() {
         </section>
 
         {/* Closing: one quiet, tinted destination block. */}
+        {/* Negative margins mirror the inner padding so the text stays on the
+            page's content edge while the tint bleeds past it. */}
         <section
           aria-labelledby="use-heading"
-          className="mt-20 rounded-2xl bg-primary-500/5 px-6 py-8 dark:bg-primary-400/10 md:mt-28 md:px-10 md:py-10"
+          className="-mx-4 mt-20 rounded-2xl bg-primary-500/5 px-4 py-8 dark:bg-primary-400/10 sm:-mx-6 sm:px-6 md:-mx-10 md:mt-28 md:px-10 md:py-10"
         >
           <h2 id="use-heading" className="text-2xl font-bold tracking-tight text-foreground">
             Use the data
