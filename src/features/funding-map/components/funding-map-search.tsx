@@ -112,8 +112,11 @@ export function FundingMapSearch() {
         >
           <div className="flex flex-1 items-center gap-2">
             <MagnifyingGlassIcon className="h-5 w-5 flex-shrink-0" />
+            {/* Persistent label: the placeholder disappears once the field has
+                a value, leaving the control unnamed for assistive tech. */}
             <Input
               type="text"
+              aria-label="Search funding opportunities"
               placeholder="Search opportunities"
               value={inputValue}
               onChange={(e) => handleInputChange(e.target.value)}
