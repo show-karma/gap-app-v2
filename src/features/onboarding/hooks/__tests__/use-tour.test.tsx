@@ -30,12 +30,19 @@ vi.mock("@/utilities/whitelabel-context", () => ({ useWhitelabel: () => whitelab
 
 const SURFACE = surfaceFor(GETTING_STARTED_TOUR);
 
+/** GETTING_STARTED_TOUR is desktop-only; jsdom reports no viewport by default. */
+function setViewport(isDesktop: boolean) {
+  vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: isDesktop }));
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
   scope.value = { scope: "did:privy:me", isReady: true, isAuthenticated: true };
   whitelabel.value = { isWhitelabel: false };
   storage.shouldAutoShow.mockReturnValue(true);
   runTour.mockResolvedValue({ status: "completed" });
+  setViewport(true);
 });
 
 describe("gating", () => {
@@ -54,6 +61,15 @@ describe("gating", () => {
 
     const { result } = renderHook(() => useTour());
     expect(result.current.canRunTours).toBe(false);
+    await result.current.startTour(GETTING_STARTED_TOUR);
+
+    expect(runTour).not.toHaveBeenCalled();
+  });
+
+  it("skips a desktop-only tour on a narrow viewport", async () => {
+    setViewport(false);
+
+    const { result } = renderHook(() => useTour());
     await result.current.startTour(GETTING_STARTED_TOUR);
 
     expect(runTour).not.toHaveBeenCalled();

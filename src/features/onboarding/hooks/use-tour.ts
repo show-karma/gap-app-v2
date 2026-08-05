@@ -8,6 +8,14 @@ import { markCompleted, markDismissed, shouldAutoShow } from "../lib/storage";
 import { surfaceFor, type TourDefinition } from "../lib/tours";
 import { useOnboardingScope } from "./use-onboarding-scope";
 
+/** Matches Tailwind's `lg`, the breakpoint the desktop navbar appears at. */
+const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
+
+function isDesktopViewport(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
+}
+
 export interface StartTourOptions {
   /**
    * True for a tour the app offers on its own. Automatic runs respect the
@@ -42,6 +50,7 @@ export function useTour(): UseTourResult {
   const startTour = useCallback(
     async (tour: TourDefinition, options: StartTourOptions = {}) => {
       if (!canRunTours || isRunning.current) return;
+      if (tour.desktopOnly && !isDesktopViewport()) return;
 
       const surface = surfaceFor(tour);
       if (options.auto && !shouldAutoShow(scope, surface)) return;

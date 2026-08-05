@@ -7,6 +7,7 @@ import { BentoGrid } from "@/components/Pages/Dashboard/v3/BentoGrid";
 import { GettingStartedView } from "@/components/Pages/Dashboard/v3/GettingStartedView";
 import { SkeletonList } from "@/components/Pages/Dashboard/v3/primitives";
 import { signalDashboardRoutePainted } from "@/components/Pages/Dashboard/v3/useDashboardTransition";
+import { GettingStartedSignpost } from "@/src/features/onboarding/components/getting-started-signpost";
 
 /**
  * `/dashboard` — the bento overview. Renders one link tile per active role
@@ -32,6 +33,7 @@ export default function DashboardOverviewPage() {
       <div className="flex flex-col gap-[18px]">
         <BentoGrid modules={modules} />
         <GettingStartedView activeModuleKeys={modules.map((m) => m.key)} variant="secondary" />
+        <GettingStartedSignpost ready />
       </div>
     );
   } else if (advisorLoading) {
