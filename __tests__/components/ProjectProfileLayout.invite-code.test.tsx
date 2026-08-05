@@ -75,15 +75,6 @@ vi.mock("@/store/modals/contributorProfile", () => ({
 }));
 
 // Mock all child components to avoid deep dependency chains (Stripe, gasless, etc.)
-vi.mock("@/components/Pages/Project/v2/Skeletons", () => ({
-  ContentTabsSkeleton: () => <div data-testid="content-tabs-skeleton" />,
-  MobileHeaderMinifiedSkeleton: () => null,
-  MobileProfileContentSkeleton: () => null,
-  ProjectHeaderSkeleton: () => <div data-testid="header-skeleton" />,
-  ProjectSidePanelSkeleton: () => null,
-  ProjectStatsBarSkeleton: () => null,
-}));
-
 vi.mock("@/components/Pages/Project/v2/EndorsementsListDialog", () => ({
   EndorsementsListDialog: () => null,
 }));
