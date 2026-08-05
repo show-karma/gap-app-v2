@@ -5,6 +5,13 @@ export interface TourStep {
   anchor: TourAnchor;
   title: string;
   description: string;
+  /**
+   * The anchor is legitimately absent in some states — results that only exist
+   * after a search, a control only signed-in users get. Optional steps are
+   * dropped quietly; a required step going missing is reported, because that
+   * means the UI moved out from under the tour.
+   */
+  optional?: boolean;
 }
 
 export interface TourDefinition {
@@ -63,12 +70,14 @@ export const FIND_FUNDERS_TOUR: TourDefinition = {
       title: "Results come with the reasoning",
       description:
         "Every match is analysed against IRS 990 filings. Click any result to see the detail behind it.",
+      optional: true,
     },
     {
       anchor: TOUR_ANCHORS.findFundersTray,
       title: "Build a prospect list",
       description:
         "Bookmark funders as you go and they collect here, so a session of searching ends with a shortlist you can work from.",
+      optional: true,
     },
   ],
 };
@@ -118,6 +127,7 @@ export const PROJECT_WORKSPACE_TOUR: TourDefinition = {
       title: "Post milestones and updates",
       description:
         "Progress you publish here is what funders check when they're deciding whether to fund you again.",
+      optional: true,
     },
   ],
 };

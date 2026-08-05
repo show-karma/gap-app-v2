@@ -98,6 +98,21 @@ describe("missing anchors", () => {
     );
   });
 
+  it("drops an optional step quietly when its anchor is absent", async () => {
+    mountAnchor(TOUR_ANCHORS.findFundersSearch);
+    stubDriver({ reachLastStep: true });
+    const withOptional: TourDefinition = {
+      ...TOUR,
+      steps: [TOUR.steps[0], { ...TOUR.steps[1], optional: true }],
+    };
+
+    const outcome = await runTour(withOptional);
+
+    expect(outcome.status).toBe("completed");
+    expect(driverFactory.mock.calls[0][0].steps).toHaveLength(1);
+    expect(captureWithContext).not.toHaveBeenCalled();
+  });
+
   it("does not report when every anchor resolves", async () => {
     mountAnchor(TOUR_ANCHORS.findFundersSearch);
     mountAnchor(TOUR_ANCHORS.findFundersResults);

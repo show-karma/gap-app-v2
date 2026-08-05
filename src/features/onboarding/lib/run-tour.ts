@@ -48,7 +48,9 @@ export async function runTour(
   options: RunTourOptions = {}
 ): Promise<TourOutcome> {
   const present = tour.steps.filter((step) => findAnchor(step.anchor));
-  const missing = tour.steps.filter((step) => !findAnchor(step.anchor)).map((step) => step.anchor);
+  const missing = tour.steps
+    .filter((step) => !step.optional && !findAnchor(step.anchor))
+    .map((step) => step.anchor);
 
   if (missing.length > 0) reportMissingAnchors(tour, missing);
   if (present.length === 0) return { status: "unavailable" };
