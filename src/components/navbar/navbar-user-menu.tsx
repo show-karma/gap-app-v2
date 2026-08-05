@@ -2,6 +2,7 @@
 
 import {
   CircleUser,
+  Compass,
   Copy,
   FolderKanban,
   Heart,
@@ -28,6 +29,7 @@ import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useGettingStarted } from "@/store/modals/gettingStarted";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
@@ -92,6 +94,7 @@ export function NavbarUserMenu() {
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
   const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
+  const { open: openGettingStarted } = useGettingStarted();
   const [, copyToClipboard] = useCopyToClipboard();
 
   if (!ready) {
@@ -234,6 +237,12 @@ export function NavbarUserMenu() {
               <div className="flex items-center w-full flex-row gap-2">
                 <KeyRound className={menuStyles.itemIcon} />
                 <span className={menuStyles.itemText}>API Keys</span>
+              </div>
+            </MenubarItem>
+            <MenubarItem className="w-full cursor-pointer" onClick={openGettingStarted}>
+              <div className="flex items-center w-full flex-row gap-2">
+                <Compass className={menuStyles.itemIcon} />
+                <span className={menuStyles.itemText}>Getting started</span>
               </div>
             </MenubarItem>
             {isRegistryAllowed && (
