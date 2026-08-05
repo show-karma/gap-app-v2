@@ -6,6 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
+import { useAutoTour } from "@/src/features/onboarding/hooks/use-tour";
+import { useTourFromUrl } from "@/src/features/onboarding/hooks/use-tour-from-url";
+import {
+  dataTour,
+  TOUR_ANCHORS,
+  type TourAnchor,
+} from "@/src/features/onboarding/lib/tour-anchors";
+import { PROJECT_WORKSPACE_TOUR } from "@/src/features/onboarding/lib/tours";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -18,6 +26,21 @@ export type ContentTab =
   | "impact"
   | "team"
   | "contact-info";
+
+/**
+ * Tabs the project-workspace walkthrough points at. Declared here so the tab
+ * that carries an anchor is visible at the place the tabs are defined.
+ */
+const TAB_TOUR_ANCHORS: Partial<Record<ContentTab, TourAnchor>> = {
+  funding: TOUR_ANCHORS.projectGrants,
+  updates: TOUR_ANCHORS.projectUpdates,
+};
+
+/** `data-tour` for a tab that a walkthrough points at, or nothing. */
+function tourAttributes(tab: ContentTab) {
+  const anchor = TAB_TOUR_ANCHORS[tab];
+  return anchor ? dataTour(anchor) : {};
+}
 
 interface TabConfig {
   value: ContentTab;
@@ -53,6 +76,11 @@ export function ContentTabs({
 }: ContentTabsProps) {
   const params = useParams();
   const projectId = params?.projectId as string;
+
+  // The tabs this tour points at are part of this component, so it is offered
+  // from here — once a project exists there is something to walk through.
+  useAutoTour(PROJECT_WORKSPACE_TOUR, Boolean(projectId));
+  useTourFromUrl(PROJECT_WORKSPACE_TOUR, Boolean(projectId));
 
   // Authorization checks for Contact Info tab
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -156,6 +184,7 @@ export function ContentTabs({
             )}
             data-testid={`tab-${tab.value}`}
             data-state={isActive || isActiveOnDesktop ? "active" : "inactive"}
+            {...tourAttributes(tab.value)}
           >
             <span className="flex items-center gap-2">
               {tab.label}
