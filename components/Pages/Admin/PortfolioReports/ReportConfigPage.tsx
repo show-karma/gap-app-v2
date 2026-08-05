@@ -14,6 +14,7 @@ import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ChartSectionPicker } from "@/components/Pages/Admin/PortfolioReports/ChartSectionPicker";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -434,8 +435,14 @@ function ReportConfigPageLoaded({
       }
       setEditingId(null);
     } catch (error) {
-      toast.error(
-        `Failed to save config: ${error instanceof Error ? error.message : "Unknown error"}`
+      // SUPPRESSED: errorManager reports to Sentry and toasts the user
+      errorManager(
+        "Failed to save report config",
+        error,
+        { community: slug },
+        {
+          error: "Failed to save config.",
+        }
       );
     }
   };
@@ -447,8 +454,14 @@ function ReportConfigPageLoaded({
       toast.success("Config deactivated");
       if (editingId === deletingId) setEditingId(null);
     } catch (error) {
-      toast.error(
-        `Failed to delete config: ${error instanceof Error ? error.message : "Unknown error"}`
+      // SUPPRESSED: errorManager reports to Sentry and toasts the user
+      errorManager(
+        "Failed to delete report config",
+        error,
+        { community: slug },
+        {
+          error: "Failed to delete config.",
+        }
       );
     } finally {
       setDeletingId(null);
