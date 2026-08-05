@@ -8,6 +8,8 @@ import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShare
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { ProjectJsonLd } from "@/components/Seo/ProjectJsonLd";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
+import { projectUpdatesQueryKey } from "@/hooks/v2/useProjectUpdates";
+import { getProjectUpdates } from "@/services/project-updates.service";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { PAGES } from "@/utilities/pages";
@@ -47,34 +49,49 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 /**
- * Prefetch ONLY the core project record — the one query the semantic shell
- * cannot render without (DEV-612).
+ * Prefetch the two queries the first paint depends on — the core project
+ * record and the default Updates feed (DEV-612).
  *
  * `ProjectProfileLayout` is a client component that renders a full-page
  * skeleton and drops `children` entirely while `useProject` has no data, so
  * this prefetch has to stay on the blocking path: without it the shell never
  * renders and the page-body Suspense boundary below it never even mounts.
  *
- * The related grants/updates/impacts prefetch used to sit here too. It cost
- * three extra indexer round-trips on the critical path and contributed zero
- * server-rendered HTML — grants and impacts render only inside client-only tab
- * bodies (which keep their own route-local loading.tsx), and the overview
- * feed comes from `getProjectFeed` in the page below the boundary. Its only
- * visible effect was seeding the tab counters, which are hidden at zero
- * (ContentTabs renders a badge only when `count > 0`), so they simply appear
- * once the client queries resolve. Streaming it back in from a lower
- * HydrationBoundary was considered and rejected: the client `useQuery` mounts
- * before a late boundary arrives and fires its own request anyway, so it would
- * duplicate the fetch rather than replace it.
+ * Updates are prefetched alongside it. They seed the default Updates tab,
+ * whose client feed otherwise starts cold: QA found that a slow or hanging
+ * client updates request left the tab in a skeleton forever, replacing the
+ * server-rendered feed with nothing. UpdatesContent now holds the server feed
+ * until real data arrives and surfaces an error state, but seeding the cache
+ * keeps the healthy path from depending on that recovery at all.
+ *
+ * Grants and impacts are deliberately NOT prefetched here. They cost two more
+ * indexer round-trips on the critical path and render only inside client-only
+ * tab bodies that keep their own route-local loading.tsx, so they contribute
+ * no server-rendered HTML. Their only other visible effect was seeding the tab
+ * counters, which are hidden at zero (ContentTabs renders a badge only when
+ * `count > 0`), so they simply appear once the client queries resolve.
+ * Streaming them back in from a lower HydrationBoundary was considered and
+ * rejected: the client `useQuery` mounts before a late boundary arrives and
+ * fires its own request anyway, so it would duplicate the fetch rather than
+ * replace it.
  *
  * Failures are swallowed on purpose — client-side hooks refetch as a fallback.
  */
 async function safePrefetchProjectData(queryClient: QueryClient, projectId: string): Promise<void> {
   try {
-    await queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
-      queryFn: () => getProjectCachedData(projectId),
-    });
+    await Promise.all([
+      queryClient.prefetchQuery({
+        queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
+        queryFn: () => getProjectCachedData(projectId),
+      }),
+      queryClient.prefetchQuery({
+        // Same key factory the hook uses — a hand-written key silently misses
+        // (that is exactly how the previous updates prefetch became a no-op).
+        queryKey: projectUpdatesQueryKey(projectId),
+        queryFn: () => getProjectUpdates(projectId),
+        staleTime: 5 * 60 * 1000,
+      }),
+    ]);
   } catch (error) {
     // Catch any unexpected errors to prevent page from breaking
     if (process.env.NODE_ENV === "development") {
@@ -99,7 +116,7 @@ export default async function RootLayout(props: {
     },
   });
 
-  // Prefetch the core project record — the only query the semantic shell needs.
+  // Prefetch the project record and the default Updates feed.
   // Failures are logged but don't break the page - client hooks will fetch as fallback
   // Skip prefetch during E2E tests — the staging API may be behind Cloudflare,
   // and a server-side prefetch failure gets cached by React Query, preventing

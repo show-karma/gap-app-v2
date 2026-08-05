@@ -89,11 +89,8 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
 
   // Pass milestoneStatus to useProjectProfile so filtering happens server-side
   const apiMilestoneStatus = milestoneStatusFilter !== "all" ? milestoneStatusFilter : undefined;
-  const { allUpdates, milestonesCount, completedCount, isUpdating } = useProjectProfile(
-    projectId as string,
-    apiMilestoneStatus,
-    feedFilters
-  );
+  const { allUpdates, milestonesCount, completedCount, isUpdating, isUpdatesError, refetch } =
+    useProjectProfile(projectId as string, apiMilestoneStatus, feedFilters);
 
   // Count items per filter category for badge counters
   const counts = useMemo(() => {
@@ -222,8 +219,21 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
     [activeFilters, updateURL]
   );
 
-  // Show loading state while data is being fetched or filter is changing
-  const isLoading = !allUpdates || isUpdating;
+  const hasUpdates = (allUpdates?.length ?? 0) > 0;
+
+  /**
+   * Keep the server-rendered feed on screen until the client query actually
+   * produces something. It used to be discarded the moment this component
+   * hydrated, so a slow, hanging or failed updates request made real content
+   * vanish into a skeleton that never resolved — `allUpdates` is always an
+   * array, so the old `!allUpdates` guard was dead and only `isUpdating`
+   * drove the skeleton, and a request that never settles never clears it.
+   */
+  const showServerFeed = Boolean(serverFeed) && !hasUpdates && !isUpdatesError;
+
+  // Skeleton while a fetch is genuinely in flight (initial load or a filter
+  // change). Distinct from the error branch below, which is terminal.
+  const isLoading = isUpdating;
 
   return (
     <div className={className} data-testid="updates-content">
@@ -249,8 +259,26 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
           server-rendered twin (serverFeed) so SSR and the client's first render
           match; after mount the interactive feed takes over. */}
       <div className="mt-6">
-        {!hydrated && serverFeed ? (
+        {(!hydrated || showServerFeed) && serverFeed ? (
           serverFeed
+        ) : isUpdatesError && !hasUpdates ? (
+          <div
+            className="flex flex-col items-center gap-3 rounded-xl border border-border p-8 text-center"
+            data-testid="updates-content-error"
+          >
+            <p className="text-sm text-muted-foreground">
+              We couldn&apos;t load this project&apos;s updates.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                void refetch();
+              }}
+              className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-blue/90"
+            >
+              Try again
+            </button>
+          </div>
         ) : isLoading ? (
           <ActivityFeedSkeleton itemCount={4} />
         ) : (

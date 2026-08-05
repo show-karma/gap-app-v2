@@ -382,6 +382,31 @@ interface UseProjectUpdatesOptions {
   isAuthorized?: boolean;
 }
 
+/**
+ * The exact React Query key this hook reads.
+ *
+ * Exported so a server-side prefetch can seed the same entry. A previous
+ * prefetch hand-wrote `QUERY_KEYS.PROJECT.UPDATES(id)` — only the first two
+ * elements — which never matched the filter-aware key below, so it warmed a
+ * cache entry nothing read. Both sides go through this function now so the
+ * two cannot drift apart again.
+ */
+export function projectUpdatesQueryKey(
+  projectIdOrSlug: string,
+  milestoneStatus?: "pending" | "completed" | "verified",
+  filters?: UpdatesFeedFilters
+) {
+  return [
+    ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
+    milestoneStatus ?? null,
+    filters?.dateFrom ?? null,
+    filters?.dateTo ?? null,
+    filters?.hasAIEvaluation ?? null,
+    filters?.aiScoreMin ?? null,
+    filters?.aiScoreMax ?? null,
+  ] as const;
+}
+
 export function useProjectUpdates(
   projectIdOrSlug: string,
   milestoneStatus?: "pending" | "completed" | "verified",
@@ -394,16 +419,7 @@ export function useProjectUpdates(
   // the underlying primitives so its identity is stable across renders — the
   // refetch callback below depends on it.
   const queryKey = useMemo(
-    () =>
-      [
-        ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
-        milestoneStatus ?? null,
-        filters?.dateFrom ?? null,
-        filters?.dateTo ?? null,
-        filters?.hasAIEvaluation ?? null,
-        filters?.aiScoreMin ?? null,
-        filters?.aiScoreMax ?? null,
-      ] as const,
+    () => projectUpdatesQueryKey(projectIdOrSlug, milestoneStatus, filters),
     [
       projectIdOrSlug,
       milestoneStatus,
