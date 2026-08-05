@@ -1,28 +1,8 @@
-import { Suspense } from "react";
 import { CapabilitiesSection } from "./sections/CapabilitiesSection";
 import { CtaSection } from "./sections/CtaSection";
 import { FaqSection } from "./sections/FaqSection";
 import { HeroSection } from "./sections/HeroSection";
 import { ToolCatalogSection } from "./sections/ToolCatalogSection";
-
-function ToolCatalogFallback() {
-  return (
-    <section aria-busy="true" className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-4 py-12">
-      <header className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">
-          The full tool catalog
-        </h2>
-      </header>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {TOOL_SKELETON_KEYS.map((key) => (
-          <div key={key} className="h-24 animate-pulse rounded-lg border border-border bg-muted" />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-const TOOL_SKELETON_KEYS = ["a", "b", "c", "d"] as const;
 
 export function ForAgentsPage() {
   return (
@@ -30,13 +10,13 @@ export function ForAgentsPage() {
       <div className="flex w-full max-w-[1920px] flex-col gap-4">
         <HeroSection />
         <CapabilitiesSection />
-        {/* The tool catalog awaits the indexer's /mcp/tools fetch. Isolating it
-            in its own Suspense boundary keeps the rest of the page — the FAQ
-            answers above all — from being dragged into a hidden streamed chunk
-            on this page's own account (DEV-612). */}
-        <Suspense fallback={<ToolCatalogFallback />}>
-          <ToolCatalogSection />
-        </Suspense>
+        {/* The tool catalog awaits the indexer's /mcp/tools fetch and is the
+            page's substantive content, so it is NOT wrapped in Suspense:
+            /for-agents ships in the sitemap, and a boundary streamed the whole
+            catalog into a hidden chunk while no-JS readers saw only a skeleton
+            (DEV-612). Awaiting it inline blocks on that one fetch, the trade
+            every route in SITEMAP_NO_LOADING makes. */}
+        <ToolCatalogSection />
         <FaqSection />
         <div className="mx-auto w-full max-w-3xl px-4 py-8">
           <CtaSection />
