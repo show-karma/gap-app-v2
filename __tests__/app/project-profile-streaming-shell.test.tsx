@@ -53,6 +53,19 @@ vi.mock("wagmi", () => ({
   useAccount: () => ({ address: undefined, isConnected: false, chain: undefined }),
   useChainId: () => 10,
   useSwitchChain: () => ({ switchChainAsync: vi.fn(), switchChain: vi.fn() }),
+  useWalletClient: () => ({ data: undefined, isLoading: false }),
+  usePublicClient: () => undefined,
+}));
+
+// The layout prefetches the default Updates feed server-side. This test is
+// about streaming shape, not the updates service, so keep it off the network.
+vi.mock("@/services/project-updates.service", () => ({
+  getProjectUpdates: vi.fn(async () => ({
+    projectUpdates: [],
+    projectMilestones: [],
+    grantMilestones: [],
+    grantUpdates: [],
+  })),
 }));
 
 vi.mock("@/components/Pages/Project/ProjectShareDialogMount", () => ({

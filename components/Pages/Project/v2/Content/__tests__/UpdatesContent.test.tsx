@@ -67,6 +67,8 @@ function mockProjectProfile(overrides: Record<string, unknown> = {}) {
     milestonesCount: 0,
     completedCount: 0,
     isUpdating: false,
+    isUpdatesError: false,
+    refetch: vi.fn(),
     ...overrides,
   });
 }
@@ -338,5 +340,67 @@ describe("UpdatesContent — onAIFilterChange updates URL", () => {
     const [url] = mockReplace.mock.calls[0];
     expect(url).not.toContain("hasAIEvaluation");
     expect(url).not.toContain("aiScoreMin");
+  });
+});
+
+/**
+ * Regression coverage for the "infinite skeleton" the QA pipeline found on
+ * PR #1992: the feed used to be gated on `!allUpdates || isUpdating`, but
+ * `allUpdates` is always an array (aggregateProjectProfileData builds one), so
+ * only `isUpdating` drove the skeleton — and a client updates request that
+ * never settles never clears it. The server-rendered feed was also discarded
+ * the moment the component hydrated, so real content vanished into that
+ * skeleton with no error state, no retry and no timeout.
+ */
+describe("UpdatesContent — feed resilience", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    capturedFiltersProps = {};
+    (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
+    (useRouter as vi.Mock).mockReturnValue({ replace: vi.fn() });
+    (useSearchParams as vi.Mock).mockReturnValue(buildSearchParams());
+    mockStores();
+    mockProjectProfile();
+  });
+
+  it("keeps the server-rendered feed while the client updates query is still in flight", () => {
+    mockProjectProfile({ allUpdates: [], isUpdating: true });
+
+    render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
+
+    // The real content stays on screen instead of being replaced by a skeleton
+    // that a hanging request would never clear.
+    expect(screen.getByTestId("server-feed")).toBeInTheDocument();
+    expect(screen.queryByTestId("updates-content-error")).not.toBeInTheDocument();
+  });
+
+  it("surfaces an error state with a retry when the updates query fails and there is no data", () => {
+    const refetch = vi.fn();
+    mockProjectProfile({ allUpdates: [], isUpdatesError: true, refetch });
+
+    render(<UpdatesContent />);
+
+    const error = screen.getByTestId("updates-content-error");
+    expect(error).toBeInTheDocument();
+
+    screen.getByRole("button", { name: /try again/i }).click();
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("prefers the error state over a stale server feed once the query has failed", () => {
+    mockProjectProfile({ allUpdates: [], isUpdatesError: true });
+
+    render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
+
+    expect(screen.getByTestId("updates-content-error")).toBeInTheDocument();
+  });
+
+  it("shows the interactive feed once the client query returns data", () => {
+    mockProjectProfile({ allUpdates: [{ uid: "1" }], isUpdating: false });
+
+    render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
+
+    expect(screen.getByTestId("activity-feed")).toBeInTheDocument();
+    expect(screen.queryByTestId("server-feed")).not.toBeInTheDocument();
   });
 });
