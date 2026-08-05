@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderPlusIcon, PlayCircleIcon } from "@heroicons/react/24/outline";
+import { FolderPlusIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import type { FC } from "react";
 
@@ -9,9 +9,20 @@ const ProjectDialog = dynamic(
   { ssr: false }
 );
 
-interface EmptyProjectsStateProps {
-  onStartWalkthrough: () => void;
-}
+const PROJECT_CONCEPTS = [
+  {
+    term: "Grants",
+    detail: "Each award you receive hangs off the project, with what it was for.",
+  },
+  {
+    term: "Milestones",
+    detail: "The outcomes you committed to, marked complete as you reach them.",
+  },
+  {
+    term: "Updates",
+    detail: "Progress you publish, which is what funders read before funding again.",
+  },
+] as const;
 
 const ProjectsIllustration: FC = () => (
   <svg
@@ -128,7 +139,7 @@ const ProjectsIllustration: FC = () => (
   </svg>
 );
 
-export const EmptyProjectsState: FC<EmptyProjectsStateProps> = ({ onStartWalkthrough }) => {
+export const EmptyProjectsState: FC = () => {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="max-w-lg w-full text-center">
@@ -148,6 +159,22 @@ export const EmptyProjectsState: FC<EmptyProjectsStateProps> = ({ onStartWalkthr
           reputation, and attract more funding.
         </p>
 
+        {/* What a project holds — the shape of the thing, explained where
+            someone is about to create one rather than in a walkthrough they
+            have to know exists. */}
+        <dl className="mx-auto mb-8 grid max-w-md grid-cols-1 gap-3 text-left sm:grid-cols-3">
+          {PROJECT_CONCEPTS.map((concept) => (
+            <div key={concept.term} className="flex flex-col gap-1">
+              <dt className="text-sm font-semibold text-gray-900 dark:text-white">
+                {concept.term}
+              </dt>
+              <dd className="m-0 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                {concept.detail}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
         {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <ProjectDialog
@@ -159,14 +186,6 @@ export const EmptyProjectsState: FC<EmptyProjectsStateProps> = ({ onStartWalkthr
                 "inline-flex items-center justify-center gap-2 px-6 py-3 h-auto bg-brand-darkblue dark:bg-zinc-700 hover:opacity-75 text-white font-semibold rounded-md transition-all duration-200 w-full sm:w-auto",
             }}
           />
-          <button
-            type="button"
-            onClick={onStartWalkthrough}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-md transition-all duration-200 w-full sm:w-auto"
-          >
-            <PlayCircleIcon className="w-5 h-5" />
-            Take a Tour
-          </button>
         </div>
 
         {/* Helpful tip */}

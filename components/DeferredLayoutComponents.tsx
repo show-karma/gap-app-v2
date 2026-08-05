@@ -28,11 +28,6 @@ const ContributorProfileDialog = dynamic(
   { ssr: false }
 );
 
-const OnboardingDialog = dynamic(
-  () => import("@/components/Dialogs/OnboardingDialog").then((mod) => mod.OnboardingDialog),
-  { ssr: false }
-);
-
 const GettingStartedDialog = dynamic(
   () =>
     import("@/src/features/onboarding/components/getting-started-dialog").then(
@@ -89,7 +84,6 @@ export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutCompon
       <ContributorProfileDialog />
       <ApiKeyManagementModal />
       <GettingStartedDialog />
-      <OnboardingDialog />
       {!isAskKarmaRoute && <AgentChatBubble />}
     </>
   );

@@ -48,6 +48,10 @@ vi.mock("next/dynamic", async () => {
 // the REAL Zustand store. This keeps the test fast and isolated from the
 // dialog's wagmi/react-hook-form/headlessui dependencies, while still proving
 // the store -> mounted-component wire is intact.
+vi.mock("@/src/features/onboarding/components/getting-started-dialog", () => ({
+  GettingStartedDialog: () => <div data-testid="getting-started-dialog-mount" hidden />,
+}));
+
 vi.mock("@/components/Dialogs/ContributorProfileDialog", async () => {
   const { useContributorProfileModalStore } = await import("@/store/modals/contributorProfile");
   return {
@@ -57,10 +61,6 @@ vi.mock("@/components/Dialogs/ContributorProfileDialog", async () => {
     },
   };
 });
-
-vi.mock("@/components/Dialogs/OnboardingDialog", () => ({
-  OnboardingDialog: () => <div data-testid="onboarding-dialog-mount" hidden />,
-}));
 
 vi.mock("@/src/features/api-keys/components/api-key-management-modal", () => ({
   ApiKeyManagementModal: () => <div data-testid="api-key-modal-mount" hidden />,
@@ -107,14 +107,14 @@ describe("DeferredLayoutComponents", () => {
     expect(await screen.findByTestId("contributor-profile-dialog")).toBeInTheDocument();
   });
 
-  it("mounts ContributorProfileDialog, OnboardingDialog, and ApiKeyManagementModal on every domain", async () => {
+  it("mounts ContributorProfileDialog, GettingStartedDialog, and ApiKeyManagementModal on every domain", async () => {
     // Regression: at app.filpgf.io (whitelabel) these were unmounted, so the
     // navbar's trigger buttons did nothing. They must mount unconditionally
     // because the navbar UI that opens them is shown on all domains.
     render(<DeferredLayoutComponents toasterConfig={toasterConfig} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("onboarding-dialog-mount")).toBeInTheDocument();
+      expect(screen.getByTestId("getting-started-dialog-mount")).toBeInTheDocument();
       expect(screen.getByTestId("api-key-modal-mount")).toBeInTheDocument();
     });
   });
