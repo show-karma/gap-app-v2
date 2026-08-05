@@ -93,6 +93,7 @@ const SITEMAP_LABEL_MAP: Record<string, string> = {
   "/seeds": "Seeds",
   "/terms-and-conditions": "Terms and Conditions",
   "/knowledge": "Knowledge Base",
+  "/data/foundation-funding": "Foundation Funding Data",
 };
 
 const SITEMAP_DESCRIPTION_MAP: Record<string, string> = {
@@ -108,6 +109,8 @@ const SITEMAP_DESCRIPTION_MAP: Record<string, string> = {
   "/seeds": "Seed funding and early-stage project support",
   "/terms-and-conditions": "Terms and conditions for using the Karma platform",
   "/knowledge": "Articles on grant accountability, reputation, and impact measurement",
+  "/data/foundation-funding":
+    "Methodology and definitions for Karma's index of IRS Form 990 and 990-PF filings",
 };
 
 const SUPPORTED_NETWORKS = [
