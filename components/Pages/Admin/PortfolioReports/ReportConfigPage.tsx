@@ -29,6 +29,7 @@ import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types
 import type { Community } from "@/types/v2/community";
 import type { CommunityProgram } from "@/types/v2/community-program";
 import { PAGES } from "@/utilities/pages";
+import { buildModelOptions, formatModelLabel } from "@/utilities/portfolio-reports/modelOptions";
 import {
   computeNextRuns,
   defaultScheduleForPreset,
@@ -42,27 +43,6 @@ import { zodResolver } from "@/utilities/zodResolver";
 interface Props {
   community: Community;
   grantPrograms: CommunityProgram[];
-}
-
-const MODEL_PROVIDER_BY_PREFIX: ReadonlyArray<[string, string]> = [
-  ["gpt", "OpenAI"],
-  ["claude", "Anthropic"],
-  ["grok", "xAI"],
-  ["gemini", "Google"],
-];
-
-function formatModelLabel(modelId: string): string {
-  const match = MODEL_PROVIDER_BY_PREFIX.find(([prefix]) => modelId.startsWith(prefix));
-  return match ? `${modelId} (${match[1]})` : modelId;
-}
-
-// Keeps the stored model selectable when editing a config whose model was
-// since removed from the backend settings list.
-function buildModelOptions(availableModels: string[], currentModelId?: string): string[] {
-  if (currentModelId && !availableModels.includes(currentModelId)) {
-    return [...availableModels, currentModelId];
-  }
-  return availableModels;
 }
 
 function ModelSelectField({
