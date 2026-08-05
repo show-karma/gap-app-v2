@@ -311,7 +311,6 @@ const withSentry = withSentryConfig(
 // or a local build — Sentry stays fully enabled, so production
 // instrumentation can never be dropped by accident.
 const isPreviewBuild =
-  process.env.VERCEL_ENV === "preview" ||
-  process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+  process.env.VERCEL_ENV === "preview" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
 
 export default isPreviewBuild ? bundleAnalyzer : withSentry;
