@@ -27,14 +27,10 @@ export default async function Projects({
 }: {
   searchParams: Promise<ProjectsExplorerSearchParams>;
 }) {
-  // /projects ships in the sitemap, so the project list itself has to be in
-  // the initially visible HTML (DEV-612). The list used to sit behind an
-  // in-page <Suspense>, which streamed all ~3k projects into a hidden
-  // `<div hidden id="S:0">` chunk while the visible document showed only a
-  // skeleton — the exact pattern this route set exists to remove, just
-  // expressed with an explicit boundary instead of a loading.tsx. Awaiting the
-  // loader here trades the instant skeleton for a crawler-readable list, the
-  // same trade every other route in SITEMAP_NO_LOADING makes.
+  // /projects ships in the sitemap, so the list must be in the initially
+  // visible HTML (DEV-612). It used to sit behind an in-page <Suspense> that
+  // streamed ~3k projects into a hidden chunk. Awaiting the loader trades the
+  // instant skeleton for a crawlable list, as every SITEMAP_NO_LOADING route does.
   const initialState = parseProjectsExplorerRequest(await searchParams);
 
   return (

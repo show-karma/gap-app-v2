@@ -49,33 +49,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 /**
- * Prefetch the two queries the first paint depends on — the core project
- * record and the default Updates feed (DEV-612).
+ * Prefetch what the first paint needs: the project record (the client shell
+ * drops `children` without it) and the default Updates feed.
  *
- * `ProjectProfileLayout` is a client component that renders a full-page
- * skeleton and drops `children` entirely while `useProject` has no data, so
- * this prefetch has to stay on the blocking path: without it the shell never
- * renders and the page-body Suspense boundary below it never even mounts.
- *
- * Updates are prefetched alongside it. They seed the default Updates tab,
- * whose client feed otherwise starts cold: QA found that a slow or hanging
- * client updates request left the tab in a skeleton forever, replacing the
- * server-rendered feed with nothing. UpdatesContent now holds the server feed
- * until real data arrives and surfaces an error state, but seeding the cache
- * keeps the healthy path from depending on that recovery at all.
- *
- * Grants and impacts are deliberately NOT prefetched here. They cost two more
- * indexer round-trips on the critical path and render only inside client-only
- * tab bodies that keep their own route-local loading.tsx, so they contribute
- * no server-rendered HTML. Their only other visible effect was seeding the tab
- * counters, which are hidden at zero (ContentTabs renders a badge only when
- * `count > 0`), so they simply appear once the client queries resolve.
- * Streaming them back in from a lower HydrationBoundary was considered and
- * rejected: the client `useQuery` mounts before a late boundary arrives and
- * fires its own request anyway, so it would duplicate the fetch rather than
- * replace it.
- *
- * Failures are swallowed on purpose — client-side hooks refetch as a fallback.
+ * Grants and impacts stay off the critical path — they render only in
+ * client-only tab bodies and produce no server HTML. Failures are swallowed;
+ * client hooks refetch.
  */
 async function safePrefetchProjectData(queryClient: QueryClient, projectId: string): Promise<void> {
   try {
@@ -137,9 +116,8 @@ export default async function RootLayout(props: {
     try {
       projectInfo = await getProjectCachedData(projectId);
     } catch (error) {
-      // Re-throw Next.js control-flow errors (notFound()/redirect(), which work
-      // by throwing) so a bare catch can't swallow them; only a genuine
-      // transient fetch failure falls through to render the shell.
+      // Re-throw Next control-flow errors (notFound()/redirect()) so a bare
+      // catch can't swallow them; only a transient fetch failure falls through.
       unstable_rethrow(error);
       // SUPPRESSED: transient project fetch failure — client hooks refetch.
     }

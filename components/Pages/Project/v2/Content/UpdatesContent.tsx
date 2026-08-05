@@ -221,14 +221,9 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
 
   const hasUpdates = (allUpdates?.length ?? 0) > 0;
 
-  /**
-   * Keep the server-rendered feed on screen until the client query actually
-   * produces something. It used to be discarded the moment this component
-   * hydrated, so a slow, hanging or failed updates request made real content
-   * vanish into a skeleton that never resolved — `allUpdates` is always an
-   * array, so the old `!allUpdates` guard was dead and only `isUpdating`
-   * drove the skeleton, and a request that never settles never clears it.
-   */
+  // Keep the server feed until the client query produces something. It used to
+  // be discarded at hydration, so a slow or hanging request made real content
+  // vanish into a skeleton that never cleared.
   const showServerFeed = Boolean(serverFeed) && !hasUpdates;
 
   // Skeleton while a fetch is genuinely in flight (initial load or a filter
@@ -258,11 +253,8 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
       {/* Activity Feed with Suspense boundary. Before hydration we render the
           server-rendered twin (serverFeed) so SSR and the client's first render
           match; after mount the interactive feed takes over. */}
-      {/* The error affordance is ALWAYS rendered when the updates query fails,
-          even if stale or server-prefetched data is still on screen. QA found
-          that suppressing it whenever data existed left a blocked request
-          looking like an ordinary page — the filters quietly went inert with no
-          message and no way to retry. Content stays below; this sits above it. */}
+      {/* Always shown when the query fails, even with stale data on screen:
+          suppressing it made a blocked request look like an ordinary page. */}
       {isUpdatesError ? (
         <div
           className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-border p-6 text-center"
