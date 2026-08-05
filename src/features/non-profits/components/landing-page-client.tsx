@@ -21,6 +21,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { Link } from "@/src/components/navigation/Link";
+import { useTourFromUrl } from "@/src/features/onboarding/hooks/use-tour-from-url";
+import { dataTour, TOUR_ANCHORS } from "@/src/features/onboarding/lib/tour-anchors";
+import { FIND_FUNDERS_TOUR } from "@/src/features/onboarding/lib/tours";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { INSTALL_CONFIGS, type InstallTab } from "../lib/install-configs";
 import { FILINGS_STATS } from "../lib/stats";
@@ -238,7 +241,7 @@ function Hero({ onSearch }: { onSearch: (query: string) => void }) {
             <span>&#8984; K</span>
           </div>
 
-          <div className="lp-search-box">
+          <div className="lp-search-box" {...dataTour(TOUR_ANCHORS.findFundersSearch)}>
             <div className="lp-search-row">
               <span className="lp-search-icon">
                 <Icon.search />
@@ -1016,6 +1019,10 @@ function FinalCTA({ onSearchFocus }: { onSearchFocus: () => void }) {
 
 export function LandingPageClient() {
   const router = useRouter();
+  // Only the search box exists here — the results and tray steps resolve once a
+  // search has run, so a walkthrough requested from the profile menu starts on
+  // what this page can actually show.
+  useTourFromUrl(FIND_FUNDERS_TOUR);
 
   const handleSearch = useCallback(
     (query: string) => {
