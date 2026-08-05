@@ -123,21 +123,33 @@ export function FundingMapSearch() {
         </div>
       </div>
 
+      {/* Native <button> per category, not a clickable <Badge>: these toggle a
+          filter, so they need keyboard focus, Enter/Space activation and a
+          pressed state that assistive tech can read. */}
       <div className="flex flex-wrap items-center justify-center gap-2">
-        {QUICK_SEARCH_CATEGORIES.map((tag) => (
-          <Badge
-            key={tag}
-            variant="outline"
-            className={cn(
-              "cursor-pointer rounded-full border-border px-2 py-0.5 text-xs font-medium text-foreground hover:bg-muted transition-colors",
-              filters.categories.includes(tag) &&
-                "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-            )}
-            onClick={() => handleCategoryClick(tag)}
-          >
-            {tag}
-          </Badge>
-        ))}
+        {QUICK_SEARCH_CATEGORIES.map((tag) => {
+          const isSelected = filters.categories.includes(tag);
+          return (
+            <button
+              key={tag}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => handleCategoryClick(tag)}
+              className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Badge
+                variant="outline"
+                className={cn(
+                  "cursor-pointer rounded-full border-border px-2 py-0.5 text-xs font-medium text-foreground hover:bg-muted transition-colors",
+                  isSelected &&
+                    "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                )}
+              >
+                {tag}
+              </Badge>
+            </button>
+          );
+        })}
       </div>
     </>
   );
