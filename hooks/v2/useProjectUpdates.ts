@@ -17,6 +17,7 @@ import {
   normalizeMilestoneDueDateMs,
 } from "@/utilities/milestones/milestoneDueDate";
 import { parseChainId } from "@/utilities/parseChainId";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -438,10 +439,17 @@ export function useProjectUpdates(
     error,
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
+    // Inherit the app-wide retry policy: it never retries aborted or
+    // non-retryable requests, where React Query's default retries three times
+    // with exponential backoff. Without this the feed's error state took ~7s
+    // of silent retries to appear, which reads to a user as "nothing happened"
+    // — QA saw a disabled filter row and no error or retry affordance.
+    ...defaultQueryOptions,
     queryKey,
     queryFn: () =>
       getProjectUpdates(projectIdOrSlug, milestoneStatus, { ...filters, isAuthorized }),
     enabled: !!projectIdOrSlug,
+    // Longer than the shared default: the feed is expensive and rarely stale.
     staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
