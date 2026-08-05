@@ -65,6 +65,12 @@ vi.mock("@/utilities/queries/v2/getCommunityData", () => ({
   }),
 }));
 
+// `getWhitelabelContext` reads request headers, which have no request scope
+// in this environment. The non-whitelabel default mirrors the main domain.
+vi.mock("@/utilities/whitelabel-server", () => ({
+  getWhitelabelContext: async () => ({ isWhitelabel: false, config: null }),
+}));
+
 vi.mock("@/utilities/funding-programs", () => ({
   isProgramEnabled: () => true,
   getProgramStatusInfo: () => ({
