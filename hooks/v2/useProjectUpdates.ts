@@ -20,6 +20,10 @@ import { parseChainId } from "@/utilities/parseChainId";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { withRequestTimeout } from "@/utilities/requestTimeout";
+
+/** Upper bound on a single updates request; a hang past this becomes an error. */
+const UPDATES_REQUEST_TIMEOUT_MS = 15_000;
 
 /**
  * Resolve a raw milestone due date (ISO string, epoch seconds, or epoch ms)
@@ -446,8 +450,19 @@ export function useProjectUpdates(
     // — QA saw a disabled filter row and no error or retry affordance.
     ...defaultQueryOptions,
     queryKey,
-    queryFn: () =>
-      getProjectUpdates(projectIdOrSlug, milestoneStatus, { ...filters, isAuthorized }),
+    // Bounded by UPDATES_REQUEST_TIMEOUT_MS. A request that hangs — the
+    // indexer accepting the connection and never responding — neither resolves
+    // nor rejects, so React Query stays `fetching` forever with no data and no
+    // error, and the feed sits on a skeleton indefinitely with nothing to
+    // retry. QA reproduced exactly that: 20+ seconds, no status code, no
+    // console error. The timeout converts a hang into an ordinary failure so
+    // the error state and its retry can do their job.
+    queryFn: ({ signal }) =>
+      getProjectUpdates(projectIdOrSlug, milestoneStatus, {
+        ...filters,
+        isAuthorized,
+        signal: withRequestTimeout(signal, UPDATES_REQUEST_TIMEOUT_MS),
+      }),
     enabled: !!projectIdOrSlug,
     // Longer than the shared default: the feed is expensive and rarely stale.
     staleTime: 5 * 60 * 1000,
