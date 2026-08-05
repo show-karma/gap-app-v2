@@ -22,7 +22,7 @@ export const DATA_PAGE_DESCRIPTION = `How Karma indexes IRS Form 990 and 990-PF 
 /** One-paragraph dataset description shared by the visible summary and the Dataset JSON-LD. */
 export const DATASET_DESCRIPTION = `An index of IRS Form 990 and 990-PF filings for U.S. private foundations and public charities: over ${FILINGS_STATS.countLong} filings covering ${FILINGS_STATS.dollarsTracked} in tracked grantmaking dollars and ${FILINGS_STATS.historySpanLong} of giving history, kept current as new filings are published.`;
 
-export interface DataPageStat {
+interface DataPageStat {
   /** The headline figure, from FILINGS_STATS. */
   value: string;
   /** Short label under the figure. */
@@ -49,7 +49,7 @@ export const DATA_PAGE_STATS: DataPageStat[] = [
   },
 ];
 
-export interface DataPageFaqEntry {
+interface DataPageFaqEntry {
   question: string;
   answer: string;
 }
