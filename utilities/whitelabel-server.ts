@@ -25,19 +25,6 @@ export function buildWhitelabelRedirectPath(path: string, ctx: WhitelabelContext
   return stripped;
 }
 
-/**
- * The request's pathname as tagged by the proxy via the `x-pathname` header,
- * or null when the proxy did not tag it. Layouts cannot read the pathname on
- * their own; the proxy sets this header narrowly (today: only
- * /nonprofits/find-funders, for the root layout's <noscript> crawler hero —
- * DEV-586). Lives here, next to getWhitelabelContext, so it shares the same
- * request-scope boundary and the same test seam.
- */
-export async function getRequestPathname(): Promise<string | null> {
-  const headersList = await headers();
-  return headersList.get("x-pathname");
-}
-
 export async function getWhitelabelContext(): Promise<WhitelabelContext> {
   const headersList = await headers();
   const host = headersList.get("host") ?? "";

@@ -8,12 +8,13 @@ import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShare
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { ProjectJsonLd } from "@/components/Seo/ProjectJsonLd";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
+import { projectUpdatesQueryKey } from "@/hooks/v2/useProjectUpdates";
+import { getProjectUpdates } from "@/services/project-updates.service";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { prefetchProjectProfileData } from "@/utilities/queries/prefetchProjectProfile";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 
@@ -48,38 +49,28 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 /**
- * Safely prefetch all project data with error handling.
- * Uses Promise.allSettled to ensure failures don't break the page.
- * Client-side hooks will fetch missing data as a fallback.
+ * Prefetch what the first paint needs: the project record (the client shell
+ * drops `children` without it) and the default Updates feed.
+ *
+ * Grants and impacts stay off the critical path — they render only in
+ * client-only tab bodies and produce no server HTML. Failures are swallowed;
+ * client hooks refetch.
  */
 async function safePrefetchProjectData(queryClient: QueryClient, projectId: string): Promise<void> {
   try {
-    const results = await Promise.allSettled([
-      // Core project data
+    await Promise.all([
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
         queryFn: () => getProjectCachedData(projectId),
       }),
-      // Related data (grants, updates, impacts)
-      prefetchProjectProfileData(queryClient, projectId),
+      queryClient.prefetchQuery({
+        // Same key factory the hook uses — a hand-written key silently misses
+        // (that is exactly how the previous updates prefetch became a no-op).
+        queryKey: projectUpdatesQueryKey(projectId),
+        queryFn: () => getProjectUpdates(projectId),
+        staleTime: 5 * 60 * 1000,
+      }),
     ]);
-
-    // Log failures in development for debugging
-    if (process.env.NODE_ENV === "development") {
-      const [projectResult, relatedResult] = results;
-      if (projectResult.status === "rejected") {
-        console.warn(
-          `[ProjectLayout] Failed to prefetch project details for ${projectId}:`,
-          projectResult.reason
-        );
-      }
-      if (relatedResult.status === "rejected") {
-        console.warn(
-          `[ProjectLayout] Failed to prefetch related data for ${projectId}:`,
-          relatedResult.reason
-        );
-      }
-    }
   } catch (error) {
     // Catch any unexpected errors to prevent page from breaking
     if (process.env.NODE_ENV === "development") {
@@ -104,7 +95,7 @@ export default async function RootLayout(props: {
     },
   });
 
-  // Prefetch all critical data in parallel with error handling
+  // Prefetch the project record and the default Updates feed.
   // Failures are logged but don't break the page - client hooks will fetch as fallback
   // Skip prefetch during E2E tests — the staging API may be behind Cloudflare,
   // and a server-side prefetch failure gets cached by React Query, preventing
@@ -125,9 +116,8 @@ export default async function RootLayout(props: {
     try {
       projectInfo = await getProjectCachedData(projectId);
     } catch (error) {
-      // Re-throw Next.js control-flow errors (notFound()/redirect(), which work
-      // by throwing) so a bare catch can't swallow them; only a genuine
-      // transient fetch failure falls through to render the shell.
+      // Re-throw Next control-flow errors (notFound()/redirect()) so a bare
+      // catch can't swallow them; only a transient fetch failure falls through.
       unstable_rethrow(error);
       // SUPPRESSED: transient project fetch failure — client hooks refetch.
     }

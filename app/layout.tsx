@@ -48,12 +48,10 @@ import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitia
 import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
 import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
-import { FindFundersNoscriptHero } from "@/src/features/non-profits/components/find-funders-noscript-hero";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
-import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { toHslToken, type WhitelabelDomain } from "@/utilities/whitelabel-config";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
-import { getRequestPathname, getWhitelabelContext } from "@/utilities/whitelabel-server";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { isWhitelabel, config, tenantConfig } = await getWhitelabelContext();
@@ -151,13 +149,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { isWhitelabel, communitySlug, config, tenantConfig } = await getWhitelabelContext();
   const themeStyle = isWhitelabel ? getWhitelabelThemeStyle(config, tenantConfig) : undefined;
 
-  // The proxy tags /nonprofits/find-funders requests with x-pathname so this
-  // layout — the only part of a streamed response that is guaranteed into the
-  // initially visible HTML — can render that route's <noscript> crawler hero.
-  // See FindFundersNoscriptHero for the full rationale (DEV-586).
-  const requestPathname = await getRequestPathname();
-  const showFindFundersNoscriptHero = requestPathname === NON_PROFITS_PAGES.HOME;
-
   return (
     <html
       lang="en"
@@ -194,7 +185,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
                 <div className="flex flex-col w-full h-full">
                   {isWhitelabel ? <WhitelabelNavbar /> : <GlobalNavbarSlot />}
-                  {showFindFundersNoscriptHero && <FindFundersNoscriptHero />}
                   {children}
                 </div>
                 <FooterSwitcher isWhitelabel={isWhitelabel} />

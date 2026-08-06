@@ -1,9 +1,7 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
-import { FundingMapLoading } from "@/src/features/funding-map/components/funding-map-loading";
 import { FundingMapSearch } from "@/src/features/funding-map/components/funding-map-search";
 import { FundingMapSidebar } from "@/src/features/funding-map/components/funding-map-sidebar";
 import {
@@ -50,14 +48,24 @@ const FundingMapPage = async () => {
         description={PAGE_DESCRIPTION}
         url="/funding-map"
       />
-      <Suspense fallback={null}>
-        <FundingMapSearch />
-      </Suspense>
+      {/* No Suspense boundaries here (DEV-612): this route is
+          sitemap-crawlable and renders dynamically, so a boundary made the
+          search block and the prefetched program cards stream as hidden late
+          chunks that no-JS readers never see. The heading and the hydrated
+          card grid all land in the initially visible HTML. */}
+      <section className="flex w-full justify-center my-16">
+        <div className="flex w-full max-w-xl flex-col gap-8">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <h1 className="text-center text-3xl font-semibold tracking-tight lg:text-4xl">
+              Find funding opportunities
+            </h1>
+            <FundingMapSearch />
+          </div>
+        </div>
+      </section>
       <div className="flex w-full flex-col gap-6 px-6 py-8 lg:flex-row lg:px-8">
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <Suspense fallback={<FundingMapLoading />}>
-            <FundingMapList />
-          </Suspense>
+          <FundingMapList />
         </HydrationBoundary>
         <FundingMapSidebar />
       </div>

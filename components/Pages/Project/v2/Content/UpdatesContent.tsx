@@ -89,11 +89,15 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
 
   // Pass milestoneStatus to useProjectProfile so filtering happens server-side
   const apiMilestoneStatus = milestoneStatusFilter !== "all" ? milestoneStatusFilter : undefined;
-  const { allUpdates, milestonesCount, completedCount, isUpdating } = useProjectProfile(
-    projectId as string,
-    apiMilestoneStatus,
-    feedFilters
-  );
+  const {
+    allUpdates,
+    milestonesCount,
+    completedCount,
+    isUpdating,
+    isUpdatesError,
+    hasUpdatesData,
+    refetch,
+  } = useProjectProfile(projectId as string, apiMilestoneStatus, feedFilters);
 
   // Count items per filter category for badge counters
   const counts = useMemo(() => {
@@ -222,8 +226,18 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
     [activeFilters, updateURL]
   );
 
-  // Show loading state while data is being fetched or filter is changing
-  const isLoading = !allUpdates || isUpdating;
+  const hasUpdates = (allUpdates?.length ?? 0) > 0;
+
+  // Keep the server feed until the client query RETURNS — not until it returns
+  // items. It used to be discarded at hydration, so a slow or hanging request
+  // made real content vanish into a skeleton that never cleared; keying on item
+  // count instead would keep the unfiltered server feed on screen when a filter
+  // legitimately matches nothing.
+  const showServerFeed = Boolean(serverFeed) && !hasUpdatesData;
+
+  // Skeleton while a fetch is genuinely in flight (initial load or a filter
+  // change). Distinct from the error branch below, which is terminal.
+  const isLoading = isUpdating;
 
   return (
     <div className={className} data-testid="updates-content">
@@ -248,9 +262,41 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
       {/* Activity Feed with Suspense boundary. Before hydration we render the
           server-rendered twin (serverFeed) so SSR and the client's first render
           match; after mount the interactive feed takes over. */}
+      {/* Always shown when the query fails, even with stale data on screen:
+          suppressing it made a blocked request look like an ordinary page. */}
+      {isUpdatesError ? (
+        <div
+          className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-border p-6 text-center"
+          role="alert"
+          data-testid="updates-content-error"
+        >
+          <p className="text-sm text-muted-foreground">
+            {hasUpdates
+              ? "We couldn't refresh this project's updates, so you may be seeing older activity."
+              : "We couldn't load this project's updates."}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              void refetch();
+            }}
+            className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-blue/90"
+          >
+            Try again
+          </button>
+        </div>
+      ) : null}
+
       <div className="mt-6">
-        {!hydrated && serverFeed ? (
+        {(!hydrated || showServerFeed) && serverFeed ? (
           serverFeed
+        ) : isUpdatesError && !hasUpdates ? (
+          <div
+            className="flex flex-col items-center gap-3 rounded-xl border border-border p-8 text-center"
+            data-testid="updates-content-empty-after-error"
+          >
+            <p className="text-sm text-muted-foreground">No updates to show right now.</p>
+          </div>
         ) : isLoading ? (
           <ActivityFeedSkeleton itemCount={4} />
         ) : (

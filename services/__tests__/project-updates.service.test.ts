@@ -204,9 +204,10 @@ describe("getProjectUpdates — URL construction", () => {
     expect(result).toEqual(emptyResponse);
   });
 
-  it("returns empty response on generic error", async () => {
+  it("throws on a generic error rather than resolving to an empty response", async () => {
+    // Only 404 resolves to empty; any other failure must reach React Query so
+    // the feed can show an error state instead of a false "no updates".
     mockApiGet.mockRejectedValueOnce(httpError(500));
-    const result = await getProjectUpdates("my-project");
-    expect(result).toEqual(emptyResponse);
+    await expect(getProjectUpdates("my-project")).rejects.toThrow();
   });
 });

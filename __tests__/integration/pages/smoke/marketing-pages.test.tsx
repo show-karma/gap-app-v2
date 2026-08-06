@@ -328,13 +328,16 @@ describe("/seeds marketing pages", () => {
 
 describe("/projects explorer page", () => {
   it("renders hero, explorer, stats", async () => {
-    // The page streams: the hero + stats shell render immediately while the
-    // explorer is an async server component deferred behind Suspense. Mounting
-    // that unresolved promise into a client render tree throws (React #482), so
-    // resolve the Suspense child to a concrete element FIRST, substitute it back
-    // into the page's children, and render the fully-synchronous tree exactly
-    // once. This still exercises the real page composition (hero, deferred
-    // explorer, stats) end to end.
+    // The explorer is an async server component. Mounting an unresolved promise
+    // into a client render tree throws (React #482), so resolve it to a concrete
+    // element FIRST, substitute it back into the page's children, and render the
+    // fully-synchronous tree exactly once. This still exercises the real page
+    // composition (hero, explorer, stats) end to end.
+    //
+    // It used to sit behind an in-page <Suspense>; DEV-612 removed that boundary
+    // because it streamed the project list into a hidden chunk on a sitemap
+    // route. The loader is now a direct child, so it is identified by the
+    // `initialState` prop only it receives rather than by its wrapper.
     const { default: ProjectsPage } = await import("@/app/projects/page");
     const runAsyncPage = ProjectsPage as unknown as (props: {
       searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -345,9 +348,16 @@ describe("/projects explorer page", () => {
     const children = Children.toArray((page.props as { children?: ReactNode }).children);
     const resolvedChildren = await Promise.all(
       children.map(async (child) => {
-        if (isValidElement(child) && child.type === Suspense) {
+        if (!isValidElement(child)) return child;
+        if (child.type === Suspense) {
           const loader = (child.props as { children: ReactElement }).children;
           return (loader.type as (props: unknown) => Promise<ReactElement>)(loader.props);
+        }
+        if (
+          typeof child.type === "function" &&
+          "initialState" in ((child.props ?? {}) as Record<string, unknown>)
+        ) {
+          return (child.type as (props: unknown) => Promise<ReactElement>)(child.props);
         }
         return child;
       })
