@@ -13,9 +13,10 @@ import { pathToFileURL } from "node:url";
 import { normalizeOrigin, verifyIndexability } from "./indexability/verify-indexability.mjs";
 
 const DEFAULTS = Object.freeze({
-  canonicalOrigin: "https://www.karmahq.xyz",
-  apexOrigin: "https://karmahq.xyz",
-  gapOrigin: "https://gap.karmahq.xyz",
+  canonicalOrigin: "https://www.karmahq.org",
+  apexOrigin: "https://karmahq.org",
+  gapOrigin: "https://gap.karmahq.org",
+  // The API subdomain is deliberately not part of the karmahq.org migration.
   indexerOrigin: "https://gapapi.karmahq.xyz",
   // Leaf-count floor. Recalibrated 4000 -> 3800 after gap-indexer PR #2195
   // (production-1.47.49) shipped the projects=v4 content-gate: a project root now
@@ -67,7 +68,7 @@ export function parseArgs(argv) {
       value = token.slice(eq + 1);
     }
 
-    if (!Object.prototype.hasOwnProperty.call(FLAG_TO_KEY, name)) {
+    if (!Object.hasOwn(FLAG_TO_KEY, name)) {
       throw new Error(`Unknown argument: ${token}`);
     }
 

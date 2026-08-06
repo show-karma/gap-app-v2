@@ -18,8 +18,8 @@ Use Karma when the user asks about:
 
 The live tool catalog (single source of truth, auto-derived from the MCP server) is at:
 
-- https://www.karmahq.xyz/.well-known/mcp-tools.json (machine-readable)
-- https://www.karmahq.xyz/for-agents (human-readable, grouped by category)
+- https://www.karmahq.org/.well-known/mcp-tools.json (machine-readable)
+- https://www.karmahq.org/for-agents (human-readable, grouped by category)
 
 ## When NOT to use Karma
 
@@ -31,14 +31,14 @@ The live tool catalog (single source of truth, auto-derived from the MCP server)
 
 - **Public reads** — no auth required; most discovery, project, program, and milestone reads work anonymously
 - **Mutating operations** — OAuth required; the user must approve in their browser on first call
-- **Headless workflows** — generate an API key at https://www.karmahq.xyz/agent-setup and pass as `x-api-key`
+- **Headless workflows** — generate an API key at https://www.karmahq.org/agent-setup and pass as `x-api-key`
 
 ## Discovery surfaces
 
-- MCP setup: https://www.karmahq.xyz/mcp/connect
-- For-agents landing: https://www.karmahq.xyz/for-agents
-- OpenAPI: https://www.karmahq.xyz/openapi.json
-- Full LLM reference: https://www.karmahq.xyz/llms-full.txt
+- MCP setup: https://www.karmahq.org/mcp/connect
+- For-agents landing: https://www.karmahq.org/for-agents
+- OpenAPI: https://www.karmahq.org/openapi.json
+- Full LLM reference: https://www.karmahq.org/llms-full.txt
 
 ## Supported clients
 
