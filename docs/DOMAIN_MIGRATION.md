@@ -1,5 +1,19 @@
 # Domain Migration Strategy
 
+> **This file records two separate migrations.**
+>
+> - **2025 — the gov split** (everything from "Overview" down): `karmahq.xyz` moved from
+>   `frontend-nextjs` to `gap-app-v2`, and governance routes moved to `gov.karmahq.xyz`.
+>   Historical record; the `middleware.ts` it describes is now `proxy.ts`.
+> - **2026-08 — the TLD flip**: `karmahq.xyz` → `karmahq.org`. See
+>   [§ 2026-08 — karmahq.xyz → karmahq.org](#2026-08--karmahqxyz--karmahqorg) at the bottom.
+>   Operational procedure lives in
+>   [`docs/runbooks/domain-migration-karmahq-org.md`](../../docs/runbooks/domain-migration-karmahq-org.md).
+
+---
+
+# 2025 — karmahq.xyz / gov.karmahq.xyz split
+
 ## Overview
 
 This document describes the domain migration strategy implemented to transition from the current domain structure to a new one, with automatic redirects to maintain backwards compatibility.
@@ -330,3 +344,132 @@ All redirect logic has been tested with the following scenarios:
 For questions about this migration:
 - Review the middleware implementation: `/home/amaury/gap/gap-app-v2/middleware.ts`
 - Check this documentation: `/home/amaury/gap/gap-app-v2/docs/DOMAIN_MIGRATION.md`
+
+> **Stale-path note (2026-08):** the paths above are one developer's local checkout, and
+> `middleware.ts` no longer exists — the single interception file is `proxy.ts` at the repo
+> root (Next 16 recognises `proxy` as an interception filename). The gov redirect logic
+> itself is unchanged and still lives in `utilities/redirectHelpers.ts` +
+> `utilities/frontendNextjsRoutes.ts`.
+
+---
+
+# 2026-08 — karmahq.xyz → karmahq.org
+
+**Date:** 2026-08 · **Linear:** DEV-617 (epic), DEV-624 (frontend), DEV-628 (docs)
+**Runbook:** [`docs/runbooks/domain-migration-karmahq-org.md`](../../docs/runbooks/domain-migration-karmahq-org.md)
+**Deferred work:** [`docs/runbooks/domain-migration-deferred-work.md`](../../docs/runbooks/domain-migration-deferred-work.md)
+
+The registrable domain changes TLD. The 2025 host topology above is otherwise preserved:
+one canonical host serves 200s, everything else collapses onto it.
+
+## Before / after
+
+| | 2025 → 2026-07 | 2026-08 onwards |
+|---|---|---|
+| Canonical host (serves 200) | `www.karmahq.xyz` | **`www.karmahq.org`** |
+| Apex | `karmahq.xyz` → 301/308 to canonical | `karmahq.org` → 308 to canonical |
+| Legacy GAP subdomain | `gap.karmahq.xyz` → 308 | unchanged, now targets `.org` |
+| Staging | `staging.karmahq.xyz` (200) | **`staging.karmahq.org`** (200) |
+| `www.karmahq.xyz` | *was* the canonical | **now a 308 alias** — this is the biggest single change |
+| Governance | `gov.karmahq.xyz` / `govstag.karmahq.xyz` | **unchanged, stays `.xyz`** (separate repo) |
+| API | `gapapi.karmahq.xyz` / `gapstagapi.karmahq.xyz` | **unchanged, stays `.xyz`** |
+| Docs | `docs.gap.karmahq.xyz` | **unchanged, stays `.xyz`** (GitBook) |
+| Email sender | `@karmahq.xyz` | **unchanged, stays `.xyz`** until DKIM/SPF exist for `.org` |
+| Legacy umbrella | `app.` / `testapp.karmahq.xyz` → 301 | unchanged hosts, now 301 to the `.org` canonical in **one** hop |
+
+## Single source of truth
+
+Every karmahq host in this repo now comes from **`utilities/domains.ts`**. It imports
+nothing, so it is safe from `proxy.ts` (per-request Node hot path), from build-time
+`metadata` evaluation, and from client bundles.
+
+```ts
+ROOT_DOMAIN          = "karmahq.org"
+LEGACY_ROOT_DOMAINS  = ["karmahq.xyz"]          // permanent — see the warning below
+CANONICAL_HOST       = "www.karmahq.org"
+CANONICAL_ORIGIN     = "https://www.karmahq.org"
+STAGING_HOST/ORIGIN  = "staging.karmahq.org"
+GOV_HOST             = "gov.karmahq.xyz"        // not flipping
+GOV_STAGING_HOST     = "govstag.karmahq.xyz"    // not flipping
+LEGACY_UMBRELLA_HOSTS= { prod: "app.karmahq.xyz", staging: "testapp.karmahq.xyz" }
+ALIAS_HOSTS          // 5 hosts that each owe exactly one 308
+appOrigin()          // env-aware canonical origin (NEXT_PUBLIC_ENV, read at call time)
+bareHostname()       // the ONE normaliser: strips port, lower-cases, drops one trailing DNS dot
+isAliasHost()        // bareHostname + membership + the !== CANONICAL_HOST loop guard
+canonicalUrl()       // the only way to build a 308 target
+```
+
+**Rule: no other file in `gap-app-v2` may contain a literal `karmahq.org` or `karmahq.xyz`**,
+except the deliberate exceptions listed under "What stayed `.xyz`" below.
+
+`ALIAS_HOSTS` resolves to five members — `karmahq.org`, `gap.karmahq.org`, `karmahq.xyz`,
+`www.karmahq.xyz`, `gap.karmahq.xyz`. It is built by filtering `CANONICAL_HOST` out of the
+candidate list, and `domains.ts` **throws at module load** if `CANONICAL_HOST` ever appears in
+the set. That assertion is the redirect-loop circuit breaker: nothing in `proxy.ts` compares
+the redirect target host to the request host, so a canonical host inside `ALIAS_HOSTS` would
+308 to itself forever.
+
+## What changed in code
+
+| Area | Change |
+|---|---|
+| `proxy.ts` | Local `CANONICAL_ORIGIN` / `ALIAS_HOSTS` / `bareHostname` deleted; imports `appOrigin`, `canonicalUrl`, `isAliasHost`. All three 308 targets build through `canonicalUrl()`. The whitelabel `/blog` 301 and the four legacy-umbrella 301s now target `appOrigin()` directly, **collapsing five pre-existing 301→308 double hops into one hop each**. No status code changed. |
+| `src/infrastructure/config/domain-constants.ts` | `DOMAIN_CONFIGS` **gains** `karmahq.org` + `staging.karmahq.org` and **keeps** all four `.xyz` rows (`isSharedDomain()` fails open, so an omission degrades silently). `getDomainInfo()` routes through the shared `bareHostname`. `getDefaultSharedDomain()` returns `ROOT_DOMAIN`. **No `www.*` row** — see deferred work §5. |
+| `utilities/meta.ts` | `SITE_URL = CANONICAL_ORIGIN`. Everything derived from it follows automatically: `metadataBase`, OG URLs, `robots.txt` `sitemap:`/`host:`, all eight `.well-known` routes, both sitemap generators, and every JSON-LD emitter. |
+| `utilities/getBaseUrl.ts`, `utilities/enviromentVars.ts`, `hooks/useInviteLink.ts` | All now `appOrigin()`. `envVars.VERCEL_URL` was **renamed to `envVars.APP_ORIGIN`** — it never read `process.env.VERCEL_URL`; the name was a lie. |
+| `utilities/redirectHelpers.ts` | Gov hosts come from `GOV_HOST` / `GOV_STAGING_HOST`. Values and the 308 status are unchanged. |
+| `next.config.ts` | CSP `frame-src` **adds** `https://privy.karmahq.org` **alongside** `https://privy.karmahq.xyz`. Nothing removed. The 12 `redirects()` entries are path-only and needed no edit. |
+| Content, components, SEO scripts | ~60 files repointed at `SITE_URL` / `CANONICAL_ORIGIN` / `CANONICAL_HOST` / `ROOT_DOMAIN` / `appOrigin()`. |
+
+## Bugs fixed on the way
+
+- **Staging emitted production invite links.** `useInviteLink.ts` compared
+  `NEXT_PUBLIC_ENV === "dev"` while the rest of the app uses `"staging"` / `"production"`, so
+  `isDev` was false on staging.
+- **Five 301→308 double hops** in the whitelabel `/blog` and legacy-umbrella branches, now one
+  hop each.
+- **OG image routes self-fetched through a redirect.** `app/api/metadata/{projects,communities}`
+  loaded their own icons/background/logo from the hardcoded **apex**; now `SITE_URL`.
+- **Three normalisers, two incomplete.** `proxy.ts`, `whitelabel-config.ts` and
+  `domain-constants.ts` each normalised hostnames differently; only `proxy.ts` dropped the
+  trailing DNS dot. All three now route through `bareHostname`.
+- **Four disagreeing app-origin sources** (`SITE_URL` and `proxy.ts` said `www`;
+  `envVars.VERCEL_URL`, `getBaseUrl()`, `getDefaultSharedDomain()`, `useInviteUrl` and
+  `SOCIALS.WEBSITE` said apex; one admin preview fell back to `gap.karmahq.xyz`). One source now.
+
+## What stayed `.xyz` — and why
+
+| Kept | Reason |
+|---|---|
+| `gapapi.karmahq.xyz` / `gapstagapi.karmahq.xyz` | Moving them rotates the MCP OAuth audience, which is verified by **scalar exact-string equality** — every live MCP access token would be invalidated instantly. Needs byte-exact coordination with `karma-oauth`, a service outside this tree. |
+| `gov.karmahq.xyz` / `govstag.karmahq.xyz` | Separate repository, separate schedule. |
+| `docs.gap.karmahq.xyz` / `docs.karmahq.xyz` | Externally hosted on GitBook. |
+| `privy.karmahq.xyz` | Privy custom auth domain. `privy.karmahq.org` was **added** to the CSP alongside it, never substituted — a CSP violation blanks the login iframe with **no catchable JS error**. |
+| `api.karmahq.xyz`, `anon.karmahq.xyz`, `gap-api.karmahq.xyz` | Not served by any repo in this tree; ownership unverified. |
+| Every `@karmahq.xyz` email address | SPF/DKIM/DMARC do not exist for `karmahq.org`. Flipping a `From` header before DKIM is provisioned **silently degrades deliverability** — no error, no bounce we can see. |
+| Security negative-test fixtures | Assertions such as `https://fakekarmahq.xyz → false` and `https://karmahq.xyz.evil.com → false` prove the anchoring of the origin regexes. They were **duplicated** for `.org`, never replaced — replacing them preserves the assertion text while destroying the coverage. |
+
+## ⚠️ karmahq.xyz must be renewed indefinitely and never sunset
+
+Immutable on-chain EAS attestation payloads embed `karmahq.xyz` URLs, and the indexer
+re-derives those payloads from chain on every re-index. They cannot be rewritten.
+
+`ALIAS_HOSTS` is the only mechanism keeping those immutably-published URLs resolvable.
+**Any future ticket proposing removal of `karmahq.xyz` or `www.karmahq.xyz` from
+`LEGACY_ROOT_DOMAINS` / `ALIAS_HOSTS` is wrong by construction.** The registration is a
+permanent operating cost.
+
+## Known operational facts (measured 2026-08-06 — re-verify before cutover)
+
+- `karmahq.org` is registered but **parked at Namecheap and not attached to Vercel**;
+  `staging.karmahq.org` does not resolve at all. Until the domains are attached, the
+  `indexability-monitor` workflow audits `.org` and reports red (its verify step is
+  `continue-on-error`).
+- **The `.xyz` apex is not served by this app.** `https://karmahq.xyz/` is answered by an
+  S3 bucket behind CloudFront that 301s to `www` — the request never reaches `proxy.ts`, so
+  the `karmahq.xyz` entry in `ALIAS_HOSTS` has never executed in production. It also emits
+  `https://www.karmahq.xyz//` (double slash) for the bare root. Decide during DEV-618 whether
+  to retire that bucket and point the apex at Vercel.
+- Full DNS/TLS table, third-party dashboard checklist, email runbook, the R1–R15 risk
+  register and the end-to-end verification gate are in
+  [`docs/runbooks/domain-migration-karmahq-org.md`](../../docs/runbooks/domain-migration-karmahq-org.md).
