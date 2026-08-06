@@ -89,7 +89,7 @@ jobs:
         run: |
           # Demos record against staging post-merge — preview deployments are
           # gone by the time this runs.
-          echo "url=https://staging.karmahq.xyz" >> "$GITHUB_OUTPUT"
+          echo "url=https://staging.karmahq.org" >> "$GITHUB_OUTPUT"
 
       - name: Setup pnpm
         if: steps.detect.outputs.exists == 'true'
