@@ -17,8 +17,13 @@ import {
   normalizeMilestoneDueDateMs,
 } from "@/utilities/milestones/milestoneDueDate";
 import { parseChainId } from "@/utilities/parseChainId";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { withRequestTimeout } from "@/utilities/requestTimeout";
+
+/** Upper bound on a single updates request; a hang past this becomes an error. */
+const UPDATES_REQUEST_TIMEOUT_MS = 15_000;
 
 /**
  * Resolve a raw milestone due date (ISO string, epoch seconds, or epoch ms)
@@ -382,6 +387,31 @@ interface UseProjectUpdatesOptions {
   isAuthorized?: boolean;
 }
 
+/**
+ * The exact React Query key this hook reads.
+ *
+ * Exported so a server-side prefetch can seed the same entry. A previous
+ * prefetch hand-wrote `QUERY_KEYS.PROJECT.UPDATES(id)` — only the first two
+ * elements — which never matched the filter-aware key below, so it warmed a
+ * cache entry nothing read. Both sides go through this function now so the
+ * two cannot drift apart again.
+ */
+export function projectUpdatesQueryKey(
+  projectIdOrSlug: string,
+  milestoneStatus?: "pending" | "completed" | "verified",
+  filters?: UpdatesFeedFilters
+) {
+  return [
+    ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
+    milestoneStatus ?? null,
+    filters?.dateFrom ?? null,
+    filters?.dateTo ?? null,
+    filters?.hasAIEvaluation ?? null,
+    filters?.aiScoreMin ?? null,
+    filters?.aiScoreMax ?? null,
+  ] as const;
+}
+
 export function useProjectUpdates(
   projectIdOrSlug: string,
   milestoneStatus?: "pending" | "completed" | "verified",
@@ -394,16 +424,7 @@ export function useProjectUpdates(
   // the underlying primitives so its identity is stable across renders — the
   // refetch callback below depends on it.
   const queryKey = useMemo(
-    () =>
-      [
-        ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
-        milestoneStatus ?? null,
-        filters?.dateFrom ?? null,
-        filters?.dateTo ?? null,
-        filters?.hasAIEvaluation ?? null,
-        filters?.aiScoreMin ?? null,
-        filters?.aiScoreMax ?? null,
-      ] as const,
+    () => projectUpdatesQueryKey(projectIdOrSlug, milestoneStatus, filters),
     [
       projectIdOrSlug,
       milestoneStatus,
@@ -422,10 +443,28 @@ export function useProjectUpdates(
     error,
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
+    // Inherit the app-wide retry policy: it never retries aborted or
+    // non-retryable requests, where React Query's default retries three times
+    // with exponential backoff. Without this the feed's error state took ~7s
+    // of silent retries to appear, which reads to a user as "nothing happened"
+    // — QA saw a disabled filter row and no error or retry affordance.
+    ...defaultQueryOptions,
     queryKey,
-    queryFn: () =>
-      getProjectUpdates(projectIdOrSlug, milestoneStatus, { ...filters, isAuthorized }),
+    // Bounded by UPDATES_REQUEST_TIMEOUT_MS. A request that hangs — the
+    // indexer accepting the connection and never responding — neither resolves
+    // nor rejects, so React Query stays `fetching` forever with no data and no
+    // error, and the feed sits on a skeleton indefinitely with nothing to
+    // retry. QA reproduced exactly that: 20+ seconds, no status code, no
+    // console error. The timeout converts a hang into an ordinary failure so
+    // the error state and its retry can do their job.
+    queryFn: ({ signal }) =>
+      getProjectUpdates(projectIdOrSlug, milestoneStatus, {
+        ...filters,
+        isAuthorized,
+        signal: withRequestTimeout(signal, UPDATES_REQUEST_TIMEOUT_MS),
+      }),
     enabled: !!projectIdOrSlug,
+    // Longer than the shared default: the feed is expensive and rarely stale.
     staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });

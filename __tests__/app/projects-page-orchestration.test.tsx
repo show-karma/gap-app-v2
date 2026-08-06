@@ -44,17 +44,43 @@ const runPage = async (params: SearchParams): Promise<ReactElement> => {
   return pageFn({ searchParams: Promise.resolve(params) });
 };
 
-// Locate the deferred loader element inside the page's Suspense boundary.
+/**
+ * Locate the async loader element that owns the data fetch.
+ *
+ * It used to sit inside an in-page <Suspense>. That boundary was removed
+ * (DEV-612): /projects ships in the sitemap, and the boundary streamed the
+ * whole project list into a hidden chunk while the visible document showed a
+ * skeleton — the same pattern the removed loading.tsx files caused. The loader
+ * is now a direct child of the page, awaited inline.
+ *
+ * Asserting it is NOT wrapped in Suspense is part of the contract: putting a
+ * boundary back here would re-hide the list from readers without JavaScript.
+ */
 function findLoaderElement(page: ReactElement): ReactElement {
   const children = (page.props as { children?: unknown }).children;
   const list = Array.isArray(children) ? children : [children];
+
   const suspense = list.find(
     (child): child is ReactElement => isValidElement(child) && child.type === Suspense
   );
-  if (!suspense) {
-    throw new Error("Suspense boundary not found in /projects page");
+  if (suspense) {
+    throw new Error(
+      "/projects wraps its list in <Suspense> again — that hides the project list from no-JS readers (DEV-612)"
+    );
   }
-  return (suspense.props as { children: ReactElement }).children;
+
+  // Identify the loader by the prop only it receives — the sibling hero and
+  // stats sections are function components too.
+  const loader = list.find(
+    (child): child is ReactElement =>
+      isValidElement(child) &&
+      typeof child.type === "function" &&
+      "initialState" in ((child.props ?? {}) as Record<string, unknown>)
+  );
+  if (!loader) {
+    throw new Error("Deferred loader element not found in /projects page");
+  }
+  return loader;
 }
 
 // Invoke the async server child (the only place data is fetched) and return the

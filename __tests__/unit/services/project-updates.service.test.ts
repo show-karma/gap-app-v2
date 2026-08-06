@@ -117,9 +117,10 @@ describe("project-updates.service", () => {
         })
       );
 
-      const result = await getProjectUpdates("project-slug");
+      // Reports AND rethrows: swallowing into emptyResponse hid a failed fetch
+      // behind the same UI as a project with no updates.
+      await expect(getProjectUpdates("project-slug")).rejects.toThrow();
 
-      expect(result).toEqual(emptyResponse);
       expect(mockErrorManager).toHaveBeenCalledWith(
         expect.stringContaining("Project Updates API Error:"),
         expect.any(HttpError),
