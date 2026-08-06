@@ -15,7 +15,7 @@ import {
   type SitemapCounts,
 } from "@/utilities/sitemap";
 
-const SITE = "https://www.karmahq.xyz";
+const SITE = "https://www.karmahq.org";
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -71,9 +71,16 @@ describe("chunkCountFromTotal", () => {
 
 describe("canonicalizeSitemapUrl", () => {
   it("rewrites the origin to the canonical production host", () => {
+    expect(canonicalizeSitemapUrl("https://staging.karmahq.org/project/x")).toBe(
+      `${SITE}/project/x`
+    );
+  });
+
+  it("rewrites a legacy .xyz origin onto the canonical .org host", () => {
     expect(canonicalizeSitemapUrl("https://staging.karmahq.xyz/project/x")).toBe(
       `${SITE}/project/x`
     );
+    expect(canonicalizeSitemapUrl("https://www.karmahq.xyz/project/x")).toBe(`${SITE}/project/x`);
   });
 
   it("preserves path, query, and hash", () => {
@@ -96,12 +103,12 @@ describe("buildUrlsetXml", () => {
   });
 
   it("omits lastmod (no accurate per-URL modified date to emit)", () => {
-    const xml = buildUrlsetXml(["https://www.karmahq.xyz/a"], 0.8, "daily");
+    const xml = buildUrlsetXml(["https://www.karmahq.org/a"], 0.8, "daily");
     expect(xml).not.toContain("<lastmod>");
   });
 
   it("escapes XML-significant characters in URLs", () => {
-    const xml = buildUrlsetXml(["https://www.karmahq.xyz/a?x=1&y=2"], 0.5, "weekly");
+    const xml = buildUrlsetXml(["https://www.karmahq.org/a?x=1&y=2"], 0.5, "weekly");
     expect(xml).toContain("x=1&amp;y=2");
   });
 

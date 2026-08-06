@@ -102,7 +102,7 @@ vi.mock("@/utilities/enviromentVars", () => ({
     ENV: "development",
     RPC: {},
     PROJECT_ID: "",
-    VERCEL_URL: "https://staging.karmahq.xyz",
+    APP_ORIGIN: "https://staging.karmahq.org",
     OSO_API_KEY: "",
     PRIVY_APP_ID: "",
     ZERODEV_PROJECT_ID: "",
