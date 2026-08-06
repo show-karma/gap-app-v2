@@ -81,4 +81,6 @@ export interface PermissionsResponse {
    */
   isProjectOwner?: boolean;
   isProjectAdmin?: boolean;
+  /** Non-revoked MemberOf on the project (or owner), across linked wallets. */
+  isProjectMember?: boolean;
 }
