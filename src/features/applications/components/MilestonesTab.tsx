@@ -1,5 +1,6 @@
 "use client";
 
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { OffChainMilestoneRow } from "@/src/features/applications/components/OffChainMilestoneRow";
 import { OnChainMilestoneRow } from "@/src/features/applications/components/OnChainMilestoneRow";
 import { useApplicationInvoiceConfig } from "@/src/features/applications/hooks/use-application-invoice-config";
@@ -39,6 +40,30 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
     { enabled: invoiceRequired !== false }
   );
 
+  // Being the APPLICANT is an off-chain funding-platform role; submitting a
+  // completion writes an ON-CHAIN attestation that the indexer authorizes
+  // against PROJECT authority (owner / MemberOf / resolver admin, resolved
+  // server-side across every linked wallet). Where an application is linked to
+  // a project the applicant has no authority on, EAS accepts the attestation,
+  // the grantee pays gas, and the indexer silently discards it. Requiring both
+  // signals is what stops that. Resolved server-side on purpose — a
+  // client-side address comparison would miss the caller's other linked
+  // wallets, which is a separate bug we already shipped a fix for.
+  const { data: projectPermissions, isLoading: isResolvingProjectAuthority } = usePermissionsQuery(
+    { projectId: application.projectUID },
+    { enabled: isOwner && Boolean(application.projectUID) }
+  );
+
+  const hasProjectAuthority =
+    projectPermissions?.isProjectOwner === true ||
+    projectPermissions?.isProjectAdmin === true ||
+    projectPermissions?.isProjectMember === true;
+
+  // Fail closed while the tri-state auth signal is pending or errored: never
+  // render the submit affordance during the window where authority is unknown.
+  const canSubmitCompletion = isOwner && !isResolvingProjectAuthority && hasProjectAuthority;
+  const isBlockedFromSubmitting = isOwner && !isResolvingProjectAuthority && !hasProjectAuthority;
+
   const showInvoice = !!invoiceConfig?.invoiceRequired && !!invoiceConfig?.grantUID;
   const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
 
@@ -67,6 +92,13 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
       <div className="border-b border-border px-5 py-4">
         <h2 className="text-base font-semibold text-foreground">Milestones</h2>
       </div>
+      {isBlockedFromSubmitting && (
+        <output className="mx-5 mt-5 block rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          Your account is not authorized on the linked Karma project, so milestone updates submitted
+          from here would not be recorded. Ask a project owner or admin to add you as a member of
+          the project, then reload this page.
+        </output>
+      )}
       <div className="space-y-3 p-5">
         {entries.map((entry) => {
           // Stable key: prefer milestoneUID; fall back to fieldLabel:title
@@ -91,7 +123,7 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
                 key={key}
                 entry={entry}
                 referenceNumber={application.referenceNumber}
-                isEditable={isOwner}
+                isEditable={canSubmitCompletion}
                 showInvoice={showInvoice}
                 existingInvoice={existingInvoice}
                 isInvoiceConfigLoading={isInvoiceConfigLoading}
@@ -109,7 +141,7 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
               key={key}
               entry={entry}
               referenceNumber={application.referenceNumber}
-              isEditable={isOwner}
+              isEditable={canSubmitCompletion}
               projectUid={application.projectUID}
             />
           );
