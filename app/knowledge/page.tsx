@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
@@ -269,7 +269,7 @@ export default function KnowledgePage() {
           <h2 className="text-xl font-semibold">How this connects to Karma</h2>
           <p className="text-gray-700 dark:text-gray-300">
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"

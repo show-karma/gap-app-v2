@@ -59,6 +59,7 @@ import type { Project as ProjectResponse } from "@/types/v2/project";
 import { api } from "@/utilities/api/client";
 import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
+import { CANONICAL_ORIGIN } from "@/utilities/domains";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
@@ -1199,7 +1200,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 id="website-input"
                 type="text"
                 className={socialMediaInputStyle}
-                placeholder="https://karmahq.xyz"
+                placeholder={CANONICAL_ORIGIN}
                 {...register("website")}
               />
             </div>

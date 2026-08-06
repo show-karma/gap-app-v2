@@ -45,6 +45,7 @@ import {
   type SavePayoutConfigRequest,
   type TokenTotal,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { CANONICAL_ORIGIN } from "@/utilities/domains";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -563,17 +564,17 @@ export default function PayoutsAdminPage() {
     if (exampleData.length === 0) {
       exampleData.push(
         {
-          projectSlug: "https://karmahq.xyz/project/example-project-1",
+          projectSlug: `${CANONICAL_ORIGIN}/project/example-project-1`,
           payoutAddress: "0x1111111111111111111111111111111111111111",
           amount: "100.00",
         },
         {
-          projectSlug: "https://karmahq.xyz/project/example-project-2",
+          projectSlug: `${CANONICAL_ORIGIN}/project/example-project-2`,
           payoutAddress: "0x2222222222222222222222222222222222222222",
           amount: "200.00",
         },
         {
-          projectSlug: "https://karmahq.xyz/project/example-project-3",
+          projectSlug: `${CANONICAL_ORIGIN}/project/example-project-3`,
           payoutAddress: "0x3333333333333333333333333333333333333333",
           amount: "300.00",
         }

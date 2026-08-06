@@ -7,6 +7,7 @@ import { PROJECT_NAME } from "@/constants/brand";
 import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { SITE_URL } from "@/utilities/meta";
 
 export async function GET(
   _request: NextRequest,
@@ -64,17 +65,17 @@ export async function GET(
     {
       title: pluralize("Grant", grants.length),
       value: grants.length,
-      icon: "https://karmahq.xyz/icons/funding-lg.png",
+      icon: `${SITE_URL}/icons/funding-lg.png`,
     },
     {
       title: `${pluralize("Milestone", milestonesCompleted || 0)} completed`,
       value: milestonesCompleted || 0,
-      icon: "https://karmahq.xyz/icons/impact.png",
+      icon: `${SITE_URL}/icons/impact.png`,
     },
     {
       title: pluralize("Endorsement", project?.endorsements?.length || 0),
       value: project?.endorsements?.length || 0,
-      icon: "https://karmahq.xyz/icons/endorsements-lg.png",
+      icon: `${SITE_URL}/icons/endorsements-lg.png`,
     },
   ];
 
@@ -93,13 +94,13 @@ export async function GET(
       <div
         tw="bg-white w-full h-full flex flex-row justify-between items-center pr-[42px] pl-[68px]"
         style={{
-          backgroundImage: `url(https://karmahq.xyz/assets/previews/background.png)`,
+          backgroundImage: `url(${SITE_URL}/assets/previews/background.png)`,
         }}
       >
         <div tw="flex flex-col items-start justify-center mt-8 w-[520px] pb-[80px]">
           <img
             alt={`${PROJECT_NAME} Logo`}
-            src="https://karmahq.xyz/logo/karma-logo-dark.svg"
+            src={`${SITE_URL}/logo/karma-logo-dark.svg`}
             style={{
               width: 158,
               height: 40,
