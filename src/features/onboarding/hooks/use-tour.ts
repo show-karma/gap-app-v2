@@ -11,6 +11,21 @@ import { useOnboardingScope } from "./use-onboarding-scope";
 /** Matches Tailwind's `lg`, the breakpoint the desktop navbar appears at. */
 const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
 
+/**
+ * How many steps a multi-step tour must actually show before the run counts as
+ * having been seen.
+ *
+ * A tour degraded to a single step is not the tour. On the find-funders landing
+ * page only the search box exists — the results and tray steps resolve after a
+ * search — so recording that one-step run as complete would permanently
+ * suppress the full walkthrough the user has never been shown.
+ */
+const MIN_STEPS_TO_RECORD = 2;
+
+function wasSubstantive(tour: TourDefinition, stepsShown: number): boolean {
+  return stepsShown >= Math.min(MIN_STEPS_TO_RECORD, tour.steps.length);
+}
+
 function isDesktopViewport(): boolean {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
   return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
@@ -62,16 +77,23 @@ export function useTour(): UseTourResult {
       try {
         const outcome = await runTour(tour, { returnFocusTo: options.trigger });
 
+        if (outcome.status === "unavailable") return;
+
+        // A run degraded to fewer steps than the tour is about doesn't settle
+        // anything, so it is reported but not remembered — the full walkthrough
+        // stays on offer once the rest of its anchors exist.
+        const substantive = wasSubstantive(tour, outcome.stepsShown);
+
         if (outcome.status === "completed") {
-          markCompleted(scope, surface);
+          if (substantive) markCompleted(scope, surface);
           trackTourCompleted({
             userId,
             tour: tour.id,
             version: tour.version,
-            steps: tour.steps.length,
+            steps: outcome.stepsShown,
           });
-        } else if (outcome.status === "dismissed") {
-          markDismissed(scope, surface);
+        } else {
+          if (substantive) markDismissed(scope, surface);
           trackTourDismissed({
             userId,
             tour: tour.id,
@@ -79,8 +101,6 @@ export function useTour(): UseTourResult {
             atStep: outcome.atStep,
           });
         }
-        // `unavailable` is deliberately not persisted: nothing was shown, so
-        // the tour should still be offered once its anchors are back.
       } finally {
         isRunning.current = false;
       }

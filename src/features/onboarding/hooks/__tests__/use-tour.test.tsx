@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GETTING_STARTED_TOUR, surfaceFor } from "../../lib/tours";
+import { FIND_FUNDERS_TOUR, GETTING_STARTED_TOUR, surfaceFor } from "../../lib/tours";
 import { useTour } from "../use-tour";
 
 const runTour = vi.hoisted(() => vi.fn());
@@ -41,7 +41,7 @@ beforeEach(() => {
   scope.value = { scope: "did:privy:me", isReady: true, isAuthenticated: true };
   whitelabel.value = { isWhitelabel: false };
   storage.shouldAutoShow.mockReturnValue(true);
-  runTour.mockResolvedValue({ status: "completed" });
+  runTour.mockResolvedValue({ status: "completed", stepsShown: 1 });
   setViewport(true);
 });
 
@@ -106,7 +106,7 @@ describe("gating", () => {
     await result.current.startTour(GETTING_STARTED_TOUR);
 
     expect(runTour).toHaveBeenCalledTimes(1);
-    release({ status: "completed" });
+    release({ status: "completed", stepsShown: 1 });
     await first;
   });
 });
@@ -126,7 +126,7 @@ describe("recording the outcome", () => {
   });
 
   it("records where a walk-away happened", async () => {
-    runTour.mockResolvedValue({ status: "dismissed", atStep: 2 });
+    runTour.mockResolvedValue({ status: "dismissed", atStep: 2, stepsShown: 1 });
 
     const { result } = renderHook(() => useTour());
     await result.current.startTour(GETTING_STARTED_TOUR);
@@ -167,5 +167,51 @@ describe("recording the outcome", () => {
     await result.current.startTour(GETTING_STARTED_TOUR);
 
     expect(runTour).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("degraded runs", () => {
+  it("does not record a multi-step tour that ran as a single step", async () => {
+    // What the find-funders landing page does: only the search anchor exists,
+    // so the results and tray steps drop out.
+    runTour.mockResolvedValue({ status: "completed", stepsShown: 1 });
+
+    const { result } = renderHook(() => useTour());
+    await result.current.startTour(FIND_FUNDERS_TOUR);
+
+    expect(storage.markCompleted).not.toHaveBeenCalled();
+    expect(analytics.trackTourCompleted).toHaveBeenCalledWith(
+      expect.objectContaining({ steps: 1 })
+    );
+  });
+
+  it("does not record a walk-away from a degraded run either", async () => {
+    runTour.mockResolvedValue({ status: "dismissed", atStep: 0, stepsShown: 1 });
+
+    const { result } = renderHook(() => useTour());
+    await result.current.startTour(FIND_FUNDERS_TOUR);
+
+    expect(storage.markDismissed).not.toHaveBeenCalled();
+  });
+
+  it("records once enough of the tour has been shown", async () => {
+    runTour.mockResolvedValue({ status: "completed", stepsShown: 2 });
+
+    const { result } = renderHook(() => useTour());
+    await result.current.startTour(FIND_FUNDERS_TOUR);
+
+    expect(storage.markCompleted).toHaveBeenCalledWith(
+      "did:privy:me",
+      surfaceFor(FIND_FUNDERS_TOUR)
+    );
+  });
+
+  it("still records a tour that only ever had one step", async () => {
+    runTour.mockResolvedValue({ status: "completed", stepsShown: 1 });
+
+    const { result } = renderHook(() => useTour());
+    await result.current.startTour(GETTING_STARTED_TOUR);
+
+    expect(storage.markCompleted).toHaveBeenCalledWith("did:privy:me", SURFACE);
   });
 });

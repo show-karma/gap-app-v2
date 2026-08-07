@@ -7,8 +7,8 @@ import type { TourDefinition } from "./tours";
 import "../styles/tour.css";
 
 export type TourOutcome =
-  | { status: "completed" }
-  | { status: "dismissed"; atStep: number }
+  | { status: "completed"; stepsShown: number }
+  | { status: "dismissed"; atStep: number; stepsShown: number }
   /** No step had a live anchor — nothing was shown. */
   | { status: "unavailable" };
 
@@ -103,7 +103,9 @@ export async function runTour(
       onDestroyed: () => {
         returnFocusTo?.focus?.();
         resolve(
-          reachedLastStep ? { status: "completed" } : { status: "dismissed", atStep: activeIndex }
+          reachedLastStep
+            ? { status: "completed", stepsShown: present.length }
+            : { status: "dismissed", atStep: activeIndex, stepsShown: present.length }
         );
       },
     });

@@ -133,13 +133,17 @@ describe("outcomes", () => {
   it("counts reaching the final step as completed", async () => {
     stubDriver({ reachLastStep: true });
 
-    await expect(runTour(TOUR)).resolves.toEqual({ status: "completed" });
+    await expect(runTour(TOUR)).resolves.toEqual({ status: "completed", stepsShown: 2 });
   });
 
   it("records where someone walked away", async () => {
     stubDriver({ reachLastStep: false });
 
-    await expect(runTour(TOUR)).resolves.toEqual({ status: "dismissed", atStep: 0 });
+    await expect(runTour(TOUR)).resolves.toEqual({
+      status: "dismissed",
+      atStep: 0,
+      stepsShown: 2,
+    });
   });
 
   it("returns focus to the control that opened it", async () => {
