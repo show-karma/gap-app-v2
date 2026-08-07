@@ -26,13 +26,19 @@ function httpErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * @param programId RAW (composite) program id, e.g. `"1013_42161"`. The
+ * backend normalizes it; pre-parsing here would lose the chain suffix.
+ * Omit it to keep the legacy unscoped behaviour.
+ */
 export async function fetchApplicationByProjectUID(
-  projectUID: string
+  projectUID: string,
+  programId?: string
 ): Promise<IFundingApplication | null> {
   try {
     // TODO(#1775): add zod schema
     const data = await api.get<IFundingApplication>(
-      INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID)
+      INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID, programId)
     );
     return data || null;
   } catch (error) {

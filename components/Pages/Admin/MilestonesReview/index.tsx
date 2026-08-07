@@ -38,6 +38,7 @@ import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { ReviewerType } from "@/src/core/rbac/types";
 import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
+import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
@@ -88,15 +89,6 @@ function extractCompletionCriteriaByTitle(
     }
   }
   return map;
-}
-
-// Strip the optional chainId suffix from program IDs (e.g. "959_42161" -> "959").
-function parseProgramId(programId: string): string {
-  if (programId.includes("_")) {
-    const [id] = programId.split("_");
-    return id ?? programId;
-  }
-  return programId;
 }
 
 /** Small icon component for filter pills */
@@ -444,7 +436,7 @@ export function MilestonesReviewPage({
   referrer,
 }: MilestonesReviewPageProps) {
   // Supports both "959" and legacy "959_42161" formats
-  const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
+  const parsedProgramId = useMemo(() => normalizeProgramId(programId), [programId]);
 
   // Wrap with PermissionProvider that includes programId for proper reviewer role detection
   return (
@@ -553,7 +545,9 @@ function MilestonesReviewPageContent({
     isLoading: isLoadingFundingApp,
     error: fundingApplicationError,
     refetch: refetchFundingApplication,
-  } = useFundingApplicationByProjectUID(projectUID || "");
+    // RAW composite programId — scopes the lookup to this grant's program so
+    // a project with grants in several programs resolves its own application.
+  } = useFundingApplicationByProjectUID(projectUID || "", programId);
 
   // On-chain milestone attestations don't carry completion criteria, so we look
   // it up from the application data (where the grantee originally entered it).
@@ -576,7 +570,7 @@ function MilestonesReviewPageContent({
   const grantName = useMemo(() => {
     const milestoneProgramId = data?.grantMilestones[0]?.programId;
     if (milestoneProgramId) {
-      return `Program ${parseProgramId(milestoneProgramId)}`;
+      return `Program ${normalizeProgramId(milestoneProgramId)}`;
     }
     return `Program ${parsedProgramId}`;
   }, [data?.grantMilestones, parsedProgramId]);

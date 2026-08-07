@@ -109,4 +109,21 @@ describe("INDEXER utilities", () => {
       expect(url).toContain("limit=15");
     });
   });
+
+  describe("V2.APPLICATIONS.BY_PROJECT_UID", () => {
+    it("should return the unscoped path when no programId is given", () => {
+      const url = INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("0xproject");
+      expect(url).toBe("/v2/funding-applications/project/0xproject");
+    });
+
+    it("should append the RAW composite programId as a query param", () => {
+      const url = INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("0xproject", "1013_42161");
+      expect(url).toBe("/v2/funding-applications/project/0xproject?programId=1013_42161");
+    });
+
+    it("should encode special characters in the programId", () => {
+      const url = INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("0xproject", "a b&c");
+      expect(url).toContain("programId=a+b%26c");
+    });
+  });
 });
