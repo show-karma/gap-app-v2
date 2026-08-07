@@ -49,20 +49,38 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
   // signals is what stops that. Resolved server-side on purpose — a
   // client-side address comparison would miss the caller's other linked
   // wallets, which is a separate bug we already shipped a fix for.
-  const { data: projectPermissions, isLoading: isResolvingProjectAuthority } = usePermissionsQuery(
+  const canResolveProjectAuthority = isOwner && Boolean(application.projectUID);
+  const {
+    data: projectPermissions,
+    isPending,
+    isPlaceholderData,
+    isError: didAuthorityLookupFail,
+  } = usePermissionsQuery(
     { projectId: application.projectUID },
-    { enabled: isOwner && Boolean(application.projectUID) }
+    { enabled: canResolveProjectAuthority }
   );
+
+  // Authority is tri-state, and two v5 behaviours make `isLoading` the wrong
+  // signal here. A DISABLED query reports isLoading=false while permanently
+  // undecided, and `placeholderData: keepPreviousData` serves the PREVIOUS
+  // project's resolved permissions under status "success" while the new
+  // project is still in flight. Either one, trusted naively, flashes the
+  // submit affordance for a project the applicant has no authority on.
+  const isResolvingProjectAuthority =
+    canResolveProjectAuthority && (isPending || isPlaceholderData);
 
   const hasProjectAuthority =
     projectPermissions?.isProjectOwner === true ||
     projectPermissions?.isProjectAdmin === true ||
     projectPermissions?.isProjectMember === true;
 
-  // Fail closed while the tri-state auth signal is pending or errored: never
-  // render the submit affordance during the window where authority is unknown.
-  const canSubmitCompletion = isOwner && !isResolvingProjectAuthority && hasProjectAuthority;
-  const isBlockedFromSubmitting = isOwner && !isResolvingProjectAuthority && !hasProjectAuthority;
+  const canSubmitCompletion =
+    canResolveProjectAuthority && !isResolvingProjectAuthority && hasProjectAuthority;
+  // An applicant whose authority we could not resolve is blocked too — but the
+  // notice must say so rather than assert a denial, or a legitimately
+  // authorized grantee goes chasing access they already have.
+  const isBlockedFromSubmitting = isOwner && !isResolvingProjectAuthority && !canSubmitCompletion;
+  const isAuthorityUnverified = didAuthorityLookupFail || !canResolveProjectAuthority;
 
   const showInvoice = !!invoiceConfig?.invoiceRequired && !!invoiceConfig?.grantUID;
   const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
@@ -94,9 +112,9 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
       </div>
       {isBlockedFromSubmitting && (
         <output className="mx-5 mt-5 block rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
-          Your account is not authorized on the linked Karma project, so milestone updates submitted
-          from here would not be recorded. Ask a project owner or admin to add you as a member of
-          the project, then reload this page.
+          {isAuthorityUnverified
+            ? "We could not verify your permissions on the Karma project behind this application, so milestone updates are disabled here for now. Reload the page, and contact the program admins if this keeps happening."
+            : "Your account is not authorized on the Karma project behind this application, so milestone updates submitted from here would not be recorded. Ask a project owner or admin to add you as a member of the project, then reload this page."}
         </output>
       )}
       <div className="space-y-3 p-5">

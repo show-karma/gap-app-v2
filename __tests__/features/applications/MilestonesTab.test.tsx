@@ -107,7 +107,9 @@ beforeEach(() => {
   mockUseApplicationInvoiceConfig.mockReturnValue({ data: null, isLoading: false });
   mockUsePermissionsQuery.mockReturnValue({
     data: { isProjectOwner: true, isProjectAdmin: false, isProjectMember: true },
-    isLoading: false,
+    isPending: false,
+    isPlaceholderData: false,
+    isError: false,
   });
 });
 
@@ -306,12 +308,26 @@ describe("MilestonesTab project-authority gating", () => {
 
   function renderWithAuthority(
     permissions: Record<string, boolean> | null,
-    { isOwner = true, isLoading = false } = {}
+    {
+      isOwner = true,
+      isPending = false,
+      isPlaceholderData = false,
+      isError = false,
+      hasLinkedProject = true,
+    } = {}
   ) {
-    mockUsePermissionsQuery.mockReturnValue({ data: permissions, isLoading });
+    mockUsePermissionsQuery.mockReturnValue({
+      data: permissions,
+      isPending,
+      isPlaceholderData,
+      isError,
+    });
     return render(
       <MilestonesTab
-        application={makeApplication({ milestoneStatuses: entries })}
+        application={makeApplication({
+          milestoneStatuses: entries,
+          projectUID: hasLinkedProject ? PROJECT_UID : undefined,
+        })}
         isOwner={isOwner}
       />
     );
@@ -373,27 +389,70 @@ describe("MilestonesTab project-authority gating", () => {
       isProjectMember: false,
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent(/not authorized on the linked/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/not authorized on the Karma project/i);
   });
 
   it("should_fail_closed_while_project_authority_is_still_resolving", () => {
     // No-glimpse rule: a tri-state auth signal must never render the
     // privileged affordance during the pending window.
-    renderWithAuthority(null, { isLoading: true });
+    renderWithAuthority(null, { isPending: true });
 
     expect(editableFlags()).toEqual(["false", "false"]);
   });
 
   it("should_not_show_the_blocked_notice_while_authority_is_still_resolving", () => {
-    renderWithAuthority(null, { isLoading: true });
+    renderWithAuthority(null, { isPending: true });
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("should_fail_closed_when_the_permissions_query_errors_out", () => {
-    renderWithAuthority(null);
+    renderWithAuthority(null, { isError: true });
 
     expect(editableFlags()).toEqual(["false", "false"]);
+  });
+
+  it("should_say_permissions_could_not_be_verified_rather_than_claiming_unauthorized_on_error", () => {
+    // An unresolved query is not a denial. Telling a legitimately authorized
+    // grantee they are "not authorized" because the permissions call failed
+    // sends them chasing access they already have.
+    renderWithAuthority(null, { isError: true });
+
+    expect(screen.getByRole("status")).toHaveTextContent(/could not verify/i);
+  });
+
+  it("should_fail_closed_while_showing_placeholder_permissions_from_a_previously_viewed_project", () => {
+    // usePermissionsQuery sets `placeholderData: keepPreviousData`, so moving
+    // between applications keeps the PRIOR project's resolved permissions with
+    // status "success". Trusting that would flash the submit affordance for a
+    // project the applicant has no authority on — the exact glimpse this fix
+    // exists to remove.
+    renderWithAuthority(
+      { isProjectOwner: true, isProjectAdmin: true, isProjectMember: true },
+      { isPlaceholderData: true }
+    );
+
+    expect(editableFlags()).toEqual(["false", "false"]);
+  });
+
+  it("should_not_show_the_blocked_notice_while_permissions_are_placeholder_data", () => {
+    renderWithAuthority(
+      { isProjectOwner: true, isProjectAdmin: true, isProjectMember: true },
+      { isPlaceholderData: true }
+    );
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("should_lock_rows_when_the_application_has_no_linked_project_to_resolve_authority_against", () => {
+    // No projectUID means the query is disabled and authority is unknowable —
+    // a disabled v5 query reports isPending=true forever, so this must not be
+    // mistaken for "still loading" and must not silently unlock the form.
+    renderWithAuthority(null, { isPending: true, hasLinkedProject: false });
+
+    // The project-source row is dropped entirely without a projectUID, so only
+    // the application-source row renders — and it must be locked.
+    expect(editableFlags()).toEqual(["false"]);
   });
 
   it("should_not_show_the_blocked_notice_to_non_applicants", () => {
