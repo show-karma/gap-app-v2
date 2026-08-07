@@ -2,6 +2,7 @@
 
 import {
   CircleUser,
+  Compass,
   Copy,
   FolderKanban,
   Heart,
@@ -25,8 +26,10 @@ import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
 import { followLinks } from "@/src/components/navbar/follow-links";
+import { dataTour, TOUR_ANCHORS } from "@/src/features/onboarding/lib/tour-anchors";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useGettingStarted } from "@/store/modals/gettingStarted";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { MenuSection } from "./menu-components";
@@ -67,6 +70,7 @@ export function NavbarUserMenu() {
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
   const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
+  const { open: openGettingStarted } = useGettingStarted();
   const [, copyToClipboard] = useCopyToClipboard();
 
   if (!ready) {
@@ -97,7 +101,10 @@ export function NavbarUserMenu() {
   return (
     <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto">
       <MenubarMenu>
-        <MenubarTrigger className="cursor-pointer p-0 rounded-full data-[state=open]:opacity-90">
+        <MenubarTrigger
+          className="cursor-pointer p-0 rounded-full data-[state=open]:opacity-90"
+          {...dataTour(TOUR_ANCHORS.gettingStarted)}
+        >
           <div className="flex items-center rounded-full border border-border p-1">
             {user?.farcaster?.pfp ? (
               <img
@@ -209,6 +216,12 @@ export function NavbarUserMenu() {
               <div className="flex items-center w-full flex-row gap-2">
                 <KeyRound className={menuStyles.itemIcon} />
                 <span className={menuStyles.itemText}>API Keys</span>
+              </div>
+            </MenubarItem>
+            <MenubarItem className="w-full cursor-pointer" onClick={openGettingStarted}>
+              <div className="flex items-center w-full flex-row gap-2">
+                <Compass className={menuStyles.itemIcon} />
+                <span className={menuStyles.itemText}>Getting started</span>
               </div>
             </MenubarItem>
             {isRegistryAllowed && (

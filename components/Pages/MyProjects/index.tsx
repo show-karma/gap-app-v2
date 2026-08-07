@@ -10,9 +10,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useAuth } from "@/hooks/useAuth";
-import { useMixpanel } from "@/hooks/useMixpanel";
 import { layoutTheme } from "@/src/helper/theme";
-import { useOnboarding } from "@/store/modals/onboarding";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -46,24 +44,8 @@ const pickColor = (index: number) => {
 export default function MyProjects() {
   const { authenticated: isAuth, address, ready } = useAuth();
   const { theme: currentTheme } = useTheme();
-  const { setIsOnboarding } = useOnboarding();
-  const { mixpanel } = useMixpanel();
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
-
-  const handleStartWalkthrough = () => {
-    setIsOnboarding(true);
-    if (address) {
-      mixpanel.reportEvent({
-        event: "onboarding:popup",
-        properties: { address },
-      });
-      mixpanel.reportEvent({
-        event: "onboarding:navigation",
-        properties: { address, id: "welcome" },
-      });
-    }
-  };
 
   const {
     data: projects,
@@ -76,6 +58,7 @@ export default function MyProjects() {
   });
 
   const totalProjects: number = projects?.length || 0;
+
   const myProjects = (projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) ||
     []) as ProjectWithGrantsResponse[];
 
@@ -220,7 +203,7 @@ export default function MyProjects() {
                 ) : null}
               </div>
             ) : (
-              <EmptyProjectsState onStartWalkthrough={handleStartWalkthrough} />
+              <EmptyProjectsState />
             )}
           </div>
         ) : (

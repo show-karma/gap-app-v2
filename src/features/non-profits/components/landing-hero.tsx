@@ -16,6 +16,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { dataTour, TOUR_ANCHORS } from "@/src/features/onboarding/lib/tour-anchors";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { HERO_CHIPS, HERO_SUB, HERO_TITLE_LINE_1, HERO_TITLE_LINE_2 } from "../lib/hero-content";
 import { FILINGS_STATS } from "../lib/stats";
@@ -178,7 +179,7 @@ export function LandingHero() {
             <span>&#8984; K</span>
           </div>
 
-          <div className="lp-search-box">
+          <div className="lp-search-box" {...dataTour(TOUR_ANCHORS.findFundersSearch)}>
             <div className="lp-search-row">
               <span className="lp-search-icon">
                 <SearchIcon />

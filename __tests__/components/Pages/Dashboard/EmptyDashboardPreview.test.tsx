@@ -8,7 +8,7 @@ vi.mock("@/components/Pages/Dashboard/v3/SoftShell", () => ({
   SoftShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-// The "Create a project" card renders the lazy ProjectDialog; stub to a button.
+// The "Track a funded project" card renders the lazy ProjectDialog; stub to a button.
 vi.mock("@/components/Dialogs/ProjectDialog/index", () => ({
   ProjectDialog: ({ buttonElement }: { buttonElement: { text: string } }) => (
     <button type="button">{buttonElement.text}</button>
@@ -30,10 +30,10 @@ describe("EmptyDashboardPreview", () => {
   it("renders the getting-started cards", () => {
     render(<EmptyDashboardPreview />);
 
-    expect(screen.getByText("Get started with Karma")).toBeInTheDocument();
-    expect(screen.getByText("Create a project")).toBeInTheDocument();
+    expect(screen.getByText("What brings you to Karma?")).toBeInTheDocument();
+    expect(screen.getByText("Track a funded project")).toBeInTheDocument();
     expect(screen.getByText("Apply for funding")).toBeInTheDocument();
     expect(screen.getByText("Explore communities")).toBeInTheDocument();
-    expect(screen.getByText("Find funders")).toBeInTheDocument();
+    expect(screen.getByText("Research nonprofits to fund")).toBeInTheDocument();
   });
 });

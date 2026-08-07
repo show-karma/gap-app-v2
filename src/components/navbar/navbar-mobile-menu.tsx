@@ -1,7 +1,7 @@
 "use client";
 
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid";
-import { CircleHelp, KeyRound, LogOutIcon, ToggleLeft, ToggleRight } from "lucide-react";
+import { CircleHelp, Compass, KeyRound, LogOutIcon, ToggleLeft, ToggleRight } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -23,6 +23,7 @@ import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
 import { followLinks } from "@/src/components/navbar/follow-links";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useGettingStarted } from "@/store/modals/gettingStarted";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { Logo } from "../shared/logo";
@@ -67,6 +68,7 @@ export function NavbarMobileMenu() {
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
   const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
+  const { open: openGettingStarted } = useGettingStarted();
 
   // Get permissions from centralized context (prevents duplicate hook calls)
   const { isLoggedIn, address, isRegistryAllowed } = useNavbarPermissions();
@@ -167,6 +169,18 @@ export function NavbarMobileMenu() {
                   ))}
                 </div>
               )}
+
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openGettingStarted();
+                }}
+              >
+                <Compass className={menuStyles.itemIcon} />
+                <span className={menuStyles.itemText}>Getting started</span>
+              </button>
 
               {/* Theme Toggle - always visible */}
               <button

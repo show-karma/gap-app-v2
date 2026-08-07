@@ -52,6 +52,8 @@ export const PAGES = {
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
   DASHBOARD: `/dashboard`,
+  /** A single role module's drill-in — keys are DASHBOARD_MODULE_KEYS. */
+  DASHBOARD_MODULE: (module: string) => `/dashboard/${module}`,
   DONATIONS: `/donations`,
   DONOR_RESEARCH: {
     INDEX: `/nonprofit-research`,

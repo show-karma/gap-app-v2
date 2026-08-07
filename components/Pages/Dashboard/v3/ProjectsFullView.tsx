@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { memo } from "react";
 import { Link } from "@/src/components/navigation/Link";
+import { TourHandoffBanner } from "@/src/features/onboarding/components/tour-handoff-banner";
+import { PROJECT_WORKSPACE_TOUR } from "@/src/features/onboarding/lib/tours";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -154,6 +156,11 @@ const ProjectCard = memo(function ProjectCard({ project }: { project: ProjectWit
  * empty, error, and ready states.
  */
 export function ProjectsFullView({ projects, isLoading, isError, refetch }: ProjectsFullViewProps) {
+  // A walkthrough requested from the Getting started chooser lands here, but
+  // runs inside a project — offer the hand-off rather than picking one.
+  const firstProject = projects[0];
+  const firstProjectSlug = firstProject?.details?.slug || firstProject?.uid;
+
   let body: React.ReactNode;
   if (isError) {
     body = <ErrorState message="Unable to load your projects." onRetry={() => refetch()} />;
@@ -196,6 +203,11 @@ export function ProjectsFullView({ projects, isLoading, isError, refetch }: Proj
       sub="Grants and milestones you own"
       action={canCreate ? <NewProjectButton label="New project" /> : null}
     >
+      <TourHandoffBanner
+        tour={PROJECT_WORKSPACE_TOUR}
+        destination={firstProjectSlug ? PAGES.PROJECT.OVERVIEW(firstProjectSlug) : undefined}
+        destinationLabel={firstProject?.details?.title || firstProjectSlug}
+      />
       {body}
     </Section>
   );
