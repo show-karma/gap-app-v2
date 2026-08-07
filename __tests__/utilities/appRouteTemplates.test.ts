@@ -20,6 +20,14 @@ describe("APP_ROUTE_TEMPLATES", () => {
     expect(APP_ROUTE_TEMPLATES.length).toBeGreaterThan(50);
   });
 
+  it("includes the Find Funders feature area from NON_PROFITS_PAGES", () => {
+    // NON_PROFITS_PAGES is exported separately from PAGES; the walker must
+    // cover it too, or the agent backend never learns these routes exist.
+    expect(APP_ROUTE_TEMPLATES).toContain("/nonprofits/find-funders");
+    expect(APP_ROUTE_TEMPLATES).toContain("/nonprofits/find-funders/foundations/:id");
+    expect(APP_ROUTE_TEMPLATES).toContain("/nonprofits/find-funders/grants/:id");
+  });
+
   it("emits the base path AND the deep-link variant for optional-param routes", () => {
     // Optional params (e.g. the milestone anchor, the `?programId=` filter)
     // must not eat the base path.
