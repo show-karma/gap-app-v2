@@ -50,7 +50,7 @@ const ENTRIES: ChooserEntry[] = [
     icon: Rocket,
     title: "Your project workspace",
     body: "Record the grants you've received and publish milestones funders can follow.",
-    href: withTourParam(PAGES.MY_PROJECTS, TOUR_IDS.projectWorkspace),
+    href: withTourParam(PAGES.DASHBOARD_MODULE("projects"), TOUR_IDS.projectWorkspace),
   },
   {
     key: "reviews",

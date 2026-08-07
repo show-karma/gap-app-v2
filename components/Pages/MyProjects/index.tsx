@@ -10,8 +10,6 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useAuth } from "@/hooks/useAuth";
-import { useForwardTourRequest } from "@/src/features/onboarding/hooks/use-forward-tour-request";
-import { PROJECT_WORKSPACE_TOUR } from "@/src/features/onboarding/lib/tours";
 import { layoutTheme } from "@/src/helper/theme";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -60,13 +58,6 @@ export default function MyProjects() {
   });
 
   const totalProjects: number = projects?.length || 0;
-  // The project walkthrough runs inside a project, not on this list — hand a
-  // request from the Getting started chooser on to the first one.
-  const firstProjectSlug = projects?.[0]?.details?.slug || projects?.[0]?.uid;
-  useForwardTourRequest(
-    PROJECT_WORKSPACE_TOUR,
-    firstProjectSlug ? PAGES.PROJECT.OVERVIEW(firstProjectSlug) : undefined
-  );
 
   const myProjects = (projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) ||
     []) as ProjectWithGrantsResponse[];
