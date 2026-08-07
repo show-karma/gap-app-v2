@@ -15,11 +15,12 @@
  * Date; safe to import without side effects.
  */
 
-const CANONICAL_DEFAULT = "https://www.karmahq.org";
-const APEX_DEFAULT = "https://karmahq.org";
-const GAP_DEFAULT = "https://gap.karmahq.org";
-// The API subdomain is deliberately not part of the karmahq.org migration.
-const INDEXER_DEFAULT = "https://gapapi.karmahq.xyz";
+import {
+  APEX_ORIGIN as APEX_DEFAULT,
+  CANONICAL_ORIGIN as CANONICAL_DEFAULT,
+  GAP_ORIGIN as GAP_DEFAULT,
+  INDEXER_ORIGIN as INDEXER_DEFAULT,
+} from "./domains.mjs";
 
 const BANNED_PROJECT_SLUGS = Object.freeze([
   "-1",
