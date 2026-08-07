@@ -1,9 +1,11 @@
 "use client";
 
-import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MilestoneAuthorityNotice } from "@/src/features/applications/components/MilestoneAuthorityNotice";
 import { OffChainMilestoneRow } from "@/src/features/applications/components/OffChainMilestoneRow";
 import { OnChainMilestoneRow } from "@/src/features/applications/components/OnChainMilestoneRow";
 import { useApplicationInvoiceConfig } from "@/src/features/applications/hooks/use-application-invoice-config";
+import { useMilestoneSubmissionAuthority } from "@/src/features/applications/hooks/use-milestone-submission-authority";
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 
 // Narrow structural prop — the tab only needs the milestone-relevant
@@ -15,6 +17,12 @@ export interface MilestonesTabApplication {
   projectUID?: string;
   status: string;
   milestoneStatuses?: MilestoneStatusEntry[];
+}
+
+// Stable key: prefer milestoneUID; fall back to fieldLabel:title for
+// application-source slots not yet anchored on-chain (no UID).
+function milestoneEntryKey(entry: MilestoneStatusEntry): string {
+  return entry.milestoneUID ?? `${entry.source}:${entry.fieldLabel ?? ""}:${entry.title}`;
 }
 
 interface MilestonesTabProps {
@@ -40,47 +48,14 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
     { enabled: invoiceRequired !== false }
   );
 
-  // Being the APPLICANT is an off-chain funding-platform role; submitting a
-  // completion writes an ON-CHAIN attestation that the indexer authorizes
-  // against PROJECT authority (owner / MemberOf / resolver admin, resolved
-  // server-side across every linked wallet). Where an application is linked to
-  // a project the applicant has no authority on, EAS accepts the attestation,
-  // the grantee pays gas, and the indexer silently discards it. Requiring both
-  // signals is what stops that. Resolved server-side on purpose — a
-  // client-side address comparison would miss the caller's other linked
-  // wallets, which is a separate bug we already shipped a fix for.
-  const canResolveProjectAuthority = isOwner && Boolean(application.projectUID);
-  const {
-    data: projectPermissions,
-    isPending,
-    isPlaceholderData,
-    isError: didAuthorityLookupFail,
-  } = usePermissionsQuery(
-    { projectId: application.projectUID },
-    { enabled: canResolveProjectAuthority }
-  );
-
-  // Authority is tri-state, and two v5 behaviours make `isLoading` the wrong
-  // signal here. A DISABLED query reports isLoading=false while permanently
-  // undecided, and `placeholderData: keepPreviousData` serves the PREVIOUS
-  // project's resolved permissions under status "success" while the new
-  // project is still in flight. Either one, trusted naively, flashes the
-  // submit affordance for a project the applicant has no authority on.
-  const isResolvingProjectAuthority =
-    canResolveProjectAuthority && (isPending || isPlaceholderData);
-
-  const hasProjectAuthority =
-    projectPermissions?.isProjectOwner === true ||
-    projectPermissions?.isProjectAdmin === true ||
-    projectPermissions?.isProjectMember === true;
-
-  const canSubmitCompletion =
-    canResolveProjectAuthority && !isResolvingProjectAuthority && hasProjectAuthority;
-  // An applicant whose authority we could not resolve is blocked too — but the
-  // notice must say so rather than assert a denial, or a legitimately
-  // authorized grantee goes chasing access they already have.
-  const isBlockedFromSubmitting = isOwner && !isResolvingProjectAuthority && !canSubmitCompletion;
-  const isAuthorityUnverified = didAuthorityLookupFail || !canResolveProjectAuthority;
+  // Being the APPLICANT is not enough to submit a completion — the indexer
+  // authorizes the resulting attestation against PROJECT authority; see the
+  // hook for why both signals are required.
+  const authority = useMilestoneSubmissionAuthority({
+    isApplicant: isOwner,
+    projectUID: application.projectUID,
+  });
+  const canSubmitCompletion = authority.status === "authorized";
 
   const showInvoice = !!invoiceConfig?.invoiceRequired && !!invoiceConfig?.grantUID;
   const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
@@ -110,20 +85,21 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
       <div className="border-b border-border px-5 py-4">
         <h2 className="text-base font-semibold text-foreground">Milestones</h2>
       </div>
-      {isBlockedFromSubmitting && (
-        <output className="mx-5 mt-5 block rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
-          {isAuthorityUnverified
-            ? "We could not verify your permissions on the Karma project behind this application, so milestone updates are disabled here for now. Reload the page, and contact the program admins if this keeps happening."
-            : "Your account is not authorized on the Karma project behind this application, so milestone updates submitted from here would not be recorded. Ask a project owner or admin to add you as a member of the project, then reload this page."}
-        </output>
+      {authority.status === "denied" && <MilestoneAuthorityNotice variant="denied" />}
+      {authority.status === "unverified" && (
+        <MilestoneAuthorityNotice variant="unverified" onRetry={authority.retry} />
       )}
       <div className="space-y-3 p-5">
         {entries.map((entry) => {
-          // Stable key: prefer milestoneUID; fall back to fieldLabel:title
-          // for application-source slots that haven't been anchored on-chain
-          // yet (no UID).
-          const key =
-            entry.milestoneUID ?? `${entry.source}:${entry.fieldLabel ?? ""}:${entry.title}`;
+          const key = milestoneEntryKey(entry);
+
+          // Tri-state rule: while authorization resolves, render a skeleton —
+          // neither the affordance nor a denial.
+          if (authority.status === "resolving") {
+            return (
+              <Skeleton key={key} data-testid="milestone-row-skeleton" className="h-16 w-full" />
+            );
+          }
 
           if (entry.source === "application") {
             // Prefer milestoneUID matching when both sides have one; same-title
@@ -149,10 +125,9 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
             );
           }
 
-          // Project-source row — requires projectUID for the "View on
-          // project page" link. The indexer only emits project-source
-          // entries when application.projectUID is set, so this is
-          // defensive rather than load-bearing.
+          // Project-source row — requires projectUID for the "View on project
+          // page" link. The indexer only emits project-source entries when
+          // application.projectUID is set, so this is defensive.
           if (!application.projectUID) return null;
           return (
             <OnChainMilestoneRow
