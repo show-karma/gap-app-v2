@@ -9,6 +9,7 @@
  * revalidation time.
  */
 
+import { ROOT_DOMAIN } from "@/utilities/domains";
 import type { PublicToolMetadata } from "./types";
 
 interface AgentFaqEntry {
@@ -30,8 +31,7 @@ export const AGENT_FAQS: AgentFaqEntry[] = [
   },
   {
     question: "How do I connect Karma to Claude?",
-    answer:
-      "In Claude, open Settings, choose Connectors, click Add custom connector, paste gapapi.karmahq.xyz/mcp as the remote MCP server URL, and sign in to Karma when prompted. Other MCP clients such as Cursor and Codex take the same URL as a remote server. The step-by-step guide with troubleshooting lives at karmahq.xyz/mcp/connect.",
+    answer: `In Claude, open Settings, choose Connectors, click Add custom connector, paste gapapi.karmahq.xyz/mcp as the remote MCP server URL, and sign in to Karma when prompted. Other MCP clients such as Cursor and Codex take the same URL as a remote server. The step-by-step guide with troubleshooting lives at ${ROOT_DOMAIN}/mcp/connect.`,
   },
   {
     question: "Which MCP operations require authentication?",

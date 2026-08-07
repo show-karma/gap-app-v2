@@ -10,13 +10,19 @@
 import { mkdir as fsMkdir, writeFile as fsWriteFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
+import {
+  APEX_ORIGIN,
+  CANONICAL_ORIGIN,
+  GAP_ORIGIN,
+  INDEXER_ORIGIN,
+} from "./indexability/domains.mjs";
 import { normalizeOrigin, verifyIndexability } from "./indexability/verify-indexability.mjs";
 
 const DEFAULTS = Object.freeze({
-  canonicalOrigin: "https://www.karmahq.xyz",
-  apexOrigin: "https://karmahq.xyz",
-  gapOrigin: "https://gap.karmahq.xyz",
-  indexerOrigin: "https://gapapi.karmahq.xyz",
+  canonicalOrigin: CANONICAL_ORIGIN,
+  apexOrigin: APEX_ORIGIN,
+  gapOrigin: GAP_ORIGIN,
+  indexerOrigin: INDEXER_ORIGIN,
   // Leaf-count floor. Recalibrated 4000 -> 3800 after gap-indexer PR #2195
   // (production-1.47.49) shipped the projects=v4 content-gate: a project root now
   // requires the project's OWN substantive description; grant text alone no longer
@@ -67,7 +73,7 @@ export function parseArgs(argv) {
       value = token.slice(eq + 1);
     }
 
-    if (!Object.prototype.hasOwnProperty.call(FLAG_TO_KEY, name)) {
+    if (!Object.hasOwn(FLAG_TO_KEY, name)) {
       throw new Error(`Unknown argument: ${token}`);
     }
 

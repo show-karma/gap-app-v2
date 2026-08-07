@@ -19,7 +19,7 @@ import {
   normalizeKnownIssues,
 } from "../crawl-sitemap.mjs";
 
-const CANONICAL = "https://www.karmahq.xyz";
+const CANONICAL = "https://www.karmahq.org";
 const ROOT = `${CANONICAL}/sitemap.xml`;
 const NS = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"';
 

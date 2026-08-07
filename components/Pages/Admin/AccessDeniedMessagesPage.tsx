@@ -18,7 +18,7 @@ import {
   substituteAccessDeniedTemplate,
   validateAccessDeniedTemplate,
 } from "@/utilities/accessDeniedTemplate";
-import { envVars } from "@/utilities/enviromentVars";
+import { appOrigin } from "@/utilities/domains";
 
 // 500-char cap mirrors backend `ACCESS_DENIED_MESSAGE_MAX_CHARS`. Keep in
 // sync with gap-indexer/.../community-config.update.body.api.request.ts.
@@ -303,7 +303,7 @@ function MessageEditorSection({
     return substituteAccessDeniedTemplate(value, {
       communityName: communityName || "Your Community",
       communitySlug,
-      appUrl: envVars.VERCEL_URL || "https://gap.karmahq.xyz",
+      appUrl: appOrigin(),
       requiredRoles: "Community Admin",
       currentRoles: meta.scenario === "forbidden" ? "Reviewer" : null,
     });

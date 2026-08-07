@@ -15,7 +15,9 @@
  * module is safe to import without side effects.
  */
 
-const DEFAULT_ROOT_SITEMAP_URL = "https://www.karmahq.xyz/sitemap.xml";
+import { CANONICAL_ORIGIN, ENGINEERING_EMAIL, ROOT_SITEMAP_URL } from "./domains.mjs";
+
+const DEFAULT_ROOT_SITEMAP_URL = ROOT_SITEMAP_URL;
 const DEFAULT_TIMEOUT_MS = 15000;
 // Polite defaults: production is behind a WAF that will (rightly) throttle a
 // hard parallel crawl, and the point of this script is a truthful sample, not
@@ -34,8 +36,7 @@ const DEFAULT_MAX_SITEMAP_DEPTH = 5;
 // Anything larger is a bug in the producer, so refuse it instead of buffering it.
 const DEFAULT_MAX_SITEMAP_BYTES = 50 * 1024 * 1024;
 const DEFAULT_MAX_URLS_PER_SITEMAP = 50000;
-const DEFAULT_USER_AGENT =
-  "KarmaSitemapCrawler/1.0 (+https://www.karmahq.xyz; internal SEO audit; contact=engineering@karmahq.xyz)";
+const DEFAULT_USER_AGENT = `KarmaSitemapCrawler/1.0 (+${CANONICAL_ORIGIN}; internal SEO audit; contact=${ENGINEERING_EMAIL})`;
 
 // How `textLength` / `h1` model the reader. `no-js` is the truthful default:
 // it excludes `hidden` subtrees (streamed Suspense chunks) and includes

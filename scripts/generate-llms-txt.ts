@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { CANONICAL_ORIGIN } from "../utilities/domains";
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
@@ -38,7 +39,7 @@ function loadScriptEnv() {
 
 loadScriptEnv();
 
-const SITE_URL = "https://www.karmahq.xyz";
+const SITE_URL = CANONICAL_ORIGIN;
 const SITEMAP_URL = `${SITE_URL}/sitemap.xml`;
 const PROJECT_NAME = "Karma";
 const API_DOCS_URL = "https://gapapi.karmahq.xyz/v2/docs";
@@ -46,10 +47,11 @@ const API_DOCS_URL = "https://gapapi.karmahq.xyz/v2/docs";
 // probe predictable apex paths, so we publish under the marketing
 // domain rather than the API subdomain. Implementation lives in
 // app/openapi.json/route.ts and proxies ${gap-indexer}/v2/docs/json.
-const API_SPEC_URL = "https://www.karmahq.xyz/openapi.json";
+const API_SPEC_URL = `${SITE_URL}/openapi.json`;
 const FIRECRAWL_SCRAPE_URL =
   process.env.FIRECRAWL_SCRAPE_URL || "https://api.firecrawl.dev/v1/scrape";
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
+// Externally hosted docs; not part of the karmahq.org migration.
 const DOCS_SITE_URL = "https://docs.gap.karmahq.xyz";
 const DOCS_SITEMAP_URL = `${DOCS_SITE_URL}/sitemap-pages.xml`;
 const DOCS_CATEGORY_ORDER = [

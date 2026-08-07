@@ -58,7 +58,7 @@ export const generateProjectMetadata = (
       card: "summary_large_image",
       images: [
         {
-          url: `${envVars.VERCEL_URL}/api/metadata/projects/${options.projectId}`,
+          url: `${envVars.APP_ORIGIN}/api/metadata/projects/${options.projectId}`,
           alt: title,
         },
       ],
@@ -70,7 +70,7 @@ export const generateProjectMetadata = (
       description,
       images: [
         {
-          url: `${envVars.VERCEL_URL}/api/metadata/projects/${options.projectId}`,
+          url: `${envVars.APP_ORIGIN}/api/metadata/projects/${options.projectId}`,
           alt: title,
         },
       ],

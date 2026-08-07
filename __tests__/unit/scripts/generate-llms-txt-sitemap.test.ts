@@ -68,13 +68,13 @@ function makeSitemapEntry(overrides: Partial<SitemapEntry> = {}): SitemapEntry {
 const SITEMAP_INDEX_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://www.karmahq.xyz/sitemaps/static/sitemap.xml</loc>
+    <loc>https://www.karmahq.org/sitemaps/static/sitemap.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.karmahq.xyz/sitemaps/communities/sitemap.xml</loc>
+    <loc>https://www.karmahq.org/sitemaps/communities/sitemap.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.karmahq.xyz/sitemaps/projects/sitemap.xml</loc>
+    <loc>https://www.karmahq.org/sitemaps/projects/sitemap.xml</loc>
   </sitemap>
 </sitemapindex>
 `;
@@ -82,17 +82,17 @@ const SITEMAP_INDEX_XML = `<?xml version="1.0" encoding="UTF-8"?>
 const STATIC_URLSET_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
-<loc>https://www.karmahq.xyz</loc>
+<loc>https://www.karmahq.org</loc>
 <changefreq>daily</changefreq>
 <priority>1</priority>
 </url>
 <url>
-<loc>https://www.karmahq.xyz/about</loc>
+<loc>https://www.karmahq.org/about</loc>
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
 <url>
-<loc>https://www.karmahq.xyz/blog/hello-world</loc>
+<loc>https://www.karmahq.org/blog/hello-world</loc>
 <lastmod>2026-01-02T00:00:00.000Z</lastmod>
 <changefreq>weekly</changefreq>
 <priority>0.6</priority>
@@ -112,16 +112,16 @@ function xmlResponse(xml: string) {
 describe("parseSitemapIndexLocs", () => {
   it("extracts child <loc> values from a sitemap index", () => {
     expect(parseSitemapIndexLocs(SITEMAP_INDEX_XML)).toEqual([
-      "https://www.karmahq.xyz/sitemaps/static/sitemap.xml",
-      "https://www.karmahq.xyz/sitemaps/communities/sitemap.xml",
-      "https://www.karmahq.xyz/sitemaps/projects/sitemap.xml",
+      "https://www.karmahq.org/sitemaps/static/sitemap.xml",
+      "https://www.karmahq.org/sitemaps/communities/sitemap.xml",
+      "https://www.karmahq.org/sitemaps/projects/sitemap.xml",
     ]);
   });
 
   it("decodes HTML entities in child locs", () => {
     const xml =
-      "<sitemapindex><sitemap><loc>https://www.karmahq.xyz/s?a=1&amp;b=2</loc></sitemap></sitemapindex>";
-    expect(parseSitemapIndexLocs(xml)).toEqual(["https://www.karmahq.xyz/s?a=1&b=2"]);
+      "<sitemapindex><sitemap><loc>https://www.karmahq.org/s?a=1&amp;b=2</loc></sitemap></sitemapindex>";
+    expect(parseSitemapIndexLocs(xml)).toEqual(["https://www.karmahq.org/s?a=1&b=2"]);
   });
 
   it("returns an empty list for a plain urlset document", () => {
@@ -134,13 +134,13 @@ describe("parseUrlSetEntries", () => {
     const entries = parseUrlSetEntries(STATIC_URLSET_XML);
     expect(entries).toHaveLength(3);
     expect(entries[0]).toEqual({
-      url: "https://www.karmahq.xyz",
+      url: "https://www.karmahq.org",
       lastModified: "",
       changeFrequency: "daily",
       priority: "1",
     });
     expect(entries[2]).toEqual({
-      url: "https://www.karmahq.xyz/blog/hello-world",
+      url: "https://www.karmahq.org/blog/hello-world",
       lastModified: "2026-01-02T00:00:00.000Z",
       changeFrequency: "weekly",
       priority: "0.6",
@@ -178,13 +178,13 @@ describe("fetchSitemapEntries", () => {
 
     const requested = fetchMock.mock.calls.map((call) => call[0]);
     expect(requested).toEqual([
-      "https://www.karmahq.xyz/sitemap.xml",
-      "https://www.karmahq.xyz/sitemaps/static/sitemap.xml",
+      "https://www.karmahq.org/sitemap.xml",
+      "https://www.karmahq.org/sitemaps/static/sitemap.xml",
     ]);
     expect(entries.map((entry) => entry.url)).toEqual([
-      "https://www.karmahq.xyz",
-      "https://www.karmahq.xyz/about",
-      "https://www.karmahq.xyz/blog/hello-world",
+      "https://www.karmahq.org",
+      "https://www.karmahq.org/about",
+      "https://www.karmahq.org/blog/hello-world",
     ]);
   });
 
@@ -211,8 +211,8 @@ describe("fetchSitemapEntries", () => {
 
   it("rejects when the index lists no allowlisted child", async () => {
     const indexWithoutStatic = SITEMAP_INDEX_XML.replace(
-      "<loc>https://www.karmahq.xyz/sitemaps/static/sitemap.xml</loc>",
-      "<loc>https://www.karmahq.xyz/sitemaps/grants/sitemap.xml</loc>"
+      "<loc>https://www.karmahq.org/sitemaps/static/sitemap.xml</loc>",
+      "<loc>https://www.karmahq.org/sitemaps/grants/sitemap.xml</loc>"
     );
     vi.stubGlobal(
       "fetch",
@@ -270,7 +270,7 @@ describe("assertRequiredSections", () => {
       landingPages,
       [
         makeSitemapEntry({ url: "https://karmahq.xyz" }),
-        makeSitemapEntry({ url: "https://www.karmahq.xyz/about", priority: "0.8" }),
+        makeSitemapEntry({ url: "https://www.karmahq.org/about", priority: "0.8" }),
       ],
       []
     );
@@ -290,7 +290,7 @@ describe("assertRequiredSections", () => {
     const populatedIndex = generateLlmsFullTxt(
       articles,
       landingPages,
-      [makeSitemapEntry({ url: "https://www.karmahq.xyz/about", priority: "0.8" })],
+      [makeSitemapEntry({ url: "https://www.karmahq.org/about", priority: "0.8" })],
       []
     );
     expect(() => assertRequiredSections("llms-full.txt", populatedIndex)).not.toThrow();
@@ -303,10 +303,10 @@ describe("assertRequiredSections", () => {
       "## Landing Pages",
       "",
       "## Site URL Index",
-      "- [Home](https://www.karmahq.xyz)",
+      "- [Home](https://www.karmahq.org)",
       "",
       "## Optional",
-      "- [Complete LLM Reference](https://www.karmahq.xyz/llms-full.txt)",
+      "- [Complete LLM Reference](https://www.karmahq.org/llms-full.txt)",
     ].join("\n");
 
     expect(() => assertRequiredSections("llms.txt", output)).toThrow(/Landing Pages/);

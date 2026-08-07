@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
+import { getDomainInfo } from "@/src/infrastructure/config/domain-constants";
+import { CANONICAL_HOST, CANONICAL_ORIGIN, STAGING_ORIGIN } from "@/utilities/domains";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
 vi.mock("next/server", async (importOriginal) => {
@@ -31,14 +33,21 @@ vi.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: () => [],
 }));
 
-// Use the canonical serving host for standard middleware tests. The apex
-// (karmahq.xyz) and gap.karmahq.xyz are now alias hosts that 308 to www under
-// the ADR 0001 canonical-host policy, so exercising the dashboard/whitelabel
-// behavior requires a request that is already on the canonical host.
-const STANDARD_HOST = "www.karmahq.xyz";
+// Use the canonical serving host for standard middleware tests. Both apexes,
+// both gap subdomains and the whole legacy .xyz tier are alias hosts that 308 to
+// www under the ADR 0001 canonical-host policy, so exercising the
+// dashboard/whitelabel behavior requires a request already on the canonical host.
+const STANDARD_HOST = CANONICAL_HOST;
 
 const createRequest = (path: string) => createRequestWithHost(path, STANDARD_HOST);
 const primaryWhitelabel = WHITELABEL_DOMAINS[0];
+
+// The /blog target follows the tier of the *requesting whitelabel host*, not the
+// build environment: a production tenant domain sends readers to the production
+// canonical even from a non-production build.
+const whitelabelBlogOrigin = getDomainInfo(primaryWhitelabel?.domain ?? "")?.isProduction
+  ? CANONICAL_ORIGIN
+  : STAGING_ORIGIN;
 
 const createRequestWithHost = (path: string, host: string) => {
   const requestUrl = new URL(`http://${host}${path}`);
@@ -133,7 +142,9 @@ describe("middleware blog whitelabel redirect", () => {
 
     const response = await proxy(createRequestWithHost("/blog", primaryWhitelabel.domain));
 
-    expect(response?.headers.get("location")).toBe("http://karmahq.xyz/blog");
+    // The target is the tier's canonical origin, not its apex: an apex target
+    // would 301 here and then 308 again at the alias collapse.
+    expect(response?.headers.get("location")).toBe(`${whitelabelBlogOrigin}/blog`);
     expect(response?.status).toBe(301);
   });
 
@@ -146,7 +157,7 @@ describe("middleware blog whitelabel redirect", () => {
       createRequestWithHost("/blog/hello-world", primaryWhitelabel.domain)
     );
 
-    expect(response?.headers.get("location")).toBe("http://karmahq.xyz/blog/hello-world");
+    expect(response?.headers.get("location")).toBe(`${whitelabelBlogOrigin}/blog/hello-world`);
     expect(response?.status).toBe(301);
   });
 

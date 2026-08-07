@@ -6,7 +6,7 @@ import { GET as childGet } from "@/app/sitemaps/[kind]/sitemap/[chunk]/route";
 import { GET as kindGet } from "@/app/sitemaps/[kind]/sitemap.xml/route";
 import { INDEXER_FETCH_PAGE_SIZE } from "@/utilities/sitemap";
 
-const SITE = "https://www.karmahq.xyz";
+const SITE = "https://www.karmahq.org";
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return { ok, status, json: async () => body } as unknown as Response;
@@ -24,7 +24,7 @@ describe("child sitemap route", () => {
     );
 
     const res = await childGet(
-      new Request("https://www.karmahq.xyz/sitemaps/projects/sitemap/1.xml"),
+      new Request("https://www.karmahq.org/sitemaps/projects/sitemap/1.xml"),
       {
         params: Promise.resolve({ kind: "projects", chunk: "1.xml" }),
       }
@@ -39,7 +39,7 @@ describe("child sitemap route", () => {
 
   it("404s an unknown kind", async () => {
     const res = await childGet(
-      new Request("https://www.karmahq.xyz/sitemaps/bogus/sitemap/1.xml"),
+      new Request("https://www.karmahq.org/sitemaps/bogus/sitemap/1.xml"),
       {
         params: Promise.resolve({ kind: "bogus", chunk: "1.xml" }),
       }
@@ -49,7 +49,7 @@ describe("child sitemap route", () => {
 
   it("404s a malformed chunk filename", async () => {
     const res = await childGet(
-      new Request("https://www.karmahq.xyz/sitemaps/grants/sitemap/0.xml"),
+      new Request("https://www.karmahq.org/sitemaps/grants/sitemap/0.xml"),
       {
         params: Promise.resolve({ kind: "grants", chunk: "0.xml" }),
       }
@@ -62,7 +62,7 @@ describe("child sitemap route", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const res = await childGet(
-      new Request("https://www.karmahq.xyz/sitemaps/projects/sitemap/99999999999999999.xml"),
+      new Request("https://www.karmahq.org/sitemaps/projects/sitemap/99999999999999999.xml"),
       {
         params: Promise.resolve({
           kind: "projects",
