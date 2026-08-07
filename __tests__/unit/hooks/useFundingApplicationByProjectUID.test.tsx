@@ -66,7 +66,7 @@ describe("useFundingApplicationByProjectUID", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1");
+      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1", undefined);
       expect(result.current.application).toEqual(mockApplication);
       expect(result.current.error).toBeNull();
     });
@@ -227,8 +227,48 @@ describe("useFundingApplicationByProjectUID", () => {
       });
 
       // Should have fetched with the correct projectUID
-      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1");
+      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1", undefined);
       expect(result.current.application?.id).toBe("app-1");
+    });
+  });
+
+  describe("Program Scoping", () => {
+    it("forwards the RAW composite programId to the service", async () => {
+      mockFetchApplicationByProjectUID.mockResolvedValue({ id: "app-1" } as any);
+
+      const { result } = renderHook(
+        () => useFundingApplicationByProjectUID("project-1", "1013_42161"),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1", "1013_42161");
+    });
+
+    it("does not cross-serve one program's application to another program", async () => {
+      mockFetchApplicationByProjectUID.mockImplementation(
+        async (_projectUID: string, programId?: string) =>
+          ({ id: programId === "1013_42161" ? "app-batch-2" : "app-batch-1" }) as any
+      );
+
+      const batch1 = renderHook(
+        () => useFundingApplicationByProjectUID("project-1", "1012_42161"),
+        { wrapper }
+      );
+      await waitFor(() => expect(batch1.result.current.application?.id).toBe("app-batch-1"));
+
+      const batch2 = renderHook(
+        () => useFundingApplicationByProjectUID("project-1", "1013_42161"),
+        { wrapper }
+      );
+      await waitFor(() => expect(batch2.result.current.application?.id).toBe("app-batch-2"));
+
+      // Two separate cache entries — the second grant page must not read the
+      // first grant's application out of cache.
+      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledTimes(2);
     });
   });
 });
