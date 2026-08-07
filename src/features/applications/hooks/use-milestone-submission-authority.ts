@@ -12,7 +12,9 @@ import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
  * - "unverified": authority is unknowable (no linked project, or the lookup
  *   failed) — blocked, but NOT a denial; `retry` re-runs the lookup.
  */
-export type MilestoneSubmissionAuthority =
+// Not exported: consumers switch on the inferred return type, and an exported
+// type with no importers registers as dead surface in the quality gate.
+type MilestoneSubmissionAuthority =
   | { status: "not-applicant" }
   | { status: "resolving" }
   | { status: "authorized" }
