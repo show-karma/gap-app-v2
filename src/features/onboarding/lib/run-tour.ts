@@ -1,5 +1,5 @@
 import { captureWithContext } from "@/utilities/sentry-capture";
-import { anchorSelector, findAnchor, type TourAnchor } from "./tour-anchors";
+import { findAnchor, type TourAnchor } from "./tour-anchors";
 import type { TourDefinition } from "./tours";
 // Loaded here rather than in the calling component so driver.js's stylesheet
 // lands in this module's async chunk — the module itself is only imported once
@@ -79,7 +79,9 @@ export async function runTour(
       prevBtnText: "Back",
       doneBtnText: "Done",
       steps: present.map((step) => ({
-        element: anchorSelector(step.anchor),
+        // Resolved lazily and by visibility — passing the selector would let
+        // driver.js re-resolve it to a hidden duplicate.
+        element: () => (findAnchor(step.anchor) ?? undefined) as Element,
         popover: { title: step.title, description: step.description },
       })),
       onPopoverRender: (popover) => {

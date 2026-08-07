@@ -45,10 +45,27 @@ function stubDriver({ reachLastStep }: { reachLastStep: boolean }) {
   });
 }
 
-function mountAnchor(anchor: string) {
+/** jsdom reports 0x0 for everything, so give the node a box to be "laid out". */
+function setBox(el: Element, width: number, height: number) {
+  el.getBoundingClientRect = () =>
+    ({
+      width,
+      height,
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: height,
+      toJSON: () => ({}),
+    }) as DOMRect;
+}
+
+function mountAnchor(anchor: string, { hidden = false } = {}) {
   const el = document.createElement("div");
   el.setAttribute("data-tour", anchor);
   document.body.appendChild(el);
+  setBox(el, hidden ? 0 : 120, hidden ? 0 : 40);
   return el;
 }
 
@@ -201,5 +218,29 @@ describe("accessibility wiring", () => {
     expect(popover.wrapper.getAttribute("aria-labelledby")).toBe(popover.title.id);
     expect(popover.wrapper.getAttribute("aria-describedby")).toBe(popover.description.id);
     expect(popover.closeButton.getAttribute("aria-label")).toBe("Close walkthrough");
+  });
+});
+
+describe("responsive duplicates", () => {
+  it("skips a collapsed copy and anchors to the one that is laid out", async () => {
+    // Mirrors the project tabs, which render a mobile and a desktop copy.
+    const hidden = mountAnchor(TOUR_ANCHORS.findFundersSearch, { hidden: true });
+    const visible = mountAnchor(TOUR_ANCHORS.findFundersSearch);
+    mountAnchor(TOUR_ANCHORS.findFundersResults);
+    stubDriver({ reachLastStep: true });
+
+    await runTour(TOUR);
+
+    const resolve = driverFactory.mock.calls[0][0].steps[0].element;
+    expect(resolve()).toBe(visible);
+    expect(resolve()).not.toBe(hidden);
+  });
+
+  it("treats an anchor that exists but is collapsed as missing", async () => {
+    mountAnchor(TOUR_ANCHORS.findFundersSearch, { hidden: true });
+    mountAnchor(TOUR_ANCHORS.findFundersResults, { hidden: true });
+    stubDriver({ reachLastStep: true });
+
+    await expect(runTour(TOUR)).resolves.toEqual({ status: "unavailable" });
   });
 });

@@ -31,7 +31,20 @@ export function anchorSelector(anchor: TourAnchor): string {
   return `[data-tour="${anchor}"]`;
 }
 
+/**
+ * First anchor element that is actually laid out.
+ *
+ * Responsive chrome often renders the same control twice — a mobile copy and a
+ * desktop copy, one of them collapsed. `querySelector` returns whichever comes
+ * first in the DOM, which is frequently the hidden one, and a tour anchored to
+ * a zero-size element spotlights nothing and parks its popover in the corner.
+ */
 export function findAnchor(anchor: TourAnchor): Element | null {
   if (typeof document === "undefined") return null;
-  return document.querySelector(anchorSelector(anchor));
+  const candidates = document.querySelectorAll(anchorSelector(anchor));
+  for (const candidate of candidates) {
+    const rect = candidate.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) return candidate;
+  }
+  return null;
 }
