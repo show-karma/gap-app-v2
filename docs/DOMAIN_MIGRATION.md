@@ -402,6 +402,20 @@ canonicalUrl()       // the only way to build a 308 target
 **Rule: no other file in `gap-app-v2` may contain a literal `karmahq.org` or `karmahq.xyz`**,
 except the deliberate exceptions listed under "What stayed `.xyz`" below.
 
+### The one sanctioned second copy: `scripts/indexability/domains.mjs`
+
+The indexability scripts (`scripts/verify-indexability.mjs`,
+`scripts/indexability/verify-indexability.mjs`, `scripts/indexability/crawl-sitemap.mjs`)
+cannot import `domains.ts`. The `indexability-monitor` workflow runs them as
+`node scripts/verify-indexability.mjs` on Node 20 — no TypeScript loader, and
+`--experimental-strip-types` did not land until Node 22.6. Their host constants therefore live
+in `scripts/indexability/domains.mjs`, and every script imports from there rather than
+redeclaring them.
+
+`__tests__/unit/scripts/indexability-domains-parity.test.ts` asserts the two files agree, so
+the copy cannot drift. If those scripts ever move onto a TypeScript loader, delete
+`domains.mjs` and import `utilities/domains.ts` directly.
+
 `ALIAS_HOSTS` resolves to five members — `karmahq.org`, `gap.karmahq.org`, `karmahq.xyz`,
 `www.karmahq.xyz`, `gap.karmahq.xyz`. It is built by filtering `CANONICAL_HOST` out of the
 candidate list, and `domains.ts` **throws at module load** if `CANONICAL_HOST` ever appears in
