@@ -11,7 +11,7 @@ import { useProgram } from "@/src/features/programs/hooks/use-program";
 import type { IStatusHistoryEntry } from "@/types/funding-platform";
 import { GrantCommentsSkeleton } from "./GrantCommentsSkeleton";
 
-export interface GrantCommentsSectionProps {
+interface GrantCommentsSectionProps {
   /** Funding application reference number, e.g. `APP-00012-00003`. */
   referenceNumber: string;
   /** Community UID the grant belongs to. */

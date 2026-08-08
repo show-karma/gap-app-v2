@@ -113,16 +113,9 @@ export const INDEXER = {
       MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
     },
     APPLICATIONS: {
-      /**
-       * `programId` scopes the lookup to a single program. Pass the RAW
-       * composite id (`"1013_42161"`) — the backend normalizes it, and
-       * pre-parsing here would throw away the chain disambiguation.
-       * Omitting it keeps the legacy "first application wins" behaviour.
-       */
-      BY_PROJECT_UID: (projectUID: string, programId?: string) => {
-        const query = programId ? `?${new URLSearchParams({ programId }).toString()}` : "";
-        return `/v2/funding-applications/project/${projectUID}${query}`;
-      },
+      /** `programId` (RAW composite id) scopes the lookup; omit for legacy behaviour. */
+      BY_PROJECT_UID: (projectUID: string, programId?: string) =>
+        `/v2/funding-applications/project/${projectUID}${programId ? `?${new URLSearchParams({ programId })}` : ""}`,
       COMMENTS: (applicationId: string) => `/v2/applications/${applicationId}/comments`,
       DELETE: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}`,
     },
