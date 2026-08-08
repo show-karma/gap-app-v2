@@ -81,6 +81,10 @@ export function GrantCommentsSection({
           applicationId={referenceNumber}
           statusHistory={timelineStatusHistory}
           communityId={communityId}
+          // "Activity" is the application page's framing. Here the card sits
+          // above a milestone list, and the grantee arrives looking for what
+          // reviewers asked about their milestone reports — name that.
+          title="Reviewer comments"
         />
       </div>
     );
