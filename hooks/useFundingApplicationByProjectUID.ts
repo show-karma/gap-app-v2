@@ -16,6 +16,13 @@ export const useFundingApplicationByProjectUID = (projectUID: string, programId?
     queryKey: QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID(projectUID, programId),
     queryFn: () => fetchApplicationByProjectUID(projectUID, programId),
     enabled: !!projectUID,
+    // This feeds a supplementary panel, not the page's primary content. The
+    // default three retries with backoff stack on top of the request timeout,
+    // so an upstream outage would hold the caller's loading state open for
+    // minutes and render as a skeleton that never resolves. Fail fast and let
+    // the caller show its error state.
+    retry: 1,
+    staleTime: 1000 * 60 * 2,
   });
 
   return {

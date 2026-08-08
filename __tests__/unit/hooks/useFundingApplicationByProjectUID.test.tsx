@@ -106,9 +106,16 @@ describe("useFundingApplicationByProjectUID", () => {
         wrapper,
       });
 
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
+      // The hook pins `retry: 1` so a stalled upstream cannot hold the caller's
+      // loading state open indefinitely. That one retry outlives waitFor's
+      // default 1s window, so this must wait past the retry delay — the point
+      // being that the query DOES settle rather than hanging.
+      await waitFor(
+        () => {
+          expect(result.current.isLoading).toBe(false);
+        },
+        { timeout: 5000 }
+      );
 
       expect(result.current.error).toBeTruthy();
       expect(result.current.application).toBeUndefined();
@@ -121,9 +128,12 @@ describe("useFundingApplicationByProjectUID", () => {
         wrapper,
       });
 
-      await waitFor(() => {
-        expect(result.current.error).toBeTruthy();
-      });
+      await waitFor(
+        () => {
+          expect(result.current.error).toBeTruthy();
+        },
+        { timeout: 5000 }
+      );
     });
   });
 

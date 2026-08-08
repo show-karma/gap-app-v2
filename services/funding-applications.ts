@@ -31,6 +31,14 @@ function httpErrorMessage(error: unknown): string {
  * backend normalizes it; pre-parsing here would lose the chain suffix.
  * Omit it to keep the legacy unscoped behaviour.
  */
+/**
+ * The indexer baseURL carries a 6-minute default transport timeout (a legacy
+ * long-poll ceiling). This lookup feeds a supplementary comments panel, so a
+ * stalled upstream must surface as an error in seconds rather than leaving the
+ * caller's loading state open long enough to read as permanently stuck.
+ */
+const APPLICATION_LOOKUP_TIMEOUT_MS = 15_000;
+
 export async function fetchApplicationByProjectUID(
   projectUID: string,
   programId?: string
@@ -38,7 +46,8 @@ export async function fetchApplicationByProjectUID(
   try {
     // TODO(#1775): add zod schema
     const data = await api.get<IFundingApplication>(
-      INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID, programId)
+      INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID, programId),
+      { timeoutMs: APPLICATION_LOOKUP_TIMEOUT_MS }
     );
     return data || null;
   } catch (error) {
