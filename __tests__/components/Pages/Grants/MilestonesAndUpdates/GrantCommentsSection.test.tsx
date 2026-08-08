@@ -146,31 +146,6 @@ describe("GrantCommentsSection", () => {
       );
     });
 
-    it("normalizes status history timestamps and defaults a missing reason", () => {
-      render(
-        <GrantCommentsSection
-          {...DEFAULT_PROPS}
-          statusHistory={[
-            { status: "approved", timestamp: new Date("2026-01-02T03:04:05.000Z") },
-            { status: "revision_requested", timestamp: "2026-02-01T00:00:00.000Z", reason: "fix" },
-          ]}
-        />
-      );
-
-      expect(mockCommentTimeline).toHaveBeenCalledWith(
-        expect.objectContaining({
-          statusHistory: [
-            { status: "approved", timestamp: "2026-01-02T03:04:05.000Z", reason: "" },
-            {
-              status: "revision_requested",
-              timestamp: "2026-02-01T00:00:00.000Z",
-              reason: "fix",
-            },
-          ],
-        })
-      );
-    });
-
     it("wins over the public stream even when public comments are enabled", () => {
       setProgram({ showCommentsOnPublicPage: true });
 

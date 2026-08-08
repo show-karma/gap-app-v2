@@ -84,15 +84,9 @@ vi.mock("@/hooks/v2/useGrantLinkedActivities", () => ({
 // --- GrantCommentsPanel's own dependencies (the panel itself is real) ---
 
 const mockUseProjectAuthorization = vi.fn();
-const mockUseFundingApplicationByProjectUID = vi.fn();
 
 vi.mock("@/hooks/useProjectAuthorization", () => ({
   useProjectAuthorization: () => mockUseProjectAuthorization(),
-}));
-
-vi.mock("@/hooks/useFundingApplicationByProjectUID", () => ({
-  useFundingApplicationByProjectUID: (projectUID: string, programId?: string) =>
-    mockUseFundingApplicationByProjectUID(projectUID, programId),
 }));
 
 vi.mock("@/src/core/rbac/context/permission-context", () => ({
@@ -111,6 +105,7 @@ const GRANT_WITHOUT_MILESTONES: Grant = {
   projectUID: "0xproject",
   communityUID: "0xcommunity",
   programId: "1013_42161",
+  referenceNumber: "APP-00012-00003",
   details: { title: "ProPGF Batch 2" },
   milestones: [],
   updates: [],
@@ -122,12 +117,6 @@ describe("MilestonesAndUpdates comments placement", () => {
     mockGrant.mockReturnValue(GRANT_WITHOUT_MILESTONES);
     mockLinkedActivities.mockReturnValue([]);
     mockUseProjectAuthorization.mockReturnValue({ isAuthorized: true, isLoading: false });
-    mockUseFundingApplicationByProjectUID.mockReturnValue({
-      application: { referenceNumber: "APP-00012-00003", statusHistory: [] },
-      isLoading: false,
-      error: null,
-      refetch: vi.fn(),
-    });
   });
 
   it("renders the comments section for a grant with no milestones and no updates", async () => {
@@ -144,12 +133,6 @@ describe("MilestonesAndUpdates comments placement", () => {
     expect(screen.getByText(MESSAGES.PROJECT.EMPTY.GRANTS.UPDATES)).toBeInTheDocument();
   });
 
-  it("scopes the application lookup to the grant's program", () => {
-    render(<MilestonesAndUpdates />);
-
-    expect(mockUseFundingApplicationByProjectUID).toHaveBeenCalledWith("0xproject", "1013_42161");
-  });
-
   it("renders the comments section for a grant that does have milestones", async () => {
     mockGrant.mockReturnValue({
       ...GRANT_WITHOUT_MILESTONES,
@@ -163,12 +146,7 @@ describe("MilestonesAndUpdates comments placement", () => {
   });
 
   it("leaves the empty state untouched when the grant has no linked application", () => {
-    mockUseFundingApplicationByProjectUID.mockReturnValue({
-      application: null,
-      isLoading: false,
-      error: null,
-      refetch: vi.fn(),
-    });
+    mockGrant.mockReturnValue({ ...GRANT_WITHOUT_MILESTONES, referenceNumber: null } as Grant);
 
     render(<MilestonesAndUpdates />);
 
@@ -183,6 +161,6 @@ describe("MilestonesAndUpdates comments placement", () => {
     render(<MilestonesAndUpdates />);
 
     expect(screen.queryByTestId("grant-comments-section")).not.toBeInTheDocument();
-    expect(mockUseFundingApplicationByProjectUID).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("permission-provider")).not.toBeInTheDocument();
   });
 });

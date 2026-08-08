@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac/components/funding-platform-guard";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types/permission";
@@ -8,8 +7,13 @@ import { CommentTimeline } from "@/src/features/application-comments/components/
 import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
 import type { StatusHistoryItem } from "@/src/features/application-comments/types";
 import { useProgram } from "@/src/features/programs/hooks/use-program";
-import type { IStatusHistoryEntry } from "@/types/funding-platform";
 import { GrantCommentsSkeleton } from "./GrantCommentsSkeleton";
+
+/**
+ * The grants payload carries no status history, and this surface is about the
+ * comment thread rather than the application's review trail.
+ */
+const NO_STATUS_HISTORY: StatusHistoryItem[] = [];
 
 interface GrantCommentsSectionProps {
   /** Funding application reference number, e.g. `APP-00012-00003`. */
@@ -21,8 +25,6 @@ interface GrantCommentsSectionProps {
    * reviewer/mention lookups key on the base form.
    */
   programId?: string;
-  /** Application status history, rendered inline in the authenticated timeline. */
-  statusHistory?: IStatusHistoryEntry[];
 }
 
 /**
@@ -45,22 +47,10 @@ export function GrantCommentsSection({
   referenceNumber,
   communityId,
   programId,
-  statusHistory,
 }: GrantCommentsSectionProps) {
   const { can, isLoading: isPermissionsLoading } = usePermissionContext();
   const isAdmin = useIsFundingPlatformAdmin();
   const { program, loading: isProgramLoading } = useProgram(programId ?? "");
-
-  const timelineStatusHistory = useMemo<StatusHistoryItem[]>(
-    () =>
-      (statusHistory ?? []).map((item) => ({
-        status: item.status,
-        timestamp:
-          typeof item.timestamp === "string" ? item.timestamp : item.timestamp.toISOString(),
-        reason: item.reason ?? "",
-      })),
-    [statusHistory]
-  );
 
   // `useProgram` is disabled without an id, and a disabled React Query v5 query
   // reports `isLoading === false` — so only treat it as pending when it can run.
@@ -79,7 +69,7 @@ export function GrantCommentsSection({
       <div id="grant-comments" data-testid="grant-comments-timeline">
         <CommentTimeline
           applicationId={referenceNumber}
-          statusHistory={timelineStatusHistory}
+          statusHistory={NO_STATUS_HISTORY}
           communityId={communityId}
           // "Activity" is the application page's framing. Here the card sits
           // above a milestone list, and the grantee arrives looking for what
