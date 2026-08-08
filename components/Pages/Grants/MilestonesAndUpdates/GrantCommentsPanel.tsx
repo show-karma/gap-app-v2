@@ -48,16 +48,19 @@ export function GrantCommentsPanel({ grant }: GrantCommentsPanelProps) {
 
   const { isLoading: isAuthLoading } = useProjectAuthorization(communityId);
 
+  // No linked funding application (grant created without one, or a private
+  // program hiding it): there is no thread to show. Checked before the auth
+  // gate because it comes off the payload synchronously — waiting on
+  // authorization first would flash a skeleton on every grant that is never
+  // going to render comments, which is most of them.
+  if (!referenceNumber) {
+    return null;
+  }
+
   // Authorization is tri-state and the branch below depends on it; render the
   // skeleton rather than a branch that may be wrong for one paint.
   if (isAuthLoading) {
     return <GrantCommentsSkeleton />;
-  }
-
-  // No linked funding application (grant created without one, or a private
-  // program hiding it): there is no thread to show. Page is unchanged.
-  if (!referenceNumber) {
-    return null;
   }
 
   return (
