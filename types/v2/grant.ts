@@ -164,6 +164,12 @@ export interface Grant {
   projectUID?: string;
   communityUID?: string;
   programId?: string | null;
+  /**
+   * Reference number of the funding application linked to this grant
+   * (e.g. `APP-00012-00003`), resolved server-side. Null/absent when the grant
+   * has no linked application.
+   */
+  referenceNumber?: string | null;
   programType?: ProgramType;
   originalProjectUID?: string | null;
   recipient?: string;

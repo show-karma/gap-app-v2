@@ -21,7 +21,6 @@ import {
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
 import { formatDate } from "@/utilities/formatDate";
-import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { cn } from "@/utilities/tailwind";
 
 const MarkdownPreview = dynamic(
@@ -35,6 +34,15 @@ const PANEL_TABS = [
   { key: "details" as const, label: "Details", icon: DocumentTextIcon },
   { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
 ];
+
+/** Strip the optional chainId suffix from program IDs (e.g. "959_42161" -> "959"). */
+function parseProgramId(programId: string): string {
+  if (programId.includes("_")) {
+    const [id] = programId.split("_");
+    return id ?? programId;
+  }
+  return programId;
+}
 
 function getRatingColor(rating: number): string {
   if (rating >= 8) return "text-green-700 dark:text-green-300";
@@ -143,14 +151,10 @@ function InlineAIEvaluation({ milestone }: { milestone: GrantMilestoneWithComple
 function MilestoneCommentsTab({
   projectUID,
   programId,
-  rawProgramId,
   communityId,
 }: {
   projectUID: string;
-  /** Base program id ("959"), used for mention/reviewer lookups downstream. */
   programId: string;
-  /** RAW composite program id ("959_42161"), used to scope the application lookup. */
-  rawProgramId: string;
   communityId: string;
 }) {
   const { address } = useAuth();
@@ -159,7 +163,7 @@ function MilestoneCommentsTab({
     isLoading,
     error,
     refetch,
-  } = useFundingApplicationByProjectUID(projectUID || "", rawProgramId);
+  } = useFundingApplicationByProjectUID(projectUID || "");
   const referenceNumber = fundingApplication?.referenceNumber;
 
   if (isLoading && !referenceNumber) {
@@ -252,7 +256,7 @@ export function InboxMilestoneDetail({
   milestoneUid,
   communityId,
 }: InboxMilestoneDetailProps) {
-  const parsedProgramId = useMemo(() => normalizeProgramId(programId), [programId]);
+  const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
   const queryClient = useQueryClient();
   const [activePanelTab, setActivePanelTab] = useState<"details" | "comments">("details");
 
@@ -437,7 +441,6 @@ export function InboxMilestoneDetail({
           <MilestoneCommentsTab
             projectUID={project?.uid ?? projectUid}
             programId={parsedProgramId}
-            rawProgramId={programId}
             communityId={communityId}
           />
         )}

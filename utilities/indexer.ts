@@ -113,9 +113,7 @@ export const INDEXER = {
       MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
     },
     APPLICATIONS: {
-      /** `programId` (RAW composite id) scopes the lookup; omit for legacy behaviour. */
-      BY_PROJECT_UID: (projectUID: string, programId?: string) =>
-        `/v2/funding-applications/project/${projectUID}${programId ? `?${new URLSearchParams({ programId })}` : ""}`,
+      BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
       COMMENTS: (applicationId: string) => `/v2/applications/${applicationId}/comments`,
       DELETE: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}`,
     },

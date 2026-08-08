@@ -93,13 +93,7 @@ export const QUERY_KEYS = {
     EVALUATION: (milestoneUID: string) => ["milestone-evaluation", milestoneUID] as const,
   },
   APPLICATIONS: {
-    /**
-     * `programId` is part of the key on purpose: a project with grants in two
-     * programs resolves to two different applications, and omitting it makes
-     * the second grant page cross-serve the first grant's comment thread.
-     */
-    BY_PROJECT_UID: (projectUID: string, programId?: string) =>
-      ["application-by-project-uid", projectUID, programId ?? null] as const,
+    BY_PROJECT_UID: (projectUID: string) => ["application-by-project-uid", projectUID] as const,
     GRANTEE_ACCESS: (address?: string, communitySlug?: string, programId?: string) =>
       [
         "application-grantee-access",
