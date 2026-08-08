@@ -73,7 +73,6 @@ export function Masthead({
             hasShareToken={report.hasShareToken}
             reportId={report.id}
             shareToken={report.shareToken}
-            shareTokenExpiresAt={report.shareTokenExpiresAt}
           />
         </div>
       ) : null}
