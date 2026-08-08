@@ -68,7 +68,8 @@ describe("funding-applications service", () => {
 
       expect(result).toEqual(mockApplication);
       expect(mockApiGet).toHaveBeenCalledWith(
-        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-456")
+        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-456"),
+        expect.any(Object)
       );
       expect(mockApiGet).toHaveBeenCalledTimes(1);
     });
@@ -86,7 +87,8 @@ describe("funding-applications service", () => {
 
       expect(result).toBeNull();
       expect(mockApiGet).toHaveBeenCalledWith(
-        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("nonexistent-project")
+        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("nonexistent-project"),
+        expect.any(Object)
       );
     });
 
@@ -111,11 +113,13 @@ describe("funding-applications service", () => {
       expect(mockApiGet).toHaveBeenCalledTimes(2);
       expect(mockApiGet).toHaveBeenNthCalledWith(
         1,
-        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-abc")
+        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-abc"),
+        expect.any(Object)
       );
       expect(mockApiGet).toHaveBeenNthCalledWith(
         2,
-        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-xyz")
+        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-xyz"),
+        expect.any(Object)
       );
     });
 
@@ -125,8 +129,21 @@ describe("funding-applications service", () => {
       await fetchApplicationByProjectUID("test-project");
 
       const expectedEndpoint = INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("test-project");
-      expect(mockApiGet).toHaveBeenCalledWith(expectedEndpoint);
+      expect(mockApiGet).toHaveBeenCalledWith(expectedEndpoint, expect.any(Object));
       expect(expectedEndpoint).toBe("/v2/funding-applications/project/test-project");
+    });
+
+    // Regression: the indexer baseURL defaults to a 6-minute transport timeout.
+    // Without an explicit bound, a stalled upstream leaves the comments panel
+    // in its loading skeleton long enough to read as permanently stuck.
+    it("should bound the request timeout so a stalled upstream fails fast", async () => {
+      mockApiGet.mockResolvedValue(mockApplication);
+
+      await fetchApplicationByProjectUID("test-project");
+
+      const [, options] = mockApiGet.mock.calls[0];
+      expect(options?.timeoutMs).toBeGreaterThan(0);
+      expect(options?.timeoutMs).toBeLessThanOrEqual(30_000);
     });
 
     it("should return null when data is null but no error", async () => {
