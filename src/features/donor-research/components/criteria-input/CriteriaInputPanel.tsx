@@ -2,11 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useCreateDonorReport } from "@/hooks/useDonorReports";
+import { isReportQuotaExhausted } from "@/services/donor-research-billing.service";
 import { PAGES } from "@/utilities/pages";
+import { UpgradeDialog } from "../../billing/UpgradeDialog";
 import { DEFAULT_TOP_COUNT, DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
 import { WEIGHTS_TOTAL_BASIS_POINTS } from "../weights/weights-allocation";
 import { CriteriaForm } from "./CriteriaForm";
@@ -51,6 +54,7 @@ export function CriteriaInputPanel() {
   const router = useRouter();
   const handlesQuery = useDonorHandles({ limit: 200 });
   const createReport = useCreateDonorReport();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const form = useForm<CriteriaFormValues>({
     resolver: zodResolver(CriteriaSchema),
@@ -65,17 +69,28 @@ export function CriteriaInputPanel() {
   });
 
   const onSubmit = async (values: CriteriaFormValues) => {
-    const result = await createReport.mutateAsync({
-      donorHandleId: values.donorHandleId,
-      criteriaText: values.criteriaText,
-      cause: values.cause || null,
-      geography: values.geography || null,
-      amountMin: values.amountMin ?? null,
-      amountMax: values.amountMax ?? null,
-      weights: values.weights,
-      topCount: values.topCount,
-    });
-    router.push(PAGES.DONOR_RESEARCH.REPORT(result.reportId));
+    try {
+      const result = await createReport.mutateAsync({
+        donorHandleId: values.donorHandleId,
+        criteriaText: values.criteriaText,
+        cause: values.cause || null,
+        geography: values.geography || null,
+        amountMin: values.amountMin ?? null,
+        amountMax: values.amountMax ?? null,
+        weights: values.weights,
+        topCount: values.topCount,
+      });
+      router.push(PAGES.DONOR_RESEARCH.REPORT(result.reportId));
+    } catch (error) {
+      // Running out of reports is a purchasing decision, not a failure —
+      // offer the plans instead of a red error line. Every other error falls
+      // through to the mutation's error state rendered below.
+      if (isReportQuotaExhausted(error)) {
+        setUpgradeOpen(true);
+        return;
+      }
+      throw error;
+    }
   };
 
   return (
@@ -96,11 +111,17 @@ export function CriteriaInputPanel() {
         submitting={createReport.isPending}
       />
 
-      {createReport.isError ? (
+      {createReport.isError && !isReportQuotaExhausted(createReport.error) ? (
         <p className="mt-3 text-sm text-red-600 dark:text-red-400">
           {(createReport.error as Error)?.message || "Couldn't start the report. Try again."}
         </p>
       ) : null}
+
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        reason="You've used all the reports on your plan. Pick a monthly plan to keep researching — your criteria are still here when you get back."
+      />
     </div>
   );
 }

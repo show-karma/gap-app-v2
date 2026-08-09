@@ -12,6 +12,7 @@ import type {
 } from "@/types/donor-research";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { DonorReportQuotaExhaustedError } from "./donor-research-billing.service";
 
 /**
  * Donor-research API client.
@@ -190,11 +191,17 @@ export interface CreateReportRequest {
 export const createResearchReport = async (
   body: CreateReportRequest
 ): Promise<ReportCreateResponse> => {
-  const [data, error] = await fetchData<ReportCreateResponse>(
+  const [data, error, , status] = await fetchData<ReportCreateResponse>(
     INDEXER.DONOR_RESEARCH.REPORTS,
     "POST",
     body
   );
+  // 402 is the report-quota gate, not a failure: the advisor is authenticated
+  // and authorized, they are simply out of reports. Throw a distinct type so
+  // the UI opens the upgrade prompt instead of a red error line.
+  if (status === 402) {
+    throw new DonorReportQuotaExhaustedError(error || undefined);
+  }
   if (error || !data) {
     throw new Error(error || "Failed to start research report");
   }

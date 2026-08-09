@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
+import { ReportQuotaBadge } from "../../billing/ReportQuotaBadge";
 import { CriteriaInputPanel } from "../criteria-input/CriteriaInputPanel";
 import { ReportListPanel } from "../report-list/ReportListPanel";
 import { DonorResearchLoading } from "./DonorResearchLoading";
@@ -67,7 +68,11 @@ export function DonorResearchHome() {
             compliance — sourced from the IRS Pub 78, recent 990 filings, and live activity signals.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Two different limits, deliberately shown side by side: the quota
+              badge is how many reports are left to buy against, the rate-limit
+              chip is how fast they may be run. */}
+          <ReportQuotaBadge />
           <RateLimitCounter advisor={advisor} />
           <Link
             href={PAGES.DONOR_RESEARCH.DILIGENCE_TEMPLATE}

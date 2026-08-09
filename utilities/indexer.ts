@@ -805,5 +805,11 @@ export const INDEXER = {
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
     SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
     SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
+    // Billing / report quota. PLANS is public (the marketing pricing page
+    // reads it); the rest require the advisor's Privy session.
+    BILLING_PLANS: "/v2/donor-research/billing/plans",
+    BILLING_SUBSCRIPTION: "/v2/donor-research/billing/subscription",
+    BILLING_CHECKOUT: "/v2/donor-research/billing/checkout",
+    BILLING_PORTAL: "/v2/donor-research/billing/portal",
   },
 };
