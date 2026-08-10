@@ -21,6 +21,15 @@ function sessionKey(scope: string): string {
   return `${SESSION_KEY_PREFIX}:${scope}`;
 }
 
+/**
+ * Whether the chooser has already been offered this session. The coach mark
+ * says the same thing in a smaller voice, so it stands down when the chooser
+ * has spoken — otherwise both land on screen at once.
+ */
+export function chooserShownThisSession(scope: string): boolean {
+  return openedThisSession(scope);
+}
+
 function openedThisSession(scope: string): boolean {
   if (typeof window === "undefined") return true;
   try {

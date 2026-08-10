@@ -2,6 +2,8 @@
 
 import { Compass } from "lucide-react";
 import { useGettingStarted } from "@/store/modals/gettingStarted";
+import { chooserShownThisSession } from "../hooks/use-auto-open-chooser";
+import { useOnboardingScope } from "../hooks/use-onboarding-scope";
 import { useAutoTour } from "../hooks/use-tour";
 import { GETTING_STARTED_TOUR } from "../lib/tours";
 
@@ -24,8 +26,13 @@ interface GettingStartedSignpostProps {
  * second, mobile-specific overlay path to maintain.
  */
 export function GettingStartedSignpost({ ready }: GettingStartedSignpostProps) {
-  const { open } = useGettingStarted();
-  useAutoTour(GETTING_STARTED_TOUR, ready);
+  const { open, isOpen } = useGettingStarted();
+  const { scope, isReady } = useOnboardingScope();
+  // The chooser makes the same point, louder. If it has already been offered
+  // this session — or is on screen right now — the spotlight stays down rather
+  // than stacking a second overlay on top of it.
+  const chooserHasSpoken = isReady && (isOpen || chooserShownThisSession(scope));
+  useAutoTour(GETTING_STARTED_TOUR, ready && !chooserHasSpoken);
 
   return (
     <p className="m-0 flex flex-row items-center gap-2 text-[12.5px] text-sf-muted lg:hidden">
