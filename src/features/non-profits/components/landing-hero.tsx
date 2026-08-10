@@ -211,7 +211,7 @@ export function LandingHero() {
             </div>
           </div>
 
-          <div className="lp-chips">
+          <div className="lp-chips" {...dataTour(TOUR_ANCHORS.findFundersExamples)}>
             <div className="lp-chips-label">TRY AN EXAMPLE</div>
             <div className="lp-chips-grid">
               {HERO_CHIPS.map((c, idx) => (

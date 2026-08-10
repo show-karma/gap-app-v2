@@ -66,13 +66,22 @@ export const GETTING_STARTED_TOUR: TourDefinition = {
  */
 export const FIND_FUNDERS_TOUR: TourDefinition = {
   id: TOUR_IDS.findFunders,
-  version: 1,
+  // v2 adds the worked examples and the agent connection — the version bump is
+  // what re-offers it to people who only saw the three-step cut.
+  version: 2,
   steps: [
     {
       anchor: TOUR_ANCHORS.findFundersSearch,
       title: "Search in plain language",
       description:
         "Describe the funding you're looking for the way you'd say it out loud — the cause, the place, the size of the grant. Press Enter to run it.",
+    },
+    {
+      anchor: TOUR_ANCHORS.findFundersExamples,
+      title: "Not sure how to ask? Start from an example",
+      description:
+        "These are real prospecting questions. Click one to drop it into the box and see the shape of a good ask.",
+      optional: true,
     },
     {
       anchor: TOUR_ANCHORS.findFundersResults,
@@ -86,6 +95,13 @@ export const FIND_FUNDERS_TOUR: TourDefinition = {
       title: "Build a prospect list",
       description:
         "Bookmark funders as you go and they collect here, so a session of searching ends with a shortlist you can work from.",
+      optional: true,
+    },
+    {
+      anchor: TOUR_ANCHORS.findFundersConnect,
+      title: "Or take the agent with you",
+      description:
+        "Connect Find Funders to Claude or ChatGPT and ask from there — same 990 data, inside the tool you already work in.",
       optional: true,
     },
   ],

@@ -12,6 +12,8 @@ export const TOUR_ANCHORS = {
   /** Profile menu trigger — where "Getting started" lives. */
   gettingStarted: "getting-started",
   findFundersSearch: "find-funders-search",
+  findFundersExamples: "find-funders-examples",
+  findFundersConnect: "find-funders-connect",
   findFundersResults: "find-funders-results",
   findFundersTray: "find-funders-tray",
   reviewerInboxQueue: "reviewer-inbox-queue",

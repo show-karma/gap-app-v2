@@ -19,6 +19,7 @@ import { useCallback, useState } from "react";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { Link } from "@/src/components/navigation/Link";
 import { useTourFromUrl } from "@/src/features/onboarding/hooks/use-tour-from-url";
+import { dataTour, TOUR_ANCHORS } from "@/src/features/onboarding/lib/tour-anchors";
 import { FIND_FUNDERS_TOUR } from "@/src/features/onboarding/lib/tours";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { INSTALL_CONFIGS, type InstallTab } from "../lib/install-configs";
@@ -459,7 +460,7 @@ function Connector() {
   const cfg = INSTALL_CONFIGS[tab];
 
   return (
-    <section id="connector" className="lp-connector">
+    <section id="connector" className="lp-connector" {...dataTour(TOUR_ANCHORS.findFundersConnect)}>
       <div className="lp-container lp-connector-inner">
         <div>
           <div className="lp-section-label">05 &mdash; ADD THE AGENT</div>
