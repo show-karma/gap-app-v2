@@ -2,8 +2,9 @@
 
 import { Compass, LayoutGrid, Rocket, ScanEye } from "lucide-react";
 import type { ComponentType } from "react";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import type { DashboardModuleKey } from "@/components/Pages/Dashboard/v3/module";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,7 @@ import {
 import { Link } from "@/src/components/navigation/Link";
 import { useGettingStarted } from "@/store/modals/gettingStarted";
 import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
+import { useAutoOpenChooser, useChooserSuppression } from "../hooks/use-auto-open-chooser";
 import { useOnboardingScope } from "../hooks/use-onboarding-scope";
 import { useReachableModules } from "../hooks/use-reachable-modules";
 import { trackRecoveryOpened } from "../lib/analytics";
@@ -81,6 +83,10 @@ const ENTRIES: ChooserEntry[] = [
 export function GettingStartedDialog() {
   const { isOpen, close } = useGettingStarted();
   const { scope, isAuthenticated } = useOnboardingScope();
+  const { suppressed, setSuppressed } = useChooserSuppression();
+  const suppressId = useId();
+
+  useAutoOpenChooser();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -100,6 +106,16 @@ export function GettingStartedDialog() {
           </DialogDescription>
         </DialogHeader>
         <ChooserEntries onNavigate={close} />
+        <div className="flex flex-row items-center gap-2 border-t border-border pt-3">
+          <Checkbox
+            id={suppressId}
+            checked={suppressed}
+            onCheckedChange={(next) => setSuppressed(next === true)}
+          />
+          <label htmlFor={suppressId} className="cursor-pointer text-xs text-muted-foreground">
+            Don&apos;t show this when I sign in
+          </label>
+        </div>
       </DialogContent>
     </Dialog>
   );

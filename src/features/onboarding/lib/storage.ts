@@ -154,6 +154,21 @@ export function migrateAnonymousState(userId: string): void {
 }
 
 /**
+ * Removes one surface's record, putting it back to never-seen. Used when a user
+ * unticks "don't show this again" — the opposite of a completion, so it has to
+ * clear rather than write another outcome.
+ */
+export function writeOnboardingCleared(scope: string, surface: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(onboardingKey(scope, surface));
+  } catch {
+    // SUPPRESSED: see readRaw. Failing to clear leaves the surface suppressed,
+    // which the user can undo by ticking and unticking again.
+  }
+}
+
+/**
  * Drops every onboarding entry. Exists for the e2e suite: onboarding state and
  * the auth bypass share localStorage, so without a sweep between specs a test
  * that finishes a walkthrough silently suppresses it for every later test in
