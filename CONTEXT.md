@@ -62,6 +62,56 @@ _Avoid_: "article" unqualified — ambiguous with **Knowledge article**.
 An evergreen, undated reference page under `/knowledge`, hand-coded as TSX in the repo with per-page JSON-LD, published only via dev PR.
 _Avoid_: "blog post" for these — they are deliberately not dated and not CMS-managed.
 
+### Domains and hosts
+
+Every karmahq host in this repo comes from **`utilities/domains.ts`**. No other file may
+contain a literal `karmahq.org` or `karmahq.xyz` — see the exceptions below.
+
+**Canonical host** (`CANONICAL_HOST` / `CANONICAL_ORIGIN`):
+`www.karmahq.org`. The **one** host that serves 200s (ADR 0001). `SITE_URL` in
+`utilities/meta.ts` is this value, so every absolute URL the app emits — metadata, OG tags,
+sitemaps, `robots.txt`, JSON-LD, `.well-known` documents — follows it automatically.
+_Avoid_: writing "the main domain" — always say whether you mean the canonical host or the apex.
+
+**Alias host** (`ALIAS_HOSTS`, `isAliasHost()`):
+Any host that owes **exactly one 308** to the canonical origin — `karmahq.org` (apex),
+`gap.karmahq.org`, `karmahq.xyz`, `www.karmahq.xyz`, `gap.karmahq.xyz`. `www.karmahq.xyz` was
+the canonical host until Aug 2026 and is now an alias; that is the single biggest behavioural
+change of the TLD migration.
+_Invariant_: the canonical host is **never** an alias. `domains.ts` throws at module load if it
+ever is, because nothing in `proxy.ts` compares the redirect target to the request host — a
+canonical host inside `ALIAS_HOSTS` would 308 to itself forever with no circuit breaker.
+
+**Legacy root domain** (`LEGACY_ROOT_DOMAINS`):
+`karmahq.xyz`. **Permanent.** Immutable on-chain EAS attestation payloads embed `.xyz` URLs and
+the indexer re-derives them from chain on every re-index, so they can never be rewritten. The
+alias tier is the only thing keeping those URLs resolvable. Any proposal to remove `.xyz` is
+wrong by construction; the registration is a permanent cost.
+
+**Legacy umbrella host** (`LEGACY_UMBRELLA_HOSTS`):
+`app.karmahq.xyz` / `testapp.karmahq.xyz`. Former umbrella hosts that only ever **301** away,
+and that **rewrite the path** (`/<tenantId>/…` → `/community/<tenantId>/…`) on the way. Not
+flipping. Retargeting anything at them, or them at `appOrigin()`, changes URL *shape*, not just
+origin.
+_Avoid_: treating them as interchangeable with the canonical origin.
+
+**Shared domain** vs **whitelabel tenant domain** (`DOMAIN_CONFIGS`, `isSharedDomain()`):
+A shared domain hosts all tenants under `/community/<slug>`; a tenant domain (`app.filpgf.io`,
+`grantsapp.scroll.io`, …) hosts exactly one. `isSharedDomain()` **fails open to `true`** for any
+host absent from `DOMAIN_CONFIGS`, so dropping a row degrades silently — which is why the `.xyz`
+rows stay listed permanently. `www.*` is deliberately **absent**: adding it would activate a
+`/<slug>` → tenant 301 branch that has never executed in production.
+
+**Hosts that did NOT flip to `.org`** — leave them alone unless a ticket says otherwise:
+`gapapi` / `gapstagapi` (moving them invalidates every live MCP OAuth token — scalar `aud`,
+exact equality), `gov` / `govstag` (separate repo), `docs.gap` (GitBook), `privy` (Privy custom
+auth domain — `privy.karmahq.org` was **added** to the CSP alongside it, never substituted),
+`api` / `anon` (not served by this tree), and **every `@karmahq.xyz` email address** (SPF/DKIM
+do not exist for `.org`; flipping a `From` header first silently degrades deliverability).
+
+Full migration record: [`docs/DOMAIN_MIGRATION.md`](docs/DOMAIN_MIGRATION.md).
+Cutover procedure: [`../docs/runbooks/domain-migration-karmahq-org.md`](../docs/runbooks/domain-migration-karmahq-org.md).
+
 ### Donor research — persona
 
 **Donor handle**:
@@ -120,4 +170,6 @@ The five scoring weights (basis points, summing to 10000) the backend **recomput
 - The actionable milestone state — grantee has submitted proof and the reviewer must verify — is `completed` in the codebase (`MilestoneStatusEntry.currentStatus`), but the design mock labels it `pending_verification` and shows it as "Needs verification". Same state. Resolved: the underlying status is `completed`; the **Waiting on you** UI label is "Needs verification".
 - "Persona" is overloaded: **Donor persona** (a real persisted 1:1 entity per donor handle, this feature) is unrelated to the abandoned **"persona switcher"** UI device from the Reviewer Inbox design mock. Resolved: "persona" in donor-research always means the **Donor persona** entity; the switcher does not exist.
 - "Notes" vs "source": **Handle notes** (`donor_handle.notes`, private, not used by research) is distinct from **Persona source** (`donor_persona.sourceText`, refined and fed to research). The DEV-431 description called the notes editor "existing" — it is **not**; only create-time notes existed, so the FE adds `useDonorHandle` + `updateDonorHandle` (`PATCH /handles/:id`). Always qualify which text is meant.
+- "Karma domain" is ambiguous three ways: the **canonical host** (`www.karmahq.org`, the only host serving 200s), the **apex** (`karmahq.org`, an alias that 308s), and the **registrable domain** (`karmahq.org`, used for host construction and for `DOMAIN_CONFIGS` matching). Before the Aug 2026 TLD flip, seven different places in this repo disagreed about which one to emit — `SITE_URL` and `proxy.ts` said `www`, while `envVars.VERCEL_URL`, `getBaseUrl()`, `getDefaultSharedDomain()`, `useInviteUrl` and `SOCIALS.WEBSITE` said apex, and one admin preview fell back to `gap.karmahq.xyz`. Resolved: `utilities/domains.ts` is the single source; `CANONICAL_ORIGIN` for production-pinned links, `appOrigin()` for environment-aware ones, `ROOT_DOMAIN` / `CANONICAL_HOST` when a bare hostname is displayed rather than linked.
+- `envVars.VERCEL_URL` never read `process.env.VERCEL_URL` — it was a ternary on `NEXT_PUBLIC_ENV`. Renamed to `envVars.APP_ORIGIN` in Aug 2026. `process.env.VERCEL_URL` (the genuine Vercel-provided variable) is still used in `utilities/fetchFromServer.ts` and declared in `utilities/env.schema.ts`; those are unrelated.
 - "Geography": the report-create form's `geography` is a **free-text** field the backend resolver maps to a radius enum (`city|metro|regional|state|national|unknown`). Persona only stores the coarse `geoRadius` (`local|regional|national`). Prefill writes the **resolver-enum token** into the free-text field (`local→metro`, since persona carries no city name), not the raw persona enum.

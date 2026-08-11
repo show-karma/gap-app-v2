@@ -15,10 +15,12 @@
  * Date; safe to import without side effects.
  */
 
-const CANONICAL_DEFAULT = "https://www.karmahq.xyz";
-const APEX_DEFAULT = "https://karmahq.xyz";
-const GAP_DEFAULT = "https://gap.karmahq.xyz";
-const INDEXER_DEFAULT = "https://gapapi.karmahq.xyz";
+import {
+  APEX_ORIGIN as APEX_DEFAULT,
+  CANONICAL_ORIGIN as CANONICAL_DEFAULT,
+  GAP_ORIGIN as GAP_DEFAULT,
+  INDEXER_ORIGIN as INDEXER_DEFAULT,
+} from "./domains.mjs";
 
 const BANNED_PROJECT_SLUGS = Object.freeze([
   "-1",

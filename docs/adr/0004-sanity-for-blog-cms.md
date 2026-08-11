@@ -1,6 +1,6 @@
 # Sanity (free tier) as the headless CMS for the on-site Blog
 
-The Karma blog moves from external Paragraph (`paragraph.xyz/@karmahq`) onto `karmahq.xyz/blog` so search authority accrues to our domain instead of Paragraph's, and so non-devs can publish without a code PR. We chose Sanity's free tier as the headless CMS: gap-app-v2 keeps a thin server-rendered `/blog` route that fetches published content, while content storage, editor auth (Sanity project membership), and media hosting live in Sanity's cloud. Sanity Studio is embedded at `/admin/studio` in gap-app-v2 (deliberate: schema changes and their renderers ship in the same PR; access is gated by Sanity login, and the route is noindexed). Hard constraint at decision time: $0 budget.
+The Karma blog moves from external Paragraph (`paragraph.xyz/@karmahq`) onto the Karma canonical host under `/blog` (`karmahq.xyz/blog` at decision time; `www.karmahq.org/blog` since the Aug 2026 TLD migration) so search authority accrues to our domain instead of Paragraph's, and so non-devs can publish without a code PR. We chose Sanity's free tier as the headless CMS: gap-app-v2 keeps a thin server-rendered `/blog` route that fetches published content, while content storage, editor auth (Sanity project membership), and media hosting live in Sanity's cloud. Sanity Studio is embedded at `/admin/studio` in gap-app-v2 (deliberate: schema changes and their renderers ship in the same PR; access is gated by Sanity login, and the route is noindexed). Hard constraint at decision time: $0 budget.
 
 ## Considered Options
 
