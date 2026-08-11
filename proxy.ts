@@ -25,7 +25,7 @@ const NOINDEX_FOLLOW = "noindex, follow";
 function bareHostname(hostname: string): string {
   // Strip the port and lower-case, then drop a single trailing DNS dot:
   // `karmahq.xyz.` is the fully-qualified form of the same host and must still
-  // match ALIAS_HOSTS, otherwise it would bypass the canonical redirect.
+  // match ALIAS_HOSTS, otherwise it would bypass the canonical redirect
   return hostname.split(":")[0].toLowerCase().replace(/\.$/, "");
 }
 
