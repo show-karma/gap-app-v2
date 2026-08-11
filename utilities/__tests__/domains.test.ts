@@ -5,6 +5,7 @@ import {
   CANONICAL_HOST,
   CANONICAL_ORIGIN,
   canonicalUrl,
+  docsOrigin,
   isAliasHost,
   STAGING_ORIGIN,
 } from "../domains";
@@ -112,6 +113,66 @@ describe("domains", () => {
     it("should not treat the legacy 'dev' value as production", () => {
       process.env.NEXT_PUBLIC_ENV = "dev";
       expect(appOrigin()).toBe(STAGING_ORIGIN);
+    });
+  });
+
+  describe("docsOrigin", () => {
+    const originalDocsOrigin = process.env.NEXT_PUBLIC_DOCS_ORIGIN;
+
+    afterEach(() => {
+      if (originalDocsOrigin === undefined) {
+        delete process.env.NEXT_PUBLIC_DOCS_ORIGIN;
+      } else {
+        process.env.NEXT_PUBLIC_DOCS_ORIGIN = originalDocsOrigin;
+      }
+    });
+
+    it("should default to the GitBook host when unset", () => {
+      delete process.env.NEXT_PUBLIC_DOCS_ORIGIN;
+      expect(docsOrigin()).toBe("https://docs.gap.karmahq.xyz");
+    });
+
+    it("should fall back to the default for an empty or whitespace override", () => {
+      process.env.NEXT_PUBLIC_DOCS_ORIGIN = "   ";
+      expect(docsOrigin()).toBe("https://docs.gap.karmahq.xyz");
+    });
+
+    // A schemeless value resolves as a relative path in an href and 404s
+    // against our own origin, so it must never be returned as-is.
+    it("should add https to a schemeless override", () => {
+      process.env.NEXT_PUBLIC_DOCS_ORIGIN = "docs.example.com";
+      expect(docsOrigin()).toBe("https://docs.example.com");
+    });
+
+    it("should preserve an override that already has a scheme", () => {
+      process.env.NEXT_PUBLIC_DOCS_ORIGIN = "http://localhost:4000";
+      expect(docsOrigin()).toBe("http://localhost:4000");
+    });
+
+    it("should strip a trailing slash so callers can append paths", () => {
+      process.env.NEXT_PUBLIC_DOCS_ORIGIN = "https://docs.example.com/";
+      expect(docsOrigin()).toBe("https://docs.example.com");
+    });
+
+    it("should fall back to the default for a hostless override", () => {
+      process.env.NEXT_PUBLIC_DOCS_ORIGIN = "///";
+      expect(docsOrigin()).toBe("https://docs.gap.karmahq.xyz");
+
+      process.env.NEXT_PUBLIC_DOCS_ORIGIN = "https://";
+      expect(docsOrigin()).toBe("https://docs.gap.karmahq.xyz");
+    });
+
+    it("should always return something an href can use verbatim", () => {
+      for (const value of [
+        "docs.example.com",
+        "https://docs.example.com/",
+        "   ",
+        "///",
+        "https://",
+      ]) {
+        process.env.NEXT_PUBLIC_DOCS_ORIGIN = value;
+        expect(docsOrigin()).toMatch(/^https?:\/\/[^/]+/);
+      }
     });
   });
 
