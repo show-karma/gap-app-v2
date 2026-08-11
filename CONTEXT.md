@@ -75,9 +75,11 @@ _Avoid_: writing "the main domain" — always say whether you mean the canonical
 
 **Alias host** (`ALIAS_HOSTS`, `isAliasHost()`):
 Any host that owes **exactly one 308** to the canonical origin — `karmahq.org` (apex),
-`gap.karmahq.org`, `karmahq.xyz`, `www.karmahq.xyz`, `gap.karmahq.xyz`. `www.karmahq.xyz` was
+`karmahq.xyz`, `www.karmahq.xyz`, `gap.karmahq.xyz`. `www.karmahq.xyz` was
 the canonical host until Aug 2026 and is now an alias; that is the single biggest behavioural
-change of the TLD migration.
+change of the TLD migration. Note there is no `gap.karmahq.org`: `gap.` exists only on the
+legacy root, because GAP was the original product name and `gap.karmahq.xyz` was its first
+host. Aliases are hosts that really resolve, not hosts derived from a naming pattern.
 _Invariant_: the canonical host is **never** an alias. `domains.ts` throws at module load if it
 ever is, because nothing in `proxy.ts` compares the redirect target to the request host — a
 canonical host inside `ALIAS_HOSTS` would 308 to itself forever with no circuit breaker.

@@ -11,7 +11,7 @@ import { verifyIndexability } from "../verify-indexability.mjs";
 
 const CANONICAL = "https://www.karmahq.org";
 const APEX = "https://karmahq.org";
-const GAP = "https://gap.karmahq.org";
+const GAP = "https://gap.karmahq.xyz";
 const INDEXER = "https://indexer.test";
 const SITEMAP = `${CANONICAL}/sitemap.xml`;
 const SLUG = "paraswap";

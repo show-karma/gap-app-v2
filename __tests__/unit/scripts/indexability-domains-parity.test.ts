@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import * as scriptDomains from "@/scripts/indexability/domains.mjs";
-import { CANONICAL_ORIGIN, ROOT_DOMAIN } from "@/utilities/domains";
+import {
+  ALIAS_HOSTS,
+  CANONICAL_ORIGIN,
+  LEGACY_ROOT_DOMAINS,
+  ROOT_DOMAIN,
+} from "@/utilities/domains";
 
 // The indexability scripts run as plain `node scripts/verify-indexability.mjs`
 // on Node 20 (see .github/workflows/indexability-monitor.yml), so they cannot
@@ -11,9 +16,16 @@ describe("scripts/indexability/domains.mjs parity with utilities/domains.ts", ()
     expect(scriptDomains.CANONICAL_ORIGIN).toBe(CANONICAL_ORIGIN);
   });
 
-  it("derives apex and gap origins from the same root domain", () => {
+  it("derives the apex origin from the same root domain", () => {
     expect(scriptDomains.APEX_ORIGIN).toBe(`https://${ROOT_DOMAIN}`);
-    expect(scriptDomains.GAP_ORIGIN).toBe(`https://gap.${ROOT_DOMAIN}`);
+  });
+
+  // `gap.` belongs to the legacy root only — gap.karmahq.org does not exist, so
+  // deriving this from ROOT_DOMAIN would point the crawler at NXDOMAIN.
+  it("keeps the gap origin on the legacy root and inside ALIAS_HOSTS", () => {
+    expect(scriptDomains.GAP_ORIGIN).toBe(`https://gap.${LEGACY_ROOT_DOMAINS[0]}`);
+    expect(ALIAS_HOSTS.has(`gap.${LEGACY_ROOT_DOMAINS[0]}`)).toBe(true);
+    expect(ALIAS_HOSTS.has(`gap.${ROOT_DOMAIN}`)).toBe(false);
   });
 
   it("keeps the sitemap root on the canonical origin", () => {
