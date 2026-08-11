@@ -907,10 +907,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
-  const [githubValidatedAs, setGithubValidatedAs] = useState<"org" | null>(null);
 
   const validateGithubUrl = debounce(async (value: string) => {
-    setGithubValidatedAs(null);
     if (!value || value.trim().length === 0) {
       return;
     }
@@ -919,8 +917,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const result = await validateGithubInput(value);
       if (!result.valid) {
         setError("github", { message: result.error });
-      } else {
-        setGithubValidatedAs("org");
       }
     } catch {
       setError("github", {
