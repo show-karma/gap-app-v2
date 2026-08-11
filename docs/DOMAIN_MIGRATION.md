@@ -416,8 +416,11 @@ redeclaring them.
 the copy cannot drift. If those scripts ever move onto a TypeScript loader, delete
 `domains.mjs` and import `utilities/domains.ts` directly.
 
-`ALIAS_HOSTS` resolves to five members — `karmahq.org`, `gap.karmahq.org`, `karmahq.xyz`,
-`www.karmahq.xyz`, `gap.karmahq.xyz`. It is built by filtering `CANONICAL_HOST` out of the
+`ALIAS_HOSTS` resolves to four members — `karmahq.org`, `karmahq.xyz`,
+`www.karmahq.xyz`, `gap.karmahq.xyz`. There is deliberately no `gap.karmahq.org`: `gap.` only
+ever existed on the legacy root, so synthesising `gap.${ROOT_DOMAIN}` would claim a host that
+does not exist in DNS — and `scripts/indexability/domains.mjs` would then aim the `gap-alias`
+check at an NXDOMAIN. It is built by filtering `CANONICAL_HOST` out of the
 candidate list, and `domains.ts` **throws at module load** if `CANONICAL_HOST` ever appears in
 the set. That assertion is the redirect-loop circuit breaker: nothing in `proxy.ts` compares
 the redirect target host to the request host, so a canonical host inside `ALIAS_HOSTS` would
