@@ -55,4 +55,6 @@ jobs:
           VERCEL_SCOPE: ${{ secrets.VERCEL_ORG_ID }}
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment_url }}
         run: |
+          # Keep .xyz first: a failure aliasing .org must not leave it un-updated.
+          vercel alias "$DEPLOYMENT_URL" staging.karmahq.xyz --token="$VERCEL_TOKEN" --scope="$VERCEL_SCOPE"
           vercel alias "$DEPLOYMENT_URL" staging.karmahq.org --token="$VERCEL_TOKEN" --scope="$VERCEL_SCOPE"
