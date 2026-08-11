@@ -127,7 +127,7 @@ describe("/data/foundation-funding (server-rendered)", () => {
     expect(dataset).toBeDefined();
     expect(dataset?.name).toBe(DATA_PAGE_TITLE);
     expect(dataset?.description).toBe(DATASET_DESCRIPTION);
-    expect(dataset?.url).toBe(`https://www.karmahq.xyz${ROUTE}`);
+    expect(dataset?.url).toBe(`https://www.karmahq.org${ROUTE}`);
     // Every fact serialized in the Dataset schema is visible on the page.
     expect(text).toContain(dataset?.name ?? "");
     expect(text).toContain(dataset?.description ?? "");

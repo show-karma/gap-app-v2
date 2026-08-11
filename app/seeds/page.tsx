@@ -6,6 +6,7 @@ import { LaunchHero } from "@/src/features/seeds/components/launch/launch-hero";
 import { LaunchHowTo } from "@/src/features/seeds/components/launch/launch-how-to";
 import { LaunchProblem } from "@/src/features/seeds/components/launch/launch-problem";
 import { LaunchUseCases } from "@/src/features/seeds/components/launch/launch-use-cases";
+import { SITE_URL } from "@/utilities/meta";
 
 export const metadata: Metadata = {
   title: "Karma Seeds - Raise Funds Without Launching a Token",
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
     title: "Karma Seeds - Accept Support Without a Token",
     description:
       "Raise funds from your community at $1 per seed. No token economics, no speculation—just transparent funding that goes to your treasury.",
-    url: "https://www.karmahq.xyz/seeds",
+    url: `${SITE_URL}/seeds`,
     images: [
       {
         url: "/og/seeds.png",

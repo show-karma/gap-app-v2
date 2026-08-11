@@ -24,7 +24,7 @@ import {
 // Dependency-free fixtures (no real network).
 // ---------------------------------------------------------------------------
 
-const CANONICAL = "https://www.karmahq.xyz";
+const CANONICAL = "https://www.karmahq.org";
 const ROOT = `${CANONICAL}/sitemap.xml`;
 const NS = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"';
 
@@ -704,7 +704,10 @@ describe("crawlSitemap", () => {
 
     for (const call of fetchImpl.calls) {
       assert.equal(call.options.redirect, "manual");
-      assert.match(call.options.headers["user-agent"], /karmahq\.xyz/);
+      // Pin the self-identifying crawler URL, not a bare "karmahq" match: the
+      // contact mailbox in the same string still lives on the legacy domain, so
+      // a loose match would pass even if the +URL were dropped entirely.
+      assert.match(call.options.headers["user-agent"], /\+https:\/\/www\.karmahq\.org/);
       assert.ok(call.options.signal instanceof AbortSignal);
     }
   });

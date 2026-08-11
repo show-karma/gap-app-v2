@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   }
 
   const siteUrl = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : SITE_URL;
-  const ogImageBase = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : envVars.VERCEL_URL;
+  const ogImageBase = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : envVars.APP_ORIGIN;
   const canonical = isWhitelabel ? "/" : `/community/${communityId}`;
 
   const title = dynamicMetadata.title || DEFAULT_TITLE;

@@ -1,4 +1,5 @@
 import { isKnownTenant, type KnownTenantId } from "@/src/infrastructure/types/tenant";
+import { docsOrigin } from "@/utilities/domains";
 import { PAGES } from "@/utilities/pages";
 import type { AskKarmaConfig, AskKarmaPersona } from "./types";
 
@@ -132,12 +133,12 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
         links: [
           {
             label: "ProPGF Grantee Guide",
-            href: "https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-grantee-guide",
+            href: `${docsOrigin()}/how-to-guides/partners/filecoin/propgf-grantee-guide`,
             isExternal: true,
           },
           {
             label: "Milestone Reviewer Guide",
-            href: "https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/milestone-reviewer-guide",
+            href: `${docsOrigin()}/how-to-guides/partners/filecoin/milestone-reviewer-guide`,
             isExternal: true,
           },
         ],

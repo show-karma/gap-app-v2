@@ -5,6 +5,7 @@ import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
+import { appOrigin } from "@/utilities/domains";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { queryClient } from "@/utilities/query-client";
@@ -154,9 +155,7 @@ export const useInviteUrl = (
 ) => {
   if (!project || !inviteCode) return null;
 
-  const isDev = process.env.NEXT_PUBLIC_ENV === "dev" || process.env.NODE_ENV === "development";
-  const baseUrl = isDev ? "staging.karmahq.xyz" : "karmahq.xyz";
   const projectIdentifier = project.details?.slug || project.uid;
 
-  return `https://${baseUrl}/project/${projectIdentifier}?invite-code=${inviteCode}`;
+  return `${appOrigin()}/project/${projectIdentifier}?invite-code=${inviteCode}`;
 };

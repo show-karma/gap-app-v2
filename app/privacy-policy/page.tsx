@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
+import { CANONICAL_HOST } from "@/utilities/domains";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 
@@ -33,7 +34,7 @@ export default function PrivacyPolicy() {
             collect, use, and protect your personal information when you use {PROJECT_NAME},
             available at{" "}
             <a className={styles.a} href={PAGES.HOME}>
-              karmahq.xyz
+              {CANONICAL_HOST}
             </a>{" "}
             (the “Platform”). By using the Platform, you consent to the practices described in this
             policy.

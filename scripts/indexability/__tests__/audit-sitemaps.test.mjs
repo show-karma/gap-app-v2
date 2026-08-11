@@ -8,7 +8,7 @@ import { auditSitemaps } from "../verify-indexability.mjs";
 // Small dependency-free response helpers (no real network).
 // ---------------------------------------------------------------------------
 
-const CANONICAL = "https://www.karmahq.xyz";
+const CANONICAL = "https://www.karmahq.org";
 const ROOT = `${CANONICAL}/sitemap.xml`;
 const NS = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"';
 

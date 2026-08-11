@@ -259,8 +259,8 @@ export default function PrivyWagmiProviders({ tenantConfig }: PrivyWagmiProvider
   const defaultChain = appNetwork[0];
 
   // Use current origin for relative logo paths so whitelabel custom domains
-  // resolve correctly. Fall back to VERCEL_URL during SSR (no window).
-  const origin = typeof window !== "undefined" ? window.location.origin : envVars.VERCEL_URL;
+  // resolve correctly. Fall back to APP_ORIGIN during SSR (no window).
+  const origin = typeof window !== "undefined" ? window.location.origin : envVars.APP_ORIGIN;
   const accentColor = tenantConfig?.theme?.colors?.primary || "#1de9b6";
   const logo = tenantConfig?.assets?.logo
     ? tenantConfig.assets.logo.startsWith("http")

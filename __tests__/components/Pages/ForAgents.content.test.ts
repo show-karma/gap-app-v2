@@ -1,5 +1,6 @@
 import { AGENT_FAQS, STATIC_FALLBACK_TOOLS, USE_CASES } from "@/components/Pages/ForAgents/content";
 import { CATEGORY_LABELS } from "@/components/Pages/ForAgents/types";
+import { ROOT_DOMAIN } from "@/utilities/domains";
 
 describe("AGENT_FAQS content", () => {
   it("provides at least four entries", () => {
@@ -29,7 +30,7 @@ describe("AGENT_FAQS content", () => {
   it("answers connecting from Claude with the guide location", () => {
     const connect = AGENT_FAQS.find((f) => f.question.includes("connect Karma to Claude"));
     expect(connect?.answer).toContain("gapapi.karmahq.xyz/mcp");
-    expect(connect?.answer).toContain("karmahq.xyz/mcp/connect");
+    expect(connect?.answer).toContain(`${ROOT_DOMAIN}/mcp/connect`);
   });
 
   it("answers whether an agent can draft and submit an application", () => {

@@ -3,6 +3,7 @@
 import { ExternalLink } from "lucide-react";
 import type React from "react";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
+import { CANONICAL_ORIGIN } from "@/utilities/domains";
 
 interface KarmaProjectLinkProps {
   uid: string;
@@ -23,7 +24,7 @@ export const KarmaProjectLink: React.FC<KarmaProjectLinkProps> = ({ uid }) => {
 
   return (
     <a
-      href={`https://www.karmahq.xyz/project/${uid}`}
+      href={`${CANONICAL_ORIGIN}/project/${uid}`}
       target="_blank"
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-primary hover:underline"

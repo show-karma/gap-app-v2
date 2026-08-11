@@ -1,3 +1,4 @@
+import { ROOT_DOMAIN } from "@/utilities/domains";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { FILINGS_STATS } from "./stats";
 
@@ -30,6 +31,8 @@ export interface FindFundersFaqEntry {
   answer: string;
 }
 
+const CONNECT_GUIDE_TEXT = `${ROOT_DOMAIN}/nonprofits/find-funders/connect`;
+
 /**
  * Answer substrings the visible FAQ renders as anchors (see landing-faq.tsx).
  * The key is the literal text as it appears in the answer; the value is the
@@ -39,7 +42,7 @@ export interface FindFundersFaqEntry {
  */
 export const FIND_FUNDERS_FAQ_LINKS: Record<string, string> = {
   "gapapi.karmahq.xyz/mcp": "https://gapapi.karmahq.xyz/mcp",
-  "karmahq.xyz/nonprofits/find-funders/connect": NON_PROFITS_PAGES.CONNECT,
+  [CONNECT_GUIDE_TEXT]: NON_PROFITS_PAGES.CONNECT,
 };
 
 export const FIND_FUNDERS_FAQS: FindFundersFaqEntry[] = [
@@ -60,8 +63,7 @@ export const FIND_FUNDERS_FAQS: FindFundersFaqEntry[] = [
   },
   {
     question: "Can I use ChatGPT or Claude to find foundations that fund my nonprofit?",
-    answer:
-      "Yes. Karma Find Funders is available as a connector for Claude and ChatGPT: add gapapi.karmahq.xyz/mcp as a custom connector (MCP), sign in to Karma once, and funder questions in your chats run against the indexed 990 data. Step-by-step setup guides live at karmahq.xyz/nonprofits/find-funders/connect.",
+    answer: `Yes. Karma Find Funders is available as a connector for Claude and ChatGPT: add gapapi.karmahq.xyz/mcp as a custom connector (MCP), sign in to Karma once, and funder questions in your chats run against the indexed 990 data. Step-by-step setup guides live at ${CONNECT_GUIDE_TEXT}.`,
   },
   {
     question: "Is Karma Find Funders free for nonprofits?",

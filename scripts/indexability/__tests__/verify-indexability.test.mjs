@@ -9,9 +9,9 @@ import { verifyIndexability } from "../verify-indexability.mjs";
 // Origins + representative fixtures.
 // ---------------------------------------------------------------------------
 
-const CANONICAL = "https://www.karmahq.xyz";
-const APEX = "https://karmahq.xyz";
-const GAP = "https://gap.karmahq.xyz";
+const CANONICAL = "https://www.karmahq.org";
+const APEX = "https://karmahq.org";
+const GAP = "https://gap.karmahq.org";
 const INDEXER = "https://indexer.test";
 const SITEMAP = `${CANONICAL}/sitemap.xml`;
 const SLUG = "paraswap";

@@ -44,10 +44,10 @@ function scan(overrides: Partial<DetailScorecardPayload>): DetailScorecardPayloa
   return {
     scanId: "scan-1",
     slug: "slug-1",
-    targetUrl: "https://karmahq.xyz/",
+    targetUrl: "https://karmahq.org/",
     status: "complete",
     viewerIsOwner: false,
-    url: "https://karmahq.xyz/",
+    url: "https://karmahq.org/",
     ...overrides,
   };
 }
@@ -62,30 +62,30 @@ describe("ScannerSiteReport", () => {
 
   it("shows a generating state while the by-url lookup is pending", () => {
     mockHook.mockReturnValue(hookState({ isPending: true }));
-    render(<ScannerSiteReport domain="karmahq.xyz" />);
+    render(<ScannerSiteReport domain="karmahq.org" />);
 
     expect(screen.getByLabelText(/generating report/i)).toBeInTheDocument();
   });
 
   it("surfaces an error with retry when the lookup fails with no data", () => {
     mockHook.mockReturnValue(hookState({ isError: true, data: undefined }));
-    render(<ScannerSiteReport domain="karmahq.xyz" />);
+    render(<ScannerSiteReport domain="karmahq.org" />);
 
     expect(screen.getByText(/couldn'?t load this report/i)).toBeInTheDocument();
   });
 
   it("offers to scan when the site has no report yet (null data)", () => {
     mockHook.mockReturnValue(hookState({ data: null }));
-    render(<ScannerSiteReport domain="karmahq.xyz" />);
+    render(<ScannerSiteReport domain="karmahq.org" />);
 
-    expect(screen.getByText(/no report yet for karmahq\.xyz/i)).toBeInTheDocument();
+    expect(screen.getByText(/no report yet for karmahq\.org/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /scan this site/i })).toBeInTheDocument();
   });
 
   it("offers to scan on a no-report domain even while Privy auth is still loading", () => {
     mockAuthState.ready = false;
     mockHook.mockReturnValue(hookState({ data: null }));
-    render(<ScannerSiteReport domain="karmahq.xyz" />);
+    render(<ScannerSiteReport domain="karmahq.org" />);
 
     expect(screen.getByRole("button", { name: /scan this site/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/generating report/i)).not.toBeInTheDocument();
@@ -93,14 +93,14 @@ describe("ScannerSiteReport", () => {
 
   it("keeps showing progress for a non-terminal scan", () => {
     mockHook.mockReturnValue(hookState({ data: scan({ status: "running_agent" }) }));
-    render(<ScannerSiteReport domain="karmahq.xyz" />);
+    render(<ScannerSiteReport domain="karmahq.org" />);
 
     expect(screen.getByLabelText(/generating report/i)).toBeInTheDocument();
   });
 
   it("renders the public tier for an anonymous viewer on a complete scan", () => {
     mockHook.mockReturnValue(hookState({ data: scan({ status: "complete" }) }));
-    render(<ScannerSiteReport domain="karmahq.xyz" />);
+    render(<ScannerSiteReport domain="karmahq.org" />);
 
     expect(screen.getByText(/public-tier:slug-1/)).toBeInTheDocument();
     expect(screen.queryByText(/detail-tier/)).not.toBeInTheDocument();
@@ -109,7 +109,7 @@ describe("ScannerSiteReport", () => {
   it("renders the members-only detail tier for an authenticated viewer", () => {
     mockAuthState.authenticated = true;
     mockHook.mockReturnValue(hookState({ data: scan({ status: "complete" }) }));
-    render(<ScannerSiteReport domain="karmahq.xyz" />);
+    render(<ScannerSiteReport domain="karmahq.org" />);
 
     expect(screen.getByText(/detail-tier:scan-1/)).toBeInTheDocument();
     expect(screen.queryByText(/public-tier/)).not.toBeInTheDocument();
