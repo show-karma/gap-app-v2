@@ -28,9 +28,11 @@ export const LEGACY_UMBRELLA_HOSTS = {
   staging: "testapp.karmahq.xyz",
 } as const;
 
+// `gap.` exists only on the legacy roots: GAP was the original product name and
+// gap.karmahq.xyz was its first host. There is deliberately no gap.karmahq.org —
+// synthesizing one would claim a host that does not exist in DNS.
 const aliasCandidates: readonly string[] = [
   ROOT_DOMAIN,
-  `gap.${ROOT_DOMAIN}`,
   CANONICAL_HOST,
   ...LEGACY_ROOT_DOMAINS.flatMap((domain) => [domain, `www.${domain}`, `gap.${domain}`]),
 ];

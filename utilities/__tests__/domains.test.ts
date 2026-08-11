@@ -12,10 +12,9 @@ import {
 
 describe("domains", () => {
   describe("ALIAS_HOSTS", () => {
-    it("should contain exactly the five legacy and non-canonical hosts", () => {
+    it("should contain exactly the four legacy and non-canonical hosts", () => {
       expect([...ALIAS_HOSTS].sort()).toEqual(
         [
-          "gap.karmahq.org",
           "gap.karmahq.xyz",
           "karmahq.org",
           "karmahq.xyz",

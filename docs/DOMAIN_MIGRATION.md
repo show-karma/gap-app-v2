@@ -392,7 +392,7 @@ STAGING_HOST/ORIGIN  = "staging.karmahq.org"
 GOV_HOST             = "gov.karmahq.xyz"        // not flipping
 GOV_STAGING_HOST     = "govstag.karmahq.xyz"    // not flipping
 LEGACY_UMBRELLA_HOSTS= { prod: "app.karmahq.xyz", staging: "testapp.karmahq.xyz" }
-ALIAS_HOSTS          // 5 hosts that each owe exactly one 308
+ALIAS_HOSTS          // 4 hosts that each owe exactly one 308
 appOrigin()          // env-aware canonical origin (NEXT_PUBLIC_ENV, read at call time)
 bareHostname()       // the ONE normaliser: strips port, lower-cases, drops one trailing DNS dot
 isAliasHost()        // bareHostname + membership + the !== CANONICAL_HOST loop guard
@@ -416,8 +416,11 @@ redeclaring them.
 the copy cannot drift. If those scripts ever move onto a TypeScript loader, delete
 `domains.mjs` and import `utilities/domains.ts` directly.
 
-`ALIAS_HOSTS` resolves to five members — `karmahq.org`, `gap.karmahq.org`, `karmahq.xyz`,
-`www.karmahq.xyz`, `gap.karmahq.xyz`. It is built by filtering `CANONICAL_HOST` out of the
+`ALIAS_HOSTS` resolves to four members — `karmahq.org`, `karmahq.xyz`,
+`www.karmahq.xyz`, `gap.karmahq.xyz`. There is deliberately no `gap.karmahq.org`: `gap.` only
+ever existed on the legacy root, so synthesising `gap.${ROOT_DOMAIN}` would claim a host that
+does not exist in DNS — and `scripts/indexability/domains.mjs` would then aim the `gap-alias`
+check at an NXDOMAIN. It is built by filtering `CANONICAL_HOST` out of the
 candidate list, and `domains.ts` **throws at module load** if `CANONICAL_HOST` ever appears in
 the set. That assertion is the redirect-loop circuit breaker: nothing in `proxy.ts` compares
 the redirect target host to the request host, so a canonical host inside `ALIAS_HOSTS` would

@@ -17,7 +17,7 @@ import {
   readAiFirstTouch,
 } from "@/utilities/aiReferrer";
 
-const SITE = "https://gap.karmahq.org";
+const SITE = "https://gap.karmahq.xyz";
 const LANDING = `${SITE}/project/my-project`;
 
 const readStoredRaw = (): string | null => window.localStorage.getItem(AI_FIRST_TOUCH_STORAGE_KEY);
