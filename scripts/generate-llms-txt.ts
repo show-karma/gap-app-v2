@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { CANONICAL_ORIGIN } from "../utilities/domains";
+import { CANONICAL_ORIGIN, docsOrigin } from "../utilities/domains";
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
@@ -52,7 +52,7 @@ const FIRECRAWL_SCRAPE_URL =
   process.env.FIRECRAWL_SCRAPE_URL || "https://api.firecrawl.dev/v1/scrape";
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
 // Externally hosted docs; not part of the karmahq.org migration.
-const DOCS_SITE_URL = "https://docs.gap.karmahq.xyz";
+const DOCS_SITE_URL = docsOrigin();
 const DOCS_SITEMAP_URL = `${DOCS_SITE_URL}/sitemap-pages.xml`;
 const DOCS_CATEGORY_ORDER = [
   "Overview",

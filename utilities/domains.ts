@@ -48,6 +48,16 @@ if (ALIAS_HOSTS.has(CANONICAL_HOST)) {
   throw new Error("canonical host is an alias — redirect loop");
 }
 
+/** Product docs are hosted on GitBook, outside this repo, so they do not flip
+ *  with the app and stay on .xyz. Env-overridable so moving them later needs a
+ *  deploy variable rather than a code change. Read at call time, like
+ *  appOrigin(). */
+export const DOCS_HOST = "docs.gap.karmahq.xyz" as const;
+
+export function docsOrigin(): string {
+  return process.env.NEXT_PUBLIC_DOCS_ORIGIN || `https://${DOCS_HOST}`;
+}
+
 /** Env-aware canonical origin. NEXT_PUBLIC_ENV is read at call time so tests and
  *  build-time evaluation see the same value the request path does. */
 export function appOrigin(): string {

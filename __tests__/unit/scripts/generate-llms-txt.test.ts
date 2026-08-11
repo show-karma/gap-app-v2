@@ -95,7 +95,7 @@ function makeSitemapEntry(overrides: Partial<SitemapEntry> = {}): SitemapEntry {
 function makeDocsPage(overrides: Partial<DocsPage> = {}): DocsPage {
   return {
     path: "/overview/how-does-it-work",
-    url: "https://docs.gap.karmahq.org/overview/how-does-it-work",
+    url: "https://docs.gap.karmahq.xyz/overview/how-does-it-work",
     title: "How Does It Work",
     description:
       "Every team maintains a project profile on Karma containing comprehensive information.",
@@ -1195,7 +1195,7 @@ describe("cleanDocsMarkdown", () => {
 
   it("removes GitBook navigation links", () => {
     const input =
-      "Content\n[PreviousWhy Karma](https://docs.gap.karmahq.org/) [NextSupported Networks](https://docs.gap.karmahq.org/overview/supported-networks)\nMore";
+      "Content\n[PreviousWhy Karma](https://docs.gap.karmahq.xyz/) [NextSupported Networks](https://docs.gap.karmahq.xyz/overview/supported-networks)\nMore";
     const result = cleanDocsMarkdown(input);
     expect(result).not.toContain("Previous");
     expect(result).not.toContain("Next");
@@ -1392,7 +1392,7 @@ describe("generateLlmsTxt with docs pages", () => {
     makeDocsPage(),
     makeDocsPage({
       path: "/how-to-guides/for-builders/create-project",
-      url: "https://docs.gap.karmahq.org/how-to-guides/for-builders/create-project",
+      url: "https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project",
       title: "Create Project",
       description: "Step-by-step guide to creating your project profile.",
       category: "For Builders",
@@ -1417,9 +1417,9 @@ describe("generateLlmsTxt with docs pages", () => {
     expect(output).toContain("For Builders —");
   });
 
-  it("links to docs.gap.karmahq.org", () => {
+  it("links to docs.gap.karmahq.xyz", () => {
     const output = generateLlmsTxt(articles, landingPages, sitemapEntries, docsPages);
-    expect(output).toContain("https://docs.gap.karmahq.org/");
+    expect(output).toContain("https://docs.gap.karmahq.xyz/");
   });
 });
 
@@ -1435,7 +1435,7 @@ describe("generateLlmsFullTxt with docs pages", () => {
     makeDocsPage(),
     makeDocsPage({
       path: "/how-to-guides/for-builders/create-project",
-      url: "https://docs.gap.karmahq.org/how-to-guides/for-builders/create-project",
+      url: "https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project",
       title: "Create Project",
       description: "Step-by-step guide to creating your project profile.",
       fullText: "# Create Project\n\nStep-by-step guide to creating your project profile.",

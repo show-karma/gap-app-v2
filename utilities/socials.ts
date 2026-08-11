@@ -1,4 +1,4 @@
-import { CANONICAL_ORIGIN } from "@/utilities/domains";
+import { CANONICAL_ORIGIN, docsOrigin } from "@/utilities/domains";
 
 export const SOCIALS = {
   DISCORD: "https://discord.gg/X4fwgzPReJ",
@@ -7,7 +7,7 @@ export const SOCIALS = {
   WEBSITE: CANONICAL_ORIGIN,
   TELEGRAM: "https://t.me/karmahq",
   X_HANDLE: "@karmahq_",
-  DOCS: "https://docs.gap.karmahq.xyz",
+  DOCS: docsOrigin(),
   PARTNER_FORM: "https://tally.so/r/3NKZEl",
   // Donor & advisor "Talk to our team" Tally form. Separate from the
   // foundations PARTNER_FORM so each audience routes to the right intake.
