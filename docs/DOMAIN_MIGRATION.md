@@ -392,7 +392,7 @@ STAGING_HOST/ORIGIN  = "staging.karmahq.org"
 GOV_HOST             = "gov.karmahq.xyz"        // not flipping
 GOV_STAGING_HOST     = "govstag.karmahq.xyz"    // not flipping
 LEGACY_UMBRELLA_HOSTS= { prod: "app.karmahq.xyz", staging: "testapp.karmahq.xyz" }
-ALIAS_HOSTS          // 5 hosts that each owe exactly one 308
+ALIAS_HOSTS          // 4 hosts that each owe exactly one 308
 appOrigin()          // env-aware canonical origin (NEXT_PUBLIC_ENV, read at call time)
 bareHostname()       // the ONE normaliser: strips port, lower-cases, drops one trailing DNS dot
 isAliasHost()        // bareHostname + membership + the !== CANONICAL_HOST loop guard
