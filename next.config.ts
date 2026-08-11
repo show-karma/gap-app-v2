@@ -21,6 +21,15 @@ const removeImports = require("next-remove-imports")();
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Dev only. Next refuses cross-origin requests for its /_next/* dev assets,
+  // so serving `next dev` through a tunnel (or any host that isn't localhost)
+  // loads the HTML and nothing else. List the hosts here to allow them —
+  // comma-separated in DEV_ALLOWED_ORIGINS, since the host is per-session and
+  // has no business being committed.
+  allowedDevOrigins:
+    process.env.DEV_ALLOWED_ORIGINS?.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean) ?? [],
   // Cap per-page static generation at 2 min. The app has no
   // generateStaticParams and builds in ~5 min, so nothing legitimately
   // approaches this — a longer stall means a hung build-time fetch that
