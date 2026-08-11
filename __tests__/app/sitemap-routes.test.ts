@@ -20,7 +20,7 @@ describe("child sitemap route", () => {
   it("returns a urlset of canonicalized URLs for a valid kind/chunk", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => jsonResponse({ urls: ["https://staging.karmahq.xyz/project/a"] }))
+      vi.fn(async () => jsonResponse({ urls: ["https://staging.karmahq.org/project/a"] }))
     );
 
     const res = await childGet(
@@ -34,7 +34,7 @@ describe("child sitemap route", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("application/xml");
     expect(body).toContain(`<loc>${SITE}/project/a</loc>`);
-    expect(body).not.toContain("staging.karmahq.xyz");
+    expect(body).not.toContain("staging.karmahq.org");
   });
 
   it("404s an unknown kind", async () => {
@@ -173,7 +173,7 @@ describe("consolidated per-kind sitemap route", () => {
   }
 
   it("serves the kind's complete urlset", async () => {
-    stubKindFetch(["https://staging.karmahq.xyz/project/a"]);
+    stubKindFetch(["https://staging.karmahq.org/project/a"]);
 
     const res = await kindGet(new Request(`${SITE}/sitemaps/projects/sitemap.xml`), {
       params: Promise.resolve({ kind: "projects" }),
@@ -183,7 +183,7 @@ describe("consolidated per-kind sitemap route", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("application/xml");
     expect(body).toContain(`<loc>${SITE}/project/a</loc>`);
-    expect(body).not.toContain("staging.karmahq.xyz");
+    expect(body).not.toContain("staging.karmahq.org");
   });
 
   // The index no longer advertises these kinds, but Google already holds their
@@ -192,7 +192,7 @@ describe("consolidated per-kind sitemap route", () => {
   it.each(["impacts", "grants", "milestones"])(
     "still serves 200 for the de-advertised legacy kind %s",
     async (kind) => {
-      stubKindFetch(["https://staging.karmahq.xyz/project/a"]);
+      stubKindFetch(["https://staging.karmahq.org/project/a"]);
 
       const res = await kindGet(new Request(`${SITE}/sitemaps/${kind}/sitemap.xml`), {
         params: Promise.resolve({ kind }),
@@ -235,7 +235,7 @@ describe("consolidated per-kind sitemap route", () => {
     // stops at the cap, which means the list may be incomplete — refuse it.
     const fullPage = Array.from(
       { length: INDEXER_FETCH_PAGE_SIZE },
-      (_, i) => `https://staging.karmahq.xyz/p/${i}`
+      (_, i) => `https://staging.karmahq.org/p/${i}`
     );
     stubKindFetch(fullPage);
 
@@ -247,7 +247,7 @@ describe("consolidated per-kind sitemap route", () => {
   });
 
   it("fetches pages at the indexer page size, not the legacy chunk size", async () => {
-    const fetchMock = stubKindFetch(["https://staging.karmahq.xyz/project/a"]);
+    const fetchMock = stubKindFetch(["https://staging.karmahq.org/project/a"]);
 
     await kindGet(new Request(`${SITE}/sitemaps/projects/sitemap.xml`), {
       params: Promise.resolve({ kind: "projects" }),

@@ -77,10 +77,10 @@ describe("canonicalizeSitemapUrl", () => {
   });
 
   it("rewrites a legacy .xyz origin onto the canonical .org host", () => {
-    expect(canonicalizeSitemapUrl("https://staging.karmahq.xyz/project/x")).toBe(
+    expect(canonicalizeSitemapUrl("https://staging.karmahq.org/project/x")).toBe(
       `${SITE}/project/x`
     );
-    expect(canonicalizeSitemapUrl("https://www.karmahq.xyz/project/x")).toBe(`${SITE}/project/x`);
+    expect(canonicalizeSitemapUrl("https://www.karmahq.org/project/x")).toBe(`${SITE}/project/x`);
   });
 
   it("preserves path, query, and hash", () => {
@@ -94,12 +94,12 @@ describe("canonicalizeSitemapUrl", () => {
 
 describe("buildUrlsetXml", () => {
   it("emits a urlset entry per URL and canonicalizes the host", () => {
-    const xml = buildUrlsetXml(["https://staging.karmahq.xyz/a"], 0.8, "daily");
+    const xml = buildUrlsetXml(["https://staging.karmahq.org/a"], 0.8, "daily");
     expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     expect(xml).toContain(`<loc>${SITE}/a</loc>`);
     expect(xml).toContain("<changefreq>daily</changefreq>");
     expect(xml).toContain("<priority>0.8</priority>");
-    expect(xml).not.toContain("staging.karmahq.xyz");
+    expect(xml).not.toContain("staging.karmahq.org");
   });
 
   it("omits lastmod (no accurate per-URL modified date to emit)", () => {
@@ -149,7 +149,7 @@ describe("countForKind", () => {
 describe("fetchSitemapKindPage", () => {
   it("requests the right kind/page/version and canonicalizes the returned URLs", async () => {
     const fetchMock = vi.fn(async () =>
-      jsonResponse({ urls: ["https://staging.karmahq.xyz/project/a"] })
+      jsonResponse({ urls: ["https://staging.karmahq.org/project/a"] })
     );
     vi.stubGlobal("fetch", fetchMock);
 
@@ -306,7 +306,7 @@ describe("buildSitemapIndexBody", () => {
 
 describe("fetchAllSitemapKindUrls", () => {
   const pageOf = (count: number, prefix: string): string[] =>
-    Array.from({ length: count }, (_, i) => `https://staging.karmahq.xyz/${prefix}/${i}`);
+    Array.from({ length: count }, (_, i) => `https://staging.karmahq.org/${prefix}/${i}`);
 
   it("pages until a short page and merges the results in order", async () => {
     const fetchMock = vi.fn(async (url: string) => {

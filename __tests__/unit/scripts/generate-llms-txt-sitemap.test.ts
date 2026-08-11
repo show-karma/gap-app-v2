@@ -26,7 +26,7 @@ function makeLandingPage(overrides: Partial<LandingPageContent> = {}): LandingPa
   return {
     path: "/",
     label: "Home",
-    url: "https://karmahq.xyz/",
+    url: "https://karmahq.org/",
     title: "Karma - Where builders get funded",
     description: "Ecosystems use Karma to fund projects transparently.",
     snippet: "Ecosystems use Karma to fund projects.",
@@ -42,7 +42,7 @@ function makeArticle(overrides: Partial<KnowledgeArticle> = {}): KnowledgeArticl
     slug: "grant-accountability",
     title: "What Is Grant Accountability in Web3?",
     description: "Grant accountability turns funding promises into persistent execution history.",
-    url: "https://karmahq.xyz/knowledge/grant-accountability",
+    url: "https://karmahq.org/knowledge/grant-accountability",
     category: "Core Concepts",
     body: "Grant accountability is the practice of tracking funded work.",
     sourcePath: "app/knowledge/grant-accountability/page.tsx",
@@ -53,7 +53,7 @@ function makeArticle(overrides: Partial<KnowledgeArticle> = {}): KnowledgeArticl
 
 function makeSitemapEntry(overrides: Partial<SitemapEntry> = {}): SitemapEntry {
   return {
-    url: "https://karmahq.xyz",
+    url: "https://karmahq.org",
     lastModified: "2024-01-01",
     changeFrequency: "weekly",
     priority: "1.0",
@@ -243,7 +243,7 @@ describe("assertRequiredSections", () => {
     makeLandingPage({
       path: "/funders",
       label: "For Funders",
-      url: "https://karmahq.xyz/funders",
+      url: "https://karmahq.org/funders",
     }),
   ];
 
@@ -254,8 +254,8 @@ describe("assertRequiredSections", () => {
       articles,
       landingPages,
       [
-        makeSitemapEntry({ url: "https://karmahq.xyz" }),
-        makeSitemapEntry({ url: "https://karmahq.xyz/funders" }),
+        makeSitemapEntry({ url: "https://karmahq.org" }),
+        makeSitemapEntry({ url: "https://karmahq.org/funders" }),
       ],
       []
     );
@@ -269,7 +269,7 @@ describe("assertRequiredSections", () => {
       articles,
       landingPages,
       [
-        makeSitemapEntry({ url: "https://karmahq.xyz" }),
+        makeSitemapEntry({ url: "https://karmahq.org" }),
         makeSitemapEntry({ url: "https://www.karmahq.org/about", priority: "0.8" }),
       ],
       []
@@ -282,7 +282,7 @@ describe("assertRequiredSections", () => {
     const emptyIndex = generateLlmsFullTxt(
       articles,
       landingPages,
-      [makeSitemapEntry({ url: "https://karmahq.xyz" })],
+      [makeSitemapEntry({ url: "https://karmahq.org" })],
       []
     );
     expect(() => assertRequiredSections("llms-full.txt", emptyIndex)).toThrow(/Site URL Index/);
