@@ -154,10 +154,24 @@ describe("domains", () => {
       expect(docsOrigin()).toBe("https://docs.example.com");
     });
 
+    it("should fall back to the default for a hostless override", () => {
+      process.env.NEXT_PUBLIC_DOCS_ORIGIN = "///";
+      expect(docsOrigin()).toBe("https://docs.gap.karmahq.xyz");
+
+      process.env.NEXT_PUBLIC_DOCS_ORIGIN = "https://";
+      expect(docsOrigin()).toBe("https://docs.gap.karmahq.xyz");
+    });
+
     it("should always return something an href can use verbatim", () => {
-      for (const value of ["docs.example.com", "https://docs.example.com/", "   "]) {
+      for (const value of [
+        "docs.example.com",
+        "https://docs.example.com/",
+        "   ",
+        "///",
+        "https://",
+      ]) {
         process.env.NEXT_PUBLIC_DOCS_ORIGIN = value;
-        expect(docsOrigin()).toMatch(/^https?:\/\//);
+        expect(docsOrigin()).toMatch(/^https?:\/\/[^/]+/);
       }
     });
   });

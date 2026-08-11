@@ -64,10 +64,14 @@ export function docsOrigin(): string {
   // the browser reads it as a relative path and resolves it against our own
   // origin, so the footer "Guide" link 404s instead of leaving the site.
   // Normalise rather than trust the input.
-  const withoutTrailingSlash = override.replace(/\/+$/, "");
-  return /^https?:\/\//i.test(withoutTrailingSlash)
-    ? withoutTrailingSlash
-    : `https://${withoutTrailingSlash}`;
+  const withScheme = /^https?:\/\//i.test(override)
+    ? override
+    : `https://${override.replace(/^\/+/, "")}`;
+  const normalised = withScheme.replace(/\/+$/, "");
+  // A slash-only value ("///") or a bare scheme ("https://") normalises to an
+  // origin with no host, which is no more usable in an href than the raw
+  // variable was. Fall back to the default rather than emit a broken link.
+  return /^https?:\/\/[^/]+/i.test(normalised) ? normalised : `https://${DOCS_HOST}`;
 }
 
 /** Env-aware canonical origin. NEXT_PUBLIC_ENV is read at call time so tests and
