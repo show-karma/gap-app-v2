@@ -55,4 +55,12 @@ jobs:
           VERCEL_SCOPE: ${{ secrets.VERCEL_ORG_ID }}
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment_url }}
         run: |
+          # Both staging hosts serve the same deployment while karmahq.org is
+          # being stood up. Without an alias here, staging.karmahq.org is only
+          # ever claimed by Vercel's git-branch integration — which does not
+          # track these CLI deploys — so it silently serves a stale build.
+          #
+          # Keep .xyz first: it is the host everything currently points at, so a
+          # failure aliasing .org must never leave .xyz un-updated.
           vercel alias "$DEPLOYMENT_URL" staging.karmahq.xyz --token="$VERCEL_TOKEN" --scope="$VERCEL_SCOPE"
+          vercel alias "$DEPLOYMENT_URL" staging.karmahq.org --token="$VERCEL_TOKEN" --scope="$VERCEL_SCOPE"
