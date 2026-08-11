@@ -147,8 +147,8 @@ describe("middleware indexability", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("308s the new gap subdomain to www", async () => {
-    const response = await proxy(createRequest("gap.karmahq.org", "/funding-map"));
+  it("308s the legacy gap subdomain to www", async () => {
+    const response = await proxy(createRequest("gap.karmahq.xyz", "/funding-map"));
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe("https://www.karmahq.org/funding-map");
