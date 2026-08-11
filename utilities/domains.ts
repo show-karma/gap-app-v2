@@ -55,7 +55,23 @@ if (ALIAS_HOSTS.has(CANONICAL_HOST)) {
 export const DOCS_HOST = "docs.gap.karmahq.xyz" as const;
 
 export function docsOrigin(): string {
-  return process.env.NEXT_PUBLIC_DOCS_ORIGIN || `https://${DOCS_HOST}`;
+  const override = process.env.NEXT_PUBLIC_DOCS_ORIGIN?.trim();
+  if (!override) {
+    return `https://${DOCS_HOST}`;
+  }
+  // A schemeless override ("docs.gap.karmahq.xyz") is the easy thing to type
+  // into a deploy variable, and it silently breaks every link built from it:
+  // the browser reads it as a relative path and resolves it against our own
+  // origin, so the footer "Guide" link 404s instead of leaving the site.
+  // Normalise rather than trust the input.
+  const withScheme = /^https?:\/\//i.test(override)
+    ? override
+    : `https://${override.replace(/^\/+/, "")}`;
+  const normalised = withScheme.replace(/\/+$/, "");
+  // A slash-only value ("///") or a bare scheme ("https://") normalises to an
+  // origin with no host, which is no more usable in an href than the raw
+  // variable was. Fall back to the default rather than emit a broken link.
+  return /^https?:\/\/[^/]+/i.test(normalised) ? normalised : `https://${DOCS_HOST}`;
 }
 
 /** Env-aware canonical origin. NEXT_PUBLIC_ENV is read at call time so tests and
