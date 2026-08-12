@@ -305,9 +305,10 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
 
         // Milestones are merged on content alone, so siblings can sit in
         // different lifecycle states. The SDK refuses to edit a completed,
-        // approved or verified milestone, and it would do so only once the
-        // earlier siblings had already spent their revoke+re-attest pair —
-        // leaving a half-applied edit. Abort before the first transaction.
+        // approved, verified or cancelled milestone, and it would do so only
+        // once the earlier siblings had already spent their revoke+re-attest
+        // pair — leaving a half-applied edit. Abort before the first
+        // transaction.
         const preflightProject = await getProjectById(projectUid);
         if (!preflightProject) {
           throw new Error("Failed to fetch project data");
@@ -316,7 +317,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         const nonEditable = preflightProject.grants
           .flatMap((grant) => grant.milestones)
           .filter((m) => mergedUIDs.includes(m.uid))
-          .filter((m) => m.completed || m.approved || m.verified?.length);
+          .filter((m) => m.completed || m.approved || m.verified?.length || m.cancelled);
 
         if (nonEditable.length) {
           showError(MERGED_NOT_EDITABLE_MESSAGE);
