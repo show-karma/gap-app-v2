@@ -185,6 +185,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       const url = await getGrantInvoiceDownloadUrl(grantUID, milestone.invoiceInfo.fileKey);
       window.open(url, "_blank", "noopener,noreferrer");
     } catch {
+      // SUPPRESSED: surfaced to the user via toast; a failed presigned-URL
+      // fetch carries no diagnostic value beyond the indexer's own logs.
       toast.error("Failed to open invoice");
     }
   }, [grantUID, milestone.invoiceInfo?.fileKey]);
