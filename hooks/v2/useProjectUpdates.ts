@@ -207,10 +207,6 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
             title: milestone.title,
             description: milestone.description,
             endsAt: milestoneEndsAt,
-            // Raw indexer status, preserved verbatim (may be mixed case). Lets
-            // consumers see lifecycle states that have no dedicated field here,
-            // notably "approved" — which the SDK also refuses to edit.
-            currentStatus: milestone.status,
             completed: isCompleted
               ? {
                   createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
