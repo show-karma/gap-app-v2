@@ -57,7 +57,16 @@ const newEditProgress = (): EditProgress => ({
 const MILESTONE_GONE_MESSAGE =
   "This milestone no longer exists. Refresh the page to see the latest data.";
 const EDIT_HALF_APPLIED_MESSAGE =
-  "The milestone edit did not complete: the updated version was not saved, and the original may have been removed. Refresh the page to check whether the milestone still exists before re-creating it.";
+  "The milestone edit did not complete: the updated version may not have been saved, and the original may have been removed. Refresh the page to check whether the milestone still exists before re-creating it.";
+/**
+ * Captured instead of the raw failure. The trigger is almost always a wallet
+ * rejection, and `sentryIgnoreErrors` drops any event whose message contains
+ * "rejected the request" — including manual `captureException` calls — so
+ * reporting the original error would silently lose the event. This sentinel
+ * matches no entry in that list; the original error is preserved in `extra`.
+ */
+const EDIT_HALF_APPLIED_SENTINEL =
+  "Milestone edit may be half-applied: revoke submitted, re-attest failed";
 const MERGED_NOT_EDITABLE_MESSAGE =
   "This milestone can't be edited because one of the grants it is shared with has already completed or verified it. Edit that grant's milestone individually instead.";
 
@@ -500,10 +509,15 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         // Reported straight to Sentry because errorManager drops anything that
         // looks like a wallet rejection, which is the common trigger here.
         showError(EDIT_HALF_APPLIED_MESSAGE);
-        Sentry.captureException(error, {
+        const originalError = error instanceof Error ? error : undefined;
+        Sentry.captureException(new Error(EDIT_HALF_APPLIED_SENTINEL), {
           extra: {
             errorMessage:
               "Milestone edit failed after the revoke was submitted; re-attest did not complete. Revoke receipt was not verified, so the original milestone may or may not still exist on-chain.",
+            originalErrorName: originalError?.name,
+            originalErrorMessage: originalError?.message,
+            originalErrorString: String(error),
+            originalErrorStack: originalError?.stack,
             revokedMilestoneUID: editProgress.revokedMilestoneUID || milestone.uid,
             newMilestoneData: newData,
             grantUID: editProgress.grantUID || milestone.refUID,
