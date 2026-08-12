@@ -6,6 +6,7 @@ import type {
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
 import { isMilestoneEditable } from "@/utilities/milestones/isMilestoneEditable";
+import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 
 const COMPLETION_DETAILS: GrantMilestoneCompletionDetails = {
   description: "shipped",
@@ -194,6 +195,56 @@ describe("isMilestoneEditable", () => {
         completionDetails: COMPLETION_DETAILS,
       });
       expect(isMilestoneEditable(milestone)).toBe(false);
+    });
+
+    it("blocks a rejected milestone, whose completionDetails arrive null", () => {
+      // Rejection presupposes a completion attestation on-chain, so the SDK's
+      // edit() still throws, but the indexer emits no completionDetails for it.
+      const milestone = convertGrantMilestone({ status: "rejected" });
+      expect(milestone.completed).toBe(false);
+      expect(isMilestoneEditable(milestone)).toBe(false);
+    });
+  });
+
+  describe("against the admin edit conversion", () => {
+    it("blocks approved and rejected milestones coming through toEditableUnifiedMilestone", () => {
+      for (const status of ["approved", "rejected", "COMPLETED"]) {
+        const milestone = toEditableUnifiedMilestone(
+          {
+            uid: "0xac1805",
+            chainId: 10,
+            title: "Test Milestone",
+            description: "Test",
+            dueDate: "2026-06-01",
+            status,
+            completionDetails: null,
+            verificationDetails: null,
+            fundingApplicationCompletion: null,
+          },
+          "0xgrant",
+          10
+        );
+        expect(isMilestoneEditable(milestone)).toBe(false);
+      }
+    });
+
+    it("keeps a pending milestone editable through toEditableUnifiedMilestone", () => {
+      const milestone = toEditableUnifiedMilestone(
+        {
+          uid: "0xac1805",
+          chainId: 10,
+          title: "Test Milestone",
+          description: "Test",
+          dueDate: "2026-06-01",
+          status: "pending",
+          completionDetails: null,
+          verificationDetails: null,
+          fundingApplicationCompletion: null,
+        },
+        "0xgrant",
+        10
+      );
+      expect(isMilestoneEditable(milestone)).toBe(true);
     });
   });
 });

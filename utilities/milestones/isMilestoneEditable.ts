@@ -31,8 +31,12 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
  * and emits it verbatim. `approved` mirrors the SDK's `this.approved` clause
  * and `MilestoneStatusEnum.APPROVED`; it has no dedicated field on
  * `UnifiedMilestone`, so the status string is the only way to see it.
+ * `rejected` is included because rejection presupposes a completion
+ * attestation (the SDK's `reject()` requires one), which makes `this.completed`
+ * truthy on-chain even though the indexer emits no `completionDetails` for
+ * rejected rows.
  */
-const NON_EDITABLE_STATUSES = new Set(["completed", "verified", "approved"]);
+const NON_EDITABLE_STATUSES = new Set(["completed", "verified", "approved", "rejected"]);
 
 export const isMilestoneEditable = (milestone: UnifiedMilestone | null | undefined): boolean => {
   if (!milestone) return false;
