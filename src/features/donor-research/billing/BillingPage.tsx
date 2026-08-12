@@ -2,7 +2,6 @@
 
 import { AlertTriangle, CheckCircle2, CreditCard, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import pluralize from "pluralize";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useDonorEntitlement, useOpenBillingPortal } from "@/hooks/useDonorBilling";
@@ -74,52 +73,57 @@ export function BillingPage() {
           Plan and billing
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Reports are the unit of billing. Each research brief you run spends one.
+          Reports, warm intros and diligence rounds are metered each month; donor profiles are a
+          plan cap. Top up or upgrade any time.
         </p>
       </header>
 
       <BillingBanners checkoutParam={checkoutParam} entitlement={entitlement} />
 
       <section className="rounded-xl border border-border bg-card p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">
-              {DONOR_PLAN_PRESENTATION[entitlement.plan].name}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {DONOR_PLAN_PRESENTATION[entitlement.plan].tagline}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="font-mono text-3xl tabular-nums text-foreground">
-              {entitlement.reportsRemaining}
-            </p>
-            <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">
-              {pluralize("report", entitlement.reportsRemaining)} left
-            </p>
-          </div>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-foreground">
+            {DONOR_PLAN_PRESENTATION[entitlement.plan].name}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {DONOR_PLAN_PRESENTATION[entitlement.plan].tagline}
+          </p>
         </div>
 
-        <dl className="mt-6 grid grid-cols-1 gap-4 border-t border-border/60 pt-6 sm:grid-cols-3">
-          {entitlement.reportsIncluded > 0 ? (
-            <Stat
-              label="This billing period"
-              value={`${entitlement.reportsUsed} of ${entitlement.reportsIncluded} used`}
-            />
-          ) : null}
-          {entitlement.freeReportsGranted > 0 ? (
-            <Stat
-              label="Signup reports"
-              value={`${entitlement.freeReportsUsed} of ${entitlement.freeReportsGranted} used`}
-            />
-          ) : null}
-          {entitlement.currentPeriodEnd ? (
-            <Stat
-              label={entitlement.cancelAtPeriodEnd ? "Cancels" : "Renews"}
-              value={formatDate(entitlement.currentPeriodEnd)}
-            />
-          ) : null}
+        <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-border/60 pt-6 sm:grid-cols-4">
+          <Counter
+            label="Reports"
+            remaining={entitlement.reportsRemaining}
+            used={entitlement.reportsUsed}
+            included={entitlement.reportsIncluded}
+          />
+          <Counter
+            label="Warm intros"
+            remaining={entitlement.introsRemaining}
+            used={entitlement.introsUsed}
+            included={entitlement.introsIncluded}
+          />
+          <Counter
+            label="Diligence"
+            remaining={entitlement.diligenceRemaining}
+            used={entitlement.diligenceUsed}
+            included={entitlement.diligenceIncluded}
+          />
+          <Counter
+            label="Donor profiles"
+            remaining={entitlement.profilesRemaining}
+            used={entitlement.profilesUsed}
+            included={entitlement.profilesIncluded}
+            isCap
+          />
         </dl>
+
+        {entitlement.currentPeriodEnd ? (
+          <p className="mt-4 text-xs uppercase tracking-[0.1em] text-muted-foreground">
+            {entitlement.cancelAtPeriodEnd ? "Cancels" : "Renews"}{" "}
+            {formatDate(entitlement.currentPeriodEnd)}
+          </p>
+        ) : null}
 
         {entitlement.billingEnabled ? (
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -247,13 +251,40 @@ function BillingBanners({
   return null;
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+/**
+ * One metered-dimension counter: the spendable remaining figure with the
+ * period usage beneath it. Profiles is a hard cap (`isCap`), so it reads "of N"
+ * rather than "used this period".
+ */
+function Counter({
+  label,
+  remaining,
+  used,
+  included,
+  isCap = false,
+}: {
+  label: string;
+  remaining: number;
+  used: number;
+  included: number;
+  isCap?: boolean;
+}) {
+  const isEmpty = remaining <= 0;
   return (
     <div>
       <dt className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
         {label}
       </dt>
-      <dd className="mt-0.5 text-sm text-foreground">{value}</dd>
+      <dd
+        className={`mt-1 font-mono text-2xl tabular-nums ${
+          isEmpty ? "text-amber-600 dark:text-amber-400" : "text-foreground"
+        }`}
+      >
+        {remaining}
+      </dd>
+      <dd className="text-[11px] text-muted-foreground">
+        {isCap ? `${used} of ${included} used` : `${used} of ${included} this month`}
+      </dd>
     </div>
   );
 }

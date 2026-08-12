@@ -6,11 +6,13 @@ import {
   fetchMyEntitlement,
   startBillingCheckout,
   startBillingPortal,
+  startPackCheckout,
 } from "@/services/donor-research-billing.service";
 import type {
   DonorBillingSession,
   DonorEntitlement,
   DonorPlanCatalog,
+  DonorResearchPack,
   PurchasableDonorPlan,
 } from "@/types/donor-research-billing";
 import { PAGES } from "@/utilities/pages";
@@ -71,6 +73,29 @@ export function useStartCheckout() {
     mutationFn: ({ plan }) =>
       startBillingCheckout({
         plan,
+        successUrl: billingReturnUrl("?checkout=success"),
+        cancelUrl: billingReturnUrl("?checkout=cancel"),
+      }),
+    onSuccess: (session) => {
+      queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
+      if (typeof window !== "undefined" && session.url) {
+        window.location.href = session.url;
+      }
+    },
+  });
+}
+
+/**
+ * Starts a one-time PAYG / top-up pack Checkout and hands the browser over.
+ * The prepaid balance is credited by the `payment_intent.succeeded` webhook.
+ */
+export function useStartPackCheckout() {
+  const queryClient = useQueryClient();
+
+  return useMutation<DonorBillingSession, Error, { pack: DonorResearchPack }>({
+    mutationFn: ({ pack }) =>
+      startPackCheckout({
+        pack,
         successUrl: billingReturnUrl("?checkout=success"),
         cancelUrl: billingReturnUrl("?checkout=cancel"),
       }),

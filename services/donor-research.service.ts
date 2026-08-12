@@ -12,7 +12,10 @@ import type {
 } from "@/types/donor-research";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { DonorReportQuotaExhaustedError } from "./donor-research-billing.service";
+import {
+  DonorProfileQuotaExhaustedError,
+  DonorReportQuotaExhaustedError,
+} from "./donor-research-billing.service";
 
 /**
  * Donor-research API client.
@@ -120,7 +123,14 @@ export interface CreateHandleRequest {
 }
 
 export const createDonorHandle = async (body: CreateHandleRequest): Promise<DonorHandle> => {
-  const [data, error] = await fetchData<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLES, "POST", body);
+  const [data, error, , status] = await fetchData<DonorHandle>(
+    INDEXER.DONOR_RESEARCH.HANDLES,
+    "POST",
+    body
+  );
+  if (status === 402) {
+    throw new DonorProfileQuotaExhaustedError(error || undefined);
+  }
   if (error || !data) {
     throw new Error(error || "Failed to create donor handle");
   }

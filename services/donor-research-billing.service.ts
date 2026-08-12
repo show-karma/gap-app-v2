@@ -2,6 +2,7 @@ import type {
   DonorBillingSession,
   DonorEntitlement,
   DonorPlanCatalog,
+  DonorResearchPack,
   PurchasableDonorPlan,
 } from "@/types/donor-research-billing";
 import fetchData from "@/utilities/fetchData";
@@ -39,6 +40,51 @@ export class DonorReportQuotaExhaustedError extends Error {
 
 export function isReportQuotaExhausted(error: unknown): error is DonorReportQuotaExhaustedError {
   return error instanceof DonorReportQuotaExhaustedError;
+}
+
+/**
+ * The three metered dimensions besides reports each get a distinct 402 error so
+ * the surface that raised it (Connect / Ask questions / New profile) can open
+ * the right upgrade or top-up prompt. The dimension is known at the call site —
+ * `fetchData` only surfaces `message` + `status`, not the 402 body — so each
+ * service maps its own 402 to the matching class rather than parsing a code.
+ */
+export class DonorIntroQuotaExhaustedError extends Error {
+  readonly code = "donor_research_intro_quota_exhausted";
+  constructor(message?: string) {
+    super(message || "No warm intros remaining on your plan.");
+    this.name = "DonorIntroQuotaExhaustedError";
+  }
+}
+
+export function isIntroQuotaExhausted(error: unknown): error is DonorIntroQuotaExhaustedError {
+  return error instanceof DonorIntroQuotaExhaustedError;
+}
+
+export class DonorDiligenceQuotaExhaustedError extends Error {
+  readonly code = "donor_research_diligence_quota_exhausted";
+  constructor(message?: string) {
+    super(message || "No diligence rounds remaining on your plan.");
+    this.name = "DonorDiligenceQuotaExhaustedError";
+  }
+}
+
+export function isDiligenceQuotaExhausted(
+  error: unknown
+): error is DonorDiligenceQuotaExhaustedError {
+  return error instanceof DonorDiligenceQuotaExhaustedError;
+}
+
+export class DonorProfileQuotaExhaustedError extends Error {
+  readonly code = "donor_research_profile_quota_exhausted";
+  constructor(message?: string) {
+    super(message || "Donor-profile limit reached on your plan.");
+    this.name = "DonorProfileQuotaExhaustedError";
+  }
+}
+
+export function isProfileQuotaExhausted(error: unknown): error is DonorProfileQuotaExhaustedError {
+  return error instanceof DonorProfileQuotaExhaustedError;
 }
 
 /**
@@ -88,6 +134,31 @@ export const startBillingCheckout = async (
 ): Promise<DonorBillingSession> => {
   const [data, error] = await fetchData<DonorBillingSession>(
     INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT,
+    "POST",
+    body
+  );
+  if (error || !data) {
+    throw new Error(error || "Couldn't start checkout");
+  }
+  return data;
+};
+
+export interface StartPackCheckoutRequest {
+  pack: DonorResearchPack;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+/**
+ * Creates a one-time Stripe Checkout session for a PAYG / top-up pack. The
+ * prepaid balance is credited by the `payment_intent.succeeded` webhook, not by
+ * the return trip.
+ */
+export const startPackCheckout = async (
+  body: StartPackCheckoutRequest
+): Promise<DonorBillingSession> => {
+  const [data, error] = await fetchData<DonorBillingSession>(
+    INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT,
     "POST",
     body
   );

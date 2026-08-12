@@ -12,6 +12,10 @@ import type {
 import { DILIGENCE_ENDPOINTS } from "@/utilities/diligenceEndpoints";
 import fetchData from "@/utilities/fetchData";
 import { fetchCurrentAdvisor, onboardAdvisor } from "./donor-research.service";
+import {
+  DonorDiligenceQuotaExhaustedError,
+  DonorIntroQuotaExhaustedError,
+} from "./donor-research-billing.service";
 
 /**
  * Nonprofit-diligence + advisor-intro API client (DEV-428).
@@ -92,10 +96,13 @@ export const askQuestions = async (
   reportId: string,
   candidateId: string
 ): Promise<AskQuestionsResponse> => {
-  const [data, error] = await fetchData<AskQuestionsResponse>(
+  const [data, error, , status] = await fetchData<AskQuestionsResponse>(
     DILIGENCE_ENDPOINTS.REQUESTS(reportId, candidateId),
     "POST"
   );
+  if (status === 402) {
+    throw new DonorDiligenceQuotaExhaustedError(error || undefined);
+  }
   if (error || !data) {
     throw new Error(error || "Failed to send diligence request");
   }
@@ -124,6 +131,9 @@ export const requestIntro = async (
     DILIGENCE_ENDPOINTS.INTRO_REQUESTS(reportId, candidateId),
     "POST"
   );
+  if (status === 402) {
+    throw new DonorIntroQuotaExhaustedError(error || undefined);
+  }
   if (status === 422) {
     return {
       kind: "email_required",

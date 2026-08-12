@@ -10,13 +10,18 @@ import { SectionContainer } from "@/src/components/shared/section-container";
 import {
   DONOR_PLAN_PRESENTATION,
   FALLBACK_FREE_SIGNUP_REPORT_GRANT,
+  FALLBACK_PACK_CATALOG,
   FALLBACK_PLAN_CATALOG,
   formatPlanPrice,
   PRICING_CARD_ORDER,
 } from "@/src/features/donor-research/billing/pricing-content";
 import { ScrollReveal } from "@/src/features/home/components/scroll-reveal";
 import { marketingLayoutTheme } from "@/src/helper/theme";
-import type { DonorPlanCatalogEntry, DonorResearchPlan } from "@/types/donor-research-billing";
+import type {
+  DonorPackCatalogEntry,
+  DonorPlanCatalogEntry,
+  DonorResearchPlan,
+} from "@/types/donor-research-billing";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
@@ -48,6 +53,10 @@ export function PricingSection() {
   const byPlan = new Map<DonorResearchPlan, DonorPlanCatalogEntry>(
     entries.map((entry) => [entry.plan, entry])
   );
+
+  const packs: readonly DonorPackCatalogEntry[] = catalog?.packs?.length
+    ? catalog.packs
+    : FALLBACK_PACK_CATALOG;
 
   return (
     <section
@@ -82,8 +91,9 @@ export function PricingSection() {
                 "w-full"
               )}
             >
-              {`Every account starts with ${freeGrant} free ${pluralize("report", freeGrant)} — enough to run a real
-              shortlist before you decide. No card required to sign up.`}
+              {`Every account starts with ${freeGrant} free, full-service ${pluralize("report", freeGrant)}, the
+              same brief every paid plan runs. Run a real shortlist before you decide, then upgrade
+              when you need more volume. No card required to sign up.`}
             </p>
           </div>
         </ScrollReveal>
@@ -101,12 +111,65 @@ export function PricingSection() {
           ))}
         </div>
 
+        <PackShowcase packs={packs} />
+
         <p className="text-sm text-muted-foreground">
-          Monthly billing, cancel any time from your billing page. Unused reports don't roll over to
-          the next month.
+          Monthly billing, cancel any time from your billing page. Unused reports roll over up to
+          one month; run dry mid-cycle and you can top up with a pack instead of upgrading.
         </p>
       </SectionContainer>
     </section>
+  );
+}
+
+/** One-time PAYG / top-up packs, shown below the plan cards. */
+function PackShowcase({ packs }: { packs: readonly DonorPackCatalogEntry[] }) {
+  if (packs.length === 0) return null;
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <p className="text-sm font-medium text-foreground">
+        No subscription? Buy reports as you go, or top up any plan.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        {packs.map((pack) => (
+          <div
+            key={pack.pack}
+            className="flex items-baseline gap-2 rounded-xl bg-secondary px-4 py-2 ring-1 ring-border/60 ring-inset"
+          >
+            <span className="text-sm font-semibold text-foreground">
+              {pack.units} {pluralize(pack.dimension === "intros" ? "intro" : "report", pack.units)}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              {formatPlanPrice(pack.priceCents)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** The four metered allowances a paid plan grants, from the live catalog. */
+function AllowanceList({ entry }: { entry: DonorPlanCatalogEntry | undefined }) {
+  if (!entry) return null;
+  const perMonth: { count: number; noun: string }[] = [
+    { count: entry.reportsIncluded, noun: "report" },
+    { count: entry.introsIncluded, noun: "warm intro" },
+    { count: entry.diligenceIncluded, noun: "diligence round" },
+  ];
+  return (
+    <ul className="flex flex-col gap-1 text-sm font-medium text-foreground">
+      {perMonth
+        .filter((item) => item.count > 0)
+        .map((item) => (
+          <li key={item.noun}>
+            {item.count} {pluralize(item.noun, item.count)} / month
+          </li>
+        ))}
+      <li>
+        {entry.profilesIncluded} donor {pluralize("profile", entry.profilesIncluded)}
+      </li>
+    </ul>
   );
 }
 
@@ -122,10 +185,6 @@ function PricingCard({ plan, entry, freeGrant, isLoading }: PricingCardProps) {
   const isEnterprise = plan === "enterprise";
   const isFree = plan === "free";
   const featured = Boolean(presentation.featured);
-
-  // Free advertises the signup grant; Enterprise is sales-led with no fixed
-  // allowance; the paid tiers show their per-month allowance.
-  const reportCount = isFree ? freeGrant : (entry?.reportsIncluded ?? 0);
 
   return (
     <div
@@ -152,14 +211,14 @@ function PricingCard({ plan, entry, freeGrant, isLoading }: PricingCardProps) {
 
       <PlanPrice entry={entry} isEnterprise={isEnterprise} isLoading={isLoading} />
 
-      {reportCount > 0 ? (
+      {isEnterprise ? (
+        <p className="text-sm font-medium text-foreground">Custom volume for your whole team</p>
+      ) : isFree ? (
         <p className="text-sm font-medium text-foreground">
-          {isFree
-            ? `${freeGrant} free ${pluralize("report", freeGrant)} to start`
-            : `${reportCount} ${pluralize("report", reportCount)} per month`}
+          {`${freeGrant} free ${pluralize("report", freeGrant)} to start`}
         </p>
       ) : (
-        <p className="text-sm font-medium text-foreground">Volume allowance for your whole team</p>
+        <AllowanceList entry={entry} />
       )}
 
       <ul className="flex flex-1 flex-col gap-2">

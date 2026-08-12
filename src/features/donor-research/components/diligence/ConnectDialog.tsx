@@ -17,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRequestIntro, useUpdateAdvisorEmail } from "@/hooks/useDiligence";
+import { isIntroQuotaExhausted } from "@/services/donor-research-billing.service";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 
 interface ConnectDialogProps {
   reportId: string;
@@ -52,6 +54,7 @@ export function ConnectDialog({
 }: ConnectDialogProps) {
   const [step, setStep] = useState<Step>("confirm");
   const [emailPrompt, setEmailPrompt] = useState<string | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const requestIntro = useRequestIntro();
   const updateAdvisorEmail = useUpdateAdvisorEmail();
@@ -94,7 +97,14 @@ export function ConnectDialog({
             onEmailRequired(result.message);
           }
         },
-        onError: () => {
+        onError: (error) => {
+          // Running out of intros is a purchasing decision, not a failure —
+          // close this dialog and offer the upgrade / top-up instead.
+          if (isIntroQuotaExhausted(error)) {
+            handleOpenChange(false);
+            setUpgradeOpen(true);
+            return;
+          }
           toast.error("Couldn't send the intro. Please try again.");
         },
       }
@@ -130,68 +140,77 @@ export function ConnectDialog({
   const isSubmittingEmail = updateAdvisorEmail.isPending || requestIntro.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        {step === "confirm" ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Send a named intro</DialogTitle>
-              <DialogDescription>
-                Connecting reveals your identity to this nonprofit, along with any answers they've
-                already shared. Karma sends them a warm intro on your behalf.
-              </DialogDescription>
-            </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent>
+          {step === "confirm" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Send a named intro</DialogTitle>
+                <DialogDescription>
+                  Connecting reveals your identity to this nonprofit, along with any answers they've
+                  already shared. Karma sends them a warm intro on your behalf.
+                </DialogDescription>
+              </DialogHeader>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={close}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleConfirm}
-                disabled={!canConnect || requestIntro.isPending}
-                isLoading={requestIntro.isPending}
-              >
-                Send intro
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <form onSubmit={handleEmailSubmit}>
-            <DialogHeader>
-              <DialogTitle>Add your email</DialogTitle>
-              <DialogDescription>
-                {emailPrompt ?? "Add an email so we can send the named intro."} We use your email as
-                the reply-to for the intro.
-              </DialogDescription>
-            </DialogHeader>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={close}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={!canConnect || requestIntro.isPending}
+                  isLoading={requestIntro.isPending}
+                >
+                  Send intro
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <form onSubmit={handleEmailSubmit}>
+              <DialogHeader>
+                <DialogTitle>Add your email</DialogTitle>
+                <DialogDescription>
+                  {emailPrompt ?? "Add an email so we can send the named intro."} We use your email
+                  as the reply-to for the intro.
+                </DialogDescription>
+              </DialogHeader>
 
-            <div className="flex flex-col gap-2 py-2">
-              <Label htmlFor="advisor-email">Email address</Label>
-              <Input
-                id="advisor-email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.org"
-                aria-invalid={errors.email ? "true" : undefined}
-                {...register("email")}
-              />
-              {errors.email ? (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              ) : null}
-            </div>
+              <div className="flex flex-col gap-2 py-2">
+                <Label htmlFor="advisor-email">Email address</Label>
+                <Input
+                  id="advisor-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.org"
+                  aria-invalid={errors.email ? "true" : undefined}
+                  {...register("email")}
+                />
+                {errors.email ? (
+                  <p className="text-sm text-destructive">{errors.email.message}</p>
+                ) : null}
+              </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={close}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmittingEmail} isLoading={isSubmittingEmail}>
-                Save and send intro
-              </Button>
-            </DialogFooter>
-          </form>
-        )}
-      </DialogContent>
-    </Dialog>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={close}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmittingEmail} isLoading={isSubmittingEmail}>
+                  Save and send intro
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        dimension="intros"
+        reason="You've used all the warm intros on your plan. Upgrade for more, or buy an intro pack to connect now."
+      />
+    </>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import pluralize from "pluralize";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAskQuestions, useDiligenceTemplate } from "@/hooks/useDiligence";
+import { isDiligenceQuotaExhausted } from "@/services/donor-research-billing.service";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import type { CandidateDiligenceView, DiligenceQuestion } from "@/types/diligence";
 import { PAGES } from "@/utilities/pages";
 
@@ -39,21 +42,36 @@ export function AskQuestionsDialog({
   onOpenChange,
   view,
 }: AskQuestionsDialogProps) {
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        {/* The portal only mounts children when open, so the template fetch in
-            AskQuestionsBody runs lazily — never for closed/unopened dialogs. */}
-        {open ? (
-          <AskQuestionsBody
-            reportId={reportId}
-            candidateId={candidateId}
-            view={view}
-            onClose={() => onOpenChange(false)}
-          />
-        ) : null}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          {/* The portal only mounts children when open, so the template fetch in
+              AskQuestionsBody runs lazily — never for closed/unopened dialogs. */}
+          {open ? (
+            <AskQuestionsBody
+              reportId={reportId}
+              candidateId={candidateId}
+              view={view}
+              onClose={() => onOpenChange(false)}
+              onQuotaExhausted={() => {
+                onOpenChange(false);
+                setUpgradeOpen(true);
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        dimension="diligence"
+        reason="You've used all the diligence rounds on your plan. Upgrade to send more."
+      />
+    </>
   );
 }
 
@@ -62,9 +80,16 @@ interface AskQuestionsBodyProps {
   candidateId: string;
   view: CandidateDiligenceView;
   onClose: () => void;
+  onQuotaExhausted: () => void;
 }
 
-function AskQuestionsBody({ reportId, candidateId, view, onClose }: AskQuestionsBodyProps) {
+function AskQuestionsBody({
+  reportId,
+  candidateId,
+  view,
+  onClose,
+  onQuotaExhausted,
+}: AskQuestionsBodyProps) {
   const frozen = view.request?.questions ?? null;
   const templateQuery = useDiligenceTemplate();
   const askQuestions = useAskQuestions();
@@ -83,7 +108,11 @@ function AskQuestionsBody({ reportId, candidateId, view, onClose }: AskQuestions
           toast.success("Questions sent");
           onClose();
         },
-        onError: () => {
+        onError: (error) => {
+          if (isDiligenceQuotaExhausted(error)) {
+            onQuotaExhausted();
+            return;
+          }
           toast.error("Couldn't send the questions. Please try again.");
         },
       }

@@ -22,32 +22,51 @@ import fetchData from "@/utilities/fetchData";
 
 const mockFetchData = vi.mocked(fetchData);
 
+const plan = (
+  p: string,
+  priceCents: number | null,
+  reports: number,
+  intros: number,
+  diligence: number,
+  profiles: number,
+  isPurchasable: boolean
+) => ({
+  plan: p,
+  label: `Nonprofit Research — ${p}`,
+  reportsIncluded: reports,
+  introsIncluded: intros,
+  diligenceIncluded: diligence,
+  profilesIncluded: profiles,
+  priceCents,
+  isPurchasable,
+});
+
 const CATALOG = {
   freeSignupReportGrant: 2,
   billingEnabled: true,
   plans: [
-    { plan: "free", label: "Free", reportsIncluded: 0, priceCents: 0, isPurchasable: false },
+    plan("free", 0, 0, 0, 1, 1, false),
+    plan("starter", 2900, 10, 2, 5, 3, true),
+    plan("pro", 9900, 40, 8, 20, 10, true),
+    plan("firm", 39_900, 200, 30, 60, 30, true),
+    plan("enterprise", null, 0, 0, 0, 0, false),
+  ],
+  packs: [
     {
-      plan: "starter",
-      label: "Nonprofit Research — Starter",
-      reportsIncluded: 5,
-      priceCents: 2500,
-      isPurchasable: true,
+      pack: "reports_3",
+      label: "Report pack (3)",
+      dimension: "reports",
+      units: 3,
+      priceCents: 3000,
     },
     {
-      plan: "pro",
-      label: "Nonprofit Research — Pro",
-      reportsIncluded: 20,
-      priceCents: 10_000,
-      isPurchasable: true,
+      pack: "reports_10",
+      label: "Report pack (10)",
+      dimension: "reports",
+      units: 10,
+      priceCents: 8000,
     },
-    {
-      plan: "enterprise",
-      label: "Nonprofit Research — Enterprise",
-      reportsIncluded: 0,
-      priceCents: null,
-      isPurchasable: false,
-    },
+    { pack: "intros_5", label: "Intro pack (5)", dimension: "intros", units: 5, priceCents: 5900 },
   ],
 };
 
@@ -76,33 +95,51 @@ describe("PricingSection", () => {
   });
   afterEach(() => qc.clear());
 
-  it("renders the three plans plus the free tier", async () => {
+  it("renders the four paid tiers including Firm and no standalone free card", async () => {
     mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
     renderSection(qc);
 
     await waitFor(() => expect(screen.getByText("Starter")).toBeInTheDocument());
-    expect(screen.getByText("Free")).toBeInTheDocument();
     expect(screen.getByText("Pro")).toBeInTheDocument();
+    expect(screen.getByText("Firm")).toBeInTheDocument();
     expect(screen.getByText("Enterprise")).toBeInTheDocument();
+    // The free reports are a universal starting grant advertised in the header,
+    // not a lesser tier, so there is no "Free" card.
+    expect(screen.queryByText("Free")).not.toBeInTheDocument();
   });
 
-  it("shows $25 for 5 reports and $100 for 20", async () => {
+  it("shows the tier prices and the four metered dimensions", async () => {
     mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
     renderSection(qc);
 
-    await waitFor(() => expect(screen.getByText("$25")).toBeInTheDocument());
-    expect(screen.getByText("5 reports per month")).toBeInTheDocument();
-    expect(screen.getByText("$100")).toBeInTheDocument();
-    expect(screen.getByText("20 reports per month")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("$29")).toBeInTheDocument());
+    expect(screen.getByText("$99")).toBeInTheDocument();
+    expect(screen.getByText("$399")).toBeInTheDocument();
+    // Starter's four allowances.
+    expect(screen.getByText("10 reports / month")).toBeInTheDocument();
+    expect(screen.getByText("2 warm intros / month")).toBeInTheDocument();
+    expect(screen.getByText("5 diligence rounds / month")).toBeInTheDocument();
+    expect(screen.getByText("3 donor profiles")).toBeInTheDocument();
   });
 
-  it("advertises the free signup grant", async () => {
+  it("renders the PAYG / top-up packs", async () => {
     mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
     renderSection(qc);
 
-    // Once on the Free card, once in the section intro.
-    await waitFor(() => expect(screen.getByText("2 free reports to start")).toBeInTheDocument());
-    expect(screen.getByText(/Every account starts with 2 free reports/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("3 reports")).toBeInTheDocument());
+    expect(screen.getByText("10 reports")).toBeInTheDocument();
+    expect(screen.getByText("5 intros")).toBeInTheDocument();
+  });
+
+  it("advertises the free signup grant in the section intro", async () => {
+    mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
+    renderSection(qc);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Every account starts with 2 free, full-service reports/)
+      ).toBeInTheDocument()
+    );
   });
 
   it("keeps Enterprise sales-led — custom price, contact CTA", async () => {
@@ -110,7 +147,7 @@ describe("PricingSection", () => {
     renderSection(qc);
 
     await waitFor(() => expect(screen.getByText("Custom")).toBeInTheDocument());
-    expect(screen.getByText("Volume allowance for your whole team")).toBeInTheDocument();
+    expect(screen.getByText("Custom volume for your whole team")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Talk to our team" })).toBeInTheDocument();
   });
 
@@ -120,8 +157,8 @@ describe("PricingSection", () => {
     mockFetchData.mockResolvedValue([null, "upstream down", null, 500]);
     renderSection(qc);
 
-    await waitFor(() => expect(screen.getByText("$25")).toBeInTheDocument());
-    expect(screen.getByText("$100")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("$29")).toBeInTheDocument());
+    expect(screen.getByText("$99")).toBeInTheDocument();
   });
 
   it("routes paid plans into the product rather than straight to Stripe", async () => {
@@ -135,9 +172,9 @@ describe("PricingSection", () => {
       "href",
       "/nonprofit-research/billing"
     );
-    expect(screen.getByRole("link", { name: "Start free" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Choose Pro" })).toHaveAttribute(
       "href",
-      "/nonprofit-research"
+      "/nonprofit-research/billing"
     );
   });
 
@@ -145,6 +182,10 @@ describe("PricingSection", () => {
     mockFetchData.mockResolvedValue([{ ...CATALOG, freeSignupReportGrant: 1 }, null, null, 200]);
     renderSection(qc);
 
-    await waitFor(() => expect(screen.getByText("1 free report to start")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Every account starts with 1 free, full-service report,/)
+      ).toBeInTheDocument()
+    );
   });
 });
