@@ -2,7 +2,7 @@ import { NoSymbolIcon } from "@heroicons/react/24/outline";
 import { memo } from "react";
 
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
-import type { MilestoneCancellation } from "@/services/milestones";
+import type { MilestoneCancellationInfo } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 
 interface CancelledMilestoneBannerProps {
@@ -11,7 +11,7 @@ interface CancelledMilestoneBannerProps {
    * (`status === "cancelled"` with no overlay), in which case the banner still
    * renders the terminal "Cancelled" state without the metadata.
    */
-  cancellation: MilestoneCancellation | null;
+  cancellation: MilestoneCancellationInfo | null;
 }
 
 /**

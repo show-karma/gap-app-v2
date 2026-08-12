@@ -1,6 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import type { GrantMilestone } from "@/types/v2/grant";
+import type { MilestoneCancellationInfo } from "@/types/v2/roadmap";
 import type { MilestoneAction } from "@/utilities/milestones/attestationFailure";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
 /**
  * The only two fields that decide the terminal cancelled state (DEV-523): the
@@ -19,6 +22,29 @@ export type CancellableMilestone = Pick<GrantMilestoneWithCompletion, "status" |
  */
 export const isMilestoneCancelled = (milestone: CancellableMilestone): boolean =>
   milestone.status === "cancelled" || milestone.cancellation != null;
+
+/**
+ * Cancellation metadata for data paths that carry `statusHistory` instead of
+ * the on-chain cancellation overlay (the grants endpoint). The history can hold
+ * more than one cancelled entry (relayed attestations get recorded per signer),
+ * so the latest one wins. Returns null when the milestone isn't cancelled or
+ * the history predates status tracking.
+ */
+export const cancellationFromStatusHistory = (
+  milestone: Pick<GrantMilestone, "currentStatus" | "statusHistory">
+): MilestoneCancellationInfo | null => {
+  if (!isCancelledMilestoneStatus(milestone.currentStatus)) return null;
+  const entry = milestone.statusHistory
+    ?.slice()
+    .reverse()
+    .find((history) => isCancelledMilestoneStatus(history.status));
+  if (!entry) return null;
+  return {
+    cancelledBy: entry.updatedBy ?? null,
+    cancelledAt: entry.updatedAt ?? null,
+    reason: entry.statusReason ?? null,
+  };
+};
 
 /**
  * Shown wherever a verification is blocked by the cancelled state — the inline

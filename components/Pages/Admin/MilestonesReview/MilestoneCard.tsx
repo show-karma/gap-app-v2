@@ -17,6 +17,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
+import { CancelledMilestoneBanner } from "@/components/Shared/CancelledMilestoneBanner";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button as BrandButton } from "@/components/ui/button";
@@ -31,7 +32,6 @@ import {
 } from "@/utilities/milestones/cancellation";
 import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 import { cn } from "@/utilities/tailwind";
-import { CancelledMilestoneBanner } from "./CancelledMilestoneBanner";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
 
 // useLayoutEffect mirrors useEffect on the server to avoid Next.js SSR warnings.
