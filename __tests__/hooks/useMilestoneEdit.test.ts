@@ -101,6 +101,12 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
+
+import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
 
 describe("useMilestoneEdit", () => {
@@ -171,7 +177,7 @@ describe("useMilestoneEdit", () => {
     });
 
     // Verify the attestation flow was initiated
-    expect(mockStartAttestation).toHaveBeenCalledWith("Step 1/2: Creating updated milestone...");
+    expect(mockStartAttestation).toHaveBeenCalledWith("Step 1/2: Revoking old milestone...");
 
     // Verify flow completes (either success or handled error)
     expect(mockDismiss).toHaveBeenCalled();
@@ -247,5 +253,105 @@ describe("useMilestoneEdit", () => {
     });
 
     expect(mockDismiss).toHaveBeenCalled();
+  });
+
+  it("labels the revocation as step 1 and the re-attestation as step 2", async () => {
+    mockEdit.mockImplementation(async (_signer: any, _data: any, callback: any) => {
+      callback("preparing");
+      callback("confirmed");
+      callback("preparing");
+      callback("confirmed");
+      return { tx: [{ hash: "0xtxhash" }], uids: ["0xnewuid"] };
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await act(async () => {
+      await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+    });
+
+    const stepMessages = mockChangeStepperStep.mock.calls.map((call) => call[0]);
+    expect(stepMessages[0]).toBe("Step 1/2: Revoking old milestone...");
+    expect(stepMessages[1]).toBe("Step 1/2: Old milestone revoked...");
+    expect(stepMessages[2]).toBe("Step 2/2: Saving updated milestone...");
+  });
+
+  it("reports to Sentry directly when the re-attestation fails after the revocation", async () => {
+    const rejection = new Error("User rejected the request");
+    mockEdit.mockImplementation(async (_signer: any, _data: any, callback: any) => {
+      callback("preparing");
+      callback("confirmed");
+      callback("preparing");
+      throw rejection;
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow(rejection);
+
+    expect(mockShowError).toHaveBeenCalledWith(expect.stringContaining("did not complete"));
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      rejection,
+      expect.objectContaining({
+        extra: expect.objectContaining({
+          revokedMilestoneUID: "milestone-001",
+          grantUID: "grant-001",
+          chainID: 10,
+          newMilestoneData: { title: "Updated MVP" },
+        }),
+      })
+    );
+    // errorManager would have dropped this rejection to a breadcrumb.
+    expect(errorManager).not.toHaveBeenCalled();
+  });
+
+  it("still routes pre-revocation failures through errorManager", async () => {
+    const failure = new Error("boom");
+    mockEdit.mockImplementation(async (_signer: any, _data: any, callback: any) => {
+      callback("preparing");
+      throw failure;
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow(failure);
+
+    expect(mockShowError).toHaveBeenCalledWith("There was an error editing the milestone");
+    expect(errorManager).toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("warns without reporting when the milestone is gone from the fetched project", async () => {
+    mockSetupChainAndWallet.mockResolvedValue({
+      gapClient: {
+        fetch: {
+          projectById: vi.fn().mockResolvedValue({
+            grants: [{ uid: "grant-001", milestones: [] }],
+          }),
+        },
+      },
+      walletSigner: mockWalletSigner,
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await act(async () => {
+      await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+    });
+
+    expect(mockShowError).toHaveBeenCalledWith(
+      "This milestone no longer exists. Refresh the page to see the latest data."
+    );
+    expect(errorManager).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
   });
 });

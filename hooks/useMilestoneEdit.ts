@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import type { IMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -25,6 +26,22 @@ import { useProjectGrants } from "./v2/useProjectGrants";
 export type MilestoneEditData = Partial<
   Pick<IMilestone, "title" | "description" | "startsAt" | "endsAt" | "priority">
 >;
+
+/**
+ * Progress of a single SDK `milestone.edit()` call. The SDK revokes the old
+ * attestation first and re-attests second, so a failure after the revocation
+ * confirmed leaves the milestone destroyed on-chain.
+ */
+interface EditProgress {
+  step: number;
+  revokeConfirmed: boolean;
+  revokedMilestoneUID?: string;
+}
+
+const MILESTONE_GONE_MESSAGE =
+  "This milestone no longer exists. Refresh the page to see the latest data.";
+const EDIT_HALF_APPLIED_MESSAGE =
+  "The milestone edit did not complete: the original milestone was removed but the updated version was not saved. Please re-create the milestone.";
 
 interface UseMilestoneEditOptions {
   /** Override project UID when not on a project page (e.g. admin review page) */
@@ -86,27 +103,28 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
 
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const editStepCallbackRef = { current: 0 };
-
-  const createEditStepCallback = () => {
-    editStepCallbackRef.current = 0;
+  const createEditStepCallback = (progress: EditProgress) => {
+    progress.step = 0;
+    progress.revokeConfirmed = false;
     return (status: string) => {
       if (status === "preparing") {
-        editStepCallbackRef.current++;
-        const step = editStepCallbackRef.current;
-        if (step === 1) {
-          changeStepperStep("Step 1/2: Creating updated milestone...");
-        } else if (step === 2) {
-          changeStepperStep("Step 2/2: Revoking old milestone...");
+        progress.step++;
+        if (progress.step === 1) {
+          changeStepperStep("Step 1/2: Revoking old milestone...");
+        } else if (progress.step === 2) {
+          // The SDK only starts the re-attestation once the revocation resolved.
+          progress.revokeConfirmed = true;
+          changeStepperStep("Step 2/2: Saving updated milestone...");
         }
         return;
       }
-      if (status === "confirmed" && editStepCallbackRef.current === 1) {
-        changeStepperStep("Step 1/2: Milestone created, awaiting confirmation...");
+      if (status === "confirmed" && progress.step === 1) {
+        progress.revokeConfirmed = true;
+        changeStepperStep("Step 1/2: Old milestone revoked...");
         return;
       }
-      if (status === "confirmed" && editStepCallbackRef.current === 2) {
-        changeStepperStep("Step 2/2: Revoking old milestone...");
+      if (status === "confirmed" && progress.step === 2) {
+        changeStepperStep("Step 2/2: Updated milestone saved, awaiting confirmation...");
         return;
       }
       changeStepperStep(status);
@@ -220,7 +238,9 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     }
 
     setIsEditing(true);
-    startAttestation("Step 1/2: Creating updated milestone...");
+    startAttestation("Step 1/2: Revoking old milestone...");
+
+    const editProgress: EditProgress = { step: 0, revokeConfirmed: false };
 
     try {
       const isMultiGrant = milestone.mergedGrants && milestone.mergedGrants.length > 1;
@@ -299,7 +319,8 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             if (!("edit" in milestoneInstance) || typeof milestoneInstance.edit !== "function") {
               throw new Error("Milestone instance does not support editing");
             }
-            const editCallback = createEditStepCallback();
+            editProgress.revokedMilestoneUID = milestoneInstance.uid;
+            const editCallback = createEditStepCallback(editProgress);
             const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
 
             if (result?.uids?.length) {
@@ -333,7 +354,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         await invalidateAllProjectQueries();
         showSuccess("Milestone edited successfully!");
       } else {
-        showLoading("Step 1/2: Creating updated milestone...");
+        showLoading("Step 1/2: Revoking old milestone...");
 
         const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
@@ -364,8 +385,13 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
         );
 
+        // The milestone is gone from the freshly fetched project — usually a
+        // stale row left behind by an earlier edit that revoked but never
+        // re-attested. Not an engineering error, so it never reaches Sentry.
         if (!milestoneInstance) {
-          throw new Error("Milestone not found");
+          showError(MILESTONE_GONE_MESSAGE);
+          await invalidateAllProjectQueries();
+          return;
         }
 
         const sanitizedData = sanitizeObject(newData);
@@ -374,7 +400,8 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           throw new Error("Milestone instance does not support editing");
         }
 
-        const editCallback = createEditStepCallback();
+        editProgress.revokedMilestoneUID = milestoneInstance.uid;
+        const editCallback = createEditStepCallback(editProgress);
         const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
 
         const editedUIDs: string[] = result?.uids?.length ? [...result.uids] : [];
@@ -408,10 +435,28 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         showSuccess("Milestone edited successfully!");
       }
     } catch (error) {
-      showError("There was an error editing the milestone");
-      errorManager("Error editing milestone", error, {
-        milestoneData: milestone,
-      });
+      if (editProgress.revokeConfirmed) {
+        // The old attestation is already revoked, so the milestone is gone.
+        // Reported straight to Sentry because errorManager drops anything that
+        // looks like a wallet rejection, which is the common trigger here.
+        showError(EDIT_HALF_APPLIED_MESSAGE);
+        Sentry.captureException(error, {
+          extra: {
+            errorMessage: "Milestone edit failed after the old attestation was revoked",
+            revokedMilestoneUID: editProgress.revokedMilestoneUID || milestone.uid,
+            newMilestoneData: newData,
+            grantUID: milestone.refUID,
+            projectUID: projectUid,
+            chainID: milestone.chainID,
+          },
+        });
+      } else {
+        showError("There was an error editing the milestone");
+        errorManager("Error editing milestone", error, {
+          milestoneData: milestone,
+        });
+      }
+      await invalidateAllProjectQueries();
       throw error;
     } finally {
       setIsEditing(false);
