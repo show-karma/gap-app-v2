@@ -413,6 +413,29 @@ describe("useMilestoneEdit", () => {
     expect(errorManager).not.toHaveBeenCalled();
   });
 
+  it("aborts a merged edit when a sibling is cancelled", async () => {
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [
+        { uid: "grant-001", milestones: [{ uid: "milestone-001", refUID: "grant-001" }] },
+        {
+          uid: "grant-002",
+          milestones: [
+            { uid: "milestone-002", refUID: "grant-002", cancelled: { uid: "cancellation-1" } },
+          ],
+        },
+      ],
+    } as any);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await act(async () => {
+      await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+    });
+
+    expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
+  });
+
   it("proceeds with a merged edit when every sibling is still editable", async () => {
     vi.mocked(getProjectById).mockResolvedValue({
       grants: [
