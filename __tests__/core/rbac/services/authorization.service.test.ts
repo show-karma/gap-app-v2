@@ -1,13 +1,24 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import { authorizationService } from "@/src/core/rbac/services/authorization.service";
+import {
+  authorizationService,
+  PERMISSIONS_TRANSPORT_TIMEOUT_MS,
+} from "@/src/core/rbac/services/authorization.service";
 import { Permission, ReviewerType, Role } from "@/src/core/rbac/types";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
-vi.mock("@/utilities/fetchData");
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn() },
+}));
 vi.mock("@/components/Utilities/errorManager");
 
-const mockedFetchData = vi.mocked(fetchData);
+const mockedApiGet = vi.mocked(api.get);
+
+/** See `PERMISSIONS_TIMEOUT_MS` — the lookup is always bounded and abortable. */
+const BOUNDED_REQUEST = {
+  signal: expect.any(AbortSignal),
+  timeoutMs: PERMISSIONS_TRANSPORT_TIMEOUT_MS,
+};
 const mockedErrorManager = vi.mocked(errorManager);
 
 interface ApiResponseOverrides {
@@ -50,10 +61,10 @@ const createApiResponse = (overrides: ApiResponseOverrides = {}) => ({
   isProjectAdmin: overrides.isProjectAdmin ?? false,
 });
 
-// Mirrors the fetchData success tuple [data, null, pageInfo, status].
-const okTuple = (data: unknown) => [data, null, null, 200] as never;
-// Mirrors the fetchData failure tuple [null, error, null, status].
-const errTuple = (error: unknown) => [null, error, null, 500] as never;
+// api.get resolves directly with the payload (no tuple) — kept as a thin
+// identity wrapper so the bulk of the mock-setup call sites below stay
+// unchanged in shape.
+const okTuple = <T>(data: T): T => data;
 
 describe("authorizationService.getPermissions", () => {
   beforeEach(() => {
@@ -70,7 +81,7 @@ describe("authorizationService.getPermissions", () => {
         isRegistryAdmin: true,
         isProgramCreator: true,
       });
-      mockedFetchData.mockResolvedValue(okTuple(apiResponse));
+      mockedApiGet.mockResolvedValue(okTuple(apiResponse));
 
       const result = await authorizationService.getPermissions({ communityId: "comm-1" });
 
@@ -87,7 +98,7 @@ describe("authorizationService.getPermissions", () => {
     });
 
     it("maps isProjectOwner and isProjectAdmin from the API response", async () => {
-      mockedFetchData.mockResolvedValue(
+      mockedApiGet.mockResolvedValue(
         okTuple(createApiResponse({ isProjectOwner: true, isProjectAdmin: true }))
       );
 
@@ -98,24 +109,27 @@ describe("authorizationService.getPermissions", () => {
     });
 
     it("forwards the params to INDEXER.V2.AUTH.PERMISSIONS as the request endpoint", async () => {
-      mockedFetchData.mockResolvedValue(okTuple(createApiResponse()));
+      mockedApiGet.mockResolvedValue(okTuple(createApiResponse()));
       const params = { communityId: "comm-1", chainId: 10 };
 
       await authorizationService.getPermissions(params);
 
-      expect(mockedFetchData).toHaveBeenCalledWith(INDEXER.V2.AUTH.PERMISSIONS(params));
+      expect(mockedApiGet).toHaveBeenCalledWith(
+        INDEXER.V2.AUTH.PERMISSIONS(params),
+        BOUNDED_REQUEST
+      );
     });
 
     it("defaults to empty params when called with no arguments", async () => {
-      mockedFetchData.mockResolvedValue(okTuple(createApiResponse()));
+      mockedApiGet.mockResolvedValue(okTuple(createApiResponse()));
 
       await authorizationService.getPermissions();
 
-      expect(mockedFetchData).toHaveBeenCalledWith(INDEXER.V2.AUTH.PERMISSIONS({}));
+      expect(mockedApiGet).toHaveBeenCalledWith(INDEXER.V2.AUTH.PERMISSIONS({}), BOUNDED_REQUEST);
     });
 
     it("does not invoke errorManager on a successful response", async () => {
-      mockedFetchData.mockResolvedValue(okTuple(createApiResponse()));
+      mockedApiGet.mockResolvedValue(okTuple(createApiResponse()));
 
       await authorizationService.getPermissions();
 
@@ -125,7 +139,7 @@ describe("authorizationService.getPermissions", () => {
 
   describe("validity guards — never trusts unknown values", () => {
     it("falls back primaryRole to GUEST when the API returns an unknown role", async () => {
-      mockedFetchData.mockResolvedValue(
+      mockedApiGet.mockResolvedValue(
         okTuple(
           createApiResponse({
             roles: { primaryRole: "WIZARD_KING", roles: [Role.APPLICANT] },
@@ -139,7 +153,7 @@ describe("authorizationService.getPermissions", () => {
     });
 
     it("filters out unknown roles from the roles array", async () => {
-      mockedFetchData.mockResolvedValue(
+      mockedApiGet.mockResolvedValue(
         okTuple(
           createApiResponse({
             roles: {
@@ -156,7 +170,7 @@ describe("authorizationService.getPermissions", () => {
     });
 
     it("falls back roles to [GUEST] when no valid role survives filtering", async () => {
-      mockedFetchData.mockResolvedValue(
+      mockedApiGet.mockResolvedValue(
         okTuple(
           createApiResponse({
             roles: { primaryRole: Role.APPLICANT, roles: ["FOO", "BAR"] },
@@ -170,7 +184,7 @@ describe("authorizationService.getPermissions", () => {
     });
 
     it("filters out unknown permissions, keeping only valid Permission values", async () => {
-      mockedFetchData.mockResolvedValue(
+      mockedApiGet.mockResolvedValue(
         okTuple(
           createApiResponse({
             permissions: [
@@ -190,7 +204,7 @@ describe("authorizationService.getPermissions", () => {
     });
 
     it("filters out unknown reviewer types", async () => {
-      mockedFetchData.mockResolvedValue(
+      mockedApiGet.mockResolvedValue(
         okTuple(
           createApiResponse({
             roles: {
@@ -213,7 +227,7 @@ describe("authorizationService.getPermissions", () => {
         ...createApiResponse(),
         roles: { primaryRole: Role.APPLICANT, roles: [Role.APPLICANT] },
       };
-      mockedFetchData.mockResolvedValue(okTuple(apiResponse));
+      mockedApiGet.mockResolvedValue(okTuple(apiResponse));
 
       const result = await authorizationService.getPermissions();
 
@@ -231,7 +245,7 @@ describe("authorizationService.getPermissions", () => {
         isProgramAdmin: 1,
         isRegistryAdmin: {},
       };
-      mockedFetchData.mockResolvedValue(okTuple(apiResponse));
+      mockedApiGet.mockResolvedValue(okTuple(apiResponse));
 
       const result = await authorizationService.getPermissions();
 
@@ -242,9 +256,9 @@ describe("authorizationService.getPermissions", () => {
   });
 
   describe("error path — fails by throwing (never silently grants guest)", () => {
-    it("throws and reports when fetchData returns an error", async () => {
-      const fetchError = "network down";
-      mockedFetchData.mockResolvedValue(errTuple(fetchError));
+    it("throws and reports when api.get rejects", async () => {
+      const fetchError = new Error("network down");
+      mockedApiGet.mockRejectedValue(fetchError);
 
       await expect(authorizationService.getPermissions({ communityId: "c" })).rejects.toBe(
         fetchError
@@ -258,7 +272,7 @@ describe("authorizationService.getPermissions", () => {
     });
 
     it("throws an Error when the response is empty without an explicit error", async () => {
-      mockedFetchData.mockResolvedValue(okTuple(null));
+      mockedApiGet.mockResolvedValue(okTuple(null));
 
       await expect(authorizationService.getPermissions()).rejects.toThrow(
         "Failed to fetch permissions: empty response"
@@ -267,7 +281,7 @@ describe("authorizationService.getPermissions", () => {
     });
 
     it("does not return DEFAULT_GUEST_PERMISSIONS on error (must reject, not resolve)", async () => {
-      mockedFetchData.mockResolvedValue(errTuple(new Error("boom")));
+      mockedApiGet.mockRejectedValue(new Error("boom"));
 
       const settled = await authorizationService
         .getPermissions()
@@ -277,8 +291,8 @@ describe("authorizationService.getPermissions", () => {
       expect(settled).toBe("rejected");
     });
 
-    it("propagates the rejection if fetchData itself throws", async () => {
-      mockedFetchData.mockRejectedValue(new Error("unexpected"));
+    it("propagates the rejection if api.get itself throws", async () => {
+      mockedApiGet.mockRejectedValue(new Error("unexpected"));
 
       await expect(authorizationService.getPermissions()).rejects.toThrow("unexpected");
     });

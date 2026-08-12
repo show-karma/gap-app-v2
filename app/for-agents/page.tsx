@@ -5,10 +5,14 @@ import { FAQJsonLd } from "@/components/Seo/FAQJsonLd";
 import { SoftwareApplicationJsonLd } from "@/components/Seo/SoftwareApplicationJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+// Rendered as "Connect Karma to your AI Agents | Karma" by the root layout's
+// `%s | Karma` title template, matching the rest of the site.
+const PAGE_TITLE = "Connect Karma to your AI Agents";
+
 export const metadata: Metadata = customMetadata({
-  title: "For AI Agents — Karma",
+  title: PAGE_TITLE,
   description:
-    "Karma works with Claude, Cursor, and Codex. Connect via MCP to read projects, grants, and impact data — or take action on your behalf.",
+    "Connect Karma to your Claude, Cursor, or Codex to search funding programs, nonprofit and IRS 990 data, and grant history — or take actions on your behalf.",
   path: "/for-agents",
 });
 

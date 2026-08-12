@@ -4,6 +4,7 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import { useMemo, useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
 import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
@@ -97,6 +98,9 @@ export function ReviewerFilterDropdown({
               const isSelected =
                 selectedAddress?.toLowerCase() === reviewer.publicAddress.toLowerCase();
               const label = getReviewerLabel(reviewer, currentUserAddress);
+              const isYou =
+                !!currentUserAddress &&
+                reviewer.publicAddress.toLowerCase() === currentUserAddress.toLowerCase();
               return (
                 <CommandItem
                   key={reviewer.publicAddress}
@@ -107,7 +111,19 @@ export function ReviewerFilterDropdown({
                   }}
                   className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-between py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 text-left"
                 >
-                  <span>{label}</span>
+                  <span>
+                    {reviewer.name ? (
+                      label
+                    ) : (
+                      <>
+                        <EthereumAddressToProfileName
+                          address={reviewer.publicAddress}
+                          shouldTruncate
+                        />
+                        {isYou ? " (You)" : ""}
+                      </>
+                    )}
+                  </span>
                   <CheckIcon
                     className={cn("h-4 w-4 min-w-4 min-h-4 text-black dark:text-white", {
                       invisible: !isSelected,

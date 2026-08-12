@@ -6,7 +6,7 @@ import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
@@ -45,7 +45,7 @@ export function useMemberRoleChange(action: RoleAction) {
   const config = ACTION_CONFIG[action];
 
   const execute = async (memberAddress: string, onSuccess?: () => void) => {
-    if (!address || !project) return;
+    if (!project) return;
     try {
       setIsLoading(true);
       startAttestation(config.loadingMessage);
@@ -88,7 +88,7 @@ export function useMemberRoleChange(action: RoleAction) {
       changeStepperStep("indexing");
       const txHash = res?.tx[0]?.hash;
       if (txHash) {
-        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, projectInstance.chainID), "POST", {});
+        await api.post(INDEXER.ATTESTATION_LISTENER(txHash, projectInstance.chainID), {});
       }
 
       // Invalidate member roles cache immediately so UI starts refetching while polling continues

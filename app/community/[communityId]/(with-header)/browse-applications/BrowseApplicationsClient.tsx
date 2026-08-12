@@ -8,7 +8,7 @@ import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-wi
 import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 
@@ -25,7 +25,7 @@ const statusOptions: Array<{
   { value: "under_review", label: "Under review" },
   { value: "revision_requested", label: "Needs info" },
   { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "rejected", label: "Declined" },
 ];
 
 interface StatusStyle {
@@ -63,7 +63,7 @@ const STATUS_STYLES: Record<ApplicationStatus, StatusStyle> = {
   rejected: {
     pill: "bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300",
     dot: "bg-red-600",
-    label: "Rejected",
+    label: "Declined",
   },
   draft: {
     pill: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
@@ -381,16 +381,11 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
         const statusParam = statusFilter === "all" ? "" : `&status=${statusFilter}`;
         const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "";
 
-        const [res, err] = await fetchData<ApplicationsPageData>(
+        // TODO(#1775): add zod schema
+        return await api.get<ApplicationsPageData>(
           `/v2/funding-applications/program/${selectedProgramId}?page=${page}&limit=100${statusParam}${searchParam}`,
-          "GET",
-          {},
-          {},
-          {},
-          false
+          { isAuthorized: false }
         );
-        if (err) throw new Error(err);
-        return res as ApplicationsPageData;
       },
       initialPageParam: 1,
       getNextPageParam: (lastPage) => {
@@ -400,6 +395,9 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
         return undefined;
       },
       enabled: !!selectedProgramId && !hasPrivateApplicationsSetting,
+      // Re-selecting a status chip you already viewed serves the cached page
+      // instead of re-hitting the API on every toggle.
+      staleTime: 1000 * 60 * 2, // 2 minutes
     });
 
   const applications = data?.pages.flatMap((page) => page.applications) || [];

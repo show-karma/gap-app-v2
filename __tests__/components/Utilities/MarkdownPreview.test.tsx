@@ -253,7 +253,8 @@ describe("MarkdownPreview", () => {
         const p = document.querySelector("p.mb-2") as HTMLElement;
         expect(p).toBeInTheDocument();
         expect(p.style.backgroundColor).toBe("transparent");
-        expect(p.style.color).toBe("currentColor");
+        // jsdom >=21 lowercases the CSS `currentColor` keyword; compare case-insensitively
+        expect(p.style.color.toLowerCase()).toBe("currentcolor");
       });
     });
   });

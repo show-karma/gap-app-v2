@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { HowToJsonLd } from "@/components/Seo/HowToJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "The Grant Lifecycle: From Proposal to Verified Impact",
   description:
     "Follow the complete grant process from proposal submission to verified impact. Learn the 10 stages every funding program needs to track and coordinate.",
-  path: "/knowledge/grant-lifecycle",
+  path: PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("grant-lifecycle");
 
 export default function GrantLifecyclePage() {
   return (
@@ -20,22 +25,21 @@ export default function GrantLifecyclePage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "The Grant Lifecycle", href: "/knowledge/grant-lifecycle" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "The Grant Lifecycle", href: PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle") },
         ]}
       />
       <ArticleJsonLd
         title="The Grant Lifecycle: From Proposal to Verified Impact"
         description="Follow the complete grant process from proposal submission to verified impact. Learn the 10 stages every funding program needs to track and coordinate."
-        url="/knowledge/grant-lifecycle"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "The Grant Lifecycle", url: "/knowledge/grant-lifecycle" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "The Grant Lifecycle", url: PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle") },
         ]}
       />
       <HowToJsonLd
@@ -85,9 +89,12 @@ export default function GrantLifecyclePage() {
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">
-          The Grant Lifecycle: From Proposal to Verified Impact
-        </h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">
+            The Grant Lifecycle: From Proposal to Verified Impact
+          </h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -157,7 +164,7 @@ export default function GrantLifecyclePage() {
             </p>
             <p>
               <Link
-                href="/knowledge/ai-grant-evaluation"
+                href={PAGES.KNOWLEDGE.ARTICLE("ai-grant-evaluation")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: AI-assisted grant evaluation
@@ -197,7 +204,7 @@ export default function GrantLifecyclePage() {
             </p>
             <p>
               <Link
-                href="/knowledge/grant-kyc"
+                href={PAGES.KNOWLEDGE.ARTICLE("grant-kyc")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: KYC in grant programs
@@ -226,7 +233,7 @@ export default function GrantLifecyclePage() {
             </p>
             <p>
               <Link
-                href="/knowledge/grant-document-signing"
+                href={PAGES.KNOWLEDGE.ARTICLE("grant-document-signing")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: Document signing in grants
@@ -253,7 +260,7 @@ export default function GrantLifecyclePage() {
             </p>
             <p>
               <Link
-                href="/knowledge/grant-fund-disbursement"
+                href={PAGES.KNOWLEDGE.ARTICLE("grant-fund-disbursement")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: Grant fund disbursement
@@ -276,7 +283,7 @@ export default function GrantLifecyclePage() {
             </p>
             <p>
               <Link
-                href="/knowledge/dao-grant-milestones"
+                href={PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: DAO grant milestones
@@ -301,7 +308,7 @@ export default function GrantLifecyclePage() {
             </p>
             <p>
               <Link
-                href="/knowledge/project-registry"
+                href={PAGES.KNOWLEDGE.ARTICLE("project-registry")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: Public project registries
@@ -326,7 +333,7 @@ export default function GrantLifecyclePage() {
             </p>
             <p>
               <Link
-                href="/knowledge/impact-measurement"
+                href={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: Impact measurement
@@ -349,13 +356,13 @@ export default function GrantLifecyclePage() {
             </p>
             <div className="space-y-1">
               <Link
-                href="/knowledge/onchain-reputation"
+                href={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
                 className="block text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: Onchain reputation
               </Link>
               <Link
-                href="/knowledge/reputation-compounding"
+                href={PAGES.KNOWLEDGE.ARTICLE("reputation-compounding")}
                 className="block text-blue-600 hover:underline dark:text-blue-400"
               >
                 → Related: Reputation compounding
@@ -368,25 +375,25 @@ export default function GrantLifecyclePage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
             </Link>
             <Link
-              href="/knowledge/why-grant-programs-fail"
+              href={PAGES.KNOWLEDGE.ARTICLE("why-grant-programs-fail")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Why grant programs fail
             </Link>
             <Link
-              href="/knowledge/milestones-vs-impact"
+              href={PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Milestones vs impact
             </Link>
             <Link
-              href="/knowledge/impact-verification"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-verification")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact verification
@@ -398,7 +405,7 @@ export default function GrantLifecyclePage() {
           <h2 className="text-xl font-semibold">How Karma fits</h2>
           <p className="text-gray-700 dark:text-gray-300">
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"

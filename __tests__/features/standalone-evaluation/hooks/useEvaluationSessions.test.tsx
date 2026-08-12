@@ -5,9 +5,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -18,7 +25,8 @@ import {
   useCreateSession,
   useSessions,
 } from "@/src/features/standalone-evaluation/hooks/useEvaluationSessions";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
 const mockSession = {
   id: "sess-1",
@@ -56,12 +64,7 @@ describe("useSessions", () => {
   afterEach(() => qc.clear());
 
   it("fetches and returns the sessions list", async () => {
-    (fetchData as vi.Mock).mockResolvedValueOnce([
-      { items: [mockSession], total: 1 },
-      null,
-      null,
-      200,
-    ]);
+    (api.get as vi.Mock).mockResolvedValueOnce({ items: [mockSession], total: 1 });
 
     const { result } = renderHook(() => useSessions(), { wrapper: wrapper(qc) });
 
@@ -69,11 +72,17 @@ describe("useSessions", () => {
 
     expect(result.current.data?.items).toHaveLength(1);
     expect(result.current.data?.total).toBe(1);
-    expect(fetchData).toHaveBeenCalledWith("/v2/evaluate/sessions?limit=20&offset=0", "GET");
+    expect(api.get).toHaveBeenCalledWith("/v2/evaluate/sessions?limit=20&offset=0");
   });
 
   it("surfaces errors from the service layer", async () => {
-    (fetchData as vi.Mock).mockResolvedValueOnce([null, "Server boom", null, 500]);
+    (api.get as vi.Mock).mockRejectedValueOnce(
+      new HttpError(500, {
+        endpoint: "/v2/evaluate/sessions",
+        method: "GET",
+        body: { message: "Server boom" },
+      })
+    );
 
     const { result } = renderHook(() => useSessions(), { wrapper: wrapper(qc) });
 
@@ -91,7 +100,7 @@ describe("useCreateSession", () => {
   afterEach(() => qc.clear());
 
   it("creates a session and invalidates the list cache", async () => {
-    (fetchData as vi.Mock).mockResolvedValueOnce([mockSession, null, null, 201]);
+    (api.post as vi.Mock).mockResolvedValueOnce(mockSession);
 
     const { result } = renderHook(() => useCreateSession(), {
       wrapper: wrapper(qc),
@@ -105,9 +114,8 @@ describe("useCreateSession", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(fetchData).toHaveBeenCalledWith(
+    expect(api.post).toHaveBeenCalledWith(
       "/v2/evaluate/sessions",
-      "POST",
       expect.objectContaining({ evaluationStyle: "RUBRIC" })
     );
     expect(result.current.data?.id).toBe("sess-1");

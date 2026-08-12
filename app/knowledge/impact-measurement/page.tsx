@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Impact Measurement for Funded Projects",
   description:
     "Discover how funded work connects to verifiable outputs and outcomes. Learn practical approaches to measuring impact and improving capital allocation decisions.",
-  path: "/knowledge/impact-measurement",
+  path: PAGES.KNOWLEDGE.ARTICLE("impact-measurement"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("impact-measurement");
 
 export default function ImpactMeasurementPage() {
   return (
@@ -19,26 +24,28 @@ export default function ImpactMeasurementPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Impact Measurement", href: "/knowledge/impact-measurement" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Impact Measurement", href: PAGES.KNOWLEDGE.ARTICLE("impact-measurement") },
         ]}
       />
       <ArticleJsonLd
         title="Impact Measurement for Funded Projects"
         description="Discover how funded work connects to verifiable outputs and outcomes. Learn practical approaches to measuring impact and improving capital allocation decisions."
-        url="/knowledge/impact-measurement"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Impact Measurement", url: "/knowledge/impact-measurement" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Impact Measurement", url: PAGES.KNOWLEDGE.ARTICLE("impact-measurement") },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Impact Measurement for Funded Projects</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">Impact Measurement for Funded Projects</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -88,25 +95,25 @@ export default function ImpactMeasurementPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/milestones-vs-impact"
+              href={PAGES.KNOWLEDGE.ARTICLE("milestones-vs-impact")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Milestones vs impact
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/impact-verification"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-verification")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact verification
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
@@ -118,7 +125,7 @@ export default function ImpactMeasurementPage() {
           <h2 className="text-xl font-semibold">Karma's role</h2>
           <p className="text-gray-700 dark:text-gray-300">
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"

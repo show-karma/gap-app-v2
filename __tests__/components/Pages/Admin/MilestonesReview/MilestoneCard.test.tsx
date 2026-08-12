@@ -3,12 +3,19 @@ import { act, fireEvent, render as rtlRender, screen } from "@testing-library/re
 import type { ReactElement } from "react";
 import { MilestoneCard } from "@/components/Pages/Admin/MilestonesReview/MilestoneCard";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { CANCELLED_MILESTONE_VERIFY_MESSAGE } from "@/utilities/milestones/cancellation";
 
 function render(ui: ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return rtlRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  // Provider passed as a `wrapper` (not inlined into `ui`) so `rerender` keeps
+  // the same client — a rerender is how memo staleness is observed.
+  return rtlRender(ui, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+  });
 }
 
 vi.mock("next/dynamic", () => ({
@@ -60,7 +67,6 @@ function createMilestone(
     status: "pending",
     completionDetails: null,
     verificationDetails: null,
-    fundingApplicationCompletion: null,
     ...overrides,
   };
 }
@@ -270,5 +276,230 @@ describe("MilestoneCard (admin review) — complete on behalf of grantee", () =>
     fireEvent.click(screen.getByRole("button", { name: /^complete$/i }));
 
     expect(onSubmitCompletion).toHaveBeenCalledWith(milestone);
+  });
+});
+
+describe("MilestoneCard (admin review) — cancellation banner", () => {
+  const CANCELLER = "0x7177000000000000000000000000000000e1e141";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should_render_cancelled_state_with_canceller_profile_name", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({
+          status: "cancelled",
+          cancellation: {
+            uid: "0xcancel-uid",
+            cancelledBy: CANCELLER,
+            cancelledAt: "2026-07-24T12:00:00Z",
+            reason: null,
+          },
+        })}
+      />
+    );
+
+    // "Cancelled" appears twice: the header status badge and the banner label.
+    expect(screen.getAllByText("Cancelled").length).toBeGreaterThanOrEqual(2);
+    // The canceller address is handed to EthereumAddressToProfileName (which
+    // resolves it to a name/ENS/email), not printed raw as a label.
+    expect(screen.getByText(CANCELLER)).toBeInTheDocument();
+  });
+
+  it("should_render_cancellation_reason_when_present", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({
+          status: "cancelled",
+          cancellation: {
+            uid: "0xcancel-uid",
+            cancelledBy: CANCELLER,
+            cancelledAt: "2026-07-24T12:00:00Z",
+            reason: "Scope moved to next quarter",
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByText(/Scope moved to next quarter/i)).toBeInTheDocument();
+  });
+
+  it("should_render_cancelled_banner_for_a_status_only_cancellation_without_overlay", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({ status: "cancelled", cancellation: null })}
+      />
+    );
+
+    // Terminal cancelled state still surfaces the banner (header badge + banner
+    // label) even when the on-chain overlay is absent.
+    expect(screen.getAllByText("Cancelled").length).toBeGreaterThanOrEqual(2);
+    // No canceller metadata is rendered when the overlay is missing.
+    expect(screen.queryByText(CANCELLER)).not.toBeInTheDocument();
+  });
+
+  it("should_not_render_cancellation_banner_for_a_non_cancelled_milestone", () => {
+    render(<MilestoneCard {...DEFAULT_PROPS} milestone={createMilestone()} />);
+
+    expect(screen.queryByText("Cancelled")).not.toBeInTheDocument();
+    expect(screen.queryByText(CANCELLER)).not.toBeInTheDocument();
+  });
+});
+
+describe("MilestoneCard (admin review) — status badge freshness", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should_recompute_the_status_badge_when_only_the_due_date_changes", () => {
+    const overdue = createMilestone({ dueDate: "2020-01-01T00:00:00Z" });
+    const { rerender } = render(<MilestoneCard {...DEFAULT_PROPS} milestone={overdue} />);
+
+    expect(screen.getByText("Past Due")).toBeInTheDocument();
+
+    // Only the deadline moves. `status`, `cancellation`, `completionDetails`
+    // and `verificationDetails` are byte-identical (and null) across both
+    // renders, so a memo keyed on those alone never recomputes and the badge
+    // stays "Past Due" after an admin extends the due date.
+    rerender(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({ dueDate: "2030-01-01T00:00:00Z" })}
+      />
+    );
+
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+    expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
+  });
+});
+
+describe("MilestoneCard (admin review) — verify gate on a cancelled milestone", () => {
+  const COMPLETION = {
+    description: "submitted",
+    completedAt: "2026-01-01T00:00:00Z",
+    completedBy: "0xgrantee",
+    deliverables: [],
+  } as unknown as GrantMilestoneWithCompletion["completionDetails"];
+
+  const CANCELLATION = {
+    uid: "0xcancel-uid",
+    cancelledBy: "0x7177000000000000000000000000000000e1e141",
+    cancelledAt: "2026-07-24T12:00:00Z",
+    reason: "Scope moved to next quarter",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should_render_verify_button_for_a_completed_milestone_that_is_not_cancelled", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({ completionDetails: COMPLETION })}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /verify milestone/i })).toBeInTheDocument();
+  });
+
+  it("should_hide_verify_button_and_explain_why_when_the_milestone_is_cancelled", () => {
+    // The indexer admits the verification attestation and then skips it, so a
+    // Verify button here burns gas on a write that silently never appears.
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({
+          status: "cancelled",
+          cancellation: CANCELLATION,
+          completionDetails: COMPLETION,
+        })}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /verify milestone/i })).not.toBeInTheDocument();
+    expect(screen.getByText(CANCELLED_MILESTONE_VERIFY_MESSAGE)).toBeInTheDocument();
+  });
+
+  it("should_hide_verify_button_for_a_status_only_cancellation_without_overlay", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({
+          status: "cancelled",
+          cancellation: null,
+          completionDetails: COMPLETION,
+        })}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /verify milestone/i })).not.toBeInTheDocument();
+    expect(screen.getByText(CANCELLED_MILESTONE_VERIFY_MESSAGE)).toBeInTheDocument();
+  });
+
+  it("should_not_render_the_inline_verification_form_when_a_cancelled_milestone_is_selected", () => {
+    const milestone = createMilestone({
+      status: "cancelled",
+      cancellation: CANCELLATION,
+      completionDetails: COMPLETION,
+    });
+
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={milestone}
+        verifyingMilestoneId={milestone.uid}
+      />
+    );
+
+    // Stale selection (cancelled while the form was open) must not leave a
+    // submit affordance behind.
+    expect(screen.queryByText(/Verify Milestone Completion/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^verify$/i })).not.toBeInTheDocument();
+    expect(screen.getByText(CANCELLED_MILESTONE_VERIFY_MESSAGE)).toBeInTheDocument();
+  });
+
+  it("should_not_show_the_cancelled_verification_notice_to_users_who_cannot_verify", () => {
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        canVerifyMilestones={false}
+        milestone={createMilestone({
+          status: "cancelled",
+          cancellation: CANCELLATION,
+          completionDetails: COMPLETION,
+        })}
+      />
+    );
+
+    expect(screen.queryByText(CANCELLED_MILESTONE_VERIFY_MESSAGE)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /verify milestone/i })).not.toBeInTheDocument();
+  });
+
+  it("should_hide_verify_button_on_the_inbox_surface_too", () => {
+    // The reviewer Inbox renders this same card (quiet surface, no AI button),
+    // so the gate covers both surfaces from one place.
+    render(
+      <MilestoneCard
+        {...DEFAULT_PROPS}
+        milestone={createMilestone({
+          status: "cancelled",
+          cancellation: CANCELLATION,
+          completionDetails: COMPLETION,
+        })}
+        canDeleteMilestones={false}
+        showAIEvaluationButton={false}
+        quietSurface
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /verify milestone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /ai evaluation/i })).not.toBeInTheDocument();
+    expect(screen.getByText(CANCELLED_MILESTONE_VERIFY_MESSAGE)).toBeInTheDocument();
   });
 });

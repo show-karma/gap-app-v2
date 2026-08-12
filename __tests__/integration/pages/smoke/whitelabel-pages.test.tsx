@@ -5,8 +5,8 @@ import type React from "react";
 
 /**
  * Smoke tests for whitelabel application/program routes. These pages are
- * async server components that fetch from the indexer; we mock fetchData
- * to return a sentinel application/program and assert the page renders.
+ * async server components that fetch from the indexer; we mock the api
+ * client to return a sentinel application/program and assert the page renders.
  */
 
 const mockApplication = {
@@ -32,13 +32,23 @@ const mockProgram = {
   },
 };
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn().mockImplementation(async (url: string) => {
-    if (url.includes("funding-applications/")) return [mockApplication, null];
-    if (url.includes("funding-program-configs/")) return [mockProgram, null];
-    return [null, null];
-  }),
+// The application detail/edit/success pages and the programs/apply page were
+// migrated off fetchData onto the unified api client (#1775 Phase 3). Mirror
+// the same sentinel shapes for api.get so those pages still render.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn().mockImplementation(async (path: string) => {
+      if (path.includes("funding-applications/")) return mockApplication;
+      if (path.includes("funding-program-configs/")) return mockProgram;
+      return null;
+    }),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/queries/v2/community", () => ({
@@ -55,8 +65,21 @@ vi.mock("@/utilities/queries/v2/getCommunityData", () => ({
   }),
 }));
 
+// `getWhitelabelContext` reads request headers, which have no request scope
+// in this environment. The non-whitelabel default mirrors the main domain.
+vi.mock("@/utilities/whitelabel-server", () => ({
+  getWhitelabelContext: async () => ({ isWhitelabel: false, config: null }),
+}));
+
 vi.mock("@/utilities/funding-programs", () => ({
   isProgramEnabled: () => true,
+  getProgramStatusInfo: () => ({
+    status: "open",
+    label: "Open for Applications",
+    color: "success",
+    dotColor: "bg-green-600",
+    endsSoon: false,
+  }),
 }));
 
 vi.mock("@/utilities/community-flags", () => ({
@@ -74,6 +97,11 @@ vi.mock("@/utilities/indexer", () => ({
     },
     KYC: {
       GET_CONFIG: (id: string) => `/communities/${id}/kyc/config`,
+    },
+    V2: {
+      FUNDING_PROGRAMS: {
+        GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
+      },
     },
   },
 }));
@@ -177,8 +205,8 @@ describe("Whitelabel application detail page", () => {
   });
 
   it("/applications/[applicationId] renders not-available when fetch fails", async () => {
-    const fetchData = (await import("@/utilities/fetchData")).default;
-    vi.mocked(fetchData).mockResolvedValueOnce([null, null]);
+    const { api } = await import("@/utilities/api/client");
+    vi.mocked(api.get).mockResolvedValueOnce(null);
     const { default: Page } = await import(
       "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/page"
     );
@@ -203,8 +231,8 @@ describe("Whitelabel application edit page", () => {
   });
 
   it("/applications/[applicationId]/edit renders not-available when fetch fails", async () => {
-    const fetchData = (await import("@/utilities/fetchData")).default;
-    vi.mocked(fetchData).mockResolvedValueOnce([null, null]);
+    const { api } = await import("@/utilities/api/client");
+    vi.mocked(api.get).mockResolvedValueOnce(null);
     const { default: Page } = await import(
       "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/edit/page"
     );
@@ -244,14 +272,11 @@ describe("Whitelabel programs/[programId]/apply page", () => {
   });
 
   it("renders 'form not available' empty state when schema has no fields", async () => {
-    const fetchData = (await import("@/utilities/fetchData")).default;
-    vi.mocked(fetchData).mockResolvedValueOnce([
-      {
-        ...mockProgram,
-        applicationConfig: { ...mockProgram.applicationConfig, formSchema: { fields: [] } },
-      },
-      null,
-    ]);
+    const { api } = await import("@/utilities/api/client");
+    vi.mocked(api.get).mockResolvedValueOnce({
+      ...mockProgram,
+      applicationConfig: { ...mockProgram.applicationConfig, formSchema: { fields: [] } },
+    });
     const { default: Page } = await import(
       "@/app/community/[communityId]/(whitelabel)/programs/[programId]/apply/page"
     );
@@ -265,9 +290,36 @@ describe("Whitelabel programs/[programId]/apply page", () => {
   });
 });
 
-describe("Whitelabel programs/[programId] client page", () => {
-  it("/programs/[programId] renders loading state when useProgram is loading", async () => {
+describe("Whitelabel programs/[programId] page", () => {
+  // The page is an async server component that prefetches the program and
+  // hands it to the client tree as a hydrated React Query entry, so it is
+  // driven the same way as the other server components in this file.
+  const importProgramPage = async () => {
+    vi.doMock("next/navigation", () => ({
+      useParams: () => ({ communityId: "c1", programId: "prog-1" }),
+    }));
+    vi.resetModules();
+    return import("@/app/community/[communityId]/(whitelabel)/programs/[programId]/page");
+  };
+
+  afterEach(() => {
+    vi.doUnmock("@/features/programs/hooks/use-program");
+    vi.doUnmock("next/navigation");
+  });
+
+  it("/programs/[programId] renders the prefetched program instead of a skeleton", async () => {
+    const { default: Page } = await importProgramPage();
+    const result = await Page({
+      params: Promise.resolve({ communityId: "c1", programId: "prog-1" }),
+    });
+    const { container } = renderInQueryClient(result);
+    expect(screen.getByRole("heading", { name: "Test Program" })).toBeInTheDocument();
+    expect(container.querySelector(".animate-pulse")).toBeNull();
+  });
+
+  it("/programs/[programId] still renders the loading skeleton while the client fetches", async () => {
     vi.doMock("@/features/programs/hooks/use-program", () => ({
+      PROGRAM_DETAIL_STALE_TIME: 5 * 60 * 1000,
       useProgram: () => ({
         program: null,
         loading: true,
@@ -275,17 +327,12 @@ describe("Whitelabel programs/[programId] client page", () => {
         refetch: vi.fn(),
       }),
     }));
-    vi.doMock("next/navigation", () => ({
-      useParams: () => ({ communityId: "c1", programId: "prog-1" }),
-    }));
-    vi.resetModules();
-    const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/programs/[programId]/page"
-    );
-    const { container } = renderInQueryClient(<Page />);
+    const { default: Page } = await importProgramPage();
+    const result = await Page({
+      params: Promise.resolve({ communityId: "c1", programId: "prog-1" }),
+    });
+    const { container } = renderInQueryClient(result);
     expect(container.querySelector(".animate-pulse")).not.toBeNull();
-    vi.doUnmock("@/features/programs/hooks/use-program");
-    vi.doUnmock("next/navigation");
   });
 });
 

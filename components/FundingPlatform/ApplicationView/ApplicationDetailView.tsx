@@ -23,6 +23,7 @@ import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel"
 import { Button } from "@/components/Utilities/Button";
 import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly } from "@/src/core/rbac";
+import { PrivateNotesTab } from "@/src/features/application-notes/components/PrivateNotesTab";
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
 import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
@@ -74,6 +75,7 @@ export default function ApplicationDetailView({
     isLoading,
     isLoadingComments,
     isAdmin,
+    canViewNotes,
     canEditApplication,
     canEditPostApproval,
     showStatusActions,
@@ -82,7 +84,11 @@ export default function ApplicationDetailView({
     applicationViewMode,
     setApplicationViewMode,
     activeTabId,
-    setActiveTabId,
+    handleUserTabChange,
+    versionViewSourceTab,
+    handleBackToVersionSource,
+    pendingScrollAnchorId,
+    handlePendingScrollHandled,
     selectedStatus,
     isUpdatingStatus,
     handleStatusChangeClick,
@@ -161,6 +167,10 @@ export default function ApplicationDetailView({
             program={program}
             viewMode={applicationViewMode}
             onViewModeChange={setApplicationViewMode}
+            versionViewSourceTab={versionViewSourceTab}
+            onBackToVersionSource={handleBackToVersionSource}
+            pendingScrollAnchorId={pendingScrollAnchorId}
+            onPendingScrollHandled={handlePendingScrollHandled}
           />
         </TabPanel>
       ),
@@ -218,10 +228,33 @@ export default function ApplicationDetailView({
             programId={programId}
             enableMentions
             referenceNumber={application.referenceNumber}
+            formSchema={config?.formSchema}
+            pendingScrollAnchorId={pendingScrollAnchorId}
+            onPendingScrollHandled={handlePendingScrollHandled}
           />
         </TabPanel>
       ),
     },
+    // Private notes tab — reviewer/admin-only. Conditional spread fails closed:
+    // no "Notes" entry exists in the tab bar for a non-reviewer or while
+    // permissions resolve (DEV-515 no-glimpse). The BE endpoint is the real guard.
+    ...(canViewNotes
+      ? [
+          {
+            id: "notes",
+            label: "Notes",
+            icon: TabIcons.Notes,
+            content: (
+              <TabPanel>
+                <PrivateNotesTab
+                  referenceNumber={application.referenceNumber}
+                  canViewNotes={canViewNotes}
+                />
+              </TabPanel>
+            ),
+          } satisfies TabConfig,
+        ]
+      : []),
   ];
 
   // Seed the rendered tab from the live activeTabId (not the static `?tab=`
@@ -233,9 +266,11 @@ export default function ApplicationDetailView({
     tabs.findIndex((tab) => tab.id === activeTabId)
   );
 
+  // Only fires for tab-bar clicks — Radix does not emit onValueChange for the
+  // programmatic switch `handleVersionClick` performs.
   const handleTabChange = (index: number) => {
     const tab = tabs[index];
-    if (tab && isKnownTabId(tab.id)) setActiveTabId(tab.id);
+    if (tab && isKnownTabId(tab.id)) handleUserTabChange(tab.id);
   };
 
   const detailBody = (

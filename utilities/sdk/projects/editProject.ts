@@ -9,7 +9,7 @@ import type {
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { AttestationStep } from "@/hooks/useAttestationToast";
 import { checkSlugExists, getProject } from "@/services/project.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -110,7 +110,17 @@ export const updateProject = async (
       changeStepperStep("indexing");
       const txHash = res?.tx[0]?.hash;
       if (txHash) {
-        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+        try {
+          // Fire-and-forget: the polling loop below is the source of truth
+          // for indexing completion, so a failure here shouldn't abort the
+          // update flow.
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), {});
+        } catch (notifyError: unknown) {
+          errorManager(
+            `Error notifying attestation listener for project ${project.uid}`,
+            notifyError
+          );
+        }
       }
 
       // Poll using checkSlugExists first to avoid potential 404 errors in Sentry

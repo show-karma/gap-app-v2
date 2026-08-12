@@ -22,6 +22,10 @@ import type {
   IFundingApplication,
   IFundingProgramConfig,
 } from "@/types/funding-platform";
+import {
+  fetchFreshApplicationByReference,
+  notifyStatusUpdateError,
+} from "./applicationStatusMutation";
 import { QUERY_KEYS } from "./fundingPlatformQueryKeys";
 import { useAuth } from "./useAuth";
 
@@ -318,21 +322,31 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
         approvedAmount,
         approvedCurrency,
       }),
-    onSuccess: () => {
+    onError: notifyStatusUpdateError,
+    // Re-sync on failure too: a 409 means the stale row must refresh, not invite a retry.
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId) });
-    },
-    onError: (error) => {
-      console.error("Failed to update application status:", error);
-      toast.error("Failed to update application status");
     },
   });
 
   // Flatten the paginated data
   const applications = applicationsQuery.data?.pages.flatMap((page) => page.applications) || [];
   const firstPage = applicationsQuery.data?.pages[0];
+
+  // Refreshes every loaded page — drops now-invalid row actions after a conflict.
+  const refetchApplicationsData = applicationsQuery.refetch;
+  const refetchApplications = useCallback(async (): Promise<IFundingApplication[]> => {
+    const { data } = await refetchApplicationsData();
+    return data?.pages.flatMap((page) => page.applications) || [];
+  }, [refetchApplicationsData]);
+
+  const fetchApplicationByReference = useCallback(
+    (referenceNumber: string) => fetchFreshApplicationByReference(queryClient, referenceNumber),
+    [queryClient]
+  );
 
   return {
     applications,
@@ -350,6 +364,8 @@ export const useFundingApplications = (programId: string, filters: IApplicationF
     updateApplicationStatus: updateStatusMutation.mutateAsync,
     isSubmitting: submitApplicationMutation.isPending,
     isUpdatingStatus: updateStatusMutation.isPending,
+    refetchApplications,
+    fetchApplicationByReference,
     refetch: () => {
       applicationsQuery.refetch();
       statsQuery.refetch();
@@ -387,12 +403,9 @@ export const useFundingApplication = (applicationId: string) => {
         approvedAmount,
         approvedCurrency,
       }),
-    onSuccess: () => {
+    onError: notifyStatusUpdateError,
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
-    },
-    onError: (error) => {
-      console.error("Failed to update application status:", error);
-      toast.error("Failed to update application status");
     },
   });
 
@@ -615,18 +628,16 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
     }) =>
       fundingPlatformService.applications.updateApplicationStatus(appId || applicationId!, request),
     onSuccess: (_, variables) => {
+      toast.success(`Application ${variables.request.status.replace("_", " ")}`);
+    },
+    onError: notifyStatusUpdateError,
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.application(variables.applicationId),
       });
       queryClient.invalidateQueries({
         queryKey: ["applications"], // Invalidate all application lists
       });
-
-      toast.success(`Application ${variables.request.status.replace("_", " ")}`);
-    },
-    onError: (error: any) => {
-      console.error("Failed to update application status:", error);
-      toast.error("Failed to update application status");
     },
   });
 
@@ -779,7 +790,7 @@ export const useApplication = (applicationId: string | null) => {
 /**
  * Hook for managing application status updates
  */
-export const useApplicationStatus = (programId?: string, _chainId?: number) => {
+export const useApplicationStatus = (_programId?: string, _chainId?: number) => {
   const queryClient = useQueryClient();
 
   const statusMutation = useMutation({
@@ -802,30 +813,19 @@ export const useApplicationStatus = (programId?: string, _chainId?: number) => {
         approvedAmount,
         approvedCurrency,
       }),
-    onSuccess: (_, variables) => {
-      // Invalidate and refetch application data
+    onError: notifyStatusUpdateError,
+    // Runs on failure too: a 409 conflict means the cached status is stale, so
+    // the detail view and every list must re-sync and drop their now-invalid
+    // action buttons instead of leaving them up for another retry.
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(variables.applicationId) });
 
-      // Invalidate applications list if programId is provided
-      if (programId) {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
-        });
-      }
+      // Prefix-invalidates every program list regardless of its filter/limit suffix.
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
 
-      // Invalidate all applications lists
-      queryClient.invalidateQueries({ queryKey: ["funding-applications"] });
-
-      // Refresh the cross-program Reviewer Inbox feed + header stats. Uses the
-      // `["reviewer-inbox"]` prefix so every community/filter variant refetches.
-      // No-op when the inbox isn't mounted (e.g. the per-program "My
-      // Applications" page), so it doesn't change that surface's behavior.
+      // Refresh every Reviewer Inbox feed/stats variant; no-op when the inbox
+      // isn't mounted (e.g. the per-program "My Applications" page).
       queryClient.invalidateQueries({ queryKey: ["reviewer-inbox"] });
-    },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || "Failed to update application status";
-      toast.error(errorMessage);
-      console.error("Failed to update application status:", error);
     },
   });
 
@@ -942,8 +942,9 @@ export const useApplicationVersions = (applicationIdOrReference: string | null) 
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     select: (data) => {
-      // Sort versions by version number descending (newest first)
-      return data.sort((a, b) => b.versionNumber - a.versionNumber);
+      // Sort versions by version number descending (newest first).
+      // Copy first: sorting in place would mutate the cached array.
+      return [...data].sort((a, b) => b.versionNumber - a.versionNumber);
     },
   });
 

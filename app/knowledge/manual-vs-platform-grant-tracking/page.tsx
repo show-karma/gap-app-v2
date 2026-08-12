@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Manual vs Platform-Based Grant Tracking",
   description:
     "Compare spreadsheets and documents with dedicated funding platforms for grant tracking. Learn when manual tools break down and when structured platforms scale better.",
-  path: "/knowledge/manual-vs-platform-grant-tracking",
+  path: PAGES.KNOWLEDGE.ARTICLE("manual-vs-platform-grant-tracking"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("manual-vs-platform-grant-tracking");
 
 export default function ManualVsPlatformGrantTrackingPage() {
   return (
@@ -19,32 +24,34 @@ export default function ManualVsPlatformGrantTrackingPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
           {
             label: "Manual vs Platform Grant Tracking",
-            href: "/knowledge/manual-vs-platform-grant-tracking",
+            href: PAGES.KNOWLEDGE.ARTICLE("manual-vs-platform-grant-tracking"),
           },
         ]}
       />
       <ArticleJsonLd
         title="Manual vs Platform-Based Grant Tracking"
         description="Compare spreadsheets and documents with dedicated funding platforms for grant tracking. Learn when manual tools break down and when structured platforms scale better."
-        url="/knowledge/manual-vs-platform-grant-tracking"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("manual-vs-platform-grant-tracking")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
           {
             name: "Manual vs Platform Grant Tracking",
-            url: "/knowledge/manual-vs-platform-grant-tracking",
+            url: PAGES.KNOWLEDGE.ARTICLE("manual-vs-platform-grant-tracking"),
           },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Manual vs Platform-Based Grant Tracking</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">Manual vs Platform-Based Grant Tracking</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -84,25 +91,25 @@ export default function ManualVsPlatformGrantTrackingPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/dao-grant-milestones"
+              href={PAGES.KNOWLEDGE.ARTICLE("dao-grant-milestones")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → DAO grant milestones
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/why-grant-programs-fail"
+              href={PAGES.KNOWLEDGE.ARTICLE("why-grant-programs-fail")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Why grant programs fail
@@ -114,7 +121,7 @@ export default function ManualVsPlatformGrantTrackingPage() {
           <h2 className="text-xl font-semibold">When Karma is used</h2>
           <p className="text-gray-700 dark:text-gray-300">
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"

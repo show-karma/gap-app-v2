@@ -100,6 +100,59 @@ export interface ResearchReportList {
   offset: number;
 }
 
+// -- Staff admin overview (DEV-467) ------------------------------------
+
+/** A report link under a donor in the admin overview. */
+export interface AdminAdvisorReportSummary {
+  id: string;
+  mode: DonorResearchReportMode;
+  status: DonorResearchReportStatus;
+  createdAt: string;
+  hasShareToken: boolean;
+}
+
+/** A donor (handle) an advisor researches, with its report links. */
+export interface AdminAdvisorDonor {
+  handleId: string;
+  opaqueLabel: string;
+  reportCount: number;
+  reports: AdminAdvisorReportSummary[];
+}
+
+/** An advisor row: identity (email from the contributor profile) + donors. */
+export interface AdminAdvisor {
+  id: string;
+  walletAddress: string;
+  email: string | null;
+  name: string | null;
+  displayName: string;
+  orgName: string | null;
+  timezone: string;
+  rateLimitTier: DonorResearchRateLimitTier;
+  createdAt: string;
+  donorCount: number;
+  reportCount: number;
+  donors: AdminAdvisorDonor[];
+}
+
+/** Global aggregates for the admin overview stat cards. */
+export interface AdminAdvisorStats {
+  advisors: number;
+  betaAdvisors: number;
+  donors: number;
+  reports: number;
+  completedReports: number;
+  sharedReports: number;
+}
+
+export interface AdminAdvisorsList {
+  items: AdminAdvisor[];
+  total: number;
+  stats: AdminAdvisorStats;
+  page: number;
+  limit: number;
+}
+
 export type ComplianceDisqualificationReason =
   | "pub78_revoked"
   | "ca_ag_suspended"
@@ -350,12 +403,124 @@ export interface FastReportEvent {
   name:
     | "snapshot"
     | "pool_loaded"
+    | "candidates_identified"
     | "compliance_complete"
+    | "contact_discovery_progress"
     | "contact_discovery_complete"
+    | "candidate_stage_complete"
     | "activity_complete"
     | "ranking_complete"
+    | "synthesis_started"
     | "report_finalized"
     | "report_failed";
   reportId: string;
   data: Record<string, unknown>;
+}
+
+export type CandidateEnrichmentStage = "compliance" | "contacts" | "news" | "social";
+
+export type CandidateStageStatus = "ok" | "skipped" | "failed";
+
+export interface IdentifiedReportCandidate {
+  fundingOrganizationId: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+}
+
+// -- Donor persona (DEV-431) -------------------------------------------
+//
+// A 1:1 record per donor handle: a free-text source the advisor writes,
+// an LLM-refined narrative, and five structured enum chips — each chip
+// carrying provenance (LLM-`extracted` vs advisor-`manual`). The persona
+// is a *default* that prefills the report-create form; it is never written
+// back to by the form, and editing it never alters existing reports.
+
+/** Per-chip origin: set by the refine LLM, set by the advisor, or absent. */
+export type PersonaProvenance = "extracted" | "manual";
+
+export type OrgMaturity = "upcoming" | "established" | "mixed";
+export type GeoRadius = "local" | "regional" | "national";
+export type FaithStance = "secular" | "faith_based" | "agnostic";
+export type GiftSizeBand = "small_high_leverage" | "mid" | "large_institutional";
+export type AdvocacyStance = "funds_advocacy" | "avoids_advocacy";
+
+/**
+ * One structured chip: an enum value plus where it came from. Invariant
+ * (enforced server-side): `value: null` ⇒ `source: null` — a chip with no
+ * value never carries provenance.
+ */
+export interface PersonaStructuredField<T extends string> {
+  value: T | null;
+  source: PersonaProvenance | null;
+}
+
+export interface PersonaStructured {
+  orgMaturity: PersonaStructuredField<OrgMaturity>;
+  geoRadius: PersonaStructuredField<GeoRadius>;
+  faithStance: PersonaStructuredField<FaithStance>;
+  giftSizeBand: PersonaStructuredField<GiftSizeBand>;
+  advocacyStance: PersonaStructuredField<AdvocacyStance>;
+}
+
+/**
+ * The five scoring weights the backend recomputes server-side on every GET
+ * from `structured` (the "nudge"). Same five dimensions as
+ * {@link CompositeWeights} (basis points, integers summing to 10000). The
+ * frontend consumes these verbatim and never mirrors the nudge math.
+ */
+export type PersonaComputedWeights = CompositeWeights;
+
+export interface DonorPersona {
+  id: string;
+  donorHandleId: string;
+  sourceText: string | null;
+  narrative: string | null;
+  structured: PersonaStructured;
+  computedWeights: PersonaComputedWeights;
+  /**
+   * Explicit gift amounts (USD) extracted from the source by Refine, used to
+   * prefill the report form accurately — NOT derived from `giftSizeBand`.
+   * Optional: present only once the backend emits them (gap-indexer#2117).
+   * `amountMax: null` means an open-ended upper bound.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
+  /**
+   * Topical cause / focus area extracted from the source (e.g. "climate",
+   * "education"), used to prefill the report form's Cause field. Optional:
+   * present only once the backend emits it (gap-indexer#2117). `null` when the
+   * source names no clear single cause.
+   */
+  cause?: string | null;
+  /**
+   * Place string extracted from the source (e.g. "Pacific Northwest"), used to
+   * prefill the report form's Geography field — NOT the coarse `geoRadius`
+   * enum. Optional: present only once the backend emits it (gap-indexer#2117).
+   * `null` when the source names no clear location.
+   */
+  geography?: string | null;
+  refinedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Result of `POST …/persona/refine`. The refine call does NOT persist, so
+ * the shape carries no `id`, timestamps, or `computedWeights`. Each chip's
+ * `source` is `"extracted"` or `null` — never `"manual"`. Refinement never
+ * fabricates: an uncertain field comes back `{ value: null, source: null }`.
+ */
+export interface RefinementResult {
+  narrative: string | null;
+  structured: PersonaStructured;
+  /**
+   * Explicit values extracted from the source. The editor carries these into
+   * the persona PUT so they persist (and then prefill the report form). `null`
+   * when the source names none. Optional for back-compat with older responses.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
+  cause?: string | null;
+  geography?: string | null;
 }

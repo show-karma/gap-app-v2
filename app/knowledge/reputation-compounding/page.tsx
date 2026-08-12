@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "How Reputation Compounds in Open Funding Systems";
 const description =
@@ -12,9 +15,11 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/reputation-compounding",
+  path: PAGES.KNOWLEDGE.ARTICLE("reputation-compounding"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("reputation-compounding");
 
 export default function ReputationCompoundingPage() {
   return (
@@ -22,26 +27,34 @@ export default function ReputationCompoundingPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Reputation Compounding", href: "/knowledge/reputation-compounding" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          {
+            label: "Reputation Compounding",
+            href: PAGES.KNOWLEDGE.ARTICLE("reputation-compounding"),
+          },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/reputation-compounding"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("reputation-compounding")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Reputation Compounding", url: "/knowledge/reputation-compounding" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "Reputation Compounding",
+            url: PAGES.KNOWLEDGE.ARTICLE("reputation-compounding"),
+          },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">How Reputation Compounds in Open Funding Systems</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">How Reputation Compounds in Open Funding Systems</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -77,25 +90,25 @@ export default function ReputationCompoundingPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/onchain-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What is onchain reputation?
             </Link>
             <Link
-              href="/knowledge/project-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → How projects build reputation through funding
             </Link>
             <Link
-              href="/knowledge/project-updates-and-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-updates-and-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Project updates and reputation
             </Link>
             <Link
-              href="/knowledge/impact-measurement"
+              href={PAGES.KNOWLEDGE.ARTICLE("impact-measurement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact measurement
@@ -108,7 +121,7 @@ export default function ReputationCompoundingPage() {
           <p className="text-gray-700 dark:text-gray-300">
             Capital should follow credibility, and credibility should be earned through work.{" "}
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"

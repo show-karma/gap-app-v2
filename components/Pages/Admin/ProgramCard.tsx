@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { api } from "@/utilities/api/client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 
@@ -19,8 +19,8 @@ export const ProgramCard = ({ programId, chainID, minimal = false }: ProgramCard
     async function loadProgram() {
       try {
         setIsLoading(true);
-        const [result, error] = await fetchData(INDEXER.REGISTRY.FIND_BY_ID(programId, chainID));
-        if (error) throw error;
+        // TODO(#1775): add zod schema
+        const result = await api.get<GrantProgram>(INDEXER.REGISTRY.FIND_BY_ID(programId, chainID));
         setProgram(result);
       } catch (error) {
         console.error("Failed to load program:", error);

@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -32,9 +40,10 @@ vi.mock("@/utilities/auth/api-client", () => ({
 vi.mock("@/services/fundingPlatformService", () => ({}));
 
 import { PermissionsService } from "@/services/permissions.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockGet = api.get as ReturnType<typeof vi.fn>;
 
 describe("PermissionsService trust tests", () => {
   let service: PermissionsService;
@@ -53,29 +62,19 @@ describe("PermissionsService trust tests", () => {
       );
     });
 
-    it("calls fetchData with correct endpoint including programId", async () => {
-      mockFetchData.mockResolvedValue([
-        { hasPermission: true, permissions: ["review"] },
-        null,
-        null,
-        200,
-      ]);
+    it("calls api.get with correct endpoint including programId", async () => {
+      mockGet.mockResolvedValue({ hasPermission: true, permissions: ["review"] });
 
       await service.checkPermission({
         programId: "p1",
         action: "review",
       });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("p1"));
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("p1"));
     });
 
     it("returns permission check response", async () => {
-      mockFetchData.mockResolvedValue([
-        { hasPermission: true, permissions: ["review", "approve"] },
-        null,
-        null,
-        200,
-      ]);
+      mockGet.mockResolvedValue({ hasPermission: true, permissions: ["review", "approve"] });
 
       const result = await service.checkPermission({
         programId: "p1",
@@ -86,8 +85,14 @@ describe("PermissionsService trust tests", () => {
       expect(result.permissions).toContain("review");
     });
 
-    it("throws on fetchData error", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden", null, 403]);
+    it("throws on api.get error", async () => {
+      mockGet.mockRejectedValue(
+        new HttpError(403, {
+          endpoint: "/v2/funding-program-configs/p1/check-permission",
+          method: "GET",
+          body: { message: "Forbidden" },
+        })
+      );
 
       await expect(service.checkPermission({ programId: "p1" })).rejects.toThrow("Forbidden");
     });
@@ -96,19 +101,19 @@ describe("PermissionsService trust tests", () => {
   // --- getUserPermissions ---
 
   describe("getUserPermissions", () => {
-    it("calls fetchData with resource param", async () => {
-      mockFetchData.mockResolvedValue([{ permissions: [] }, null, null, 200]);
+    it("calls api.get with resource param", async () => {
+      mockGet.mockResolvedValue({ permissions: [] });
 
       await service.getUserPermissions("programs");
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("resource=programs"));
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("resource=programs"));
     });
 
     it("returns user permissions response", async () => {
       const perms = {
         permissions: [{ resource: "programs", actions: ["read", "write"], role: "admin" }],
       };
-      mockFetchData.mockResolvedValue([perms, null, null, 200]);
+      mockGet.mockResolvedValue(perms);
 
       const result = await service.getUserPermissions();
 
@@ -117,7 +122,13 @@ describe("PermissionsService trust tests", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Unauthorized", null, 401]);
+      mockGet.mockRejectedValue(
+        new HttpError(401, {
+          endpoint: "/v2/user/permissions",
+          method: "GET",
+          body: { message: "Unauthorized" },
+        })
+      );
 
       await expect(service.getUserPermissions()).rejects.toThrow("Unauthorized");
     });
@@ -131,7 +142,7 @@ describe("PermissionsService trust tests", () => {
         { programId: "p1", name: "Program 1" },
         { programId: "p2", name: "Program 2" },
       ];
-      mockFetchData.mockResolvedValue([programs, null, null, 200]);
+      mockGet.mockResolvedValue(programs);
 
       const result = await service.getReviewerPrograms();
 
@@ -140,7 +151,13 @@ describe("PermissionsService trust tests", () => {
     });
 
     it("throws on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Server Error", null, 500]);
+      mockGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/funding-program-configs/my-reviewer-programs",
+          method: "GET",
+          body: { message: "Server Error" },
+        })
+      );
 
       await expect(service.getReviewerPrograms()).rejects.toThrow("Server Error");
     });
@@ -150,7 +167,7 @@ describe("PermissionsService trust tests", () => {
 
   describe("hasRole", () => {
     it("returns true when reviewer programs exist", async () => {
-      mockFetchData.mockResolvedValue([[{ programId: "p1" }], null, null, 200]);
+      mockGet.mockResolvedValue([{ programId: "p1" }]);
 
       const result = await service.hasRole("reviewer");
 
@@ -158,7 +175,7 @@ describe("PermissionsService trust tests", () => {
     });
 
     it("returns false when reviewer programs are empty", async () => {
-      mockFetchData.mockResolvedValue([[], null, null, 200]);
+      mockGet.mockResolvedValue([]);
 
       const result = await service.hasRole("reviewer");
 
@@ -166,14 +183,9 @@ describe("PermissionsService trust tests", () => {
     });
 
     it("checks role against resource permissions when resource provided", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          permissions: [{ resource: "program-123", actions: ["review"], role: "admin" }],
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockGet.mockResolvedValue({
+        permissions: [{ resource: "program-123", actions: ["review"], role: "admin" }],
+      });
 
       const result = await service.hasRole("admin", "program-123");
 
@@ -181,14 +193,9 @@ describe("PermissionsService trust tests", () => {
     });
 
     it("returns false when role does not match", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          permissions: [{ resource: "program-123", actions: ["read"], role: "viewer" }],
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockGet.mockResolvedValue({
+        permissions: [{ resource: "program-123", actions: ["read"], role: "viewer" }],
+      });
 
       const result = await service.hasRole("admin", "program-123");
 
@@ -206,14 +213,9 @@ describe("PermissionsService trust tests", () => {
 
   describe("canPerformAction", () => {
     it("returns true when action is in permissions", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          permissions: [{ resource: "programs", actions: ["read", "write", "delete"] }],
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockGet.mockResolvedValue({
+        permissions: [{ resource: "programs", actions: ["read", "write", "delete"] }],
+      });
 
       const result = await service.canPerformAction("programs", "write");
 
@@ -221,14 +223,9 @@ describe("PermissionsService trust tests", () => {
     });
 
     it("returns false when action is not in permissions", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          permissions: [{ resource: "programs", actions: ["read"] }],
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockGet.mockResolvedValue({
+        permissions: [{ resource: "programs", actions: ["read"] }],
+      });
 
       const result = await service.canPerformAction("programs", "delete");
 
@@ -236,7 +233,7 @@ describe("PermissionsService trust tests", () => {
     });
 
     it("returns false when resource is not found", async () => {
-      mockFetchData.mockResolvedValue([{ permissions: [] }, null, null, 200]);
+      mockGet.mockResolvedValue({ permissions: [] });
 
       const result = await service.canPerformAction("nonexistent", "read");
 

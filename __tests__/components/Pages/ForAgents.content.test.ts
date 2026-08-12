@@ -1,5 +1,6 @@
 import { AGENT_FAQS, STATIC_FALLBACK_TOOLS, USE_CASES } from "@/components/Pages/ForAgents/content";
 import { CATEGORY_LABELS } from "@/components/Pages/ForAgents/types";
+import { ROOT_DOMAIN } from "@/utilities/domains";
 
 describe("AGENT_FAQS content", () => {
   it("provides at least four entries", () => {
@@ -10,6 +11,47 @@ describe("AGENT_FAQS content", () => {
     for (const entry of AGENT_FAQS) {
       expect(entry.question).toMatch(/\?$/);
       expect(entry.answer.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("states the MCP endpoint and supported clients as a direct answer", () => {
+    const clients = AGENT_FAQS.find((f) => f.question.includes("Which AI apps"));
+    expect(clients?.answer).toContain("gapapi.karmahq.xyz/mcp");
+    expect(clients?.answer).toContain("Claude");
+    expect(clients?.answer).toContain("Codex");
+  });
+
+  it("answers which operations need authentication", () => {
+    const auth = AGENT_FAQS.find((f) => f.question.includes("require authentication"));
+    expect(auth?.answer).toContain("Every tool call requires a signed-in session");
+    expect(auth?.answer).toContain("x-api-key");
+  });
+
+  it("answers connecting from Claude with the guide location", () => {
+    const connect = AGENT_FAQS.find((f) => f.question.includes("connect Karma to Claude"));
+    expect(connect?.answer).toContain("gapapi.karmahq.xyz/mcp");
+    expect(connect?.answer).toContain(`${ROOT_DOMAIN}/mcp/connect`);
+  });
+
+  it("answers whether an agent can draft and submit an application", () => {
+    const drafting = AGENT_FAQS.find((f) =>
+      f.question.includes("draft and submit a grant application")
+    );
+    expect(drafting?.answer).toMatch(/^Yes, with your permission/);
+  });
+
+  it("positions against conventional grant platforms without naming competitors", () => {
+    const comparison = AGENT_FAQS.find((f) => f.question.includes("compare"));
+    expect(comparison?.answer).toContain("Conventional grants-management platforms");
+    for (const competitor of ["Fluxx", "Submittable", "Candid", "Instrumentl", "Blackbaud"]) {
+      expect(comparison?.answer).not.toContain(competitor);
+    }
+  });
+
+  it("mentions ChatGPT nowhere in the page copy (reviewer decision: Codex only)", () => {
+    for (const entry of AGENT_FAQS) {
+      expect(entry.question).not.toContain("ChatGPT");
+      expect(entry.answer).not.toContain("ChatGPT");
     }
   });
 });

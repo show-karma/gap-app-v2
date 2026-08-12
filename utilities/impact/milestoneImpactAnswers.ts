@@ -1,7 +1,7 @@
 import toast from "react-hot-toast";
+import { z } from "zod";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import type { ProjectIndicatorResponse } from "@/types/indicator";
-import fetchData from "../fetchData";
+import { api } from "../api/client";
 import { INDEXER } from "../indexer";
 import { MESSAGES } from "../messages";
 
@@ -35,35 +35,22 @@ export const sendMilestoneImpactAnswers = async (
   onError?: (error: string) => void
 ): Promise<boolean> => {
   try {
-    const [, error] = await fetchData(
-      INDEXER.MILESTONE.IMPACT_INDICATORS.SEND(milestoneUID),
-      "POST",
-      {
-        indicatorId,
-        data: datapoints.map((item) => ({
-          value: String(item.value),
-          proof: item.proof,
-          startDate: item.startDate,
-          endDate: item.endDate,
-        })),
-      }
-    );
+    await api.post(INDEXER.MILESTONE.IMPACT_INDICATORS.SEND(milestoneUID), {
+      indicatorId,
+      data: datapoints.map((item) => ({
+        value: String(item.value),
+        proof: item.proof,
+        startDate: item.startDate,
+        endDate: item.endDate,
+      })),
+    });
 
-    if (error) {
-      if (onError) {
-        onError(error);
-      } else {
-        toast.error(MESSAGES.MILESTONES.OUTPUTS.ERROR);
-      }
-      return false;
+    if (onSuccess) {
+      onSuccess();
     } else {
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        toast.success(MESSAGES.MILESTONES.OUTPUTS.SUCCESS);
-      }
-      return true;
+      toast.success(MESSAGES.MILESTONES.OUTPUTS.SUCCESS);
     }
+    return true;
   } catch (error) {
     if (onError) {
       onError(error instanceof Error ? error.message : String(error));
@@ -83,18 +70,14 @@ export const deleteMilestoneImpactAnswers = async (
   milestoneUID: string,
   indicatorId: string
 ): Promise<void> => {
-  const [, error] = await fetchData(
-    INDEXER.MILESTONE.IMPACT_INDICATORS.SEND(milestoneUID),
-    "POST",
-    {
+  try {
+    await api.post(INDEXER.MILESTONE.IMPACT_INDICATORS.SEND(milestoneUID), {
       indicatorId,
       data: [],
-    }
-  );
-
-  if (error) {
+    });
+  } catch (error) {
     throw new Error(
-      `Failed to delete milestone impact answers for milestoneUID=${milestoneUID} indicatorId=${indicatorId}: ${error}`
+      `Failed to delete milestone impact answers for milestoneUID=${milestoneUID} indicatorId=${indicatorId}: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 };
@@ -102,10 +85,59 @@ export const deleteMilestoneImpactAnswers = async (
 /**
  * Transform V2 milestone indicators response to ImpactIndicatorWithData[]
  */
-function transformMilestoneIndicators(response: {
-  milestoneUID: string;
-  indicators: ProjectIndicatorResponse[];
-}): ImpactIndicatorWithData[] {
+// Matches ProjectIndicatorResponse (types/indicator.ts) / the milestone
+// indicators envelope, which this service already consumes as if these
+// fields were always present (no defensive checks below).
+const DatapointSchema = z
+  .object({
+    id: z.string(),
+    value: z.string(),
+    breakdown: z.string().nullable(),
+    startDate: z.string(),
+    endDate: z.string(),
+    period: z.string().nullable(),
+    proof: z.string().nullable(),
+    source: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .passthrough();
+
+const AggregatedDatapointResponseSchema = z
+  .object({
+    indicatorId: z.string(),
+    indicatorName: z.string(),
+    startDate: z.string(),
+    endDate: z.string(),
+    totalValue: z.number(),
+    projectCount: z.number(),
+  })
+  .passthrough();
+
+const ProjectIndicatorResponseSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    unitOfMeasure: z.string(),
+    hasData: z.boolean(),
+    lastUpdatedAt: z.string().nullable(),
+    datapoints: z.array(DatapointSchema),
+    aggregatedData: z.record(z.string(), z.array(AggregatedDatapointResponseSchema)).optional(),
+  })
+  .passthrough();
+
+const MilestoneIndicatorsResponseSchema = z
+  .object({
+    milestoneUID: z.string(),
+    indicators: z.array(ProjectIndicatorResponseSchema),
+  })
+  .passthrough();
+type MilestoneIndicatorsResponse = z.infer<typeof MilestoneIndicatorsResponseSchema>;
+
+function transformMilestoneIndicators(
+  response: MilestoneIndicatorsResponse
+): ImpactIndicatorWithData[] {
   return response.indicators.map((indicator) => ({
     id: indicator.id,
     name: indicator.name,
@@ -137,17 +169,11 @@ export const getMilestoneImpactAnswers = async (
   milestoneUID: string
 ): Promise<ImpactIndicatorWithData[]> => {
   try {
-    const [data, error] = await fetchData(
+    const response = await api.get<MilestoneIndicatorsResponse>(
       INDEXER.INDICATORS.V2.MILESTONE_INDICATORS(milestoneUID),
-      "GET"
+      { schema: MilestoneIndicatorsResponseSchema }
     );
-
-    if (error) {
-      console.error("Error fetching milestone impact data:", error);
-      return [];
-    }
-
-    return transformMilestoneIndicators(data);
+    return transformMilestoneIndicators(response);
   } catch (error) {
     console.error("Error fetching milestone impact data:", error);
     return [];

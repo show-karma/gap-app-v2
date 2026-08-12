@@ -2,6 +2,8 @@ id: no-hardcoded-url
 valid:
   - "const url = envVars.INDEXER.PROJECTS;"
   - "const ns = 'http://www.w3.org/2000/svg';"
+  - "const site = CANONICAL_ORIGIN;"
 invalid:
   - "const u = 'https://gapapi.karmahq.xyz/projects';"
+  - "const site = 'https://www.karmahq.org';"
   - "const base = 'http://api.example.com/v2';"

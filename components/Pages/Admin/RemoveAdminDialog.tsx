@@ -8,11 +8,12 @@ import { type FC, Fragment, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { Button } from "../../Utilities/Button";
@@ -28,10 +29,24 @@ const schema = z.object({
 });
 
 type SchemaType = z.infer<typeof schema>;
-interface CommunityAdmin {
-  id: string;
-  admins: { user: { id: string } }[];
-}
+
+// Only the fields this dialog actually reads are required; everything else
+// on the envelope/nested objects is allowed to pass through unvalidated —
+// fetchData applied zero runtime validation for this endpoint previously.
+const communityAdminSchema = z
+  .object({
+    id: z.string(),
+    admins: z.array(
+      z
+        .object({
+          user: z.object({ id: z.string() }).passthrough(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+
+type CommunityAdmin = z.infer<typeof communityAdminSchema>;
 
 type RemoveAdminDialogProps = {
   UUID: `0x${string}`;
@@ -99,22 +114,18 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
       const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
         if (hash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(hash, chainid), {});
         }
         changeStepperStep("indexing");
         let retries = 1000;
         let addressRemoved = false;
         while (retries > 0) {
           try {
-            const [response, error] = await fetchData(
-              INDEXER.COMMUNITY.ADMINS(UUID),
-              "GET",
-              {},
-              {},
-              {},
-              false
-            );
-            if (!response || error) {
+            const response = await api.get<CommunityAdmin>(INDEXER.COMMUNITY.ADMINS(UUID), {
+              isAuthorized: false,
+              schema: communityAdminSchema,
+            });
+            if (!response) {
               throw new Error(`Error fetching admins for community ${UUID}`);
             }
 
@@ -223,7 +234,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
                             </span>
                           )}
                           <span className="text-xs font-mono text-gray-500 dark:text-zinc-400 break-all">
-                            {Admin}
+                            <EthereumAddressToProfileName address={Admin} shouldTruncate />
                           </span>
                         </div>
                       </div>

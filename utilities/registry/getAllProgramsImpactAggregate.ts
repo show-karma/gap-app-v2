@@ -1,18 +1,17 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { ImpactAggregateData } from "@/types/programs";
-import fetchData from "../fetchData";
+import { api } from "../api/client";
 import { INDEXER } from "../indexer";
 
 export async function getAllProgramsImpactAggregate(communityId: string) {
   try {
-    const [data, error] = await fetchData(
+    // TODO(#1775): add zod schema — ImpactAggregateData is a deeply nested
+    // shape (segments/indicators/datapoints) not safe to re-derive strictly here.
+    const data = await api.get<ImpactAggregateData[]>(
       INDEXER.COMMUNITY.ALL_PROGRAMS_IMPACT_AGGREGATE(communityId)
     );
-    if (error) {
-      throw error;
-    }
 
-    const existingCategories = (data as ImpactAggregateData[]).map((item) => {
+    const existingCategories = data.map((item) => {
       return {
         categoryName: item.categoryName,
         impacts: item.impacts || [],

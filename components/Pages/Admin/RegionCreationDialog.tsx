@@ -13,7 +13,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 type RegionCreationDialogProps = {
@@ -70,18 +70,10 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
         throw new Error("Community ID is not available");
       }
 
-      const [_request, error] = await fetchData(
-        INDEXER.REGIONS.CREATE(communityUID),
-        "POST",
-        {
-          name: data.name,
-        },
-        {},
-        {},
-        true
-      );
-
-      if (error) throw new Error("An error occurred while creating the region");
+      // TODO(#1775): add zod schema
+      await api.post(INDEXER.REGIONS.CREATE(communityUID), {
+        name: data.name,
+      });
 
       toast.success("Region created successfully");
       refreshRegions();

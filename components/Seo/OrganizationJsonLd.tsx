@@ -1,5 +1,10 @@
 import { safeJsonLdStringify } from "@/utilities/jsonLd";
-import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL } from "@/utilities/meta";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
+  ORGANIZATION_DESCRIPTION,
+  SITE_URL,
+} from "@/utilities/meta";
 
 const organizationSchema = {
   "@context": "https://schema.org",
@@ -7,7 +12,7 @@ const organizationSchema = {
   name: "Karma",
   url: SITE_URL,
   logo: `${SITE_URL}/logo/karma-logo.svg`,
-  description: DEFAULT_DESCRIPTION,
+  description: ORGANIZATION_DESCRIPTION,
   email: "info@karmahq.xyz",
   contactPoint: {
     "@type": "ContactPoint",

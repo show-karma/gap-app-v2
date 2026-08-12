@@ -18,7 +18,7 @@ import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
@@ -67,21 +67,20 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
           continue;
         }
 
-        const [_, error] = await fetchData(
-          INDEXER.PROJECT.ENDORSEMENT.NOTIFY(project.details?.slug || (project.uid as string)),
-          "POST",
-          {
-            email: contact.email,
-            name: contact.name,
-            endorsementId: endorsement.uid,
-            endorserAddress: address,
-            projectTitle: project.details?.title || project.uid,
-            comment: comment || undefined,
-          }
-        );
-
-        if (error) {
-          console.error("Failed to send notification to", contact.email, ":", error);
+        try {
+          await api.post(
+            INDEXER.PROJECT.ENDORSEMENT.NOTIFY(project.details?.slug || (project.uid as string)),
+            {
+              email: contact.email,
+              name: contact.name,
+              endorsementId: endorsement.uid,
+              endorserAddress: address,
+              projectTitle: project.details?.title || project.uid,
+              comment: comment || undefined,
+            }
+          );
+        } catch (notifyError) {
+          console.error("Failed to send notification to", contact.email, ":", notifyError);
         }
       }
     } catch (error) {
@@ -117,7 +116,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       await endorsement.attest(walletSigner, changeStepperStep).then(async (res) => {
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID), {});
         }
         let retries = 1000;
         refreshProject();

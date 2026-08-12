@@ -1,17 +1,33 @@
 "use client";
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-  KycBatchStatusResponse,
-  KycConfigResponse,
-  KycFormUrlRequest,
-  KycFormUrlResponse,
-  KycProviderType,
-  KycStatusResponse,
-  KycVerificationType,
+import toast from "react-hot-toast";
+import {
+  type KycApplicabilityRequest,
+  type KycBatchStatusResponse,
+  type KycConfigResponse,
+  type KycFormUrlRequest,
+  type KycFormUrlResponse,
+  type KycProviderType,
+  type KycStatusResponse,
+  KycVerificationStatus,
+  type KycVerificationType,
 } from "@/types/kyc";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic "HTTP <status> <method> <path>" message.
+ */
+function httpErrorMessage(error: HttpError): string {
+  const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+  const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+  return bodyMessage || causeMessage || error.message;
+}
 
 // Cache duration constants
 const KYC_STATUS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
@@ -71,47 +87,29 @@ export const useKycStatus = (
 
       // Use application-specific endpoint for APP- references
       if (isAppRef) {
-        const [data, error, _pageInfo, statusCode] = await fetchData<KycStatusResponse>(
-          INDEXER.KYC.GET_STATUS_BY_APP_REF(identifier),
-          "GET",
-          {},
-          {},
-          {},
-          true
-        );
-
-        if (statusCode === 404) {
-          return null;
+        try {
+          // TODO(#1775): add zod schema
+          return await api.get<KycStatusResponse>(INDEXER.KYC.GET_STATUS_BY_APP_REF(identifier));
+        } catch (error) {
+          if (isApiError(error) && error instanceof HttpError && error.status === 404) {
+            return null;
+          }
+          throw error instanceof HttpError ? new Error(httpErrorMessage(error)) : error;
         }
-
-        if (error) {
-          throw new Error(error);
-        }
-
-        return data;
       }
 
       // Use project endpoint for 0x... identifiers (requires communityUID)
       if (!communityUID) return null;
 
-      const [data, error, _pageInfo, statusCode] = await fetchData<KycStatusResponse>(
-        INDEXER.KYC.GET_STATUS(identifier, communityUID),
-        "GET",
-        {},
-        {},
-        {},
-        true
-      );
-
-      if (statusCode === 404) {
-        return null;
+      try {
+        // TODO(#1775): add zod schema
+        return await api.get<KycStatusResponse>(INDEXER.KYC.GET_STATUS(identifier, communityUID));
+      } catch (error) {
+        if (isApiError(error) && error instanceof HttpError && error.status === 404) {
+          return null;
+        }
+        throw error instanceof HttpError ? new Error(httpErrorMessage(error)) : error;
       }
-
-      if (error) {
-        throw new Error(error);
-      }
-
-      return data;
     },
     enabled: options?.enabled !== false && !!identifier && (isAppRef || !!communityUID),
     staleTime: KYC_STATUS_STALE_TIME,
@@ -139,26 +137,24 @@ export const useKycConfig = (
     queryFn: async () => {
       if (!communityIdOrSlug) return null;
 
-      const [data, error] = await fetchData<KycConfigResponse>(
-        INDEXER.KYC.GET_CONFIG(communityIdOrSlug),
-        "GET",
-        {},
-        {},
-        {},
-        false
-      );
-
-      // Treat "not found" as "not configured yet" - return null instead of throwing
-      // This allows admin pages to show empty form for initial setup
-      if (error) {
-        const errorLower = error.toLowerCase();
-        if (errorLower.includes("not found") || errorLower.includes("not configured")) {
-          return null;
+      try {
+        // TODO(#1775): add zod schema
+        const data = await api.get<KycConfigResponse>(INDEXER.KYC.GET_CONFIG(communityIdOrSlug), {
+          isAuthorized: false,
+        });
+        return data ?? null;
+      } catch (error) {
+        // Treat "not found" as "not configured yet" - return null instead of throwing
+        // This allows admin pages to show empty form for initial setup
+        if (isApiError(error) && error instanceof HttpError) {
+          const message = httpErrorMessage(error).toLowerCase();
+          if (message.includes("not found") || message.includes("not configured")) {
+            return null;
+          }
+          throw new Error(httpErrorMessage(error));
         }
-        throw new Error(error);
+        throw error;
       }
-
-      return data ?? null;
     },
     enabled: options?.enabled !== false && !!communityIdOrSlug,
     staleTime: KYC_CONFIG_STALE_TIME,
@@ -190,18 +186,11 @@ export const useKycBatchStatuses = (
         return new Map();
       }
 
-      const [data, error] = await fetchData<KycBatchStatusResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.post<KycBatchStatusResponse>(
         INDEXER.KYC.GET_BATCH_STATUSES(communityUID),
-        "POST",
-        { projectUIDs },
-        {},
-        {},
-        true
+        { projectUIDs }
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       const statusMap = new Map<string, KycStatusResponse | null>();
       if (data?.statuses) {
@@ -242,18 +231,12 @@ export const useKycBatchStatusesPublic = (
         return new Map();
       }
 
-      const [data, error] = await fetchData<KycBatchStatusResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.post<KycBatchStatusResponse>(
         INDEXER.KYC.GET_BATCH_STATUSES_PUBLIC(communityUID),
-        "POST",
         { projectUIDs },
-        {},
-        {},
-        false
+        { isAuthorized: false }
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       const statusMap = new Map<string, KycStatusResponse | null>();
       if (data?.statuses) {
@@ -325,18 +308,11 @@ export const useKycBatchStatusesByAppRef = (
       }
 
       if (refsToFetch.length > 0) {
-        const [data, error] = await fetchData<KycBatchStatusResponse>(
+        // TODO(#1775): add zod schema
+        const data = await api.post<KycBatchStatusResponse>(
           INDEXER.KYC.GET_BATCH_STATUSES_BY_APP_REF(communityUID),
-          "POST",
-          { applicationReferences: refsToFetch },
-          {},
-          {},
-          true
+          { applicationReferences: refsToFetch }
         );
-
-        if (error) {
-          throw new Error(error);
-        }
 
         if (data?.statuses) {
           Object.entries(data.statuses).forEach(([appRef, status]) => {
@@ -391,18 +367,11 @@ export const useKycFormUrl = () => {
         walletAddress,
       };
 
-      const [data, error] = await fetchData<KycFormUrlResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.post<KycFormUrlResponse>(
         INDEXER.KYC.GET_FORM_URL(communityIdOrSlug),
-        "POST",
-        requestBody,
-        {},
-        {},
-        true
+        requestBody
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       if (!data) {
         throw new Error("No data returned from KYC form URL request");
@@ -430,6 +399,136 @@ export const useKycFormUrl = () => {
   });
 };
 
+const BATCH_BY_APP_REF_PREFIX = [...KYC_QUERY_KEYS.all, "batch-by-app-ref"] as const;
+
+interface SetKycApplicabilityContext {
+  previousStatus: KycStatusResponse | null | undefined;
+  /**
+   * Per-map snapshot of ONLY this application's entry (maps without the
+   * ref are never patched, so they are not snapshotted). Rolling back whole
+   * Maps would clobber interleaved optimistic updates for OTHER applications
+   * sharing the same batch Map.
+   */
+  previousBatchEntries: [readonly unknown[], KycStatusResponse | null][];
+}
+
+/**
+ * Hook for community admins to mark an application's KYC/KYB as Not applicable
+ * (or reset it back to Not started).
+ *
+ * Optimistic: flips the cached status immediately (single app-ref query AND
+ * every batch-by-app-ref Map), rolls back on error, and writes the server's
+ * authoritative row on success. Always invalidates on settle so truth wins.
+ */
+export const useSetKycApplicability = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<KycStatusResponse, Error, KycApplicabilityRequest, SetKycApplicabilityContext>(
+    {
+      mutationFn: async (request) => {
+        // TODO(#1775): add zod schema
+        const data = await api.put<KycStatusResponse>(INDEXER.KYC.SET_APPLICABILITY, request);
+
+        if (!data) {
+          throw new Error("No data returned from KYC applicability request");
+        }
+
+        return data;
+      },
+      onMutate: async (request) => {
+        const statusKey = KYC_QUERY_KEYS.statusByAppRef(request.applicationReference);
+
+        await queryClient.cancelQueries({ queryKey: KYC_QUERY_KEYS.all });
+
+        const previousStatus = queryClient.getQueryData<KycStatusResponse | null>(statusKey);
+        const previousBatchEntries: SetKycApplicabilityContext["previousBatchEntries"] = [];
+        for (const [queryKey, data] of queryClient.getQueriesData<
+          Map<string, KycStatusResponse | null>
+        >({ queryKey: BATCH_BY_APP_REF_PREFIX })) {
+          if (data?.has(request.applicationReference)) {
+            previousBatchEntries.push([queryKey, data.get(request.applicationReference) ?? null]);
+          }
+        }
+
+        const patchStatus = (
+          existing: KycStatusResponse | null | undefined
+        ): KycStatusResponse => ({
+          projectUID: existing?.projectUID ?? "",
+          communityUID: existing?.communityUID ?? "",
+          status: request.status,
+          verificationType: existing?.verificationType ?? request.verificationType,
+          // An exemption never expires; the undo resets to a clean Not started row
+          isExpired: false,
+        });
+
+        queryClient.setQueryData<KycStatusResponse | null>(statusKey, (old) => patchStatus(old));
+
+        queryClient.setQueriesData<Map<string, KycStatusResponse | null>>(
+          { queryKey: BATCH_BY_APP_REF_PREFIX },
+          (old) => {
+            if (!old?.has(request.applicationReference)) return old;
+            const next = new Map(old);
+            next.set(
+              request.applicationReference,
+              patchStatus(old.get(request.applicationReference))
+            );
+            return next;
+          }
+        );
+
+        return { previousStatus, previousBatchEntries };
+      },
+      onError: (error, request, context) => {
+        if (context) {
+          const statusKey = KYC_QUERY_KEYS.statusByAppRef(request.applicationReference);
+          if (context.previousStatus === undefined) {
+            // No cache entry existed before onMutate created one — remove the
+            // synthetic entry instead of fabricating a "no row" (null) result
+            queryClient.removeQueries({ queryKey: statusKey, exact: true });
+          } else {
+            queryClient.setQueryData(statusKey, context.previousStatus);
+          }
+          // Restore ONLY this application's entry in each batch Map, on top of
+          // the map's CURRENT state — other applications' entries (including
+          // interleaved optimistic updates) must survive this rollback
+          for (const [queryKey, previousEntry] of context.previousBatchEntries) {
+            queryClient.setQueryData<Map<string, KycStatusResponse | null>>(queryKey, (current) => {
+              if (!current?.has(request.applicationReference)) return current;
+              const next = new Map(current);
+              next.set(request.applicationReference, previousEntry);
+              return next;
+            });
+          }
+        }
+        toast.error(error instanceof HttpError ? httpErrorMessage(error) : error.message);
+      },
+      onSuccess: (data, request) => {
+        queryClient.setQueryData<KycStatusResponse | null>(
+          KYC_QUERY_KEYS.statusByAppRef(request.applicationReference),
+          data
+        );
+        queryClient.setQueriesData<Map<string, KycStatusResponse | null>>(
+          { queryKey: BATCH_BY_APP_REF_PREFIX },
+          (old) => {
+            if (!old?.has(request.applicationReference)) return old;
+            const next = new Map(old);
+            next.set(request.applicationReference, data);
+            return next;
+          }
+        );
+        toast.success(
+          request.status === KycVerificationStatus.NOT_APPLICABLE
+            ? "Marked as Not applicable"
+            : "Reset to Not started"
+        );
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: KYC_QUERY_KEYS.all });
+      },
+    }
+  );
+};
+
 /**
  * Hook to save KYC provider configuration for a community
  */
@@ -451,18 +550,11 @@ export const useSaveKycConfig = (communityIdOrSlug: string | undefined) => {
         throw new Error("Community ID is required");
       }
 
-      const [data, error] = await fetchData<KycConfigResponse>(
+      // TODO(#1775): add zod schema
+      const data = await api.put<KycConfigResponse>(
         INDEXER.KYC.GET_CONFIG(communityIdOrSlug),
-        "PUT",
-        config,
-        {},
-        {},
-        true
+        config
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       if (!data) {
         throw new Error("No data returned from save KYC config request");

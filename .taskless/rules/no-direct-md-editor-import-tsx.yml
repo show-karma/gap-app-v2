@@ -1,0 +1,27 @@
+id: no-direct-md-editor-import-tsx
+language: tsx
+severity: warning
+message: Import SafeMdEditor from components/Utilities/SafeMdEditor.tsx, never md-editor-rt directly.
+note: |
+  TSX variant of `no-direct-md-editor-import`. ast-grep scopes a rule to a
+  single language, and `.tsx` files are parsed as `tsx`, not `typescript`.
+  md-editor-rt@6.4.1 reads InputEvent.data.length unguarded in its CodeMirror
+  maxLength handler; data is null for Backspace/Enter/paste (Sentry
+  GAP-FRONTEND-1WY / GAP-FRONTEND-24S). SafeMdEditor normalizes the event and
+  the model value before the library sees them.
+ignores:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "components/Utilities/SafeMdEditor.tsx"
+  - "scripts/**"
+rule:
+  kind: string
+  regex: '^["'']md-editor-rt'
+  inside:
+    stopBy: end
+    any:
+      - kind: import_statement
+      - kind: call_expression

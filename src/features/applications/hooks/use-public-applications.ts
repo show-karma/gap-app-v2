@@ -2,7 +2,25 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { Application, ApplicationFilters } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
+
+/**
+ * Best-effort text extraction from a thrown ApiError, mirroring the
+ * pre-migration `fetchData` error-string shape (backend body message, else
+ * the ApiError's own message) so the "private" substring check below keeps
+ * working the same way it did against the legacy tuple's error slot.
+ */
+function getErrorText(err: unknown): string {
+  if (isApiError(err)) {
+    if (err instanceof HttpError) {
+      const bodyMessage = (err.body as { message?: string } | undefined)?.message;
+      return bodyMessage || err.message;
+    }
+    return err.message;
+  }
+  return err instanceof Error ? err.message : String(err);
+}
 
 interface UsePublicApplicationsParams {
   programId: string;
@@ -41,41 +59,42 @@ export function usePublicApplications({
       const queryString = queryParams.toString();
       const url = `/v2/funding-applications/program/${programId}${queryString ? `?${queryString}` : ""}`;
 
-      const [response, fetchError] = await fetchData<
-        Application[] | { applications: Application[]; message?: string }
-      >(url);
+      try {
+        // TODO(#1775): add zod schema
+        const response = await api.get<
+          Application[] | { applications: Application[]; message?: string }
+        >(url);
 
-      if (fetchError) {
-        if (fetchError.includes("private")) {
+        if (!response) {
+          return { applications: [], isPrivate: false };
+        }
+
+        if (
+          !Array.isArray(response) &&
+          "message" in response &&
+          typeof response.message === "string" &&
+          response.message.includes("private")
+        ) {
           return { applications: [], isPrivate: true };
         }
-        throw new Error(fetchError);
-      }
 
-      if (!response) {
-        return { applications: [], isPrivate: false };
-      }
+        if (!Array.isArray(response) && "applications" in response) {
+          return {
+            applications: response.applications || [],
+            isPrivate: false,
+          };
+        }
 
-      if (
-        !Array.isArray(response) &&
-        "message" in response &&
-        typeof response.message === "string" &&
-        response.message.includes("private")
-      ) {
-        return { applications: [], isPrivate: true };
-      }
-
-      if (!Array.isArray(response) && "applications" in response) {
         return {
-          applications: response.applications || [],
+          applications: Array.isArray(response) ? response : [],
           isPrivate: false,
         };
+      } catch (err) {
+        if (getErrorText(err).includes("private")) {
+          return { applications: [], isPrivate: true };
+        }
+        throw err;
       }
-
-      return {
-        applications: Array.isArray(response) ? response : [],
-        isPrivate: false,
-      };
     },
     enabled: enabled && !!programId,
     staleTime: 5 * 60 * 1000,

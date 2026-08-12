@@ -67,7 +67,6 @@ describe("useProjectUpdates", () => {
             completedBy: "0x123",
           },
           verificationDetails: null,
-          fundingApplicationCompletion: null,
         },
       ],
       grantUpdates: [
@@ -139,7 +138,6 @@ describe("useProjectUpdates", () => {
             completedBy: "0x123",
           },
           verificationDetails: null,
-          fundingApplicationCompletion: null,
         },
       ],
       grantUpdates: [],
@@ -175,9 +173,11 @@ describe("useProjectUpdates", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", "completed", {
-        isAuthorized: true,
-      });
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith(
+        "test-project",
+        "completed",
+        expect.objectContaining({ isAuthorized: true, signal: expect.any(AbortSignal) })
+      );
     });
   });
 
@@ -194,9 +194,11 @@ describe("useProjectUpdates", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, {
-        isAuthorized: true,
-      });
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith(
+        "test-project",
+        undefined,
+        expect.objectContaining({ isAuthorized: true, signal: expect.any(AbortSignal) })
+      );
     });
   });
 
@@ -220,10 +222,15 @@ describe("useProjectUpdates", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, {
-        ...filters,
-        isAuthorized: true,
-      });
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith(
+        "test-project",
+        undefined,
+        expect.objectContaining({
+          ...filters,
+          isAuthorized: true,
+          signal: expect.any(AbortSignal),
+        })
+      );
     });
   });
 
@@ -241,9 +248,11 @@ describe("useProjectUpdates", () => {
     );
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, {
-        isAuthorized: false,
-      });
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith(
+        "test-project",
+        undefined,
+        expect.objectContaining({ isAuthorized: false, signal: expect.any(AbortSignal) })
+      );
     });
   });
 
@@ -309,7 +318,6 @@ describe("useProjectUpdates", () => {
             completedBy: "0x123",
           },
           verificationDetails: null,
-          fundingApplicationCompletion: null,
           grantMilestoneIndex: 2,
           grantMilestoneTotal: 4,
         },
@@ -358,7 +366,6 @@ describe("useProjectUpdates", () => {
           },
           completionDetails: null,
           verificationDetails: null,
-          fundingApplicationCompletion: null,
         },
       ],
       grantUpdates: [],
