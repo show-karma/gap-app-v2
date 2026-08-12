@@ -609,7 +609,9 @@ export function MilestoneCard({
         ) : null}
       </div>
 
-      {isCancelled && <CancelledMilestoneBanner cancellation={milestone.cancellation ?? null} />}
+      {isCancelled && (
+        <CancelledMilestoneBanner cancellation={milestone.cancellation ?? null} className="mb-3" />
+      )}
 
       {/* Collapsible description */}
       <div className="mb-3">
