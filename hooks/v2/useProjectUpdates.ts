@@ -32,6 +32,21 @@ const resolveEndsAtSeconds = (raw: MilestoneDueDateInput): number | undefined =>
 };
 
 /**
+ * Whether a raw milestone `status` string means the milestone is done.
+ *
+ * The comparison is case-insensitive on purpose: the indexer stores
+ * `currentStatus` in mixed case (it matches both `'COMPLETED'` and
+ * `'completed'` in `project.repository.ts`, and `$toLower`s the column in
+ * `grant.repository.ts`) and emits it verbatim as `status`, while only
+ * lowercasing internally to decide `completionDetails`. An exact-match
+ * comparison therefore reads an uppercase `COMPLETED` row as pending.
+ */
+const isCompletedMilestoneStatus = (status: string | null | undefined): boolean => {
+  const normalized = status?.toLowerCase();
+  return normalized === "completed" || normalized === "verified";
+};
+
+/**
  * Converts API response to UnifiedMilestone format for backward compatibility
  * with existing components.
  *
@@ -77,7 +92,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   // Convert project milestones to unified format
   data.projectMilestones.forEach((milestone: ProjectMilestone) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
-    const isCompleted = milestone.status === "completed" || milestone.status === "verified";
+    const isCompleted = isCompletedMilestoneStatus(milestone.status);
     const recipient = milestone.recipient || "";
     // Display attribution falls back to recipient when the on-chain attester
     // isn't present (Karma backend-signed milestones expose attester separately).
@@ -126,7 +141,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   // Convert grant milestones to unified format
   data.grantMilestones.forEach((milestone: GrantMilestoneWithDetails) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
-    const isCompleted = milestone.status === "completed" || milestone.status === "verified";
+    const isCompleted = isCompletedMilestoneStatus(milestone.status);
     // Recipient is the on-chain milestone owner (passes Gap.sol's revoke gate).
     // Attester may differ (Karma backend-signed milestones use a service wallet);
     // display attribution falls back to recipient when attester is unavailable.
@@ -206,6 +221,10 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
             title: milestone.title,
             description: milestone.description,
             endsAt: milestoneEndsAt,
+            // Raw indexer status, preserved verbatim (may be mixed case). Lets
+            // consumers see lifecycle states that have no dedicated field here,
+            // notably "approved" — which the SDK also refuses to edit.
+            currentStatus: milestone.status,
             completed: isCompleted
               ? {
                   createdAt:
