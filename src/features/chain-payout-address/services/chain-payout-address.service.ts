@@ -1,4 +1,4 @@
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import type {
   ChainPayoutAddressMap,
@@ -24,15 +24,11 @@ export const chainPayoutAddressService = {
   ): Promise<ChainPayoutAddressMap | null> {
     const payload: UpdateChainPayoutAddressRequest = { chainPayoutAddresses };
 
-    const [response, error] = await fetchData<UpdateChainPayoutAddressResponse>(
+    // TODO(#1775): add zod schema
+    const response = await api.put<UpdateChainPayoutAddressResponse>(
       INDEXER.PROJECT.CHAIN_PAYOUT_ADDRESS.UPDATE(projectId),
-      "PUT",
       payload
     );
-
-    if (error) {
-      throw new Error(error);
-    }
 
     return response?.chainPayoutAddress ?? null;
   },

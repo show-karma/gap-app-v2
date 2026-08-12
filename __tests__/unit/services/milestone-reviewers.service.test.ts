@@ -10,8 +10,18 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Mock fetchData for GET requests
-vi.mock("@/utilities/fetchData");
+// Mock the unified api client for GET requests
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 // Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
 var mockAxiosInstance: vi.Mocked<AxiosInstance>;
@@ -48,11 +58,12 @@ import {
   type AddMilestoneReviewerRequest,
   milestoneReviewersService,
 } from "@/services/milestone-reviewers.service";
-// Import fetchData mock
-import fetchData from "@/utilities/fetchData";
+// Import the mocked unified api client
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
 const mockedAxios = axios as vi.Mocked<typeof axios>;
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.Mock;
 
 describe("milestoneReviewersService", () => {
   beforeEach(() => {
@@ -85,11 +96,11 @@ describe("milestoneReviewersService", () => {
         },
       ];
 
-      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockApiResponse);
 
       const result = await milestoneReviewersService.getReviewers("program-1");
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-1"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("program-1"));
       expect(result).toEqual([
         {
           publicAddress: "0x1234567890123456789012345678901234567890",
@@ -104,7 +115,13 @@ describe("milestoneReviewersService", () => {
     });
 
     it("should return empty array when no reviewers found", async () => {
-      mockFetchData.mockResolvedValue([null, "Milestone Reviewer Not Found", null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/programs/program-1/milestone-reviewers",
+          method: "GET",
+          body: { message: "Milestone Reviewer Not Found" },
+        })
+      );
 
       const result = await milestoneReviewersService.getReviewers("program-1");
 
@@ -112,7 +129,13 @@ describe("milestoneReviewersService", () => {
     });
 
     it('should return empty array when API returns "No reviewers found" message', async () => {
-      mockFetchData.mockResolvedValue([null, "No reviewers found for this program", null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/programs/program-1/milestone-reviewers",
+          method: "GET",
+          body: { message: "No reviewers found for this program" },
+        })
+      );
 
       const result = await milestoneReviewersService.getReviewers("program-1");
 
@@ -130,7 +153,7 @@ describe("milestoneReviewersService", () => {
         },
       ];
 
-      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockApiResponse);
 
       const result = await milestoneReviewersService.getReviewers("program-1");
 
@@ -145,8 +168,32 @@ describe("milestoneReviewersService", () => {
       });
     });
 
+    it("should return empty array for any 404, regardless of message copy", async () => {
+      // A program with no reviewers is an empty list, not a failure. Some
+      // deployments return a 404 whose body message doesn't match the known
+      // "not found" phrases — treating the 404 status itself as "empty" keeps
+      // the reviewers filter from surfacing a spurious error toast.
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: "/v2/programs/program-1/milestone-reviewers",
+          method: "GET",
+          body: { message: "Not found" },
+        })
+      );
+
+      const result = await milestoneReviewersService.getReviewers("program-1");
+
+      expect(result).toEqual([]);
+    });
+
     it("should throw error for non-404 errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Internal Server Error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/programs/program-1/milestone-reviewers",
+          method: "GET",
+          body: { message: "Internal Server Error" },
+        })
+      );
 
       await expect(milestoneReviewersService.getReviewers("program-1")).rejects.toThrow(
         "Internal Server Error"

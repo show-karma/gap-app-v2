@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -57,9 +65,10 @@ import {
   getExplorerProjects,
   getExplorerProjectsPaginated,
 } from "@/services/projects-explorer.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockApiGet = api.get as ReturnType<typeof vi.fn>;
 
 describe("community-grants service trust tests", () => {
   beforeEach(() => {
@@ -72,23 +81,29 @@ describe("community-grants service trust tests", () => {
         { uid: "g1", title: "Grant 1" },
         { uid: "g2", title: "Grant 2" },
       ];
-      mockFetchData.mockResolvedValue([grants, null, null, 200]);
+      mockApiGet.mockResolvedValue(grants);
 
       const result = await getCommunityGrants("my-community");
 
       expect(result).toEqual(grants);
     });
 
-    it("calls fetchData with community slug in endpoint", async () => {
-      mockFetchData.mockResolvedValue([[], null, null, 200]);
+    it("calls api.get with community slug in endpoint", async () => {
+      mockApiGet.mockResolvedValue([]);
 
       await getCommunityGrants("test-community");
 
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/test-community/grants");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/communities/test-community/grants");
     });
 
     it("returns empty array on error (does not throw)", async () => {
-      mockFetchData.mockResolvedValue([null, "Server Error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/communities/my-community/grants",
+          method: "GET",
+          body: { message: "Server Error" },
+        })
+      );
 
       const result = await getCommunityGrants("my-community");
 
@@ -96,7 +111,7 @@ describe("community-grants service trust tests", () => {
     });
 
     it("returns empty array when data is null but no error", async () => {
-      mockFetchData.mockResolvedValue([null, null, null, 200]);
+      mockApiGet.mockResolvedValue(null);
 
       const result = await getCommunityGrants("my-community");
 
@@ -114,28 +129,28 @@ describe("projects-explorer service trust tests", () => {
 
   describe("getExplorerProjects", () => {
     it("uses LIST endpoint when no search query", async () => {
-      mockFetchData.mockResolvedValue([[], null, null, 200]);
+      mockApiGet.mockResolvedValue([]);
 
       await getExplorerProjects({});
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("/v2/projects"));
-      expect(mockFetchData).toHaveBeenCalledWith(expect.not.stringContaining("search"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("/v2/projects"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.not.stringContaining("search"));
     });
 
     it("uses SEARCH endpoint when query length >= 3", async () => {
-      mockFetchData.mockResolvedValue([[], null, null, 200]);
+      mockApiGet.mockResolvedValue([]);
 
       await getExplorerProjects({ search: "test" });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("search"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("search"));
     });
 
     it("uses LIST endpoint when query length < 3", async () => {
-      mockFetchData.mockResolvedValue([[], null, null, 200]);
+      mockApiGet.mockResolvedValue([]);
 
       await getExplorerProjects({ search: "ab" });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.not.stringContaining("search"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.not.stringContaining("search"));
     });
 
     it("filters out test projects from results", async () => {
@@ -145,7 +160,7 @@ describe("projects-explorer service trust tests", () => {
         { details: { title: "My Test App" } },
         { details: { title: "Production App" } },
       ];
-      mockFetchData.mockResolvedValue([projects, null, null, 200]);
+      mockApiGet.mockResolvedValue(projects);
 
       const result = await getExplorerProjects({});
 
@@ -155,7 +170,13 @@ describe("projects-explorer service trust tests", () => {
     });
 
     it("returns empty array on error (does not throw)", async () => {
-      mockFetchData.mockResolvedValue([null, "Server Error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/projects",
+          method: "GET",
+          body: { message: "Server Error" },
+        })
+      );
 
       const result = await getExplorerProjects({});
 
@@ -164,7 +185,7 @@ describe("projects-explorer service trust tests", () => {
 
     it("includes projects without titles (not filtered out)", async () => {
       const projects = [{ details: {} }, { details: { title: "Normal" } }];
-      mockFetchData.mockResolvedValue([projects, null, null, 200]);
+      mockApiGet.mockResolvedValue(projects);
 
       const result = await getExplorerProjects({});
 
@@ -182,16 +203,16 @@ describe("projects-explorer service trust tests", () => {
         page: 2,
         limit: 10,
       };
-      mockFetchData.mockResolvedValue([response, null, null, 200]);
+      mockApiGet.mockResolvedValue(response);
 
       await getExplorerProjectsPaginated({ page: 2, limit: 10 });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("page=2"));
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("limit=10"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("page=2"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("limit=10"));
     });
 
     it("passes sortBy and sortOrder params", async () => {
-      mockFetchData.mockResolvedValue([{ projects: [], total: 0 }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ projects: [], total: 0 });
 
       await getExplorerProjectsPaginated({
         page: 1,
@@ -199,34 +220,38 @@ describe("projects-explorer service trust tests", () => {
         sortOrder: "desc" as any,
       });
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("sortBy=updatedAt"));
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("sortOrder=desc"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("sortBy=updatedAt"));
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("sortOrder=desc"));
     });
 
     it("throws on error (unlike getExplorerProjects which returns [])", async () => {
-      mockFetchData.mockResolvedValue([null, "Server Error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/projects/paginated",
+          method: "GET",
+          body: { message: "Server Error" },
+        })
+      );
 
       await expect(getExplorerProjectsPaginated({ page: 1 })).rejects.toThrow();
     });
 
     it("excludes search query when length < 3", async () => {
-      mockFetchData.mockResolvedValue([{ projects: [], total: 0 }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ projects: [], total: 0 });
 
       await getExplorerProjectsPaginated({ page: 1, search: "ab" });
 
       // Should not have q param
-      const callArg = mockFetchData.mock.calls[0][0] as string;
+      const callArg = mockApiGet.mock.calls[0][0] as string;
       expect(callArg).not.toMatch(/q=ab/);
     });
 
     it("always sends excludeTestProjects=true", async () => {
-      mockFetchData.mockResolvedValue([{ projects: [], total: 0 }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ projects: [], total: 0 });
 
       await getExplorerProjectsPaginated({ page: 1 });
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        expect.stringContaining("excludeTestProjects=true")
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("excludeTestProjects=true"));
     });
   });
 });

@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import type { ApplicationFormData, UseApplicationSubmitReturn } from "../types";
 
 export function useApplicationSubmit(communityId: string): UseApplicationSubmitReturn {
@@ -29,13 +29,10 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
       if (aiEvaluation) body.aiEvaluation = aiEvaluation;
       if (accessCode) body.accessCode = accessCode;
 
-      const [response, fetchError] = await fetchData<Application>(
-        `/v2/funding-applications/${programId}`,
-        "POST",
-        body
-      );
-      if (fetchError || !response) {
-        throw new Error(fetchError ?? "Failed to submit application");
+      // TODO(#1775): add zod schema
+      const response = await api.post<Application>(`/v2/funding-applications/${programId}`, body);
+      if (!response) {
+        throw new Error("Failed to submit application");
       }
       return response;
     },

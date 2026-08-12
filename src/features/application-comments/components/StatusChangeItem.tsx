@@ -1,9 +1,9 @@
 "use client";
 
 import { Calendar, CheckCircle, Clock, Eye, FileQuestion, XCircle } from "lucide-react";
-import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatApplicationStatus } from "@/utilities/application-status";
 import { formatDate } from "@/utilities/formatDate";
 import type { StatusHistoryItem } from "../types";
 
@@ -28,13 +28,6 @@ function getStatusIcon(status: string) {
   }
 }
 
-function formatStatusLabel(status: string): string {
-  return status
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
 export function StatusChangeItem({ status }: StatusChangeItemProps) {
   return (
     <Card className="rounded-none bg-gray-50 dark:bg-zinc-900/50 border-l-4 border-l-primary">
@@ -48,7 +41,7 @@ export function StatusChangeItem({ status }: StatusChangeItemProps) {
 
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline">{formatStatusLabel(status.status)}</Badge>
+              <Badge variant="outline">{formatApplicationStatus(status.status)}</Badge>
               <span className="text-xs text-muted-foreground">Status Changed</span>
             </div>
 

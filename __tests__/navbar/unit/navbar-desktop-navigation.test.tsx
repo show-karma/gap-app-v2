@@ -83,6 +83,7 @@ import userEvent from "@testing-library/user-event";
 import { useAuth } from "@/hooks/useAuth";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
 import { useNavbarPermissions } from "@/src/components/navbar/navbar-permissions-context";
+import { PAGES } from "@/utilities/pages";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 import { mockAuthState, mockNavbarPermissionsState } from "../setup";
 import {
@@ -331,8 +332,10 @@ describe("NavbarDesktopNavigation", () => {
 
       // Wait for content - check for Funders menu items
       await waitFor(() => {
-        expect(screen.getByText("Launch a program")).toBeInTheDocument();
+        expect(screen.getByText("Run a grant program")).toBeInTheDocument();
       });
+      expect(screen.getByText("Foundations")).toBeInTheDocument();
+      expect(screen.getByText("Donor Advisors")).toBeInTheDocument();
     });
 
     it("should render ExploreContent in Explore dropdown", async () => {
@@ -619,11 +622,13 @@ describe("NavbarDesktopNavigation", () => {
         { timeout: 3000 }
       );
 
-      // Check for social media links (by aria-label)
+      // Check for follow links (by aria-label)
       expect(screen.getByLabelText("Twitter")).toBeInTheDocument();
       expect(screen.getByLabelText("Telegram")).toBeInTheDocument();
       expect(screen.getByLabelText("Discord")).toBeInTheDocument();
-      expect(screen.getByLabelText("Paragraph")).toBeInTheDocument();
+      const blog = screen.getByLabelText("Blog");
+      expect(blog).toHaveAttribute("href", PAGES.BLOG);
+      expect(blog).not.toHaveAttribute("target", "_blank");
     });
 
     it("should render Follow section title in Resources dropdown", async () => {

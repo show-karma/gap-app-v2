@@ -64,11 +64,14 @@ describe("Navigation Flow Integration Tests", () => {
       await user.click(forFundersTrigger);
 
       await waitFor(() => {
-        expect(screen.getByText("Launch a program")).toBeInTheDocument();
+        expect(screen.getByText("Run a grant program")).toBeInTheDocument();
       });
 
-      // Verify secondary items
+      // Verify the audience groups and their items
+      expect(screen.getByText("Foundations")).toBeInTheDocument();
       expect(screen.getByText("Case studies")).toBeInTheDocument();
+      expect(screen.getByText("Donor Advisors")).toBeInTheDocument();
+      expect(screen.getByText("Nonprofit Deep Research")).toBeInTheDocument();
       expect(screen.getByText("Schedule demo")).toBeInTheDocument();
     });
 

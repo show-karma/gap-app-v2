@@ -38,6 +38,10 @@ export function getMilestoneStatusTooltip(
         ? parts.join(" · ")
         : MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.PENDING];
     }
+    case MilestoneLifecycleStatus.CANCELLED:
+      return statusUpdatedAt
+        ? `Cancelled on ${fmtDate(statusUpdatedAt)}`
+        : MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.CANCELLED];
     default:
       return effectiveStatus;
   }

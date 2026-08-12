@@ -92,4 +92,60 @@ describe("instrumentation-client", () => {
     expect(exports.onRequestError).toBe(mockCaptureRequestError);
     expect(exports.onRouterTransitionStart).toBe(mockCaptureRouterTransitionStart);
   });
+
+  describe("beforeSend — chunk load error gating (GAP-FRONTEND-20T)", () => {
+    const RELOAD_FLAG_KEY = "chunk-reload-attempted";
+
+    beforeEach(() => {
+      window.sessionStorage.clear();
+    });
+
+    afterEach(() => {
+      window.sessionStorage.clear();
+    });
+
+    it("drops a first-time chunk load error (recovery about to run)", async () => {
+      await import("@/instrumentation-client");
+      const initConfig = mockInit.mock.calls[0][0];
+
+      const event = { tags: {} } as Record<string, unknown>;
+      const hint = {
+        originalException: new Error(
+          "Failed to load chunk /_next/static/chunks/f1658854a5637c9c.js from module 572682"
+        ),
+      };
+
+      expect(initConfig.beforeSend(event, hint)).toBeNull();
+    });
+
+    it("keeps and tags an exhausted chunk load error (reload already attempted)", async () => {
+      window.sessionStorage.setItem(RELOAD_FLAG_KEY, String(Date.now()));
+
+      await import("@/instrumentation-client");
+      const initConfig = mockInit.mock.calls[0][0];
+
+      const event = { tags: {} } as { tags: Record<string, string> };
+      const hint = {
+        originalException: new Error(
+          "Failed to load chunk /_next/static/chunks/abc.js from module 1"
+        ),
+      };
+
+      const result = initConfig.beforeSend(event, hint);
+      expect(result).toBe(event);
+      expect(result.tags.chunk_recovery).toBe("exhausted");
+    });
+
+    it("does not touch non-chunk errors", async () => {
+      await import("@/instrumentation-client");
+      const initConfig = mockInit.mock.calls[0][0];
+
+      const event = { tags: {} } as { tags: Record<string, string> };
+      const hint = { originalException: new Error("Some unrelated failure") };
+
+      const result = initConfig.beforeSend(event, hint);
+      expect(result).toBe(event);
+      expect(result.tags.chunk_recovery).toBeUndefined();
+    });
+  });
 });

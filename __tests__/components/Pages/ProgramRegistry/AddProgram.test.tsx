@@ -4,7 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
 // --- Mocks ---
 
@@ -80,9 +81,16 @@ vi.mock("@/services/programRegistry.service", () => ({
   },
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn().mockResolvedValue([{}, null]),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn().mockResolvedValue({}),
+    put: vi.fn().mockResolvedValue({}),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/messages", () => ({
@@ -525,25 +533,21 @@ describe("AddProgram", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalledWith(
+        expect(api.post).toHaveBeenCalledWith(
           "/v2/registry/create",
-          "POST",
           expect.objectContaining({
             chainId: expect.anything(),
             metadata: expect.objectContaining({
               title: "Test Program Name",
             }),
-          }),
-          {},
-          {},
-          true
+          })
         );
       });
     });
 
     it("shows loading state on submit button during submission", async () => {
-      // Make fetchData hang to keep loading state active
-      vi.mocked(fetchData).mockReturnValue(new Promise(() => {}));
+      // Make api.post hang to keep loading state active
+      vi.mocked(api.post).mockReturnValue(new Promise(() => {}));
 
       const user = userEvent.setup();
       renderWithProviders(<AddProgram />);
@@ -568,7 +572,13 @@ describe("AddProgram", () => {
     });
 
     it("shows error toast when submission fails", async () => {
-      vi.mocked(fetchData).mockResolvedValue([null, "Server error"]);
+      vi.mocked(api.post).mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/registry/create",
+          method: "POST",
+          body: { message: "Server error" },
+        })
+      );
       const user = userEvent.setup();
       renderWithProviders(<AddProgram />);
 

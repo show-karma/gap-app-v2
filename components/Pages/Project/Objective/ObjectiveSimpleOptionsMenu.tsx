@@ -14,7 +14,7 @@ import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -36,7 +36,6 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
@@ -55,7 +54,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
   });
 
   const deleteFn = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeleting(true);
     startAttestation("Deleting milestone...");
     try {
@@ -125,11 +124,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID), {});
           }
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");

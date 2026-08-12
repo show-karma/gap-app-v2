@@ -92,6 +92,47 @@ describe("getMilestoneStatus", () => {
     });
     expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.PendingVerification);
   });
+
+  it("returns Cancelled when status is cancelled", () => {
+    const milestone = makeMilestone({ status: "cancelled", dueDate: "2020-01-01" });
+    expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.Cancelled);
+  });
+
+  it("returns Cancelled when a cancellation is attached", () => {
+    const milestone = makeMilestone({
+      status: "cancelled",
+      cancellation: {
+        uid: "0xcancel",
+        cancelledBy: "0xadmin",
+        cancelledAt: "2026-07-13T00:00:00Z",
+        reason: "superseded",
+      },
+    });
+    expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.Cancelled);
+  });
+
+  it("prioritizes Cancelled over completion/verification (terminal)", () => {
+    const milestone = makeMilestone({
+      status: "cancelled",
+      cancellation: {
+        uid: "0xcancel",
+        cancelledBy: "0xadmin",
+        cancelledAt: null,
+        reason: null,
+      },
+      completionDetails: {
+        description: "Done",
+        completedAt: "2025-01-15T10:00:00Z",
+        completedBy: "0xdef",
+      },
+      verificationDetails: {
+        description: "Verified",
+        verifiedAt: "2025-01-16T14:30:00Z",
+        verifiedBy: "0xabc",
+      },
+    });
+    expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.Cancelled);
+  });
 });
 
 describe("MilestoneReviewStatus enum", () => {

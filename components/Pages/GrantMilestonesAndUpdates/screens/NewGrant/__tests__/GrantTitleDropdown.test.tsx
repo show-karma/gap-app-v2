@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { GrantTitleDropdown } from "../GrantTitleDropdown";
 
 // Mock react-hot-toast
@@ -17,12 +17,9 @@ describe("GrantTitleDropdown", () => {
   const mockSetValue = vi.fn();
   const mockSetSelectedProgram = vi.fn();
 
-  const createMockProgram = (overrides: Partial<GrantProgram> = {}): GrantProgram => ({
-    _id: { $oid: "test-id" },
+  const createMockProgram = (overrides: Partial<CommunityProgram> = {}): CommunityProgram => ({
     programId: "program-1",
     chainID: 10,
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-01",
     ...overrides,
     metadata: {
       title: "Test Program",

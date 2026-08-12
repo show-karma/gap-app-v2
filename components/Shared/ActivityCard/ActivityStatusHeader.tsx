@@ -6,7 +6,10 @@ import type { FC } from "react";
 import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
-import { getEffectiveMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import {
+  getEffectiveMilestoneStatus,
+  isCancelledMilestoneStatus,
+} from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import {
   type MilestoneDueDateInput,
   normalizeMilestoneDueDateMs,
@@ -51,7 +54,11 @@ export const ActivityStatusHeader: FC<ActivityStatusHeaderProps> = ({
 }) => {
   const dueMs = normalizeMilestoneDueDateMs(dueDate);
   const effectiveStatus = getEffectiveMilestoneStatus(
-    completed ? MilestoneLifecycleStatus.COMPLETED : MilestoneLifecycleStatus.PENDING,
+    isCancelledMilestoneStatus(milestone?.currentStatus)
+      ? MilestoneLifecycleStatus.CANCELLED
+      : completed
+        ? MilestoneLifecycleStatus.COMPLETED
+        : MilestoneLifecycleStatus.PENDING,
     dueMs
   );
 

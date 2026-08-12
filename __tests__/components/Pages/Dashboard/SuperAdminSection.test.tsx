@@ -5,8 +5,8 @@ describe("SuperAdminSection", () => {
   it("renders the admin panel link card", () => {
     render(<SuperAdminSection />);
 
-    expect(screen.getByText("Admin Panel")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open Admin Panel" })).toHaveAttribute(
+    expect(screen.getByText("Admin panel")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open admin panel" })).toHaveAttribute(
       "href",
       "/admin"
     );

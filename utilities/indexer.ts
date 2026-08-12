@@ -69,8 +69,6 @@ export const INDEXER = {
       `/projects/list?offset=${offset}&limit=${limit}${
         sortField ? `&sortField=${sortField}` : ""
       }${sortOrder ? `&sortOrder=${sortOrder}` : ""}`,
-    BY_PROGRAM: (programId: string, chainId: number, communityId: string) =>
-      `/projects/by-program?programId=${programId}&chainId=${chainId}&communityId=${communityId}`,
     TRACKS: (projectId: string) => `/tracks/projects/${projectId}/tracks`,
   },
   V2: {
@@ -113,7 +111,6 @@ export const INDEXER = {
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
       UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,
       MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
-      IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`,
     },
     APPLICATIONS: {
       BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
@@ -165,8 +162,19 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
       ACCESS: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}/access`,
-      MY_APPLICATIONS: (communitySlug: string) =>
-        `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
+      MY_APPLICATIONS: (params: {
+        communitySlug: string;
+        programId?: string;
+        page?: number;
+        limit?: number;
+      }) => {
+        const qs = new URLSearchParams();
+        qs.set("communitySlug", params.communitySlug);
+        if (params.programId) qs.set("programId", params.programId);
+        if (params.page !== undefined) qs.set("page", String(params.page));
+        if (params.limit !== undefined) qs.set("limit", String(params.limit));
+        return `/v2/funding-applications/user/my-applications?${qs.toString()}`;
+      },
       INVOICE_CONFIG: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/invoice-config`,
       MILESTONE_EVALUATION: (referenceNumber: string, milestoneTitle: string) =>
@@ -213,6 +221,7 @@ export const INDEXER = {
       REVIEWERS: (communityUID: string) => `/v2/communities/${communityUID}/reviewers`,
       REVIEWER_PROGRAMS: (communityUID: string) =>
         `/v2/communities/${communityUID}/reviewer-programs`,
+      PROGRAMS: (uidOrSlug: string) => `/v2/communities/${uidOrSlug}/programs`,
     },
     REGISTRY: {
       GET_ALL: "/v2/program-registry/search",
@@ -381,7 +390,6 @@ export const INDEXER = {
     },
   },
   PROGRAMS: {
-    COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
     FINANCIALS: (programId: string, page?: number, limit?: number) => {
       const params = new URLSearchParams();
       if (page) params.set("page", page.toString());
@@ -396,13 +404,10 @@ export const INDEXER = {
     },
     CONTRACTS: {
       CHECK_ADDRESS: () => `/v2/projects/contracts/address-availability`,
-      DEPLOYER: (network: string, contractAddress: string) =>
-        `/v2/projects/contracts/deployer?network=${encodeURIComponent(network)}&contractAddress=${encodeURIComponent(contractAddress)}`,
-      VERIFY_MESSAGE: () => `/v2/projects/contracts/verify-message`,
-      VERIFY_SIGNATURE: () => `/v2/projects/contracts/verify-signature`,
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
+    IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`, // TEMP: V1 bridge pending gap-indexer#2178; move back to V2.PROJECTS.IMPACTS (/v2/projects/:id/impacts) once shipped
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
     REQUEST_INTRO: (projectIdOrSlug: string) => `/projects/requestintro/${projectIdOrSlug}`,
@@ -656,7 +661,6 @@ export const INDEXER = {
       PENDING_VERIFICATION: (communityIdOrSlug: string) =>
         `/v2/communities/${communityIdOrSlug}/milestones/pending-verification`,
     },
-    PROGRAMS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/programs`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs/impact-aggregate`,
     PROJECT_DISCOVERY: (communityIdOrSlug: string) =>
@@ -744,6 +748,7 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
+    SET_APPLICABILITY: "/v2/admin/kyc/applicability",
   },
   NOTIFICATION_CONFIG: {
     TEST_CONFIG: (communityIdOrSlug: string) =>
@@ -798,6 +803,9 @@ export const INDEXER = {
     ME: "/v2/donor-research/me",
     ME_COUNTERS: "/v2/donor-research/me/counters",
     HANDLES: "/v2/donor-research/handles",
+    HANDLE_BY_ID: (handleId: string) => `/v2/donor-research/handles/${handleId}`,
+    PERSONA: (handleId: string) => `/v2/donor-research/handles/${handleId}/persona`,
+    PERSONA_REFINE: (handleId: string) => `/v2/donor-research/handles/${handleId}/persona/refine`,
     REPORTS: "/v2/donor-research/reports",
     REPORT_BY_ID: (reportId: string) => `/v2/donor-research/reports/${reportId}`,
     REPORT_CONFIG: (reportId: string) => `/v2/donor-research/reports/${reportId}/config`,
@@ -805,5 +813,8 @@ export const INDEXER = {
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
     SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
     SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
+    // Staff-only admin overview. Report reads use REPORT_BY_ID — the
+    // endpoint grants staff an unscoped read.
+    ADMIN_ADVISORS: "/v2/admin/donor-research/advisors",
   },
 };

@@ -55,12 +55,10 @@ export const ProjectNavigation = ({
   const publicTabs = useMemo<Tab[]>(
     () => [
       {
+        // The project root is now the Updates page (v2 UpdatesContent); the
+        // separate /updates route is consolidated here.
         name: "Project",
         href: PAGES.PROJECT.OVERVIEW(project?.details?.slug || projectId),
-      },
-      {
-        name: "Updates",
-        href: PAGES.PROJECT.UPDATES(project?.details?.slug || projectId),
       },
       {
         name: "Funding",

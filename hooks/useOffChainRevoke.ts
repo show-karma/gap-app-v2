@@ -1,18 +1,19 @@
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { envVars } from "@/utilities/enviromentVars";
 import {
   INDEXING_TIMEOUT_MESSAGE,
   IndexingTimeoutError,
   OffChainRevokeError,
 } from "@/utilities/errors";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { isAbortError, isRetryConditionNotMetError } from "@/utilities/retries";
 
 /**
- * Hard cap on the revoke POST itself. Overrides the indexer-wide 360s ceiling
- * in `fetchData` (which exists for legacy long-poll endpoints) so a hung
- * revoke surfaces as a fast, actionable error instead of spinning for minutes
+ * Hard cap on the revoke POST itself. Overrides the indexer-wide default
+ * timeout (which exists for legacy long-poll endpoints) so a hung revoke
+ * surfaces as a fast, actionable error instead of spinning for minutes
  * behind a button the user is staring at.
  */
 const REVOKE_REQUEST_TIMEOUT_MS = 30_000;
@@ -44,14 +45,14 @@ const normalizeErrorMessage = (error: unknown): string =>
  * **Contract: throws on failure.** `performOffChainRevoke` resolves to `void`
  * on success and rejects with a typed error on any failure. Callers MUST wrap
  * it in try/catch — failure can no longer be silently ignored (there is no
- * boolean to discard). The error is derived from `fetchData`'s tuple SHAPE,
- * not from which internal branch ran:
+ * boolean to discard). The error is derived from the `api` client's typed
+ * `ApiError`, not from which internal branch ran:
  *
- * - server responded with an error → `res[1]` is a STRING →
+ * - server responded with an error → an `HttpError` →
  *   `OffChainRevokeError("API_ERROR")` (toasted, `surfaced`).
- * - no response (network failure / internal timeout) → `res[1]` is the raw
- *   `Error` object → `OffChainRevokeError("REQUEST_FAILED")` (toasted,
- *   `surfaced`), with the message normalized to a string before toasting.
+ * - no response (network failure / internal timeout) → any other `ApiError`
+ *   → `OffChainRevokeError("REQUEST_FAILED")` (toasted, `surfaced`), with the
+ *   message normalized to a string before toasting.
  * - injected `checkIfExists` exhausts its budget → `IndexingTimeoutError`.
  * - injected `checkIfExists` is cancelled by the caller → the abort error is
  *   rethrown untouched, no toast (the user navigated away).
@@ -73,38 +74,41 @@ export const useOffChainRevoke = (injectedToast?: AttestationToast) => {
   }: UseOffChainRevokeOptions): Promise<void> => {
     showLoading(toastMessages?.loading || "Revoking attestation...");
 
-    const [, error, , status] = await fetchData(
-      INDEXER.PROJECT.REVOKE_ATTESTATION(uid, chainID),
-      "POST",
-      {},
-      {},
-      {},
-      true,
-      false,
-      envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
-      AbortSignal.timeout(REVOKE_REQUEST_TIMEOUT_MS)
-    );
-
-    if (error) {
-      if (typeof error === "string") {
-        // Server responded with an error — `fetchData` put the message string
-        // in the tuple along with the HTTP status.
-        showError(error);
-        throw new OffChainRevokeError("API_ERROR", error, {
+    try {
+      await api.post(
+        INDEXER.PROJECT.REVOKE_ATTESTATION(uid, chainID),
+        {},
+        {
+          baseURL: envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
+          signal: AbortSignal.timeout(REVOKE_REQUEST_TIMEOUT_MS),
+        }
+      );
+    } catch (rawErr) {
+      if (isApiError(rawErr) && rawErr instanceof HttpError) {
+        // Server responded with an error — mirror the legacy fetchData
+        // adapter's message extraction: prefer the response body's message,
+        // then the underlying cause's message, then the synthetic HttpError
+        // message.
+        const bodyMessage = (rawErr.body as { message?: string } | undefined)?.message;
+        const causeMessage = (rawErr.cause as { message?: string } | undefined)?.message;
+        const message = bodyMessage || causeMessage || rawErr.message;
+        showError(message);
+        throw new OffChainRevokeError("API_ERROR", message, {
           uid,
           chainID,
-          status,
+          status: rawErr.status,
           surfaced: true,
         });
       }
 
       // No response: network failure or our own 30s request timeout. Because
-      // this hook owns the only signal on the POST, a tuple-path cancellation
-      // here is the internal timeout, never user cancellation.
-      const isTimeout = isAbortError(error);
+      // this hook owns the only signal on the POST, an abort here is the
+      // internal timeout, never user cancellation.
+      const underlyingError = isApiError(rawErr) ? (rawErr.cause ?? rawErr) : rawErr;
+      const isTimeout = isAbortError(underlyingError);
       const message = isTimeout
         ? "Revocation request timed out. Please try again."
-        : normalizeErrorMessage(error);
+        : normalizeErrorMessage(underlyingError);
       showError(message);
       throw new OffChainRevokeError("REQUEST_FAILED", message, {
         uid,

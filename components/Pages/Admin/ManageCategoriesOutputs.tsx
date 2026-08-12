@@ -14,7 +14,7 @@ import { useIndicators } from "@/hooks/useIndicators";
 import { Link } from "@/src/components/navigation/Link";
 import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -222,17 +222,13 @@ export const ManageCategoriesOutputs = ({
   const handleAddOutput = async (data: ImpactSegmentFormData, categoryId: string) => {
     try {
       setIsSavingOutput("new");
-      const [, error] = await fetchData(
-        INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId),
-        "POST",
-        {
-          name: data.name,
-          type: data.type,
-          description: data.description,
-          impactIndicators: data.impact_indicators,
-        }
-      );
-      if (error) throw error;
+      // TODO(#1775): add zod schema
+      await api.post(INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId), {
+        name: data.name,
+        type: data.type,
+        description: data.description,
+        impactIndicators: data.impact_indicators,
+      });
 
       refreshCategories(true).then((refreshedCategories) => {
         setCategories(refreshedCategories);
@@ -258,14 +254,11 @@ export const ManageCategoriesOutputs = ({
   const handleRemoveOutput = async (categoryId: string, segmentId: string) => {
     try {
       setIsDeletingOutput(segmentId);
-      const [, error] = await fetchData(
-        INDEXER.CATEGORIES.IMPACT_SEGMENTS.DELETE(categoryId),
-        "DELETE",
-        {
-          segmentId,
-        }
-      );
-      if (error) throw error;
+      // DELETE with a body isn't exposed on api.delete(); use the low-level
+      // request() escape hatch (still throws on failure like the rest of the client).
+      await api.request("DELETE", INDEXER.CATEGORIES.IMPACT_SEGMENTS.DELETE(categoryId), {
+        segmentId,
+      });
 
       refreshCategories(true).then((refreshedCategories) => {
         setCategories(refreshedCategories);
@@ -298,17 +291,13 @@ export const ManageCategoriesOutputs = ({
   const saveOutput = async (data: ImpactSegmentFormData, categoryId: string, outputId: string) => {
     try {
       setIsSavingOutput(outputId);
-      const [, error] = await fetchData(
-        INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId),
-        "POST",
-        {
-          name: data.name,
-          type: data.type,
-          description: data.description,
-          impactIndicators: data.impact_indicators,
-        }
-      );
-      if (error) throw error;
+      // TODO(#1775): add zod schema
+      await api.post(INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId), {
+        name: data.name,
+        type: data.type,
+        description: data.description,
+        impactIndicators: data.impact_indicators,
+      });
 
       refreshCategories(true).then((refreshedCategories) => {
         setCategories(refreshedCategories);

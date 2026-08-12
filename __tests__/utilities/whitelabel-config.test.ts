@@ -21,6 +21,14 @@ describe("whitelabel-config", () => {
     it("returns null for unknown domains", () => {
       expect(getWhitelabelByDomain("example.com")).toBeNull();
     });
+
+    it("configures button foreground colors independently from primary colors", () => {
+      const optimism = getWhitelabelByDomain("app.opgrants.io");
+      const filecoin = getWhitelabelByDomain("app.filpgf.io");
+
+      expect(optimism?.theme?.buttonTextColor).toBe("#FFFFFF");
+      expect(filecoin?.theme?.buttonTextColor).toBe("#FFFFFF");
+    });
   });
 
   describe("toHslToken", () => {

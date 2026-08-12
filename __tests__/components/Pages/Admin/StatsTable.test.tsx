@@ -141,6 +141,31 @@ describe("StatsTable", () => {
       expect(pastDueCell).toHaveClass("text-red-600");
     });
 
+    it("links milestone counts to the canonical manage review page (DEV-496)", () => {
+      render(
+        <StatsTable
+          {...baseProps}
+          reports={[makeReport({ pastDueMilestones: 1 })]}
+          isLoading={false}
+          error={null}
+          onSort={vi.fn()}
+          onPageChange={vi.fn()}
+        />
+      );
+
+      const row = screen.getByRole("row", { name: /Grant Alpha/i });
+      const pastDueCell = within(row).getByRole("link", {
+        name: "1 past due milestones for Grant Alpha",
+      });
+
+      // DEV-496: one canonical milestone link — the manage review page, not the
+      // public project page with a status anchor.
+      expect(pastDueCell).toHaveAttribute(
+        "href",
+        "/community/community-1/manage/funding-platform/program-1/milestones/project-1"
+      );
+    });
+
     it("renders zero past-due counts in gray", () => {
       render(
         <StatsTable

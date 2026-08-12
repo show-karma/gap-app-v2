@@ -115,7 +115,6 @@ function makeMilestone(
     status: "completed",
     completionDetails: null,
     verificationDetails: null,
-    fundingApplicationCompletion: null,
     ...overrides,
   };
 }

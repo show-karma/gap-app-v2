@@ -1,14 +1,16 @@
 import { getCommunityGrants } from "../community-grants.service";
 
-vi.mock("@/utilities/fetchData");
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn() },
+}));
 vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as unknown as vi.Mock;
 const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("community-grants.service", () => {
@@ -43,17 +45,17 @@ describe("community-grants.service", () => {
         },
       ];
 
-      mockFetchData.mockResolvedValue([mockGrants, null]);
+      mockApiGet.mockResolvedValue(mockGrants);
 
       const result = await getCommunityGrants(communitySlug);
 
-      expect(mockFetchData).toHaveBeenCalledWith(`/v2/communities/${communitySlug}/grants`);
+      expect(mockApiGet).toHaveBeenCalledWith(`/v2/communities/${communitySlug}/grants`);
       expect(result).toEqual(mockGrants);
       expect(mockErrorManager).not.toHaveBeenCalled();
     });
 
     it("should return empty array when no grants exist", async () => {
-      mockFetchData.mockResolvedValue([[], null]);
+      mockApiGet.mockResolvedValue([]);
 
       const result = await getCommunityGrants(communitySlug);
 
@@ -62,14 +64,14 @@ describe("community-grants.service", () => {
     });
 
     it("should return empty array and log error on API error", async () => {
-      mockFetchData.mockResolvedValue([null, "Server error"]);
+      mockApiGet.mockRejectedValue(new Error("Server error"));
 
       const result = await getCommunityGrants(communitySlug);
 
       expect(result).toEqual([]);
       expect(mockErrorManager).toHaveBeenCalledWith(
-        "Community Grants API Error: Server error",
-        "Server error",
+        "Community Grants API Error: Error: Server error",
+        expect.any(Error),
         {
           context: "community-grants.service",
           communitySlug,
@@ -78,7 +80,7 @@ describe("community-grants.service", () => {
     });
 
     it("should return empty array when data is undefined", async () => {
-      mockFetchData.mockResolvedValue([undefined, null]);
+      mockApiGet.mockResolvedValue(undefined);
 
       const result = await getCommunityGrants(communitySlug);
 
@@ -100,7 +102,7 @@ describe("community-grants.service", () => {
         },
       ];
 
-      mockFetchData.mockResolvedValue([mockGrants, null]);
+      mockApiGet.mockResolvedValue(mockGrants);
 
       const result = await getCommunityGrants(communitySlug);
 
@@ -122,7 +124,7 @@ describe("community-grants.service", () => {
         },
       ];
 
-      mockFetchData.mockResolvedValue([mockGrants, null]);
+      mockApiGet.mockResolvedValue(mockGrants);
 
       const result = await getCommunityGrants(communitySlug);
 
@@ -131,13 +133,13 @@ describe("community-grants.service", () => {
     });
 
     it("should use the correct endpoint for different community slugs", async () => {
-      mockFetchData.mockResolvedValue([[], null]);
+      mockApiGet.mockResolvedValue([]);
 
       await getCommunityGrants("optimism");
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/optimism/grants");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/communities/optimism/grants");
 
       await getCommunityGrants("gitcoin");
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/gitcoin/grants");
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/communities/gitcoin/grants");
     });
 
     it("should handle large response with many grants", async () => {
@@ -152,7 +154,7 @@ describe("community-grants.service", () => {
         categories: [`Category ${i}`],
       }));
 
-      mockFetchData.mockResolvedValue([mockGrants, null]);
+      mockApiGet.mockResolvedValue(mockGrants);
 
       const result = await getCommunityGrants(communitySlug);
 

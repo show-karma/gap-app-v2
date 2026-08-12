@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { GOV_HOST, GOV_STAGING_HOST } from "./domains";
 import { FRONTEND_NEXTJS_ROUTES } from "./frontendNextjsRoutes";
 
 /**
@@ -9,7 +10,7 @@ import { FRONTEND_NEXTJS_ROUTES } from "./frontendNextjsRoutes";
  */
 function getGovSubdomain(): string {
   const isProduction = process.env.NEXT_PUBLIC_ENV === "production";
-  return isProduction ? "gov.karmahq.xyz" : "govstag.karmahq.xyz";
+  return isProduction ? GOV_HOST : GOV_STAGING_HOST;
 }
 
 /**

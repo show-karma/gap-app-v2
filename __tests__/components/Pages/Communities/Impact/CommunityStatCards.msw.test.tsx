@@ -86,6 +86,8 @@ describe("CommunityStatCards", () => {
               grantCompletedMilestones: 25,
               grantUpdates: 60,
             },
+            totalTransactions: 0,
+            averageCompletion: 0,
           });
         })
       );
@@ -127,6 +129,8 @@ describe("CommunityStatCards", () => {
               grantCompletedMilestones: 0,
               grantUpdates: 0,
             },
+            totalTransactions: 0,
+            averageCompletion: 0,
           });
         })
       );
@@ -146,6 +150,8 @@ describe("CommunityStatCards", () => {
             totalMilestones: 0,
             projectUpdates: 0,
             projectUpdatesBreakdown: null,
+            totalTransactions: 0,
+            averageCompletion: 0,
           });
         })
       );
@@ -172,6 +178,8 @@ describe("CommunityStatCards", () => {
             totalMilestones: 30,
             projectUpdates: 40,
             projectUpdatesBreakdown: null,
+            totalTransactions: 0,
+            averageCompletion: 0,
           });
         })
       );
@@ -219,6 +227,8 @@ describe("CommunityStatCards", () => {
             totalMilestones: 1,
             projectUpdates: 1,
             projectUpdatesBreakdown: null,
+            totalTransactions: 0,
+            averageCompletion: 0,
           });
         })
       );

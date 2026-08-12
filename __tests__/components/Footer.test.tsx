@@ -31,12 +31,6 @@ vi.mock("@/components/Icons", () => ({
   ),
 }));
 
-vi.mock("@/components/Icons/Paragraph", () => ({
-  ParagraphIcon: (props: any) => (
-    <svg {...props} data-testid="paragraph-icon" aria-label="Paragraph" />
-  ),
-}));
-
 // Mock ExternalLink component
 vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, className, ...props }: any) => (
@@ -154,10 +148,10 @@ describe("Footer", () => {
       expect(screen.getByTestId("telegram-icon")).toBeInTheDocument();
     });
 
-    it("should render Paragraph icon", () => {
+    it("should not render a Paragraph icon (Blog moved to internal navigation)", () => {
       render(<Footer />);
 
-      expect(screen.getByTestId("paragraph-icon")).toBeInTheDocument();
+      expect(screen.queryByTestId("paragraph-icon")).not.toBeInTheDocument();
     });
 
     it("should have proper icon sizing", () => {
@@ -172,12 +166,10 @@ describe("Footer", () => {
 
       const links = screen.getAllByRole("link");
       const socialLinks = links.filter((link) =>
-        ["Twitter", "Discord", "Telegram", "Paragraph"].includes(
-          link.getAttribute("aria-label") || ""
-        )
+        ["Twitter", "Discord", "Telegram"].includes(link.getAttribute("aria-label") || "")
       );
 
-      expect(socialLinks.length).toBe(4);
+      expect(socialLinks.length).toBe(3);
     });
   });
 
@@ -317,9 +309,17 @@ describe("Footer", () => {
     it("should have external links with proper attributes", () => {
       render(<Footer />);
 
+      const guideLink = screen.getByText("Guide").closest("a");
+      expect(guideLink).toHaveAttribute("target", "_blank");
+      expect(guideLink).toHaveAttribute("rel", "noopener noreferrer");
+    });
+
+    it("should render Blog as an internal link, not an external one", () => {
+      render(<Footer />);
+
       const blogLink = screen.getByText("Blog").closest("a");
-      expect(blogLink).toHaveAttribute("target", "_blank");
-      expect(blogLink).toHaveAttribute("rel", "noopener noreferrer");
+      expect(blogLink).toHaveAttribute("href", "/blog");
+      expect(blogLink).not.toHaveAttribute("target", "_blank");
     });
 
     it("should have aria-labels for icon-only links", () => {
@@ -362,14 +362,17 @@ describe("Footer", () => {
       render(<Footer />);
 
       const buildersLink = screen.getByText("For Projects");
+      const guideLink = screen.getByText("Guide");
       const blogLink = screen.getByText("Blog");
 
-      // Blog is external, should have target="_blank"
-      expect(blogLink.closest("a")).toHaveAttribute("target", "_blank");
+      // Guide is external, should have target="_blank"
+      expect(guideLink.closest("a")).toHaveAttribute("target", "_blank");
 
-      // For Projects is internal (should not have target="_blank" in actual implementation)
+      // Blog and For Projects are internal — no target="_blank"
+      expect(blogLink.closest("a")).not.toHaveAttribute("target", "_blank");
       const buildersAnchor = buildersLink.closest("a");
       expect(buildersAnchor).toBeInTheDocument();
+      expect(buildersAnchor).not.toHaveAttribute("target", "_blank");
     });
 
     it("should render all navigation links as clickable", () => {
@@ -453,8 +456,9 @@ describe("Footer", () => {
       render(<Footer />);
 
       const allLinks = screen.getAllByRole("link");
-      // 6 navigation + 2 legal + 4 social = 12 links
-      expect(allLinks.length).toBeGreaterThanOrEqual(12);
+      // 9 navigation + 2 legal + 3 social (Paragraph removed, Blog moved to
+      // internal navigation) links, at minimum.
+      expect(allLinks.length).toBeGreaterThanOrEqual(11);
     });
   });
 });

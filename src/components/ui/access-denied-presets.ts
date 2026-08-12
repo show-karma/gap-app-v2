@@ -38,3 +38,9 @@ export function faucetAdminDenial(): DenialPreset {
     requiredRoles: [Role.SUPER_ADMIN],
   };
 }
+
+export function staffDenial(): DenialPreset {
+  return {
+    requiredRoles: [Role.SUPER_ADMIN],
+  };
+}

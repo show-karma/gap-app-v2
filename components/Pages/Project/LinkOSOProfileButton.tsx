@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 
@@ -86,7 +86,8 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
     setError(null);
     const validIds = ids.filter((id) => id.trim() !== "");
     try {
-      const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), "PUT", {
+      // TODO(#1775): add zod schema
+      const data = await api.put(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), {
         target: "oso",
         ids: validIds,
       });
@@ -99,11 +100,6 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
           onClose();
         }
         refreshProject();
-      }
-
-      if (error) {
-        setError(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR);
-        throw new Error(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR);
       }
     } catch (err) {
       setError(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR);

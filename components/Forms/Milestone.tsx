@@ -23,7 +23,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -31,7 +31,10 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { errorManager } from "../Utilities/errorManager";
 
-const milestoneSchema = z.object({
+// Exported as a test seam so the refine's error-path fix (dates.startsAt, not
+// dates.dates.startsAt) can be locked with a direct schema test instead of a
+// brittle full-form render.
+export const milestoneSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.MILESTONES.FORM.TITLE.MIN })
@@ -54,7 +57,9 @@ const milestoneSchema = z.object({
       },
       {
         message: "Start date must be before the end date",
-        path: ["dates", "startsAt"],
+        // Relative to the `dates` object this refine is attached to; a
+        // ["dates", "startsAt"] path would resolve to dates.dates.startsAt
+        path: ["startsAt"],
       }
     ),
 });
@@ -74,9 +79,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   grant: { uid, chainID, milestones },
   afterSubmit,
 }) => {
-  const form = useForm<z.infer<typeof milestoneSchema>>({
-    resolver: zodResolver(milestoneSchema),
-  });
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [recipient, setRecipient] = useState("");
 
@@ -120,7 +122,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
-    if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
     setIsLoading(true);
     startAttestation("Creating milestone...");
@@ -156,11 +157,18 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
-            "POST",
-            {}
-          );
+          try {
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID), {});
+          } catch (error) {
+            // Best-effort notification: the indexer's own blockchain listener
+            // will eventually catch up, so a failed HTTP nudge here must not
+            // block the success/indexing flow below (matches legacy
+            // fetchData behavior — see utilities/indexer-notification.ts).
+            errorManager("Failed to notify indexer of new attestation", error, {
+              txHash,
+              chainId: milestoneToAttest.chainID,
+            });
+          }
         }
         updateStep("indexing");
         while (retries > 0) {
@@ -230,7 +238,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="priority"
-            control={form.control}
+            control={control}
             render={({ field, formState, fieldState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>Milestone priority (optional)</div>
@@ -289,7 +297,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                     </Popover.Panel>
                   </Popover>
                 </div>
-                <p className="text-base text-red-400">{formState.errors.dates?.endsAt?.message}</p>
+                <p className="text-base text-red-400">{formState.errors.priority?.message}</p>
               </div>
             )}
           />
@@ -299,7 +307,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="dates.startsAt"
-            control={form.control}
+            control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>Start date (optional)</div>
@@ -336,7 +344,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="flex w-full flex-row justify-between gap-4">
           <Controller
             name="dates.endsAt"
-            control={form.control}
+            control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
                 <div className={labelStyle}>End date *</div>

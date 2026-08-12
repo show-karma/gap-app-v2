@@ -80,11 +80,13 @@ export function FeaturedProgram({
                 )}
                 aria-hidden
               />
-              {view.daysLeft !== null && view.urgency !== "closed"
-                ? `${view.daysLeft} ${pluralize("day", view.daysLeft)} left`
-                : view.urgency === "closed"
-                  ? "Closed"
-                  : "Open"}
+              {view.urgency === "closed"
+                ? "Closed"
+                : view.urgency === "upcoming"
+                  ? "Coming soon"
+                  : view.daysLeft !== null
+                    ? `${view.daysLeft} ${pluralize("day", view.daysLeft)} left`
+                    : "Open"}
             </span>
             <span className="rounded-full border border-border bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
               Featured
@@ -106,10 +108,12 @@ export function FeaturedProgram({
               href={href}
               className="inline-flex h-11 items-center gap-2 rounded-lg bg-foreground px-5 text-sm font-semibold text-background transition hover:bg-foreground/90"
             >
-              {view.urgency === "closed" ? "View details" : "Apply before deadline"}
+              {view.urgency === "closed" || view.urgency === "upcoming"
+                ? "View details"
+                : "Apply before deadline"}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
-            {view.urgency !== "closed" ? (
+            {view.urgency !== "closed" && view.urgency !== "upcoming" ? (
               <Link
                 href={href}
                 className="inline-flex h-11 items-center rounded-lg border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:bg-secondary"

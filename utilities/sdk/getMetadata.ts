@@ -1,6 +1,7 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { orElse } from "@/utilities/api/or-else";
 import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetails } from "../queries/v2/community";
 
@@ -10,9 +11,8 @@ export const getMetadata = async <T>(
 ): Promise<T | undefined> => {
   try {
     if (type === "project") {
-      const [project, error] = await fetchData(INDEXER.V2.PROJECTS.GET(uid));
-      if (error || !project) return undefined;
-      return project as T;
+      // TODO(#1775): add zod schema
+      return await orElse<T | undefined>(api.get<T>(INDEXER.V2.PROJECTS.GET(uid)), undefined);
     }
     if (type === "community") {
       const community = await getCommunityDetails(uid);

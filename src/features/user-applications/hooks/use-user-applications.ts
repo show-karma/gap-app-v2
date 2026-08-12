@@ -1,12 +1,31 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { useUserApplicationsStore } from "../lib/store";
-import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../types";
+import type {
+  UserApplicationsResponse,
+  UserApplicationsSortBy,
+  UseUserApplicationsReturn,
+} from "../types";
 
-export function useUserApplications(communitySlug?: string): UseUserApplicationsReturn {
+// The my-applications endpoint does not accept sort params, so sorting is
+// applied client-side over the fetched page. ISO date strings compare
+// correctly as strings.
+const SORT_FIELD: Record<UserApplicationsSortBy, (app: Application) => string> = {
+  createdAt: (app) => app.createdAt ?? "",
+  updatedAt: (app) => app.updatedAt ?? "",
+  // Application has no submittedAt field; creation time is the closest proxy
+  submittedAt: (app) => app.createdAt ?? "",
+  programName: (app) => app.programTitle ?? "",
+  status: (app) => app.status ?? "",
+};
+
+export function useUserApplications(
+  communitySlug?: string,
+  options?: { enabled?: boolean }
+): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
   const { address, authenticated } = useAuth();
 
@@ -28,13 +47,14 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     setError,
   } = useUserApplicationsStore();
 
+  // sortBy/sortOrder are intentionally NOT in the key: the endpoint doesn't
+  // accept them, so including them refetches byte-identical data on every
+  // header click. Sorting happens client-side below.
   const queryKey = [
     "wl-user-applications",
     communitySlug,
     address,
     filters,
-    sortBy,
-    sortOrder,
     pagination.page,
     pagination.limit,
   ];
@@ -50,15 +70,13 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
       const communityParam = communitySlug ? `&communitySlug=${communitySlug}` : "";
 
-      const [res, err] = await fetchData<UserApplicationsResponse>(
-        `/v2/funding-applications/user/my-applications?page=${pagination.page}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`,
-        "GET"
+      // TODO(#1775): add zod schema
+      return api.get<UserApplicationsResponse>(
+        `/v2/funding-applications/user/my-applications?page=${pagination.page}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`
       );
-      if (err) throw new Error(err);
-      return res as UserApplicationsResponse;
     },
     staleTime: 1000 * 60 * 2,
-    enabled: !!authenticated,
+    enabled: !!authenticated && (options?.enabled ?? true),
   });
 
   // Update store with query results
@@ -68,7 +86,14 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
     if (data) {
       setApplications(data.applications);
-      setPagination(data.pagination);
+      // The endpoint's wire format names this field `totalCount`, not
+      // `total` (see gap-indexer's FundingApplicationApiMapper) — normalize
+      // here so the rest of the app can keep reading the single `total`
+      // field without silently falling back to a stale/zero value.
+      setPagination({
+        ...data.pagination,
+        total: data.pagination.totalCount ?? data.pagination.total ?? 0,
+      });
       setStatusCounts(data.statusCounts ?? {});
     }
   }, [
@@ -90,8 +115,6 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
         communitySlug,
         address,
         filters,
-        sortBy,
-        sortOrder,
         pagination.page + 1,
         pagination.limit,
       ];
@@ -106,14 +129,11 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
 
       queryClient.prefetchQuery({
         queryKey: nextPageKey,
-        queryFn: async () => {
-          const [res, err] = await fetchData<UserApplicationsResponse>(
-            `/v2/funding-applications/user/my-applications?page=${pagination.page + 1}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`,
-            "GET"
-          );
-          if (err) throw new Error(err);
-          return res;
-        },
+        queryFn: () =>
+          // TODO(#1775): add zod schema
+          api.get<UserApplicationsResponse>(
+            `/v2/funding-applications/user/my-applications?page=${pagination.page + 1}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`
+          ),
         staleTime: 1000 * 60 * 2,
       });
     }
@@ -123,15 +143,19 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     pagination.totalPages,
     pagination.limit,
     filters,
-    sortBy,
-    sortOrder,
     communitySlug,
     queryClient,
     address,
   ]);
 
+  const sortedApplications = useMemo(() => {
+    const getField = SORT_FIELD[sortBy] ?? SORT_FIELD.createdAt;
+    const sorted = [...applications].sort((a, b) => getField(a).localeCompare(getField(b)));
+    return sortOrder === "desc" ? sorted.reverse() : sorted;
+  }, [applications, sortBy, sortOrder]);
+
   return {
-    applications,
+    applications: sortedApplications,
     filters,
     sortBy,
     sortOrder,

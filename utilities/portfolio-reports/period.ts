@@ -2,6 +2,13 @@ import type { ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-rep
 
 export const RUN_DATE_REGEX = /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
+/**
+ * Report-config slug segment. Must stay in sync with the backend's
+ * `configSlugSchema` (portfolio-report.schemas.ts) — a slug the FE accepts but
+ * the API rejects would 400 instead of rendering a not-found.
+ */
+export const CONFIG_SLUG_REGEX = /^[a-z0-9][a-z0-9-]*$/;
+
 export function isRunDate(value: string): boolean {
   return RUN_DATE_REGEX.test(value);
 }

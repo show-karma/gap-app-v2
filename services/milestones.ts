@@ -2,30 +2,14 @@ import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Grant } from "@/types/v2/grant";
 import type { ProjectUpdateDeliverable } from "@/types/v2/roadmap";
+import { api } from "@/utilities/api/client";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 // Keep apiClient for mutations (PUT, POST)
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
-
-// Milestone completion data from funding applications
-export interface MilestoneCompletionData {
-  id: string;
-  referenceNumber: string;
-  milestoneFieldLabel: string;
-  milestoneTitle: string;
-  completionText: string;
-  ownerAddress: string;
-  isVerified: boolean;
-  verifiedBy?: string;
-  verifiedAt?: string;
-  verificationComment?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 // Grant milestone completion details (on-chain data)
 export interface GrantMilestoneCompletionDetails {
@@ -46,6 +30,14 @@ export interface GrantMilestoneVerificationDetails {
   attestationUID?: string;
 }
 
+// On-chain cancellation overlay (DEV-523). Present only when status === "cancelled".
+export interface MilestoneCancellation {
+  uid: string; // the cancelled attestation, revoked to un-cancel
+  cancelledBy: string;
+  cancelledAt: string | null;
+  reason: string | null;
+}
+
 // Grant milestone with completion data
 export interface GrantMilestoneWithCompletion {
   uid: string;
@@ -57,9 +49,17 @@ export interface GrantMilestoneWithCompletion {
   startsAt?: number;
   priority?: number;
   status: string;
+  /**
+   * On-chain recipient of the milestone attestation, resolved by the indexer
+   * from the attestation record. This is the value every follow-up attestation
+   * (completion / verification / cancellation) must reuse verbatim — it is the
+   * reason the flows no longer re-fetch the whole project through the SDK.
+   * Optional because legacy rows predate the indexer's recipient backfill.
+   */
+  recipient?: string;
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
-  fundingApplicationCompletion: MilestoneCompletionData | null;
+  cancellation?: MilestoneCancellation | null;
 }
 
 // Response from the project updates endpoint
@@ -100,13 +100,10 @@ export interface MilestoneEvaluationResponse {
 export async function fetchMilestoneEvaluation(
   milestoneUID: string
 ): Promise<MilestoneEvaluationResponse> {
-  const [data, error] = await fetchData<MilestoneEvaluationResponse>(
+  // TODO(#1775): add zod schema
+  const data = await api.get<MilestoneEvaluationResponse>(
     INDEXER.MILESTONE.EVALUATION(milestoneUID)
   );
-
-  if (error) {
-    throw new Error(`Failed to fetch milestone evaluation: ${error}`);
-  }
 
   return data ?? { evaluations: [] };
 }
@@ -115,13 +112,10 @@ export async function fetchApplicationMilestoneEvaluation(
   referenceNumber: string,
   milestoneTitle: string
 ): Promise<MilestoneEvaluationResponse> {
-  const [data, error] = await fetchData<MilestoneEvaluationResponse>(
+  // TODO(#1775): add zod schema
+  const data = await api.get<MilestoneEvaluationResponse>(
     INDEXER.V2.FUNDING_APPLICATIONS.MILESTONE_EVALUATION(referenceNumber, milestoneTitle)
   );
-
-  if (error) {
-    throw new Error(`Failed to fetch application milestone evaluation: ${error}`);
-  }
 
   return data ?? { evaluations: [] };
 }
@@ -136,18 +130,71 @@ async function fetchGrantByProgramId(
   programId: string
 ): Promise<Grant | undefined> {
   const grantsEndpoint = INDEXER.V2.PROJECTS.GRANTS(projectUid);
-  const [grants, error] = await fetchData<Grant[]>(grantsEndpoint);
+  try {
+    // TODO(#1775): add zod schema
+    const grants = await api.get<Grant[]>(grantsEndpoint);
 
-  if (error || !grants) {
+    // Compare in normalized form: grant.details.programId may be stored as
+    // either "1013" or "1013_42161" depending on when the grant was created,
+    // while the caller always passes the chain-stripped form.
+    const normalizedTarget = stripChainSuffix(programId);
+    return grants.find((g) => stripChainSuffix(g.details?.programId) === normalizedTarget);
+  } catch (error) {
+    // Reported, not swallowed: errorManager owns the Sentry capture. The grant
+    // is supplementary to the milestones, so a failure here degrades the
+    // response rather than failing the whole read.
     errorManager("Error fetching grant", error, { projectUid, programId });
     return undefined;
   }
+}
 
-  // Compare in normalized form: grant.details.programId may be stored as
-  // either "1013" or "1013_42161" depending on when the grant was created,
-  // while the caller always passes the chain-stripped form.
-  const normalizedTarget = stripChainSuffix(programId);
-  return grants.find((g) => stripChainSuffix(g.details?.programId) === normalizedTarget);
+/**
+ * The single grant-milestones endpoint. Shared by the full read and the
+ * poll-friendly read so the two can never drift apart on query params.
+ */
+function grantMilestonesEndpoint(projectUid: string, programId: string): string {
+  const normalizedProgramId = stripChainSuffix(programId) ?? programId;
+  return `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`;
+}
+
+function mapGrantMilestones(
+  updatesResponse: ProjectUpdatesResponse
+): GrantMilestoneWithCompletion[] {
+  return updatesResponse.grantMilestones.map((milestone) => ({
+    uid: milestone.uid,
+    programId: milestone.programId,
+    chainId: milestone.chainId,
+    title: milestone.title,
+    description: milestone.description,
+    dueDate: milestone.dueDate,
+    startsAt: milestone.startsAt,
+    priority: milestone.priority,
+    status: milestone.status,
+    recipient: milestone.recipient,
+    completionDetails: milestone.completionDetails,
+    verificationDetails: milestone.verificationDetails,
+    cancellation: milestone.cancellation ?? null,
+  }));
+}
+
+/**
+ * Fetches ONLY the grant milestones for a program — a single V2 request, unlike
+ * `fetchProjectGrantMilestones` which also resolves the project and grant.
+ *
+ * Used by the attestation flows' indexing polls: they re-read one milestone
+ * every ~1.5s, so the extra project/grant round-trips (and, previously, an
+ * SDK-driven V1 `GET /projects/:uid`) were pure overhead and a crash site.
+ */
+export async function fetchGrantMilestonesForProgram(
+  projectUid: string,
+  programId: string
+): Promise<GrantMilestoneWithCompletion[]> {
+  // TODO(#1775): add zod schema
+  const updatesResponse = await api.get<ProjectUpdatesResponse>(
+    grantMilestonesEndpoint(projectUid, programId)
+  );
+
+  return mapGrantMilestones(updatesResponse);
 }
 
 export async function fetchProjectGrantMilestones(
@@ -156,45 +203,25 @@ export async function fetchProjectGrantMilestones(
 ): Promise<ProjectGrantMilestonesResponse> {
   // Normalize programId (remove chainId suffix if present) before sending to API
   const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-  const [projectResponse, milestonesResponse, grant] = await Promise.all([
-    fetchData(INDEXER.V2.PROJECTS.GET(projectUid), "GET"),
-    fetchData(
-      `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`,
-      "GET"
-    ),
+  const [project, updatesResponse, grant] = await Promise.all([
+    // TODO(#1775): add zod schema
+    api
+      .get<ProjectData>(INDEXER.V2.PROJECTS.GET(projectUid))
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to fetch project: ${message}`);
+      }),
+    // TODO(#1775): add zod schema
+    api
+      .get<ProjectUpdatesResponse>(grantMilestonesEndpoint(projectUid, normalizedProgramId))
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to fetch milestones: ${message}`);
+      }),
     fetchGrantByProgramId(projectUid, normalizedProgramId),
   ]);
 
-  const [projectData, projectError] = projectResponse;
-  const [milestonesData, milestonesError] = milestonesResponse;
-
-  if (projectError || !projectData) {
-    throw new Error(`Failed to fetch project: ${projectError || "No data returned"}`);
-  }
-
-  if (milestonesError || !milestonesData) {
-    throw new Error(`Failed to fetch milestones: ${milestonesError || "No data returned"}`);
-  }
-
-  const project = projectData as ProjectData;
-  const updatesResponse = milestonesData as ProjectUpdatesResponse;
-
-  const grantMilestones: GrantMilestoneWithCompletion[] = updatesResponse.grantMilestones.map(
-    (milestone) => ({
-      uid: milestone.uid,
-      programId: milestone.programId,
-      chainId: milestone.chainId,
-      title: milestone.title,
-      description: milestone.description,
-      dueDate: milestone.dueDate,
-      startsAt: milestone.startsAt,
-      priority: milestone.priority,
-      status: milestone.status,
-      completionDetails: milestone.completionDetails,
-      verificationDetails: milestone.verificationDetails,
-      fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
-    })
-  );
+  const grantMilestones = mapGrantMilestones(updatesResponse);
 
   return {
     project,

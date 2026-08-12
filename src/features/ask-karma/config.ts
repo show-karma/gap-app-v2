@@ -1,4 +1,6 @@
 import { isKnownTenant, type KnownTenantId } from "@/src/infrastructure/types/tenant";
+import { docsOrigin } from "@/utilities/domains";
+import { PAGES } from "@/utilities/pages";
 import type { AskKarmaConfig, AskKarmaPersona } from "./types";
 
 const DEFAULT_CONFIG: AskKarmaConfig = {
@@ -43,9 +45,8 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       title: "Open Funding Rounds",
       description: "Browse active programs accepting applications",
       links: [
-        // TODO(ask-karma): replace placeholder hrefs with real destinations
-        { label: "View open rounds", href: "/funding-opportunities" },
-        { label: "How applications work", href: "/" },
+        { label: "View open rounds", href: PAGES.REGISTRY.ROOT },
+        { label: "How applications work", href: PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle") },
       ],
     },
     {
@@ -58,10 +59,9 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
       icon: "settings",
       title: "Project Management",
       links: [
-        // TODO(ask-karma): replace placeholder hrefs with real destinations
-        { label: "Submit a milestone update", href: "/my-projects" },
-        { label: "Update project profile", href: "/my-projects" },
-        { label: "FAQs", href: "/" },
+        { label: "Submit a milestone update", href: PAGES.MY_PROJECTS },
+        { label: "Update project profile", href: PAGES.MY_PROJECTS },
+        { label: "FAQs", href: PAGES.KNOWLEDGE.ARTICLE("project-updates-and-reputation") },
       ],
     },
   ],
@@ -133,12 +133,12 @@ const TENANT_CONFIGS: Partial<Record<KnownTenantId, AskKarmaConfig>> = {
         links: [
           {
             label: "ProPGF Grantee Guide",
-            href: "https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-grantee-guide",
+            href: `${docsOrigin()}/how-to-guides/partners/filecoin/propgf-grantee-guide`,
             isExternal: true,
           },
           {
             label: "Milestone Reviewer Guide",
-            href: "https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/milestone-reviewer-guide",
+            href: `${docsOrigin()}/how-to-guides/partners/filecoin/milestone-reviewer-guide`,
             isExternal: true,
           },
         ],

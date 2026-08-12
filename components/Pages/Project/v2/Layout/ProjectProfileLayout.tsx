@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
+import { useParams, usePathname } from "next/navigation";
+import { type ReactNode, Suspense, useCallback, useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const ProgressDialog = dynamic(
@@ -58,7 +58,6 @@ const EndorsementsListDialog = dynamic(
 
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -69,11 +68,10 @@ import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
 import { MobileSupportContent } from "../Mobile/MobileSupportContent";
 import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
 import { SidebarProfileCard } from "../SidePanel/SidebarProfileCard";
-import {
-  ContentTabsSkeleton,
-  MobileProfileContentSkeleton,
-  ProjectSidePanelSkeleton,
-} from "../Skeletons";
+import { ContentTabsSkeleton } from "../Skeletons/ContentTabsSkeleton";
+import { MobileProfileContentSkeleton } from "../Skeletons/MobileProfileContentSkeleton";
+import { ProjectSidePanelSkeleton } from "../Skeletons/ProjectSidePanelSkeleton";
+import { ProjectInviteCodeWatcher } from "./ProjectInviteCodeWatcher";
 
 interface ProjectProfileLayoutProps {
   children: ReactNode;
@@ -108,7 +106,6 @@ export function ProjectProfileLayout({
 }: ProjectProfileLayoutProps) {
   const { projectId } = useParams();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // Support tab is mobile-only and has no URL — track with local state
   const [isSupportActive, setIsSupportActive] = useState(false);
@@ -123,18 +120,19 @@ export function ProjectProfileLayout({
   const { isIntroModalOpen } = useIntroModalStore();
   const { isProgressModalOpen } = useProgressModalStore();
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
-  const { openModal: openContributorProfileModal } = useContributorProfileModalStore();
   const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
 
-  // Auto-open contributor profile modal when invite code is present in URL (only once)
-  const inviteCode = searchParams.get("invite-code");
+  // Rendered in every branch below (including loading and error) so the invite
+  // modal still opens while the project resolves. The latch stays here, not in
+  // the watcher: the branches have different root element types, so React
+  // remounts it and child state would reset. See ProjectInviteCodeWatcher.
   const [hasOpenedInviteModal, setHasOpenedInviteModal] = useState(false);
-  useEffect(() => {
-    if (inviteCode && !hasOpenedInviteModal) {
-      setHasOpenedInviteModal(true);
-      openContributorProfileModal();
-    }
-  }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
+  const markInviteModalOpened = useCallback(() => setHasOpenedInviteModal(true), []);
+  const inviteCodeWatcher = (
+    <Suspense fallback={null}>
+      <ProjectInviteCodeWatcher hasOpened={hasOpenedInviteModal} onOpen={markInviteModalOpened} />
+    </Suspense>
+  );
 
   const { project, isProjectLoading, isLoading, isError, isVerified, stats } = useProjectProfile(
     projectId as string
@@ -180,6 +178,7 @@ export function ProjectProfileLayout({
         className="flex flex-col items-center justify-center gap-6 w-full min-h-[60vh] px-4"
         data-testid="project-not-found"
       >
+        {inviteCodeWatcher}
         <div className="flex flex-col items-center gap-4 max-w-md text-center">
           <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center">
             <svg
@@ -227,6 +226,7 @@ export function ProjectProfileLayout({
     if (serverSidePanel) {
       return (
         <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
+          {inviteCodeWatcher}
           {/* Mobile: Server-rendered profile card */}
           <div className="lg:hidden">{serverSidePanel}</div>
 
@@ -257,6 +257,7 @@ export function ProjectProfileLayout({
 
     return (
       <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
+        {inviteCodeWatcher}
         {/* Mobile: Profile card skeleton */}
         <div className="lg:hidden">
           <div className="flex flex-col gap-4 p-6 rounded-lg border border-border bg-background">
@@ -300,6 +301,7 @@ export function ProjectProfileLayout({
 
   return (
     <ErrorBoundary>
+      {inviteCodeWatcher}
       {/* Dialogs */}
       {isEndorsementOpen && <EndorsementDialog />}
       {isIntroModalOpen && <IntroDialog />}

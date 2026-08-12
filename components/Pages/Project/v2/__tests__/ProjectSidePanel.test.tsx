@@ -23,10 +23,11 @@ vi.mock("@/store/modals/intro", () => ({
   }),
 }));
 
-// Mock fetchData for SubscribeSection
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(() => Promise.resolve([{}, null])),
+// Mock the api client for SubscribeSection
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    post: vi.fn(() => Promise.resolve({})),
+  },
 }));
 
 // Mock react-hot-toast

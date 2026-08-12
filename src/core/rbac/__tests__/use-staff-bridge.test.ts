@@ -5,6 +5,7 @@ import { Role } from "../types/role";
 const mockContextValue = {
   hasRoleOrHigher: vi.fn(),
   isLoading: false,
+  isGuestDueToError: false,
 };
 
 vi.mock("../context/permission-context", () => ({
@@ -18,7 +19,22 @@ describe("useStaff", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockContextValue.isLoading = false;
+    mockContextValue.isGuestDueToError = false;
     mockContextValue.hasRoleOrHigher.mockReturnValue(false);
+  });
+
+  it("should return isStaff=false and isError=true when permissions could not be resolved", () => {
+    // React Query keeps the last successful payload when a refetch fails, so
+    // `hasRoleOrHigher` can still answer true off a stale answer. Authorization
+    // must fail closed on an unresolved result, not coast on a cached one.
+    mockContextValue.isGuestDueToError = true;
+    mockContextValue.hasRoleOrHigher.mockReturnValue(true);
+
+    const { result } = renderHook(() => useStaff());
+
+    expect(result.current.isStaff).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isError).toBe(true);
   });
 
   it("should return isStaff=true when user has SUPER_ADMIN role", () => {

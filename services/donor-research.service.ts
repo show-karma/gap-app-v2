@@ -3,28 +3,34 @@ import type {
   DonorAdvisor,
   DonorHandle,
   DonorHandleList,
+  DonorPersona,
   DonorResearchCountersSnapshot,
+  PersonaProvenance,
+  PersonaStructured,
+  RefinementResult,
   ReportCreateResponse,
   ResearchReportDetail,
   ResearchReportList,
   SharedReportApiPayload,
   ShareTokenPayload,
 } from "@/types/donor-research";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
  * Donor-research API client.
  *
- * All authenticated endpoints rely on the Privy session cookie that
- * `fetchData` attaches by default. The shared donor view
+ * All authenticated endpoints rely on the Privy session cookie/bearer token
+ * that the `api` client attaches by default. The shared donor view
  * (`fetchSharedReport`) does NOT require authentication — the path token
  * IS the capability.
  *
- * Failure shape mirrors the rest of the v2 services: tuple
- * `[data, error, _, status]` from `fetchData`. We unwrap into either the
- * data object or `null` plus throw on hard failures so callers (React
- * Query hooks) can lean on `useQuery`'s built-in retry + cache layers.
+ * Failure shape: the `api` client throws a typed `ApiError` on failure. We
+ * unwrap successful responses into either the data object or `null` (for
+ * the documented 404-as-empty-state cases below) and let every other
+ * failure propagate so callers (React Query hooks) can lean on
+ * `useQuery`'s built-in retry + cache layers.
  */
 
 // -- Advisor -----------------------------------------------------------
@@ -35,20 +41,22 @@ import { INDEXER } from "@/utilities/indexer";
  * Returns `null` only when the advisor hasn't onboarded yet — `GET /me`
  * returns 404 in exactly that one case (missing/invalid auth surfaces as
  * 401 earlier, and the route always exists), so a 404 is the unambiguous
- * "route to onboarding" signal. `fetchData` exposes only `response.data
- * .message`, not the structured error code, so we key off the status.
- * Any other error is thrown so React Query can retry / surface an error
- * state rather than silently sending the user to onboarding.
+ * "route to onboarding" signal — keyed off `HttpError.status`. Any other
+ * error is thrown so React Query can retry / surface an error state
+ * rather than silently sending the user to onboarding.
  */
 export const fetchCurrentAdvisor = async (): Promise<DonorAdvisor | null> => {
-  const [data, error, , status] = await fetchData<DonorAdvisor>(INDEXER.DONOR_RESEARCH.ME);
-  if (status === 404) {
-    return null;
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<DonorAdvisor>(INDEXER.DONOR_RESEARCH.ME);
+    if (!data) throw new Error("Failed to load advisor");
+    return data;
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  if (error || !data) {
-    throw new Error(error || "Failed to load advisor");
-  }
-  return data;
 };
 
 export interface OnboardAdvisorRequest {
@@ -64,10 +72,9 @@ export interface OnboardAdvisorRequest {
 }
 
 export const onboardAdvisor = async (body: OnboardAdvisorRequest): Promise<DonorAdvisor> => {
-  const [data, error] = await fetchData<DonorAdvisor>(INDEXER.DONOR_RESEARCH.ME, "POST", body);
-  if (error || !data) {
-    throw new Error(error || "Failed to onboard advisor");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.post<DonorAdvisor>(INDEXER.DONOR_RESEARCH.ME, body);
+  if (!data) throw new Error("Failed to onboard advisor");
   return data;
 };
 
@@ -79,12 +86,9 @@ export const onboardAdvisor = async (body: OnboardAdvisorRequest): Promise<Donor
  * still render but with a "—" usage value.
  */
 export const fetchMyCounters = async (): Promise<DonorResearchCountersSnapshot> => {
-  const [data, error] = await fetchData<DonorResearchCountersSnapshot>(
-    INDEXER.DONOR_RESEARCH.ME_COUNTERS
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to load rate-limit counters");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.get<DonorResearchCountersSnapshot>(INDEXER.DONOR_RESEARCH.ME_COUNTERS);
+  if (!data) throw new Error("Failed to load rate-limit counters");
   return data;
 };
 
@@ -101,15 +105,9 @@ export const listDonorHandles = async (
   const params: Record<string, number> = {};
   if (options.limit !== undefined) params.limit = options.limit;
   if (options.offset !== undefined) params.offset = options.offset;
-  const [data, error] = await fetchData<DonorHandleList>(
-    INDEXER.DONOR_RESEARCH.HANDLES,
-    "GET",
-    {},
-    params
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to load donor handles");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.get<DonorHandleList>(INDEXER.DONOR_RESEARCH.HANDLES, { params });
+  if (!data) throw new Error("Failed to load donor handles");
   return data;
 };
 
@@ -119,11 +117,193 @@ export interface CreateHandleRequest {
 }
 
 export const createDonorHandle = async (body: CreateHandleRequest): Promise<DonorHandle> => {
-  const [data, error] = await fetchData<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLES, "POST", body);
-  if (error || !data) {
-    throw new Error(error || "Failed to create donor handle");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.post<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLES, body);
+  if (!data) throw new Error("Failed to create donor handle");
   return data;
+};
+
+/** Fetches a single donor handle. Powers the donor-detail page (U7). */
+export const getDonorHandle = async (handleId: string): Promise<DonorHandle> => {
+  // TODO(#1775): add zod schema
+  const data = await api.get<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLE_BY_ID(handleId));
+  if (!data) throw new Error("Failed to load donor handle");
+  return data;
+};
+
+export interface UpdateHandleRequest {
+  opaqueLabel?: string;
+  /** Private advisor notes — NOT the persona source. `null` clears them. */
+  notes?: string | null;
+}
+
+/**
+ * Patches a donor handle (used by the detail page's private "Notes"
+ * section). Only the provided keys are sent; omitted keys preserve.
+ */
+export const updateDonorHandle = async (
+  handleId: string,
+  body: UpdateHandleRequest
+): Promise<DonorHandle> => {
+  // TODO(#1775): add zod schema
+  const data = await api.patch<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLE_BY_ID(handleId), body);
+  if (!data) throw new Error("Failed to update donor handle");
+  return data;
+};
+
+// -- Persona -----------------------------------------------------------
+
+/**
+ * Fetches the persona for a donor handle.
+ *
+ * Returns `null` on 404 — a handle with no persona yet is the normal empty
+ * state, not an error (mirrors {@link fetchCurrentAdvisor}). Any other
+ * failure throws so React Query can surface an error state.
+ */
+export const getDonorPersona = async (handleId: string): Promise<DonorPersona | null> => {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<DonorPersona>(INDEXER.DONOR_RESEARCH.PERSONA(handleId));
+    if (!data) throw new Error("Failed to load donor persona");
+    return data;
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+};
+
+/** One chip in an {@link UpdateDonorPersonaInput}. */
+export interface PersonaChipInput {
+  value: string | null;
+  /**
+   * Provenance. MUST be absent when `value` is `null` (a cleared chip cannot
+   * carry a source — the backend 400s otherwise); the serializer enforces
+   * this. Defaults to `"manual"` when a value is present without one.
+   */
+  source?: PersonaProvenance;
+}
+
+/**
+ * PUT body for {@link updateDonorPersona}. Every top-level key is optional:
+ * an omitted key preserves the persisted value; an explicit `null` clears it.
+ * Within `structured`, an omitted chip key preserves that chip.
+ */
+export interface UpdateDonorPersonaInput {
+  sourceText?: string | null;
+  narrative?: string | null;
+  structured?: Partial<Record<keyof PersonaStructured, PersonaChipInput>>;
+  /**
+   * Refine-extracted scalars carried through so they persist (and then prefill
+   * the report form). `null` clears the value; omit to preserve.
+   */
+  amountMin?: number | null;
+  amountMax?: number | null;
+  cause?: string | null;
+  geography?: string | null;
+}
+
+/**
+ * Builds the PUT request body, enforcing the wire contract:
+ * - only keys present on `input` are included (omit = preserve);
+ * - a cleared chip (`value: null`) is sent as `{ value: null }` WITHOUT a
+ *   `source` (coherence — the backend rejects a null value carrying a source);
+ * - a set chip is sent as `{ value, source }`, defaulting `source` to `manual`.
+ *
+ * Exported for direct unit testing of the serializer.
+ */
+export const buildPersonaPutBody = (input: UpdateDonorPersonaInput): Record<string, unknown> => {
+  const body: Record<string, unknown> = {};
+  if (input.sourceText !== undefined) body.sourceText = input.sourceText;
+  if (input.narrative !== undefined) body.narrative = input.narrative;
+  if (input.amountMin !== undefined) body.amountMin = input.amountMin;
+  if (input.amountMax !== undefined) body.amountMax = input.amountMax;
+  if (input.cause !== undefined) body.cause = input.cause;
+  if (input.geography !== undefined) body.geography = input.geography;
+  if (input.structured) {
+    const structured: Record<string, unknown> = {};
+    for (const [key, chip] of Object.entries(input.structured)) {
+      if (!chip) continue;
+      structured[key] =
+        chip.value === null
+          ? { value: null }
+          : { value: chip.value, source: chip.source ?? "manual" };
+    }
+    body.structured = structured;
+  }
+  return body;
+};
+
+/** Persona rate-limit channels (PRD §1). */
+type PersonaRateLimitChannel = "persona_refine" | "persona_write";
+
+const PERSONA_RATE_LIMIT_MESSAGES: Record<PersonaRateLimitChannel, string> = {
+  persona_refine: "You've hit the refine limit (20/hour). Try again shortly.",
+  persona_write: "You've hit the save limit (60/hour). Try again shortly.",
+};
+
+/**
+ * Thrown on a 429 from a persona write/refine. Carries the channel so the UI
+ * can show an actionable, channel-specific message and leave editor state
+ * untouched. `retryAfter` (seconds to the next hour boundary) is surfaced
+ * when the backend provides it.
+ */
+export class DonorPersonaRateLimitError extends Error {
+  readonly status = 429 as const;
+  constructor(
+    readonly channel: PersonaRateLimitChannel,
+    readonly retryAfter?: number,
+    message?: string
+  ) {
+    super(message || PERSONA_RATE_LIMIT_MESSAGES[channel]);
+    this.name = "DonorPersonaRateLimitError";
+  }
+}
+
+/** Upserts the persona. Returns the saved persona (incl. recomputed weights). */
+export const updateDonorPersona = async (
+  handleId: string,
+  input: UpdateDonorPersonaInput
+): Promise<DonorPersona> => {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.put<DonorPersona>(
+      INDEXER.DONOR_RESEARCH.PERSONA(handleId),
+      buildPersonaPutBody(input)
+    );
+    if (!data) throw new Error("Failed to save donor persona");
+    return data;
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 429) {
+      throw new DonorPersonaRateLimitError("persona_write");
+    }
+    throw error;
+  }
+};
+
+/**
+ * Runs the LLM refinement over `sourceText`. Does NOT persist — the caller
+ * reviews the returned narrative + chips and commits via
+ * {@link updateDonorPersona}.
+ */
+export const refineDonorPersona = async (
+  handleId: string,
+  sourceText: string
+): Promise<RefinementResult> => {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.post<RefinementResult>(INDEXER.DONOR_RESEARCH.PERSONA_REFINE(handleId), {
+      sourceText,
+    });
+    if (!data) throw new Error("Failed to refine donor persona");
+    return data;
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 429) {
+      throw new DonorPersonaRateLimitError("persona_refine");
+    }
+    throw error;
+  }
 };
 
 // -- Reports -----------------------------------------------------------
@@ -136,7 +316,13 @@ export interface ListReportsOptions {
    * report for the current advisor (default behavior).
    */
   donorHandleId?: string;
+  /** Restrict the list to a user-facing report outcome group. */
+  status?: ReportListStatusFilter;
 }
+
+export const REPORT_LIST_STATUS_FILTERS = ["in_progress", "complete", "failed"] as const;
+
+export type ReportListStatusFilter = (typeof REPORT_LIST_STATUS_FILTERS)[number];
 
 export const listResearchReports = async (
   options: ListReportsOptions = {}
@@ -145,25 +331,17 @@ export const listResearchReports = async (
   if (options.limit !== undefined) params.limit = options.limit;
   if (options.offset !== undefined) params.offset = options.offset;
   if (options.donorHandleId) params.donorHandleId = options.donorHandleId;
-  const [data, error] = await fetchData<ResearchReportList>(
-    INDEXER.DONOR_RESEARCH.REPORTS,
-    "GET",
-    {},
-    params
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to load research reports");
-  }
+  if (options.status) params.status = options.status;
+  // TODO(#1775): add zod schema
+  const data = await api.get<ResearchReportList>(INDEXER.DONOR_RESEARCH.REPORTS, { params });
+  if (!data) throw new Error("Failed to load research reports");
   return data;
 };
 
 export const getResearchReport = async (reportId: string): Promise<ResearchReportDetail> => {
-  const [data, error] = await fetchData<ResearchReportDetail>(
-    INDEXER.DONOR_RESEARCH.REPORT_BY_ID(reportId)
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to load research report");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.get<ResearchReportDetail>(INDEXER.DONOR_RESEARCH.REPORT_BY_ID(reportId));
+  if (!data) throw new Error("Failed to load research report");
   return data;
 };
 
@@ -190,14 +368,9 @@ export interface CreateReportRequest {
 export const createResearchReport = async (
   body: CreateReportRequest
 ): Promise<ReportCreateResponse> => {
-  const [data, error] = await fetchData<ReportCreateResponse>(
-    INDEXER.DONOR_RESEARCH.REPORTS,
-    "POST",
-    body
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to start research report");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.post<ReportCreateResponse>(INDEXER.DONOR_RESEARCH.REPORTS, body);
+  if (!data) throw new Error("Failed to start research report");
   return data;
 };
 
@@ -221,14 +394,12 @@ export const updateReportConfig = async (
   reportId: string,
   body: UpdateReportConfigRequest
 ): Promise<ResearchReportDetail> => {
-  const [data, error] = await fetchData<ResearchReportDetail>(
+  // TODO(#1775): add zod schema
+  const data = await api.put<ResearchReportDetail>(
     INDEXER.DONOR_RESEARCH.REPORT_CONFIG(reportId),
-    "PUT",
     body
   );
-  if (error || !data) {
-    throw new Error(error || "Failed to update report config");
-  }
+  if (!data) throw new Error("Failed to update report config");
   return data;
 };
 
@@ -242,14 +413,14 @@ export const reorderReportCandidates = async (
   reportId: string,
   orderedCandidateIds: string[]
 ): Promise<ResearchReportDetail> => {
-  const [data, error] = await fetchData<ResearchReportDetail>(
+  // TODO(#1775): add zod schema
+  const data = await api.put<ResearchReportDetail>(
     INDEXER.DONOR_RESEARCH.REPORT_REORDER(reportId),
-    "PUT",
-    { orderedCandidateIds }
+    {
+      orderedCandidateIds,
+    }
   );
-  if (error || !data) {
-    throw new Error(error || "Failed to reorder report candidates");
-  }
+  if (!data) throw new Error("Failed to reorder report candidates");
   return data;
 };
 
@@ -265,22 +436,17 @@ export const generateShareToken = async (
   reportId: string,
   body: GenerateShareTokenRequest
 ): Promise<ShareTokenPayload> => {
-  const [data, error] = await fetchData<ShareTokenPayload>(
+  // TODO(#1775): add zod schema
+  const data = await api.post<ShareTokenPayload>(
     INDEXER.DONOR_RESEARCH.SHARE_TOKEN(reportId),
-    "POST",
     body
   );
-  if (error || !data) {
-    throw new Error(error || "Failed to generate share token");
-  }
+  if (!data) throw new Error("Failed to generate share token");
   return data;
 };
 
 export const revokeShareToken = async (reportId: string): Promise<void> => {
-  const [, error] = await fetchData(INDEXER.DONOR_RESEARCH.SHARE_TOKEN(reportId), "DELETE");
-  if (error) {
-    throw new Error(error);
-  }
+  await api.delete(INDEXER.DONOR_RESEARCH.SHARE_TOKEN(reportId));
 };
 
 // -- Public donor view (unauthenticated) -------------------------------
@@ -296,17 +462,11 @@ export const fetchSharedReport = async (token: string): Promise<ResearchReportDe
   // no share-token material). Adapt it to the full ResearchReportDetail shape
   // the brief expects by filling inert defaults for the advisor-only fields —
   // the share view hides every control that would read them.
-  const [data, error] = await fetchData<SharedReportApiPayload>(
-    INDEXER.DONOR_RESEARCH.SHARED(token),
-    "GET",
-    {},
-    {},
-    {},
-    false
-  );
-  if (error || !data) {
-    throw new Error(error || "Failed to load shared report");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.get<SharedReportApiPayload>(INDEXER.DONOR_RESEARCH.SHARED(token), {
+    isAuthorized: false,
+  });
+  if (!data) throw new Error("Failed to load shared report");
   return {
     ...data,
     // Defensive: a share payload from before DEV-418 has no `weights`/`topCount`

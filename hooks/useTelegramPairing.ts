@@ -1,7 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import type { CommunityConfig } from "./useCommunityConfig";
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic "HTTP <status> <method> <path>" message.
+ */
+function httpErrorMessage(error: HttpError): string {
+  const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+  const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+  return bodyMessage || causeMessage || error.message;
+}
 
 // ── Types ──
 
@@ -43,20 +56,29 @@ export const useStartTelegramPairing = (communitySlug: string | undefined) => {
         throw new TelegramPairingError("Community slug is required", 400);
       }
 
-      const [data, error, , status] = await fetchData<TelegramPairStartResponse>(
-        INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_START(communitySlug),
-        "POST",
-        {},
-        {},
-        {},
-        true
-      );
+      try {
+        // TODO(#1775): add zod schema
+        const { data, status } = await api.request<TelegramPairStartResponse>(
+          "POST",
+          INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_START(communitySlug),
+          {}
+        );
 
-      if (error || !data) {
-        throw new TelegramPairingError(error || "Failed to start pairing", status);
+        if (!data) {
+          throw new TelegramPairingError("Failed to start pairing", status);
+        }
+
+        return data;
+      } catch (error) {
+        if (error instanceof TelegramPairingError) throw error;
+        if (isApiError(error) && error instanceof HttpError) {
+          throw new TelegramPairingError(httpErrorMessage(error), error.status);
+        }
+        throw new TelegramPairingError(
+          error instanceof Error ? error.message : "Failed to start pairing",
+          500
+        );
       }
-
-      return data;
     },
   });
 };
@@ -70,20 +92,29 @@ export const useVerifyTelegramPairing = (communitySlug: string | undefined) => {
         throw new TelegramPairingError("Community slug is required", 400);
       }
 
-      const [data, error, , status] = await fetchData<TelegramPairVerifyResponse>(
-        INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_VERIFY(communitySlug),
-        "POST",
-        { token },
-        {},
-        {},
-        true
-      );
+      try {
+        // TODO(#1775): add zod schema
+        const { data, status } = await api.request<TelegramPairVerifyResponse>(
+          "POST",
+          INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_VERIFY(communitySlug),
+          { token }
+        );
 
-      if (error || !data) {
-        throw new TelegramPairingError(error || "Verification failed", status);
+        if (!data) {
+          throw new TelegramPairingError("Verification failed", status);
+        }
+
+        return data;
+      } catch (error) {
+        if (error instanceof TelegramPairingError) throw error;
+        if (isApiError(error) && error instanceof HttpError) {
+          throw new TelegramPairingError(httpErrorMessage(error), error.status);
+        }
+        throw new TelegramPairingError(
+          error instanceof Error ? error.message : "Verification failed",
+          500
+        );
       }
-
-      return data;
     },
     onSuccess: (data) => {
       if (!communitySlug) return;

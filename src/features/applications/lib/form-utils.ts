@@ -16,10 +16,11 @@ export function transformFormSchemaToQuestions(formSchema: IFormSchema): Applica
       description: field.description,
       required: field.required || false,
       placeholder: field.placeholder,
-      options: field.options?.map((option) => ({
-        value: option,
-        label: option,
-      })),
+      options: field.options?.map((option) =>
+        typeof option === "object" && option !== null
+          ? { value: String(option.value), label: String(option.label ?? option.value) }
+          : { value: option, label: option }
+      ),
       validation: {
         min: field.validation?.min,
         max: field.validation?.max,
@@ -36,56 +37,17 @@ export function transformFormSchemaToQuestions(formSchema: IFormSchema): Applica
   });
 }
 
-export function mapFieldsToLabels(
-  fieldData: Record<string, FormFieldValue>,
-  questions: ApplicationQuestion[]
-): PostApprovalData {
-  const mappedData: PostApprovalData = {};
-  const idToLabelMap: Record<string, string> = {};
-  for (const q of questions) {
-    idToLabelMap[q.id] = q.label;
-  }
-
-  for (const [key, value] of Object.entries(fieldData)) {
-    const fieldLabel = idToLabelMap[key];
-    if (fieldLabel) {
-      mappedData[fieldLabel] = value;
-    } else {
-      mappedData[key] = value;
-    }
-  }
-
-  return mappedData;
-}
-
-export function mapLabelsToFields(
-  labelData: PostApprovalData,
-  questions: ApplicationQuestion[]
-): Record<string, FormFieldValue> {
-  const mappedData: Record<string, FormFieldValue> = {};
-  const labelToIdMap: Record<string, string> = {};
-  for (const q of questions) {
-    labelToIdMap[q.label] = q.id;
-  }
-
-  for (const [key, value] of Object.entries(labelData)) {
-    const fieldId = labelToIdMap[key];
-    if (fieldId) {
-      mappedData[fieldId] = value;
-    }
-  }
-
-  return mappedData;
-}
-
 export function transformDataForSubmission(
-  formData: Record<string, FormFieldValue>,
-  questions: ApplicationQuestion[]
+  formData: Record<string, FormFieldValue>
 ): PostApprovalData {
-  const mappedData = mapFieldsToLabels(formData, questions);
+  // `applicationData` is persisted keyed by field.id everywhere else in the
+  // app (the create/apply flow POSTs the raw RHF-keyed form data as-is, and
+  // the read-only view maps applicationData's own keys to labels via
+  // createFieldLabelsMap). Store it the same way here so round-tripping
+  // through edit doesn't change the persisted shape.
   const cleanedData: PostApprovalData = {};
 
-  for (const [key, value] of Object.entries(mappedData)) {
+  for (const [key, value] of Object.entries(formData)) {
     if (value !== "" && value !== undefined) {
       if (Array.isArray(value)) {
         const cleanedArray = value
@@ -119,7 +81,17 @@ export function transformDataForDisplay(
   apiData: PostApprovalData,
   questions: ApplicationQuestion[]
 ): Record<string, FormFieldValue> {
-  const mappedData = mapLabelsToFields(apiData, questions);
+  // `apiData` (application.applicationData) is persisted keyed by field.id —
+  // see transformDataForSubmission above. Start from it as-is so every saved
+  // answer prefills. Fall back to a label-keyed lookup for the rare legacy
+  // record that predates this convention, so partially-migrated data still
+  // shows up instead of rendering empty.
+  const mappedData: Record<string, FormFieldValue> = { ...apiData };
+  for (const q of questions) {
+    if (!(q.id in mappedData) && q.label in apiData) {
+      mappedData[q.id] = apiData[q.label];
+    }
+  }
 
   for (const q of questions) {
     if (q.type === "checkbox" && !Array.isArray(mappedData[q.id])) {

@@ -44,8 +44,11 @@ function AboutSection({ icon, title, content, testId }: AboutSectionProps) {
         )}
         // Server-rendered markdown. Source is sanitized by markdown-it (html:false
         // escapes raw HTML, link protocols validated) before reaching the DOM.
+        // headingOffset:2 nests authored headings below the page <h1> AND this
+        // section's <h2> title — a leading `# ` becomes <h3>, never a competing
+        // <h1> and never outranking the section heading it sits under.
         // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized server markdown
-        dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(content) }}
+        dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(content, { headingOffset: 2 }) }}
       />
     </div>
   );

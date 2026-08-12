@@ -8,10 +8,21 @@
 export const DILIGENCE_ENDPOINTS = {
   // Advisor (authed):
   TEMPLATE: "/v2/donor-research/me/diligence-template",
+  /**
+   * The same template resolved through a report — i.e. the report OWNER's.
+   * Used by the in-report Ask-Questions dialog so the questions it shows are
+   * the ones the outreach will freeze, whether the owner or a staff member
+   * acting on their behalf opened it. `TEMPLATE` (caller-scoped) stays the
+   * endpoint for the standalone template editor page.
+   */
+  REPORT_TEMPLATE: (reportId: string) =>
+    `/v2/donor-research/reports/${reportId}/diligence-template`,
   CANDIDATE: (reportId: string, candidateId: string) =>
     `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/diligence`,
   REQUESTS: (reportId: string, candidateId: string) =>
     `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/diligence-requests`,
+  OUTREACH_PREVIEW: (reportId: string, candidateId: string, action: "diligence" | "intro") =>
+    `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/outreach-preview?action=${action}`,
   INTRO_REQUESTS: (reportId: string, candidateId: string) =>
     `/v2/donor-research/reports/${reportId}/candidates/${candidateId}/intro-requests`,
   // Public (token = capability, no auth):

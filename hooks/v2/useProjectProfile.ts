@@ -27,6 +27,10 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
   project: Project | null;
   /** Whether the project fetch failed (e.g., not found) */
   isError: boolean;
+  /** Whether the updates/milestones fetch failed — drives the feed's error state */
+  isUpdatesError: boolean;
+  /** Whether the updates query has returned, even if it returned zero items */
+  hasUpdatesData: boolean;
   /** Whether the updates/milestones are being re-fetched (e.g., during filter change) */
   isUpdating: boolean;
   /** Refetch all project data */
@@ -80,8 +84,10 @@ export function useProjectProfile(
   // Fetch updates and milestones (pass milestoneStatus and extra filters for server-side filtering)
   const {
     milestones = [],
+    rawData: updatesRawData,
     isLoading: isUpdatesLoading,
     isFetching: isUpdatesFetching,
+    error: updatesError,
     refetch: refetchUpdates,
   } = useProjectUpdates(projectId, milestoneStatus, filters, { isAuthorized });
 
@@ -121,6 +127,16 @@ export function useProjectProfile(
     isUpdating: isUpdatesFetching,
     isError,
     error: error instanceof Error ? error : error ? new Error(String(error)) : null,
+    // Surfaced separately from the core-project `isError` above: the updates
+    // query is what the Updates tab renders, and a failure there has to reach
+    // the feed as an error state rather than being indistinguishable from
+    // "still loading" (which rendered a skeleton forever).
+    isUpdatesError: Boolean(updatesError),
+    // Whether the updates query has returned, regardless of how many items it
+    // produced. Callers must not infer this from item count: a filtered query
+    // can succeed with zero results, and treating that as "no data yet" keeps a
+    // stale unfiltered server feed on screen instead of the empty result.
+    hasUpdatesData: updatesRawData !== undefined,
     refetch,
     ...profileData,
   };

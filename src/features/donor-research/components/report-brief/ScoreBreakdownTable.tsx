@@ -1,6 +1,7 @@
 import type { CompositeWeights, ResearchReportCandidate } from "@/types/donor-research";
-import { briefDisplay } from "./fonts";
+import { cn } from "@/utilities/tailwind";
 import { componentRows } from "./scoring";
+import { TABLE_CAPTION, TABLE_CELL_EMPHASIS, TABLE_CELL_MONO, TABLE_WRAP } from "./table-classes";
 
 interface ScoreBreakdownTableProps {
   candidate: ResearchReportCandidate;
@@ -19,37 +20,33 @@ export function ScoreBreakdownTable({ candidate, weights }: ScoreBreakdownTableP
   const composite100 = Math.round(candidate.composite * 100);
 
   return (
-    <div className="mt-8">
-      <p
-        className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground`}
-      >
-        How the score adds up
-      </p>
+    <div className="mt-6">
+      <p className={TABLE_CAPTION}>How the score adds up</p>
       <dl
-        className={`${briefDisplay.className} mt-3 flex flex-col divide-y divide-border/50 border-y border-border/50`}
+        className={cn(TABLE_WRAP, "flex flex-col divide-y divide-sf-line border-y border-sf-line")}
       >
         {rows.map((row) => (
           <div
             key={row.key}
-            className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 py-2 text-sm"
+            className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 py-2 text-[13px]"
           >
-            <dt className="text-foreground/80">{row.label}</dt>
-            <dd className="tabular-nums text-foreground/70" title="Score (0–100) × weight">
+            <dt className="text-sf-ink">{row.label}</dt>
+            <dd className={cn(TABLE_CELL_MONO, "text-sf-muted")} title="Score (0–100) × weight">
               {row.scoreOutOf100}
-              <span className="text-muted-foreground/70"> × </span>
+              <span className="text-sf-muted/70"> × </span>
               {Math.round(row.weight * 100)}%
             </dd>
-            <dd className="w-10 text-right font-medium tabular-nums text-foreground">
+            <dd className={cn(TABLE_CELL_EMPHASIS, "w-10 text-right")}>
               {row.contributionOutOf100}
             </dd>
           </div>
         ))}
-        <div className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 py-2.5 text-sm">
-          <dt className="font-medium uppercase tracking-[0.18em] text-[10px] text-muted-foreground">
+        <div className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 py-2.5 text-[13px]">
+          <dt className="text-[10px] font-[650] uppercase tracking-[0.12em] text-sf-muted">
             Composite
           </dt>
           <dd aria-hidden />
-          <dd className="w-10 text-right text-base font-medium tabular-nums text-brand-emphasis dark:text-brand-subtle">
+          <dd className="w-10 text-right font-mono text-base font-[650] tabular-nums text-brand-emphasis dark:text-brand-subtle">
             {composite100}
           </dd>
         </div>

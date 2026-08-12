@@ -9,8 +9,18 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Mock fetchData for getComments method (which uses fetchData)
-vi.mock("@/utilities/fetchData");
+// Mock the unified api client for getComments (which now uses api.get)
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
+}));
 
 // Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
 var mockAxiosInstance: vi.Mocked<AxiosInstance>;
@@ -44,9 +54,9 @@ vi.mock("@/utilities/auth/api-client", () => {
 // NOW import the service after mocks are configured
 import { applicationCommentsService } from "@/services/application-comments.service";
 // Import the mocked module to get access to the mock function
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.Mock;
 
 describe("applicationCommentsService", () => {
   beforeEach(() => {
@@ -96,14 +106,16 @@ describe("applicationCommentsService", () => {
       // Mock TokenManager to return no token
       (TokenManager.getToken as vi.Mock) = vi.fn().mockResolvedValue(null);
 
-      // Mock successful fetchData response for getComments
-      mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
+      // Mock successful api.get response for getComments
+      mockApiGet.mockResolvedValueOnce({ comments: [] });
 
       // Call the service
       await applicationCommentsService.getComments("app-123");
 
-      // Verify fetchData was called (getComments uses fetchData)
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("app-123"), "GET", {}, {});
+      // Verify api.get was called (getComments uses the unified api client)
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("app-123"), {
+        params: {},
+      });
     });
 
     it("should include JWT token for all service methods", async () => {
@@ -113,13 +125,15 @@ describe("applicationCommentsService", () => {
       (TokenManager.getToken as vi.Mock) = vi.fn().mockResolvedValue(mockToken);
 
       // Mock successful responses
-      mockFetchData.mockResolvedValue([{ comments: [] }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ comments: [] });
       mockAxiosInstance.put.mockResolvedValue({ data: { comment: {} } });
       mockAxiosInstance.delete.mockResolvedValue({ data: {} });
 
-      // Test getComments (uses fetchData)
+      // Test getComments (uses the unified api client)
       await applicationCommentsService.getComments("app-123");
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("app-123"), "GET", {}, {});
+      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("app-123"), {
+        params: {},
+      });
 
       // Test editComment (uses apiClient)
       await applicationCommentsService.editComment("comment-1", "Updated content");

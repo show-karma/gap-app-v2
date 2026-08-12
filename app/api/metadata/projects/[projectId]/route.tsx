@@ -4,18 +4,22 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
+import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { SITE_URL } from "@/utilities/meta";
 
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ projectId: string }> }
 ) {
   const projectId = (await context.params).projectId;
+  // Fetch directly instead of via getProjectCachedData: that helper throws
+  // notFound()/redirect(), which would turn this image endpoint into a 404
+  // page or an HTML redirect and make the branded fallback below unreachable.
   const [project, grants] = await Promise.all([
-    getProjectCachedData(projectId),
-    getProjectGrants(projectId),
+    getProject(projectId).catch(() => null),
+    getProjectGrants(projectId).catch(() => []),
   ]);
   if (!project) {
     return new ImageResponse(
@@ -61,17 +65,17 @@ export async function GET(
     {
       title: pluralize("Grant", grants.length),
       value: grants.length,
-      icon: "https://karmahq.xyz/icons/funding-lg.png",
+      icon: `${SITE_URL}/icons/funding-lg.png`,
     },
     {
       title: `${pluralize("Milestone", milestonesCompleted || 0)} completed`,
       value: milestonesCompleted || 0,
-      icon: "https://karmahq.xyz/icons/impact.png",
+      icon: `${SITE_URL}/icons/impact.png`,
     },
     {
       title: pluralize("Endorsement", project?.endorsements?.length || 0),
       value: project?.endorsements?.length || 0,
-      icon: "https://karmahq.xyz/icons/endorsements-lg.png",
+      icon: `${SITE_URL}/icons/endorsements-lg.png`,
     },
   ];
 
@@ -90,13 +94,13 @@ export async function GET(
       <div
         tw="bg-white w-full h-full flex flex-row justify-between items-center pr-[42px] pl-[68px]"
         style={{
-          backgroundImage: `url(https://karmahq.xyz/assets/previews/background.png)`,
+          backgroundImage: `url(${SITE_URL}/assets/previews/background.png)`,
         }}
       >
         <div tw="flex flex-col items-start justify-center mt-8 w-[520px] pb-[80px]">
           <img
             alt={`${PROJECT_NAME} Logo`}
-            src="https://karmahq.xyz/logo/karma-logo-dark.svg"
+            src={`${SITE_URL}/logo/karma-logo-dark.svg`}
             style={{
               width: 158,
               height: 40,

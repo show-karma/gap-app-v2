@@ -110,7 +110,8 @@ export interface IFormField {
   label: string;
   placeholder?: string;
   required?: boolean;
-  options?: string[];
+  // Legacy programs store plain strings; the form builder saves {value, label}.
+  options?: Array<string | { value: string; label: string }>;
   validation?: {
     min?: number;
     max?: number;
