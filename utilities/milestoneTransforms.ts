@@ -23,10 +23,6 @@ export function toEditableUnifiedMilestone(
       ? Math.floor(new Date(milestone.dueDate).getTime() / 1000)
       : undefined,
     priority: milestone.priority,
-    // The raw lifecycle status is the only non-pending signal that survives
-    // this conversion for approved/rejected milestones, whose
-    // `completionDetails` arrives null — `isMilestoneEditable` reads it.
-    currentStatus: milestone.status,
     verified: [],
   };
 

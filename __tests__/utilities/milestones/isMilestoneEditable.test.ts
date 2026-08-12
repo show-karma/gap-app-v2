@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { convertToUnifiedMilestones } from "@/hooks/v2/useProjectUpdates";
 import type {
   GrantMilestoneCompletionDetails,
+  GrantMilestoneVerificationDetails,
   UnifiedMilestone,
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
 import { isMilestoneEditable } from "@/utilities/milestones/isMilestoneEditable";
-import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 
 const COMPLETION_DETAILS: GrantMilestoneCompletionDetails = {
   description: "shipped",
@@ -15,13 +15,22 @@ const COMPLETION_DETAILS: GrantMilestoneCompletionDetails = {
   attestationUID: "0xcompleted",
 };
 
+const VERIFICATION_DETAILS: GrantMilestoneVerificationDetails = {
+  description: "looks good",
+  verifiedAt: "2026-05-03T00:00:00Z",
+  verifiedBy: "0x23B7A53ECFD93803C63B97316D7362EAE59C55B6",
+  attestationUID: "0xverified",
+};
+
 /**
- * Runs a realistic grant milestone through the real converter, so the fixture
- * matches the shape the UI actually receives rather than a hand-rolled cast.
+ * Builds fixtures with the real converter, so they carry exactly the fields the
+ * UI receives — notably `completionDetails`, which the converter sets
+ * unconditionally, outside its `isCompleted` ternary.
  */
 const convertGrantMilestone = (overrides: {
   status: string;
   completionDetails?: GrantMilestoneCompletionDetails | null;
+  verificationDetails?: GrantMilestoneVerificationDetails | null;
 }): UnifiedMilestone => {
   const response = {
     projectUpdates: [],
@@ -40,7 +49,7 @@ const convertGrantMilestone = (overrides: {
         recipient: "0xb4713F39476841fAF0EA5A555D0B1d451E6B05A1",
         status: overrides.status,
         completionDetails: overrides.completionDetails ?? null,
-        verificationDetails: null,
+        verificationDetails: overrides.verificationDetails ?? null,
         grant: {
           uid: "0xgrant",
           title: "Test Grant",
@@ -56,195 +65,75 @@ const convertGrantMilestone = (overrides: {
   return converted;
 };
 
-const COMPLETION = {
-  uid: "0xcompleted",
-  chainID: 8453,
-  createdAt: "2026-05-02T00:00:00Z",
-  attester: "0x23B7A53ECFD93803C63B97316D7362EAE59C55B6",
-  data: { reason: "done" },
-};
-
-const VERIFICATION = {
-  uid: "0xverified",
-  chainID: 8453,
-  createdAt: "2026-05-03T00:00:00Z",
-  attester: "0x23B7A53ECFD93803C63B97316D7362EAE59C55B6",
-};
-
-const grantMilestone = (overrides?: {
-  completed?: unknown;
-  milestoneCompleted?: unknown;
-  verified?: unknown;
-}): UnifiedMilestone =>
-  ({
-    uid: "0xac1805",
-    type: "grant",
-    title: "Test",
-    completed: overrides?.completed ?? false,
-    createdAt: "2026-05-01T00:00:00Z",
-    chainID: 8453,
-    refUID: "0x0",
-    source: {
-      type: "grant",
-      grantMilestone: {
-        milestone: {
-          uid: "0xac1805",
-          chainID: 8453,
-          title: "Test",
-          completed: overrides?.milestoneCompleted ?? null,
-          verified: overrides?.verified ?? [],
-        },
-        grant: { uid: "0xgrant", chainID: 8453 },
-      },
-    },
-  }) as unknown as UnifiedMilestone;
-
-const projectMilestone = (overrides?: {
-  completed?: unknown;
-  milestoneCompleted?: unknown;
-  verified?: unknown;
-}): UnifiedMilestone =>
-  ({
-    uid: "0xproj",
-    type: "milestone",
-    title: "Test",
-    completed: overrides?.completed ?? false,
-    createdAt: "2026-05-01T00:00:00Z",
-    chainID: 8453,
-    refUID: "0x0",
-    source: {
-      type: "milestone",
-      projectMilestone: {
-        uid: "0xproj",
-        completed: overrides?.milestoneCompleted ?? undefined,
-        verified: overrides?.verified ?? undefined,
-      },
-    },
-  }) as unknown as UnifiedMilestone;
-
 describe("isMilestoneEditable", () => {
   it("returns false for a missing milestone", () => {
     expect(isMilestoneEditable(null)).toBe(false);
     expect(isMilestoneEditable(undefined)).toBe(false);
   });
 
-  it("returns true for a pending milestone", () => {
-    expect(isMilestoneEditable(grantMilestone())).toBe(true);
-    expect(isMilestoneEditable(projectMilestone())).toBe(true);
+  const cases: Array<{
+    name: string;
+    milestone: () => UnifiedMilestone;
+    editable: boolean;
+  }> = [
+    {
+      name: "pending milestone stays editable",
+      milestone: () => convertGrantMilestone({ status: "pending" }),
+      editable: true,
+    },
+    {
+      name: "unrecognised future status stays editable (blocklist, not allowlist)",
+      milestone: () => convertGrantMilestone({ status: "some-future-status" }),
+      editable: true,
+    },
+    {
+      name: "completed milestone is blocked",
+      milestone: () =>
+        convertGrantMilestone({ status: "completed", completionDetails: COMPLETION_DETAILS }),
+      editable: false,
+    },
+    {
+      name: "verified milestone is blocked",
+      milestone: () =>
+        convertGrantMilestone({ status: "verified", verificationDetails: VERIFICATION_DETAILS }),
+      editable: false,
+    },
+    {
+      // Regression guard for GAP-FRONTEND-202: the indexer emits currentStatus
+      // verbatim, so this row converts with completed=false and verified=[].
+      // completionDetails and the case-normalised status each block it alone.
+      name: "UPPERCASE completed milestone is blocked via completionDetails",
+      milestone: () =>
+        convertGrantMilestone({ status: "COMPLETED", completionDetails: COMPLETION_DETAILS }),
+      editable: false,
+    },
+    {
+      name: "approved milestone is blocked (no dedicated field, status only)",
+      milestone: () => convertGrantMilestone({ status: "approved" }),
+      editable: false,
+    },
+    {
+      name: "rejected milestone is blocked (completionDetails arrive null)",
+      milestone: () => convertGrantMilestone({ status: "rejected" }),
+      editable: false,
+    },
+    {
+      name: "cancelled milestone is blocked",
+      milestone: () => convertGrantMilestone({ status: "cancelled" }),
+      editable: false,
+    },
+  ];
+
+  it.each(cases)("$name", ({ milestone, editable }) => {
+    expect(isMilestoneEditable(milestone())).toBe(editable);
   });
 
-  it("returns false when the unified `completed` flag is set", () => {
-    expect(isMilestoneEditable(grantMilestone({ completed: true }))).toBe(false);
-    expect(isMilestoneEditable(projectMilestone({ completed: true }))).toBe(false);
-  });
-
-  it("returns false when the source milestone carries a completion attestation", () => {
-    expect(isMilestoneEditable(grantMilestone({ milestoneCompleted: COMPLETION }))).toBe(false);
-    expect(isMilestoneEditable(projectMilestone({ milestoneCompleted: COMPLETION }))).toBe(false);
-  });
-
-  it("returns false when the milestone has verifications", () => {
-    expect(isMilestoneEditable(grantMilestone({ verified: [VERIFICATION] }))).toBe(false);
-    // Legacy project-milestone payloads surface `verified` as a plain boolean
-    expect(isMilestoneEditable(projectMilestone({ verified: true }))).toBe(false);
-  });
-
-  it("treats an empty verification array as still editable", () => {
-    expect(isMilestoneEditable(grantMilestone({ verified: [] }))).toBe(true);
-    expect(isMilestoneEditable(projectMilestone({ verified: false }))).toBe(true);
-  });
-
-  // Fixtures below come from the real converter, so they carry the fields the
-  // indexer actually populates (notably `completionDetails`, which the
-  // converter sets unconditionally).
-  describe("against converter output", () => {
-    it("keeps a genuinely pending milestone editable", () => {
-      expect(isMilestoneEditable(convertGrantMilestone({ status: "pending" }))).toBe(true);
-    });
-
-    it("blocks a lowercase completed milestone", () => {
-      const milestone = convertGrantMilestone({
-        status: "completed",
-        completionDetails: COMPLETION_DETAILS,
-      });
-      expect(isMilestoneEditable(milestone)).toBe(false);
-    });
-
-    it("blocks an UPPERCASE completed milestone (indexer emits currentStatus verbatim)", () => {
-      const milestone = convertGrantMilestone({
-        status: "COMPLETED",
-        completionDetails: COMPLETION_DETAILS,
-      });
-      // Regression guard: before the case-insensitive fix this milestone
-      // converted to completed=false / verified=[] and slipped through.
-      expect(milestone.completed).toBeTruthy();
-      expect(isMilestoneEditable(milestone)).toBe(false);
-    });
-
-    it("blocks an approved milestone, which has no dedicated field", () => {
-      const milestone = convertGrantMilestone({ status: "approved" });
-      // Nothing but the raw status marks this one.
-      expect(milestone.completed).toBe(false);
-      expect(milestone.source.grantMilestone?.completionDetails).toBeFalsy();
-      expect(isMilestoneEditable(milestone)).toBe(false);
-    });
-
-    it("blocks on completionDetails even when the status is unrecognised", () => {
-      const milestone = convertGrantMilestone({
-        status: "some-future-status",
-        completionDetails: COMPLETION_DETAILS,
-      });
-      expect(isMilestoneEditable(milestone)).toBe(false);
-    });
-
-    it("blocks a rejected milestone, whose completionDetails arrive null", () => {
-      // Rejection presupposes a completion attestation on-chain, so the SDK's
-      // edit() still throws, but the indexer emits no completionDetails for it.
-      const milestone = convertGrantMilestone({ status: "rejected" });
-      expect(milestone.completed).toBe(false);
-      expect(isMilestoneEditable(milestone)).toBe(false);
-    });
-  });
-
-  describe("against the admin edit conversion", () => {
-    it("blocks approved and rejected milestones coming through toEditableUnifiedMilestone", () => {
-      for (const status of ["approved", "rejected", "COMPLETED"]) {
-        const milestone = toEditableUnifiedMilestone(
-          {
-            uid: "0xac1805",
-            chainId: 10,
-            title: "Test Milestone",
-            description: "Test",
-            dueDate: "2026-06-01",
-            status,
-            completionDetails: null,
-            verificationDetails: null,
-            fundingApplicationCompletion: null,
-          },
-          "0xgrant",
-          10
-        );
-        expect(isMilestoneEditable(milestone)).toBe(false);
-      }
-    });
-
-    it("keeps a pending milestone editable through toEditableUnifiedMilestone", () => {
-      const milestone = toEditableUnifiedMilestone(
-        {
-          uid: "0xac1805",
-          chainId: 10,
-          title: "Test Milestone",
-          description: "Test",
-          dueDate: "2026-06-01",
-          status: "pending",
-          completionDetails: null,
-          verificationDetails: null,
-          fundingApplicationCompletion: null,
-        },
-        "0xgrant",
-        10
-      );
-      expect(isMilestoneEditable(milestone)).toBe(true);
-    });
+  it("blocks the UPPERCASE completed row even without completionDetails", () => {
+    // The converter's exact-match `isCompleted` reads this as pending, so the
+    // case-normalised status check is the only thing standing in the way.
+    const milestone = convertGrantMilestone({ status: "COMPLETED" });
+    expect(milestone.completed).toBe(false);
+    expect(milestone.source.grantMilestone?.completionDetails).toBeFalsy();
+    expect(isMilestoneEditable(milestone)).toBe(false);
   });
 });

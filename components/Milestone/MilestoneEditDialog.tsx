@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import type { MilestoneEditData } from "@/hooks/useMilestoneEdit";
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
-import { isMilestoneEditable } from "@/utilities/milestones/isMilestoneEditable";
 import { zodResolver } from "@/utilities/zodResolver";
 
 const editMilestoneSchema = z.object({
@@ -126,36 +125,6 @@ export const MilestoneEditDialog = ({
       setError(err instanceof Error ? err.message : "Failed to edit milestone");
     }
   };
-
-  // Defensive: the SDK's `Milestone.edit()` rejects anything past PENDING, so a
-  // dialog opened on a completed/verified milestone could only fail on submit.
-  if (!isMilestoneEditable(milestone)) {
-    return (
-      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-lg min-w-0">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <PencilSquareIcon className="w-5 h-5" />
-              Edit Milestone
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            This milestone can&apos;t be edited because it has been completed or verified. Undo the
-            completion first.
-          </p>
-          <DialogFooter>
-            <Button
-              type="button"
-              className="bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-              onClick={onClose}
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>

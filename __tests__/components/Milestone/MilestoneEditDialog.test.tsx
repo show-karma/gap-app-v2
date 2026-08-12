@@ -291,33 +291,4 @@ describe("MilestoneEditDialog", () => {
       expect(callArgs.title).toBe("Build MVP");
     });
   });
-
-  describe("non-editable milestones", () => {
-    const completedMilestone = {
-      ...mockPendingMilestone,
-      completed: true,
-    } as unknown as UnifiedMilestone;
-
-    it("explains why instead of rendering the form", () => {
-      render(
-        <MilestoneEditDialog milestone={completedMilestone} isOpen={true} onClose={mockOnClose} />
-      );
-
-      expect(screen.getByText(/can't be edited/i)).toBeInTheDocument();
-      expect(screen.queryByTestId("milestone-title")).not.toBeInTheDocument();
-      expect(screen.queryByText("Save Changes")).not.toBeInTheDocument();
-    });
-
-    it("closes from the explanation branch without attempting an edit", async () => {
-      const user = userEvent.setup();
-      render(
-        <MilestoneEditDialog milestone={completedMilestone} isOpen={true} onClose={mockOnClose} />
-      );
-
-      await user.click(screen.getByText("Close"));
-
-      expect(mockOnClose).toHaveBeenCalled();
-      expect(mockEditMilestone).not.toHaveBeenCalled();
-    });
-  });
 });
