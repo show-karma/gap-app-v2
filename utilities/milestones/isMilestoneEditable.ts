@@ -29,14 +29,16 @@ export const isMilestoneEditable = (milestone: UnifiedMilestone | null | undefin
   if (!milestone) return false;
   if (milestone.completed) return false;
 
+  // The converter threads the raw indexer status here verbatim, so it may be
+  // mixed case and may name a state with no dedicated field (approved,
+  // rejected, cancelled).
+  if (NON_EDITABLE_STATUSES.has(milestone.currentStatus?.toLowerCase() ?? "")) return false;
+
   const grantMilestone = milestone.source?.grantMilestone;
   if (grantMilestone?.milestone?.completed) return false;
   // Set unconditionally by the converter, outside its `isCompleted` ternary, so
   // it survives a status-case mismatch that leaves `completed` empty.
   if (grantMilestone?.completionDetails) return false;
-  if (NON_EDITABLE_STATUSES.has(grantMilestone?.milestone?.currentStatus?.toLowerCase() ?? "")) {
-    return false;
-  }
 
   return !(grantMilestone?.milestone?.verified?.length ?? 0);
 };
