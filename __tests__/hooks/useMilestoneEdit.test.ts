@@ -108,6 +108,8 @@ vi.mock("@sentry/nextjs", () => ({
 import * as Sentry from "@sentry/nextjs";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
+import { api } from "@/utilities/api/client";
+import { getProjectById } from "@/utilities/sdk";
 
 describe("useMilestoneEdit", () => {
   const mockMilestone = {
@@ -327,6 +329,92 @@ describe("useMilestoneEdit", () => {
     expect(mockShowError).toHaveBeenCalledWith("There was an error editing the milestone");
     expect(errorManager).toHaveBeenCalled();
     expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("does not claim data loss when a step after the SDK edit fails", async () => {
+    mockEdit.mockImplementation(async (_signer: any, _data: any, callback: any) => {
+      callback("preparing");
+      callback("confirmed");
+      callback("preparing");
+      callback("confirmed");
+      return { tx: [{ hash: "0xtxhash" }], uids: ["0xnewuid"] };
+    });
+    const indexingFailure = new Error("attestation listener unavailable");
+    vi.mocked(api.post).mockRejectedValueOnce(indexingFailure);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow(indexingFailure);
+
+    // Both transactions landed, so the user must not be told to re-create it.
+    expect(mockShowError).toHaveBeenCalledWith("There was an error editing the milestone");
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(errorManager).toHaveBeenCalled();
+  });
+
+  const mergedMilestone = {
+    ...mockMilestone,
+    mergedGrants: [
+      { grantUID: "grant-001", milestoneUID: "milestone-001", chainID: 10 },
+      { grantUID: "grant-002", milestoneUID: "milestone-002", chainID: 10 },
+    ],
+  } as any;
+
+  it("aborts a merged edit before any transaction when a sibling is not editable", async () => {
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [
+        { uid: "grant-001", milestones: [{ uid: "milestone-001", refUID: "grant-001" }] },
+        {
+          uid: "grant-002",
+          milestones: [
+            { uid: "milestone-002", refUID: "grant-002", completed: { uid: "completion-1" } },
+          ],
+        },
+      ],
+    } as any);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await act(async () => {
+      await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+    });
+
+    expect(mockShowError).toHaveBeenCalledWith(
+      expect.stringContaining("already completed or verified")
+    );
+    expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(errorManager).not.toHaveBeenCalled();
+  });
+
+  it("proceeds with a merged edit when every sibling is still editable", async () => {
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [
+        {
+          uid: "grant-001",
+          milestones: [{ uid: "milestone-001", refUID: "grant-001", edit: mockEdit }],
+        },
+        {
+          uid: "grant-002",
+          milestones: [{ uid: "milestone-002", refUID: "grant-002", edit: mockEdit }],
+        },
+      ],
+    } as any);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await act(async () => {
+      await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+    });
+
+    expect(mockShowError).not.toHaveBeenCalled();
+    expect(mockSetupChainAndWallet).toHaveBeenCalled();
+    expect(mockEdit).toHaveBeenCalledTimes(2);
   });
 
   it("warns without reporting when the milestone is gone from the fetched project", async () => {
