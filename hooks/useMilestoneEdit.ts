@@ -29,19 +29,31 @@ export type MilestoneEditData = Partial<
 
 /**
  * Progress of a single SDK `milestone.edit()` call. The SDK revokes the old
- * attestation first and re-attests second, so a failure after the revocation
- * confirmed leaves the milestone destroyed on-chain.
+ * attestation first and re-attests second, so a failure between those two
+ * transactions leaves the milestone destroyed on-chain. Once `edit()` has
+ * resolved both transactions landed and later failures are not data loss.
  */
 interface EditProgress {
   step: number;
   revokeConfirmed: boolean;
+  sdkEditCompleted: boolean;
   revokedMilestoneUID?: string;
+  grantUID?: string;
+  chainID?: number;
 }
+
+const newEditProgress = (): EditProgress => ({
+  step: 0,
+  revokeConfirmed: false,
+  sdkEditCompleted: false,
+});
 
 const MILESTONE_GONE_MESSAGE =
   "This milestone no longer exists. Refresh the page to see the latest data.";
 const EDIT_HALF_APPLIED_MESSAGE =
   "The milestone edit did not complete: the original milestone was removed but the updated version was not saved. Please re-create the milestone.";
+const MERGED_NOT_EDITABLE_MESSAGE =
+  "This milestone can't be edited because one of the grants it is shared with has already completed or verified it. Edit that grant's milestone individually instead.";
 
 interface UseMilestoneEditOptions {
   /** Override project UID when not on a project page (e.g. admin review page) */
@@ -75,10 +87,14 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
   const invalidateAllProjectQueries = async () => {
     const invalidations: Promise<void>[] = [];
 
-    if (projectSlug) {
+    // Project caches are keyed by slug in some places and by UID in others
+    // (`useProjectGrants` uses the UID), so both identifiers have to be swept
+    // or the revoked milestone stays actionable until a hard reload.
+    const projectIdentifiers = Array.from(new Set([projectSlug, projectUid].filter(Boolean)));
+    for (const identifier of projectIdentifiers) {
       invalidations.push(
         queryClient.invalidateQueries({
-          predicate: createProjectQueryPredicate(projectSlug),
+          predicate: createProjectQueryPredicate(identifier),
         })
       );
     }
@@ -106,6 +122,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
   const createEditStepCallback = (progress: EditProgress) => {
     progress.step = 0;
     progress.revokeConfirmed = false;
+    progress.sdkEditCompleted = false;
     return (status: string) => {
       if (status === "preparing") {
         progress.step++;
@@ -240,7 +257,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     setIsEditing(true);
     startAttestation("Step 1/2: Revoking old milestone...");
 
-    const editProgress: EditProgress = { step: 0, revokeConfirmed: false };
+    const editProgress = newEditProgress();
 
     try {
       const isMultiGrant = milestone.mergedGrants && milestone.mergedGrants.length > 1;
@@ -265,6 +282,31 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             if (b === chain?.id) return 1;
             return a - b;
           });
+
+        if (!projectUid) {
+          throw new Error("Missing project UID for milestone edit");
+        }
+
+        // Milestones are merged on content alone, so siblings can sit in
+        // different lifecycle states. The SDK refuses to edit a completed,
+        // approved or verified milestone, and it would do so only once the
+        // earlier siblings had already spent their revoke+re-attest pair —
+        // leaving a half-applied edit. Abort before the first transaction.
+        const preflightProject = await getProjectById(projectUid);
+        if (!preflightProject) {
+          throw new Error("Failed to fetch project data");
+        }
+        const mergedUIDs = milestone.mergedGrants!.map((g) => g.milestoneUID);
+        const nonEditable = preflightProject.grants
+          .flatMap((grant) => grant.milestones)
+          .filter((m) => mergedUIDs.includes(m.uid))
+          .filter((m) => m.completed || m.approved || m.verified?.length);
+
+        if (nonEditable.length) {
+          showError(MERGED_NOT_EDITABLE_MESSAGE);
+          await invalidateAllProjectQueries();
+          return;
+        }
 
         for (let i = 0; i < arrayOfMilestonesByChains.length; i++) {
           const chainId = arrayOfMilestonesByChains[i];
@@ -319,9 +361,12 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             if (!("edit" in milestoneInstance) || typeof milestoneInstance.edit !== "function") {
               throw new Error("Milestone instance does not support editing");
             }
-            editProgress.revokedMilestoneUID = milestoneInstance.uid;
             const editCallback = createEditStepCallback(editProgress);
+            editProgress.revokedMilestoneUID = milestoneInstance.uid;
+            editProgress.grantUID = milestoneInstance.refUID;
+            editProgress.chainID = chainId;
             const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
+            editProgress.sdkEditCompleted = true;
 
             if (result?.uids?.length) {
               editedUIDs.push(...result.uids);
@@ -400,9 +445,12 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           throw new Error("Milestone instance does not support editing");
         }
 
-        editProgress.revokedMilestoneUID = milestoneInstance.uid;
         const editCallback = createEditStepCallback(editProgress);
+        editProgress.revokedMilestoneUID = milestoneInstance.uid;
+        editProgress.grantUID = milestoneInstance.refUID;
+        editProgress.chainID = milestone.chainID;
         const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
+        editProgress.sdkEditCompleted = true;
 
         const editedUIDs: string[] = result?.uids?.length ? [...result.uids] : [];
 
@@ -435,8 +483,10 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         showSuccess("Milestone edited successfully!");
       }
     } catch (error) {
-      if (editProgress.revokeConfirmed) {
-        // The old attestation is already revoked, so the milestone is gone.
+      // Only a failure *between* the revoke and the re-attest destroys the
+      // milestone. Once `edit()` resolved both transactions landed, so a later
+      // indexing or cache failure must not tell the user to re-create it.
+      if (editProgress.revokeConfirmed && !editProgress.sdkEditCompleted) {
         // Reported straight to Sentry because errorManager drops anything that
         // looks like a wallet rejection, which is the common trigger here.
         showError(EDIT_HALF_APPLIED_MESSAGE);
@@ -445,9 +495,9 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             errorMessage: "Milestone edit failed after the old attestation was revoked",
             revokedMilestoneUID: editProgress.revokedMilestoneUID || milestone.uid,
             newMilestoneData: newData,
-            grantUID: milestone.refUID,
+            grantUID: editProgress.grantUID || milestone.refUID,
             projectUID: projectUid,
-            chainID: milestone.chainID,
+            chainID: editProgress.chainID ?? milestone.chainID,
           },
         });
       } else {
