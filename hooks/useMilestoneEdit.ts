@@ -30,12 +30,18 @@ export type MilestoneEditData = Partial<
 /**
  * Progress of a single SDK `milestone.edit()` call. The SDK revokes the old
  * attestation first and re-attests second, so a failure between those two
- * transactions leaves the milestone destroyed on-chain. Once `edit()` has
+ * transactions can leave the milestone destroyed on-chain. Once `edit()` has
  * resolved both transactions landed and later failures are not data loss.
+ *
+ * `revokeSubmitted` is submission-level knowledge only: the SDK's callback
+ * emits "confirmed" when the revoke transaction is broadcast (it does not
+ * await the receipt), so a dropped or reverted revoke is indistinguishable
+ * from a mined one here. Failure handling must therefore report the
+ * milestone's state as uncertain, never as definitely removed.
  */
 interface EditProgress {
   step: number;
-  revokeConfirmed: boolean;
+  revokeSubmitted: boolean;
   sdkEditCompleted: boolean;
   revokedMilestoneUID?: string;
   grantUID?: string;
@@ -44,14 +50,14 @@ interface EditProgress {
 
 const newEditProgress = (): EditProgress => ({
   step: 0,
-  revokeConfirmed: false,
+  revokeSubmitted: false,
   sdkEditCompleted: false,
 });
 
 const MILESTONE_GONE_MESSAGE =
   "This milestone no longer exists. Refresh the page to see the latest data.";
 const EDIT_HALF_APPLIED_MESSAGE =
-  "The milestone edit did not complete: the original milestone was removed but the updated version was not saved. Please re-create the milestone.";
+  "The milestone edit did not complete: the updated version was not saved, and the original may have been removed. Refresh the page to check whether the milestone still exists before re-creating it.";
 const MERGED_NOT_EDITABLE_MESSAGE =
   "This milestone can't be edited because one of the grants it is shared with has already completed or verified it. Edit that grant's milestone individually instead.";
 
@@ -121,7 +127,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
 
   const createEditStepCallback = (progress: EditProgress) => {
     progress.step = 0;
-    progress.revokeConfirmed = false;
+    progress.revokeSubmitted = false;
     progress.sdkEditCompleted = false;
     return (status: string) => {
       if (status === "preparing") {
@@ -129,15 +135,16 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         if (progress.step === 1) {
           changeStepperStep("Step 1/2: Revoking old milestone...");
         } else if (progress.step === 2) {
-          // The SDK only starts the re-attestation once the revocation resolved.
-          progress.revokeConfirmed = true;
+          // The SDK only starts the re-attestation once the revoke call
+          // resolved — which proves submission, not that the tx was mined.
+          progress.revokeSubmitted = true;
           changeStepperStep("Step 2/2: Saving updated milestone...");
         }
         return;
       }
       if (status === "confirmed" && progress.step === 1) {
-        progress.revokeConfirmed = true;
-        changeStepperStep("Step 1/2: Old milestone revoked...");
+        progress.revokeSubmitted = true;
+        changeStepperStep("Step 1/2: Old milestone revocation submitted...");
         return;
       }
       if (status === "confirmed" && progress.step === 2) {
@@ -483,16 +490,20 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         showSuccess("Milestone edited successfully!");
       }
     } catch (error) {
-      // Only a failure *between* the revoke and the re-attest destroys the
+      // Only a failure *between* the revoke and the re-attest can destroy the
       // milestone. Once `edit()` resolved both transactions landed, so a later
       // indexing or cache failure must not tell the user to re-create it.
-      if (editProgress.revokeConfirmed && !editProgress.sdkEditCompleted) {
+      // The revoke signal is submission-level (the SDK never awaits the
+      // receipt), so the copy and the Sentry event both report the original
+      // milestone's state as uncertain rather than definitely removed.
+      if (editProgress.revokeSubmitted && !editProgress.sdkEditCompleted) {
         // Reported straight to Sentry because errorManager drops anything that
         // looks like a wallet rejection, which is the common trigger here.
         showError(EDIT_HALF_APPLIED_MESSAGE);
         Sentry.captureException(error, {
           extra: {
-            errorMessage: "Milestone edit failed after the old attestation was revoked",
+            errorMessage:
+              "Milestone edit failed after the revoke was submitted; re-attest did not complete. Revoke receipt was not verified, so the original milestone may or may not still exist on-chain.",
             revokedMilestoneUID: editProgress.revokedMilestoneUID || milestone.uid,
             newMilestoneData: newData,
             grantUID: editProgress.grantUID || milestone.refUID,

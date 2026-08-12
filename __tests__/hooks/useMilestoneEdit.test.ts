@@ -274,7 +274,7 @@ describe("useMilestoneEdit", () => {
 
     const stepMessages = mockChangeStepperStep.mock.calls.map((call) => call[0]);
     expect(stepMessages[0]).toBe("Step 1/2: Revoking old milestone...");
-    expect(stepMessages[1]).toBe("Step 1/2: Old milestone revoked...");
+    expect(stepMessages[1]).toBe("Step 1/2: Old milestone revocation submitted...");
     expect(stepMessages[2]).toBe("Step 2/2: Saving updated milestone...");
   });
 
