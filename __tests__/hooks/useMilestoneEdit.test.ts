@@ -110,6 +110,13 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
 import { api } from "@/utilities/api/client";
 import { getProjectById } from "@/utilities/sdk";
+import { sentryIgnoreErrors } from "@/utilities/sentry/ignoreErrors";
+
+/** Mirrors how Sentry's InboundFilters matches an event message. */
+const matchesIgnoreList = (message: string) =>
+  sentryIgnoreErrors.some((pattern) =>
+    typeof pattern === "string" ? message.includes(pattern) : pattern.test(message)
+  );
 
 describe("useMilestoneEdit", () => {
   const mockMilestone = {
@@ -297,9 +304,11 @@ describe("useMilestoneEdit", () => {
 
     expect(mockShowError).toHaveBeenCalledWith(expect.stringContaining("did not complete"));
     expect(Sentry.captureException).toHaveBeenCalledWith(
-      rejection,
+      expect.any(Error),
       expect.objectContaining({
         extra: expect.objectContaining({
+          originalErrorMessage: "User rejected the request",
+          originalErrorString: expect.stringContaining("User rejected the request"),
           revokedMilestoneUID: "milestone-001",
           grantUID: "grant-001",
           chainID: 10,
@@ -307,6 +316,18 @@ describe("useMilestoneEdit", () => {
         }),
       })
     );
+
+    // A sentinel is captured, not the wallet rejection: `sentryIgnoreErrors`
+    // filters manual captures too, so the raw message would never arrive.
+    const captured = vi.mocked(Sentry.captureException).mock.calls[0][0] as Error;
+    expect(captured).not.toBe(rejection);
+    expect(captured.message).not.toBe(rejection.message);
+    expect(captured.message).toBe(
+      "Milestone edit may be half-applied: revoke submitted, re-attest failed"
+    );
+    expect(matchesIgnoreList(rejection.message)).toBe(true);
+    expect(matchesIgnoreList(captured.message)).toBe(false);
+
     // errorManager would have dropped this rejection to a breadcrumb.
     expect(errorManager).not.toHaveBeenCalled();
   });
