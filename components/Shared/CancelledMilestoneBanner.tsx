@@ -4,6 +4,7 @@ import { memo } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import type { MilestoneCancellationInfo } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 interface CancelledMilestoneBannerProps {
   /**
@@ -12,22 +13,35 @@ interface CancelledMilestoneBannerProps {
    * renders the terminal "Cancelled" state without the metadata.
    */
   cancellation: MilestoneCancellationInfo | null;
+  /** Spacing is owned by the call site — the banner ships with no outer margin. */
+  className?: string;
 }
 
 /**
- * Quiet terminal state for a cancelled milestone (DEV-523). Styled to match the
- * neutral "Cancelled" badge rather than the colored completion/verification
- * boxes, and surfaces the canceller as a human-readable profile name.
+ * Quiet terminal state for a cancelled milestone (DEV-523). A tinted panel
+ * rather than a bordered box so it doesn't read as a card nested inside the
+ * milestone card, and surfaces the canceller as a human-readable profile name.
  */
-function CancelledMilestoneBannerComponent({ cancellation }: CancelledMilestoneBannerProps) {
+function CancelledMilestoneBannerComponent({
+  cancellation,
+  className,
+}: CancelledMilestoneBannerProps) {
   return (
-    <div className="mb-3 flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/60">
-      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
-        <NoSymbolIcon className="h-4 w-4" aria-hidden="true" />
-      </span>
+    <div
+      className={cn(
+        "flex items-start gap-3 rounded-lg bg-gray-100/80 px-4 py-3 dark:bg-zinc-800/70",
+        className
+      )}
+    >
+      <NoSymbolIcon
+        className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 dark:text-gray-500"
+        aria-hidden="true"
+      />
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm leading-tight">
-          <span className="font-semibold text-gray-800 dark:text-gray-200">Cancelled</span>
+        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-sm leading-snug">
+          <span className="font-semibold text-gray-900 dark:text-gray-100">
+            Milestone cancelled
+          </span>
           {cancellation?.cancelledBy ? (
             <span className="text-gray-500 dark:text-gray-400">
               by{" "}
@@ -44,8 +58,7 @@ function CancelledMilestoneBannerComponent({ cancellation }: CancelledMilestoneB
           ) : null}
         </div>
         {cancellation?.reason ? (
-          <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Reason:</span>{" "}
+          <p className="mt-1 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
             {cancellation.reason}
           </p>
         ) : null}
