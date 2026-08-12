@@ -32,6 +32,7 @@ import {
   MILESTONE_STATUS_BADGE_CLASS,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { isMilestoneEditable } from "@/utilities/milestones/isMilestoneEditable";
 import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -596,7 +597,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         {type === "milestone" && projectMilestone ? (
           <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
         ) : type === "grant" && grantMilestone ? (
-          <GrantMilestoneSimpleOptionsMenu milestone={milestone} canEdit={canEdit} />
+          <GrantMilestoneSimpleOptionsMenu
+            milestone={milestone}
+            canEdit={canEdit && isMilestoneEditable(milestone)}
+          />
         ) : null}
       </>
     ) : null;
