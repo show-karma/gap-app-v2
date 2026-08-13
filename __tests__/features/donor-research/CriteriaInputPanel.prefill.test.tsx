@@ -110,12 +110,12 @@ describe("CriteriaInputPanel persona prefill", () => {
     await waitFor(() => expect(screen.getByLabelText(/Geography/)).toHaveValue("Greater Boston"));
     expect(screen.getByLabelText(/Amount min/)).toHaveValue(null);
     expect(screen.getByLabelText(/Amount max/)).toHaveValue(null);
-    // Persona criteria are applied behind the scenes instead of filling the
-    // report-specific textarea; geography and weights remain visible prefills.
-    expect(
-      screen.getByText("This persona's saved criteria will be included automatically.")
-    ).toBeVisible();
-    expect(screen.queryByLabelText("Research criteria")).not.toBeInTheDocument();
+    // Persona criteria are applied behind the scenes rather than filling the
+    // report-specific textarea, but that textarea stays available so each
+    // report can add its own question on top of the saved persona.
+    expect(screen.getByText(/saved criteria are included automatically/i)).toBeVisible();
+    expect(screen.getByLabelText("Research criteria")).toBeInTheDocument();
+    expect(screen.getByLabelText("Research criteria")).toHaveValue("");
     expect(badges()).toHaveLength(2);
   });
 
@@ -222,7 +222,7 @@ describe("CriteriaInputPanel persona prefill", () => {
     expect(toast.error).toHaveBeenCalledWith("Daily fast-report limit reached");
   });
 
-  it("submits hidden persona criteria without rendering a criteria input", async () => {
+  it("submits hidden persona criteria when the advisor adds nothing report-specific", async () => {
     const mutateAsync = vi.fn().mockResolvedValue({ reportId: "report-1" });
     mockUseCreateReport.mockReturnValue({
       mutateAsync,
@@ -233,7 +233,6 @@ describe("CriteriaInputPanel persona prefill", () => {
     renderWithProviders(<CriteriaInputPanel />);
 
     await selectPersona(user, "Acme");
-    expect(screen.queryByLabelText("Research criteria")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /create report/i }));
 
     await waitFor(() =>
@@ -242,6 +241,33 @@ describe("CriteriaInputPanel persona prefill", () => {
           criteriaText: expect.stringMatching(/established local funder/i),
         })
       )
+    );
+  });
+
+  // Regression: selecting a donor that already had a saved persona used to
+  // replace the criteria textarea with a static note, so every report for that
+  // donor was forced to repeat the persona verbatim.
+  it("keeps the criteria textarea usable for a donor with a saved persona", async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({ reportId: "report-1" });
+    mockUseCreateReport.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useCreateDonorReport>);
+    const user = userEvent.setup();
+    renderWithProviders(<CriteriaInputPanel />);
+
+    await selectPersona(user, "Acme");
+    await user.type(screen.getByLabelText("Research criteria"), "coastal restoration only");
+    await user.click(screen.getByRole("button", { name: /create report/i }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    const { criteriaText } = mutateAsync.mock.calls[0][0];
+    // Persona narrative first, then the report-specific addition.
+    expect(criteriaText).toMatch(/established local funder/i);
+    expect(criteriaText).toMatch(/coastal restoration only/);
+    expect(criteriaText.indexOf("coastal restoration only")).toBeGreaterThan(
+      criteriaText.search(/established local funder/i)
     );
   });
 });
