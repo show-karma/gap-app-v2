@@ -68,7 +68,27 @@ const EDIT_HALF_APPLIED_MESSAGE =
 const EDIT_HALF_APPLIED_SENTINEL =
   "Milestone edit may be half-applied: revoke submitted, re-attest failed";
 const MERGED_NOT_EDITABLE_MESSAGE =
-  "This milestone can't be edited because one of the grants it is shared with has already completed or verified it. Edit that grant's milestone individually instead.";
+  "This milestone can't be edited because a copy shared with another grant has already been completed, approved, verified or cancelled. Refresh the page to see the latest milestone status.";
+const MERGED_MILESTONE_NOT_FOUND_MESSAGE =
+  "This milestone can't be edited because a copy shared with another grant could not be found. Refresh the page and try again.";
+
+export class MilestoneEditBlockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MilestoneEditBlockedError";
+  }
+}
+
+export class MilestoneEditHalfAppliedError extends Error {
+  readonly originalErrorMessage: string;
+
+  constructor(originalError: unknown) {
+    super(EDIT_HALF_APPLIED_MESSAGE);
+    this.name = "MilestoneEditHalfAppliedError";
+    this.originalErrorMessage =
+      originalError instanceof Error ? originalError.message : String(originalError);
+  }
+}
 
 interface UseMilestoneEditOptions {
   /** Override project UID when not on a project page (e.g. admin review page) */
@@ -313,16 +333,31 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         if (!preflightProject) {
           throw new Error("Failed to fetch project data");
         }
-        const mergedUIDs = milestone.mergedGrants!.map((g) => g.milestoneUID);
-        const nonEditable = preflightProject.grants
-          .flatMap((grant) => grant.milestones)
-          .filter((m) => mergedUIDs.includes(m.uid))
-          .filter((m) => m.completed || m.approved || m.verified?.length || m.cancelled);
+        const mergedUIDs = milestone.mergedGrants!.map((g) => g.milestoneUID.toLowerCase());
+        const mergedUIDSet = new Set(mergedUIDs);
+        const allMilestones = preflightProject.grants.flatMap((grant) => grant.milestones);
+        const matchedMilestones: typeof allMilestones = [];
+        const matchedUIDs = new Set<string>();
+        for (const sibling of allMilestones) {
+          const normalizedUID = sibling.uid.toLowerCase();
+          if (mergedUIDSet.has(normalizedUID)) {
+            matchedMilestones.push(sibling);
+            matchedUIDs.add(normalizedUID);
+          }
+        }
+
+        if (matchedUIDs.size < mergedUIDs.length) {
+          await invalidateAllProjectQueries();
+          throw new MilestoneEditBlockedError(MERGED_MILESTONE_NOT_FOUND_MESSAGE);
+        }
+
+        const nonEditable = matchedMilestones.filter(
+          (m) => m.completed || m.approved || m.verified?.length || m.cancelled
+        );
 
         if (nonEditable.length) {
-          showError(MERGED_NOT_EDITABLE_MESSAGE);
           await invalidateAllProjectQueries();
-          return;
+          throw new MilestoneEditBlockedError(MERGED_NOT_EDITABLE_MESSAGE);
         }
 
         for (let i = 0; i < arrayOfMilestonesByChains.length; i++) {
@@ -365,7 +400,11 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((m) => milestoneUIDs.includes((m as any)?._uid || m?.uid));
+            .filter((m) => {
+              const legacyUID = (m as unknown as { _uid?: unknown })._uid;
+              const uid = typeof legacyUID === "string" ? legacyUID : m.uid;
+              return milestoneUIDs.includes(uid);
+            });
 
           if (!milestoneInstances?.length) {
             throw new Error("Milestone instances couldn't be found for this chain");
@@ -451,9 +490,8 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         // stale row left behind by an earlier edit that revoked but never
         // re-attested. Not an engineering error, so it never reaches Sentry.
         if (!milestoneInstance) {
-          showError(MILESTONE_GONE_MESSAGE);
           await invalidateAllProjectQueries();
-          return;
+          throw new MilestoneEditBlockedError(MILESTONE_GONE_MESSAGE);
         }
 
         const sanitizedData = sanitizeObject(newData);
@@ -506,6 +544,11 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
       // The revoke signal is submission-level (the SDK never awaits the
       // receipt), so the copy and the Sentry event both report the original
       // milestone's state as uncertain rather than definitely removed.
+      if (error instanceof MilestoneEditBlockedError) {
+        throw error;
+      }
+
+      let errorToThrow = error;
       if (editProgress.revokeSubmitted && !editProgress.sdkEditCompleted) {
         // Reported straight to Sentry because errorManager drops anything that
         // looks like a wallet rejection, which is the common trigger here.
@@ -526,6 +569,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             chainID: editProgress.chainID ?? milestone.chainID,
           },
         });
+        errorToThrow = new MilestoneEditHalfAppliedError(error);
       } else {
         showError("There was an error editing the milestone");
         errorManager("Error editing milestone", error, {
@@ -533,7 +577,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         });
       }
       await invalidateAllProjectQueries();
-      throw error;
+      throw errorToThrow;
     } finally {
       setIsEditing(false);
       dismiss();
