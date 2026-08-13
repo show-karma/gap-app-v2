@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -19,6 +20,7 @@ import {
   useReportConfigs,
   useUpdateReportConfig,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
+import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
@@ -36,14 +38,6 @@ interface Props {
   community: Community;
   grantPrograms: GrantProgram[];
 }
-
-const AVAILABLE_MODELS = [
-  { id: "gpt-5.5", label: "GPT-5.5 (OpenAI)" },
-  { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (Anthropic)" },
-  { id: "grok-4-1-fast-reasoning", label: "Grok 4.1 (xAI)" },
-];
-
-const MODEL_IDS = AVAILABLE_MODELS.map((m) => m.id) as [string, ...string[]];
 
 const PROMPT_PLACEHOLDER = `Example: Generate a markdown portfolio report covering the last 30 days of activity (please always specify a date range — the agent defaults to the last 30 days when none is given).
 
@@ -93,7 +87,7 @@ const scheduleZod = z.object({
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(128),
   programIds: z.array(z.string().min(1)).min(1, "Select at least one program"),
-  modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
+  modelId: z.string().trim().min(1, "Pick a model"),
   prompt: z.string().trim().min(1, "A prompt is required"),
   chartIndicatorIds: z.array(z.string().min(1)).max(50).default([]),
   schedule: scheduleZod,
@@ -102,26 +96,59 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const EMPTY_FORM_VALUES: FormValues = {
-  name: "",
-  programIds: [],
-  modelId: AVAILABLE_MODELS[0].id,
-  prompt: "",
-  chartIndicatorIds: [],
-  schedule: defaultScheduleForPreset("monthly"),
-  isActive: true,
-};
+function buildEmptyFormValues(defaultModel: string): FormValues {
+  return {
+    name: "",
+    programIds: [],
+    modelId: defaultModel,
+    prompt: "",
+    chartIndicatorIds: [],
+    schedule: defaultScheduleForPreset("monthly"),
+    isActive: true,
+  };
+}
 
 function buildFormValues(cfg: ReportConfig): FormValues {
   return {
     name: cfg.name,
     programIds: cfg.programIds,
-    modelId: cfg.modelId as FormValues["modelId"],
+    modelId: cfg.modelId,
     prompt: cfg.prompt,
     chartIndicatorIds: cfg.chartIndicatorIds ?? [],
     schedule: cfg.schedule,
     isActive: cfg.isActive,
   };
+}
+
+function getSubmissionValidationError({
+  values,
+  availableModels,
+  todayIso,
+  originalStartDate,
+  originalEndsDate,
+  originalModelId,
+}: {
+  values: FormValues;
+  availableModels: string[];
+  todayIso: string;
+  originalStartDate?: string;
+  originalEndsDate?: string;
+  originalModelId?: string;
+}): string | null {
+  if (!availableModels.includes(values.modelId) && values.modelId !== originalModelId) {
+    return "Pick a model from the current catalog.";
+  }
+  if (values.schedule.startDate < todayIso && values.schedule.startDate !== originalStartDate) {
+    return "Start date can't be in the past.";
+  }
+  if (values.schedule.ends.kind !== "on_date") return null;
+  if (values.schedule.ends.date < todayIso && values.schedule.ends.date !== originalEndsDate) {
+    return "End date can't be in the past.";
+  }
+  if (values.schedule.ends.date < values.schedule.startDate) {
+    return "End date must be on or after the start date.";
+  }
+  return null;
 }
 
 interface ProgramOption {
@@ -151,8 +178,14 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     isError: configsError,
     refetch: refetchConfigs,
   } = useReportConfigs(community.details.slug);
+  const {
+    data: availableModels = [],
+    isLoading: modelsLoading,
+    isError: modelsError,
+    refetch: refetchModels,
+  } = useAvailableAIModels("portfolioReport");
 
-  if (accessLoading || isLoading) {
+  if (accessLoading || isLoading || modelsLoading) {
     return (
       <div className="flex items-center justify-center p-12">
         <Spinner />
@@ -168,6 +201,25 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     );
   }
 
+  if (modelsError) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <p className="text-sm text-red-600 dark:text-red-400">Failed to load the model catalog.</p>
+        <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchModels()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (availableModels.length === 0) {
+    return (
+      <div className="flex items-center justify-center p-12 text-sm text-zinc-500">
+        No AI models are configured for report generation.
+      </div>
+    );
+  }
+
   return (
     <ReportConfigPageLoaded
       community={community}
@@ -175,6 +227,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
       configs={configs ?? []}
       configsError={configsError}
       refetchConfigs={refetchConfigs}
+      availableModels={availableModels}
     />
   );
 }
@@ -185,6 +238,7 @@ interface LoadedProps {
   configs: ReportConfig[];
   configsError: boolean;
   refetchConfigs: () => void;
+  availableModels: string[];
 }
 
 function ReportConfigPageLoaded({
@@ -193,6 +247,7 @@ function ReportConfigPageLoaded({
   configs,
   configsError,
   refetchConfigs,
+  availableModels,
 }: LoadedProps) {
   const slug = community.details.slug;
   const { push: routerPush } = useRouter();
@@ -229,6 +284,10 @@ function ReportConfigPageLoaded({
   const createMutation = useCreateReportConfig(slug);
   const updateMutation = useUpdateReportConfig(slug, editingConfig?.id ?? "");
   const deleteMutation = useDeleteReportConfig(slug);
+  const emptyFormValues = useMemo(
+    () => buildEmptyFormValues(availableModels[0] ?? ""),
+    [availableModels]
+  );
 
   const {
     register,
@@ -239,12 +298,12 @@ function ReportConfigPageLoaded({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingConfig ? buildFormValues(editingConfig) : EMPTY_FORM_VALUES,
+    defaultValues: editingConfig ? buildFormValues(editingConfig) : emptyFormValues,
   });
 
   const openNewForm = () => {
     setEditingId("new");
-    reset(EMPTY_FORM_VALUES);
+    reset(emptyFormValues);
   };
 
   const openEditForm = (configId: string) => {
@@ -314,21 +373,17 @@ function ReportConfigPageLoaded({
       editingConfig?.schedule.ends.kind === "on_date"
         ? editingConfig.schedule.ends.date
         : undefined;
-
-    if (values.schedule.startDate < todayIso && values.schedule.startDate !== originalStartDate) {
-      toast.error("Start date can't be in the past.");
+    const validationError = getSubmissionValidationError({
+      values,
+      availableModels,
+      todayIso,
+      originalStartDate,
+      originalEndsDate,
+      originalModelId: editingConfig?.modelId,
+    });
+    if (validationError) {
+      toast.error(validationError);
       return;
-    }
-    if (values.schedule.ends.kind === "on_date") {
-      const endsDate = values.schedule.ends.date;
-      if (endsDate < todayIso && endsDate !== originalEndsDate) {
-        toast.error("End date can't be in the past.");
-        return;
-      }
-      if (endsDate < values.schedule.startDate) {
-        toast.error("End date must be on or after the start date.");
-        return;
-      }
     }
 
     try {
@@ -450,8 +505,7 @@ function ReportConfigPageLoaded({
                     {formatScheduleLabel(cfg.schedule)}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
-                    {cfg.programIds.length} program
-                    {cfg.programIds.length === 1 ? "" : "s"}
+                    {cfg.programIds.length} {pluralize("program", cfg.programIds.length)}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">{cfg.modelId}</td>
                   <td className="px-4 py-3">
@@ -559,9 +613,14 @@ function ReportConfigPageLoaded({
               className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
               {...register("modelId")}
             >
-              {AVAILABLE_MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
+              {editingConfig && !availableModels.includes(editingConfig.modelId) && (
+                <option value={editingConfig.modelId}>
+                  {editingConfig.modelId} (not currently permitted)
+                </option>
+              )}
+              {availableModels.map((model) => (
+                <option key={model} value={model}>
+                  {model}
                 </option>
               ))}
             </select>

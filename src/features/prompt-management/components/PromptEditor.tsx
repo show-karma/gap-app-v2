@@ -52,6 +52,8 @@ export function PromptEditor({
     setIsTestPanelOpen,
     availableModels,
     isLoadingModels,
+    isModelsError,
+    refetchModels,
     savePromptMutation,
     testPromptMutation,
     bulkEvaluationMutation,
@@ -90,6 +92,8 @@ export function PromptEditor({
         modelId={modelId}
         availableModels={availableModels}
         isLoadingModels={isLoadingModels}
+        isModelsError={isModelsError}
+        onRetryModels={() => refetchModels()}
         onNameChange={handleNameChange}
         onSystemMessageChange={handleSystemMessageChange}
         onContentChange={handleContentChange}

@@ -17,11 +17,13 @@ interface PromptEditorFormProps {
   modelId: string;
   availableModels: string[];
   isLoadingModels: boolean;
+  isModelsError: boolean;
   // Handlers
   onNameChange: (value: string) => void;
   onSystemMessageChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onContentChange: (value: string) => void;
   onModelChange: (value: string) => void;
+  onRetryModels: () => void;
 }
 
 export function PromptEditorForm({
@@ -35,10 +37,12 @@ export function PromptEditorForm({
   modelId,
   availableModels,
   isLoadingModels,
+  isModelsError,
   onNameChange,
   onSystemMessageChange,
   onContentChange,
   onModelChange,
+  onRetryModels,
 }: PromptEditorFormProps) {
   const isNewPrompt = !existingPrompt;
 
@@ -100,15 +104,20 @@ export function PromptEditorForm({
             id={`ai-model-${promptType}`}
             value={modelId}
             onChange={(e) => onModelChange(e.target.value)}
-            disabled={readOnly || isLoadingModels}
+            disabled={readOnly || isLoadingModels || isModelsError || availableModels.length === 0}
             className={cn(
               "w-full appearance-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 pr-10 text-gray-900 dark:text-white text-sm",
               "focus:outline-none focus:ring-2 focus:ring-blue-500",
-              (readOnly || isLoadingModels) && "opacity-50 cursor-not-allowed"
+              (readOnly || isLoadingModels || isModelsError || availableModels.length === 0) &&
+                "opacity-50 cursor-not-allowed"
             )}
           >
             {isLoadingModels ? (
               <option value="">Loading models...</option>
+            ) : isModelsError ? (
+              <option value="">Models unavailable</option>
+            ) : availableModels.length === 0 ? (
+              <option value="">No models configured</option>
             ) : (
               availableModels.map((model) => (
                 <option key={model} value={model}>
@@ -119,6 +128,15 @@ export function PromptEditorForm({
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         </div>
+        {isModelsError && (
+          <button
+            type="button"
+            onClick={onRetryModels}
+            className="mt-2 text-sm text-blue-600 underline hover:no-underline dark:text-blue-400"
+          >
+            Retry loading models
+          </button>
+        )}
       </div>
 
       {/* System Message */}

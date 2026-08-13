@@ -42,7 +42,12 @@ export function usePromptEditorState({
   const [currentJobId, setCurrentJobId] = useState<string | null>(initialJobId);
 
   // Fetch available AI models
-  const { data: availableModels = [], isLoading: isLoadingModels } = useAvailableAIModels();
+  const {
+    data: availableModels = [],
+    isLoading: isLoadingModels,
+    isError: isModelsError,
+    refetch: refetchModels,
+  } = useAvailableAIModels();
 
   // Mutations
   const savePromptMutation = useSavePrompt(programId, promptType, {
@@ -198,6 +203,8 @@ export function usePromptEditorState({
     // Models
     availableModels,
     isLoadingModels,
+    isModelsError,
+    refetchModels,
 
     // Mutations
     savePromptMutation,
