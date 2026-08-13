@@ -205,6 +205,33 @@ describe("MilestoneEditDialog", () => {
     expect(mockOnClose).not.toHaveBeenCalled();
   });
 
+  it("keeps a blocked merged edit open with the inline error and form state", async () => {
+    const blockedMessage =
+      "This milestone can't be edited because a copy shared with another grant has already been completed, approved, verified or cancelled. Refresh the page to see the latest milestone status.";
+    mockEditMilestone.mockRejectedValue(new Error(blockedMessage));
+    const user = userEvent.setup();
+
+    render(
+      <MilestoneEditDialog milestone={mockPendingMilestone} isOpen={true} onClose={mockOnClose} />
+    );
+
+    const titleInput = screen.getByTestId("milestone-title");
+    const descriptionInput = screen.getByTestId("milestone-description");
+    await user.clear(titleInput);
+    await user.type(titleInput, "Updated MVP");
+    await user.clear(descriptionInput);
+    await user.type(descriptionInput, "Updated description");
+    await user.click(screen.getByText("Save Changes"));
+
+    await waitFor(() => {
+      expect(screen.getByText(blockedMessage)).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(titleInput).toHaveValue("Updated MVP");
+    expect(descriptionInput).toHaveValue("Updated description");
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
   it("disables form fields during editing", () => {
     mockIsEditing = true;
     render(

@@ -107,7 +107,11 @@ vi.mock("@sentry/nextjs", () => ({
 
 import * as Sentry from "@sentry/nextjs";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
+import {
+  MilestoneEditBlockedError,
+  MilestoneEditHalfAppliedError,
+  useMilestoneEdit,
+} from "@/hooks/useMilestoneEdit";
 import { api } from "@/utilities/api/client";
 import { getProjectById } from "@/utilities/sdk";
 import { sentryIgnoreErrors } from "@/utilities/sentry/ignoreErrors";
@@ -117,6 +121,7 @@ const matchesIgnoreList = (message: string) =>
   sentryIgnoreErrors.some((pattern) =>
     typeof pattern === "string" ? message.includes(pattern) : pattern.test(message)
   );
+type FetchedProject = NonNullable<Awaited<ReturnType<typeof getProjectById>>>;
 
 describe("useMilestoneEdit", () => {
   const mockMilestone = {
@@ -296,13 +301,21 @@ describe("useMilestoneEdit", () => {
 
     const { result } = renderHook(() => useMilestoneEdit());
 
-    await expect(
-      act(async () => {
-        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
-      })
-    ).rejects.toThrow(rejection);
+    const editPromise = act(async () => {
+      await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+    });
 
-    expect(mockShowError).toHaveBeenCalledWith(expect.stringContaining("did not complete"));
+    await expect(editPromise).rejects.toMatchObject({
+      name: "MilestoneEditHalfAppliedError",
+      message:
+        "The milestone edit did not complete: the updated version may not have been saved, and the original may have been removed. Refresh the page to check whether the milestone still exists before re-creating it.",
+      originalErrorMessage: rejection.message,
+    });
+    await expect(editPromise).rejects.toBeInstanceOf(MilestoneEditHalfAppliedError);
+
+    expect(mockShowError).toHaveBeenCalledWith(
+      "The milestone edit did not complete: the updated version may not have been saved, and the original may have been removed. Refresh the page to check whether the milestone still exists before re-creating it."
+    );
     expect(Sentry.captureException).toHaveBeenCalledWith(
       expect.any(Error),
       expect.objectContaining({
@@ -396,17 +409,21 @@ describe("useMilestoneEdit", () => {
           ],
         },
       ],
-    } as any);
+    } as unknown as FetchedProject);
 
     const { result } = renderHook(() => useMilestoneEdit());
 
-    await act(async () => {
-      await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toMatchObject({
+      name: "MilestoneEditBlockedError",
+      message:
+        "This milestone can't be edited because a copy shared with another grant has already been completed, approved, verified or cancelled. Refresh the page to see the latest milestone status.",
     });
 
-    expect(mockShowError).toHaveBeenCalledWith(
-      expect.stringContaining("already completed or verified")
-    );
+    expect(mockShowError).not.toHaveBeenCalled();
     expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     expect(mockEdit).not.toHaveBeenCalled();
     expect(Sentry.captureException).not.toHaveBeenCalled();
@@ -424,16 +441,69 @@ describe("useMilestoneEdit", () => {
           ],
         },
       ],
-    } as any);
+    } as unknown as FetchedProject);
 
     const { result } = renderHook(() => useMilestoneEdit());
 
-    await act(async () => {
-      await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
-    });
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toBeInstanceOf(MilestoneEditBlockedError);
 
     expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     expect(mockEdit).not.toHaveBeenCalled();
+  });
+
+  it("matches merged sibling UIDs regardless of hex casing", async () => {
+    const casingMilestone = {
+      ...mergedMilestone,
+      mergedGrants: [
+        { grantUID: "grant-001", milestoneUID: "0xabcdef", chainID: 10 },
+        { grantUID: "grant-002", milestoneUID: "0x123456", chainID: 10 },
+      ],
+    };
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [
+        { uid: "grant-001", milestones: [{ uid: "0xABCDEF", refUID: "grant-001" }] },
+        {
+          uid: "grant-002",
+          milestones: [{ uid: "0x123456", refUID: "grant-002", approved: { uid: "approval-1" } }],
+        },
+      ],
+    } as unknown as FetchedProject);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(casingMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow("completed, approved, verified or cancelled");
+
+    expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
+  });
+
+  it("blocks a merged edit when a sibling is missing from the fetched project", async () => {
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [{ uid: "grant-001", milestones: [{ uid: "milestone-001", refUID: "grant-001" }] }],
+    } as unknown as FetchedProject);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow(
+      "This milestone can't be edited because a copy shared with another grant could not be found. Refresh the page and try again."
+    );
+
+    expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(errorManager).not.toHaveBeenCalled();
   });
 
   it("proceeds with a merged edit when every sibling is still editable", async () => {
@@ -475,13 +545,13 @@ describe("useMilestoneEdit", () => {
 
     const { result } = renderHook(() => useMilestoneEdit());
 
-    await act(async () => {
-      await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
-    });
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toBeInstanceOf(MilestoneEditBlockedError);
 
-    expect(mockShowError).toHaveBeenCalledWith(
-      "This milestone no longer exists. Refresh the page to see the latest data."
-    );
+    expect(mockShowError).not.toHaveBeenCalled();
     expect(errorManager).not.toHaveBeenCalled();
     expect(Sentry.captureException).not.toHaveBeenCalled();
     expect(mockEdit).not.toHaveBeenCalled();
