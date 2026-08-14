@@ -12,6 +12,7 @@ import { useParams } from "next/navigation";
 import { type FC, useCallback } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { CancelledMilestoneBanner } from "@/components/Shared/CancelledMilestoneBanner";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -184,6 +185,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       const url = await getGrantInvoiceDownloadUrl(grantUID, milestone.invoiceInfo.fileKey);
       window.open(url, "_blank", "noopener,noreferrer");
     } catch {
+      // SUPPRESSED: surfaced to the user via toast; a failed presigned-URL
+      // fetch carries no diagnostic value beyond the indexer's own logs.
       toast.error("Failed to open invoice");
     }
   }, [grantUID, milestone.invoiceInfo?.fileKey]);
@@ -537,6 +540,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         : MilestoneLifecycleStatus.PENDING,
     dueMs
   );
+  const isCancelled = effectiveStatus === MilestoneLifecycleStatus.CANCELLED;
   const showOrderBadge = type === "grant" && Boolean(milestone.grantMilestoneOrder);
   const showAllocationBadge = Boolean(allocationAmount);
   const showDueBadge = dueMs != null;
@@ -589,7 +593,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const milestoneActions =
     isAuthorized && (type === "milestone" || type === "grant") ? (
       <>
-        {!completed && effectiveStatus !== MilestoneLifecycleStatus.CANCELLED && (
+        {!completed && !isCancelled && (
           <Button
             className="flex flex-row gap-1 border border-brand-blue text-brand-blue text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3 rounded-md max-sm:px-2 max-sm:py-1"
             onClick={() => handleCompleting(true)}
@@ -622,6 +626,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         pills={pills}
         title={title}
         description={description}
+        banner={
+          isCancelled ? (
+            <CancelledMilestoneBanner cancellation={milestone.cancellation ?? null} />
+          ) : undefined
+        }
         attributionDate={milestone.createdAt || undefined}
         attributionActions={attributionActions}
       />
