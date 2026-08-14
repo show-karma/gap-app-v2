@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -132,6 +133,51 @@ function buildFormValues(cfg: ReportConfig): FormValues {
   };
 }
 
+function getUnavailableModelId(
+  config: ReportConfig | null,
+  availableModels: string[]
+): string | undefined {
+  if (config && !availableModels.includes(config.modelId)) return config.modelId;
+  return undefined;
+}
+
+function getSubmissionValidationError({
+  values,
+  availableModels,
+  todayIso,
+  isLoadingModels,
+  isModelsError,
+  originalStartDate,
+  originalEndsDate,
+  originalModelId,
+}: {
+  values: FormValues;
+  availableModels: string[];
+  todayIso: string;
+  isLoadingModels: boolean;
+  isModelsError: boolean;
+  originalStartDate?: string;
+  originalEndsDate?: string;
+  originalModelId?: string;
+}): string | null {
+  if (isLoadingModels) return "Wait for the model catalog to finish loading.";
+  if (isModelsError) return "Reload the model catalog before saving.";
+  if (!availableModels.includes(values.modelId) && values.modelId !== originalModelId) {
+    return "Pick a model from the current catalog.";
+  }
+  if (values.schedule.startDate < todayIso && values.schedule.startDate !== originalStartDate) {
+    return "Start date can't be in the past.";
+  }
+  if (values.schedule.ends.kind !== "on_date") return null;
+  if (values.schedule.ends.date < todayIso && values.schedule.ends.date !== originalEndsDate) {
+    return "End date can't be in the past.";
+  }
+  if (values.schedule.ends.date < values.schedule.startDate) {
+    return "End date must be on or after the start date.";
+  }
+  return null;
+}
+
 interface ProgramOption {
   programId: string;
   label: string;
@@ -237,8 +283,12 @@ function ReportConfigPageLoaded({
   const createMutation = useCreateReportConfig(slug);
   const updateMutation = useUpdateReportConfig(slug, editingConfig?.id ?? "");
   const deleteMutation = useDeleteReportConfig(slug);
-
-  const { data: availableModels = [], isLoading: isLoadingModels } = useAvailableAIModels();
+  const {
+    data: availableModels = [],
+    isLoading: isLoadingModels,
+    isError: isModelsError,
+    refetch: refetchModels,
+  } = useAvailableAIModels("portfolioReport");
 
   const {
     register,
@@ -256,13 +306,18 @@ function ReportConfigPageLoaded({
     () => buildModelOptions(availableModels, editingConfig?.modelId),
     [availableModels, editingConfig]
   );
+  const unavailableModelId = getUnavailableModelId(editingConfig, availableModels);
 
   const backfillModel = useCallback((modelId: string) => setValue("modelId", modelId), [setValue]);
   useDefaultModelBackfill(availableModels, isLoadingModels, watch("modelId"), backfillModel);
 
-  const openNewForm = () => {
+  const handleOpenNewForm = () => {
     setEditingId("new");
     reset(emptyFormValues(availableModels[0]));
+  };
+
+  const handleRetryModels = () => {
+    void refetchModels();
   };
 
   const openEditForm = (configId: string) => {
@@ -332,21 +387,19 @@ function ReportConfigPageLoaded({
       editingConfig?.schedule.ends.kind === "on_date"
         ? editingConfig.schedule.ends.date
         : undefined;
-
-    if (values.schedule.startDate < todayIso && values.schedule.startDate !== originalStartDate) {
-      toast.error("Start date can't be in the past.");
+    const validationError = getSubmissionValidationError({
+      values,
+      availableModels,
+      todayIso,
+      isLoadingModels,
+      isModelsError,
+      originalStartDate,
+      originalEndsDate,
+      originalModelId: editingConfig?.modelId,
+    });
+    if (validationError) {
+      toast.error(validationError);
       return;
-    }
-    if (values.schedule.ends.kind === "on_date") {
-      const endsDate = values.schedule.ends.date;
-      if (endsDate < todayIso && endsDate !== originalEndsDate) {
-        toast.error("End date can't be in the past.");
-        return;
-      }
-      if (endsDate < values.schedule.startDate) {
-        toast.error("End date must be on or after the start date.");
-        return;
-      }
     }
 
     try {
@@ -436,7 +489,7 @@ function ReportConfigPageLoaded({
           </p>
         </div>
         {!isFormOpen && (
-          <Button onClick={openNewForm}>
+          <Button onClick={handleOpenNewForm}>
             <Plus className="mr-2 h-4 w-4" />
             New Report
           </Button>
@@ -480,8 +533,8 @@ function ReportConfigPageLoaded({
                     {formatScheduleLabel(cfg.schedule)}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
-                    {cfg.programIds.length} program
-                    {cfg.programIds.length === 1 ? "" : "s"}
+                    {cfg.programIds.length > 0 &&
+                      `${cfg.programIds.length} ${pluralize("program", cfg.programIds.length)}`}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">{cfg.modelId}</td>
                   <td className="px-4 py-3">
@@ -580,8 +633,11 @@ function ReportConfigPageLoaded({
           <ModelSelectField
             modelOptions={modelOptions}
             isLoadingModels={isLoadingModels}
+            isModelsError={isModelsError}
+            unavailableModelId={unavailableModelId}
             registration={register("modelId")}
             error={errors.modelId?.message}
+            onRetryModels={handleRetryModels}
           />
 
           {/* Schedule */}
@@ -648,7 +704,7 @@ function ReportConfigPageLoaded({
             <Button variant="outline" type="button" onClick={closeForm}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving || isLoadingModels || isModelsError}>
               <Save className="mr-2 h-4 w-4" />
               {isSaving ? "Saving..." : editingId === "new" ? "Create Report" : "Save Changes"}
             </Button>

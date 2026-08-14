@@ -14,12 +14,7 @@ describe("domains", () => {
   describe("ALIAS_HOSTS", () => {
     it("should contain exactly the four legacy and non-canonical hosts", () => {
       expect([...ALIAS_HOSTS].sort()).toEqual(
-        [
-          "gap.karmahq.xyz",
-          "karmahq.org",
-          "karmahq.xyz",
-          "www.karmahq.xyz",
-        ].sort()
+        ["gap.karmahq.xyz", "karmahq.org", "karmahq.xyz", "www.karmahq.xyz"].sort()
       );
     });
 

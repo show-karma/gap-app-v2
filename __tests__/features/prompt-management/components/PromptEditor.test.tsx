@@ -278,6 +278,35 @@ describe("PromptEditor", () => {
         expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("json"));
       });
     });
+
+    it("should disable save when the selected model is not in the current catalog", async () => {
+      const user = userEvent.setup();
+      const existingPrompt: ProgramPrompt = {
+        id: "prompt-123",
+        programId: "program-123",
+        promptType: "external",
+        name: "existing-prompt",
+        systemMessage: null,
+        content: "Existing json content",
+        modelId: "retired-model",
+        langfusePromptId: "langfuse-123",
+        langfuseVersion: 1,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+        createdBy: "0x123",
+        updatedBy: "0x123",
+      };
+
+      render(<PromptEditor {...defaultProps} existingPrompt={existingPrompt} />);
+
+      expect(
+        screen.getByRole("option", { name: "retired-model (not currently permitted)" })
+      ).toBeInTheDocument();
+
+      await user.type(screen.getByTestId("markdown-textarea"), " updated");
+
+      expect(screen.getByRole("button", { name: /Save Changes/i })).toBeDisabled();
+    });
   });
 
   describe("Saving Prompt", () => {
