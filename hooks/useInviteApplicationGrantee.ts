@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface AddedTeamMember {
@@ -24,13 +24,13 @@ export function useInviteApplicationGrantee(referenceNumber: string | undefined)
       if (!referenceNumber) {
         throw new Error("Reference number is required");
       }
-      const [response, fetchError] = await fetchData<AddedTeamMember>(
+      // TODO(#1775): add zod schema
+      const response = await api.post<AddedTeamMember>(
         `/v2/funding-applications/${referenceNumber}/team-members`,
-        "POST",
         { memberEmail: email, memberName: name }
       );
-      if (fetchError || !response) {
-        throw new Error(fetchError ?? "Failed to invite grantee");
+      if (!response) {
+        throw new Error("Failed to invite grantee");
       }
       return response;
     },

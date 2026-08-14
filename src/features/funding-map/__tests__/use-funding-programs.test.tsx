@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { FUNDING_MAP_DEFAULT_CHAIN_ID } from "../constants/filter-options";
+import { fundingProgramsKeys } from "../constants/query-keys";
 import {
-  fundingProgramsKeys,
   useFundingProgram,
   useFundingProgramByCompositeId,
   useFundingPrograms,

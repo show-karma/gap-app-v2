@@ -25,10 +25,14 @@ const TERMINAL_EVENT_NAMES = new Set(["report_finalized", "report_failed"]);
 const KNOWN_EVENT_NAMES = new Set<FastReportEvent["name"]>([
   "snapshot",
   "pool_loaded",
+  "candidates_identified",
   "compliance_complete",
+  "contact_discovery_progress",
   "contact_discovery_complete",
+  "candidate_stage_complete",
   "activity_complete",
   "ranking_complete",
+  "synthesis_started",
   "report_finalized",
   "report_failed",
 ]);
@@ -43,19 +47,33 @@ const KNOWN_EVENT_NAMES = new Set<FastReportEvent["name"]>([
 export const MAX_STREAM_RETRIES = 5;
 
 /**
- * Pure event-merge: dedupes by `name` while preserving first-seen order.
- *
- * The backend emitter replays every prior stage on reconnect, so naive
- * appending would grow the array unbounded and feed duplicate stages to
- * `ProgressTimeline`. Instead, when an event with the same name already
- * exists we replace it in place (keeping its position) so the array is
- * bounded by the number of distinct stage names; otherwise we append.
+ * Stable replay key for an event. Stage-level events are keyed by name;
+ * granular candidate updates are keyed by candidate + enrichment stage.
+ * This preserves one last-write-wins record for every candidate spinner.
+ * Malformed candidate events fall back to their event name and are ignored
+ * by the progress UI's wire guards.
+ */
+export function streamEventKey(event: FastReportEvent): string {
+  if (event.name !== "candidate_stage_complete") return event.name;
+  const fundingOrganizationId = event.data.fundingOrganizationId;
+  const stage = event.data.stage;
+  if (typeof fundingOrganizationId !== "string" || typeof stage !== "string") {
+    return event.name;
+  }
+  return `${event.name}:${fundingOrganizationId}:${stage}`;
+}
+
+/**
+ * Pure event merge: replaces replayed events in place while preserving the
+ * first-seen order. Candidate stage events use their granular replay key;
+ * every other event continues to dedupe by name.
  */
 export function mergeStreamEvents(
   existing: FastReportEvent[],
   next: FastReportEvent
 ): FastReportEvent[] {
-  const index = existing.findIndex((event) => event.name === next.name);
+  const nextKey = streamEventKey(next);
+  const index = existing.findIndex((event) => streamEventKey(event) === nextKey);
   if (index === -1) {
     return [...existing, next];
   }
@@ -77,9 +95,9 @@ export function mergeStreamEvents(
  * Returns the deduped, first-seen-ordered event list (for replay UIs)
  * plus the latest event (for status banners). Reconnects automatically
  * on transient errors up to `MAX_STREAM_RETRIES` consecutive failures;
- * the backend emitter replays prior stages on reconnect, so we dedupe
- * by stage name (see `mergeStreamEvents`) to keep the timeline bounded
- * and free of duplicates.
+ * the backend emitter replays prior stages on reconnect, so we dedupe by
+ * stable event identity (see `mergeStreamEvents`) to keep the timeline
+ * bounded without collapsing per-candidate progress.
  */
 export function useDonorReportStream(reportId: string | null) {
   const [state, setState] = useState<StreamState>(INITIAL_STREAM_STATE);
@@ -125,7 +143,7 @@ export function useDonorReportStream(reportId: string | null) {
           return true;
         }
       } catch {
-        // Malformed payload — drop the event but keep the stream open.
+        // SUPPRESSED: malformed payload, drop the event but keep the stream open.
       }
       return false;
     };

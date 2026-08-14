@@ -18,7 +18,7 @@ import { getProjectImpacts } from "@/services/project-impacts.service";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { queryClient } from "@/utilities/query-client";
@@ -229,7 +229,7 @@ export const useUpdateActions = (update: UpdateType) => {
           const res = await findUpdate.revoke(walletSigner as any, changeStepperStep);
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID), "POST", {});
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID), {});
           }
 
           await checkIfAttestationExists(() => {

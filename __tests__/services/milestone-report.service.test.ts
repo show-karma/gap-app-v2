@@ -1,42 +1,47 @@
 import type { Mock } from "vitest";
 import { milestoneReportService } from "@/services/milestone-report.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { NetworkError } from "@/utilities/api/errors";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
-const mockedFetch = fetchData as unknown as Mock;
+const mockedApiGet = api.get as unknown as Mock;
 
 describe("milestoneReportService.getReport", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedFetch.mockResolvedValue([
-      {
-        data: [],
-        pageInfo: { totalItems: 0, page: 1, pageLimit: 50 },
-        uniqueProjectCount: 0,
-        stats: {
-          totalGrants: 0,
-          totalProjectsWithMilestones: 0,
-          totalMilestones: 0,
-          totalCompletedMilestones: 0,
-          totalPendingMilestones: 0,
-          totalProjects: 0,
-          percentageProjectsWithMilestones: 0,
-          percentageCompletedMilestones: 0,
-          percentagePendingMilestones: 0,
-        },
+    mockedApiGet.mockResolvedValue({
+      data: [],
+      pageInfo: { totalItems: 0, page: 1, pageLimit: 50 },
+      uniqueProjectCount: 0,
+      stats: {
+        totalGrants: 0,
+        totalProjectsWithMilestones: 0,
+        totalMilestones: 0,
+        totalCompletedMilestones: 0,
+        totalPendingMilestones: 0,
+        totalProjects: 0,
+        percentageProjectsWithMilestones: 0,
+        percentageCompletedMilestones: 0,
+        percentagePendingMilestones: 0,
       },
-      null,
-    ]);
+    });
   });
 
   it("should_call_v2_endpoint_with_pageLimit_and_sortField_query_params", async () => {
     await milestoneReportService.getReport("filecoin", 2, 50, "totalMilestones", "desc");
 
-    const url = mockedFetch.mock.calls[0][0] as string;
+    const url = mockedApiGet.mock.calls[0][0] as string;
 
     expect(url).toContain("/v2/communities/filecoin/milestones/report");
     expect(url).toContain("pageLimit=50");
@@ -53,7 +58,7 @@ describe("milestoneReportService.getReport", () => {
       "200",
     ]);
 
-    const url = mockedFetch.mock.calls[0][0] as string;
+    const url = mockedApiGet.mock.calls[0][0] as string;
 
     expect(url).toContain("programIds=");
   });
@@ -69,19 +74,25 @@ describe("milestoneReportService.getReport", () => {
       "0x1234567890abcdef1234567890abcdef12345678"
     );
 
-    const url = mockedFetch.mock.calls[0][0] as string;
+    const url = mockedApiGet.mock.calls[0][0] as string;
 
     expect(url).toContain("reviewerAddress=0x1234567890abcdef1234567890abcdef12345678");
   });
 
   it("should_throw_when_fetchData_returns_an_error", async () => {
-    mockedFetch.mockResolvedValueOnce([null, new Error("network down")]);
+    mockedApiGet.mockRejectedValueOnce(
+      new NetworkError({
+        endpoint: "/v2/communities/filecoin/milestones/report",
+        method: "GET",
+        message: "network down",
+      })
+    );
 
     await expect(milestoneReportService.getReport("filecoin", 1, 50)).rejects.toThrow();
   });
 
   it("should_return_empty_response_when_fetchData_returns_null_data", async () => {
-    mockedFetch.mockResolvedValueOnce([null, null]);
+    mockedApiGet.mockResolvedValueOnce(null);
 
     const result = await milestoneReportService.getReport("filecoin", 1, 50);
 

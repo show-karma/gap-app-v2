@@ -30,11 +30,11 @@ const ROWS: ProductRow[] = [
   {
     audience: "For donor advisors",
     headline: "Generate a donor-ready research brief in 10 minutes",
-    body: "Donor advisors use Karma to build a ranked shortlist for any cause, geography, or grant size. Every brief ships with a composite score, the inputs that produced it, and the receipts attached, so you save hours of diligence and hand donors a recommendation they can act on with confidence.",
+    body: "Donor advisors use Karma to build a ranked shortlist for any cause, geography, or grant size. Every brief ships with a composite score, the inputs that produced it, and source documents linked, so you save hours of diligence and hand donors a recommendation they can act on with confidence.",
     features: [
       "Composite scoring with mission match, online presence, and IRS 990 recency",
       "IRS Pub 78, latest 990, and state registries verified up front",
-      "Fast mode: 10-minute shortlist. Deep mode: 3-day diligence with outreach",
+      "Deep mode: 3-day diligence with outreach. Fast mode ships a shortlist in 10 minutes.",
     ],
     visual: {
       kind: "single",
@@ -53,13 +53,13 @@ const ROWS: ProductRow[] = [
   },
   {
     audience: "For grant programs and foundations",
-    headline: "AI-powered software for grant programs",
-    body: "For foundations and ecosystems running grants, hackathons, and RFPs, Karma adds intake forms, AI-scored application evaluation, milestone-gated disbursement, and board-ready portfolio reporting.",
+    headline: "Cut application review time by 70% and pay on proof of work",
+    body: "Run grants, hackathons, and RFPs end to end. Intake, AI-assisted evaluation with risk flags, milestone-gated payouts, board-ready impact reports.",
     features: [
       "AI evaluation cuts review time by 70%, with risk flags on every applicant",
       "Milestone-based payouts, gated on proof of work",
       "Portfolio impact reports aligned with the Common Impact Data Standard",
-      "Bring your own AI: run your program from ChatGPT, Claude, or MCP",
+      "Bring your own AI: run your program from ChatGPT, Claude, or any agents",
     ],
     visual: { kind: "layered-foundation" },
     caption: "Application evaluation feeding the live project registry.",
@@ -182,7 +182,7 @@ function ProductRowBlock({ row, reverse }: { row: ProductRow; reverse: boolean }
 
 export function WorkflowSection() {
   return (
-    <section id="how-it-works" className="flex flex-col items-center w-full">
+    <section id="why-karma" className="flex flex-col items-center w-full">
       {/* Editorial section header: kicker rule + label sit immediately above
           the H2 in a single left-aligned column. No 2-column grid (the
           asymmetric kicker felt orphaned from the headline). Top padding
@@ -195,7 +195,7 @@ export function WorkflowSection() {
               <div className="flex items-center gap-3">
                 <span aria-hidden className="h-px w-8 bg-foreground/40" />
                 <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
-                  How Karma works
+                  Why Karma
                 </span>
               </div>
               <h2
@@ -205,11 +205,13 @@ export function WorkflowSection() {
                   "leading-[105%] tracking-[-0.02em]"
                 )}
               >
-                One platform for two motions.
+                Find the organizations worth funding.
               </h2>
               <p className="text-muted-foreground text-base md:text-lg leading-[160%]">
-                Nonprofit Research for one-off gifts. Funding platform for running grant programs.
-                Same data, same standards, different surfaces.
+                Karma indexes nonprofit projects and updates from across philanthropy, plus the
+                progress grantees post directly. This rich source of live nonprofit data lets donor
+                advisors recommend the right organization to clients, and foundations run end-to-end
+                grant programs. Fund on better data.
               </p>
             </div>
           </ScrollReveal>
@@ -239,21 +241,32 @@ export function WorkflowSection() {
         );
       })}
 
-      {/* Quiet closing moment. Single sentence + arrow link gives end-of-
-          page visitors a final pull without competing with the per-row
-          CTAs above. Routes to the general partner form so visitors who
-          don't fit either bucket get the right intake. */}
+      {/* Quiet closing moment. Confident headline + one-line subhead +
+          arrow link. Stays understated relative to the per-row CTAs above
+          but reinforces the audience and the demo length so the final pull
+          feels specific. Routes to the general partner form so visitors
+          who don't fit either bucket get the right intake. */}
       <ScrollReveal variant="fade-up" className="w-full">
         <div className={cn(marketingLayoutTheme.padding, "w-full py-14 md:py-20")}>
-          <SectionContainer className="flex flex-col items-center text-center gap-1">
-            <p className="text-sm md:text-base text-muted-foreground">Not sure which path fits?</p>
+          <SectionContainer className="flex flex-col items-center text-center gap-3">
+            <h3
+              className={cn(
+                "font-display font-medium text-foreground",
+                "text-[24px] md:text-[28px] leading-[110%] tracking-[-0.015em]"
+              )}
+            >
+              See Karma on your stack.
+            </h3>
+            <p className="text-sm md:text-base text-muted-foreground max-w-[520px]">
+              Foundations and donor advisors: book a 30-minute walkthrough with the team.
+            </p>
             <a
               href={SOCIALS.PARTNER_FORM}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-foreground hover:text-foreground/80 transition-colors font-medium text-base md:text-lg group"
+              className="inline-flex items-center gap-1.5 mt-2 text-foreground hover:text-foreground/80 transition-colors font-medium text-base md:text-lg group"
             >
-              Talk to our team
+              Schedule a demo
               <span
                 aria-hidden
                 className="transition-transform duration-200 group-hover:translate-x-1"

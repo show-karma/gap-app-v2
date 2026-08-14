@@ -43,15 +43,21 @@ vi.mock("@/components/CommunityGrants", () => ({
     communityUid,
     categoriesOptions,
     initialProjects,
+    initialPage,
+    paginationBasePath,
   }: {
     communityUid: string;
     categoriesOptions: string[];
     initialProjects: { payload: unknown[] };
+    initialPage?: number;
+    paginationBasePath: string;
   }) => (
     <div data-testid="community-grants">
       <span data-testid="community-uid">{communityUid}</span>
       <span data-testid="categories-count">{categoriesOptions.length}</span>
       <span data-testid="projects-count">{initialProjects.payload.length}</span>
+      <span data-testid="initial-page">{initialPage}</span>
+      <span data-testid="pagination-base-path">{paginationBasePath}</span>
     </div>
   ),
 }));
@@ -158,6 +164,7 @@ describe("SSR Server Components", () => {
       const CommunityProjectsPage = await importPage();
       const jsx = await CommunityProjectsPage({
         params: Promise.resolve({ communityId: "test-community" }),
+        searchParams: Promise.resolve({}),
       });
 
       render(jsx);
@@ -170,6 +177,80 @@ describe("SSR Server Components", () => {
 
       // Verify projects were fetched
       expect(screen.getByTestId("projects-count")).toHaveTextContent("1");
+    });
+
+    /**
+     * The seed is only usable if the server asks the indexer for exactly what
+     * the client's first query would ask for. Pins page/limit/sortBy on the wire
+     * (the server used to omit sortBy while the client sent sortBy=milestones)
+     * and the ?page= pass-through that makes the crawlable links resolvable.
+     */
+    const renderProjectsPageCapturingIndexerUrl = async (
+      searchParams: Record<string, string | string[] | undefined>
+    ) => {
+      const community = createMockCommunity({
+        uid: "0xpagedcommunity" as `0x${string}`,
+        details: { name: "Paged Community", slug: "paged-community" },
+      });
+      let projectsRequestUrl = "";
+
+      server.use(
+        http.get(`${BASE}/v2/communities/:slug`, () => HttpResponse.json(community)),
+        http.get(`${BASE}/communities/:slug/categories`, () => HttpResponse.json([])),
+        http.get(`${BASE}/v2/communities/:slug/projects`, ({ request }) => {
+          projectsRequestUrl = request.url;
+          return HttpResponse.json({
+            payload: [createMockProject({ details: { title: "Paged", slug: "paged" } })],
+            pagination: {
+              totalCount: 24,
+              page: 1,
+              limit: 12,
+              totalPages: 2,
+              nextPage: 2,
+              prevPage: null,
+              hasNextPage: true,
+              hasPrevPage: false,
+            },
+          });
+        })
+      );
+
+      const CommunityProjectsPage = await importPage();
+      const jsx = await CommunityProjectsPage({
+        params: Promise.resolve({ communityId: "paged-community" }),
+        searchParams: Promise.resolve(searchParams),
+      });
+      render(jsx);
+
+      return new URL(projectsRequestUrl).searchParams;
+    };
+
+    it("fetches page 1 with the explicit default sort when no page param is present", async () => {
+      const query = await renderProjectsPageCapturingIndexerUrl({});
+
+      expect(query.get("page")).toBe("1");
+      expect(query.get("limit")).toBe("12");
+      expect(query.get("sortBy")).toBe("milestones");
+      expect(screen.getByTestId("initial-page")).toHaveTextContent("1");
+      expect(screen.getByTestId("pagination-base-path")).toHaveTextContent(
+        "/community/paged-community/projects"
+      );
+    });
+
+    it("forwards ?page=2 to the indexer and to CommunityGrants", async () => {
+      const query = await renderProjectsPageCapturingIndexerUrl({ page: "2" });
+
+      expect(query.get("page")).toBe("2");
+      expect(query.get("limit")).toBe("12");
+      expect(query.get("sortBy")).toBe("milestones");
+      expect(screen.getByTestId("initial-page")).toHaveTextContent("2");
+    });
+
+    it("falls back to page 1 for a malformed page param", async () => {
+      const query = await renderProjectsPageCapturingIndexerUrl({ page: "-3" });
+
+      expect(query.get("page")).toBe("1");
+      expect(screen.getByTestId("initial-page")).toHaveTextContent("1");
     });
 
     it("calls notFound when community details are null", async () => {
@@ -198,6 +279,7 @@ describe("SSR Server Components", () => {
       await expect(
         CommunityProjectsPage({
           params: Promise.resolve({ communityId: "nonexistent" }),
+          searchParams: Promise.resolve({}),
         })
       ).rejects.toThrow("NEXT_NOT_FOUND");
 
@@ -240,6 +322,7 @@ describe("SSR Server Components", () => {
       const CommunityProjectsPage = await importPage();
       const jsx = await CommunityProjectsPage({
         params: Promise.resolve({ communityId: "empty-community" }),
+        searchParams: Promise.resolve({}),
       });
 
       render(jsx);
@@ -329,6 +412,7 @@ describe("SSR Server Components", () => {
       const CommunityMainPage = await importPage();
       const jsx = await CommunityMainPage({
         params: Promise.resolve({ communityId: "main-community" }),
+        searchParams: Promise.resolve({}),
       });
 
       render(jsx);
@@ -364,6 +448,7 @@ describe("SSR Server Components", () => {
       await expect(
         CommunityMainPage({
           params: Promise.resolve({ communityId: "missing" }),
+          searchParams: Promise.resolve({}),
         })
       ).rejects.toThrow("NEXT_NOT_FOUND");
     });

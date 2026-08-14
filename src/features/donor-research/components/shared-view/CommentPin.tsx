@@ -40,7 +40,7 @@ const CommentPinComponent = ({ count, targetKey, onActivate, ariaLabel }: Commen
       aria-label={ariaLabel ? `${label} on ${ariaLabel}` : label}
       data-comment-pin
       data-target-key={targetKey}
-      className="inline-flex items-center gap-1 rounded-full border border-border bg-background/90 px-2 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex items-center gap-1.5 rounded-full border border-sf-line-strong bg-sf-card/95 px-2.5 py-1 text-[11.5px] font-[650] text-sf-heading shadow-sm backdrop-blur transition-colors hover:bg-sf-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
     >
       <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
       {label}

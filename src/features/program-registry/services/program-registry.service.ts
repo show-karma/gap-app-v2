@@ -1,5 +1,5 @@
 import type { Community } from "@/types/v2/community";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import type { UpdateProgramFormSchema } from "../schemas/admin-form";
@@ -205,18 +205,9 @@ export class ProgramRegistryService {
       metadata,
     };
 
-    const [createResponse, createError] = await fetchData(
-      INDEXER.REGISTRY.V2.CREATE,
-      "POST",
-      request,
-      {},
-      {},
-      true
-    );
-
-    if (createError) {
-      throw new Error(createError);
-    }
+    // TODO(#1775): add zod schema — response shape varies (V1/V2, partial
+    // BE serialization), see extractProgramId below.
+    const createResponse = await api.post<unknown>(INDEXER.REGISTRY.V2.CREATE, request);
 
     // Extract programId from response if available (may be empty due to
     // BE response serialization stripping properties)
@@ -253,18 +244,7 @@ export class ProgramRegistryService {
       metadata,
     };
 
-    const [, updateError] = await fetchData(
-      INDEXER.REGISTRY.V2.UPDATE(programId),
-      "PUT",
-      request,
-      {},
-      {},
-      true
-    );
-
-    if (updateError) {
-      throw new Error(updateError);
-    }
+    await api.put(INDEXER.REGISTRY.V2.UPDATE(programId), request);
   }
 
   /**
@@ -280,17 +260,6 @@ export class ProgramRegistryService {
       isValid,
     };
 
-    const [_approveResponse, approveError] = await fetchData(
-      INDEXER.REGISTRY.V2.APPROVE,
-      "POST",
-      request,
-      {},
-      {},
-      true
-    );
-
-    if (approveError) {
-      throw new Error(approveError);
-    }
+    await api.post(INDEXER.REGISTRY.V2.APPROVE, request);
   }
 }

@@ -30,9 +30,10 @@ pnpm lint:fix           # Biome lint + format
 ## Non-Obvious Rules (will cause bugs if ignored)
 
 - **Mutations**: Always `useMutation` with optimistic updates — never `useState` + direct service calls.
+- **Attestation gating**: wagmi `useAccount().address` is **display/recipient-only** — it lags the Privy signer behind the dual-`WagmiProvider` bridge, so gating a write on it (`if (!address) return`) silently no-ops (issue #1821). Gate attestation submits on `signerStatus`/`attestationAddress` from `useSetupChainAndWallet`. Use `useAttestation()` (hooks/useAttestation.ts) + `<AttestationSubmit>` (components/ui/AttestationSubmit.tsx): they throw a typed `SignerUnavailableError` (routed to guidance, kept out of Sentry) and render a Connect-wallet CTA / disabled+tooltip instead of failing silently. Enforced by the `no-account-address-write-guard` taskless rule.
 - **Three States**: Every data component renders loading (skeleton), empty (CTA), error (retry). Never `return null`.
 - **Routes**: `PAGES` constants from `utilities/pages.ts` — never hardcode strings.
-- **New routes**: Every `app/` route needs `page.tsx` + `loading.tsx` + `error.tsx`.
+- **New routes**: Every `app/` route needs `page.tsx` + `error.tsx`, and non-crawlable routes also need `loading.tsx`. EXCEPTION (DEV-612): sitemap-crawlable routes must have NO `loading.tsx` anywhere on their segment chain — every route renders dynamically (root layout awaits `headers()`), so a loading boundary makes Next stream the page HTML as a hidden Suspense chunk (`<div hidden id="S:n">`) and no-JS readers (most AI crawlers) see only the fallback. Enforced by `__tests__/app/route-file-structure.test.ts` (`SITEMAP_NO_LOADING`).
 - **`"use client"`**: Required on any file importing `@radix-ui/*`.
 - **No barrel exports**: Import directly from source files, not `index.ts` re-exports. Existing barrel exports in `types/`, `store/`, `utilities/sdk/` are legacy — don't add new ones.
 - **Heavy libs**: Must use `dynamic()` or lazy `import()` — never top-level import of chart/editor/markdown libs.

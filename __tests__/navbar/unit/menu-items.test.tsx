@@ -64,52 +64,64 @@ describe("Menu Items Configuration", () => {
   });
 
   describe("ForFunders Items", () => {
+    const allGroupItems = forFundersItems.groups.flatMap((group) => group.items);
+
     it("should have valid structure", () => {
       expect(forFundersItems).toBeDefined();
-      expect(forFundersItems).toHaveProperty("main");
+      expect(forFundersItems).toHaveProperty("groups");
       expect(forFundersItems).toHaveProperty("secondary");
     });
 
-    it("should have valid main item", () => {
-      const { main } = forFundersItems;
-      expect(main).toHaveProperty("href");
-      expect(main).toHaveProperty("icon");
-      expect(main).toHaveProperty("title");
-      expect(main.title).toBe("Launch a program");
-      expect(main.href).toBe(PAGES.HOME);
+    it("should group items by audience", () => {
+      expect(forFundersItems.groups.map((group) => group.title)).toEqual([
+        "Foundations",
+        "Donor Advisors",
+      ]);
     });
 
-    it("should have valid secondary items array", () => {
-      const { secondary } = forFundersItems;
-      expect(Array.isArray(secondary)).toBe(true);
-      expect(secondary.length).toBeGreaterThan(0);
-
-      secondary.forEach((item) => {
-        expect(item).toHaveProperty("href");
-        expect(item).toHaveProperty("icon");
-        expect(item).toHaveProperty("title");
+    it("should have valid items in every group", () => {
+      forFundersItems.groups.forEach((group) => {
+        expect(group.items.length).toBeGreaterThan(0);
+        group.items.forEach((item) => {
+          expect(item).toHaveProperty("href");
+          expect(item).toHaveProperty("icon");
+          expect(item).toHaveProperty("title");
+        });
       });
     });
 
-    it('should contain "Case studies" item with anchor', () => {
-      const caseStudiesItem = forFundersItems.secondary.find(
-        (item) => item.title === "Case studies"
+    it('should lead the Foundations group with "Run a grant program"', () => {
+      const foundations = forFundersItems.groups.find((group) => group.title === "Foundations");
+      expect(foundations?.items[0].title).toBe("Run a grant program");
+      expect(foundations?.items[0].href).toBe(PAGES.FOUNDATIONS);
+      expect(foundations?.items[0].external).toBeUndefined();
+    });
+
+    it('should point "Nonprofit Deep Research" at the donor-advisors landing page', () => {
+      const donorAdvisors = forFundersItems.groups.find(
+        (group) => group.title === "Donor Advisors"
       );
+      const research = donorAdvisors?.items.find(
+        (item) => item.title === "Nonprofit Deep Research"
+      );
+      expect(research).toBeDefined();
+      expect(research?.href).toBe(PAGES.DONOR_ADVISORS);
+      expect(research?.href).not.toBe(PAGES.DONOR_RESEARCH.INDEX);
+    });
+
+    it('should contain "Case studies" item with anchor', () => {
+      const caseStudiesItem = allGroupItems.find((item) => item.title === "Case studies");
       expect(caseStudiesItem).toBeDefined();
       expect(caseStudiesItem?.anchor).toBe("case-studies");
     });
 
-    it('should contain "Schedule demo" item as external link', () => {
+    it('should keep "Schedule demo" ungrouped as an external link', () => {
       const scheduleDemoItem = forFundersItems.secondary.find(
         (item) => item.title === "Schedule demo"
       );
       expect(scheduleDemoItem).toBeDefined();
       expect(scheduleDemoItem?.external).toBe(true);
       expect(scheduleDemoItem?.href).toBe(SOCIALS.PARTNER_FORM);
-    });
-
-    it("should not have external flag on main item", () => {
-      expect(forFundersItems.main.external).toBeUndefined();
     });
   });
 
@@ -211,11 +223,12 @@ describe("Menu Items Configuration", () => {
       expect(docsItem?.external).toBe(true);
     });
 
-    it('should contain "Blog" item', () => {
+    it('should contain "Blog" item as an internal link', () => {
       const blogItem = resourcesItems.find((item) => item.title === "Blog");
       expect(blogItem).toBeDefined();
-      expect(blogItem?.href).toBe(SOCIALS.PARAGRAPH);
-      expect(blogItem?.external).toBe(true);
+      expect(blogItem?.href).toBe(PAGES.BLOG);
+      expect(blogItem?.external).toBeFalsy();
+      expect(blogItem?.showArrow).toBeFalsy();
     });
 
     it('should contain "For AI Agents" item as an internal link', () => {
@@ -297,8 +310,12 @@ describe("Menu Items Configuration", () => {
     });
 
     it("should have valid icon components for forFundersItems", () => {
-      expect(forFundersItems.main.icon).toBeDefined();
-      expect(forFundersItems.main.icon).toBeTruthy();
+      forFundersItems.groups.forEach((group) => {
+        group.items.forEach((item) => {
+          expect(item.icon).toBeDefined();
+          expect(item.icon).toBeTruthy();
+        });
+      });
       forFundersItems.secondary.forEach((item) => {
         expect(item.icon).toBeDefined();
         expect(item.icon).toBeTruthy();

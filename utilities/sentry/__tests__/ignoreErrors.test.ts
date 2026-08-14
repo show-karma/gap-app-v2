@@ -37,3 +37,18 @@ describe("sentryIgnoreErrors — chunk load errors", () => {
     expect(isIgnored("Cannot read property 'map' of undefined")).toBe(false);
   });
 });
+
+describe("sentryIgnoreErrors — obfuscated injected-script errors", () => {
+  it("ignores Safari's 'Can't find variable: _0x…' ReferenceError", () => {
+    expect(isIgnored("ReferenceError: Can't find variable: _0x4761")).toBe(true);
+  });
+
+  it("ignores V8's '_0x… is not defined' ReferenceError", () => {
+    expect(isIgnored("_0x1ad251 is not defined")).toBe(true);
+  });
+
+  it("does NOT ignore a genuine application ReferenceError", () => {
+    expect(isIgnored("Can't find variable: fetchApplication")).toBe(false);
+    expect(isIgnored("myLocalVar is not defined")).toBe(false);
+  });
+});

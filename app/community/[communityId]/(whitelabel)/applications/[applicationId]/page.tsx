@@ -3,19 +3,34 @@ import { cache } from "react";
 import { Link } from "@/src/components/navigation/Link";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import type { Application, FundingProgram } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { PAGES } from "@/utilities/pages";
 import { ApplicationPageClient } from "./ApplicationPageClient";
 
 // Deduplicated across generateMetadata and page render (React.cache — 1 network call total)
 const fetchAppWithProgram = cache(async (applicationId: string) => {
-  const [app] = await fetchData<Application>(`/v2/funding-applications/${applicationId}`, "GET");
+  // TODO(#1775): add zod schema
+  let app: Application | null;
+  try {
+    app = await api.get<Application>(`/v2/funding-applications/${applicationId}`);
+  } catch {
+    // SUPPRESSED: SSR degrade-to-null is intentional — a missing/private/
+    // failed application fetch renders the "Not Available" fallback below
+    // instead of crashing the server (matches legacy fetchData behavior).
+    app = null;
+  }
   if (!app) return null;
-  const [program] = await fetchData<FundingProgram>(
-    `/v2/funding-program-configs/${app.programId}`,
-    "GET"
-  );
-  return { application: app, program: program ?? null };
+
+  // TODO(#1775): add zod schema
+  let program: FundingProgram | null;
+  try {
+    program = await api.get<FundingProgram>(`/v2/funding-program-configs/${app.programId}`);
+  } catch {
+    // SUPPRESSED: best-effort program-config fetch; the page still renders
+    // with the application data alone when this fails.
+    program = null;
+  }
+  return { application: app, program };
 });
 
 export async function generateMetadata({

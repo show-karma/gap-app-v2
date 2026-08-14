@@ -3,15 +3,33 @@ import type {
   ITrackAssignmentResponse,
   ITrackResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Track } from "@/services/tracks";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   return String(error);
 }
+
+// API response shape for a single track (matches the `Track` type above).
+// `description`/`programId`/`isActive` may be absent from the payload.
+const TrackAPIResponseSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable().optional(),
+    communityUID: z.string(),
+    isArchived: z.boolean(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    programId: z.string().optional(),
+    isActive: z.boolean().optional(),
+  })
+  .passthrough();
+const TrackListAPIResponseSchema = z.array(TrackAPIResponseSchema);
 
 // Map V2 Track to SDK ITrackResponse format
 const mapToSdkTrack = (track: Track): ITrackResponse => ({
@@ -32,19 +50,10 @@ export const fetchCommunityTracks = async (
   includeArchived: boolean = false
 ): Promise<ITrackResponse[]> => {
   try {
-    const [data, error] = await fetchData<Track[]>(
-      INDEXER.V2.TRACKS.LIST(communityUID, includeArchived),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      false
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch tracks");
-    }
+    const data = await api.get<Track[]>(INDEXER.V2.TRACKS.LIST(communityUID, includeArchived), {
+      isAuthorized: false,
+      schema: TrackListAPIResponseSchema,
+    });
 
     return data.map(mapToSdkTrack);
   } catch (error: unknown) {
@@ -58,19 +67,10 @@ export const fetchCommunityTracks = async (
  */
 export const fetchTrackById = async (id: string): Promise<ITrackResponse> => {
   try {
-    const [data, error] = await fetchData<Track>(
-      INDEXER.V2.TRACKS.BY_ID(id),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      false
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Track not found");
-    }
+    const data = await api.get<Track>(INDEXER.V2.TRACKS.BY_ID(id), {
+      isAuthorized: false,
+      schema: TrackAPIResponseSchema,
+    });
 
     return mapToSdkTrack(data);
   } catch (error: unknown) {
@@ -88,23 +88,15 @@ export const createTrack = async (
   description?: string
 ): Promise<ITrackResponse> => {
   try {
-    const [data, error] = await fetchData<Track>(
+    const data = await api.post<Track>(
       INDEXER.V2.TRACKS.CREATE(),
-      "POST",
       {
         name,
         communityUID,
         description,
       },
-      {},
-      {},
-      true,
-      false
+      { schema: TrackAPIResponseSchema }
     );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to create track");
-    }
 
     return mapToSdkTrack(data);
   } catch (error: unknown) {
@@ -121,19 +113,9 @@ export const updateTrack = async (
   data: { name?: string; description?: string; communityUID?: string }
 ): Promise<ITrackResponse> => {
   try {
-    const [responseData, error] = await fetchData<Track>(
-      INDEXER.V2.TRACKS.UPDATE(id),
-      "PUT",
-      data,
-      {},
-      {},
-      true,
-      false
-    );
-
-    if (error || !responseData) {
-      throw new Error(error || "Failed to update track");
-    }
+    const responseData = await api.put<Track>(INDEXER.V2.TRACKS.UPDATE(id), data, {
+      schema: TrackAPIResponseSchema,
+    });
 
     return mapToSdkTrack(responseData);
   } catch (error: unknown) {
@@ -147,19 +129,9 @@ export const updateTrack = async (
  */
 export const archiveTrack = async (id: string): Promise<ITrackResponse> => {
   try {
-    const [data, error] = await fetchData<Track>(
-      INDEXER.V2.TRACKS.ARCHIVE(id),
-      "DELETE",
-      {},
-      {},
-      {},
-      true,
-      false
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to archive track");
-    }
+    const data = await api.delete<Track>(INDEXER.V2.TRACKS.ARCHIVE(id), {
+      schema: TrackAPIResponseSchema,
+    });
 
     return mapToSdkTrack(data);
   } catch (error: unknown) {
@@ -176,19 +148,11 @@ export const assignTracksToProgram = async (
   trackIds: string[]
 ): Promise<ITrackAssignmentResponse[]> => {
   try {
-    const [data, error] = await fetchData<ITrackAssignmentResponse[]>(
+    // TODO(#1775): add zod schema
+    const data = await api.post<ITrackAssignmentResponse[]>(
       INDEXER.V2.TRACKS.ASSIGN_TO_PROGRAM(programId),
-      "POST",
-      { trackIds },
-      {},
-      {},
-      true,
-      false
+      { trackIds }
     );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to assign tracks");
-    }
 
     return data;
   } catch (error: unknown) {
@@ -205,19 +169,7 @@ export const unassignTrackFromProgram = async (
   trackId: string
 ): Promise<void> => {
   try {
-    const [, error] = await fetchData(
-      INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(programId, trackId),
-      "DELETE",
-      {},
-      {},
-      {},
-      true,
-      false
-    );
-
-    if (error) {
-      throw new Error(error);
-    }
+    await api.delete(INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(programId, trackId));
   } catch (error: unknown) {
     errorManager(`Error removing track ${trackId} from program ${programId}`, error);
     throw new Error(`Failed to unassign track: ${getErrorMessage(error)}`);
@@ -231,19 +183,10 @@ export const fetchProgramTracks = async (programId: string): Promise<ITrackRespo
   try {
     // Normalize programId (remove chainId suffix if present) before sending to API
     const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-    const [data, error] = await fetchData<Track[]>(
-      INDEXER.V2.TRACKS.PROGRAM_TRACKS(normalizedProgramId),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      false
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch program tracks");
-    }
+    const data = await api.get<Track[]>(INDEXER.V2.TRACKS.PROGRAM_TRACKS(normalizedProgramId), {
+      isAuthorized: false,
+      schema: TrackListAPIResponseSchema,
+    });
 
     return data.map(mapToSdkTrack);
   } catch (error: unknown) {
@@ -261,19 +204,10 @@ export const fetchProjectTracks = async (
   _activeOnly: boolean = true
 ): Promise<ITrackResponse[]> => {
   try {
-    const [data, error] = await fetchData<Track[]>(
-      INDEXER.V2.TRACKS.PROJECT_TRACKS(projectId, programId),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      false
-    );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch project tracks");
-    }
+    const data = await api.get<Track[]>(INDEXER.V2.TRACKS.PROJECT_TRACKS(projectId, programId), {
+      isAuthorized: false,
+      schema: TrackListAPIResponseSchema,
+    });
 
     return data.map(mapToSdkTrack);
   } catch (error: unknown) {
@@ -291,19 +225,11 @@ export const assignTracksToProject = async (
   trackIds: string[]
 ): Promise<IProjectTrackResponse[]> => {
   try {
-    const [data, error] = await fetchData<IProjectTrackResponse[]>(
+    // TODO(#1775): add zod schema
+    const data = await api.post<IProjectTrackResponse[]>(
       INDEXER.V2.TRACKS.ASSIGN_TO_PROJECT(projectId),
-      "POST",
-      { trackIds, programId },
-      {},
-      {},
-      true,
-      false
+      { trackIds, programId }
     );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to assign tracks to project");
-    }
 
     return data;
   } catch (error: unknown) {
@@ -321,19 +247,11 @@ export const unassignTracksFromProject = async (
   trackIds: string[]
 ): Promise<void> => {
   try {
-    const [, error] = await fetchData(
-      INDEXER.V2.TRACKS.UNASSIGN_FROM_PROJECT(programId, projectId),
-      "DELETE",
-      { trackIds },
-      {},
-      {},
-      true,
-      false
-    );
-
-    if (error) {
-      throw new Error(error);
-    }
+    // DELETE with a body isn't exposed on api.delete(); use the low-level
+    // request() escape hatch (still throws on failure like the rest of the client).
+    await api.request("DELETE", INDEXER.V2.TRACKS.UNASSIGN_FROM_PROJECT(programId, projectId), {
+      trackIds,
+    });
   } catch (error: unknown) {
     errorManager(`Error removing tracks from project ${projectId}`, error);
     throw new Error(`Failed to unassign tracks from project: ${getErrorMessage(error)}`);
@@ -351,19 +269,11 @@ export const fetchProjectsByTrack = async (
   try {
     // Normalize programId (remove chainId suffix if present) before sending to API
     const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
-    const [data, error] = await fetchData<IProjectTrackResponse[]>(
+    // TODO(#1775): add zod schema
+    const data = await api.get<IProjectTrackResponse[]>(
       INDEXER.V2.TRACKS.PROJECTS_BY_TRACK(communityId, normalizedProgramId, trackId),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      false
+      { isAuthorized: false }
     );
-
-    if (error || !data) {
-      throw new Error(error || "Failed to fetch projects by track");
-    }
 
     return data;
   } catch (error: unknown) {

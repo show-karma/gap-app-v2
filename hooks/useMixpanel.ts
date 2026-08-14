@@ -1,6 +1,7 @@
 "use client";
 import mp, { type Mixpanel } from "mixpanel-browser";
 import { useEffect, useState } from "react";
+import { getAiFirstTouchProps } from "@/utilities/aiReferrer";
 
 export interface IMixpanelEvent {
   event: string;
@@ -25,8 +26,11 @@ export const useMixpanel = (prefix = "gap"): IUseMixpanel => {
   }, []);
 
   const reportEvent = (data: IMixpanelEvent): Promise<void> =>
+    // First-touch AI attribution rides along on every event; event-level
+    // properties win on key collision. Mirrors utilities/mixpanelEvent.ts.
     new Promise((resolve, reject) => {
-      mixpanel?.track(`${prefix}:${data.event}`, data.properties || {}, (err) => {
+      const properties = { ...getAiFirstTouchProps(), ...(data.properties || {}) };
+      mixpanel?.track(`${prefix}:${data.event}`, properties, (err) => {
         if (err && err !== 1) {
           reject(err);
         } else {

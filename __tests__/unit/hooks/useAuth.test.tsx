@@ -41,8 +41,8 @@ vi.mock("@/store/modals/projectCreate", () => ({
   },
 }));
 
-// Mock compareAllWallets used in watchAccount effect
-vi.mock("@/utilities/auth/compare-all-wallets", () => ({
+vi.mock("@/utilities/auth/compare-all-wallets", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/utilities/auth/compare-all-wallets")>()),
   compareAllWallets: vi.fn(() => true),
 }));
 

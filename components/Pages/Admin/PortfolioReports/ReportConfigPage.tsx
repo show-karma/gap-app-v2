@@ -3,14 +3,23 @@
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ChartSectionPicker } from "@/components/Pages/Admin/PortfolioReports/ChartSectionPicker";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import {
+  ModelSelectField,
+  useDefaultModelBackfill,
+} from "@/components/Pages/Admin/PortfolioReports/ModelSelectField";
+import {
+  CalendarBiweekly,
+  CalendarSmall,
+  SlidersIcon,
+} from "@/components/Pages/Admin/PortfolioReports/scheduleIcons";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -23,7 +32,9 @@ import {
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { PAGES } from "@/utilities/pages";
+import { buildModelOptions } from "@/utilities/portfolio-reports/modelOptions";
 import {
   computeNextRuns,
   defaultScheduleForPreset,
@@ -36,7 +47,7 @@ import { zodResolver } from "@/utilities/zodResolver";
 
 interface Props {
   community: Community;
-  grantPrograms: GrantProgram[];
+  grantPrograms: CommunityProgram[];
 }
 
 const PROMPT_PLACEHOLDER = `Example: Generate a markdown portfolio report covering the last 30 days of activity (please always specify a date range — the agent defaults to the last 30 days when none is given).
@@ -96,16 +107,18 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-function buildEmptyFormValues(defaultModel: string): FormValues {
-  return {
-    name: "",
-    programIds: [],
-    modelId: defaultModel,
-    prompt: "",
-    chartIndicatorIds: [],
-    schedule: defaultScheduleForPreset("monthly"),
-    isActive: true,
-  };
+const EMPTY_FORM_VALUES: FormValues = {
+  name: "",
+  programIds: [],
+  modelId: "",
+  prompt: "",
+  chartIndicatorIds: [],
+  schedule: defaultScheduleForPreset("monthly"),
+  isActive: true,
+};
+
+function emptyFormValues(defaultModelId: string | undefined): FormValues {
+  return { ...EMPTY_FORM_VALUES, modelId: defaultModelId ?? "" };
 }
 
 function buildFormValues(cfg: ReportConfig): FormValues {
@@ -120,10 +133,20 @@ function buildFormValues(cfg: ReportConfig): FormValues {
   };
 }
 
+function getUnavailableModelId(
+  config: ReportConfig | null,
+  availableModels: string[]
+): string | undefined {
+  if (config && !availableModels.includes(config.modelId)) return config.modelId;
+  return undefined;
+}
+
 function getSubmissionValidationError({
   values,
   availableModels,
   todayIso,
+  isLoadingModels,
+  isModelsError,
   originalStartDate,
   originalEndsDate,
   originalModelId,
@@ -131,10 +154,14 @@ function getSubmissionValidationError({
   values: FormValues;
   availableModels: string[];
   todayIso: string;
+  isLoadingModels: boolean;
+  isModelsError: boolean;
   originalStartDate?: string;
   originalEndsDate?: string;
   originalModelId?: string;
 }): string | null {
+  if (isLoadingModels) return "Wait for the model catalog to finish loading.";
+  if (isModelsError) return "Reload the model catalog before saving.";
   if (!availableModels.includes(values.modelId) && values.modelId !== originalModelId) {
     return "Pick a model from the current catalog.";
   }
@@ -156,7 +183,7 @@ interface ProgramOption {
   label: string;
 }
 
-function buildProgramOptions(grantPrograms: GrantProgram[]): ProgramOption[] {
+function buildProgramOptions(grantPrograms: CommunityProgram[]): ProgramOption[] {
   const options: ProgramOption[] = [];
   for (const program of grantPrograms) {
     const programId = (program as { programId?: string }).programId;
@@ -178,17 +205,8 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     isError: configsError,
     refetch: refetchConfigs,
   } = useReportConfigs(community.details.slug);
-  const {
-    data: availableModels = [],
-    isLoading: modelsLoading,
-    isError: modelsError,
-    refetch: refetchModels,
-  } = useAvailableAIModels("portfolioReport");
-  const handleRetryModels = () => {
-    void refetchModels();
-  };
 
-  if (accessLoading || isLoading || modelsLoading) {
+  if (accessLoading || isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
         <Spinner />
@@ -204,25 +222,6 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     );
   }
 
-  if (modelsError) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 text-center">
-        <p className="text-sm text-red-600 dark:text-red-400">Failed to load the model catalog.</p>
-        <Button variant="outline" size="sm" className="mt-3" onClick={handleRetryModels}>
-          Retry
-        </Button>
-      </div>
-    );
-  }
-
-  if (availableModels.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-12 text-sm text-zinc-500">
-        No AI models are configured for report generation.
-      </div>
-    );
-  }
-
   return (
     <ReportConfigPageLoaded
       community={community}
@@ -230,18 +229,16 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
       configs={configs ?? []}
       configsError={configsError}
       refetchConfigs={refetchConfigs}
-      availableModels={availableModels}
     />
   );
 }
 
 interface LoadedProps {
   community: Community;
-  grantPrograms: GrantProgram[];
+  grantPrograms: CommunityProgram[];
   configs: ReportConfig[];
   configsError: boolean;
   refetchConfigs: () => void;
-  availableModels: string[];
 }
 
 function ReportConfigPageLoaded({
@@ -250,7 +247,6 @@ function ReportConfigPageLoaded({
   configs,
   configsError,
   refetchConfigs,
-  availableModels,
 }: LoadedProps) {
   const slug = community.details.slug;
   const { push: routerPush } = useRouter();
@@ -287,10 +283,12 @@ function ReportConfigPageLoaded({
   const createMutation = useCreateReportConfig(slug);
   const updateMutation = useUpdateReportConfig(slug, editingConfig?.id ?? "");
   const deleteMutation = useDeleteReportConfig(slug);
-  const emptyFormValues = useMemo(
-    () => buildEmptyFormValues(availableModels[0] ?? ""),
-    [availableModels]
-  );
+  const {
+    data: availableModels = [],
+    isLoading: isLoadingModels,
+    isError: isModelsError,
+    refetch: refetchModels,
+  } = useAvailableAIModels("portfolioReport");
 
   const {
     register,
@@ -301,12 +299,25 @@ function ReportConfigPageLoaded({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingConfig ? buildFormValues(editingConfig) : emptyFormValues,
+    defaultValues: editingConfig ? buildFormValues(editingConfig) : EMPTY_FORM_VALUES,
   });
+
+  const modelOptions = useMemo(
+    () => buildModelOptions(availableModels, editingConfig?.modelId),
+    [availableModels, editingConfig]
+  );
+  const unavailableModelId = getUnavailableModelId(editingConfig, availableModels);
+
+  const backfillModel = useCallback((modelId: string) => setValue("modelId", modelId), [setValue]);
+  useDefaultModelBackfill(availableModels, isLoadingModels, watch("modelId"), backfillModel);
 
   const handleOpenNewForm = () => {
     setEditingId("new");
-    reset(emptyFormValues);
+    reset(emptyFormValues(availableModels[0]));
+  };
+
+  const handleRetryModels = () => {
+    void refetchModels();
   };
 
   const openEditForm = (configId: string) => {
@@ -380,6 +391,8 @@ function ReportConfigPageLoaded({
       values,
       availableModels,
       todayIso,
+      isLoadingModels,
+      isModelsError,
       originalStartDate,
       originalEndsDate,
       originalModelId: editingConfig?.modelId,
@@ -403,8 +416,14 @@ function ReportConfigPageLoaded({
       }
       setEditingId(null);
     } catch (error) {
-      toast.error(
-        `Failed to save config: ${error instanceof Error ? error.message : "Unknown error"}`
+      // SUPPRESSED: errorManager reports to Sentry and toasts the user
+      errorManager(
+        "Failed to save report config",
+        error,
+        { community: slug },
+        {
+          error: "Failed to save config.",
+        }
       );
     }
   };
@@ -416,8 +435,14 @@ function ReportConfigPageLoaded({
       toast.success("Config deactivated");
       if (editingId === deletingId) setEditingId(null);
     } catch (error) {
-      toast.error(
-        `Failed to delete config: ${error instanceof Error ? error.message : "Unknown error"}`
+      // SUPPRESSED: errorManager reports to Sentry and toasts the user
+      errorManager(
+        "Failed to delete report config",
+        error,
+        { community: slug },
+        {
+          error: "Failed to delete config.",
+        }
       );
     } finally {
       setDeletingId(null);
@@ -605,30 +630,15 @@ function ReportConfigPageLoaded({
           </div>
 
           {/* Model */}
-          <div>
-            <label
-              htmlFor="modelId"
-              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              LLM Model
-            </label>
-            <select
-              id="modelId"
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-              {...register("modelId")}
-            >
-              {editingConfig && !availableModels.includes(editingConfig.modelId) && (
-                <option value={editingConfig.modelId}>
-                  {editingConfig.modelId} (not currently permitted)
-                </option>
-              )}
-              {availableModels.map((model) => (
-                <option key={model} value={model}>
-                  {model}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ModelSelectField
+            modelOptions={modelOptions}
+            isLoadingModels={isLoadingModels}
+            isModelsError={isModelsError}
+            unavailableModelId={unavailableModelId}
+            registration={register("modelId")}
+            error={errors.modelId?.message}
+            onRetryModels={handleRetryModels}
+          />
 
           {/* Schedule */}
           <SchedulePicker
@@ -694,7 +704,7 @@ function ReportConfigPageLoaded({
             <Button variant="outline" type="button" onClick={closeForm}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isSaving || isLoadingModels || isModelsError}>
               <Save className="mr-2 h-4 w-4" />
               {isSaving ? "Saving..." : editingId === "new" ? "Create Report" : "Save Changes"}
             </Button>
@@ -933,38 +943,4 @@ function parseIsoOrToday(iso: string): Date {
   if (!RUN_DATE_REGEX.test(iso)) return new Date();
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d);
-}
-
-function CalendarSmall({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <rect x="2" y="4" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2 8H16" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="6" cy="11" r="1.2" fill="currentColor" />
-    </svg>
-  );
-}
-
-function CalendarBiweekly({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <rect x="2" y="4" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2 8H16" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="5.5" cy="11" r="1.1" fill="currentColor" />
-      <circle cx="12.5" cy="11" r="1.1" fill="currentColor" />
-    </svg>
-  );
-}
-
-function SlidersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <path d="M3 5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M14 5L15 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="12" cy="5" r="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M3 13L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M9 13H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="7" cy="13" r="2" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
 }

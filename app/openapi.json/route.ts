@@ -13,7 +13,7 @@ export const revalidate = 3600;
 /**
  * Serves the indexer's OpenAPI spec from the marketing-domain apex so
  * agent crawlers (Ora, Profound, etc.) that probe predictable paths
- * like https://www.karmahq.xyz/openapi.json find it without having to
+ * like https://www.karmahq.org/openapi.json find it without having to
  * walk the .well-known/ai-plugin.json manifest first.
  *
  * Hourly-revalidated ISR proxy of `${indexer}/v2/docs/json`. Same

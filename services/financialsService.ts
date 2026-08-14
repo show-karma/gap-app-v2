@@ -1,5 +1,5 @@
 import type { ProgramFinancialsResponse } from "@/types/financials";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -15,11 +15,6 @@ export const getProgramFinancials = async (
   page: number = 1,
   limit: number = 10
 ): Promise<ProgramFinancialsResponse> => {
-  const [data, error] = await fetchData(INDEXER.PROGRAMS.FINANCIALS(programId, page, limit));
-
-  if (error) {
-    throw new Error(error);
-  }
-
-  return data as ProgramFinancialsResponse;
+  // TODO(#1775): add zod schema
+  return api.get<ProgramFinancialsResponse>(INDEXER.PROGRAMS.FINANCIALS(programId, page, limit));
 };

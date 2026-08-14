@@ -104,7 +104,14 @@ export function ForFundersContent({ variant = "desktop", onClose }: ForFundersCo
   if (variant === "mobile") {
     return (
       <>
-        <MenuItem {...forFundersItems.main} variant="mobile" onClick={onClose} />
+        {forFundersItems.groups.map((group, index) => (
+          <div key={group.title} className={cn("flex flex-col", index > 0 && "mt-3")}>
+            <MenuSection title={group.title} variant="mobile" />
+            {group.items.map((item) => (
+              <MenuItem key={item.href} {...item} variant="mobile" onClick={onClose} />
+            ))}
+          </div>
+        ))}
         {forFundersItems.secondary.map((item) => (
           <MenuItem key={item.href} {...item} variant="mobile" onClick={onClose} />
         ))}
@@ -115,7 +122,14 @@ export function ForFundersContent({ variant = "desktop", onClose }: ForFundersCo
   return (
     <div className="flex flex-row justify-between items-center gap-4">
       <div className="flex flex-col">
-        <MenuItem {...forFundersItems.main} variant="desktop" />
+        {forFundersItems.groups.map((group, index) => (
+          <div key={group.title} className={cn("flex flex-col", index > 0 && "mt-4")}>
+            <MenuSection title={group.title} variant="desktop" />
+            {group.items.map((item) => (
+              <MenuItem key={item.href} {...item} variant="desktop" />
+            ))}
+          </div>
+        ))}
         <hr className="my-4 border-border" />
         <div className="flex flex-col">
           {forFundersItems.secondary.map((item) => (

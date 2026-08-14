@@ -15,7 +15,7 @@ describe("renderMarkdownToHtml", () => {
   });
 
   it("adds nofollow + new-tab attributes to links", () => {
-    const html = renderMarkdownToHtml("[karma](https://karmahq.xyz)");
+    const html = renderMarkdownToHtml("[karma](https://www.karmahq.org)");
     expect(html).toContain('rel="nofollow noopener noreferrer"');
     expect(html).toContain('target="_blank"');
   });

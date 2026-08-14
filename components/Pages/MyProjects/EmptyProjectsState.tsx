@@ -160,6 +160,7 @@ export const EmptyProjectsState: FC<EmptyProjectsStateProps> = ({ onStartWalkthr
             }}
           />
           <button
+            type="button"
             onClick={onStartWalkthrough}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-md transition-all duration-200 w-full sm:w-auto"
           >
@@ -179,5 +180,3 @@ export const EmptyProjectsState: FC<EmptyProjectsStateProps> = ({ onStartWalkthr
     </div>
   );
 };
-
-export default EmptyProjectsState;

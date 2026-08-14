@@ -178,7 +178,7 @@ export function PendingVerificationTable({
                   <td className="px-4 py-3">
                     {milestone.programId && (
                       <Link
-                        href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
+                        href={PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(
                           communityId,
                           normalizeProgramId(milestone.programId),
                           milestone.projectUid,

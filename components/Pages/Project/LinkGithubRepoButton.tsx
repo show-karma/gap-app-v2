@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 
@@ -245,7 +245,8 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
     }
 
     try {
-      const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), "PUT", {
+      // TODO(#1775): add zod schema
+      const data = await api.put(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), {
         target: "github",
         ids: nonEmptyRepos,
       });
@@ -259,12 +260,8 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
         }
         refreshProject();
       }
-
-      if (error) {
-        setError(`Failed to update GitHub repositories. Please try again.`);
-        throw new Error("Failed to update GitHub repositories.");
-      }
     } catch (err) {
+      setError(`Failed to update GitHub repositories. Please try again.`);
       errorManager(
         MESSAGES.PROJECT.LINK_GITHUB_REPOS.ERROR,
         err,

@@ -12,8 +12,15 @@ const roundNumberWithPlus = (
     return value;
   }
 
-  // Handle edge cases: zero or numbers less than 10
-  if (value === 0 || value < 10) {
+  // Guard against non-finite values (NaN, Infinity) — they would slip past
+  // the `< 100` check below and render as "NaN+" or "∞+"
+  if (!Number.isFinite(value)) {
+    return value;
+  }
+
+  // Values under 100 round down to 0, which would render a misleading "0+" —
+  // return them as-is instead
+  if (value < 100) {
     return value;
   }
 

@@ -317,10 +317,31 @@ If 3 or more Critical issues are found, stop execution. Document what was tested
 | Result | When to use |
 |--------|-------------|
 | PASS | Actual matched expected exactly. |
-| FAIL | Actual did not match expected, AND the failure is plausibly caused by changes in this PR (or by code in the repo even if not changed by this PR). |
+| FAIL | Actual did not match expected, AND the app is genuinely broken (whether or not this PR caused it). Set `classification` — see below. |
 | BLOCKED | Scenario could not be executed due to a cause unrelated to the PR's code: third-party service outage (Privy / Sentry / RPC down), missing test fixture data, infra/network failure, or missing environment capability (e.g. `agent-browser` unavailable). The PR did not modify the relevant code path. Use evidence to justify why this is environmental, not regression. |
 
 `BLOCKED` does NOT contribute to the blocking verdict — but you must justify the classification in `evidence`. When in doubt between FAIL and BLOCKED, choose FAIL. A genuine regression mislabeled as BLOCKED would let a real bug ship.
+
+### `classification` on FAIL rows (required)
+
+Every `FAIL` needs `"classification": "pr-caused"` or `"classification": "pre-existing"`.
+
+| Value | Meaning |
+|-------|---------|
+| `pr-caused` | This PR introduced the breakage, or changed code on the failing path. **This is the default — use it whenever you are not certain.** |
+| `pre-existing` | The app is broken, but the PR did not cause it: the failing code path is untouched by this PR's diff. |
+
+**Only `pr-caused` failures block the merge.** `pre-existing` ones are reported in the verdict comment so they get filed as issues, but they do not gate the PR. A pre-existing bug is real and worth fixing — it is just not this PR's author's obligation to fix before shipping, and blocking on it makes a green pipeline unreachable by working on the PR at all.
+
+**The bar for `pre-existing` is evidence, not intuition.** You must state at least one of these in `evidence`, and name the file:
+
+- `git diff <base>...HEAD -- <path>` shows the failing path is untouched by this PR, **and** the failure mechanism lives in that untouched code.
+- The same failure reproduces on the base commit.
+- The failure is in a dependency, third-party service, or seed data rather than repo code.
+
+"The PR seems unrelated" is NOT evidence. A file being untouched is NOT sufficient on its own if the PR changed how that file is reached, what data it receives, or when it renders — that is `pr-caused`. If you cannot produce evidence within your time budget, use `pr-caused`.
+
+Mislabeling a regression as `pre-existing` lets a real bug ship, which is the worst outcome here. Unclassified FAILs are counted as `pr-caused` by the verdict, so omitting the field fails safe.
 
 ## Output
 
@@ -355,14 +376,17 @@ JSON shape:
   "skipped": 0,
   "blocking": true,
   "scenarios": [
-    { "id": "P1", "name": "...", "result": "PASS", "severity": null, "evidence": null },
-    { "id": "A1", "name": "...", "result": "FAIL", "severity": "High", "evidence": "qa-output/screenshots/A1-fail.png" },
-    { "id": "A2", "name": "...", "result": "BLOCKED", "severity": null, "evidence": "Privy returned a 5xx service error; PR did not modify auth code." }
+    { "id": "P1", "name": "...", "result": "PASS", "severity": null, "classification": null, "evidence": null },
+    { "id": "A1", "name": "...", "result": "FAIL", "severity": "High", "classification": "pr-caused", "evidence": "Tab body stayed on the skeleton after the PR moved the feed behind a boundary." },
+    { "id": "A3", "name": "...", "result": "FAIL", "severity": "High", "classification": "pre-existing", "evidence": "/admin hangs on its skeleton; the gate is CommunityAdmin.tsx:251, and git diff shows that file and useAdminCommunities.ts are untouched by this PR." },
+    { "id": "A2", "name": "...", "result": "BLOCKED", "severity": null, "classification": null, "evidence": "Privy returned a 5xx service error; PR did not modify auth code." }
   ]
 }
 ```
 
 `result === "BLOCKED"` rows have `severity: null` (severity describes regression impact; blocked scenarios were never tested). Always include an `evidence` string explaining why the failure is environmental, not regression.
+
+`classification` is required on `FAIL` rows and `null` elsewhere. Only `pr-caused` FAILs block the merge; see **Result Values** above for the evidence bar.
 
 Post a PR comment. **Comment format — follow exactly:**
 
@@ -393,11 +417,11 @@ Post a PR comment. **Comment format — follow exactly:**
 
 **Rules:**
 - PASS rows: no severity, no evidence.
-- FAIL rows: severity required. For evidence, describe what you observed inline (1-2 sentences) — do NOT link to local file paths like `qa-output/screenshots/...` because those are not accessible from GitHub. Screenshots are saved as workflow artifacts and can be downloaded from the workflow run link.
+- FAIL rows: severity AND `classification` required. For evidence, describe what you observed inline (1-2 sentences) — do NOT link to local file paths like `qa-output/screenshots/...` because those are not accessible from GitHub. Screenshots are saved as workflow artifacts and can be downloaded from the workflow run link.
 - BLOCKED rows: no severity. Evidence must justify why the failure is environmental (third-party outage, missing fixture, infra issue) and NOT a regression in this PR's code.
 - Sort: FAILs first (by severity), then BLOCKED, then PASSes.
 - No prose. Just the tables.
-- `Blocking: Yes` if any Critical or High severity FAIL. BLOCKED never makes a PR blocking.
+- `Blocking: Yes` if any Critical or High severity FAIL classified `pr-caused`. BLOCKED never makes a PR blocking, and neither does a `pre-existing` FAIL — report those so they get filed.
 
 ## Strictness Rules
 

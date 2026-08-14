@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { ProgramImpactData } from "@/types/programs";
-import fetchData from "../fetchData";
+import { api } from "../api/client";
 import { INDEXER } from "../indexer";
 
 /**
@@ -50,14 +50,15 @@ export async function getProgramsImpact(
   filters?: ImpactFilters
 ): Promise<ProgramImpactData> {
   try {
-    const [data, error] = await fetchData<ImpactApiResponse>(
+    // TODO(#1775): add zod schema
+    const data = await api.get<ImpactApiResponse>(
       INDEXER.COMMUNITY.V2.IMPACT(communityId, filters)
     );
 
-    if (error || !data) {
+    if (!data) {
       const message = "Impact fetch error";
-      console.warn(`${message}:`, error);
-      errorManager(message, error);
+      console.warn(`${message}:`, null);
+      errorManager(message, null);
       return {
         data: [],
         stats: {

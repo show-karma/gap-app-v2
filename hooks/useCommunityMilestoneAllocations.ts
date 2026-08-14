@@ -1,5 +1,5 @@
-import { useQueries } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
 import { getNativeTokenSymbol, NATIVE_TOKEN_ADDRESS } from "@/config/tokens";
 import { getTokenByAddressAndChain } from "@/constants/supportedTokens";
 import { payoutDisbursementKeys } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
@@ -7,6 +7,15 @@ import * as payoutService from "@/src/features/payout-disbursement/services/payo
 import type { PayoutGrantConfig } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
+
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
+// Keep public configs cached well past staleTime so navigating between pages
+// reuses them instead of re-fetching and re-risking the rate limit.
+const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+
+// Stable empty reference so downstream `useMemo`s don't re-run while the
+// community query is still loading.
+const EMPTY_CONFIGS: (PayoutGrantConfig | null | undefined)[] = [];
 
 /**
  * Resolves a token symbol from a payout config's tokenAddress and chainID.
@@ -136,45 +145,137 @@ export function buildGrantAllocationTotalMap(
   return map;
 }
 
+interface PayoutConfigsForGrantsOptions {
+  /**
+   * On-chain community UID (never a slug — the indexer matches the column
+   * exactly). When supplied, every public payout config for the community is
+   * fetched in ONE request and seeded into the per-grant cache entries below,
+   * so the per-grant queries resolve from cache and issue zero requests. This
+   * is what stops milestone pages that fan out 50–200+ grants from bursting
+   * past the indexer's 30 req/min/IP per-route limit. See GAP-FRONTEND-245.
+   */
+  communityUID?: string;
+}
+
 /**
- * Generic hook: fetches payout configs for given grant UIDs
- * and returns both milestone-level and grant-level allocation maps.
+ * Internal: resolves the public payout configs for a set of grant UIDs,
+ * optionally priming them from a single community-wide request.
+ *
+ * The batch only ever SEEDS the canonical per-grant cache keys — the per-grant
+ * queries stay the single read path. That is deliberate: an earlier attempt
+ * batched by pointing a `select`-filtered query at the shared community key,
+ * which gave different pages different views of the same cache entry. Seeding
+ * the canonical keys instead means every consumer (report page, project pages,
+ * milestone lists) observes exactly the value it would have fetched on its own,
+ * so batching cannot make one page disagree with another.
  */
-export function useMilestoneAllocationsByGrants(
-  grantUIDs: string[],
-  currencyByGrant?: Map<string, string>
-) {
+function usePayoutConfigsForGrants(grantUIDs: string[], options?: PayoutConfigsForGrantsOptions) {
+  const communityUID = options?.communityUID;
+  const queryClient = useQueryClient();
+
+  const uniqueGrantUIDs = useMemo(() => Array.from(new Set(grantUIDs)), [grantUIDs]);
+
+  const communityQuery = useQuery({
+    queryKey: payoutDisbursementKeys.payoutConfigs.byCommunityPublic(communityUID ?? ""),
+    queryFn: () => payoutService.getPayoutConfigsByCommunityPublic(communityUID as string),
+    enabled: !!communityUID && uniqueGrantUIDs.length > 0,
+    staleTime: FIVE_MINUTES_MS,
+    gcTime: THIRTY_MINUTES_MS,
+  });
+
+  const communityConfigs = communityQuery.data;
+
+  // Seed each requested grant's canonical cache entry from the batch. A grant
+  // the community response doesn't mention has no config, so it is seeded
+  // `null` rather than left empty — otherwise it would fall through to its own
+  // request and rebuild the fan-out this batching exists to remove.
+  useEffect(() => {
+    if (!communityUID || !communityConfigs) return;
+    const configByGrant = new Map(communityConfigs.map((config) => [config.grantUID, config]));
+    for (const grantUID of uniqueGrantUIDs) {
+      queryClient.setQueryData(
+        payoutDisbursementKeys.payoutConfigs.byGrantPublic(grantUID),
+        configByGrant.get(grantUID) ?? null
+      );
+    }
+  }, [communityUID, communityConfigs, uniqueGrantUIDs, queryClient]);
+
+  // When batching, the batch itself is the read path and NO per-grant observer
+  // is created — feeding `useQueries` an empty list keeps the request count at
+  // exactly one regardless of grant count, with no dependence on whether the
+  // seeding effect above happens to run before React Query schedules a fetch.
   const queries = useQueries({
-    queries: grantUIDs.map((grantUID) => ({
-      queryKey: [...payoutDisbursementKeys.payoutConfigs.byGrant(grantUID), "public"] as const,
+    queries: (communityUID ? [] : uniqueGrantUIDs).map((grantUID) => ({
+      queryKey: payoutDisbursementKeys.payoutConfigs.byGrantPublic(grantUID),
       queryFn: () => payoutService.getPayoutConfigByGrantPublic(grantUID),
-      staleTime: 5 * 60 * 1000,
+      staleTime: FIVE_MINUTES_MS,
+      gcTime: THIRTY_MINUTES_MS,
     })),
   });
 
-  const isLoading = queries.some((q) => q.isLoading);
-  const isError = queries.some((q) => q.isError);
-  const error = queries.find((q) => q.error)?.error ?? null;
+  const dataKey = queries.map((q) => q.dataUpdatedAt).join(",");
 
-  const dataKey = useMemo(() => queries.map((q) => q.dataUpdatedAt).join(","), [queries]);
-
-  const allocationMap = useMemo(() => {
-    return buildMilestoneAllocationMap(
-      queries.map((q) => q.data),
-      currencyByGrant
-    );
+  const perGrantConfigs = useMemo(
+    () => queries.map((q) => q.data),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataKey, currencyByGrant]);
+    [dataKey]
+  );
 
-  const grantTotalMap = useMemo(() => {
-    return buildGrantAllocationTotalMap(
-      queries.map((q) => q.data),
-      currencyByGrant
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataKey, currencyByGrant]);
+  // Project the batch onto the requested grants in the same order/shape the
+  // per-grant path yields, so both modes build byte-identical allocation maps.
+  const batchedConfigs = useMemo(() => {
+    if (!communityUID || !communityConfigs) return undefined;
+    const configByGrant = new Map(communityConfigs.map((config) => [config.grantUID, config]));
+    return uniqueGrantUIDs.map((grantUID) => configByGrant.get(grantUID) ?? null);
+  }, [communityUID, communityConfigs, uniqueGrantUIDs]);
 
-  return { allocationMap, grantTotalMap, isLoading, isError, error };
+  if (communityUID) {
+    return {
+      configs: batchedConfigs ?? EMPTY_CONFIGS,
+      isLoading: communityQuery.isLoading,
+      isError: communityQuery.isError,
+      error: communityQuery.error ?? null,
+      refetch: communityQuery.refetch,
+    };
+  }
+
+  return {
+    configs: perGrantConfigs,
+    isLoading: queries.some((q) => q.isLoading),
+    isError: queries.some((q) => q.isError),
+    error: queries.find((q) => q.error)?.error ?? null,
+    refetch: () => Promise.all(queries.map((q) => q.refetch())),
+  };
+}
+
+/**
+ * Generic hook: fetches payout configs for given grant UIDs
+ * and returns both milestone-level and grant-level allocation maps.
+ *
+ * Pass `communityUID` to collapse the fetch into one community-wide request
+ * (recommended for pages that fan out many grants).
+ */
+export function useMilestoneAllocationsByGrants(
+  grantUIDs: string[],
+  currencyByGrant?: Map<string, string>,
+  options?: PayoutConfigsForGrantsOptions
+) {
+  const { configs, isLoading, isError, error, refetch } = usePayoutConfigsForGrants(
+    grantUIDs,
+    options
+  );
+
+  const allocationMap = useMemo(
+    () => buildMilestoneAllocationMap(configs, currencyByGrant),
+    [configs, currencyByGrant]
+  );
+
+  const grantTotalMap = useMemo(
+    () => buildGrantAllocationTotalMap(configs, currencyByGrant),
+    [configs, currencyByGrant]
+  );
+
+  return { allocationMap, grantTotalMap, isLoading, isError, error, refetch };
 }
 
 /**
@@ -202,27 +303,25 @@ export function useCommunityMilestoneAllocations(milestones: CommunityMilestoneU
     return map;
   }, [milestones]);
 
-  const queries = useQueries({
-    queries: uniqueGrantUIDs.map((grantUID) => ({
-      queryKey: [...payoutDisbursementKeys.payoutConfigs.byGrant(grantUID), "public"] as const,
-      queryFn: () => payoutService.getPayoutConfigByGrantPublic(grantUID),
-      staleTime: 5 * 60 * 1000,
-    })),
+  // Only batch when every milestone belongs to the same community. A mixed
+  // list would otherwise be seeded against one community's configs and the
+  // other communities' grants would be wrongly recorded as having none.
+  const communityUID = useMemo(() => {
+    const uids = new Set<string>();
+    for (const m of milestones) {
+      if (m.communityUID) uids.add(m.communityUID);
+    }
+    return uids.size === 1 ? Array.from(uids)[0] : undefined;
+  }, [milestones]);
+
+  const { configs, isLoading, isError, error } = usePayoutConfigsForGrants(uniqueGrantUIDs, {
+    communityUID,
   });
 
-  const isLoading = queries.some((q) => q.isLoading);
-  const isError = queries.some((q) => q.isError);
-  const error = queries.find((q) => q.error)?.error ?? null;
-
-  const dataKey = useMemo(() => queries.map((q) => q.dataUpdatedAt).join(","), [queries]);
-
-  const allocationMap = useMemo(() => {
-    return buildMilestoneAllocationMap(
-      queries.map((q) => q.data),
-      currencyByGrant
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataKey, currencyByGrant]);
+  const allocationMap = useMemo(
+    () => buildMilestoneAllocationMap(configs, currencyByGrant),
+    [configs, currencyByGrant]
+  );
 
   return { allocationMap, isLoading, isError, error };
 }

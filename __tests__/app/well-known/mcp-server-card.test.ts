@@ -20,7 +20,7 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
     expect(body.name).toBe("gap-tools");
     expect(body.alternateNames).toEqual(expect.arrayContaining(["karma-gap-tools"]));
     expect(body.transport).toBe("http");
-    expect(body.url).toBe(`${INDEXER_URL}/v2/mcp`);
+    expect(body.url).toBe(`${INDEXER_URL}/mcp`);
     expect(body.protocolVersion).toBe("2025-11-25");
     expect(body.version).toBe("1.0.0");
   });

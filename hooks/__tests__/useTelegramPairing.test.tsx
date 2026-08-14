@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import type { MockedFunction } from "vitest";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import {
   TelegramPairingError,
@@ -10,9 +10,11 @@ import {
   useVerifyTelegramPairing,
 } from "../useTelegramPairing";
 
-vi.mock("@/utilities/fetchData");
+vi.mock("@/utilities/api/client", () => ({
+  api: { request: vi.fn() },
+}));
 
-const mockFetchData = fetchData as MockedFunction<typeof fetchData>;
+const mockApiRequest = api.request as unknown as vi.Mock;
 
 const SLUG = "filecoin";
 
@@ -43,7 +45,7 @@ describe("useTelegramPairing", () => {
         token: "KARMA-PAIR-ab3f9k",
         expiresAt: "2026-04-17T12:34:56Z",
       };
-      mockFetchData.mockResolvedValue([startResponse, null, null, 200]);
+      mockApiRequest.mockResolvedValue({ data: startResponse, status: 200, pageInfo: null });
 
       const { result } = renderHook(() => useStartTelegramPairing(SLUG), { wrapper });
 
@@ -53,18 +55,21 @@ describe("useTelegramPairing", () => {
       });
 
       expect(mutationResult).toEqual(startResponse);
-      expect(mockFetchData).toHaveBeenCalledWith(
-        INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_START(SLUG),
+      expect(mockApiRequest).toHaveBeenCalledWith(
         "POST",
-        {},
-        {},
-        {},
-        true
+        INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_START(SLUG),
+        {}
       );
     });
 
     it("throws a TelegramPairingError with status when backend returns an error", async () => {
-      mockFetchData.mockResolvedValue([null, "Unavailable", null, 503]);
+      mockApiRequest.mockRejectedValue(
+        new HttpError(503, {
+          endpoint: INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_START(SLUG),
+          method: "POST",
+          body: { message: "Unavailable" },
+        })
+      );
 
       const { result } = renderHook(() => useStartTelegramPairing(SLUG), { wrapper });
 
@@ -83,7 +88,13 @@ describe("useTelegramPairing", () => {
       // cast via `as TelegramPairingError`, so `instanceof` checks at call
       // sites returned false. Now it's a real Error subclass — call sites
       // can branch on the class.
-      mockFetchData.mockResolvedValue([null, "Boom", null, 500]);
+      mockApiRequest.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_START(SLUG),
+          method: "POST",
+          body: { message: "Boom" },
+        })
+      );
 
       const { result } = renderHook(() => useStartTelegramPairing(SLUG), { wrapper });
 
@@ -120,7 +131,7 @@ describe("useTelegramPairing", () => {
         chatType: "supergroup",
         alreadyPaired: false,
       };
-      mockFetchData.mockResolvedValue([verifyResponse, null, null, 200]);
+      mockApiRequest.mockResolvedValue({ data: verifyResponse, status: 200, pageInfo: null });
 
       const { result } = renderHook(() => useVerifyTelegramPairing(SLUG), { wrapper });
 
@@ -130,13 +141,10 @@ describe("useTelegramPairing", () => {
       });
 
       expect(mutationResult).toEqual(verifyResponse);
-      expect(mockFetchData).toHaveBeenCalledWith(
-        INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_VERIFY(SLUG),
+      expect(mockApiRequest).toHaveBeenCalledWith(
         "POST",
-        { token: "KARMA-PAIR-ab3f9k" },
-        {},
-        {},
-        true
+        INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_VERIFY(SLUG),
+        { token: "KARMA-PAIR-ab3f9k" }
       );
     });
 
@@ -157,7 +165,7 @@ describe("useTelegramPairing", () => {
         chatType: "group",
         alreadyPaired: false,
       };
-      mockFetchData.mockResolvedValue([verifyResponse, null, null, 200]);
+      mockApiRequest.mockResolvedValue({ data: verifyResponse, status: 200, pageInfo: null });
 
       const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
 
@@ -179,7 +187,13 @@ describe("useTelegramPairing", () => {
     });
 
     it("surfaces a 404 error with status preserved", async () => {
-      mockFetchData.mockResolvedValue([null, "not found", null, 404]);
+      mockApiRequest.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: INDEXER.COMMUNITY.CONFIG.TELEGRAM_PAIR_VERIFY(SLUG),
+          method: "POST",
+          body: { message: "not found" },
+        })
+      );
 
       const { result } = renderHook(() => useVerifyTelegramPairing(SLUG), { wrapper });
 

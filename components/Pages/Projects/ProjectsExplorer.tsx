@@ -2,6 +2,7 @@
 
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
+import type { InfiniteData } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -15,7 +16,13 @@ import {
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import type { PaginatedProjectsResponse } from "@/types/v2/project";
+import {
+  type ProjectsExplorerState,
+  parseProjectsExplorerRequest,
+} from "@/utilities/projects-explorer-request";
 import { queryClient } from "@/utilities/query-client";
+import { CrawlableProjectsPagination } from "./CrawlablePagination";
 import { ProjectsLoading } from "./Loading";
 import { ProjectCard } from "./ProjectCard";
 
@@ -28,7 +35,14 @@ const sortOptions: Record<ExplorerSortByOptions, string> = {
   noOfGrantMilestones: "No. of Milestones",
 };
 
-export const ProjectsExplorer = () => {
+interface ProjectsExplorerProps {
+  /** Server-rendered first page for the initial (matching) request. */
+  initialData?: PaginatedProjectsResponse;
+  /** Effective request the server rendered, used to gate the seed. */
+  initialState?: ProjectsExplorerState;
+}
+
+export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorerProps = {}) => {
   const sectionRef = useRef<HTMLElement>(null);
   const hasScrolledRef = useRef(false);
 
@@ -103,8 +117,42 @@ export const ProjectsExplorer = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
+    if (value === "") {
+      // Clearing must take effect immediately. Cancel any pending debounced write
+      // and clear the URL synchronously, otherwise the next render or the
+      // debounce-cleanup effect can cancel the queued clear and leave a stale ?q
+      // (and stale results) behind.
+      debouncedSetSearch.cancel();
+      setSearchQuery(null);
+      return;
+    }
     debouncedSetSearch(value);
   };
+
+  // Normalize the live URL filters with the shared policy so the seed decision
+  // matches exactly what the server parsed.
+  const normalizedState = parseProjectsExplorerRequest({
+    q: searchQuery,
+    sortBy: selectedSort,
+    sortOrder: selectedSortOrder,
+    raisingFunds: hasPayoutAddress,
+  });
+
+  const matchesInitialState =
+    initialState !== undefined &&
+    normalizedState.q === initialState.q &&
+    normalizedState.sortBy === initialState.sortBy &&
+    normalizedState.sortOrder === initialState.sortOrder &&
+    normalizedState.raisingFunds === initialState.raisingFunds;
+
+  // When the live filters still match the server request, start from its page so
+  // even a failed server fetch retries the same page client-side; otherwise
+  // reset to page 1 so a stale seed cannot bleed into a different query.
+  const effectivePage = matchesInitialState && initialState ? initialState.page : 1;
+  const seededData: InfiniteData<PaginatedProjectsResponse, number> | undefined =
+    matchesInitialState && initialData
+      ? { pages: [initialData], pageParams: [effectivePage] }
+      : undefined;
 
   // Infinite query
   const {
@@ -117,11 +165,24 @@ export const ProjectsExplorer = () => {
     hasNextPage,
     fetchNextPage,
   } = useProjectsExplorerInfinite({
-    search: searchQuery,
-    sortBy: selectedSort as ExplorerSortByOptions,
-    sortOrder: selectedSortOrder as ExplorerSortOrder,
-    hasPayoutAddress: isPayoutAddressFilterActive,
+    // Feed the service normalized values so an invalid URL param can never reach
+    // the indexer or diverge from the seed decision.
+    search: normalizedState.q,
+    sortBy: normalizedState.sortBy,
+    sortOrder: normalizedState.sortOrder,
+    hasPayoutAddress: normalizedState.raisingFunds,
+    initialData: seededData,
+    initialPage: effectivePage,
   });
+
+  // Crawlable pagination: only meaningful in SSR mode (initialState present).
+  // Derived from the effective page and the total pages so bots can follow
+  // Previous/Next without JavaScript.
+  const totalPages = Math.ceil(totalCount / PROJECTS_EXPLORER_CONSTANTS.RESULT_LIMIT);
+  const hrefState: ProjectsExplorerState = { ...normalizedState, page: effectivePage };
+  const showCrawlablePagination = initialState !== undefined && projects.length > 0;
+  const hasCrawlablePrev = showCrawlablePagination && effectivePage > 1;
+  const hasCrawlableNext = showCrawlablePagination && effectivePage < totalPages;
 
   // Handle sort change
   const changeSort = async (newValue: ExplorerSortByOptions) => {
@@ -145,7 +206,7 @@ export const ProjectsExplorer = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-black dark:text-white">Projects on Karma</h2>
+          <h2 className="text-2xl font-semibold text-black dark:text-white">Projects on Karma</h2>
           {!isLoading && totalCount > 0 && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {totalCount.toLocaleString()} {totalCount === 1 ? "project" : "projects"} found
@@ -161,7 +222,7 @@ export const ProjectsExplorer = () => {
             <input
               type="text"
               aria-label="Search projects"
-              placeholder="Search projects..."
+              placeholder="Search projects…"
               value={inputValue}
               onChange={handleSearchChange}
               className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
@@ -172,6 +233,7 @@ export const ProjectsExplorer = () => {
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
+              aria-label="Filter to projects raising funds"
               checked={isPayoutAddressFilterActive}
               onChange={() => setHasPayoutAddress(isPayoutAddressFilterActive ? null : "true")}
               className="sr-only peer"
@@ -202,7 +264,7 @@ export const ProjectsExplorer = () => {
             </label>
             <div className="flex items-center gap-1">
               <Select
-                value={selectedSort}
+                value={normalizedState.sortBy}
                 onValueChange={(value) => {
                   changeSort(value as ExplorerSortByOptions);
                 }}
@@ -212,7 +274,7 @@ export const ProjectsExplorer = () => {
                   aria-label="Sort projects by"
                   className="w-48 bg-white dark:bg-zinc-800 dark:text-zinc-200 border-gray-300 dark:border-zinc-700"
                 >
-                  <SelectValue>{sortOptions[selectedSort as ExplorerSortByOptions]}</SelectValue>
+                  <SelectValue>{sortOptions[normalizedState.sortBy]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-zinc-800">
                   {Object.keys(sortOptions).map((sortOption) => (
@@ -228,11 +290,13 @@ export const ProjectsExplorer = () => {
               </Select>
               <button
                 type="button"
-                onClick={() => setSelectedSortOrder(selectedSortOrder === "asc" ? "desc" : "asc")}
-                aria-label={`Sort ${selectedSortOrder === "asc" ? "descending" : "ascending"}`}
+                onClick={() =>
+                  setSelectedSortOrder(normalizedState.sortOrder === "asc" ? "desc" : "asc")
+                }
+                aria-label={`Sort ${normalizedState.sortOrder === "asc" ? "descending" : "ascending"}`}
                 className="p-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               >
-                {selectedSortOrder === "asc" ? (
+                {normalizedState.sortOrder === "asc" ? (
                   <ArrowUpIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                 ) : (
                   <ArrowDownIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -266,10 +330,18 @@ export const ProjectsExplorer = () => {
             ))}
           </div>
 
+          <CrawlableProjectsPagination
+            hrefState={hrefState}
+            effectivePage={effectivePage}
+            hasPrev={hasCrawlablePrev}
+            hasNext={hasCrawlableNext}
+          />
+
           {/* Load More Button */}
           {hasNextPage && (
             <div className="flex justify-center py-8">
               <button
+                type="button"
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
                 className="px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
@@ -277,7 +349,7 @@ export const ProjectsExplorer = () => {
                 {isFetchingNextPage ? (
                   <>
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Loading...
+                    Loading…
                   </>
                 ) : (
                   "Load More Projects"
@@ -299,7 +371,7 @@ export const ProjectsExplorer = () => {
       {isFetching && !isLoading && !isFetchingNextPage && (
         <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2">
           <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          Updating...
+          Updating…
         </div>
       )}
     </section>

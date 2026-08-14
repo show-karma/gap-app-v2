@@ -176,12 +176,12 @@ describe("roundNumberWithPlus", () => {
       expect(roundNumberWithPlus(0, true)).toBe(0);
     });
 
-    it("should round 10 to 0+", () => {
-      expect(roundNumberWithPlus(10, true)).toBe("0+");
+    it("should not round 10 — values under 100 would produce a misleading 0+", () => {
+      expect(roundNumberWithPlus(10, true)).toBe(10);
     });
 
-    it("should round 99 to 0+", () => {
-      expect(roundNumberWithPlus(99, true)).toBe("0+");
+    it("should not round 99 — values under 100 would produce a misleading 0+", () => {
+      expect(roundNumberWithPlus(99, true)).toBe(99);
     });
 
     it("should round 100 to 100+", () => {

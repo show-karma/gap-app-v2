@@ -15,7 +15,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -91,7 +91,7 @@ export const MilestonesScreen: React.FC = () => {
   };
 
   const createNewGrant = async () => {
-    if (!address || !selectedProject || !gap || isCreating) return;
+    if (!selectedProject || !gap || isCreating) return;
 
     setIsCreating(true);
     try {
@@ -207,7 +207,7 @@ export const MilestonesScreen: React.FC = () => {
           const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), {});
           }
           changeStepperStep("indexing");
 
@@ -252,7 +252,7 @@ export const MilestonesScreen: React.FC = () => {
                   const programId = programIdParts[0];
                   const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10);
 
-                  await fetchData(INDEXER.PROJECTS.TRACKS(selectedProject.uid), "POST", {
+                  await api.post(INDEXER.PROJECTS.TRACKS(selectedProject.uid), {
                     communityUID: newGrantData.community,
                     trackIds: newGrantData.selectedTrackIds,
                     programId,

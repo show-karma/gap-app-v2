@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
+import { CANONICAL_HOST } from "@/utilities/domains";
 
 export const runtime = "edge";
 
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
           width: "100%",
         }}
       >
-        <div style={{ fontSize: 20, color: "#64748B" }}>karmahq.xyz/knowledge</div>
+        <div style={{ fontSize: 20, color: "#64748B" }}>{`${CANONICAL_HOST}/knowledge`}</div>
       </div>
     </div>,
     {

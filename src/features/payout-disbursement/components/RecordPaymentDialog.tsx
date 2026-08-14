@@ -33,7 +33,9 @@ interface RecordPaymentDialogProps {
   milestoneInvoices?: CommunityPayoutInvoiceInfo[];
   todayLocal: string;
   onSuccess?: () => void;
-  /** Pre-select a milestone by label when opening from the status dropdown */
+  /** Pre-select a milestone by its UID when opening from the status dropdown */
+  initialMilestoneUID?: string | null;
+  /** Fallback pre-select by label when the milestone has no UID */
   initialMilestoneLabel?: string;
   /** Pre-fill the amount field with the milestone's allocation value */
   initialAmount?: string | null;
@@ -88,6 +90,7 @@ function RecordPaymentDialogInner({
   milestoneInvoices,
   todayLocal,
   onSuccess,
+  initialMilestoneUID,
   initialMilestoneLabel,
   initialAmount,
   initialStatus,
@@ -176,18 +179,26 @@ function RecordPaymentDialogInner({
       .map((cat) => ({ category: cat, ...CATEGORY_CONFIG[cat], items: groups.get(cat)! }));
   }, [milestoneOptions]);
 
-  // Pre-select milestone and pre-fill amount when opening from the status dropdown
+  // Pre-select milestone and pre-fill amount when opening from the status dropdown.
+  // Match on the row's UID first so duplicate labels resolve to the correct row.
   useEffect(() => {
-    if (!isOpen || !initialMilestoneLabel || milestoneOptions.length === 0) return;
+    if (!isOpen || milestoneOptions.length === 0) return;
+    if (!initialMilestoneUID && !initialMilestoneLabel) return;
 
-    const match = milestoneOptions.find((opt) => opt.label === initialMilestoneLabel);
+    const match =
+      (initialMilestoneUID
+        ? milestoneOptions.find((opt) => opt.milestoneUID === initialMilestoneUID)
+        : undefined) ??
+      (initialMilestoneLabel
+        ? milestoneOptions.find((opt) => opt.label === initialMilestoneLabel)
+        : undefined);
     if (match && !match.isPaid) {
       setSelectedKeys([match.key]);
     }
     if (initialAmount && !Number.isNaN(Number(initialAmount))) {
       setAmount(initialAmount);
     }
-  }, [isOpen, initialMilestoneLabel, initialAmount, milestoneOptions]);
+  }, [isOpen, initialMilestoneUID, initialMilestoneLabel, initialAmount, milestoneOptions]);
 
   const toggleSelection = useCallback((key: string) => {
     setSelectedKeys((prev) =>

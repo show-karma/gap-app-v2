@@ -16,7 +16,7 @@ export const ApplicationListStatsBar: FC<ApplicationListStatsBarProps> = ({ stat
     { title: "Revision Requested", value: stats.revisionRequestedApplications || 0 },
     { title: "Under Review", value: stats.underReviewApplications || 0 },
     { title: "Approved", value: stats.approvedApplications || 0 },
-    { title: "Rejected", value: stats.rejectedApplications || 0 },
+    { title: "Declined", value: stats.rejectedApplications || 0 },
   ];
 
   return (
