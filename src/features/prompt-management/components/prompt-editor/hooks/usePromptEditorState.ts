@@ -48,6 +48,7 @@ export function usePromptEditorState({
     isError: isModelsError,
     refetch: refetchModels,
   } = useAvailableAIModels();
+  const hasPermittedModel = !isLoadingModels && !isModelsError && availableModels.includes(modelId);
 
   // Mutations
   const savePromptMutation = useSavePrompt(programId, promptType, {
@@ -132,6 +133,10 @@ export function usePromptEditorState({
   );
 
   const handleSave = useCallback(() => {
+    if (!hasPermittedModel) {
+      toast.error("Select a model from the current catalog");
+      return;
+    }
     if (!name.trim()) {
       toast.error("Prompt name is required");
       return;
@@ -140,11 +145,6 @@ export function usePromptEditorState({
       toast.error("Prompt content is required");
       return;
     }
-    if (!modelId) {
-      toast.error("Please select an AI model");
-      return;
-    }
-
     const combinedText = `${systemMessage} ${content}`.toLowerCase();
     if (!combinedText.includes("json")) {
       toast.error(
@@ -159,7 +159,7 @@ export function usePromptEditorState({
       content: content.trim(),
       modelId,
     });
-  }, [name, systemMessage, content, modelId, savePromptMutation]);
+  }, [name, systemMessage, content, modelId, hasPermittedModel, savePromptMutation]);
 
   const handleTest = useCallback(
     async (applicationId: string): Promise<TestProgramPromptResult> => {
@@ -182,7 +182,7 @@ export function usePromptEditorState({
 
   // Derived state
   const isNewPrompt = !existingPrompt;
-  const canSave = isDirty && !!name.trim() && !!content.trim() && !!modelId && !readOnly;
+  const canSave = isDirty && !!name.trim() && !!content.trim() && hasPermittedModel && !readOnly;
   const canTest = !!existingPrompt && !isDirty;
   const canBulkEvaluate = !!existingPrompt && !isDirty;
   const isJobRunning = Boolean(

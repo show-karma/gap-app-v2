@@ -78,6 +78,9 @@ export function PromptEditor({
     onSaveSuccess,
     readOnly,
   });
+  const handleRetryModels = () => {
+    void refetchModels();
+  };
 
   return (
     <div className="space-y-6">
@@ -93,7 +96,7 @@ export function PromptEditor({
         availableModels={availableModels}
         isLoadingModels={isLoadingModels}
         isModelsError={isModelsError}
-        onRetryModels={() => refetchModels()}
+        onRetryModels={handleRetryModels}
         onNameChange={handleNameChange}
         onSystemMessageChange={handleSystemMessageChange}
         onContentChange={handleContentChange}

@@ -45,6 +45,7 @@ export function PromptEditorForm({
   onRetryModels,
 }: PromptEditorFormProps) {
   const isNewPrompt = !existingPrompt;
+  const hasUnavailableModel = Boolean(modelId) && !availableModels.includes(modelId);
 
   return (
     <>
@@ -119,11 +120,16 @@ export function PromptEditorForm({
             ) : availableModels.length === 0 ? (
               <option value="">No models configured</option>
             ) : (
-              availableModels.map((model) => (
-                <option key={model} value={model}>
-                  {model}
-                </option>
-              ))
+              <>
+                {hasUnavailableModel && (
+                  <option value={modelId}>{modelId} (not currently permitted)</option>
+                )}
+                {availableModels.map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
+              </>
             )}
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />

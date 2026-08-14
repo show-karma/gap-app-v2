@@ -184,6 +184,9 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     isError: modelsError,
     refetch: refetchModels,
   } = useAvailableAIModels("portfolioReport");
+  const handleRetryModels = () => {
+    void refetchModels();
+  };
 
   if (accessLoading || isLoading || modelsLoading) {
     return (
@@ -205,7 +208,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
         <p className="text-sm text-red-600 dark:text-red-400">Failed to load the model catalog.</p>
-        <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchModels()}>
+        <Button variant="outline" size="sm" className="mt-3" onClick={handleRetryModels}>
           Retry
         </Button>
       </div>
@@ -301,7 +304,7 @@ function ReportConfigPageLoaded({
     defaultValues: editingConfig ? buildFormValues(editingConfig) : emptyFormValues,
   });
 
-  const openNewForm = () => {
+  const handleOpenNewForm = () => {
     setEditingId("new");
     reset(emptyFormValues);
   };
@@ -461,7 +464,7 @@ function ReportConfigPageLoaded({
           </p>
         </div>
         {!isFormOpen && (
-          <Button onClick={openNewForm}>
+          <Button onClick={handleOpenNewForm}>
             <Plus className="mr-2 h-4 w-4" />
             New Report
           </Button>
@@ -505,7 +508,8 @@ function ReportConfigPageLoaded({
                     {formatScheduleLabel(cfg.schedule)}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
-                    {cfg.programIds.length} {pluralize("program", cfg.programIds.length)}
+                    {cfg.programIds.length > 0 &&
+                      `${cfg.programIds.length} ${pluralize("program", cfg.programIds.length)}`}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">{cfg.modelId}</td>
                   <td className="px-4 py-3">

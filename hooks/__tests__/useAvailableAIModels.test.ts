@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractModelsFromResponse } from "../useAvailableAIModels";
+import { extractModelsFromResponse } from "@/hooks/useAvailableAIModels";
 
 describe("extractModelsFromResponse", () => {
   it("returns only models assigned to the requested selection surface", () => {
@@ -21,5 +21,17 @@ describe("extractModelsFromResponse", () => {
     expect(extractModelsFromResponse({ models: ["model-a"] }, "programPrompt")).toEqual([
       "model-a",
     ]);
+  });
+
+  it("keeps an explicitly empty selection empty", () => {
+    expect(
+      extractModelsFromResponse(
+        {
+          models: ["model-a"],
+          selections: { programPrompt: [] },
+        },
+        "programPrompt"
+      )
+    ).toEqual([]);
   });
 });
