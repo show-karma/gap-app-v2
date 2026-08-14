@@ -1,8 +1,8 @@
 /**
  * Unit Tests: WhitelabelNavbar social link labels
  * Verifies that a tenant can override the default "Twitter" social link label
- * via navigation.socialLinkLabels (e.g. Filecoin shows "Social"), while tenants
- * without an override keep the default label.
+ * via navigation.socialLinkLabels, while tenants without an override keep the
+ * default label.
  */
 
 import { fireEvent, screen, waitFor } from "@testing-library/react";

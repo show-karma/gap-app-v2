@@ -302,6 +302,7 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
         label: "ProPGF",
         items: [
           { label: "Overview", href: "https://filpgf.io/propgf", isExternal: true },
+          { label: "Financials", href: "/community/filecoin/financials" },
           {
             label: "Grants",
             items: [
@@ -341,16 +342,21 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
                 isExternal: true,
               },
               {
+                label: "Batch 3",
+                href: "https://app.filpgf.io/browse-applications?programId=1479",
+                isExternal: true,
+              },
+              {
                 label: "Pods Track",
                 href: "https://app.filpgf.io/browse-applications?programId=1039",
                 isExternal: true,
               },
             ],
           },
-          { label: "Financials", href: "/community/filecoin/financials" },
         ],
       },
       { label: "RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
+      { label: "Blog", href: "https://filpgf.io/blog", isExternal: true },
       {
         label: "More",
         items: [
@@ -361,6 +367,7 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
             href: "https://github.com/filecoin-project/community/discussions",
             isExternal: true,
           },
+          { label: "Community", href: "https://filecoin.io/community", isExternal: true },
         ],
       },
     ],
@@ -368,9 +375,6 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
       twitter: "https://twitter.com/Filecoin",
       discord: "https://discord.gg/yeQ2hcd2TD",
       github: "https://github.com/filecoin-project",
-    },
-    socialLinkLabels: {
-      twitter: "Social",
     },
   },
   "for-the-world": {
