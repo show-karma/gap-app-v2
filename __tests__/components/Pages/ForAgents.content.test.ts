@@ -1,6 +1,14 @@
 import { AGENT_FAQS, STATIC_FALLBACK_TOOLS, USE_CASES } from "@/components/Pages/ForAgents/content";
 import { CATEGORY_LABELS } from "@/components/Pages/ForAgents/types";
-import { ROOT_DOMAIN } from "@/utilities/domains";
+import { CANONICAL_HOST, LEGACY_ROOT_DOMAINS } from "@/utilities/domains";
+import { envVars } from "@/utilities/enviromentVars";
+import { normalizeBaseUrl } from "@/utilities/wellKnown";
+
+// Derived exactly as content.ts derives them. Pinning literals here is what let
+// the .xyz -> .org migration ship with a stale MCP host on /for-agents: a
+// repo-wide sweep for the old domain was held back by a green assertion.
+const MCP_SERVER_URL = `${normalizeBaseUrl(envVars.NEXT_PUBLIC_GAP_INDEXER_URL)}/mcp`;
+const MCP_CONNECT_URL = `${CANONICAL_HOST}/mcp/connect`;
 
 describe("AGENT_FAQS content", () => {
   it("provides at least four entries", () => {
@@ -16,9 +24,17 @@ describe("AGENT_FAQS content", () => {
 
   it("states the MCP endpoint and supported clients as a direct answer", () => {
     const clients = AGENT_FAQS.find((f) => f.question.includes("Which AI apps"));
-    expect(clients?.answer).toContain("gapapi.karmahq.xyz/mcp");
+    expect(clients?.answer).toContain(MCP_SERVER_URL);
     expect(clients?.answer).toContain("Claude");
     expect(clients?.answer).toContain("Codex");
+  });
+
+  it("never advertises a legacy host in copy that is also emitted as JSON-LD", () => {
+    for (const entry of AGENT_FAQS) {
+      for (const legacyRoot of LEGACY_ROOT_DOMAINS) {
+        expect(entry.answer).not.toContain(legacyRoot);
+      }
+    }
   });
 
   it("answers which operations need authentication", () => {
@@ -29,8 +45,8 @@ describe("AGENT_FAQS content", () => {
 
   it("answers connecting from Claude with the guide location", () => {
     const connect = AGENT_FAQS.find((f) => f.question.includes("connect Karma to Claude"));
-    expect(connect?.answer).toContain("gapapi.karmahq.xyz/mcp");
-    expect(connect?.answer).toContain(`${ROOT_DOMAIN}/mcp/connect`);
+    expect(connect?.answer).toContain(MCP_SERVER_URL);
+    expect(connect?.answer).toContain(MCP_CONNECT_URL);
   });
 
   it("answers whether an agent can draft and submit an application", () => {

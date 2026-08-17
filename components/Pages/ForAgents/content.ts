@@ -9,8 +9,21 @@
  * revalidation time.
  */
 
-import { ROOT_DOMAIN } from "@/utilities/domains";
+import { CANONICAL_HOST } from "@/utilities/domains";
+import { envVars } from "@/utilities/enviromentVars";
+import { normalizeBaseUrl } from "@/utilities/wellKnown";
 import type { PublicToolMetadata } from "./types";
+
+/**
+ * Derived, never hardcoded. These strings are the setup instructions users
+ * copy into their MCP client and are also emitted as FAQPage JSON-LD, so a
+ * stale literal here contradicts /mcp/connect and gets ingested by crawlers
+ * as the official endpoint. Built the same way McpConnectPage builds it.
+ */
+const MCP_SERVER_URL = `${normalizeBaseUrl(envVars.NEXT_PUBLIC_GAP_INDEXER_URL)}/mcp`;
+
+/** Linked, so it must be the canonical host — the apex owes a 308. */
+const MCP_CONNECT_URL = `${CANONICAL_HOST}/mcp/connect`;
 
 interface AgentFaqEntry {
   question: string;
@@ -26,12 +39,11 @@ interface UseCaseCard {
 export const AGENT_FAQS: AgentFaqEntry[] = [
   {
     question: "Which AI apps does Karma's MCP server work with?",
-    answer:
-      "Karma provides a public MCP (Model Context Protocol) server over Streamable HTTP at gapapi.karmahq.xyz/mcp. It works with Claude (claude.ai and the desktop app, via custom connectors), Cursor, Codex, and any MCP client supporting protocol version 2025-11-25 or later.",
+    answer: `Karma provides a public MCP (Model Context Protocol) server over Streamable HTTP at ${MCP_SERVER_URL}. It works with Claude (claude.ai and the desktop app, via custom connectors), Cursor, Codex, and any MCP client supporting protocol version 2025-11-25 or later.`,
   },
   {
     question: "How do I connect Karma to Claude?",
-    answer: `In Claude, open Settings, choose Connectors, click Add custom connector, paste gapapi.karmahq.xyz/mcp as the remote MCP server URL, and sign in to Karma when prompted. Other MCP clients such as Cursor and Codex take the same URL as a remote server. The step-by-step guide with troubleshooting lives at ${ROOT_DOMAIN}/mcp/connect.`,
+    answer: `In Claude, open Settings, choose Connectors, click Add custom connector, paste ${MCP_SERVER_URL} as the remote MCP server URL, and sign in to Karma when prompted. Other MCP clients such as Cursor and Codex take the same URL as a remote server. The step-by-step guide with troubleshooting lives at ${MCP_CONNECT_URL}.`,
   },
   {
     question: "Which MCP operations require authentication?",
