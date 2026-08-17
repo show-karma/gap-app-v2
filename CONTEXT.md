@@ -108,11 +108,15 @@ rows stay listed permanently. `www.*` is deliberately **absent**: adding it woul
 `gapapi` / `gapstagapi` (moving them invalidates every live MCP OAuth token — scalar `aud`,
 exact equality), `gov` / `govstag` (separate repo), `docs.gap` (GitBook), `privy` (Privy custom
 auth domain — `privy.karmahq.org` was **added** to the CSP alongside it, never substituted),
-`api` / `anon` (not served by this tree), and **every `@karmahq.xyz` email address** (SPF/DKIM
-do not exist for `.org`; flipping a `From` header first silently degrades deliverability).
+`api` / `anon` (not served by this tree), and every **individual** `@karmahq.xyz` mailbox
+(`arthur@`, `bruno@`, …) plus every email fixture in the test suites.
+
+Role addresses (`info@`, `support@`, `hello@`, `engineering@`) **did** flip to `.org`.
+That flip is gated on SPF/DKIM/DMARC existing for `karmahq.org` — without them a `From`
+header on `.org` silently degrades deliverability, with no bounce this tree can see.
 
 Full migration record: [`docs/DOMAIN_MIGRATION.md`](docs/DOMAIN_MIGRATION.md).
-Cutover procedure: [`../docs/runbooks/domain-migration-karmahq-org.md`](../docs/runbooks/domain-migration-karmahq-org.md).
+Cutover procedure: [`docs/runbooks/domain-migration-karmahq-org.md`](docs/runbooks/domain-migration-karmahq-org.md).
 
 ### Donor research — persona
 

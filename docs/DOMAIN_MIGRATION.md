@@ -8,7 +8,7 @@
 > - **2026-08 — the TLD flip**: `karmahq.xyz` → `karmahq.org`. See
 >   [§ 2026-08 — karmahq.xyz → karmahq.org](#2026-08--karmahqxyz--karmahqorg) at the bottom.
 >   Operational procedure lives in
->   [`docs/runbooks/domain-migration-karmahq-org.md`](../../docs/runbooks/domain-migration-karmahq-org.md).
+>   [`docs/runbooks/domain-migration-karmahq-org.md`](runbooks/domain-migration-karmahq-org.md).
 
 ---
 
@@ -356,8 +356,8 @@ For questions about this migration:
 # 2026-08 — karmahq.xyz → karmahq.org
 
 **Date:** 2026-08 · **Linear:** DEV-617 (epic), DEV-624 (frontend), DEV-628 (docs)
-**Runbook:** [`docs/runbooks/domain-migration-karmahq-org.md`](../../docs/runbooks/domain-migration-karmahq-org.md)
-**Deferred work:** [`docs/runbooks/domain-migration-deferred-work.md`](../../docs/runbooks/domain-migration-deferred-work.md)
+**Runbook (live state, open items, permanent constraints):**
+[`docs/runbooks/domain-migration-karmahq-org.md`](runbooks/domain-migration-karmahq-org.md)
 
 The registrable domain changes TLD. The 2025 host topology above is otherwise preserved:
 one canonical host serves 200s, everything else collapses onto it.
@@ -374,7 +374,8 @@ one canonical host serves 200s, everything else collapses onto it.
 | Governance | `gov.karmahq.xyz` / `govstag.karmahq.xyz` | **unchanged, stays `.xyz`** (separate repo) |
 | API | `gapapi.karmahq.xyz` / `gapstagapi.karmahq.xyz` | **unchanged, stays `.xyz`** |
 | Docs | `docs.gap.karmahq.xyz` | **unchanged, stays `.xyz`** (GitBook) |
-| Email sender | `@karmahq.xyz` | **unchanged, stays `.xyz`** until DKIM/SPF exist for `.org` |
+| Email — role addresses | `info@` / `support@` / `hello@` / `engineering@karmahq.xyz` | **`@karmahq.org`** — gated on SPF/DKIM/DMARC, see runbook §3 |
+| Email — individual mailboxes | `@karmahq.xyz` | **unchanged, stays `.xyz`** (per-user provisioning) |
 | Legacy umbrella | `app.` / `testapp.karmahq.xyz` → 301 | unchanged hosts, now 301 to the `.org` canonical in **one** hop |
 
 ## Single source of truth
@@ -463,7 +464,7 @@ the redirect target host to the request host, so a canonical host inside `ALIAS_
 | `docs.gap.karmahq.xyz` / `docs.karmahq.xyz` | Externally hosted on GitBook. |
 | `privy.karmahq.xyz` | Privy custom auth domain. `privy.karmahq.org` was **added** to the CSP alongside it, never substituted — a CSP violation blanks the login iframe with **no catchable JS error**. |
 | `api.karmahq.xyz`, `anon.karmahq.xyz`, `gap-api.karmahq.xyz` | Not served by any repo in this tree; ownership unverified. |
-| Every `@karmahq.xyz` email address | SPF/DKIM/DMARC do not exist for `karmahq.org`. Flipping a `From` header before DKIM is provisioned **silently degrades deliverability** — no error, no bounce we can see. |
+| Individual `@karmahq.xyz` mailboxes and every email test fixture | Per-user provisioning, not just domain records. Role addresses (`info@`, `support@`, `hello@`, `engineering@`) **did** flip — that flip is gated on SPF/DKIM/DMARC existing for `karmahq.org`, which as of 2026-08-17 it does not (the zone has zero TXT records). Shipping a `.org` `From` header first **silently degrades deliverability** — no error, no bounce we can see. Runbook §3. |
 | Security negative-test fixtures | Assertions such as `https://fakekarmahq.xyz → false` and `https://karmahq.xyz.evil.com → false` prove the anchoring of the origin regexes. They were **duplicated** for `.org`, never replaced — replacing them preserves the assertion text while destroying the coverage. |
 
 ## ⚠️ karmahq.xyz must be renewed indefinitely and never sunset
@@ -476,17 +477,18 @@ re-derives those payloads from chain on every re-index. They cannot be rewritten
 `LEGACY_ROOT_DOMAINS` / `ALIAS_HOSTS` is wrong by construction.** The registration is a
 permanent operating cost.
 
-## Known operational facts (measured 2026-08-06 — re-verify before cutover)
+## Known operational facts (re-measured 2026-08-17 — post-cutover)
 
-- `karmahq.org` is registered but **parked at Namecheap and not attached to Vercel**;
-  `staging.karmahq.org` does not resolve at all. Until the domains are attached, the
-  `indexability-monitor` workflow audits `.org` and reports red (its verify step is
-  `continue-on-error`).
+- ~~`karmahq.org` is parked at Namecheap and not attached to Vercel; `staging.karmahq.org` does
+  not resolve.~~ **Resolved.** The zone is now Route 53, `www.karmahq.org` serves 200 as the
+  canonical host, and `staging.karmahq.org` serves 200 with `robots.txt` = `Disallow: /`.
+  The `indexability-monitor` passes all 16 domain-topology checks; it is red only on three
+  unrelated `banned-slug` junk projects. Full table in runbook §1 and §6.
 - **The `.xyz` apex is not served by this app.** `https://karmahq.xyz/` is answered by an
   S3 bucket behind CloudFront that 301s to `www` — the request never reaches `proxy.ts`, so
   the `karmahq.xyz` entry in `ALIAS_HOSTS` has never executed in production. It also emits
   `https://www.karmahq.xyz//` (double slash) for the bare root. Decide during DEV-618 whether
   to retire that bucket and point the apex at Vercel.
-- Full DNS/TLS table, third-party dashboard checklist, email runbook, the R1–R15 risk
-  register and the end-to-end verification gate are in
-  [`docs/runbooks/domain-migration-karmahq-org.md`](../../docs/runbooks/domain-migration-karmahq-org.md).
+- Verified live host table, the apex fix, the email prerequisites, the analytics/Search Console
+  checklist and the monitoring status are in
+  [`docs/runbooks/domain-migration-karmahq-org.md`](runbooks/domain-migration-karmahq-org.md).
