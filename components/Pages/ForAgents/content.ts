@@ -9,21 +9,30 @@
  * revalidation time.
  */
 
-import { CANONICAL_HOST } from "@/utilities/domains";
-import { envVars } from "@/utilities/enviromentVars";
-import { normalizeBaseUrl } from "@/utilities/wellKnown";
+import { CANONICAL_ORIGIN } from "@/utilities/domains";
+import { getIndexerBaseUrl } from "@/utilities/wellKnown";
 import type { PublicToolMetadata } from "./types";
 
 /**
  * Derived, never hardcoded. These strings are the setup instructions users
  * copy into their MCP client and are also emitted as FAQPage JSON-LD, so a
  * stale literal here contradicts /mcp/connect and gets ingested by crawlers
- * as the official endpoint. Built the same way McpConnectPage builds it.
+ * as the official endpoint.
+ *
+ * getIndexerBaseUrl() rather than a bare envVars read: envVars casts
+ * NEXT_PUBLIC_GAP_INDEXER_URL without validating it, so an unset or malformed
+ * value would publish something like "undefined/mcp" as the official endpoint.
+ * This accessor rejects that at module load — both importers are server-side,
+ * so a misconfiguration fails the build instead of shipping a dead URL.
  */
-const MCP_SERVER_URL = `${normalizeBaseUrl(envVars.NEXT_PUBLIC_GAP_INDEXER_URL)}/mcp`;
+const MCP_SERVER_URL = `${getIndexerBaseUrl()}/mcp`;
 
-/** Linked, so it must be the canonical host — the apex owes a 308. */
-const MCP_CONNECT_URL = `${CANONICAL_HOST}/mcp/connect`;
+/**
+ * Absolute, not a bare hostname: this is pasted into setup instructions and
+ * emitted as structured data, and it points at the canonical origin because
+ * the apex owes a 308.
+ */
+const MCP_CONNECT_URL = `${CANONICAL_ORIGIN}/mcp/connect`;
 
 interface AgentFaqEntry {
   question: string;

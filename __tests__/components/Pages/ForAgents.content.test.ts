@@ -1,14 +1,13 @@
 import { AGENT_FAQS, STATIC_FALLBACK_TOOLS, USE_CASES } from "@/components/Pages/ForAgents/content";
 import { CATEGORY_LABELS } from "@/components/Pages/ForAgents/types";
-import { CANONICAL_HOST, LEGACY_ROOT_DOMAINS } from "@/utilities/domains";
-import { envVars } from "@/utilities/enviromentVars";
-import { normalizeBaseUrl } from "@/utilities/wellKnown";
+import { CANONICAL_ORIGIN, LEGACY_ROOT_DOMAINS } from "@/utilities/domains";
+import { getIndexerBaseUrl } from "@/utilities/wellKnown";
 
 // Derived exactly as content.ts derives them. Pinning literals here is what let
 // the .xyz -> .org migration ship with a stale MCP host on /for-agents: a
 // repo-wide sweep for the old domain was held back by a green assertion.
-const MCP_SERVER_URL = `${normalizeBaseUrl(envVars.NEXT_PUBLIC_GAP_INDEXER_URL)}/mcp`;
-const MCP_CONNECT_URL = `${CANONICAL_HOST}/mcp/connect`;
+const MCP_SERVER_URL = `${getIndexerBaseUrl()}/mcp`;
+const MCP_CONNECT_URL = `${CANONICAL_ORIGIN}/mcp/connect`;
 
 describe("AGENT_FAQS content", () => {
   it("provides at least four entries", () => {
@@ -29,11 +28,11 @@ describe("AGENT_FAQS content", () => {
     expect(clients?.answer).toContain("Codex");
   });
 
-  it("advertises a well-formed absolute MCP endpoint", () => {
-    // envVars casts NEXT_PUBLIC_GAP_INDEXER_URL without validating it, so an
-    // unset value would render "undefined/mcp" into both the visible copy and
-    // the FAQPage JSON-LD rather than failing loudly.
+  it("advertises absolute URLs for both the MCP endpoint and the setup guide", () => {
+    // A bare hostname breaks copy-paste into an MCP client and does not
+    // identify a canonical URL in the FAQPage JSON-LD.
     expect(MCP_SERVER_URL).toMatch(/^https?:\/\/[^/]+\/mcp$/);
+    expect(MCP_CONNECT_URL).toMatch(/^https:\/\/[^/]+\/mcp\/connect$/);
   });
 
   it("never advertises a legacy host in copy that is also emitted as JSON-LD", () => {
