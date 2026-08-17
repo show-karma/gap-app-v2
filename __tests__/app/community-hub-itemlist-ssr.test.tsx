@@ -45,13 +45,6 @@ vi.mock("nuqs", () => ({
   },
 }));
 
-// The page reads the request host to decide whether it is serving a whitelabel
-// tenant, and these tests render it outside a Next request scope. Answer with
-// the canonical host so the assertions below describe the Karma-branded case.
-vi.mock("next/headers", () => ({
-  headers: async () => new Headers({ host: "www.karmahq.org" }),
-}));
-
 vi.mock("next/navigation", () => ({
   useParams: () => ({ communityId: COMMUNITY_ID }),
   useSearchParams: () => new URLSearchParams(),

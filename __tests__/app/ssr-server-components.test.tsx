@@ -16,12 +16,6 @@ const BASE = "http://localhost:4000";
 
 // Mock next/navigation server functions
 const mockNotFound = vi.fn();
-// Server components here read the request host to detect whitelabel tenants,
-// and these tests render them outside a Next request scope.
-vi.mock("next/headers", () => ({
-  headers: async () => new Headers({ host: "www.karmahq.org" }),
-}));
-
 vi.mock("next/navigation", () => ({
   notFound: () => {
     mockNotFound();
