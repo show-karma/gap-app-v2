@@ -29,6 +29,13 @@ describe("AGENT_FAQS content", () => {
     expect(clients?.answer).toContain("Codex");
   });
 
+  it("advertises a well-formed absolute MCP endpoint", () => {
+    // envVars casts NEXT_PUBLIC_GAP_INDEXER_URL without validating it, so an
+    // unset value would render "undefined/mcp" into both the visible copy and
+    // the FAQPage JSON-LD rather than failing loudly.
+    expect(MCP_SERVER_URL).toMatch(/^https?:\/\/[^/]+\/mcp$/);
+  });
+
   it("never advertises a legacy host in copy that is also emitted as JSON-LD", () => {
     for (const entry of AGENT_FAQS) {
       for (const legacyRoot of LEGACY_ROOT_DOMAINS) {

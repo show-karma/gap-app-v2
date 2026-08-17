@@ -33,7 +33,7 @@ const extractSchema = (html: string) => {
   return JSON.parse(match[1].replace(/\\u003c/g, "<"));
 };
 
-const renderList = (whitelabel?: WhitelabelContext) =>
+const renderList = (whitelabel: WhitelabelContext) =>
   extractSchema(
     renderToString(
       <ItemListJsonLd
@@ -68,8 +68,10 @@ describe("ItemListJsonLd on the canonical host", () => {
     );
   });
 
-  it("behaves the same when no whitelabel context is supplied", () => {
-    const schema = renderList(undefined);
+  it("keeps the prefix when the context reports a slug but no tenant domain", () => {
+    // isWhitelabel false with a slug present: the community is known, the
+    // request just is not on a tenant domain.
+    const schema = renderList({ ...karmaContext, communitySlug: TENANT_SLUG });
 
     expect(schema.itemListElement[0].url).toBe(
       `${SITE_URL}/community/${TENANT_SLUG}/programs/1479`

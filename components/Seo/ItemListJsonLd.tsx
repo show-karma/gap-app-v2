@@ -17,8 +17,12 @@ interface ItemListJsonLdProps {
    * Resolved by the calling page via `getWhitelabelContext()`. Read as a prop
    * rather than from headers() here so this stays a synchronous component:
    * an async one cannot be rendered by the SSR test harness.
+   *
+   * Required on purpose. Optional, it would let a new caller silently emit
+   * canonical-host URLs on a tenant domain — the exact defect this prop exists
+   * to prevent — with nothing failing to flag it.
    */
-  whitelabel?: WhitelabelContext;
+  whitelabel: WhitelabelContext;
 }
 
 /**
@@ -34,7 +38,7 @@ interface ItemListJsonLdProps {
  * render without the `/community/<slug>` prefix. Resolving item URLs against
  * SITE_URL there pointed structured data off the tenant's branded domain and at
  * paths their site never serves, so both the origin and the prefix follow the
- * request's whitelabel context when the caller supplies it.
+ * request's whitelabel context.
  */
 export function ItemListJsonLd({ name, items, whitelabel }: ItemListJsonLdProps) {
   if (items.length === 0) {
@@ -42,15 +46,10 @@ export function ItemListJsonLd({ name, items, whitelabel }: ItemListJsonLdProps)
   }
 
   const origin =
-    whitelabel?.isWhitelabel && whitelabel.config
-      ? `https://${whitelabel.config.domain}`
-      : SITE_URL;
+    whitelabel.isWhitelabel && whitelabel.config ? `https://${whitelabel.config.domain}` : SITE_URL;
 
-  const toAbsoluteUrl = (url: string): string => {
-    if (/^https?:\/\//i.test(url)) return url;
-    const path = whitelabel ? buildWhitelabelRedirectPath(url, whitelabel) : url;
-    return `${origin}${path}`;
-  };
+  const toAbsoluteUrl = (url: string): string =>
+    /^https?:\/\//i.test(url) ? url : `${origin}${buildWhitelabelRedirectPath(url, whitelabel)}`;
 
   const itemListSchema = {
     "@context": "https://schema.org",

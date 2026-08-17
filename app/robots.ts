@@ -41,8 +41,12 @@ const AI_CRAWLERS = [
  * hardcoded body was being served to all of them.
  */
 export default async function robots(): Promise<MetadataRoute.Robots> {
+  // `host`, not `x-forwarded-host`: the forwarded header is client-settable, so
+  // trusting it would let a request talk this route into the staging or tenant
+  // branch. It is also what proxy.ts and getWhitelabelContext() read, and this
+  // route must classify a host exactly the way they do.
   const headerList = await headers();
-  const host = bareHostname(headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "");
+  const host = bareHostname(headerList.get("host") ?? "");
 
   // staging.karmahq.org is a new host created by the .org migration, so it
   // carries none of the "already ignored by crawlers" protection an old host
