@@ -1,9 +1,11 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { ChevronDown, Lock, RefreshCw, Search, X } from "lucide-react";
+import { Lock, RefreshCw, Search, X } from "lucide-react";
+import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
+import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters";
 import { Link } from "@/src/components/navigation/Link";
@@ -208,97 +210,6 @@ function StatStrip({ items }: { items: StatCardItem[] }) {
   );
 }
 
-interface ProgramOption {
-  programId: string;
-  name: string;
-}
-
-function ProgramPillSelector({
-  programs,
-  selectedProgramId,
-  onSelect,
-}: {
-  programs: ProgramOption[];
-  selectedProgramId: string;
-  onSelect: (id: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  const selected = programs.find((p) => p.programId === selectedProgramId);
-  const label = selected?.name ?? "Choose a program";
-
-  return (
-    <div ref={ref} className="relative inline-flex">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className="inline-flex items-center gap-2 rounded-full border border-brand-200/60 bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-800 transition hover:bg-brand-100 dark:border-brand-700/40 dark:bg-brand-900/30 dark:text-brand-200 dark:hover:bg-brand-900/50"
-      >
-        <span className="max-w-[260px] truncate">{label}</span>
-        <ChevronDown
-          className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")}
-          aria-hidden
-        />
-      </button>
-      {open ? (
-        <div
-          role="listbox"
-          className="absolute left-0 top-[calc(100%+6px)] z-30 max-h-[360px] w-[300px] overflow-y-auto rounded-xl border border-border bg-background p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.08)]"
-        >
-          <div className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
-            Program
-          </div>
-          {programs.map((p) => {
-            const isActive = p.programId === selectedProgramId;
-            return (
-              <button
-                key={p.programId}
-                type="button"
-                role="option"
-                aria-selected={isActive}
-                onClick={() => {
-                  onSelect(p.programId);
-                  setOpen(false);
-                }}
-                className={cn(
-                  "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm",
-                  isActive
-                    ? "bg-brand-50 font-semibold text-foreground dark:bg-brand-900/30"
-                    : "text-foreground hover:bg-secondary"
-                )}
-              >
-                <span className="truncate">{p.name}</span>
-              </button>
-            );
-          })}
-          {programs.length === 0 ? (
-            <div className="px-2.5 py-3 text-sm text-muted-foreground">No programs available</div>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClientProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -430,10 +341,11 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const applicationCount = programMetrics?.totalApplications ?? 0;
   const headerSubtitle = selectedProgram
-    ? `${programMetrics?.totalApplications ?? 0} application${
-        (programMetrics?.totalApplications ?? 0) === 1 ? "" : "s"
-      }${selectedProgram.name ? ` · ${selectedProgram.name}` : ""}`
+    ? `${applicationCount} ${pluralize("application", applicationCount)}${
+        selectedProgram.name ? ` · ${selectedProgram.name}` : ""
+      }`
     : "Choose a program to browse public applications.";
 
   return (
@@ -441,22 +353,35 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
       className="space-y-6 [&>*]:animate-fade-in-up [&>*:nth-child(1)]:[animation-delay:0ms] [&>*:nth-child(2)]:[animation-delay:80ms] [&>*:nth-child(3)]:[animation-delay:160ms] [&>*:nth-child(4)]:[animation-delay:240ms]"
       data-testid="applications-list"
     >
-      {/* Header: title + program pill + subtitle */}
-      <header className="relative z-30 flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-[26px] md:text-[28px] font-semibold tracking-[-0.02em] text-foreground">
-            Browse applications
-          </h1>
-          {programs.length > 0 ? (
-            <ProgramPillSelector
-              programs={programs.map((p) => ({ programId: p.programId, name: p.name }))}
-              selectedProgramId={selectedProgramId}
-              onSelect={setSelectedProgramId}
-            />
-          ) : null}
-        </div>
+      {/* Header: title + subtitle */}
+      <header className="flex flex-col gap-2">
+        <h1 className="text-[26px] md:text-[28px] font-semibold tracking-[-0.02em] text-foreground">
+          Browse applications
+        </h1>
         <p className="text-sm text-muted-foreground">{headerSubtitle}</p>
       </header>
+
+      {/* Program selector: same labeled dropdown used on projects/updates/financials */}
+      {programs.length > 0 ? (
+        <div className="flex w-[260px] flex-col gap-1.5 max-lg:w-full">
+          <label
+            htmlFor="browse-applications-program"
+            className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          >
+            Choose Program
+          </label>
+          <SearchWithValueDropdown
+            id="browse-applications-program"
+            list={programs.map((p) => ({ title: p.name, value: p.programId }))}
+            onSelectFunction={(value: string) => setSelectedProgramId(value)}
+            type="Program"
+            selected={selectedProgram ? [selectedProgram.name] : []}
+            prefixUnselected="Select"
+            buttonClassname="w-full max-w-full"
+            isMultiple={false}
+          />
+        </div>
+      ) : null}
 
       {selectedProgramId && statItems ? <StatStrip items={statItems} /> : null}
 

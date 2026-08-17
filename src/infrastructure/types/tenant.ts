@@ -89,12 +89,37 @@ export interface NavDropdown {
 
 export type NavItem = NavLink | NavDropdown;
 
+export interface TenantHeaderWordmark {
+  /** Text rendered before the accented segment (e.g. "fil"). */
+  prefix: string;
+  /** Accented segment of the wordmark (e.g. "pgf"). */
+  accent: string;
+  /** Text rendered after the accented segment (e.g. ".io"). */
+  suffix?: string;
+  /** Destination of the brand link — typically the tenant's marketing site. */
+  href: string;
+  /**
+   * Production domains this wordmark belongs to. A tenant can serve several
+   * domains (see DOMAIN_CONFIGS / WHITELABEL_DOMAINS), and the wordmark is a
+   * per-domain brand, so domains outside this list keep the logo + title brand.
+   * Omitted: the wordmark renders on every domain serving the tenant.
+   */
+  domains?: string[];
+  /** Accent color in light mode. Omitted: the accent inherits the wordmark text color. */
+  accentColor?: string;
+  /** Accent color in dark mode. Falls back to `accentColor`. */
+  accentColorDark?: string;
+  ariaLabel?: string;
+}
+
 export interface TenantNavigation {
   header?: {
     logo?: Partial<ImageProps>;
     title?: string;
     shouldHaveTitle?: boolean;
     poweredBy?: boolean;
+    /** When set, a text wordmark replaces the logo + title brand block. */
+    wordmark?: TenantHeaderWordmark;
   };
   items: NavItem[];
   /** Whether to show the top-level "Applications" link in the navbar. Defaults to true. */

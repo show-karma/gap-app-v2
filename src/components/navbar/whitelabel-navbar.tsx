@@ -28,11 +28,19 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
-import type { NavDropdown, NavItem, TenantNavigation } from "@/src/infrastructure/types/tenant";
+import { getDomainInfo } from "@/src/infrastructure/config/domain-constants";
+import type {
+  NavDropdown,
+  NavItem,
+  TenantConfig,
+  TenantHeaderWordmark,
+  TenantNavigation,
+} from "@/src/infrastructure/types/tenant";
 import { useTenantSafe } from "@/store/tenant";
 import { karmaLinks } from "@/utilities/karma/karma";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { NavbarAssistantButton } from "./navbar-assistant-button";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { NavbarPermissionsProvider } from "./navbar-permissions-context";
@@ -309,6 +317,146 @@ function buildSocialLinks(
   ].filter((link): link is SocialLinkItem => Boolean(link));
 }
 
+function BrandPoweredBy() {
+  return (
+    <div className="flex w-full items-center justify-end gap-1">
+      <span className="text-xs text-zinc-500 dark:text-zinc-400">Powered by</span>
+      <Image
+        src="/images/karma-logo-dark.svg"
+        alt="Karma"
+        width={40}
+        height={20}
+        className="hidden dark:block"
+      />
+      <Image
+        src="/logo/karma-logo-light.svg"
+        alt="Karma"
+        width={40}
+        height={20}
+        className="block dark:hidden"
+      />
+    </div>
+  );
+}
+
+function BrandWordmark({ wordmark }: { wordmark: TenantHeaderWordmark }) {
+  const { prefix, accent, suffix, accentColor, accentColorDark } = wordmark;
+  return (
+    <span className="font-mono text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
+      {prefix}
+      {accentColorDark ? (
+        <>
+          <span className="dark:hidden" style={{ color: accentColor }}>
+            {accent}
+          </span>
+          <span className="hidden dark:inline" style={{ color: accentColorDark }}>
+            {accent}
+          </span>
+        </>
+      ) : (
+        <span style={{ color: accentColor }}>{accent}</span>
+      )}
+      {suffix}
+    </span>
+  );
+}
+
+/**
+ * The wordmark is a per-domain brand, but tenant config is per-tenant and a
+ * tenant can serve several domains (filecoin serves both app.filpgf.io and
+ * grants.filecoin.io). `wordmark.domains` lists the production domains the
+ * wordmark belongs to; anywhere else the tenant keeps its logo + title brand.
+ * Domains injected via WHITELABEL_EXTRA_DOMAINS_JSON (dev, previews) are absent
+ * from DOMAIN_CONFIGS, so they are not production hosts and still show the
+ * wordmark — otherwise it could never be reviewed outside production.
+ */
+function useDomainScopedWordmark(tenant: TenantConfig): TenantHeaderWordmark | undefined {
+  const { config } = useWhitelabel();
+  const wordmark = tenant.navigation?.header?.wordmark;
+  const servingDomain = config?.domain;
+
+  if (!wordmark?.domains?.length) return wordmark;
+  if (!servingDomain) return wordmark;
+  if (wordmark.domains.includes(servingDomain)) return wordmark;
+
+  return getDomainInfo(servingDomain)?.isProduction ? undefined : wordmark;
+}
+
+/* The accent renders twice — one span per color scheme — so the anchor carries
+   an aria-label and the duplicated glyphs stay out of the accessible name. */
+/** Brand slot: a tenant text wordmark linking to the tenant's own site when configured, otherwise the tenant logo + title linking to the app root. */
+function NavbarBrand({ tenant }: { tenant: TenantConfig }) {
+  const wordmark = useDomainScopedWordmark(tenant);
+
+  return wordmark ? (
+    <a
+      href={wordmark.href}
+      aria-label={
+        wordmark.ariaLabel ?? `${wordmark.prefix}${wordmark.accent}${wordmark.suffix ?? ""}`
+      }
+      className="flex shrink-0 flex-col items-start"
+    >
+      <BrandWordmark wordmark={wordmark} />
+      {tenant.navigation?.header?.poweredBy && <BrandPoweredBy />}
+    </a>
+  ) : (
+    <Link href={"/"} className="flex shrink-0 flex-col items-start">
+      <div className="flex items-center gap-2">
+        {tenant.assets?.logo ? (
+          tenant.assets.logoDark ? (
+            <>
+              <Image
+                src={tenant.assets.logo}
+                alt={tenant.name}
+                width={40}
+                height={40}
+                {...tenant.navigation?.header?.logo}
+                className={cn(
+                  "h-8 w-8 object-cover dark:hidden",
+                  tenant.navigation?.header?.logo?.className
+                )}
+              />
+              <Image
+                src={tenant.assets.logoDark}
+                alt={tenant.name}
+                width={40}
+                height={40}
+                {...tenant.navigation?.header?.logo}
+                className={cn(
+                  "hidden h-8 w-8 object-cover dark:block",
+                  tenant.navigation?.header?.logo?.className
+                )}
+              />
+            </>
+          ) : (
+            <Image
+              src={tenant.assets.logo}
+              alt={tenant.name}
+              width={40}
+              height={40}
+              {...tenant.navigation?.header?.logo}
+              className={cn(
+                "h-8 w-8 rounded-full object-contain",
+                tenant.navigation?.header?.logo?.className
+              )}
+            />
+          )
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+            {tenant.name?.[0] || "C"}
+          </div>
+        )}
+        {tenant.navigation?.header?.shouldHaveTitle && (
+          <p className="whitespace-nowrap text-lg font-semibold text-zinc-900 dark:text-white">
+            {tenant.navigation?.header?.title || "Grants Council"}
+          </p>
+        )}
+      </div>
+      {tenant.navigation?.header?.poweredBy && <BrandPoweredBy />}
+    </Link>
+  );
+}
+
 export function WhitelabelNavbar() {
   const pathname = usePathname();
   const tenant = useTenantSafe();
@@ -351,78 +499,7 @@ export function WhitelabelNavbar() {
       <nav className="sticky top-0 z-50 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto flex h-16 items-center justify-between px-8 lg:px-8 xl:px-24">
           {/* Brand */}
-          <Link href={"/"} className="flex shrink-0 flex-col items-start">
-            <div className="flex items-center gap-2">
-              {tenant.assets?.logo ? (
-                tenant.assets.logoDark ? (
-                  <>
-                    <Image
-                      src={tenant.assets.logo}
-                      alt={tenant.name}
-                      width={40}
-                      height={40}
-                      {...tenant.navigation?.header?.logo}
-                      className={cn(
-                        "h-8 w-8 object-cover dark:hidden",
-                        tenant.navigation?.header?.logo?.className
-                      )}
-                    />
-                    <Image
-                      src={tenant.assets.logoDark}
-                      alt={tenant.name}
-                      width={40}
-                      height={40}
-                      {...tenant.navigation?.header?.logo}
-                      className={cn(
-                        "hidden h-8 w-8 object-cover dark:block",
-                        tenant.navigation?.header?.logo?.className
-                      )}
-                    />
-                  </>
-                ) : (
-                  <Image
-                    src={tenant.assets.logo}
-                    alt={tenant.name}
-                    width={40}
-                    height={40}
-                    {...tenant.navigation?.header?.logo}
-                    className={cn(
-                      "h-8 w-8 rounded-full object-contain",
-                      tenant.navigation?.header?.logo?.className
-                    )}
-                  />
-                )
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-                  {tenant.name?.[0] || "C"}
-                </div>
-              )}
-              {tenant.navigation?.header?.shouldHaveTitle && (
-                <p className="whitespace-nowrap text-lg font-semibold text-zinc-900 dark:text-white">
-                  {tenant.navigation?.header?.title || "Grants Council"}
-                </p>
-              )}
-            </div>
-            {tenant.navigation?.header?.poweredBy && (
-              <div className="flex w-full items-center justify-end gap-1">
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">Powered by</span>
-                <Image
-                  src="/images/karma-logo-dark.svg"
-                  alt="Karma"
-                  width={40}
-                  height={20}
-                  className="hidden dark:block"
-                />
-                <Image
-                  src="/logo/karma-logo-light.svg"
-                  alt="Karma"
-                  width={40}
-                  height={20}
-                  className="block dark:hidden"
-                />
-              </div>
-            )}
-          </Link>
+          <NavbarBrand tenant={tenant} />
 
           {/* Desktop Nav */}
           <div className="hidden items-center gap-1 lg:flex">

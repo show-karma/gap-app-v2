@@ -342,7 +342,7 @@ export function PublicReportListPage({ community }: Props) {
 
   return (
     <div className="w-full max-w-full -my-4 py-2 animate-fade-in-up">
-      <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
+      <header className="mb-10 flex flex-col items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">
             Portfolio Reports

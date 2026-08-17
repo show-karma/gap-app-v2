@@ -150,14 +150,13 @@ function createWrapper() {
   };
 }
 
-// The program selector is a custom listbox: a button (aria-haspopup="listbox")
-// that opens a popup with role="option" entries — not a native <select>.
+// The program selector is the shared SearchWithValueDropdown: a Radix Popover
+// trigger opening a portalled cmdk list whose entries are plain buttons.
 async function selectProgram(user: ReturnType<typeof userEvent.setup>, name: string) {
-  const trigger = screen.getByRole("button", {
-    name: /choose a program|test grant program|another program/i,
-  });
-  await user.click(trigger);
-  const option = within(screen.getByRole("listbox")).getByRole("option", { name });
+  // The <label> makes "Choose Program" the trigger's accessible name, whatever
+  // program is currently selected.
+  await user.click(screen.getByLabelText("Choose Program"));
+  const option = await screen.findByRole("button", { name });
   await user.click(option);
 }
 

@@ -295,7 +295,25 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
     socialLinks: {},
   },
   filecoin: {
-    header: { title: "Filecoin Community", shouldHaveTitle: true, poweredBy: true },
+    header: {
+      title: "Filecoin Community",
+      shouldHaveTitle: true,
+      poweredBy: true,
+      wordmark: {
+        prefix: "fil",
+        accent: "pgf",
+        suffix: ".io",
+        href: "https://filpgf.io",
+        // The filecoin tenant also serves grants.filecoin.io, which is not the
+        // filpgf.io brand — it keeps the logo + title brand linking to the app.
+        domains: ["app.filpgf.io"],
+        // Light accent matches the landing site brand color; the dark accent is
+        // the filecoin tenant primary, for contrast on the dark navbar.
+        accentColor: "#1a5fd0",
+        accentColorDark: "#0090ff",
+        ariaLabel: "filpgf.io home",
+      },
+    },
     showBrowseApplications: false,
     items: [
       {
