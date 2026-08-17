@@ -27,13 +27,19 @@ type BuildMode = "ok" | "fail" | "hang_term" | "hang_kill" | "oom";
 
 let workdir: string;
 
-/** A pnpm whose `build` ends the way `mode` asks it to. */
+/**
+ * A pnpm whose `build` ends the way `mode` asks it to.
+ *
+ * The sleeps detach from stdout: SIGKILL leaves them orphaned, and an orphan
+ * still holding the inherited pipe keeps spawnSync blocked long after the
+ * script it was measuring has exited.
+ */
 const STUB_PNPM = `#!/bin/bash
 case "$MODE" in
   ok)        exit 0 ;;
   fail)      echo "compile error"; exit 1 ;;
-  hang_term) sleep 60 ;;
-  hang_kill) trap '' TERM; sleep 60 ;;
+  hang_term) sleep 60 >/dev/null 2>&1 ;;
+  hang_kill) trap '' TERM; sleep 60 >/dev/null 2>&1 ;;
   oom)       kill -9 $$ ;;
 esac
 `;
@@ -66,6 +72,12 @@ function runBuild(mode: BuildMode) {
   return { status: result.status, stdout: result.stdout };
 }
 
+/** The seconds the script reports it spent building, from either message. */
+function elapsedFrom(stdout: string): number {
+  const match = stdout.match(/(\d+)s elapsed|killed after (\d+)s/);
+  return Number(match?.[1] ?? match?.[2]);
+}
+
 describe("vercel-build.sh", () => {
   it("exits clean without retrying when the build succeeds", () => {
     const { status, stdout } = runBuild("ok");
@@ -82,6 +94,9 @@ describe("vercel-build.sh", () => {
     expect(stdout).toContain("timed out");
     expect(stdout).not.toContain("out of memory");
     expect(stdout).toContain("Not retrying");
+    // Elapsed time is the only thing separating this from a real OOM kill, so
+    // pin that the script measured it rather than happening to land right.
+    expect(elapsedFrom(stdout)).toBeGreaterThanOrEqual(TEST_TIMEOUT_SECONDS);
   });
 
   it("reports a timeout when the build dies to timeout's SIGTERM", () => {
@@ -99,6 +114,7 @@ describe("vercel-build.sh", () => {
     expect(status).toBe(137);
     expect(stdout).toContain("out of memory");
     expect(stdout).toContain("Not retrying");
+    expect(elapsedFrom(stdout)).toBeLessThan(TEST_TIMEOUT_SECONDS);
   });
 
   it("retries once on an ordinary build failure, which a poisoned cache can survive", () => {
