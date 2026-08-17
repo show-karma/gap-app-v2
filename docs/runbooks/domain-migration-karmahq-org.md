@@ -28,13 +28,23 @@ Re-run the commands, don't trust the table.
 | `app.karmahq.xyz` | 301 → `.org` | `curl -sSI https://app.karmahq.xyz/` |
 | `app.karmahq.org` | 200 | `curl -sSI https://app.karmahq.org/` |
 | `staging.karmahq.org` | 200, `robots.txt` = `Disallow: /` | `curl -sS https://staging.karmahq.org/robots.txt` |
-| `api.karmahq.org` | 200 on `/communities`, `/health` | `curl -sS https://api.karmahq.org/health` |
-| `stagapi.karmahq.org` | 200 on `/communities`, `/health` | `curl -sS https://stagapi.karmahq.org/health` |
+| `api.karmahq.org` | 200 on `/communities`, `/health` | `curl -sS -o /dev/null -w '%{http_code}\n' https://api.karmahq.org/communities https://api.karmahq.org/health` |
+| `stagapi.karmahq.org` | 200 on `/communities`, `/health` | `curl -sS -o /dev/null -w '%{http_code}\n' https://stagapi.karmahq.org/communities https://stagapi.karmahq.org/health` |
 | `karmahq.xyz` (apex) | ⚠️ **301 → `https://www.karmahq.xyz//`** — see §2 | `curl -sSI https://karmahq.xyz/` |
 
-`api.karmahq.org` and `gapapi.karmahq.xyz` return byte-identical bodies (`122834b` on
-`/communities`); same for `stagapi` / `gapstagapi` (`185278b`). The `.xyz` API hosts dual-serve
-and must keep doing so — see §5.
+The `.org` and `.xyz` API hosts serve the same origin. Reproduce the parity check:
+
+```bash
+for h in api.karmahq.org gapapi.karmahq.xyz stagapi.karmahq.org gapstagapi.karmahq.xyz; do
+  printf '%-24s ' "$h"
+  curl -sS --max-time 20 "https://$h/communities" | sha256sum
+done
+```
+
+`/communities` is byte-identical within each pair — prod `122834b`, staging `185278b`.
+**`/health` is not a parity target**: it embeds a live `redis.entities` counter that changes
+between two calls to the *same* host, so compare status codes there, not checksums.
+The `.xyz` API hosts dual-serve and must keep doing so — see §5.
 
 SEO surface on `www.karmahq.org`: `robots.txt` 200, `sitemap.xml` 200 (5 sitemap docs / 3946
 leaves), `<link rel=canonical>` and `og:url` both `https://www.karmahq.org`, GSC verification
@@ -68,14 +78,36 @@ should print `1 https://www.karmahq.org/`.
 
 ## 3. Open item — email
 
-`karmahq.org` has **zero TXT records** of any kind. Confirm before doing anything else:
+Mail on `karmahq.org` is **not provisioned**. Each record class has to be checked on its own
+name — an empty apex `TXT` says nothing about `_dmarc`, and nothing at all about DKIM, whose
+selector lives on a provider-specific name this repo cannot guess.
 
 ```bash
-curl -sS -H 'accept: application/dns-json' \
-  'https://cloudflare-dns.com/dns-query?name=karmahq.org&type=TXT'
+# SPF lives on the apex; DMARC on _dmarc; MX decides whether mail can be received at all.
+for q in karmahq.org:TXT _dmarc.karmahq.org:TXT karmahq.org:MX; do
+  printf '%-28s ' "$q"
+  curl -sS -H 'accept: application/dns-json' \
+    "https://cloudflare-dns.com/dns-query?name=${q%:*}&type=${q#*:}" \
+    | jq -c '{Status, Answer: (.Answer // [] | map(.data))}'
+done
+
+# DKIM: substitute the selector your mail provider issues. There is nothing to query until
+# a provider is chosen, so its absence below is "unknown", not "verified absent".
+# curl -sS -H 'accept: application/dns-json' \
+#   'https://cloudflare-dns.com/dns-query?name=<selector>._domainkey.karmahq.org&type=TXT'
 ```
 
-An empty `Answer` means no SPF, no DMARC, and no DKIM selector on the domain.
+Measured 2026-08-17:
+
+| Record | Result | Reading |
+|---|---|---|
+| `karmahq.org` `TXT` | `Status 0`, no `Answer` | **verified absent** — no SPF |
+| `_dmarc.karmahq.org` `TXT` | `Status 3` (NXDOMAIN) | **verified absent** — no DMARC |
+| `karmahq.org` `MX` | `Status 0`, no `Answer` | **verified absent** — the domain cannot receive mail |
+| `<selector>._domainkey.karmahq.org` | not queried | `UNVERIFIED` — no provider/selector chosen yet |
+
+Note the distinct failure modes: `Status 0` with no `Answer` is "name exists, record type absent";
+`Status 3` is "name does not exist". Both mean not provisioned here.
 
 Role addresses in this repo (`info@`, `support@`, `hello@`, `engineering@`) have been flipped to
 `@karmahq.org` in code. **That code must not reach production until these records exist**, or
@@ -83,11 +115,18 @@ outbound mail from `.org` degrades silently — no error, no bounce visible from
 
 Required before deploy:
 
-1. SPF `TXT @` authorising the sending provider.
-2. DKIM selector record(s) from the provider, and the signing domain switched to `karmahq.org`.
-3. DMARC `TXT _dmarc` — start at `p=none` with `rua=` reporting, tighten later.
-4. Mailboxes/aliases for `info@`, `support@`, `hello@`, `engineering@` actually created on
+1. `MX` on `karmahq.org` pointing at the mail provider — without it the role addresses cannot
+   receive replies, however well the outbound side is signed.
+2. SPF `TXT @` authorising the sending provider.
+3. DKIM selector record(s) from the provider, and the signing domain switched to `karmahq.org`.
+   Re-run the selector query above once the selector is known — it is the one item currently
+   `UNVERIFIED` rather than verified absent.
+4. DMARC `TXT _dmarc` — start at `p=none` with `rua=` reporting, tighten later.
+5. Mailboxes/aliases for `info@`, `support@`, `hello@`, `engineering@` actually created on
    `karmahq.org`, and `@karmahq.xyz` kept forwarding indefinitely (§5).
+
+Re-run the whole block above and confirm every row reads present — not just the ones that were
+easy to check — before the role addresses ship.
 
 **Not flipped, deliberately:** individual human mailboxes (`arthur@`, `bruno@`, `amaury@`,
 `mahesh@` where it is a real recipient) and every email fixture in the test suites. Those depend
@@ -113,10 +152,13 @@ history is continuous and no new property is needed.
 
 **Google Search Console**
 
-- No domain property exists for `karmahq.org` (§3 shows the zone has no TXT at all). Create one
-  by DNS TXT — it covers `www`, `app`, `staging`, and `api` in a single property. The URL-prefix
-  property `https://www.karmahq.org/` will verify immediately, since
-  `googleb231020e03517669.html` already serves 200 there.
+- Whether a `karmahq.org` **domain property** exists is `UNVERIFIED` — only the dashboard can
+  say. §3 establishes that the zone carries no verification `TXT` *today*, which rules out an
+  active DNS-verified property but not a property created and verified by some other method.
+  Check Search Console before creating a duplicate.
+  If none exists, create one by DNS `TXT` — a domain property covers `www`, `app`, `staging`,
+  and `api` at once. The URL-prefix property `https://www.karmahq.org/` will verify
+  immediately: `googleb231020e03517669.html` already serves 200 there.
 - Run **Change of Address** from `karmahq.xyz` to `karmahq.org`. Do §2 first.
 - Submit `sitemap.xml` under the new property. The four child sitemaps already emit `.org` locs.
 - **Never delete the `karmahq.xyz` property.** It backs the change-of-address report, and the

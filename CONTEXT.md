@@ -112,7 +112,7 @@ auth domain — `privy.karmahq.org` was **added** to the CSP alongside it, never
 (`arthur@`, `bruno@`, …) plus every email fixture in the test suites.
 
 Role addresses (`info@`, `support@`, `hello@`, `engineering@`) **did** flip to `.org`.
-That flip is gated on SPF/DKIM/DMARC existing for `karmahq.org` — without them a `From`
+That flip is gated on MX/SPF/DKIM/DMARC existing for `karmahq.org` — without them a `From`
 header on `.org` silently degrades deliverability, with no bounce this tree can see.
 
 Full migration record: [`docs/DOMAIN_MIGRATION.md`](docs/DOMAIN_MIGRATION.md).
