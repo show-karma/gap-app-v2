@@ -44,7 +44,7 @@ describe("/.well-known/ai-plugin.json route handler", () => {
     const res = GET();
     const body = await res.json();
     expect(body.logo_url).toBe(`${SITE_URL}/logo/karma-logo.svg`);
-    expect(body.contact_email).toBe("info@karmahq.xyz");
+    expect(body.contact_email).toBe("info@karmahq.org");
     expect(body.legal_info_url).toBe(`${SITE_URL}/terms-and-conditions`);
   });
 

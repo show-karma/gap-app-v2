@@ -21,8 +21,9 @@ export const GAP_ORIGIN = "https://gap.karmahq.xyz";
 /** The API subdomain is deliberately not part of the karmahq.org migration. */
 export const INDEXER_ORIGIN = "https://gapapi.karmahq.xyz";
 
-/** Crawler contact address, also not part of the migration. */
-export const ENGINEERING_EMAIL = "engineering@karmahq.xyz";
+/** Crawler contact address. Moved with the TLD flip; requires SPF/DKIM/DMARC on
+ *  karmahq.org — see docs/runbooks/domain-migration-karmahq-org.md. */
+export const ENGINEERING_EMAIL = "engineering@karmahq.org";
 
 /** Flat sitemap entry point used by the manual content crawler. The verifier
  *  derives its own root from the (possibly overridden) canonical origin. */

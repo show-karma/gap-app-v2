@@ -10,7 +10,7 @@ interface FailedReportBannerProps {
 }
 
 const SUPPORT_MAILTO =
-  "mailto:support@karmahq.xyz?subject=Donor%20Research%20%E2%80%94%20Higher%20Limits%20Request";
+  "mailto:support@karmahq.org?subject=Donor%20Research%20%E2%80%94%20Higher%20Limits%20Request";
 
 /**
  * Detailed failed-state UX for the report viewer (F5).

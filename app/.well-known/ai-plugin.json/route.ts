@@ -30,7 +30,7 @@ export function GET() {
       url: `${SITE_URL}/openapi.json`,
     },
     logo_url: `${SITE_URL}/logo/karma-logo.svg`,
-    contact_email: "info@karmahq.xyz",
+    contact_email: "info@karmahq.org",
     legal_info_url: `${SITE_URL}/terms-and-conditions`,
   };
 

@@ -156,7 +156,7 @@ describe("NonprofitSubmissionForm", () => {
 
       const alert = screen.getByRole("alert");
       expect(alert).toHaveTextContent(/Something went wrong/i);
-      expect(alert).toHaveTextContent("hello@karmahq.xyz");
+      expect(alert).toHaveTextContent("hello@karmahq.org");
       // The form stays rendered so the visitor can retry.
       expect(screen.getByLabelText(/Your website/i)).toBeInTheDocument();
     });

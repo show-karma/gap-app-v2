@@ -32,10 +32,16 @@ describe("scripts/indexability/domains.mjs parity with utilities/domains.ts", ()
     expect(scriptDomains.ROOT_SITEMAP_URL).toBe(`${CANONICAL_ORIGIN}/sitemap.xml`);
   });
 
-  // Phase 3/5 hosts: pinned to .xyz on purpose, asserted so a well-meaning
-  // find-and-replace across the migration cannot flip them silently.
-  it("leaves the indexer origin and contact email on karmahq.xyz", () => {
+  // The indexer origin stays pinned to .xyz on purpose (moving it rotates the
+  // MCP OAuth audience), asserted so a well-meaning find-and-replace across the
+  // migration cannot flip it silently.
+  it("leaves the indexer origin on karmahq.xyz", () => {
     expect(scriptDomains.INDEXER_ORIGIN).toBe("https://gapapi.karmahq.xyz");
-    expect(scriptDomains.ENGINEERING_EMAIL).toBe("engineering@karmahq.xyz");
+  });
+
+  // Contact email moved with the TLD flip. Gated on SPF/DKIM/DMARC existing for
+  // karmahq.org — see docs/runbooks/domain-migration-karmahq-org.md.
+  it("serves the contact email from karmahq.org", () => {
+    expect(scriptDomains.ENGINEERING_EMAIL).toBe("engineering@karmahq.org");
   });
 });

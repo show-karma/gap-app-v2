@@ -94,8 +94,8 @@ export default async function AboutPage() {
       <h2 className={styles.h2}>Contact</h2>
       <p className={styles.p}>
         For partnership inquiries, support, or general questions:{" "}
-        <a className={styles.a} href="mailto:info@karmahq.xyz">
-          info@karmahq.xyz
+        <a className={styles.a} href="mailto:info@karmahq.org">
+          info@karmahq.org
         </a>
       </p>
     </main>

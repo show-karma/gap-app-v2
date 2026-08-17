@@ -78,7 +78,7 @@ export default function SumupAdminPage() {
               className={
                 "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
               }
-              placeholder="Ex: mahesh@karmahq.xyz or 0x1234567890abcdef1234567890abcdef12345678"
+              placeholder="Ex: mahesh@karmahq.org or 0x1234567890abcdef1234567890abcdef12345678"
               {...register("addressOrEmail")}
             />
             <p className="text-base text-red-400">{errors.addressOrEmail?.message}</p>

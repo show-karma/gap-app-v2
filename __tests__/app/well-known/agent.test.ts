@@ -18,7 +18,7 @@ describe("/.well-known/agent.json route handler", () => {
     expect(body.name).toBe("Karma");
     expect(typeof body.description).toBe("string");
     expect(body.description.length).toBeGreaterThan(0);
-    expect(body.contact).toBe("info@karmahq.xyz");
+    expect(body.contact).toBe("info@karmahq.org");
   });
 
   it("aggregates all other discovery surfaces under .discovery", async () => {

@@ -38,9 +38,9 @@ export function WhitelabelFooter() {
         <button
           type="button"
           className="text-sm text-blue-500 font-medium cursor-pointer hover:underline"
-          onClick={() => copy("info@karmahq.xyz")}
+          onClick={() => copy("info@karmahq.org")}
         >
-          info@karmahq.xyz
+          info@karmahq.org
         </button>
       </div>
     </footer>
