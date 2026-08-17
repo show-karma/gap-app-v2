@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { karmaLinks } from "@/utilities/karma/karma";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
@@ -61,12 +62,7 @@ export default async function ContactPage() {
       <h2 className={styles.h2}>Developers and AI agents</h2>
       <p className={styles.p}>
         Karma exposes a public REST API and MCP server. See the{" "}
-        <a
-          className={styles.a}
-          href="https://gapapi.karmahq.xyz/v2/docs"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a className={styles.a} href={karmaLinks.apiDocs} target="_blank" rel="noopener noreferrer">
           API documentation
         </a>{" "}
         and the{" "}

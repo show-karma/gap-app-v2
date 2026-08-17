@@ -42,7 +42,10 @@ loadScriptEnv();
 const SITE_URL = CANONICAL_ORIGIN;
 const SITEMAP_URL = `${SITE_URL}/sitemap.xml`;
 const PROJECT_NAME = "Karma";
-const API_DOCS_URL = "https://gapapi.karmahq.xyz/v2/docs";
+// Follows the indexer, which serves these docs — loadScriptEnv() above has
+// already read .env. Pinning the host here is what left llms.txt advertising
+// gapapi.karmahq.xyz after the API moved to api.karmahq.org.
+const API_DOCS_URL = `${(process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "").replace(/\/+$/, "")}/v2/docs`;
 // Apex proxy of the indexer's OpenAPI spec; agent crawlers (Ora, etc.)
 // probe predictable apex paths, so we publish under the marketing
 // domain rather than the API subdomain. Implementation lives in
