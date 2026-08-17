@@ -146,10 +146,15 @@ export async function proxy(request: NextRequest) {
     // and then 308 again at the alias collapse below.
     const mainOrigin = domainInfo.isProduction ? CANONICAL_ORIGIN : STAGING_ORIGIN;
     const protocol = request.nextUrl.protocol;
+    // Every hop out of the umbrella host is cross-origin, so it is built from a
+    // string rather than nextUrl.clone() and has to carry the query explicitly.
+    // Dropping it here silently destroys UTM attribution and invite/referral
+    // tokens on the one host whose whole job is forwarding inbound links.
+    const search = request.nextUrl.search;
 
     // Path already starts with /community/ — redirect as-is to the main domain
     if (slug === "community") {
-      return NextResponse.redirect(new URL(`${mainOrigin}${path}`), 301);
+      return NextResponse.redirect(new URL(`${mainOrigin}${path}${search}`), 301);
     }
 
     if (slug && isKnownTenant(slug)) {
@@ -158,21 +163,30 @@ export async function proxy(request: NextRequest) {
 
       if (whitelabelDomain) {
         // Tenant has a whitelabel domain — redirect there
-        return NextResponse.redirect(new URL(`${protocol}//${whitelabelDomain}${restPath}`), 301);
+        return NextResponse.redirect(
+          new URL(`${protocol}//${whitelabelDomain}${restPath}${search}`),
+          301
+        );
       }
 
       // No whitelabel domain — redirect to main site at /community/<slug>/path
-      return NextResponse.redirect(new URL(`${mainOrigin}/community/${slug}${restPath}`), 301);
+      return NextResponse.redirect(
+        new URL(`${mainOrigin}/community/${slug}${restPath}${search}`),
+        301
+      );
     }
 
     if (slug) {
       // Unknown slug — treat as community slug and redirect to /community/<slug>/path
       const restPath = `/${segments.slice(1).join("/")}` || "/";
-      return NextResponse.redirect(new URL(`${mainOrigin}/community/${slug}${restPath}`), 301);
+      return NextResponse.redirect(
+        new URL(`${mainOrigin}/community/${slug}${restPath}${search}`),
+        301
+      );
     }
 
     // No slug (root path) — redirect to main site homepage
-    return NextResponse.redirect(new URL(`${mainOrigin}${path}`), 301);
+    return NextResponse.redirect(new URL(`${mainOrigin}${path}${search}`), 301);
   }
 
   // --- Canonical host policy: collapse alias hosts to www (ADR 0001) ---
@@ -195,11 +209,16 @@ export async function proxy(request: NextRequest) {
 
   // Dashboard redirects — the drill-ins are real nested routes now
   // (/dashboard/[module]), not a #hash on the overview.
+  // nextUrl.clone() keeps the query; `new URL(path, request.url)` would drop it.
   if (path === "/my-projects") {
-    return NextResponse.redirect(new URL("/dashboard/projects", request.url), 301);
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard/projects";
+    return NextResponse.redirect(url, 301);
   }
   if (path === "/my-reviews") {
-    return NextResponse.redirect(new URL("/dashboard/reviews", request.url), 301);
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard/reviews";
+    return NextResponse.redirect(url, 301);
   }
 
   // Handle community slugs with forbidden characters
@@ -210,13 +229,19 @@ export async function proxy(request: NextRequest) {
 
     if (hasForbiddenChars(communitySlug)) {
       const cleanSlug = sanitizeCommunitySlug(communitySlug);
-      const newPath = `/community/${cleanSlug}${restOfPath}`;
-      return NextResponse.redirect(new URL(newPath, request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = `/community/${cleanSlug}${restOfPath}`;
+      return NextResponse.redirect(url);
     }
   }
 
   // --- Redirect /<slug> to whitelabel domain if one exists ---
-  // e.g. www.karmahq.org/optimism → app.opgrants.io
+  // Gated on domainInfo?.isShared, which only DOMAIN_CONFIGS entries satisfy.
+  // CANONICAL_HOST is deliberately absent from that table, so this branch does
+  // NOT run on www — adding a www row would activate a tenant redirect that has
+  // never executed in production. In practice it fires for the staging host and
+  // the apex tiers; on www, /<slug> falls through to the rewrite below and
+  // serves the Karma-branded community page.
   const communityMatch = path.match(/^\/([^/]+)(\/.*)?$/);
 
   if (communityMatch) {
@@ -229,7 +254,9 @@ export async function proxy(request: NextRequest) {
       if (whitelabelDomain) {
         const protocol = request.nextUrl.protocol;
         return NextResponse.redirect(
-          new URL(`${protocol}//${whitelabelDomain}${restOfCommunityPath}`),
+          new URL(
+            `${protocol}//${whitelabelDomain}${restOfCommunityPath}${request.nextUrl.search}`
+          ),
           301
         );
       }
@@ -242,8 +269,9 @@ export async function proxy(request: NextRequest) {
         community.slug === communityId || community.uid.toLowerCase() === communityId.toLowerCase()
     );
     if (isChosenCommunity && !path.startsWith("/community/")) {
-      const newPath = path.replace(/^\/([^/]+)/, "/community/$1");
-      return NextResponse.redirect(new URL(newPath, request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = path.replace(/^\/([^/]+)/, "/community/$1");
+      return NextResponse.redirect(url);
     }
   }
 

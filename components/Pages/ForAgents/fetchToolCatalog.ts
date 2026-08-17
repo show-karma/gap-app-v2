@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { getIndexerBaseUrl } from "@/utilities/wellKnown";
-import { STATIC_FALLBACK_TOOLS } from "./content";
+import { STATIC_FALLBACK_TOOLS } from "./fallbackTools";
 import type { PublicToolMetadata } from "./types";
 
 const UPSTREAM_TIMEOUT_MS = 5000;
