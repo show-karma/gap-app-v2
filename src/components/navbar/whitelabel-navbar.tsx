@@ -476,7 +476,10 @@ export function WhitelabelNavbar() {
 
   if (!tenant) {
     return (
-      <nav className="sticky top-0 z-50 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <nav
+        data-app-chrome
+        className="sticky top-0 z-50 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+      >
         <div className="mx-auto flex h-16 items-center justify-between px-8 lg:px-24">
           <Skeleton className="h-8 w-8 rounded-lg" />
           <div className="hidden items-center gap-3 lg:flex">
@@ -496,7 +499,10 @@ export function WhitelabelNavbar() {
 
   return (
     <NavbarPermissionsProvider>
-      <nav className="sticky top-0 z-50 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <nav
+        data-app-chrome
+        className="sticky top-0 z-50 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+      >
         <div className="mx-auto flex h-16 items-center justify-between px-8 lg:px-8 xl:px-24">
           {/* Brand */}
           <NavbarBrand tenant={tenant} />

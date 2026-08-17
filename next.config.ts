@@ -4,6 +4,29 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
+const FRAME_SRC =
+  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com";
+
+/**
+ * Sites allowed to embed EMBEDDABLE_ROUTES. The filpgf.io landing site opens
+ * Ask Karma in an overlay instead of navigating away, and the assistant has to
+ * run on this origin for the session (and Privy sign-in) to be the real one.
+ *
+ * Everything else keeps `frame-ancestors 'self'`, so widening this list is the
+ * only way to grow the clickjacking surface — keep it to origins we operate.
+ * Local origins are added outside production so the overlay is testable.
+ */
+const EMBEDDING_ORIGINS = [
+  "https://filpgf.io",
+  "https://www.filpgf.io",
+  ...(process.env.NODE_ENV === "production"
+    ? []
+    : ["http://localhost:4342", "http://localhost:4343"]),
+];
+
+/** Routes the sites above may frame. One route, deliberately. */
+const EMBEDDABLE_ROUTES = ["/ask-karma"];
+
 const securityHeaders = [
   {
     key: "X-Frame-Options",
@@ -11,8 +34,20 @@ const securityHeaders = [
   },
   {
     key: "Content-Security-Policy",
-    value:
-      "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com; frame-ancestors 'self';",
+    value: `${FRAME_SRC}; frame-ancestors 'self';`,
+  },
+];
+
+/**
+ * X-Frame-Options has no allowlist form, so the embeddable routes drop it and
+ * rely on frame-ancestors, which supersedes it in every browser that supports
+ * CSP2. Browsers old enough to lack that support would refuse the frame — they
+ * fall back to the link, not to an unprotected page.
+ */
+const embeddableHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: `${FRAME_SRC}; frame-ancestors 'self' ${EMBEDDING_ORIGINS.join(" ")};`,
   },
 ];
 
@@ -88,11 +123,17 @@ const nextConfig: NextConfig = {
     qualities: [50, 75, 100],
   },
   async headers() {
+    // The catch-all skips the embeddable routes rather than layering over them:
+    // two rules setting Content-Security-Policy on one path emit the header
+    // twice, and browsers enforce the intersection — which would keep the
+    // stricter frame-ancestors and silently block the embed.
+    const embeddablePattern = EMBEDDABLE_ROUTES.map((route) => route.slice(1)).join("|");
     const headerRules = [
       {
-        source: "/(.*)",
+        source: `/((?!${embeddablePattern}$).*)`,
         headers: securityHeaders,
       },
+      ...EMBEDDABLE_ROUTES.map((source) => ({ source, headers: embeddableHeaders })),
     ];
     // Content-hashed build assets are safe to cache forever: a new deploy emits
     // new filenames, so a stale cache entry is never served for new code. This

@@ -851,3 +851,15 @@ body[data-scroll-locked] .karma-assistant-fab,
 body[data-scroll-locked] .karma-assistant-panel {
   display: none !important;
 }
+
+/* Embedded surfaces: the filpgf.io landing site opens /ask-karma in an overlay
+ * (see src/components/embed/embed-mode.tsx). The app is still the real page in
+ * that frame — same origin, same session — but its own navbar, footer and
+ * assistant bubble would make the panel read as a site in a box, so the chrome
+ * around the content is dropped. Scoped to `?embed=1`, so nothing changes for
+ * a normal visit. */
+[data-embed="1"] [data-app-chrome],
+[data-embed="1"] footer,
+[data-embed="1"] .karma-assistant-fab {
+  display: none !important;
+}
