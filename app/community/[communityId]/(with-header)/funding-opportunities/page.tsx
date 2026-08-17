@@ -8,6 +8,7 @@ import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 import FundingOpportunitiesClient from "./FundingOpportunitiesClient";
 
 type Params = Promise<{ communityId: string }>;
@@ -66,10 +67,15 @@ export default async function FundingOpportunitiesPage({ params }: { params: Par
   // on the PR; the schema describes the post-hydration default view.
   const listedPrograms = programs ?? [];
 
+  // On a tenant domain the schema must describe the tenant's own URLs, not the
+  // Karma-branded ones these PAGES helpers build.
+  const whitelabel = await getWhitelabelContext();
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ItemListJsonLd
         name="Funding opportunities"
+        whitelabel={whitelabel}
         items={listedPrograms.map((program) => ({
           name: program.metadata?.title ?? program.name ?? "Untitled program",
           url: PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, program.programId),
