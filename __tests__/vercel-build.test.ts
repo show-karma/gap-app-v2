@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -57,9 +65,21 @@ beforeAll(() => {
   writeFileSync(pnpm, STUB_PNPM);
   chmodSync(pnpm, 0o755);
 
-  const script = readFileSync(join(__dirname, "..", "vercel-build.sh"), "utf8")
+  const original = readFileSync(join(__dirname, "..", "vercel-build.sh"), "utf8");
+  const script = original
     .replace(/^BUILD_CEILING_SECONDS=\d+$/m, `BUILD_CEILING_SECONDS=${TEST_CEILING_SECONDS}`)
     .replace(/^KILL_GRACE_SECONDS=\d+$/m, `KILL_GRACE_SECONDS=${TEST_KILL_GRACE_SECONDS}`);
+
+  // A rename would make both replacements no-op, and the suite would silently
+  // run against the real 8-minute ceiling — every timeout test hanging for
+  // eight minutes, or passing for the wrong reason.
+  if (!script.includes(`BUILD_CEILING_SECONDS=${TEST_CEILING_SECONDS}`)) {
+    throw new Error("vercel-build.sh no longer declares BUILD_CEILING_SECONDS=<n>");
+  }
+  if (!script.includes(`KILL_GRACE_SECONDS=${TEST_KILL_GRACE_SECONDS}`)) {
+    throw new Error("vercel-build.sh no longer declares KILL_GRACE_SECONDS=<n>");
+  }
+
   writeFileSync(join(workdir, "vercel-build.sh"), script);
 });
 
@@ -67,8 +87,12 @@ afterAll(() => {
   rmSync(workdir, { recursive: true, force: true });
 });
 
+let runCounter = 0;
+
 function runBuild(mode: BuildMode) {
-  const attemptLog = join(workdir, `attempts-${mode}.log`);
+  // Per invocation, not per mode: the wall-clock test re-runs every mode, and a
+  // shared log would let it inflate the attempt count another test asserts on.
+  const attemptLog = join(workdir, `attempts-${mode}-${runCounter++}.log`);
   const startedAt = Date.now();
   const result = spawnSync("bash", ["vercel-build.sh"], {
     cwd: workdir,
@@ -157,5 +181,34 @@ describe("vercel-build.sh", () => {
     const { stdout } = runBuild("ok");
 
     expect(stdout).toMatch(/Build machine: \S+ cores, \S+ GB/);
+  });
+
+  it("refuses to run when the grace period would swallow the whole ceiling", () => {
+    // `timeout 0s` means no limit, so this misconfiguration would turn the
+    // script into the unbounded build it exists to prevent. It must not build.
+    const misconfigured = join(workdir, "misconfigured.sh");
+    writeFileSync(
+      misconfigured,
+      readFileSync(join(workdir, "vercel-build.sh"), "utf8").replace(
+        /^KILL_GRACE_SECONDS=\d+$/m,
+        `KILL_GRACE_SECONDS=${TEST_CEILING_SECONDS}`
+      )
+    );
+    const attemptLog = join(workdir, `attempts-misconfigured-${runCounter++}.log`);
+
+    const result = spawnSync("bash", ["misconfigured.sh"], {
+      cwd: workdir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        MODE: "ok",
+        ATTEMPT_LOG: attemptLog,
+        PATH: `${join(workdir, "bin")}:${process.env.PATH}`,
+      },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Misconfigured");
+    expect(existsSync(attemptLog)).toBe(false);
   });
 });

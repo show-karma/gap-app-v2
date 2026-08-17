@@ -43,6 +43,14 @@ KILL_GRACE_SECONDS=15
 
 SOFT_DEADLINE_SECONDS=$(( BUILD_CEILING_SECONDS - KILL_GRACE_SECONDS ))
 
+# `timeout 0s` means no limit at all, so a grace period that swallows the whole
+# ceiling would silently turn this script into the unbounded build it exists to
+# prevent. Fail loudly instead.
+if [ "$SOFT_DEADLINE_SECONDS" -le 0 ]; then
+  echo "Misconfigured: KILL_GRACE_SECONDS (${KILL_GRACE_SECONDS}s) must be smaller than BUILD_CEILING_SECONDS (${BUILD_CEILING_SECONDS}s)." >&2
+  exit 1
+fi
+
 # Match production.yml so preview and production share one memory profile.
 export NODE_OPTIONS='--max-old-space-size=4096'
 
