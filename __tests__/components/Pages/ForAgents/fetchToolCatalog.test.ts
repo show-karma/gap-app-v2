@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { STATIC_FALLBACK_TOOLS } from "@/components/Pages/ForAgents/content";
+import { STATIC_FALLBACK_TOOLS } from "@/components/Pages/ForAgents/fallbackTools";
 import { fetchToolCatalog } from "@/components/Pages/ForAgents/fetchToolCatalog";
 import type { PublicToolMetadata } from "@/components/Pages/ForAgents/types";
 

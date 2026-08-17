@@ -1,4 +1,5 @@
-import { AGENT_FAQS, STATIC_FALLBACK_TOOLS, USE_CASES } from "@/components/Pages/ForAgents/content";
+import { AGENT_FAQS, USE_CASES } from "@/components/Pages/ForAgents/content";
+import { STATIC_FALLBACK_TOOLS } from "@/components/Pages/ForAgents/fallbackTools";
 import { CATEGORY_LABELS } from "@/components/Pages/ForAgents/types";
 import { CANONICAL_ORIGIN, LEGACY_ROOT_DOMAINS } from "@/utilities/domains";
 import { getIndexerBaseUrl } from "@/utilities/wellKnown";

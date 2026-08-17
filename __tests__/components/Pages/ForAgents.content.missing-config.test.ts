@@ -51,4 +51,17 @@ describe("MCP instructions with a missing or malformed indexer URL", () => {
       expect(entry.answer).not.toContain("undefined");
     }
   });
+
+  it("keeps the static fallback importable while the config is broken", async () => {
+    // fetchToolCatalog's resilience contract is to catch the thrown error and
+    // serve STATIC_FALLBACK_TOOLS. That only works while the fallback lives
+    // outside content.ts — co-locating them made the fallback unreachable in
+    // exactly the situation it exists for.
+    indexerUrl.value = "";
+
+    vi.resetModules();
+    const { STATIC_FALLBACK_TOOLS } = await import("@/components/Pages/ForAgents/fallbackTools");
+
+    expect(STATIC_FALLBACK_TOOLS.length).toBeGreaterThan(0);
+  });
 });
