@@ -34,7 +34,7 @@ import { join } from "node:path";
 const TEST_CEILING_SECONDS = 3;
 const TEST_KILL_GRACE_SECONDS = 1;
 
-type BuildMode = "ok" | "fail" | "hang_term" | "hang_kill" | "oom";
+type BuildMode = "ok" | "fail" | "exit_124" | "hang_term" | "hang_kill" | "oom";
 
 let workdir: string;
 
@@ -50,6 +50,7 @@ echo "build attempt" >> "$ATTEMPT_LOG"
 case "$MODE" in
   ok)        exit 0 ;;
   fail)      echo "compile error"; exit 1 ;;
+  exit_124)  echo "compile error"; exit 124 ;;
   hang_term) sleep 60 >/dev/null 2>&1 ;;
   hang_kill) trap '' TERM; sleep 60 >/dev/null 2>&1 ;;
   oom)       kill -9 $$ ;;
@@ -154,6 +155,17 @@ describe("vercel-build.sh", () => {
     expect(stdout).not.toContain("out of memory");
   });
 
+  it("does not blame the ceiling for a build that exits 124 on its own", () => {
+    // `timeout` passes the build's exit code straight through, so 124 is not
+    // exclusively timeout's — only reaching the deadline is.
+    const { status, stdout } = runBuild("exit_124");
+
+    expect(status).toBe(124);
+    expect(stdout).toContain("Build failed with exit 124");
+    expect(stdout).not.toContain("ceiling");
+    expect(stdout).not.toContain("out of memory");
+  });
+
   it("still reports memory when the build is killed well short of the deadline", () => {
     const { status, stdout } = runBuild("oom");
 
@@ -172,7 +184,7 @@ describe("vercel-build.sh", () => {
   });
 
   it("never exceeds the ceiling, whichever way the build ends", () => {
-    for (const mode of ["ok", "fail", "hang_term", "hang_kill", "oom"] as const) {
+    for (const mode of ["ok", "fail", "exit_124", "hang_term", "hang_kill", "oom"] as const) {
       expect(runBuild(mode).wallSeconds).toBeLessThanOrEqual(TEST_CEILING_SECONDS + 1);
     }
   });

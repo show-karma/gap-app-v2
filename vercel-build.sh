@@ -82,13 +82,16 @@ report_ceiling() {
   exit "$code"
 }
 
-# 124 is timeout's own report. Anything else that survived to the soft deadline
-# was ended by the timeout too, it just needed the SIGKILL escalation.
-if [ "$code" -eq 124 ]; then report_ceiling; fi
+# Elapsed time is the only reliable signal, because neither exit code is
+# exclusively timeout's: `timeout` reports 124 when it kills the build and 137
+# when it has to escalate to SIGKILL, but it also passes the build's own exit
+# code straight through, and 124 and 137 are values a build can return by
+# itself. Reaching the soft deadline is what timeout alone can cause.
 if [ "$elapsed" -ge "$SOFT_DEADLINE_SECONDS" ]; then report_ceiling; fi
 
 if [ "$code" -eq 137 ]; then
   echo "Build was killed after ${elapsed}s (exit 137), well short of the ${BUILD_CEILING_SECONDS}s ceiling, so the machine ran out of memory."
+  echo "Check the build machine line above -- 8 GB is not enough for this build."
   exit "$code"
 fi
 
