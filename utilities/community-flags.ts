@@ -5,5 +5,47 @@
  * These are temporary gates — remove entries as features roll out broadly.
  */
 
-/** Communities where the Financials tab is enabled. */
+import type { CommunityNavItemId } from "./community-nav";
+
+/**
+ * Communities where the Commitments & Disbursements (financials) feature is
+ * enabled. It gates two things together: the `/community/<id>/financials` route
+ * — every other community gets a "not available" state there — and the explorer
+ * tab that points at it.
+ *
+ * Whether an enabled community *shows* that tab on a given host is a separate
+ * decision: see {@link EXPLORER_NAV_OVERRIDES}.
+ */
 export const FINANCIALS_ENABLED_COMMUNITIES: readonly string[] = ["filecoin"];
+
+/** Per-community tweaks to the community explorer tab bar. */
+export type ExplorerNavOverride = {
+  /** Navigation item ids to drop from the tab bar entirely. */
+  readonly hiddenTabs?: readonly CommunityNavItemId[];
+  /** Navigation item id -> replacement tab label. */
+  readonly tabLabels?: Readonly<Partial<Record<CommunityNavItemId, string>>>;
+};
+
+/**
+ * Explorer tab overrides, keyed by the `communityId` ROUTE PARAM (the slug as it
+ * appears in the URL) — not by the community's canonical slug or UID. A community
+ * addressed by UID therefore falls through to the default tabs, the same known
+ * limitation {@link FINANCIALS_ENABLED_COMMUNITIES} already has.
+ *
+ * APPLIED ON WHITELABEL HOSTS ONLY. The entries below hide tabs whose
+ * destinations the tenant's own navbar already carries (see
+ * `tenant-config.ts`), which is only true on that navbar's host. On
+ * karmahq.org/community/<slug> there is no such navbar, so hiding a tab there
+ * would leave a live route with no in-app entry point at all — the tab bar is
+ * the only way in. Callers must gate the lookup on `isWhitelabel`.
+ */
+export const EXPLORER_NAV_OVERRIDES: Readonly<Partial<Record<string, ExplorerNavOverride>>> = {
+  filecoin: {
+    // Commitments & Disbursements and every report type are in the filpgf.io
+    // navbar under Funding and Reports. Funded projects are reachable from the
+    // navbar's Funding -> Grants entries, though those are program-scoped —
+    // the unfiltered list is only linked from filpgf.io itself.
+    hiddenTabs: ["community-projects", "reports", "financials"],
+    tabLabels: { "browse-applications": "Browse Projects" },
+  },
+};

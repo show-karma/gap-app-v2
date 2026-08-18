@@ -16,17 +16,21 @@ import { useEffect } from "react";
  */
 export function EmbedMode() {
   const searchParams = useSearchParams();
-  const isEmbedded = searchParams?.get("embed") === "1";
+  const embed = searchParams?.get("embed");
+  // "1" hides the chrome around the page. "login" goes further: the page is a
+  // bare surface for the sign-in dialog, so the host site supplies the
+  // backdrop and the dialog is all that shows.
+  const surface = embed === "1" || embed === "login" ? embed : null;
 
   useEffect(() => {
     const root = document.documentElement;
-    if (!isEmbedded) {
+    if (!surface) {
       root.removeAttribute("data-embed");
       return;
     }
-    root.setAttribute("data-embed", "1");
+    root.setAttribute("data-embed", surface);
     return () => root.removeAttribute("data-embed");
-  }, [isEmbedded]);
+  }, [surface]);
 
   return null;
 }

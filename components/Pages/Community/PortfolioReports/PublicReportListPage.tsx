@@ -1,10 +1,10 @@
 "use client";
 
 import { AlertTriangle, ArrowUpRight, FileText, RefreshCw } from "lucide-react";
-import Link from "next/link";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { PageHero } from "@/components/Pages/Communities/PageHero";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
   Select,
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
+import { Link } from "@/src/components/navigation/Link";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
@@ -304,9 +305,7 @@ export function PublicReportListPage({ community }: Props) {
   if (isError) {
     return (
       <div className="w-full max-w-full py-2 animate-fade-in-up">
-        <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-          Portfolio Reports
-        </h1>
+        <PageHero compact eyebrow="Reports" title="Portfolio Reports" />
         <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 p-12 text-center dark:border-red-900/40">
           <AlertTriangle className="mb-3 h-8 w-8 text-red-400" />
           <p className="text-sm text-zinc-500">Failed to load reports. Please try again.</p>
@@ -326,9 +325,7 @@ export function PublicReportListPage({ community }: Props) {
   if (sortedReports.length === 0) {
     return (
       <div className="w-full max-w-full py-2 animate-fade-in-up">
-        <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-          Portfolio Reports
-        </h1>
+        <PageHero compact eyebrow="Reports" title="Portfolio Reports" />
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">
           <FileText className="mb-3 h-8 w-8 text-zinc-400" />
           <p className="text-sm text-zinc-500">No published reports yet.</p>
@@ -341,26 +338,28 @@ export function PublicReportListPage({ community }: Props) {
   const latest = filteredReports[0];
 
   return (
-    <div className="w-full max-w-full -my-4 py-2 animate-fade-in-up">
-      <header className="mb-10 flex flex-col items-start gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">
-            Portfolio Reports
-          </h1>
-          {count > 0 && (
-            <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              {count} {pluralize("report", count)} · Latest {formatRunDate(latest.runDate).label}
-            </p>
-          )}
-        </div>
-        {reportTypes.length > 1 && (
-          <ReportTypeFilterSelect
-            types={reportTypes}
-            value={typeFilter}
-            onChange={handleTypeChange}
-          />
-        )}
-      </header>
+    <div className="w-full max-w-full py-2 animate-fade-in-up">
+      <PageHero
+        compact
+        eyebrow="Reports"
+        title="Portfolio Reports"
+        description={
+          count > 0
+            ? `${count} ${pluralize("report", count)} · Latest ${formatRunDate(latest.runDate).label}`
+            : undefined
+        }
+        rightSlot={
+          reportTypes.length > 1 ? (
+            <div className="flex md:justify-end">
+              <ReportTypeFilterSelect
+                types={reportTypes}
+                value={typeFilter}
+                onChange={handleTypeChange}
+              />
+            </div>
+          ) : undefined
+        }
+      />
 
       {filteredReports.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">

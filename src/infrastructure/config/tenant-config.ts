@@ -3,6 +3,7 @@
 // is needed. If this changes, implement getIndexerUrl(tenantId) here and
 // thread it as `opts.baseURL` on the affected `api.*` calls.
 import { getHedgeyContractAddress } from "@/src/features/claim-funds/lib/hedgey-contract";
+import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 import { getTenantTheme } from "../theme/config";
 import type {
   ClaimGrantsConfig,
@@ -158,6 +159,35 @@ const tenantMetadata: Record<
     uid: "0x0000000000000000000000000000000000000000000000000000000000000000",
   },
 };
+
+/**
+ * Report-config ids for the Filecoin community, as returned by
+ * `GET /v2/communities/filecoin/reports/published` (`reportConfigId`). The
+ * labels below are the `reportConfigName` each id resolves to — verified
+ * against that endpoint, and the reason these are named rather than inlined:
+ * a bare id in an href literal cannot be checked against anything.
+ *
+ * Linking by type (rather than to a dated report) always lands on the latest
+ * report of that type, so these never need a manual date bump.
+ * `PublicReportListPage` reads `?type=` via nuqs and matches it against
+ * `report.reportConfigId`.
+ *
+ * Mirrored on the marketing site in `filecoin-grants/src/data/site.ts`
+ * (REPORT_TYPES) — the two live in different repos, so a new report type has
+ * to be added in both.
+ */
+const FILECOIN_REPORT_CONFIG_IDS = {
+  /** "Filecoin ProPGF Monthly" — the programme-wide monthly. */
+  propgfMonthly: "69e70e9a641448585f44e961",
+  /** "Monthly Pods Report" — the Pods track's own monthly. */
+  monthlyPods: "6a23268272df01209256e5b9",
+  /** "Bi-Weekly Progress Report" */
+  biweeklyProgress: "6a233d04e82a77f23c7838f7",
+} as const;
+
+/** Latest Filecoin report of one type. Whitelabel-relative — see the nav below. */
+const filecoinReportHref = (type: keyof typeof FILECOIN_REPORT_CONFIG_IDS) =>
+  `/reports?type=${FILECOIN_REPORT_CONFIG_IDS[type]}`;
 
 const tenantNavigation: Record<TenantId, TenantNavigation> = {
   optimism: {
@@ -317,9 +347,13 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
     showBrowseApplications: false,
     items: [
       {
-        label: "ProPGF",
+        label: "Funding",
         items: [
-          { label: "Overview", href: "https://filpgf.io/propgf", isExternal: true },
+          { label: "Overview", href: "https://filpgf.io/propgf/", isExternal: true },
+          // Whitelabel-only navbar, so the clean path is safe here and saves the
+          // /community/filecoin/* -> / redirect hop.
+          { label: COMMITMENTS_AND_DISBURSEMENTS, href: "/financials" },
+          { label: "RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
           {
             label: "Grants",
             items: [
@@ -335,7 +369,7 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
               },
               {
                 label: "Batch 3",
-                href: "https://app.filpgf.io/programs/1479/",
+                href: "https://app.filpgf.io/projects?programId=1479",
                 isExternal: true,
               },
               {
@@ -359,26 +393,36 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
                 isExternal: true,
               },
               {
+                label: "Batch 3",
+                href: "https://app.filpgf.io/browse-applications?programId=1479",
+                isExternal: true,
+              },
+              {
                 label: "Pods Track",
                 href: "https://app.filpgf.io/browse-applications?programId=1039",
                 isExternal: true,
               },
             ],
           },
-          { label: "Financials", href: "/community/filecoin/financials" },
         ],
       },
-      { label: "RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
       {
-        label: "More",
+        label: "Reports",
+        // Labels are the config names the reports API returns for these ids —
+        // see FILECOIN_REPORT_CONFIG_IDS.
         items: [
-          { label: "About Filecoin", href: "https://filecoin.io/", isExternal: true },
+          { label: "Filecoin ProPGF Monthly", href: filecoinReportHref("propgfMonthly") },
+          { label: "Monthly Pods Report", href: filecoinReportHref("monthlyPods") },
+          { label: "Bi-Weekly Progress Report", href: filecoinReportHref("biweeklyProgress") },
+          { label: "All reports", href: "/reports" },
+        ],
+      },
+      { label: "Blog", href: "https://filpgf.io/blog/", isExternal: true },
+      {
+        label: "About",
+        items: [
+          { label: "Filecoin", href: "https://filecoin.io/", isExternal: true },
           { label: "Upcoming Events", href: "https://fil.org/events/", isExternal: true },
-          {
-            label: "Forum",
-            href: "https://github.com/filecoin-project/community/discussions",
-            isExternal: true,
-          },
         ],
       },
     ],

@@ -11,12 +11,40 @@ import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
+import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
+import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
 import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 interface BrowseApplicationsClientProps {
   communityId: string;
 }
+
+/**
+ * Tab id this page belongs to. Heading and tab both resolve their wording from
+ * it — the default out of COMMUNITY_NAV_LABELS, the override out of
+ * EXPLORER_NAV_OVERRIDES — so the two can never drift apart.
+ */
+const NAV_ITEM_ID = "browse-applications";
+
+/**
+ * The page heading, plus the noun its subtitle should count.
+ *
+ * A community that renames the explorer tab gets the same wording here, so tab
+ * and page agree. Gated on `isWhitelabel` for the same reason the tab bar is:
+ * the rename belongs to the tenant's own host (see EXPLORER_NAV_OVERRIDES).
+ *
+ * The heading reads "Browse <things>", so the last word is the thing being
+ * counted — deriving the noun from the heading is what stops "Browse Projects"
+ * from sitting above a count of applications.
+ */
+const resolveHeading = (communityId: string, isWhitelabel: boolean) => {
+  const title =
+    (isWhitelabel ? EXPLORER_NAV_OVERRIDES[communityId]?.tabLabels?.[NAV_ITEM_ID] : undefined) ??
+    COMMUNITY_NAV_LABELS[NAV_ITEM_ID];
+  return { title, noun: pluralize.singular(title.split(" ").pop() ?? "").toLowerCase() };
+};
 
 const statusOptions: Array<{
   value: ApplicationStatus | "all";
@@ -214,6 +242,9 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { programs } = useProgramsWithConfig(communityId);
+  const { isWhitelabel } = useWhitelabel();
+
+  const { title: pageTitle, noun: itemNoun } = resolveHeading(communityId, isWhitelabel);
 
   // The query string is the single source of truth for these filters (see
   // useBrowseApplicationFilters): nuqs writes through history.replaceState, so
@@ -343,10 +374,10 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
 
   const applicationCount = programMetrics?.totalApplications ?? 0;
   const headerSubtitle = selectedProgram
-    ? `${applicationCount} ${pluralize("application", applicationCount)}${
+    ? `${applicationCount} ${pluralize(itemNoun, applicationCount)}${
         selectedProgram.name ? ` · ${selectedProgram.name}` : ""
       }`
-    : "Choose a program to browse public applications.";
+    : `Choose a program to browse public ${pluralize(itemNoun, 2)}.`;
 
   return (
     <div
@@ -356,7 +387,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
       {/* Header: title + subtitle */}
       <header className="flex flex-col gap-2">
         <h1 className="text-[26px] md:text-[28px] font-semibold tracking-[-0.02em] text-foreground">
-          Browse applications
+          {pageTitle}
         </h1>
         <p className="text-sm text-muted-foreground">{headerSubtitle}</p>
       </header>

@@ -43,6 +43,12 @@ vi.mock("@/utilities/pages", () => ({
 // Mock community-flags
 vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
+  EXPLORER_NAV_OVERRIDES: {
+    filecoin: {
+      hiddenTabs: ["community-projects", "reports", "financials"],
+      tabLabels: { "browse-applications": "Browse Projects" },
+    },
+  },
 }));
 
 // Mock lucide-react icons
@@ -73,6 +79,17 @@ describe("CommunityPageNavigator", () => {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+
+  /**
+   * Labels of every tab currently carrying the active style. `border-b-gray-900`
+   * is the discriminator: the inactive style also sets `border-b-4`, but
+   * transparent.
+   */
+  const activeTabLabels = () =>
+    screen
+      .getAllByRole("link")
+      .filter((link) => link.className.includes("border-b-gray-900"))
+      .map((link) => link.textContent?.trim() ?? "");
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -124,10 +141,6 @@ describe("CommunityPageNavigator", () => {
 
   describe("Rendering", () => {
     it("should render all navigation items", () => {
-      // Use filecoin communityId so financials tab is visible
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin");
-
       render(<CommunityPageNavigator />, { wrapper });
 
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
@@ -136,14 +149,9 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByText("Milestone updates")).toBeInTheDocument();
       expect(screen.getByText("Impact")).toBeInTheDocument();
       expect(screen.getByText("Reports")).toBeInTheDocument();
-      expect(screen.getByText("Financials")).toBeInTheDocument();
     });
 
     it("should render all icons", () => {
-      // Use filecoin communityId so financials tab is visible
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin");
-
       render(<CommunityPageNavigator />, { wrapper });
 
       expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
@@ -152,7 +160,6 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByTestId("land-plot-icon")).toBeInTheDocument();
       expect(screen.getByTestId("chart-line-icon")).toBeInTheDocument();
       expect(screen.getByTestId("file-text-icon")).toBeInTheDocument();
-      expect(screen.getByTestId("wallet-icon")).toBeInTheDocument();
     });
 
     it("should render links with correct hrefs", () => {
@@ -470,124 +477,267 @@ describe("CommunityPageNavigator", () => {
     });
   });
 
-  describe("Financials Tab Visibility", () => {
-    it("should hide financials tab when community is not in FINANCIALS_ENABLED_COMMUNITIES", () => {
-      // test-community is NOT in FINANCIALS_ENABLED_COMMUNITIES
-      mockUseCommunityPrograms.mockReturnValue({
-        data: [{ programId: "program-1", metadata: { title: "Program One" } }],
-        isLoading: false,
+  // The overrides exist to drop tabs the tenant's own navbar already carries.
+  // That navbar only exists on the whitelabel host, so the overrides are gated
+  // on it: on karmahq.org/community/filecoin this bar is the only way into
+  // those routes, and hiding them there would strand two live pages.
+  describe("Explorer Nav Overrides (whitelabel hosts only)", () => {
+    const renderFilecoin = ({
+      pathname = "/community/filecoin",
+      isWhitelabel = true,
+    }: {
+      pathname?: string;
+      isWhitelabel?: boolean;
+    } = {}) => {
+      mockUseWhitelabel.mockReturnValue({
+        isWhitelabel,
+        communitySlug: isWhitelabel ? "filecoin" : null,
+        config: null,
       } as any);
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue(pathname);
+      render(<CommunityPageNavigator />, { wrapper });
+    };
 
+    describe("on a whitelabel host", () => {
+      it("should hide the tabs listed in hiddenTabs", () => {
+        renderFilecoin();
+
+        expect(screen.queryByText("View funded projects")).not.toBeInTheDocument();
+        expect(screen.queryByText("Reports")).not.toBeInTheDocument();
+        expect(screen.queryByText("Commitments & Disbursements")).not.toBeInTheDocument();
+      });
+
+      it("should render exactly the surviving tabs, in order", () => {
+        renderFilecoin();
+
+        expect(screen.getAllByRole("link").map((link) => link.textContent?.trim())).toEqual([
+          "Funding opportunities",
+          "Browse Projects",
+          "Milestone updates",
+          "Impact",
+        ]);
+      });
+
+      it("should apply the override label to the browse applications tab", () => {
+        renderFilecoin();
+
+        expect(screen.getByText("Browse Projects")).toBeInTheDocument();
+        expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
+        // Bare path: the whitelabel-aware Link strips the /community/<slug>
+        // prefix on the tenant host, so the tab costs no redirect hop.
+        expect(screen.getByText("Browse Projects").closest("a")).toHaveAttribute(
+          "href",
+          "/browse-applications"
+        );
+      });
+
+      it("should skip the published-reports query when the reports tab is hidden", () => {
+        renderFilecoin();
+
+        expect(mockUsePublishedReports).toHaveBeenCalledWith("");
+      });
+    });
+
+    describe("on karmahq.org (no tenant navbar to carry the destinations)", () => {
+      it("should keep every tab the overrides would have hidden", () => {
+        renderFilecoin({ isWhitelabel: false });
+
+        expect(screen.getByText("View funded projects")).toBeInTheDocument();
+        expect(screen.getByText("Reports")).toBeInTheDocument();
+        expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
+      });
+
+      it("should keep the default browse-applications label", () => {
+        renderFilecoin({ isWhitelabel: false });
+
+        expect(screen.getByText("Browse applications")).toBeInTheDocument();
+        expect(screen.queryByText("Browse Projects")).not.toBeInTheDocument();
+      });
+
+      it("should still run the published-reports query", () => {
+        renderFilecoin({ isWhitelabel: false });
+
+        // The canonical slug from community details, never the suppressing "".
+        expect(mockUsePublishedReports).not.toHaveBeenCalledWith("");
+      });
+    });
+
+    it("should leave a community without an override untouched on either host", () => {
+      const defaultTabs = [
+        "Funding opportunities",
+        "Browse applications",
+        "View funded projects",
+        "Milestone updates",
+        "Impact",
+        "Reports",
+      ];
+
+      const { unmount } = render(<CommunityPageNavigator />, { wrapper });
+      expect(screen.getAllByRole("link").map((link) => link.textContent?.trim())).toEqual(
+        defaultTabs
+      );
+      unmount();
+
+      mockUseWhitelabel.mockReturnValue({
+        isWhitelabel: true,
+        communitySlug: "test-community",
+        config: null,
+      } as any);
+      render(<CommunityPageNavigator />, { wrapper });
+      expect(screen.getAllByRole("link").map((link) => link.textContent?.trim())).toEqual(
+        defaultTabs
+      );
+    });
+  });
+
+  describe("Commitments & Disbursements (financials) Tab Visibility", () => {
+    const renderFilecoinOnKarma = (pathname = "/community/filecoin") => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue(pathname);
+      render(<CommunityPageNavigator />, { wrapper });
+    };
+
+    it("should hide the tab when the community is not in FINANCIALS_ENABLED_COMMUNITIES", () => {
       render(<CommunityPageNavigator />, { wrapper });
 
-      expect(screen.queryByText("Financials")).not.toBeInTheDocument();
+      expect(screen.queryByText("Commitments & Disbursements")).not.toBeInTheDocument();
       expect(screen.queryByTestId("wallet-icon")).not.toBeInTheDocument();
     });
 
-    it("should hide financials tab when programs count is 0 even for enabled community", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin");
-      mockUseCommunityPrograms.mockReturnValue({
-        data: [],
-        isLoading: false,
-      } as any);
+    it("should hide the tab when programs count is 0 even for an enabled community", () => {
+      mockUseCommunityPrograms.mockReturnValue({ data: [], isLoading: false } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      renderFilecoinOnKarma();
 
-      expect(screen.queryByText("Financials")).not.toBeInTheDocument();
+      expect(screen.queryByText("Commitments & Disbursements")).not.toBeInTheDocument();
       expect(screen.queryByTestId("wallet-icon")).not.toBeInTheDocument();
     });
 
-    it("should show financials tab when community is enabled and programs exist", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin");
-      mockUseCommunityPrograms.mockReturnValue({
-        data: [{ programId: "program-1", metadata: { title: "Program One" } }],
-        isLoading: false,
-      } as any);
+    it("should hide the tab while programs are loading (undefined !== empty)", () => {
+      mockUseCommunityPrograms.mockReturnValue({ data: undefined, isLoading: true } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      renderFilecoinOnKarma();
 
-      expect(screen.getByText("Financials")).toBeInTheDocument();
+      expect(screen.queryByText("Commitments & Disbursements")).not.toBeInTheDocument();
+    });
+
+    it("should show the tab, with its New! badge, when enabled and programs exist", () => {
+      renderFilecoinOnKarma();
+
+      expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
       expect(screen.getByTestId("wallet-icon")).toBeInTheDocument();
+      expect(screen.getByText("New!")).toBeInTheDocument();
     });
 
-    it("should hide financials tab when programs are loading (undefined !== empty)", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin");
-      mockUseCommunityPrograms.mockReturnValue({
-        data: undefined,
-        isLoading: true,
-      } as any);
+    it("should render the tab link with the correct href", () => {
+      renderFilecoinOnKarma();
 
-      render(<CommunityPageNavigator />, { wrapper });
-
-      // Tab is hidden while loading because programs?.length ?? 0 evaluates to 0 when programs is undefined
-      expect(screen.queryByText("Financials")).not.toBeInTheDocument();
+      expect(screen.getByText("Commitments & Disbursements").closest("a")).toHaveAttribute(
+        "href",
+        "/community/filecoin/financials"
+      );
     });
 
-    it("should show financials tab with multiple programs for enabled community", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin");
-      mockUseCommunityPrograms.mockReturnValue({
-        data: [
-          { programId: "program-1", metadata: { title: "Program One" } },
-          { programId: "program-2", metadata: { title: "Program Two" } },
-        ],
-        isLoading: false,
-      } as any);
-
-      render(<CommunityPageNavigator />, { wrapper });
-
-      expect(screen.getByText("Financials")).toBeInTheDocument();
-    });
-
-    it("should render financials link with correct href", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin");
-
-      render(<CommunityPageNavigator />, { wrapper });
-
-      const financialsLink = screen.getByText("Financials").closest("a");
-      expect(financialsLink).toHaveAttribute("href", "/community/filecoin/financials");
-    });
-
-    it("should append programId to financials link when present", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin");
+    it("should append programId to the tab link when present", () => {
       mockUseSearchParams.mockReturnValue({
         get: (key: string) => (key === "programId" ? "program-123" : null),
       });
 
-      render(<CommunityPageNavigator />, { wrapper });
+      renderFilecoinOnKarma();
 
-      const financialsLink = screen.getByText("Financials").closest("a");
-      expect(financialsLink).toHaveAttribute(
+      expect(screen.getByText("Commitments & Disbursements").closest("a")).toHaveAttribute(
         "href",
         "/community/filecoin/financials?programId=program-123"
       );
     });
 
-    it("should apply active styles to financials link when on financials page", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin/financials");
+    it("should apply active styles on the financials page", () => {
+      renderFilecoinOnKarma("/community/filecoin/financials");
 
-      render(<CommunityPageNavigator />, { wrapper });
-
-      const link = screen.getByText("Financials").closest("a");
+      const link = screen.getByText("Commitments & Disbursements").closest("a");
       expect(link?.className).toContain("text-gray-900");
       expect(link?.className).toContain("border-b-4");
       expect(link?.className).toContain("border-b-gray-900");
     });
 
-    it("should not mark community projects as active on financials page", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin/financials");
-
-      render(<CommunityPageNavigator />, { wrapper });
+    it("should not mark community projects as active on the financials page", () => {
+      renderFilecoinOnKarma("/community/filecoin/financials");
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
+    });
+  });
+
+  describe("No Active Tab", () => {
+    // Highlighting a tab the reader is not on is worse than highlighting none:
+    // on a whitelabel filecoin host /projects is hidden, so its own URL matches
+    // nothing — the bar must stay unhighlighted rather than claim another tab.
+    it.each(["/community/filecoin", "/community/filecoin/projects"])(
+      "should highlight nothing on %s, where no visible tab matches",
+      (pathname) => {
+        mockUseWhitelabel.mockReturnValue({
+          isWhitelabel: true,
+          communitySlug: "filecoin",
+          config: null,
+        } as any);
+        mockUseParams.mockReturnValue({ communityId: "filecoin" });
+        mockUsePathname.mockReturnValue(pathname);
+
+        render(<CommunityPageNavigator />, { wrapper });
+
+        expect(activeTabLabels()).toEqual([]);
+      }
+    );
+
+    it("should still honour a real match on an overridden community", () => {
+      mockUseWhitelabel.mockReturnValue({
+        isWhitelabel: true,
+        communitySlug: "filecoin",
+        config: null,
+      } as any);
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin/impact");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(activeTabLabels()).toEqual(["Impact"]);
+    });
+  });
+
+  describe("isActive segment matching (community slugs that look like tabs)", () => {
+    const renderSlug = (slug: string, pathname: string) => {
+      mockUseParams.mockReturnValue({ communityId: slug });
+      mockUsePathname.mockReturnValue(pathname);
+      mockUseCommunityDetails.mockReturnValue({
+        data: { uid: "0xabc", details: { name: "Reports DAO", slug } },
+        isLoading: false,
+      } as any);
+      render(<CommunityPageNavigator />, { wrapper });
+    };
+
+    // The pre-move matcher was `pathname.includes("/reports")`, so
+    // "/community/reports-dao" lit up the Reports tab on every page of that
+    // community. Matching the resolved sub-segment instead is what fixes it.
+    it.each(["reports-dao", "weekly-reports-dao", "impact-collective"])(
+      "does not light up a tab from the community slug %s",
+      (slug) => {
+        renderSlug(slug, `/community/${slug}/updates`);
+
+        expect(activeTabLabels()).toEqual(["Milestone updates"]);
+      }
+    );
+
+    it("marks funded projects active on the root of a slug containing a tab name", () => {
+      renderSlug("weekly-reports-dao", "/community/weekly-reports-dao");
+
+      expect(activeTabLabels()).toEqual(["View funded projects"]);
+    });
+
+    it("still marks Reports active on the real reports route of such a community", () => {
+      renderSlug("weekly-reports-dao", "/community/weekly-reports-dao/reports");
+
+      expect(activeTabLabels()).toEqual(["Reports"]);
     });
   });
 
@@ -742,8 +892,7 @@ describe("CommunityPageNavigator", () => {
 
   describe("Active Tab Auto-Scroll", () => {
     it("should scroll active tab into view on mount", () => {
-      mockUseParams.mockReturnValue({ communityId: "filecoin" });
-      mockUsePathname.mockReturnValue("/community/filecoin/financials");
+      mockUsePathname.mockReturnValue("/community/test-community/impact");
 
       render(<CommunityPageNavigator />, { wrapper });
 
