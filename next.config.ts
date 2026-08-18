@@ -40,7 +40,12 @@ const EMBEDDING_ORIGINS = [
   // branch, so they are matched by pattern rather than chased one at a time.
   // Never present in a production build.
   ...(allowsPreviewEmbedders
-    ? ["https://*.vercel.app", "http://localhost:4342", "http://localhost:4343"]
+    ? [
+        "https://*.vercel.app",
+        "http://localhost:3004",
+        "http://localhost:4342",
+        "http://localhost:4343",
+      ]
     : []),
 ];
 
