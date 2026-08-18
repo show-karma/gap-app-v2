@@ -47,18 +47,17 @@ export const checkSlugExists = async (slug: string): Promise<boolean> => {
     // available = false means slug is taken (project exists)
     return !data?.available;
   } catch (error) {
-    // A contract violation is a real defect, not a transient state: it silently
-    // turns "slug is taken" into "slug is free" and hangs the creation poll.
-    // Report it rather than swallowing it.
+    // SUPPRESSED: mirrors legacy fetchData behavior — this powers polling during
+    // project creation, so a failure degrades to "not available" rather than
+    // creating Sentry noise for an expected transient state. The one exception
+    // is a contract violation: that is a real defect, not a transient state, and
+    // it silently turns "slug is taken" into "slug is free" and hangs the poll.
     if (error instanceof ContractViolationError && !contractViolationReported) {
       contractViolationReported = true;
       errorManager(`Project slug check contract violation: ${slug}`, error, {
         context: "project.service",
       });
     }
-    // SUPPRESSED: mirrors legacy fetchData behavior — this powers polling during
-    // project creation, so any other failure degrades to "not available" rather
-    // than creating Sentry noise for an expected transient state.
     return false;
   }
 };
