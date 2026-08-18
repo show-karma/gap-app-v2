@@ -2,21 +2,32 @@ import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { api } from "@/utilities/api/client";
-import { HttpError } from "@/utilities/api/errors";
+import { ContractViolationError, HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 const SlugAvailabilityResultSchema = z
   .object({
     available: z.boolean(),
+    // Mirrors the indexer's CheckSlugAvailabilityResponseSchema ({ uid, title }).
+    // Kept passthrough and every field optional on purpose: only `available` is
+    // read here, and a stricter shape once turned a "slug is taken" response
+    // into a contract violation that stalled the project-creation poll forever.
     existingProject: z
       .object({
-        uid: z.string(),
-        slug: z.string(),
+        uid: z.string().optional(),
+        title: z.string().optional(),
       })
+      .passthrough()
       .nullable()
       .optional(),
   })
   .passthrough();
+
+// The slug check is called from a polling loop (up to 1000 iterations during
+// project creation), and a contract violation is deterministic — it would fire
+// on every single tick. Sentry fingerprints them into one issue, but reporting
+// once per loaded module is enough to diagnose the drift without burning quota.
+let contractViolationReported = false;
 
 /**
  * Check if a project slug exists (is taken).
@@ -35,10 +46,18 @@ export const checkSlugExists = async (slug: string): Promise<boolean> => {
     // available = true means slug is free (project doesn't exist)
     // available = false means slug is taken (project exists)
     return !data?.available;
-  } catch {
+  } catch (error) {
     // SUPPRESSED: mirrors legacy fetchData behavior — this powers polling during
-    // project creation, so any failure degrades to "not available" rather than
-    // creating Sentry noise for an expected transient state.
+    // project creation, so a failure degrades to "not available" rather than
+    // creating Sentry noise for an expected transient state. The one exception
+    // is a contract violation: that is a real defect, not a transient state, and
+    // it silently turns "slug is taken" into "slug is free" and hangs the poll.
+    if (error instanceof ContractViolationError && !contractViolationReported) {
+      contractViolationReported = true;
+      errorManager(`Project slug check contract violation: ${slug}`, error, {
+        context: "project.service",
+      });
+    }
     return false;
   }
 };
