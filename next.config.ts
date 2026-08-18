@@ -16,12 +16,32 @@ const FRAME_SRC =
  * only way to grow the clickjacking surface — keep it to origins we operate.
  * Local origins are added outside production so the overlay is testable.
  */
+/**
+ * Whether this build may be framed by preview hosts as well as the real ones.
+ *
+ * Deliberately opt-in rather than `NODE_ENV !== "production"`: Vercel builds
+ * previews with NODE_ENV=production, so that test would quietly drop the extra
+ * origins exactly where they are needed. Reading the environment explicitly
+ * also fails safe — if the VERCEL_ENV variables go missing on a production
+ * build, NODE_ENV is still "production" and nothing relaxes.
+ *
+ * Wider than `isPreviewBuild` below, which gates Sentry: this one also covers
+ * local builds, where framing from a dev server has to work.
+ */
+const allowsPreviewEmbedders =
+  process.env.VERCEL_ENV === "preview" ||
+  process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
+  process.env.NODE_ENV !== "production";
+
 const EMBEDDING_ORIGINS = [
   "https://filpgf.io",
   "https://www.filpgf.io",
-  ...(process.env.NODE_ENV === "production"
-    ? []
-    : ["http://localhost:4342", "http://localhost:4343"]),
+  // Preview only: the landing site's Vercel previews change hostname per
+  // branch, so they are matched by pattern rather than chased one at a time.
+  // Never present in a production build.
+  ...(allowsPreviewEmbedders
+    ? ["https://*.vercel.app", "http://localhost:4342", "http://localhost:4343"]
+    : []),
 ];
 
 /** Routes the sites above may frame. One route, deliberately. */

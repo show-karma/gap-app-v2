@@ -61,3 +61,22 @@ describe("framing headers", () => {
     expect(catchAll.source).toContain("(?!");
   });
 });
+
+describe("preview origins", () => {
+  it("does not leak preview origins into a production build", async () => {
+    // The suite runs with NODE_ENV=test, so the preview origins are present
+    // here — the guarantee worth pinning is the shape of the gate, not this
+    // run's value: a production build must satisfy neither branch.
+    const { readFile } = await import("node:fs/promises");
+    const { resolve } = await import("node:path");
+    const source = await readFile(resolve(process.cwd(), "next.config.ts"), "utf8");
+
+    expect(source).toContain('process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"');
+    // The wildcard must sit inside the preview-only branch, never in the
+    // unconditional part of the list.
+    const gate = source.indexOf("...(allowsPreviewEmbedders");
+    expect(gate).toBeGreaterThan(-1);
+    expect(source.slice(0, gate)).not.toContain("https://*.vercel.app");
+    expect(source.slice(gate, gate + 200)).toContain("https://*.vercel.app");
+  });
+});
