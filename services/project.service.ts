@@ -23,6 +23,12 @@ const SlugAvailabilityResultSchema = z
   })
   .passthrough();
 
+// The slug check is called from a polling loop (up to 1000 iterations during
+// project creation), and a contract violation is deterministic — it would fire
+// on every single tick. Sentry fingerprints them into one issue, but reporting
+// once per loaded module is enough to diagnose the drift without burning quota.
+let contractViolationReported = false;
+
 /**
  * Check if a project slug exists (is taken).
  * Uses the V2 endpoint which returns proper 200 responses instead of 404 errors.
@@ -44,7 +50,8 @@ export const checkSlugExists = async (slug: string): Promise<boolean> => {
     // A contract violation is a real defect, not a transient state: it silently
     // turns "slug is taken" into "slug is free" and hangs the creation poll.
     // Report it rather than swallowing it.
-    if (error instanceof ContractViolationError) {
+    if (error instanceof ContractViolationError && !contractViolationReported) {
+      contractViolationReported = true;
       errorManager(`Project slug check contract violation: ${slug}`, error, {
         context: "project.service",
       });

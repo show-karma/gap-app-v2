@@ -10,10 +10,15 @@
  */
 import { HttpResponse, http } from "msw";
 import { setupServer } from "msw/node";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { checkSlugExists } from "@/services/project.service";
 
 vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: { getToken: vi.fn().mockResolvedValue(null) },
+}));
+
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 const BASE = "http://localhost:4000";
@@ -58,6 +63,25 @@ describe("checkSlugExists", () => {
     );
 
     await expect(checkSlugExists("drifted")).resolves.toBe(true);
+  });
+
+  it("reports a contract violation once, not on every poll tick", async () => {
+    // A shape the schema cannot accept, to force a ContractViolationError.
+    server.use(slugCheck("broken-contract", { available: "nope" }));
+
+    await expect(checkSlugExists("broken-contract")).resolves.toBe(false);
+    expect(errorManager).toHaveBeenCalledTimes(1);
+    expect(errorManager).toHaveBeenCalledWith(
+      expect.stringContaining("contract violation"),
+      expect.anything(),
+      { context: "project.service" }
+    );
+
+    // The creation poll runs up to 1000 ticks; a deterministic violation must
+    // not produce 1000 Sentry events.
+    await checkSlugExists("broken-contract");
+    await checkSlugExists("broken-contract");
+    expect(errorManager).toHaveBeenCalledTimes(1);
   });
 
   it("degrades to 'not taken' when the request fails", async () => {
