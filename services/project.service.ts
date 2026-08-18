@@ -2,17 +2,22 @@ import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { api } from "@/utilities/api/client";
-import { HttpError } from "@/utilities/api/errors";
+import { ContractViolationError, HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 const SlugAvailabilityResultSchema = z
   .object({
     available: z.boolean(),
+    // Mirrors the indexer's CheckSlugAvailabilityResponseSchema ({ uid, title }).
+    // Kept passthrough and every field optional on purpose: only `available` is
+    // read here, and a stricter shape once turned a "slug is taken" response
+    // into a contract violation that stalled the project-creation poll forever.
     existingProject: z
       .object({
-        uid: z.string(),
-        slug: z.string(),
+        uid: z.string().optional(),
+        title: z.string().optional(),
       })
+      .passthrough()
       .nullable()
       .optional(),
   })
@@ -35,10 +40,18 @@ export const checkSlugExists = async (slug: string): Promise<boolean> => {
     // available = true means slug is free (project doesn't exist)
     // available = false means slug is taken (project exists)
     return !data?.available;
-  } catch {
+  } catch (error) {
+    // A contract violation is a real defect, not a transient state: it silently
+    // turns "slug is taken" into "slug is free" and hangs the creation poll.
+    // Report it rather than swallowing it.
+    if (error instanceof ContractViolationError) {
+      errorManager(`Project slug check contract violation: ${slug}`, error, {
+        context: "project.service",
+      });
+    }
     // SUPPRESSED: mirrors legacy fetchData behavior — this powers polling during
-    // project creation, so any failure degrades to "not available" rather than
-    // creating Sentry noise for an expected transient state.
+    // project creation, so any other failure degrades to "not available" rather
+    // than creating Sentry noise for an expected transient state.
     return false;
   }
 };
