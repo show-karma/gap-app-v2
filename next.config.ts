@@ -20,6 +20,9 @@ const removeImports = require("next-remove-imports")();
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
+  // Next 16.3 otherwise rewrites the tracked AGENTS.md whenever `next dev`
+  // starts. This repository maintains its own agent guidance.
+  agentRules: false,
   reactStrictMode: true,
   // Cap per-page static generation at 2 min. The app has no
   // generateStaticParams and builds in ~5 min, so nothing legitimately
