@@ -30,7 +30,7 @@ const MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
  *  jar — the domain attribute is what has to be left off for that to work. */
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
-export interface IdentityHint {
+interface IdentityHint {
   /** Schema version, so the reader can ignore a shape it does not know. */
   v: 1;
   /** Display name: whatever the navbar itself would show. */

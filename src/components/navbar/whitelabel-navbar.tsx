@@ -39,9 +39,10 @@ import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { NavbarAssistantButton } from "./navbar-assistant-button";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
+import { navStyles } from "./navbar-nav-item-styles";
 import { NavbarPermissionsProvider } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
-import { DesktopTenantNavItems, MobileTenantNavItems, navStyles } from "./navbar-tenant-nav-items";
+import { DesktopTenantNavItems, MobileTenantNavItems } from "./navbar-tenant-nav-items";
 import { NavbarUserMenu } from "./navbar-user-menu";
 import { ThemeToggleButton } from "./theme-toggle-button";
 

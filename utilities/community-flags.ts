@@ -19,7 +19,7 @@ import type { CommunityNavItemId } from "./community-nav";
 export const FINANCIALS_ENABLED_COMMUNITIES: readonly string[] = ["filecoin"];
 
 /** Per-community tweaks to the community explorer tab bar. */
-export type ExplorerNavOverride = {
+type ExplorerNavOverride = {
   /** Navigation item ids to drop from the tab bar entirely. */
   readonly hiddenTabs?: readonly CommunityNavItemId[];
   /** Navigation item id -> replacement tab label. */

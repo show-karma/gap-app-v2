@@ -40,7 +40,7 @@ function truncateAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-6)}`;
 }
 
-export interface AccountIdentity {
+interface AccountIdentity {
   /** Display name, or undefined while nothing has resolved yet. */
   name?: string;
   /** Picture URL, when one resolved. No identicon — that is the caller's fallback. */
