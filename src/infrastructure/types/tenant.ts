@@ -142,6 +142,13 @@ export interface TenantNavigation {
     docs?: string;
     telegram?: string;
   };
+  /**
+   * Name of the menu the social links sit under, in the navbar and in the
+   * mobile section heading. Defaults to "Resources"; a tenant that calls the
+   * same set of links something else (filecoin: "Connect") sets it here rather
+   * than the label being decided in the navbar for everyone.
+   */
+  socialLinksLabel?: string;
 }
 
 export interface HeroStat {
@@ -190,4 +197,13 @@ export interface TenantConfig {
   communitySlug?: string;
   communityUID?: string;
   claimGrants: ClaimGrantsConfig;
+  /**
+   * Parent domain to publish the identity hint on, for tenants whose marketing
+   * site is a sibling host (filecoin: `.filpgf.io`, shared by app.filpgf.io and
+   * www.filpgf.io). Omitted, no hint is written at all.
+   *
+   * See `utilities/auth/identity-hint.ts` for what the hint is and, more
+   * importantly, what it is not — it carries no token and grants nothing.
+   */
+  identityHintCookieDomain?: string;
 }

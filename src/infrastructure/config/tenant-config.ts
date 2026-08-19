@@ -189,6 +189,18 @@ const FILECOIN_REPORT_CONFIG_IDS = {
 const filecoinReportHref = (type: keyof typeof FILECOIN_REPORT_CONFIG_IDS) =>
   `/reports?type=${FILECOIN_REPORT_CONFIG_IDS[type]}`;
 
+/**
+ * Parent domain each tenant's identity hint is published on — the registrable
+ * domain shared by the app host and that tenant's marketing site. Only tenants
+ * with such a sibling site appear here; everyone else writes no hint at all.
+ *
+ * See `utilities/auth/identity-hint.ts`: display only, no token, no authority.
+ */
+const tenantIdentityHintCookieDomain: Readonly<Partial<Record<TenantId, string>>> = {
+  // app.filpgf.io and www.filpgf.io.
+  filecoin: ".filpgf.io",
+};
+
 const tenantNavigation: Record<TenantId, TenantNavigation> = {
   optimism: {
     header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
@@ -421,11 +433,13 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
       {
         label: "About",
         items: [
-          { label: "Filecoin", href: "https://filecoin.io/", isExternal: true },
+          { label: "Filecoin", href: "https://www.filecoin.io/learn", isExternal: true },
           { label: "Upcoming Events", href: "https://fil.org/events/", isExternal: true },
         ],
       },
     ],
+    /* This tenant calls the social-links menu "Connect", not "Resources". */
+    socialLinksLabel: "Connect",
     socialLinks: {
       twitter: "https://twitter.com/Filecoin",
       discord: "https://discord.gg/yeQ2hcd2TD",
@@ -600,6 +614,7 @@ export function getTenantConfig(tenantId: TenantId, communitySlug?: string): Ten
       communitySlug,
       communityUID: metadata.uid,
       claimGrants: getClaimGrantsConfigForTenant("karma"),
+      identityHintCookieDomain: tenantIdentityHintCookieDomain.karma,
     };
   }
 
@@ -619,5 +634,6 @@ export function getTenantConfig(tenantId: TenantId, communitySlug?: string): Ten
     communitySlug: metadata.slug,
     communityUID: metadata.uid,
     claimGrants: getClaimGrantsConfigForTenant(tenantId),
+    identityHintCookieDomain: tenantIdentityHintCookieDomain[tenantId],
   };
 }

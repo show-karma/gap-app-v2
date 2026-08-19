@@ -1,10 +1,13 @@
 /**
  * Unit Tests: framing headers
  *
- * The filpgf.io landing site opens /ask-karma in an overlay, which only works
- * because that one route relaxes frame-ancestors. These assertions guard the
- * two halves of that trade: the route stays embeddable by the sites we
- * operate, and nothing else does.
+ * /ask-karma was once framable by filpgf.io, which ran sign-in in an overlay on
+ * this origin. That is gone — the landing site hands off to this app instead —
+ * so the carve-out is gone with it and every route is same-origin only again.
+ *
+ * These assertions exist to keep it that way. Reopening `frame-ancestors` is
+ * the kind of change that looks like configuration and lands like a
+ * clickjacking surface, so it should have to break a test first.
  */
 
 import nextConfig from "@/next.config";
@@ -20,63 +23,56 @@ async function getHeaderRules(): Promise<HeaderRule[]> {
 const cspOf = (rule: HeaderRule) =>
   rule.headers.find((header) => header.key === "Content-Security-Policy")?.value ?? "";
 
+/** The rule carrying the framing headers, whatever its source pattern. */
+const framingRule = (rules: HeaderRule[]) =>
+  rules.find((rule) => cspOf(rule).includes("frame-ancestors")) as HeaderRule;
+
 describe("framing headers", () => {
-  it("lets the landing site frame /ask-karma", async () => {
+  it("keeps every route same-origin only", async () => {
     const rules = await getHeaderRules();
-    const askKarma = rules.find((rule) => rule.source === "/ask-karma");
+    const rule = framingRule(rules);
 
-    expect(askKarma).toBeDefined();
-    const csp = cspOf(askKarma as HeaderRule);
-    expect(csp).toContain("frame-ancestors 'self' https://filpgf.io https://www.filpgf.io");
+    expect(rule).toBeDefined();
+    expect(cspOf(rule)).toContain("frame-ancestors 'self';");
+    expect(rule.headers.find((header) => header.key === "X-Frame-Options")?.value).toBe(
+      "SAMEORIGIN"
+    );
   });
 
-  it("drops X-Frame-Options on the embeddable route, since it cannot express an allowlist", async () => {
+  it("names no external framing origin at all", async () => {
     const rules = await getHeaderRules();
-    const askKarma = rules.find((rule) => rule.source === "/ask-karma") as HeaderRule;
 
-    expect(askKarma.headers.some((header) => header.key === "X-Frame-Options")).toBe(false);
+    for (const rule of rules) {
+      const csp = cspOf(rule);
+      if (!csp.includes("frame-ancestors")) continue;
+      // The landing site, its previews, and the local dev origins that used to
+      // be allowed. Any of them reappearing means the overlay came back.
+      expect(csp).not.toContain("filpgf.io");
+      expect(csp).not.toContain("vercel.app");
+      expect(csp).not.toContain("localhost");
+    }
   });
 
-  it("keeps every other route same-origin only", async () => {
+  it("carves no route out of the framing headers", async () => {
     const rules = await getHeaderRules();
-    const catchAll = rules.find((rule) => rule.source.startsWith("/((?!"));
 
-    expect(catchAll).toBeDefined();
-    expect(cspOf(catchAll as HeaderRule)).toContain("frame-ancestors 'self';");
-    expect(cspOf(catchAll as HeaderRule)).not.toContain("filpgf.io");
-    expect(
-      (catchAll as HeaderRule).headers.find((header) => header.key === "X-Frame-Options")?.value
-    ).toBe("SAMEORIGIN");
+    // The carve-out was a negative lookahead excluding /ask-karma from the
+    // catch-all so a second, laxer rule could cover it. Nothing should be
+    // excluded now, and no route should have framing headers of its own.
+    const framingRules = rules.filter((rule) => cspOf(rule).includes("frame-ancestors"));
+    expect(framingRules).toHaveLength(1);
+    expect(framingRules[0].source).not.toContain("(?!");
   });
 
-  it("excludes the embeddable route from the catch-all, so the CSP is not emitted twice", async () => {
-    const rules = await getHeaderRules();
-    const catchAll = rules.find((rule) => rule.source.startsWith("/((?!")) as HeaderRule;
-
-    // Next compiles `source` with path-to-regexp; the negative lookahead is
-    // what keeps /ask-karma out. Two rules setting the same header on one path
-    // would emit it twice, and browsers enforce the intersection — which would
-    // silently restore the stricter frame-ancestors and break the embed.
-    expect(catchAll.source).toContain("ask-karma");
-    expect(catchAll.source).toContain("(?!");
-  });
-});
-
-describe("preview origins", () => {
-  it("does not leak preview origins into a production build", async () => {
-    // The suite runs with NODE_ENV=test, so the preview origins are present
-    // here — the guarantee worth pinning is the shape of the gate, not this
-    // run's value: a production build must satisfy neither branch.
+  it("leaves no embed apparatus behind in the config", async () => {
     const { readFile } = await import("node:fs/promises");
     const { resolve } = await import("node:path");
     const source = await readFile(resolve(process.cwd(), "next.config.ts"), "utf8");
 
-    expect(source).toContain('process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"');
-    // The wildcard must sit inside the preview-only branch, never in the
-    // unconditional part of the list.
-    const gate = source.indexOf("...(allowsPreviewEmbedders");
-    expect(gate).toBeGreaterThan(-1);
-    expect(source.slice(0, gate)).not.toContain("https://*.vercel.app");
-    expect(source.slice(gate, gate + 200)).toContain("https://*.vercel.app");
+    // Dead allowlists are worse than none: they read as though something still
+    // depends on them, and invite an origin being added back "while we're here".
+    expect(source).not.toContain("EMBEDDING_ORIGINS");
+    expect(source).not.toContain("EMBEDDABLE_ROUTES");
+    expect(source).not.toContain("allowsPreviewEmbedders");
   });
 });

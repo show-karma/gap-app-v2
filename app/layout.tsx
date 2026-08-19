@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Spectral } from "next/font/google";
 import localFont from "next/font/local";
-import { Suspense } from "react";
 import { defaultMetadata } from "@/utilities/meta";
 
 // Single self-hosted Inter variable font (next/font/local), same as the rest
@@ -46,7 +45,6 @@ import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
-import { EmbedMode } from "@/src/components/embed/embed-mode";
 import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
 import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
@@ -183,9 +181,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
               )}
               <PermissionsProvider />
-              <Suspense fallback={null}>
-                <EmbedMode />
-              </Suspense>
               <DeferredLayoutComponents toasterConfig={toasterConfig} />
               <div
                 data-app-content
