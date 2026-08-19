@@ -348,15 +348,13 @@ export function PublicReportListPage({ community }: Props) {
             ? `${count} ${pluralize("report", count)} · Latest ${formatRunDate(latest.runDate).label}`
             : undefined
         }
-        rightSlot={
+        leftSlot={
           reportTypes.length > 1 ? (
-            <div className="flex md:justify-end">
-              <ReportTypeFilterSelect
-                types={reportTypes}
-                value={typeFilter}
-                onChange={handleTypeChange}
-              />
-            </div>
+            <ReportTypeFilterSelect
+              types={reportTypes}
+              value={typeFilter}
+              onChange={handleTypeChange}
+            />
           ) : undefined
         }
       />

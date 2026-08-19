@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { useIdentityHint } from "@/hooks/useIdentityHint";
 import { Link } from "@/src/components/navigation/Link";
 import { getDomainInfo } from "@/src/infrastructure/config/domain-constants";
 import type {
@@ -62,6 +63,9 @@ const navStyles = {
   mobileSubItemExternal:
     "flex items-center justify-between rounded-lg px-3 py-2 pl-6 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
 };
+
+/** Menu name for the social links when the tenant does not give one. */
+const DEFAULT_SOCIAL_LINKS_LABEL = "Resources";
 
 function isDropdown(item: NavItem): item is NavDropdown {
   return "items" in item;
@@ -463,8 +467,13 @@ export function WhitelabelNavbar() {
   const { authenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Publishes who is signed in to the tenant's marketing site, which is on its
+  // own origin and cannot see this session. Display only — see identity-hint.ts.
+  useIdentityHint();
+
   const tenantSocialLinks = tenant?.navigation?.socialLinks;
   const tenantSocialLinkLabels = tenant?.navigation?.socialLinkLabels;
+  const socialLinksLabel = tenant?.navigation?.socialLinksLabel ?? DEFAULT_SOCIAL_LINKS_LABEL;
   const socialLinks = useMemo<SocialLinkItem[]>(
     () => buildSocialLinks(tenantSocialLinks, tenantSocialLinkLabels),
     [tenantSocialLinks, tenantSocialLinkLabels]
@@ -510,7 +519,10 @@ export function WhitelabelNavbar() {
           {/* Desktop Nav */}
           <div className="hidden items-center gap-1 lg:flex">
             {/* Search */}
-            <div className="mr-2">
+            {/* `ml-6` is breathing room against the brand: the row is
+                `justify-between` with no gap, so the search box otherwise butts
+                straight up against the wordmark. */}
+            <div className="ml-6 mr-2">
               <NavbarSearch placeholder="Search Project" />
             </div>
             {/* My Applications - first when authenticated (matching reference) */}
@@ -537,7 +549,7 @@ export function WhitelabelNavbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button type="button" className={navStyles.desktopTrigger}>
-                    Resources
+                    {socialLinksLabel}
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </DropdownMenuTrigger>
@@ -627,7 +639,7 @@ export function WhitelabelNavbar() {
               {socialLinks.length > 0 && (
                 <div className="space-y-1 border-t border-zinc-200 pt-2 dark:border-zinc-700">
                   <span className="block px-3 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                    Resources
+                    {socialLinksLabel}
                   </span>
                   {socialLinks.map((link) => (
                     <a
