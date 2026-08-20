@@ -1,9 +1,43 @@
 import { useCallback, useRef } from "react";
 import { type ChatMessage, useAgentChatStore } from "@/store/agentChat";
 
+/**
+ * Supplies the signed-in user's access token, or null/undefined for a visitor.
+ *
+ * A callback rather than a token, and called per request rather than once at
+ * init: the widget outlives any single token, and a value captured at mount
+ * would go stale in a tab left open — which is exactly where a long chat
+ * happens. Host pages that have no session at all simply omit it.
+ */
+export type GetAuthToken = () => string | null | undefined | Promise<string | null | undefined>;
+
 interface WidgetStreamConfig {
   apiUrl: string;
   communityId: string;
+  getAuthToken?: GetAuthToken;
+}
+
+/**
+ * Ask the host for a token, and treat any failure as "anonymous".
+ *
+ * The endpoint authenticates optionally — a visitor gets answers, a signed-in
+ * user gets personalized ones. So a host whose token lookup throws, or which
+ * has no session, must still be able to chat: degrading to anonymous is the
+ * correct outcome, not an error to surface.
+ */
+async function resolveAuthHeader(
+  getAuthToken: GetAuthToken | undefined
+): Promise<Record<string, string>> {
+  if (!getAuthToken) return {};
+  try {
+    const token = await getAuthToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    // SUPPRESSED: the host's own concern to report. Failing the message over it
+    // would take the chat down for a user who could still have used it signed
+    // out.
+    return {};
+  }
 }
 
 interface SSEEvent {
@@ -80,7 +114,7 @@ export function abortWidgetStream() {
   activeController = null;
 }
 
-export function useWidgetStream({ apiUrl, communityId }: WidgetStreamConfig) {
+export function useWidgetStream({ apiUrl, communityId, getAuthToken }: WidgetStreamConfig) {
   const streamingContentRef = useRef("");
 
   const sendMessage = useCallback(
@@ -105,9 +139,10 @@ export function useWidgetStream({ apiUrl, communityId }: WidgetStreamConfig) {
       activeController = controller;
 
       try {
+        const authHeader = await resolveAuthHeader(getAuthToken);
         const response = await fetch(apiUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeader },
           body: JSON.stringify({
             message: userMessage,
             communityId,
@@ -206,7 +241,7 @@ export function useWidgetStream({ apiUrl, communityId }: WidgetStreamConfig) {
         useAgentChatStore.getState().setStreaming(false);
       }
     },
-    [apiUrl, communityId]
+    [apiUrl, communityId, getAuthToken]
   );
 
   const abort = useCallback(() => {

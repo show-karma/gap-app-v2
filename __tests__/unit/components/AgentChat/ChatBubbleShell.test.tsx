@@ -53,6 +53,51 @@ function renderShell(overrides: Partial<ChatBubbleShellProps> = {}) {
   return { ...utils, onToggle };
 }
 
+describe("ChatBubbleShell thinking indicator", () => {
+  const userMessage = {
+    id: "u1",
+    role: "user" as const,
+    content: "teste",
+    timestamp: 0,
+  };
+
+  it("shows while the reply is still pending and no assistant message exists yet", () => {
+    // The widget holds its assistant placeholder back until the stream is
+    // confirmed, so for the whole network wait the last message is the user's.
+    // That wait used to render nothing at all.
+    renderShell({ isStreaming: true, messages: [userMessage] });
+
+    expect(screen.getByTestId("thinking-dots")).toBeInTheDocument();
+  });
+
+  it("shows while an assistant message exists but is still empty", () => {
+    renderShell({
+      isStreaming: true,
+      messages: [userMessage, { id: "a1", role: "assistant" as const, content: "", timestamp: 1 }],
+    });
+
+    expect(screen.getByTestId("thinking-dots")).toBeInTheDocument();
+  });
+
+  it("stops once the first content arrives", () => {
+    renderShell({
+      isStreaming: true,
+      messages: [
+        userMessage,
+        { id: "a1", role: "assistant" as const, content: "Yes —", timestamp: 1 },
+      ],
+    });
+
+    expect(screen.queryByTestId("thinking-dots")).not.toBeInTheDocument();
+  });
+
+  it("stays hidden when nothing is in flight", () => {
+    renderShell({ isStreaming: false, messages: [userMessage] });
+
+    expect(screen.queryByTestId("thinking-dots")).not.toBeInTheDocument();
+  });
+});
+
 describe("ChatBubbleShell placement", () => {
   beforeEach(() => {
     vi.clearAllMocks();

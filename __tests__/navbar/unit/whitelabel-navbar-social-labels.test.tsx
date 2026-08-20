@@ -2,7 +2,9 @@
  * Unit Tests: WhitelabelNavbar social link labels
  * Verifies that a tenant can override the default "Twitter" social link label
  * via navigation.socialLinkLabels (e.g. Filecoin shows "Social"), while tenants
- * without an override keep the default label.
+ * without an override keep the default label — and the same for the name of the
+ * menu those links sit under (navigation.socialLinksLabel, "Connect" for
+ * Filecoin, "Resources" everywhere else).
  */
 
 import { fireEvent, screen, waitFor } from "@testing-library/react";
@@ -89,5 +91,38 @@ describe("WhitelabelNavbar social link labels", () => {
       expect(screen.getByRole("link", { name: "Twitter" })).toBeInTheDocument();
     });
     expect(screen.queryByRole("link", { name: "Social" })).not.toBeInTheDocument();
+  });
+
+  it('names the social links section with socialLinksLabel ("Connect") when set', async () => {
+    _tenantRef.tenant = buildTenant({
+      socialLinks: { twitter: "https://x.com/Filecoin" },
+      socialLinksLabel: "Connect",
+    });
+
+    renderNavbar();
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
+
+    // The desktop trigger and the mobile section heading are both mounted (the
+    // two bars hide each other with `lg:` classes), so both carry the name.
+    await waitFor(() => {
+      expect(screen.getAllByText("Connect")).toHaveLength(2);
+    });
+    expect(screen.queryByText("Resources")).not.toBeInTheDocument();
+  });
+
+  it('falls back to "Resources" when the tenant sets no socialLinksLabel', async () => {
+    _tenantRef.tenant = buildTenant({
+      socialLinks: { twitter: "https://x.com/optimism" },
+    });
+
+    renderNavbar();
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Resources")).toHaveLength(2);
+    });
+    expect(screen.queryByText("Connect")).not.toBeInTheDocument();
   });
 });

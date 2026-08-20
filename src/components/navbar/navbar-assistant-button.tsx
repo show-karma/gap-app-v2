@@ -87,7 +87,7 @@ export function NavbarAssistantButton({ compact = false, className }: NavbarAssi
       aria-controls={KARMA_ASSISTANT_PANEL_ID}
       aria-label="Ask Karma"
       className={cn(
-        "inline-flex h-9 items-center justify-center rounded-full border font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "inline-flex h-9 shrink-0 items-center justify-center rounded-full border font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         // Icon-only until there is room for the label. At the `lg` breakpoint
         // the desktop navbar is already at its natural minimum width, so a
         // labelled button here overflows the row and pushes the whole
@@ -108,7 +108,7 @@ export function NavbarAssistantButton({ compact = false, className }: NavbarAssi
       </span>
       {/* The button keeps its `aria-label` at every width, so hiding the text
           below `xl` costs nothing for assistive tech. */}
-      {!compact && <span className="hidden xl:inline">Ask Karma</span>}
+      {!compact && <span className="hidden whitespace-nowrap xl:inline">Ask Karma</span>}
     </button>
   );
 }
