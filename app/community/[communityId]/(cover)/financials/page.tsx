@@ -7,6 +7,7 @@ import { getCommunityPayoutsPublic } from "@/src/features/payout-disbursement/se
 import { api } from "@/utilities/api/client";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
+import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -31,8 +32,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   // inherits from the layout. Give it server-rendered content first, then a
   // canonical and a sitemap entry together.
   return {
-    title: `Financials - ${communityName}`,
-    description: `View financial overview, project agreements, milestones, and payment status for ${communityName}.`,
+    title: `${COMMITMENTS_AND_DISBURSEMENTS} - ${communityName}`,
+    description: `View committed funding, project agreements, milestones, and disbursement status for ${communityName}.`,
   };
 }
 
@@ -86,24 +87,27 @@ async function prefetchFinancialsData(queryClient: QueryClient, communityId: str
 export default async function FinancialsPage({ params }: { params: Params }) {
   const { communityId } = await params;
 
-  // Financials is a per-community feature flag. For a community that exists but
-  // hasn't enabled it, render an explicit "not available" state with a way back
-  // — clear feedback, rather than a silent redirect (looks broken) or a generic
-  // "community not found" (misleading — the community exists).
+  // Commitments & Disbursements is a per-community feature flag. For a
+  // community that exists but hasn't enabled it, render an explicit "not
+  // available" state with a way back — clear feedback, rather than a silent
+  // redirect (looks broken) or a generic "community not found" (misleading —
+  // the community exists). This page is chrome-free (the (cover) group renders
+  // no community navigator), so the copy names the community itself and the
+  // link back to the community explorer is the only way out.
   if (!FINANCIALS_ENABLED_COMMUNITIES.includes(communityId)) {
     const community = await getCachedCommunity(communityId);
     const communityName = community?.details?.name || communityId;
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-        <h1 className="text-2xl font-bold">Financials not available</h1>
+        <h1 className="text-2xl font-bold">{COMMITMENTS_AND_DISBURSEMENTS} not available</h1>
         <p className="max-w-md text-muted-foreground">
-          The financials dashboard isn&apos;t enabled for {communityName}.
+          {communityName} hasn&apos;t enabled the {COMMITMENTS_AND_DISBURSEMENTS} dashboard.
         </p>
         <Link
           href={PAGES.COMMUNITY.ALL_GRANTS(communityId)}
           className="mt-2 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Back to grants
+          Back to {communityName}
         </Link>
       </div>
     );

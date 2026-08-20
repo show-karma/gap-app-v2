@@ -99,7 +99,7 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
-      <div className="flex items-center justify-start pt-6">
+      <div data-app-chrome className="flex items-center justify-start pt-6">
         <Link
           href={communityExitHref}
           data-testid="ask-karma-go-to-community"

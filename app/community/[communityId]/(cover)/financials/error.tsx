@@ -2,6 +2,7 @@
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
+import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 
 export default function FinancialsError({
   error,
@@ -18,7 +19,8 @@ export default function FinancialsError({
         </div>
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
         <p className="text-sm text-muted-foreground">
-          We encountered an error loading the financials page. Please try again.
+          We encountered an error loading the {COMMITMENTS_AND_DISBURSEMENTS} page. Please try
+          again.
         </p>
         {error.digest ? (
           <p className="text-xs text-muted-foreground">Error ID: {error.digest}</p>

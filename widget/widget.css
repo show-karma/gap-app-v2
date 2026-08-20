@@ -1,3 +1,6 @@
+/* karma-chat-scoped: this bundle's utilities carry a `.karma-chat` scope (see
+   widget/tailwind.config.ts). Hosts read this marker to decide whether the
+   sheet needs containing — an older, unscoped bundle does. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,7 +17,7 @@
     box-sizing: border-box;
     border-width: 0;
     border-style: solid;
-    border-color: hsl(220 13% 91%);
+    border-color: hsl(var(--kc-border, 220 13% 91%));
     font-family:
       -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
       Arial, sans-serif;
@@ -53,6 +56,36 @@
     --kc-ring: 215 20% 65%;
     --kc-radius: 0.5rem;
     --radius: 0.5rem;
+  }
+
+  /*
+   * Dark theme, keyed off an attribute the host sets rather than inherited
+   * custom properties: `all: initial` above deliberately severs inheritance,
+   * so a host's own `.dark` tokens cannot reach in here. Values are the app's
+   * dark palette, so the same conversation reads the same on both surfaces.
+   *
+   * Not `prefers-color-scheme`: a host with its own light/dark toggle can sit
+   * in dark while the OS says light, and the panel would then be the one thing
+   * on the page in the wrong theme.
+   */
+  .karma-chat[data-theme="dark"] {
+    color: hsl(0 0% 98%);
+
+    --kc-background: 224 71% 4%;
+    --kc-foreground: 0 0% 98%;
+    --kc-card: 224 71% 4%;
+    --kc-card-foreground: 0 0% 98%;
+    --kc-border: 215 28% 17%;
+    --kc-muted: 215 28% 17%;
+    --kc-muted-foreground: 218 11% 65%;
+    --kc-secondary: 215 28% 17%;
+    --kc-secondary-foreground: 0 0% 98%;
+    --kc-accent: 215 28% 17%;
+    --kc-accent-foreground: 0 0% 98%;
+    --kc-destructive: 0 63% 31%;
+    --kc-destructive-subtle: 0 63% 12%;
+    --kc-input: 215 28% 17%;
+    --kc-ring: 216 12% 84%;
   }
 
   :where(.karma-chat) button,

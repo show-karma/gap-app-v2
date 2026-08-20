@@ -24,6 +24,18 @@ import type { ChatMessage } from "@/store/agentChat";
 import { renderWithMentionPills } from "@/widget/mention-token";
 import { CHAT_COMPOSER_SELECTOR, KARMA_ASSISTANT_PANEL_ID } from "./panel-dom";
 
+/**
+ * Is the assistant's reply still pending — nothing of it on screen yet?
+ *
+ * True both before the assistant message exists at all (the last message is
+ * the user's) and while it exists but is still empty.
+ */
+function isAwaitingReply(messages: ChatMessage[]): boolean {
+  const last = messages[messages.length - 1];
+  if (!last) return true;
+  return last.role === "user" || last.content === "";
+}
+
 function ScrollOnNewMessage({ lastMessageContent }: { lastMessageContent: string | undefined }) {
   const { scrollToBottom } = useStickToBottomContext();
   const prevContent = useRef(lastMessageContent);
@@ -317,7 +329,18 @@ export function ChatBubbleShell({
                   </div>
                 ))
               )}
-              {isStreaming && messages[messages.length - 1]?.content === "" && (
+              {/* Thinking dots. Shown while the request is in flight and there
+                  is nothing yet to read — which covers two different waits.
+
+                  The in-app panel pushes an empty assistant message as soon as
+                  it sends, so its wait is "last message exists and is empty".
+                  The widget deliberately holds that placeholder back until the
+                  stream is confirmed, so a failed request cannot strand an
+                  empty bubble in the thread; during its wait the last message
+                  is still the user's, and testing only for empty content left
+                  it showing nothing at all for the longest part of the round
+                  trip. Both waits are the same thing to a reader. */}
+              {isStreaming && isAwaitingReply(messages) && (
                 <div className="flex items-start gap-2.5">
                   <Avatar className="h-6 w-6 shrink-0">
                     <AvatarFallback className="bg-muted text-muted-foreground">
