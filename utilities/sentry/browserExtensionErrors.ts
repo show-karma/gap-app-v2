@@ -43,8 +43,13 @@ const EXTENSION_SCHEME =
  */
 const ROOT_LEVEL_SCRIPT = /^(?:app:\/\/\/)?[\w.-]+\.js$/;
 
-/** Frames the browser reports for native/eval'd code — carry no provenance. */
-const SYNTHETIC_FRAMES = new Set(["", "<anonymous>", "[native code]", "native"]);
+/**
+ * Markers the browser emits *deliberately* for code with no source URL. These
+ * are positive statements of "this frame is synthetic", so they are neutral
+ * evidence. An absent or blank `filename` is a different thing entirely — it
+ * means the frame carries no provenance at all — and is handled separately.
+ */
+const SYNTHETIC_FRAMES = new Set(["<anonymous>", "[native code]", "native"]);
 
 const FIRST_PARTY_SEGMENT = "/_next/";
 
@@ -81,9 +86,15 @@ export function isBrowserExtensionOnlyError(event: Event): boolean {
     }
 
     for (const frame of frames) {
-      const filename = frame.filename?.trim() ?? "";
+      const filename = frame.filename?.trim();
       sawAnyFrame = true;
 
+      // No filename at all: the frame tells us nothing about who owns it, so
+      // it cannot count towards "the whole stack is somebody else's code".
+      // Fail open rather than guessing.
+      if (!filename) {
+        return false;
+      }
       if (SYNTHETIC_FRAMES.has(filename)) {
         continue;
       }

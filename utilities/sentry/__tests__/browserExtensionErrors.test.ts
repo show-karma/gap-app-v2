@@ -136,6 +136,25 @@ describe("isBrowserExtensionOnlyError — never masks first-party failures", () 
     ).toBe(false);
   });
 
+  it("keeps a stack where an injected frame sits beside a filename-less frame", () => {
+    // A frame with no filename is not the same as `<anonymous>`: the browser
+    // emits `<anonymous>` deliberately, whereas an absent filename means we
+    // simply do not know who owns the frame. Never suppress on a guess.
+    expect(
+      isBrowserExtensionOnlyError(
+        errorEvent([frame("app:///injectLeap.js", "ty.request"), { function: "unknown" }])
+      )
+    ).toBe(false);
+  });
+
+  it("keeps a stack where an injected frame sits beside a blank filename", () => {
+    expect(
+      isBrowserExtensionOnlyError(
+        errorEvent([frame("app:///injectLeap.js", "ty.request"), frame("   ", "unknown")])
+      )
+    ).toBe(false);
+  });
+
   it("keeps a stack made only of synthetic frames", () => {
     expect(
       isBrowserExtensionOnlyError(
