@@ -29,7 +29,7 @@ export function GET() {
       oauthProtectedResource: `${SITE_URL}/.well-known/oauth-protected-resource`,
       llmsTxt: `${SITE_URL}/llms.txt`,
     },
-    contact: "info@karmahq.xyz",
+    contact: "info@karmahq.org",
   };
 
   return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });

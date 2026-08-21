@@ -29,8 +29,8 @@ export default async function ContactPage() {
 
       <h2 className={styles.h2}>General inquiries</h2>
       <p className={styles.p}>
-        <a className={styles.a} href="mailto:info@karmahq.xyz">
-          info@karmahq.xyz
+        <a className={styles.a} href="mailto:info@karmahq.org">
+          info@karmahq.org
         </a>{" "}
         — partnerships, support, and general questions.
       </p>
@@ -38,8 +38,8 @@ export default async function ContactPage() {
       <h2 className={styles.h2}>Funders</h2>
       <p className={styles.p}>
         Running a grants program and want to use Karma? Email{" "}
-        <a className={styles.a} href="mailto:info@karmahq.xyz">
-          info@karmahq.xyz
+        <a className={styles.a} href="mailto:info@karmahq.org">
+          info@karmahq.org
         </a>{" "}
         with details about your ecosystem, program structure, and rough budget. We respond within
         1-2 business days.
@@ -79,8 +79,8 @@ export default async function ContactPage() {
       <h2 className={styles.h2}>Reporting issues</h2>
       <p className={styles.p}>
         For security disclosures, email{" "}
-        <a className={styles.a} href="mailto:info@karmahq.xyz?subject=Security%3A">
-          info@karmahq.xyz
+        <a className={styles.a} href="mailto:info@karmahq.org?subject=Security%3A">
+          info@karmahq.org
         </a>{" "}
         with subject &ldquo;Security:&rdquo;. For platform bugs or feature requests, mention us at{" "}
         <a

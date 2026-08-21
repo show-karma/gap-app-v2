@@ -57,7 +57,7 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
     const body = await res.json();
     expect(body.publisher.name).toBe("Karma");
     expect(body.publisher.url).toBe(SITE_URL);
-    expect(body.publisher.email).toBe("info@karmahq.xyz");
+    expect(body.publisher.email).toBe("info@karmahq.org");
   });
 
   it("sets wide-open CORS headers", async () => {

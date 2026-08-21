@@ -56,7 +56,7 @@ export function GET() {
     publisher: {
       name: "Karma",
       url: SITE_URL,
-      email: "info@karmahq.xyz",
+      email: "info@karmahq.org",
     },
   };
 

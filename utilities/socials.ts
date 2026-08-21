@@ -17,5 +17,5 @@ export const SOCIALS = {
   NONPROFIT_HELP_FORM: "https://tally.so/r/MeV9lk",
   // Human fallback shown when automated flows fail (e.g. the nonprofit
   // submission form's error state).
-  SUPPORT_EMAIL: "hello@karmahq.xyz",
+  SUPPORT_EMAIL: "hello@karmahq.org",
 };

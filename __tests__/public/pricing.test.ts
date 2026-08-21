@@ -22,7 +22,7 @@ describe("public/pricing.md", () => {
   it("documents the ecosystem / enterprise tier and points to the sales email", () => {
     const contents = fs.readFileSync(PRICING_MD_PATH, "utf-8");
     expect(contents).toContain("## Ecosystem / enterprise");
-    expect(contents).toContain("info@karmahq.xyz");
+    expect(contents).toContain("info@karmahq.org");
   });
 
   it("documents free API access under fair-use rate limits", () => {

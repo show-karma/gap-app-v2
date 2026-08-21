@@ -89,7 +89,7 @@ export function NonProfitsFooter() {
             <div className="lp-footer-col-title">{"// COMPANY"}</div>
             <div className="lp-footer-links">
               <ExternalLink href={CANONICAL_ORIGIN}>About Karma</ExternalLink>
-              <ExternalLink href="mailto:hello@karmahq.xyz">Contact</ExternalLink>
+              <ExternalLink href="mailto:hello@karmahq.org">Contact</ExternalLink>
               <ExternalLink href={`${CANONICAL_ORIGIN}/privacy`}>Privacy</ExternalLink>
               <ExternalLink href={`${CANONICAL_ORIGIN}/terms`}>Terms</ExternalLink>
             </div>

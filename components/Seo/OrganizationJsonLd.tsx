@@ -13,11 +13,11 @@ const organizationSchema = {
   url: SITE_URL,
   logo: `${SITE_URL}/logo/karma-logo.svg`,
   description: ORGANIZATION_DESCRIPTION,
-  email: "info@karmahq.xyz",
+  email: "info@karmahq.org",
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer service",
-    email: "info@karmahq.xyz",
+    email: "info@karmahq.org",
     areaServed: "Worldwide",
     availableLanguage: ["English"],
   },

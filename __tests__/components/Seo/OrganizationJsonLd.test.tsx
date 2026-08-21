@@ -95,7 +95,7 @@ describe("OrganizationJsonLd", () => {
       expect(schema.contactPoint).toEqual({
         "@type": "ContactPoint",
         contactType: "customer service",
-        email: "info@karmahq.xyz",
+        email: "info@karmahq.org",
         areaServed: "Worldwide",
         availableLanguage: ["English"],
       });

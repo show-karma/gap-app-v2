@@ -694,7 +694,7 @@ Getting Started
 Step 1: Log In to FilPGF
 Go to https://app.filpgf.io
 Click the Login button (located in the top-right corner of the page) and enter your email address you used to submit the application.
-If you don't find your application when you login, you will find a link to lookup your application by the reference ID (it looks like APP-XXXXXXXX-XXXXXX). If you're still unable to log in, contact the Karma team on Telegram https://t.me/karmahq or email support@karmahq.xyz
+If you don't find your application when you login, you will find a link to lookup your application by the reference ID (it looks like APP-XXXXXXXX-XXXXXX). If you're still unable to log in, contact the Karma team on Telegram https://t.me/karmahq or email support@karmahq.org
 Step 2: Find Your Application
 Once logged in, navigate to Dashboard
 You'll see your approved grant application listed under My Applications section
@@ -730,7 +730,7 @@ Include proof: Link to tangible outputs — GitHub repos, deployed applications,
 Update regularly: Don't wait until the last minute; post updates as you make meaningful progress
 Troubleshooting
 I don't see my application
-After logging in, make sure you're on the My Applications tab. If your application doesn't appear, most likely you submitted your application with a different email address. You can lookup your application on the dashboard to find the email you used to login. If you still have trouble, reach out to the Karma on Telegram or support@karmahq.xyz
+After logging in, make sure you're on the My Applications tab. If your application doesn't appear, most likely you submitted your application with a different email address. You can lookup your application on the dashboard to find the email you used to login. If you still have trouble, reach out to the Karma on Telegram or support@karmahq.org
 My milestones don't look right
 If any milestone information appears incorrect or incomplete, contact the Filecoin team to request corrections.
 Need Help?

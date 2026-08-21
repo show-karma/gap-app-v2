@@ -26,12 +26,12 @@ describe("app/contact/page.tsx", () => {
     expect(canonical).toBe("/contact");
   });
 
-  it("exposes the info@karmahq.xyz contact mailto link", async () => {
+  it("exposes the info@karmahq.org contact mailto link", async () => {
     await renderContactPage();
-    const mailtoLinks = screen.getAllByRole("link", { name: /info@karmahq\.xyz/i });
+    const mailtoLinks = screen.getAllByRole("link", { name: /info@karmahq\.org/i });
     expect(mailtoLinks.length).toBeGreaterThanOrEqual(1);
     expect(
-      mailtoLinks.some((link) => link.getAttribute("href")?.startsWith("mailto:info@karmahq.xyz"))
+      mailtoLinks.some((link) => link.getAttribute("href")?.startsWith("mailto:info@karmahq.org"))
     ).toBe(true);
   });
 });

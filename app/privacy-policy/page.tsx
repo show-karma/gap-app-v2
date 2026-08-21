@@ -118,7 +118,7 @@ export default function PrivacyPolicy() {
             <li className={styles.p}>- Request a copy of your data </li>
             <li className={styles.p}>- Object to or restrict certain types of processing </li>
           </ul>
-          <p className={styles.p}>To make a request, contact us at info@karmahq.xyz</p>
+          <p className={styles.p}>To make a request, contact us at info@karmahq.org</p>
         </div>
         <div className={styles.block}>
           <h2 className={styles.h2}>5. Data Retention</h2>
@@ -152,7 +152,7 @@ export default function PrivacyPolicy() {
         <div className={styles.block}>
           <h2 className={styles.h2}>9. Contact Us</h2>
           <p className={styles.p}>
-            If you have questions about this Privacy Policy, contact us at: info@karmahq.xyz
+            If you have questions about this Privacy Policy, contact us at: info@karmahq.org
           </p>
         </div>
       </div>
