@@ -378,6 +378,66 @@ describe("errorManager", () => {
   // Expected-state filter (GAP-FRONTEND-24N) — errors marked `expected: true`
   // (e.g. SignerUnavailableError) are guidance, not defects.
   // ---------------------------------------------------------------------
+  // GAP-FRONTEND-23J: attestation failures reach Sentry wearing karma-gap-sdk's
+  // constant "Error during attestation." message, so every on-chain write in the
+  // app groups together — one issue held a wallet stack overflow AND an ERC-4337
+  // rejection at the same time. Callers opt in with an `attestation` context and
+  // get classification + fingerprinting instead.
+  describe("attestation failures (GAP-FRONTEND-23J)", () => {
+    const sdkWrapper = (originalError: unknown) =>
+      Object.assign(new Error("ATTEST_ERROR: Error during attestation."), {
+        code: 50012,
+        originalError,
+      });
+
+    const attestation = { entity: "ProjectUpdate", chainId: 42161, signingMode: "external" };
+
+    it("fingerprints and tags an opted-in attestation failure", () => {
+      errorManager("Error creating project activity", sdkWrapper(new Error("boom")), {
+        attestation,
+        projectUID: "0xabc",
+      });
+
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      const [, options] = vi.mocked(Sentry.captureException).mock.calls[0];
+      expect(options?.fingerprint).toEqual(["attestation", "ProjectUpdate", "unclassified"]);
+      expect(options?.tags).toMatchObject({ "attest.entity": "ProjectUpdate" });
+      expect(options?.extra).toMatchObject({ projectUID: "0xabc" });
+    });
+
+    it("does not leak the internal `attestation` context into extra", () => {
+      errorManager("Error creating project activity", sdkWrapper(new Error("boom")), {
+        attestation,
+      });
+
+      const [, options] = vi.mocked(Sentry.captureException).mock.calls[0];
+      expect(options?.extra).not.toHaveProperty("attestation");
+    });
+
+    // The routing sits BELOW the reject/switch-chain/expected guards on purpose:
+    // declining the wallet prompt also arrives wrapped in an AttestationError,
+    // and that is guidance, not a defect.
+    it("still suppresses a user rejection wrapped in an attestation error", () => {
+      errorManager(
+        "Error creating project activity",
+        sdkWrapper(new Error("User rejected the request")),
+        { attestation }
+      );
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it("leaves callers that opted out on the generic capture path", () => {
+      errorManager("Error creating project activity", sdkWrapper(new Error("boom")), {
+        projectUID: "0xabc",
+      });
+
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      const [, options] = vi.mocked(Sentry.captureException).mock.calls[0];
+      expect(options?.fingerprint).toBeUndefined();
+    });
+  });
+
   describe("expected errors (GAP-FRONTEND-24N)", () => {
     it("does NOT capture an error with expected: true", () => {
       const error = Object.assign(new Error("No wallet is connected."), { expected: true });
