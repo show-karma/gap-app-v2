@@ -191,7 +191,10 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
       {
         label: "Funding",
         items: [
-          { label: "Overview", href: "https://filpgf.io/propgf/", isExternal: true },
+          // The ProPGF overview (filpgf.io/propgf/) is deliberately not listed
+          // while no round is open; the page stays reachable by URL. Restore the
+          // "Overview" item here and in the landing site's nav together when a
+          // new RFP opens.
           // Whitelabel-only navbar, so the clean path is safe here and saves the
           // /community/filecoin/* -> / redirect hop.
           { label: COMMITMENTS_AND_DISBURSEMENTS, href: "/financials" },
