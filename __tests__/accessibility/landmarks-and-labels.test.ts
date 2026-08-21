@@ -24,10 +24,21 @@ function read(relativePath: string): string {
   return readFileSync(path.join(ROOT, relativePath), "utf8");
 }
 
+/**
+ * Strips block comments and comment-only lines, so a doc comment that *talks
+ * about* a landmark ("re-supplies the <main> landmark") is not counted as one.
+ * Line comments are only stripped when they own the whole line, to avoid
+ * eating the `//` of a URL.
+ */
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+
 function countMainLandmarks(source: string): number {
   // Counts opening <main ...> tags and role="main" usages.
-  const mainTags = source.match(/<main[\s/>]/g)?.length ?? 0;
-  const roleMain = source.match(/role=["']main["']/g)?.length ?? 0;
+  const code = stripComments(source);
+  const mainTags = code.match(/<main[\s/>]/g)?.length ?? 0;
+  const roleMain = code.match(/role=["']main["']/g)?.length ?? 0;
   return mainTags + roleMain;
 }
 
@@ -39,6 +50,10 @@ describe("landmark regions (#1309)", () => {
     "app/dashboard/layout.tsx",
     "app/donations/layout.tsx",
     "app/community/[communityId]/(with-header)/layout.tsx",
+    // The chrome-free "cover" group (financials, portfolio reports) renders no
+    // community header or tab navigator, so it has to supply the <main>
+    // landmark its (with-header) sibling used to provide.
+    "app/community/[communityId]/(cover)/layout.tsx",
     "app/community/[communityId]/donate/page.tsx",
     "app/community/[communityId]/donate/[programId]/page.tsx",
   ];

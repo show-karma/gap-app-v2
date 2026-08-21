@@ -4,6 +4,9 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
+const FRAME_SRC =
+  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com";
+
 const securityHeaders = [
   {
     key: "X-Frame-Options",
@@ -11,8 +14,7 @@ const securityHeaders = [
   },
   {
     key: "Content-Security-Policy",
-    value:
-      "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com; frame-ancestors 'self';",
+    value: `${FRAME_SRC}; frame-ancestors 'self';`,
   },
 ];
 
@@ -105,6 +107,9 @@ const nextConfig: NextConfig = {
     qualities: [50, 75, 100],
   },
   async headers() {
+    // No route is framable any more: the landing site ran sign-in in an iframe
+    // on this origin and no longer does, so nothing needs the relaxed
+    // frame-ancestors that carve-out existed for.
     const headerRules = [
       {
         source: "/(.*)",

@@ -10,9 +10,9 @@ import type {
   TenantConfig,
   TenantContent,
   TenantId,
-  TenantNavigation,
   TenantSeo,
 } from "../types/tenant";
+import { tenantNavigation } from "./tenant-navigation-config";
 
 function getHedgeyNetwork(defaultNetwork: string): string {
   return process.env.NEXT_PUBLIC_HEDGEY_NETWORK || defaultNetwork;
@@ -159,233 +159,16 @@ const tenantMetadata: Record<
   },
 };
 
-const tenantNavigation: Record<TenantId, TenantNavigation> = {
-  optimism: {
-    header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
-    items: [
-      {
-        label: "Grants",
-        items: [
-          {
-            label: "Audit Grants",
-            href: "https://atlas.optimism.io/missions/audit-grants",
-            isExternal: true,
-          },
-          {
-            label: "Growth Grants",
-            href: "https://atlas.optimism.io/missions/growth-grants",
-            isExternal: true,
-          },
-          {
-            label: "Retro Funding: Dev Tooling",
-            href: "https://atlas.optimism.io/missions/retro-funding-dev-tooling",
-            isExternal: true,
-          },
-          {
-            label: "Retro Funding: Onchain Builders",
-            href: "https://atlas.optimism.io/missions/retro-funding-onchain-builders",
-            isExternal: true,
-          },
-          {
-            label: "Foundation Missions",
-            href: "https://atlas.optimism.io/missions/foundation-missions",
-            isExternal: true,
-          },
-        ],
-      },
-      {
-        label: "More",
-        items: [
-          { label: "Optimism", href: "https://optimism.io/", isExternal: true },
-          { label: "Forum", href: "https://gov.optimism.io/", isExternal: true },
-          { label: "Delegates", href: "https://vote.optimism.io/delegates", isExternal: true },
-        ],
-      },
-    ],
-    claimFundsHref: "/claim-funds",
-    socialLinks: {
-      twitter: "https://twitter.com/optimism",
-      discord: "https://discord.optimism.io",
-      github: "https://github.com/ethereum-optimism",
-      docs: "https://community.optimism.io",
-    },
-  },
-  arbitrum: {
-    header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
-    items: [
-      { label: "Programs", items: [{ label: "Dashboard", href: "/" }] },
-      {
-        label: "About",
-        items: [
-          { label: "About Arbitrum", href: "https://arbitrum.io/", isExternal: true },
-          { label: "Documentation", href: "https://docs.arbitrum.io", isExternal: true },
-          { label: "Forum", href: "https://forum.arbitrum.foundation/", isExternal: true },
-        ],
-      },
-    ],
-    socialLinks: {
-      twitter: "https://twitter.com/arbitrum",
-      discord: "https://discord.gg/arbitrum",
-      github: "https://github.com/OffchainLabs",
-      docs: "https://docs.arbitrum.io",
-    },
-  },
-  celo: {
-    header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
-    items: [],
-    socialLinks: {
-      twitter: "https://twitter.com/celoorg",
-      discord: "https://discord.gg/celo",
-      github: "https://github.com/celo-org",
-      docs: "https://docs.celo.org",
-    },
-  },
-  polygon: {
-    header: { title: "Founder Support", shouldHaveTitle: true, poweredBy: true },
-    items: [],
-    socialLinks: {
-      twitter: "https://twitter.com/0xPolygon",
-      discord: "https://discord.gg/polygon",
-      github: "https://github.com/maticnetwork",
-      docs: "https://docs.polygon.technology",
-      telegram: "https://t.me/polygonhq",
-    },
-  },
-  scroll: {
-    header: { title: "Grants", shouldHaveTitle: true, poweredBy: true },
-    items: [],
-    socialLinks: {
-      twitter: "https://twitter.com/Scroll_ZKP",
-      discord: "https://discord.gg/scroll",
-      github: "https://github.com/scroll-tech",
-      docs: "https://docs.scroll.io",
-    },
-  },
-  karma: {
-    header: {
-      logo: { className: "w-[180px] h-auto", width: 180, height: 40 },
-      shouldHaveTitle: false,
-      poweredBy: false,
-    },
-    items: [],
-    socialLinks: {
-      twitter: "https://x.com/karmahq_",
-      discord: "https://discord.gg/X4fwgzPReJ",
-      telegram: "https://t.me/karmahq",
-      paragraph: "https://paragraph.xyz/@karmahq",
-    },
-  },
-  celopg: {
-    header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
-    items: [],
-    socialLinks: { twitter: "https://twitter.com/CeloPublicGoods", docs: "https://www.celopg.eco" },
-  },
-  "regen-coordination": {
-    header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
-    items: [],
-    socialLinks: {
-      twitter: "https://x.com/RegenCoordinate",
-      docs: "https://www.regencoordination.xyz/?v=1b22e7251f2f800594c2000c9bb5a316",
-      telegram: "https://t.me/+dfOMYhMROdU5YzY0",
-    },
-  },
-  "localism-fund": {
-    header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
-    items: [],
-    socialLinks: {},
-  },
-  filecoin: {
-    header: { title: "Filecoin Community", shouldHaveTitle: true, poweredBy: true },
-    showBrowseApplications: false,
-    items: [
-      {
-        label: "ProPGF",
-        items: [
-          { label: "Overview", href: "https://filpgf.io/propgf", isExternal: true },
-          {
-            label: "Grants",
-            items: [
-              {
-                label: "Batch 1",
-                href: "https://app.filpgf.io/projects?programId=1013",
-                isExternal: true,
-              },
-              {
-                label: "Batch 2",
-                href: "https://app.filpgf.io/projects?programId=992",
-                isExternal: true,
-              },
-              {
-                label: "Batch 3",
-                href: "https://app.filpgf.io/programs/1479/",
-                isExternal: true,
-              },
-              {
-                label: "Pods Track",
-                href: "https://app.filpgf.io/projects?programId=1039",
-                isExternal: true,
-              },
-            ],
-          },
-          {
-            label: "Applications",
-            items: [
-              {
-                label: "Batch 1",
-                href: "https://app.filpgf.io/browse-applications?programId=1013",
-                isExternal: true,
-              },
-              {
-                label: "Batch 2",
-                href: "https://app.filpgf.io/browse-applications?programId=992",
-                isExternal: true,
-              },
-              {
-                label: "Pods Track",
-                href: "https://app.filpgf.io/browse-applications?programId=1039",
-                isExternal: true,
-              },
-            ],
-          },
-          { label: "Financials", href: "/community/filecoin/financials" },
-        ],
-      },
-      { label: "RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
-      {
-        label: "More",
-        items: [
-          { label: "About Filecoin", href: "https://filecoin.io/", isExternal: true },
-          { label: "Upcoming Events", href: "https://fil.org/events/", isExternal: true },
-          {
-            label: "Forum",
-            href: "https://github.com/filecoin-project/community/discussions",
-            isExternal: true,
-          },
-        ],
-      },
-    ],
-    socialLinks: {
-      twitter: "https://twitter.com/Filecoin",
-      discord: "https://discord.gg/yeQ2hcd2TD",
-      github: "https://github.com/filecoin-project",
-    },
-    socialLinkLabels: {
-      twitter: "Social",
-    },
-  },
-  "for-the-world": {
-    header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
-    items: [],
-    socialLinks: {
-      twitter: "https://x.com/ETHForTheWorld",
-      farcaster: "https://farcaster.xyz/ethfortheworld",
-    },
-  },
-  default: {
-    header: { title: "Grants Council", shouldHaveTitle: true, poweredBy: true },
-    items: [],
-    socialLinks: {},
-  },
+/**
+ * Parent domain each tenant's identity hint is published on — the registrable
+ * domain shared by the app host and that tenant's marketing site. Only tenants
+ * with such a sibling site appear here; everyone else writes no hint at all.
+ *
+ * See `utilities/auth/identity-hint.ts`: display only, no token, no authority.
+ */
+const tenantIdentityHintCookieDomain: Readonly<Partial<Record<TenantId, string>>> = {
+  // app.filpgf.io and www.filpgf.io.
+  filecoin: ".filpgf.io",
 };
 
 const tenantContent: Partial<Record<TenantId, TenantContent>> = {
@@ -538,6 +321,7 @@ export function getTenantConfig(tenantId: TenantId, communitySlug?: string): Ten
       communitySlug,
       communityUID: metadata.uid,
       claimGrants: getClaimGrantsConfigForTenant("karma"),
+      identityHintCookieDomain: tenantIdentityHintCookieDomain.karma,
     };
   }
 
@@ -557,5 +341,6 @@ export function getTenantConfig(tenantId: TenantId, communitySlug?: string): Ten
     communitySlug: metadata.slug,
     communityUID: metadata.uid,
     claimGrants: getClaimGrantsConfigForTenant(tenantId),
+    identityHintCookieDomain: tenantIdentityHintCookieDomain[tenantId],
   };
 }
