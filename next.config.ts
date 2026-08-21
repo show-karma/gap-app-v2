@@ -25,8 +25,10 @@ const standaloneOutput = process.env.NEXT_OUTPUT_STANDALONE === "1";
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
-  // Next 16.3 otherwise rewrites the tracked AGENTS.md whenever `next dev`
-  // starts. This repository maintains its own agent guidance.
+  // When `next dev` detects an AI coding agent and Next's managed block is
+  // absent, 16.3 writes that block into AGENTS.md and CLAUDE.md. This
+  // repository tracks and maintains both itself, so opting out keeps
+  // generated instructions from dirtying the worktree.
   agentRules: false,
   reactStrictMode: true,
   // Cap per-page static generation at 2 min. The app has no
