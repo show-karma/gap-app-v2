@@ -10,7 +10,7 @@ import {
 const PATTERNS = [
   "https://www.filpgf.io",
   "https://*.vercel.app",
-  "https://filecoin-grants-*.vercel.app",
+  "https://filpgf-*.vercel.app",
   "http://localhost:4321",
 ];
 
@@ -42,26 +42,20 @@ describe("isAllowedBridgeOrigin", () => {
   });
 
   it("lets an in-label wildcard match one label's worth of characters only", () => {
-    const prefixed = ["https://filecoin-grants-*.vercel.app"];
-    expect(isAllowedBridgeOrigin("https://filecoin-grants-abc123-karma.vercel.app", prefixed)).toBe(
+    const prefixed = ["https://filpgf-*.vercel.app"];
+    expect(isAllowedBridgeOrigin("https://filpgf-abc123-karma.vercel.app", prefixed)).toBe(true);
+    expect(isAllowedBridgeOrigin("https://filpgf-git-feat-x-karma.vercel.app", prefixed)).toBe(
       true
     );
-    expect(
-      isAllowedBridgeOrigin("https://filecoin-grants-git-feat-x-karma.vercel.app", prefixed)
-    ).toBe(true);
     // Another project on the same platform.
     expect(isAllowedBridgeOrigin("https://evil-abc123.vercel.app", prefixed)).toBe(false);
     // The prefix somewhere other than the start, or a dot inside the wildcard.
-    expect(isAllowedBridgeOrigin("https://evil-filecoin-grants-x.vercel.app", prefixed)).toBe(
-      false
-    );
-    expect(isAllowedBridgeOrigin("https://filecoin-grants-x.evil.vercel.app", prefixed)).toBe(
-      false
-    );
+    expect(isAllowedBridgeOrigin("https://evil-filpgf-x.vercel.app", prefixed)).toBe(false);
+    expect(isAllowedBridgeOrigin("https://filpgf-x.evil.vercel.app", prefixed)).toBe(false);
     // Nothing after the prefix.
-    expect(isAllowedBridgeOrigin("https://filecoin-grants-.vercel.app", prefixed)).toBe(false);
+    expect(isAllowedBridgeOrigin("https://filpgf-.vercel.app", prefixed)).toBe(false);
     // Regex metacharacters in the literal part are literal.
-    expect(isAllowedBridgeOrigin("https://filecoin-grantsXabc.vercel.app", prefixed)).toBe(false);
+    expect(isAllowedBridgeOrigin("https://filpgfXabc.vercel.app", prefixed)).toBe(false);
   });
 
   it("refuses anything that is not a bare origin", () => {
@@ -120,7 +114,7 @@ describe("tenant allowlists", () => {
     // must carry the project prefix so a stranger's preview is answered with
     // nothing.
     expect(TOKEN_BRIDGE_PREVIEW_ORIGINS).not.toContain("https://*.vercel.app");
-    expect(TOKEN_BRIDGE_PREVIEW_ORIGINS).toContain("https://filecoin-grants-*.vercel.app");
+    expect(TOKEN_BRIDGE_PREVIEW_ORIGINS).toContain("https://filpgf-*.vercel.app");
     expect(TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS).toContain("https://*.vercel.app");
     expect(isAllowedBridgeOrigin("https://anyone.vercel.app", TOKEN_BRIDGE_PREVIEW_ORIGINS)).toBe(
       false

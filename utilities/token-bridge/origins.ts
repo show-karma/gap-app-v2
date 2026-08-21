@@ -53,13 +53,13 @@ export function tokenBridgeAllowsPreviewOrigins(): boolean {
  * Anyone can deploy to `*.vercel.app`, so a bare wildcard would let any
  * Vercel-hosted page frame a preview of this app and ask for the token of
  * whoever is signed into that preview. The bridge therefore accepts only
- * hostnames carrying the landing site's project prefix — Vercel names every
+ * hostnames carrying the landing site's Vercel project prefix (the project is
+ * "filpgf") — Vercel names every
  * preview `<project>-<hash>-<team>` or `<project>-git-<branch>-<team>`.
  *
  * Overridable because the project slug is Vercel's, not ours to pin in code.
  */
-const PREVIEW_HOST_PREFIX =
-  process.env.NEXT_PUBLIC_TOKEN_BRIDGE_PREVIEW_PREFIX ?? "filecoin-grants-";
+const PREVIEW_HOST_PREFIX = process.env.NEXT_PUBLIC_TOKEN_BRIDGE_PREVIEW_PREFIX ?? "filpgf-";
 
 /** Local Astro dev servers: the default port and the two the site has used. */
 const LOCAL_ORIGINS: readonly string[] = [
@@ -71,7 +71,7 @@ const LOCAL_ORIGINS: readonly string[] = [
 /**
  * Preview and local embedders the BRIDGE answers. Never present in a
  * production build. The `*` stands for one hostname label's worth of
- * characters, so `filecoin-grants-*.vercel.app` matches the site's previews
+ * characters, so `filpgf-*.vercel.app` matches the site's previews
  * and nothing deployed under another project name.
  */
 export const TOKEN_BRIDGE_PREVIEW_ORIGINS: readonly string[] = [
@@ -117,9 +117,9 @@ export function allTokenBridgeOrigins(): readonly string[] {
  *   (`*.vercel.app` matches `a.vercel.app` and `a.b.vercel.app`, never
  *   `vercel.app` itself);
  * - a `*` anywhere else stands for part of ONE label — letters, digits and
- *   hyphens, no dots (`filecoin-grants-*.vercel.app` matches
- *   `filecoin-grants-abc123-karma.vercel.app`, never
- *   `filecoin-grants-x.evil.vercel.app` or `evil-filecoin-grants-x.vercel.app`).
+ *   hyphens, no dots (`filpgf-*.vercel.app` matches
+ *   `filpgf-abc123-karma.vercel.app`, never
+ *   `filpgf-x.evil.vercel.app` or `evil-filpgf-x.vercel.app`).
  *
  * Scheme and port must match exactly; there is no wildcard for either.
  * Anything unparsable is refused.
