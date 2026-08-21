@@ -18,6 +18,9 @@ const securityHeaders = [
 
 const removeImports = require("next-remove-imports")();
 
+// Only the CI jobs that unpack .next/standalone ask for it; see `output` below.
+const standaloneOutput = process.env.NEXT_OUTPUT_STANDALONE === "1";
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   // Next 16.3 otherwise rewrites the tracked AGENTS.md whenever `next dev`
@@ -44,7 +47,7 @@ const nextConfig: NextConfig = {
   // .next/next-server.js.nft.json unguarded and dies with ENOENT after an
   // otherwise successful build. That covers both preview deploys and
   // production.yml, which runs `vercel build --prod` on a GitHub runner.
-  output: process.env.NEXT_OUTPUT_STANDALONE === "1" ? "standalone" : undefined,
+  output: standaloneOutput ? "standalone" : undefined,
   turbopack: {
     resolveAlias: {
       // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export

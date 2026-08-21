@@ -27,10 +27,12 @@ describe("standalone output gate", () => {
   it("does not request standalone output unconditionally", () => {
     const config = readRepoFile("next.config.ts");
 
+    // Unconditional `output: "standalone"` is the exact shape that broke.
     expect(config).not.toMatch(/^\s*output:\s*"standalone",/m);
-    expect(config).toContain(
-      `output: process.env.${STANDALONE_ENV_VAR} === "1" ? "standalone" : undefined,`
-    );
+    // Whatever the surrounding refactor, the value must still be reached
+    // through the env var and must still be able to resolve to undefined.
+    expect(config).toContain(`process.env.${STANDALONE_ENV_VAR} === "1"`);
+    expect(config).toMatch(/^\s*output:\s+\w+\s*\?\s*"standalone"\s*:\s*undefined,/m);
   });
 
   it.each(["build-main.yml", "qa-pipeline.yml"])(
