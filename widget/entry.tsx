@@ -76,6 +76,26 @@ let root: Root | null = null;
 let container: HTMLDivElement | null = null;
 let styleEl: HTMLStyleElement | null = null;
 let stopThemeWatch: (() => void) | null = null;
+/** The live config, so later calls (setNotice) can re-render with one field changed. */
+let current: KarmaChatConfig | null = null;
+
+function render() {
+  if (!root || !current) return;
+  root.render(
+    <ChatWidget
+      apiUrl={current.apiUrl}
+      communityId={current.communityId}
+      title={current.title}
+      placeholder={current.placeholder}
+      getAuthToken={current.getAuthToken}
+      notice={current.notice}
+      brand={current.brand}
+      badge={current.badge}
+      emptyDescription={current.emptyDescription}
+      placement={current.placement}
+    />
+  );
+}
 
 function init(config: KarmaChatConfig) {
   if (!config.apiUrl) throw new Error("KarmaChat.init: apiUrl is required");
@@ -122,21 +142,23 @@ function init(config: KarmaChatConfig) {
   }
 
   // Mount React
+  current = { ...config };
   root = createRoot(container);
-  root.render(
-    <ChatWidget
-      apiUrl={config.apiUrl}
-      communityId={config.communityId}
-      title={config.title}
-      placeholder={config.placeholder}
-      getAuthToken={config.getAuthToken}
-      notice={config.notice}
-      brand={config.brand}
-      badge={config.badge}
-      emptyDescription={config.emptyDescription}
-      placement={config.placement}
-    />
-  );
+  render();
+}
+
+/**
+ * Replace the standing note above the composer, or clear it with `undefined`.
+ *
+ * A host may only learn after `init` whether its answers are personalized —
+ * filpgf.io asks the app's token bridge, which takes a round trip — and
+ * should not hold the panel back while it finds out. Safe to call before
+ * `init` (it is simply dropped) and after `destroy`.
+ */
+function setNotice(notice: ChatNotice | undefined) {
+  if (!current) return;
+  current = { ...current, notice };
+  render();
 }
 
 // NOTE: destroy() mutates the shared useAgentChatStore. This is safe because
@@ -159,6 +181,7 @@ function destroy() {
     root.unmount();
     root = null;
   }
+  current = null;
   if (container) {
     container.remove();
     container = null;
@@ -193,4 +216,4 @@ function toggle() {
 
 // Default export so the IIFE `name: "KarmaChat"` exposes these
 // directly on window.KarmaChat (not nested as window.KarmaChat.KarmaChat)
-export default { init, destroy, open, close, toggle };
+export default { init, destroy, open, close, toggle, setNotice };
