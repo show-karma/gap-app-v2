@@ -17,7 +17,7 @@ import nextConfig from "@/next.config";
 import {
   TOKEN_BRIDGE_ORIGINS,
   TOKEN_BRIDGE_PATH,
-  TOKEN_BRIDGE_PREVIEW_ORIGINS,
+  TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS,
 } from "@/utilities/token-bridge/origins";
 
 type HeaderRule = { source: string; headers: { key: string; value: string }[] };
@@ -75,7 +75,7 @@ describe("framing headers", () => {
     const allowed = new Set([
       "'self'",
       ...Object.values(TOKEN_BRIDGE_ORIGINS).flat(),
-      ...TOKEN_BRIDGE_PREVIEW_ORIGINS,
+      ...TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS,
     ]);
 
     for (const rule of framingRules(rules)) {

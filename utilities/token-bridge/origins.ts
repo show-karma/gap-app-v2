@@ -48,17 +48,47 @@ export function tokenBridgeAllowsPreviewOrigins(): boolean {
 }
 
 /**
- * Preview and local embedders. Never present in a production build.
+ * Which Vercel preview hostnames may embed the bridge.
  *
- * The landing site deploys previews to Vercel under per-branch hostnames, so
- * they are matched by pattern rather than chased one at a time. The local
- * ports are Astro's default and the two the site has historically used.
+ * Anyone can deploy to `*.vercel.app`, so a bare wildcard would let any
+ * Vercel-hosted page frame a preview of this app and ask for the token of
+ * whoever is signed into that preview. The bridge therefore accepts only
+ * hostnames carrying the landing site's project prefix — Vercel names every
+ * preview `<project>-<hash>-<team>` or `<project>-git-<branch>-<team>`.
+ *
+ * Overridable because the project slug is Vercel's, not ours to pin in code.
  */
-export const TOKEN_BRIDGE_PREVIEW_ORIGINS: readonly string[] = [
-  "https://*.vercel.app",
+const PREVIEW_HOST_PREFIX =
+  process.env.NEXT_PUBLIC_TOKEN_BRIDGE_PREVIEW_PREFIX ?? "filecoin-grants-";
+
+/** Local Astro dev servers: the default port and the two the site has used. */
+const LOCAL_ORIGINS: readonly string[] = [
   "http://localhost:4321",
   "http://localhost:4342",
   "http://localhost:4343",
+];
+
+/**
+ * Preview and local embedders the BRIDGE answers. Never present in a
+ * production build. The `*` stands for one hostname label's worth of
+ * characters, so `filecoin-grants-*.vercel.app` matches the site's previews
+ * and nothing deployed under another project name.
+ */
+export const TOKEN_BRIDGE_PREVIEW_ORIGINS: readonly string[] = [
+  `https://${PREVIEW_HOST_PREFIX}*.vercel.app`,
+  ...LOCAL_ORIGINS,
+];
+
+/**
+ * Preview and local embedders the CSP names. CSP host-sources can only
+ * wildcard the leftmost label, so `frame-ancestors` has to say `*.vercel.app`
+ * — which merely lets the frame load. Handing over a token is still gated by
+ * the bridge's own check against {@link TOKEN_BRIDGE_PREVIEW_ORIGINS}, so a
+ * stranger's Vercel page gets an iframe that answers nothing.
+ */
+export const TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS: readonly string[] = [
+  "https://*.vercel.app",
+  ...LOCAL_ORIGINS,
 ];
 
 /** Every origin a given tenant's bridge may answer in this build. */
@@ -74,16 +104,25 @@ export function tokenBridgeOriginsFor(tenantId: string | null | undefined): read
 export function allTokenBridgeOrigins(): readonly string[] {
   const production = Object.values(TOKEN_BRIDGE_ORIGINS).flatMap((origins) => origins ?? []);
   return tokenBridgeAllowsPreviewOrigins()
-    ? [...production, ...TOKEN_BRIDGE_PREVIEW_ORIGINS]
+    ? [...production, ...TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS]
     : production;
 }
 
 /**
  * Does `origin` (as `MessageEvent.origin` reports it) match one of `patterns`?
  *
- * A pattern is a literal origin, or one whose host starts with `*.` to accept
- * any single-or-multi-label subdomain. Scheme and port must match exactly;
- * there is no wildcard for either. Anything unparsable is refused.
+ * A pattern is a literal origin, or one with a wildcard in its host:
+ *
+ * - a leading `*.` accepts any subdomain, one label or several
+ *   (`*.vercel.app` matches `a.vercel.app` and `a.b.vercel.app`, never
+ *   `vercel.app` itself);
+ * - a `*` anywhere else stands for part of ONE label — letters, digits and
+ *   hyphens, no dots (`filecoin-grants-*.vercel.app` matches
+ *   `filecoin-grants-abc123-karma.vercel.app`, never
+ *   `filecoin-grants-x.evil.vercel.app` or `evil-filecoin-grants-x.vercel.app`).
+ *
+ * Scheme and port must match exactly; there is no wildcard for either.
+ * Anything unparsable is refused.
  */
 export function isAllowedBridgeOrigin(origin: string, patterns: readonly string[]): boolean {
   let candidate: URL;
@@ -104,8 +143,15 @@ export function isAllowedBridgeOrigin(origin: string, patterns: readonly string[
       return false;
     }
     if (wanted.protocol !== candidate.protocol || wanted.port !== candidate.port) return false;
-    if (!wanted.hostname.startsWith("*.")) return wanted.hostname === candidate.hostname;
-    const suffix = wanted.hostname.slice(1); // ".vercel.app"
-    return candidate.hostname.endsWith(suffix) && candidate.hostname.length > suffix.length;
+    if (wanted.hostname.startsWith("*.")) {
+      const suffix = wanted.hostname.slice(1); // ".vercel.app"
+      return candidate.hostname.endsWith(suffix) && candidate.hostname.length > suffix.length;
+    }
+    if (!wanted.hostname.includes("*")) return wanted.hostname === candidate.hostname;
+    const hostRegex = wanted.hostname
+      .split("*")
+      .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+      .join("[a-z0-9-]+");
+    return new RegExp(`^${hostRegex}$`).test(candidate.hostname);
   });
 }

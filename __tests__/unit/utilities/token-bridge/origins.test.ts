@@ -2,11 +2,17 @@ import {
   allTokenBridgeOrigins,
   isAllowedBridgeOrigin,
   TOKEN_BRIDGE_ORIGINS,
+  TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS,
   TOKEN_BRIDGE_PREVIEW_ORIGINS,
   tokenBridgeOriginsFor,
 } from "@/utilities/token-bridge/origins";
 
-const PATTERNS = ["https://www.filpgf.io", "https://*.vercel.app", "http://localhost:4321"];
+const PATTERNS = [
+  "https://www.filpgf.io",
+  "https://*.vercel.app",
+  "https://filecoin-grants-*.vercel.app",
+  "http://localhost:4321",
+];
 
 describe("isAllowedBridgeOrigin", () => {
   it("accepts a literal origin exactly", () => {
@@ -33,6 +39,29 @@ describe("isAllowedBridgeOrigin", () => {
     expect(isAllowedBridgeOrigin("https://vercel.app", PATTERNS)).toBe(false);
     expect(isAllowedBridgeOrigin("https://notvercel.app", PATTERNS)).toBe(false);
     expect(isAllowedBridgeOrigin("http://x.vercel.app", PATTERNS)).toBe(false);
+  });
+
+  it("lets an in-label wildcard match one label's worth of characters only", () => {
+    const prefixed = ["https://filecoin-grants-*.vercel.app"];
+    expect(isAllowedBridgeOrigin("https://filecoin-grants-abc123-karma.vercel.app", prefixed)).toBe(
+      true
+    );
+    expect(
+      isAllowedBridgeOrigin("https://filecoin-grants-git-feat-x-karma.vercel.app", prefixed)
+    ).toBe(true);
+    // Another project on the same platform.
+    expect(isAllowedBridgeOrigin("https://evil-abc123.vercel.app", prefixed)).toBe(false);
+    // The prefix somewhere other than the start, or a dot inside the wildcard.
+    expect(isAllowedBridgeOrigin("https://evil-filecoin-grants-x.vercel.app", prefixed)).toBe(
+      false
+    );
+    expect(isAllowedBridgeOrigin("https://filecoin-grants-x.evil.vercel.app", prefixed)).toBe(
+      false
+    );
+    // Nothing after the prefix.
+    expect(isAllowedBridgeOrigin("https://filecoin-grants-.vercel.app", prefixed)).toBe(false);
+    // Regex metacharacters in the literal part are literal.
+    expect(isAllowedBridgeOrigin("https://filecoin-grantsXabc.vercel.app", prefixed)).toBe(false);
   });
 
   it("refuses anything that is not a bare origin", () => {
@@ -80,6 +109,21 @@ describe("tenant allowlists", () => {
   it("adds the preview hosts to a Vercel preview even though NODE_ENV is production", () => {
     process.env.NODE_ENV = "production";
     process.env.VERCEL_ENV = "preview";
-    expect(allTokenBridgeOrigins()).toEqual(expect.arrayContaining(TOKEN_BRIDGE_PREVIEW_ORIGINS));
+    expect(allTokenBridgeOrigins()).toEqual(
+      expect.arrayContaining(TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS)
+    );
+  });
+
+  it("never hands the bridge a bare *.vercel.app — only the CSP gets that", () => {
+    // Anyone can deploy to vercel.app. The CSP must name the bare wildcard
+    // (host-sources cannot express a prefix), but the bridge's own allowlist
+    // must carry the project prefix so a stranger's preview is answered with
+    // nothing.
+    expect(TOKEN_BRIDGE_PREVIEW_ORIGINS).not.toContain("https://*.vercel.app");
+    expect(TOKEN_BRIDGE_PREVIEW_ORIGINS).toContain("https://filecoin-grants-*.vercel.app");
+    expect(TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS).toContain("https://*.vercel.app");
+    expect(isAllowedBridgeOrigin("https://anyone.vercel.app", TOKEN_BRIDGE_PREVIEW_ORIGINS)).toBe(
+      false
+    );
   });
 });
