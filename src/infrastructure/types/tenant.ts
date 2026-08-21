@@ -206,4 +206,12 @@ export interface TenantConfig {
    * importantly, what it is not — it carries no token and grants nothing.
    */
   identityHintCookieDomain?: string;
+  /**
+   * Origins allowed to frame `/auth/token-bridge` and be handed the signed-in
+   * visitor's access token — the tenant's own marketing site, nothing else.
+   * Omitted or empty, the bridge answers nobody. Sourced from
+   * `utilities/token-bridge/origins.ts`, which `next.config.ts` also reads so
+   * the CSP and the bridge cannot disagree about who is allowed.
+   */
+  tokenBridgeOrigins?: readonly string[];
 }
