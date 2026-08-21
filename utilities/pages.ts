@@ -174,6 +174,8 @@ export const PAGES = {
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
   ASK_KARMA: `/ask-karma`,
+  /** Framed by a tenant's marketing site to obtain an access token. */
+  TOKEN_BRIDGE: `/auth/token-bridge`,
   SCANNER: {
     ROOT: `/nonprofits/is-ai-ready`,
     SCAN_DETAIL: (id: string) => `/nonprofits/is-ai-ready/scans/${id}`,

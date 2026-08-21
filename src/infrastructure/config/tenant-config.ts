@@ -3,6 +3,7 @@
 // is needed. If this changes, implement getIndexerUrl(tenantId) here and
 // thread it as `opts.baseURL` on the affected `api.*` calls.
 import { getHedgeyContractAddress } from "@/src/features/claim-funds/lib/hedgey-contract";
+import { tokenBridgeOriginsFor } from "@/utilities/token-bridge/origins";
 import { getTenantTheme } from "../theme/config";
 import type {
   ClaimGrantsConfig,
@@ -322,6 +323,7 @@ export function getTenantConfig(tenantId: TenantId, communitySlug?: string): Ten
       communityUID: metadata.uid,
       claimGrants: getClaimGrantsConfigForTenant("karma"),
       identityHintCookieDomain: tenantIdentityHintCookieDomain.karma,
+      tokenBridgeOrigins: tokenBridgeOriginsFor("karma"),
     };
   }
 
@@ -342,5 +344,6 @@ export function getTenantConfig(tenantId: TenantId, communitySlug?: string): Ten
     communityUID: metadata.uid,
     claimGrants: getClaimGrantsConfigForTenant(tenantId),
     identityHintCookieDomain: tenantIdentityHintCookieDomain[tenantId],
+    tokenBridgeOrigins: tokenBridgeOriginsFor(tenantId),
   };
 }
