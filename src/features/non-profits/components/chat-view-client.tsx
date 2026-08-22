@@ -40,6 +40,10 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/src/components/ai-elements/prompt-input";
+import { useAutoTour } from "@/src/features/onboarding/hooks/use-tour";
+import { useTourFromUrl } from "@/src/features/onboarding/hooks/use-tour-from-url";
+import { dataTour, TOUR_ANCHORS } from "@/src/features/onboarding/lib/tour-anchors";
+import { FIND_FUNDERS_TOUR } from "@/src/features/onboarding/lib/tours";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 import { usePhilanthropySearch } from "../hooks/use-philanthropy-stream";
@@ -111,7 +115,9 @@ const AssistantTurn = memo(function AssistantTurn({
           <NarrativeBlock narrative={turn.narrative} entities={[...turn.entities]} />
         )}
         {turn.entities.length > 0 && (
-          <EntityList entities={[...turn.entities]} searchId={searchId} />
+          <div {...dataTour(TOUR_ANCHORS.findFundersResults)}>
+            <EntityList entities={[...turn.entities]} searchId={searchId} />
+          </div>
         )}
         {turn.attachments.length > 0 && <AttachmentsPanel attachments={[...turn.attachments]} />}
         {turn.status === "done" && turn.traceId && (
@@ -371,6 +377,13 @@ export function ChatView({ searchId }: { searchId?: string }) {
   // the (unconditional) rail kept showing one above `xl`.
   const showNudge = useMemo(() => messages.some((m) => m.status === "done"), [messages]);
 
+  // The walkthrough points at the results list and the research tray, so it
+  // can only run once a search has actually produced them — offering it on an
+  // empty conversation would spotlight elements that aren't there yet.
+  const hasResults = useMemo(() => messages.some((m) => m.entities.length > 0), [messages]);
+  useAutoTour(FIND_FUNDERS_TOUR, hasResults);
+  useTourFromUrl(FIND_FUNDERS_TOUR, hasResults);
+
   // Not-found state: the conversation URL is private to another account,
   // deleted, or never existed (server 404 with no local query to re-run).
   if (notFound) {
@@ -514,6 +527,7 @@ export function ChatView({ searchId }: { searchId?: string }) {
             <PromptInput
               onSubmit={onSubmit}
               className="rounded-2xl border border-zinc-200 dark:border-zinc-800"
+              {...dataTour(TOUR_ANCHORS.findFundersSearch)}
             >
               <PromptInputBody>
                 <PromptInputTextarea

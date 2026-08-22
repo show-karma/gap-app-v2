@@ -29,11 +29,13 @@ import {
   useNavbarPermissions,
 } from "@/src/components/navbar/navbar-permissions-context";
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
+import { useTour } from "@/src/features/onboarding/hooks/use-tour";
+import { dataTour, TOUR_ANCHORS } from "@/src/features/onboarding/lib/tour-anchors";
+import { FIND_FUNDERS_TOUR } from "@/src/features/onboarding/lib/tours";
 import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
 import { useResearchTray } from "../hooks/use-research-tray";
 import { FILINGS_STATS } from "../lib/stats";
 import { BookmarksDrawer } from "./bookmarks-drawer";
-import { HelpModal } from "./help-modal";
 
 // Loaded the same way as the homepage navbar (ssr: false) so the account
 // dropdown is identical and never renders on the server — this avoids the
@@ -108,8 +110,8 @@ export function NonProfitsNavbar() {
   const { data: bookmarks = [] } = useResearchTray();
   const bookmarkCount = bookmarks.length;
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { startTour } = useTour();
 
   useEffect(() => {
     setMounted(true);
@@ -150,11 +152,13 @@ export function NonProfitsNavbar() {
               <span>{FILINGS_STATS.indexedLabel}</span>
             </div>
 
-            {/* Help */}
+            {/* Help — starts the walkthrough on the elements it describes */}
             <button
               className="lp-icon-btn"
-              onClick={() => setHelpOpen(true)}
-              aria-label="Help"
+              onClick={(event) => {
+                void startTour(FIND_FUNDERS_TOUR, { trigger: event.currentTarget });
+              }}
+              aria-label="Take the Find Funders walkthrough"
               type="button"
             >
               <HelpCircle className="size-4" />
@@ -167,6 +171,7 @@ export function NonProfitsNavbar() {
                 onClick={() => setDrawerOpen(true)}
                 aria-label="Open bookmarks"
                 className="lp-icon-btn relative"
+                {...dataTour(TOUR_ANCHORS.findFundersTray)}
               >
                 <Bookmark
                   className={`size-4 ${bookmarkCount > 0 ? "fill-amber-500 stroke-amber-600" : ""}`}
@@ -206,7 +211,6 @@ export function NonProfitsNavbar() {
       </nav>
 
       {authenticated && <BookmarksDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
-      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>
   );
 }

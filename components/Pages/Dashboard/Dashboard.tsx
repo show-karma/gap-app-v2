@@ -6,6 +6,7 @@ import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
 import { useDashboardModules } from "./useDashboardModules";
 import { BentoOverview } from "./v3/BentoOverview";
 import "./v3/dashboard-soft.css";
+import { GettingStartedSignpost } from "@/src/features/onboarding/components/getting-started-signpost";
 import { GettingStartedView } from "./v3/GettingStartedView";
 import { SkeletonList, WarnBar } from "./v3/primitives";
 import { SoftShell } from "./v3/SoftShell";
@@ -42,7 +43,10 @@ export function Dashboard() {
         {/* Getting-started cards for the starting points the user hasn't set up
             yet, shown beneath their active modules — hidden while drilled in. */}
         {!isDrilledIn ? (
-          <GettingStartedView activeModuleKeys={modules.map((m) => m.key)} variant="secondary" />
+          <>
+            <GettingStartedView activeModuleKeys={modules.map((m) => m.key)} variant="secondary" />
+            <GettingStartedSignpost ready />
+          </>
         ) : null}
       </div>
     );

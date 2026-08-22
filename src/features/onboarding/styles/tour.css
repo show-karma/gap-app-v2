@@ -1,0 +1,85 @@
+@import "driver.js/dist/driver.css";
+
+/**
+ * driver.js 1.4 ships fixed colours and exposes no custom properties, so the
+ * popover is restyled here against the app's theme tokens. Those tokens are
+ * defined on :root (and overridden under .dark), which is what lets one set of
+ * rules cover both the main app shell and the find-funders `.landing` shell.
+ */
+
+.driver-popover.karma-tour {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+  max-width: 22rem;
+}
+
+.driver-popover.karma-tour .driver-popover-title {
+  color: hsl(var(--foreground));
+  font-size: 0.975rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.driver-popover.karma-tour .driver-popover-description {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.driver-popover.karma-tour .driver-popover-progress-text {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+}
+
+.driver-popover.karma-tour .driver-popover-close-btn {
+  color: hsl(var(--muted-foreground));
+}
+
+.driver-popover.karma-tour .driver-popover-close-btn:hover,
+.driver-popover.karma-tour .driver-popover-close-btn:focus-visible {
+  color: hsl(var(--foreground));
+}
+
+.driver-popover.karma-tour .driver-popover-navigation-btns button {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  text-shadow: none;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.driver-popover.karma-tour .driver-popover-navigation-btns button:last-child {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+/* Keyboard users must be able to see which control they're on — driver.js
+   suppresses the default outline on its buttons. */
+.driver-popover.karma-tour button:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* The arrow is drawn with borders, so each side needs the popover's background
+   rather than a single colour declaration. */
+.driver-popover.karma-tour .driver-popover-arrow-side-top {
+  border-top-color: hsl(var(--background));
+}
+
+.driver-popover.karma-tour .driver-popover-arrow-side-bottom {
+  border-bottom-color: hsl(var(--background));
+}
+
+.driver-popover.karma-tour .driver-popover-arrow-side-left {
+  border-left-color: hsl(var(--background));
+}
+
+.driver-popover.karma-tour .driver-popover-arrow-side-right {
+  border-right-color: hsl(var(--background));
+}
