@@ -1,6 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { type ApiError, isApiError, isTransientApiError } from "@/utilities/api/errors";
 import { reportApiFailure } from "@/utilities/api/report";
+import {
+  type AttestationContext,
+  isAttestationFailure,
+  reportAttestationFailure,
+} from "@/utilities/sentry/attestationFailure";
 import { isTransientHttpError, isTransientNetworkError } from "@/utilities/sentry/transientErrors";
 
 // Lazy import toast to avoid issues in server components
@@ -131,6 +136,33 @@ const handleExpectedError = (error: unknown, toastError?: { error?: string }): b
   return true;
 };
 
+// Routes a karma-gap-sdk attestation failure through the dedicated Sentry
+// policy in `utilities/sentry/attestationFailure.ts`. Extracted (rather than
+// inlined below) to keep errorManager under biome's cognitive-complexity
+// ceiling, mirroring `handleApiError`.
+//
+// Callers opt in by putting an `attestation` context on `extra`; without one
+// there is nothing to fingerprint on beyond the entity, so the error falls
+// through to the generic capture unchanged.
+const handleAttestationFailure = (
+  error: unknown,
+  errorMessage: string,
+  extra: unknown,
+  toastError?: { error?: string }
+): boolean => {
+  const bag = (extra ?? {}) as { attestation?: AttestationContext } & Record<string, unknown>;
+  const context = bag.attestation;
+  if (!context || !isAttestationFailure(error)) {
+    return false;
+  }
+  if (toastError?.error) {
+    fireErrorToast(toastError.error);
+  }
+  const { attestation: _context, ...rest } = bag;
+  reportAttestationFailure(error, { context, errorMessage, extra: rest });
+  return true;
+};
+
 export const errorManager = (
   errorMessage: string,
   error: any,
@@ -167,6 +199,22 @@ export const errorManager = (
   }
   if (handleExpectedError(error, toastError)) {
     breadcrumbSuppressed("expected-state", errorMessage, error, extra);
+    return;
+  }
+
+  // Attestation failures carry their real cause on `.originalError`, which the
+  // generic capture at the bottom never reads — every on-chain write in the app
+  // then groups under the SDK's constant "Error during attestation." message,
+  // mixing unrelated bugs into one Sentry issue (GAP-FRONTEND-23J held a wallet
+  // stack overflow AND an ERC-4337 rejection). Route them through the dedicated
+  // policy so they arrive classified and fingerprinted.
+  //
+  // Deliberately BELOW the reject / switch-chain / expected-state guards above:
+  // a user declining the wallet prompt also arrives wrapped in an
+  // `AttestationError`, and that is guidance, not a defect. Those paths must
+  // keep suppressing before this one reports.
+  // See utilities/sentry/attestationFailure.ts
+  if (handleAttestationFailure(error, errorMessage, extra, toastError)) {
     return;
   }
   if (toastError?.error) {
