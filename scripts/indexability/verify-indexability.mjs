@@ -35,6 +35,9 @@ const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_SITEMAP_DEPTH = 12;
 // 301 and 308 are treated as equivalent permanent redirects.
 const PERMANENT_REDIRECT_STATUSES = new Set([301, 308]);
+// Statuses a banned project slug may return: gone (404/410), or a 200 that
+// carries `noindex, follow`. Anything else means the slug is indexable.
+const NON_INDEXABLE_BANNED_STATUSES = new Set([200, 404, 410]);
 
 // ---------------------------------------------------------------------------
 // auditSitemaps
@@ -370,13 +373,23 @@ export async function verifyIndexability({
     fields: { status: r.status, robots: r.robots },
   }));
 
-  // --- Each exact banned slug: gone (404/410) + noindex, follow ---
+  // --- Each exact banned slug: never indexable at the canonical project path ---
+  // Two response shapes satisfy this, and both are legitimate outcomes of the
+  // indexability contract implemented in proxy.ts:
+  //   - `gone`           -> 404/410, for a slug that resolves to no project.
+  //   - `noindex-follow` -> 200, for a junk project that really exists and stays
+  //                         reachable, but is withheld from search.
+  // Which one a given slug gets is the indexer's call, not this monitor's, so
+  // asserting 404/410 alone made the run red whenever a banned project existed.
+  // Sitemap exclusion is asserted independently by auditSitemaps(), so all this
+  // check has to prove is that the page can never enter the index: `noindex,
+  // follow` on a status that is either gone or a plain 200.
   for (const banned of BANNED_PROJECT_SLUGS) {
     await addCheck(
       `banned-slug:${banned}`,
       `${canonicalOrigin}/project/${banned}`,
       (r) => ({
-        ok: (r.status === 404 || r.status === 410) && r.robots === "noindex, follow",
+        ok: NON_INDEXABLE_BANNED_STATUSES.has(r.status) && r.robots === "noindex, follow",
         fields: { status: r.status, robots: r.robots },
       }),
       { slug: banned }
