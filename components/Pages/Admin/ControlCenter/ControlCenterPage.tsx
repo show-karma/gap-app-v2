@@ -21,6 +21,7 @@ import { cn } from "@/utilities/tailwind";
 import { BulkPayoutImportPanel } from "./BulkPayoutImportPanel";
 import { ControlCenterTable, type TableRow } from "./ControlCenterTable";
 import { FilterToolbar } from "./FilterToolbar";
+import { findGrantRowToOpen } from "./findGrantRowToOpen";
 import { ProjectDetailsSidebar } from "./ProjectDetailsSidebar";
 import { useControlCenterData } from "./useControlCenterData";
 
@@ -58,6 +59,7 @@ export function ControlCenterPage() {
     | undefined;
   const kycFilter = searchParams.get("kycStatus") || undefined;
   const projectParam = searchParams.get("project") || undefined;
+  const grantParam = searchParams.get("grant") || undefined;
   const filterSignature = JSON.stringify({
     selectedProgramId,
     agreementFilter,
@@ -205,11 +207,13 @@ export function ControlCenterPage() {
     if (!projectParam || isLoadingPayouts) return;
     if (autoOpenedProjectRef.current === projectParam) return;
 
-    const match = tableData.find((row) => row.projectSlug === projectParam);
+    const match = findGrantRowToOpen(tableData, projectParam, grantParam);
     if (!match) {
       if (searchQuery === projectParam) {
         // Already filtered by this slug but no match — project not in community.
-        router.replace(`${pathname}?${createQueryString({ project: null, search: null })}`);
+        router.replace(
+          `${pathname}?${createQueryString({ project: null, grant: null, search: null })}`
+        );
       } else {
         // Narrow the dataset to this slug and retry when data reloads.
         router.replace(`${pathname}?${createQueryString({ search: projectParam, page: "1" })}`);
@@ -220,10 +224,12 @@ export function ControlCenterPage() {
     autoOpenedProjectRef.current = projectParam;
     setDetailsGrantUid(match.grantUid);
     setDetailsModalOpen(true);
-    // Strip `project` and the transient search param we may have injected.
+    // Strip `project`/`grant` and the transient search param we may have injected.
     const clearSearch = searchQuery === projectParam ? null : searchQuery || null;
-    router.replace(`${pathname}?${createQueryString({ project: null, search: clearSearch })}`);
-  }, [projectParam, isLoadingPayouts, tableData, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+    router.replace(
+      `${pathname}?${createQueryString({ project: null, grant: null, search: clearSearch })}`
+    );
+  }, [projectParam, grantParam, isLoadingPayouts, tableData, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveBulkImportMutation = useSavePayoutConfig();
 
