@@ -21,8 +21,8 @@ import { cn } from "@/utilities/tailwind";
 import { BulkPayoutImportPanel } from "./BulkPayoutImportPanel";
 import { ControlCenterTable, type TableRow } from "./ControlCenterTable";
 import { FilterToolbar } from "./FilterToolbar";
-import { findGrantRowToOpen } from "./findGrantRowToOpen";
 import { ProjectDetailsSidebar } from "./ProjectDetailsSidebar";
+import { useAutoOpenGrantFromUrl } from "./useAutoOpenGrantFromUrl";
 import { useControlCenterData } from "./useControlCenterData";
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -191,45 +191,18 @@ export function ControlCenterPage() {
     return detailsGrantRef.current;
   }, [detailsGrantUid, paginatedData]);
 
-  // Auto-open project details sidebar when ?project=<slug> is in the URL.
-  //
-  // The project may be on any page of the paginated dataset, so we can't rely
-  // on a simple tableData scan. Instead we use the existing `search` param as
-  // a proxy: the backend search filter matches exact project slugs, so setting
-  // search=<slug> collapses the dataset to just that project. Once the filtered
-  // data loads and the match is found the sidebar opens, then both `project`
-  // and the transient `search` param are stripped from the URL.
-  //
-  // If search=<slug> is already active but the project is still not found the
-  // slug doesn't exist in this community — we clean up the URL and give up.
-  const autoOpenedProjectRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!projectParam || isLoadingPayouts) return;
-    if (autoOpenedProjectRef.current === projectParam) return;
-
-    const match = findGrantRowToOpen(tableData, projectParam, grantParam);
-    if (!match) {
-      if (searchQuery === projectParam) {
-        // Already filtered by this slug but no match — project not in community.
-        router.replace(
-          `${pathname}?${createQueryString({ project: null, grant: null, search: null })}`
-        );
-      } else {
-        // Narrow the dataset to this slug and retry when data reloads.
-        router.replace(`${pathname}?${createQueryString({ search: projectParam, page: "1" })}`);
-      }
-      return;
-    }
-
-    autoOpenedProjectRef.current = projectParam;
-    setDetailsGrantUid(match.grantUid);
-    setDetailsModalOpen(true);
-    // Strip `project`/`grant` and the transient search param we may have injected.
-    const clearSearch = searchQuery === projectParam ? null : searchQuery || null;
-    router.replace(
-      `${pathname}?${createQueryString({ project: null, grant: null, search: clearSearch })}`
-    );
-  }, [projectParam, grantParam, isLoadingPayouts, tableData, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  useAutoOpenGrantFromUrl({
+    projectParam,
+    grantParam,
+    searchQuery,
+    isLoading: isLoadingPayouts,
+    rows: tableData,
+    replaceQuery: (updates) => router.replace(`${pathname}?${createQueryString(updates)}`),
+    onOpen: (row) => {
+      setDetailsGrantUid(row.grantUid);
+      setDetailsModalOpen(true);
+    },
+  });
 
   const saveBulkImportMutation = useSavePayoutConfig();
 
