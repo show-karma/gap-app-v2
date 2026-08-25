@@ -3,7 +3,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
+
+/**
+ * Extracts the backend's `message` from an HttpError body when present,
+ * falling back to the ApiError's own message. Preserves the pre-migration
+ * `fetchData` behavior of surfacing the server's actual error text (instead
+ * of a generic "HTTP 400 PUT ..." string) in `setError`/toast copy.
+ */
+function toErrorMessage(err: unknown, fallback: string): string {
+  if (isApiError(err)) {
+    if (err instanceof HttpError) {
+      const bodyMessage = (err.body as { message?: string } | undefined)?.message;
+      return bodyMessage || err.message;
+    }
+    return err.message;
+  }
+  return err instanceof Error ? err.message : fallback;
+}
 
 export function useEditApplication(
   communityId: string,
@@ -25,13 +43,16 @@ export function useEditApplication(
 
   const saveDraftMutation = useMutation({
     mutationFn: async (dataToSave: Record<string, unknown>) => {
-      const [response, fetchError] = await fetchData<Application>(
-        `/v2/funding-applications/${applicationId}`,
-        "PUT",
-        { data: dataToSave }
-      );
-      if (fetchError || !response) throw new Error(fetchError ?? "Failed to save draft");
-      return response;
+      try {
+        // TODO(#1775): add zod schema
+        const response = await api.put<Application>(`/v2/funding-applications/${applicationId}`, {
+          data: dataToSave,
+        });
+        if (!response) throw new Error("Failed to save draft");
+        return response;
+      } catch (err) {
+        throw new Error(toErrorMessage(err, "Failed to save draft"));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -53,13 +74,17 @@ export function useEditApplication(
     }) => {
       const body: Record<string, unknown> = { data: dataToSubmit };
       if (aiEvaluation) body.aiEvaluation = aiEvaluation;
-      const [response, fetchError] = await fetchData<Application>(
-        `/v2/funding-applications/${applicationId}`,
-        "PUT",
-        body
-      );
-      if (fetchError || !response) throw new Error(fetchError ?? "Failed to submit application");
-      return response;
+      try {
+        // TODO(#1775): add zod schema
+        const response = await api.put<Application>(
+          `/v2/funding-applications/${applicationId}`,
+          body
+        );
+        if (!response) throw new Error("Failed to submit application");
+        return response;
+      } catch (err) {
+        throw new Error(toErrorMessage(err, "Failed to submit application"));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

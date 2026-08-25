@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import type { ApplicationLookupError, ApplicationLookupResult } from "../types";
 
 const REFERENCE_NUMBER_PATTERN = /^APP-[A-Z0-9]{8}-[A-Z0-9]{6}$/;
@@ -38,22 +39,16 @@ export function useApplicationLookup(): UseApplicationLookupReturn {
     setIsLoading(true);
 
     try {
-      const [data, fetchError] = await fetchData<ApplicationLookupResult>(
+      // TODO(#1775): add zod schema
+      const data = await api.get<ApplicationLookupResult>(
         `/v2/funding-applications/lookup-credential/${referenceNumber}`,
-        "GET",
-        {},
-        {},
-        {},
-        true
+        { isAuthorized: true }
       );
 
-      if (fetchError || !data) {
+      if (!data) {
         setError({
           type: "not_found",
-          message:
-            typeof fetchError === "string"
-              ? fetchError
-              : `Funding application with reference number ${referenceNumber} not found`,
+          message: `Funding application with reference number ${referenceNumber} not found`,
         });
         return;
       }
@@ -65,7 +60,21 @@ export function useApplicationLookup(): UseApplicationLookupReturn {
         communityName: data.communityName,
         communitySlug: data.communitySlug,
       });
-    } catch {
+    } catch (fetchError) {
+      if (isApiError(fetchError) && fetchError instanceof HttpError) {
+        const bodyMessage = (fetchError.body as { message?: string } | undefined)?.message;
+        const causeMessage = (fetchError.cause as { message?: string } | undefined)?.message;
+        setError({
+          type: "not_found",
+          message:
+            bodyMessage ||
+            causeMessage ||
+            fetchError.message ||
+            `Funding application with reference number ${referenceNumber} not found`,
+        });
+        return;
+      }
+
       setError({
         type: "network_error",
         message: "Unable to lookup application. Please check your connection and try again.",

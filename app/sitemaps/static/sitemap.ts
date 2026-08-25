@@ -1,5 +1,8 @@
+import * as Sentry from "@sentry/nextjs";
 import type { MetadataRoute } from "next";
+import { getPublishedSlugs } from "@/sanity/lib/gateway";
 import { SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const staticPages = [
   "",
@@ -35,9 +38,13 @@ const staticPages = [
   "/knowledge/project-profiles-software-vs-nonsoftware",
   "/knowledge/onchain-project-profiles",
   "/knowledge/how-funders-use-project-profiles",
+  "/knowledge/nonprofit-due-diligence",
+  "/data/foundation-funding",
   "/mcp/connect",
+  PAGES.BLOG,
   "/foundations",
   "/donor-advisors",
+  "/nonprofit-research",
   "/nonprofits",
   "/nonprofits/find-funders",
   "/nonprofits/find-funders/connect",
@@ -52,11 +59,29 @@ const staticPages = [
 
 const lowPriorityPages = ["/privacy-policy", "/terms-and-conditions"];
 
-// `lastModified` is intentionally omitted — we have no accurate per-page
-// modified date, and a fabricated "now" makes Google distrust the signal
-// (see utilities/sitemap.ts buildUrlsetXml).
-export default function sitemap(): MetadataRoute.Sitemap {
-  return staticPages.map((path) => ({
+// Self-healing ISR, mirroring the `revalidate = 60` ceiling on /blog and
+// /blog/[slug]. The Sanity webhook (app/api/blog/revalidate) stays the fast
+// path; without a ceiling here this route is fully static and only rebuilds on
+// deploy, so three failure modes leave published posts out of the sitemap with
+// no visible symptom:
+//   1. Webhook never fires — unset SANITY_WEBHOOK_SECRET (route 401s) or no
+//      webhook configured in Sanity. Post pages self-heal in 60s; this doesn't.
+//   2. Scheduled posts — the slug query filters `publishedAt <= now()`, so a
+//      future-dated post fires the webhook while still excluded and nothing
+//      fires again once its date arrives.
+//   3. Sanity blip — getPublishedSlugs resolves to `[]` on error, so a
+//      revalidation during an outage caches a post-less sitemap indefinitely.
+// An hour is well inside search engines' recrawl cadence and costs one extra
+// CMS query per hour.
+export const revalidate = 3600;
+
+// `lastModified` is intentionally omitted for the static pages below — we
+// have no accurate per-page modified date, and a fabricated "now" makes
+// Google distrust the signal (see utilities/sitemap.ts buildUrlsetXml).
+// Blog posts are the one legitimate exception: `publishedAt` from Sanity is
+// a real, accurate modified date, so those entries do carry `lastModified`.
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const staticEntries: MetadataRoute.Sitemap = staticPages.map((path) => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes(path) ? "yearly" : "weekly",
     priority:
@@ -68,4 +93,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
             ? 0.7
             : 0.8,
   }));
+
+  // Draft posts never appear here — the gateway's slug query only returns
+  // published posts, and the gateway itself never throws (CMS errors
+  // resolve to `[]`). The try/catch below is a second line of defense: even
+  // if that contract ever changes, the sitemap route must still resolve to
+  // the static pages rather than 500 the whole file.
+  let publishedSlugs: Awaited<ReturnType<typeof getPublishedSlugs>> = [];
+  try {
+    publishedSlugs = await getPublishedSlugs();
+  } catch (error) {
+    Sentry.captureException(error, { tags: { module: "blog-sitemap" } });
+  }
+
+  const postEntries: MetadataRoute.Sitemap = publishedSlugs.map(({ slug, publishedAt }) => ({
+    url: `${SITE_URL}${PAGES.BLOG_POST(slug)}`,
+    lastModified: publishedAt,
+    changeFrequency: "weekly",
+    priority: 0.6,
+  }));
+
+  return [...staticEntries, ...postEntries];
 }

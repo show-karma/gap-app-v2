@@ -5,11 +5,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 // Temporarily comment out SearchWithValueDropdown to fix import issue
 // import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 const UNIT_TYPES = ["int", "float"] as const;
@@ -82,7 +81,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [_availablePrograms, setAvailablePrograms] = useState<GrantProgram[]>([]);
   const finalIsLoading = isLoading || externalIsLoading;
 
   // Reset form when defaultValues change
@@ -92,31 +90,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
     }
   }, [defaultValues, reset]);
 
-  // Fetch programs when communityId changes (only for IndicatorsHub scenario)
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      if (!communityId) return;
-
-      try {
-        const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
-        if (error) throw error;
-
-        const sortedPrograms = result.sort((a: GrantProgram, b: GrantProgram) => {
-          const aTitle = a.metadata?.title || "";
-          const bTitle = b.metadata?.title || "";
-          if (aTitle < bTitle) return -1;
-          if (aTitle > bTitle) return 1;
-          return 0;
-        });
-        setAvailablePrograms(sortedPrograms);
-      } catch (error) {
-        console.error("Failed to fetch programs:", error);
-      }
-    };
-
-    fetchPrograms();
-  }, [communityId]);
-
   const onSubmit: SubmitHandler<IndicatorFormData> = async (data, event) => {
     if (preventPropagation && event) {
       event.preventDefault();
@@ -125,24 +98,26 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
 
     setIsLoading(true);
     try {
-      const [response, error] = await fetchData(INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(), "POST", {
-        indicatorId: indicatorId,
-        name: data.name,
-        description: data.description,
-        unitOfMeasure: data.unitOfMeasure,
-        communityUID: communityId,
-        programs:
-          preSelectedPrograms?.map((item) => {
-            return {
-              programId: item.programId,
-              chainID: item.chainID,
-            };
-          }) ||
-          data.programs ||
-          [],
-      });
-
-      if (error) throw error;
+      // TODO(#1775): add zod schema
+      const response = await api.post<ImpactIndicatorWithData | null>(
+        INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
+        {
+          indicatorId: indicatorId,
+          name: data.name,
+          description: data.description,
+          unitOfMeasure: data.unitOfMeasure,
+          communityUID: communityId,
+          programs:
+            preSelectedPrograms?.map((item) => {
+              return {
+                programId: item.programId,
+                chainID: item.chainID,
+              };
+            }) ||
+            data.programs ||
+            [],
+        }
+      );
 
       // Check if response exists and is an array
       if (!response) {

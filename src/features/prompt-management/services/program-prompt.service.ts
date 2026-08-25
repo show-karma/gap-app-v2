@@ -1,4 +1,4 @@
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import type {
   BulkEvaluationJob,
@@ -11,10 +11,9 @@ import type {
   TriggerBulkEvaluationResult,
 } from "../types/program-prompt";
 
-function unwrapResponse<T>(response: T | null, error: string | null): T {
-  if (error) {
-    throw new Error(error);
-  }
+// `api.get/post/put` already throw on failure, so the only remaining case
+// this guards against is a 2xx response with an empty/null body.
+function unwrapResponse<T>(response: T | null): T {
   if (!response) {
     throw new Error("No response from server");
   }
@@ -32,11 +31,11 @@ export const programPromptService = {
    * @returns Both external and internal prompts with migration info
    */
   async getPrompts(programId: string): Promise<ProgramPromptsResponse> {
-    const [response, error] = await fetchData<ProgramPromptsResponse>(
-      INDEXER.V2.FUNDING_PROGRAMS.PROMPTS.GET(programId),
-      "GET"
+    // TODO(#1775): add zod schema
+    const response = await api.get<ProgramPromptsResponse>(
+      INDEXER.V2.FUNDING_PROGRAMS.PROMPTS.GET(programId)
     );
-    return unwrapResponse(response, error);
+    return unwrapResponse(response);
   },
 
   /**
@@ -53,12 +52,12 @@ export const programPromptService = {
     promptType: PromptType,
     data: SaveProgramPromptRequest
   ): Promise<ProgramPrompt> {
-    const [response, error] = await fetchData<ProgramPrompt>(
+    // TODO(#1775): add zod schema
+    const response = await api.put<ProgramPrompt>(
       INDEXER.V2.FUNDING_PROGRAMS.PROMPTS.SAVE(programId, promptType),
-      "PUT",
       data
     );
-    return unwrapResponse(response, error);
+    return unwrapResponse(response);
   },
 
   /**
@@ -74,12 +73,12 @@ export const programPromptService = {
     promptType: PromptType,
     data: TestProgramPromptRequest
   ): Promise<TestProgramPromptResult> {
-    const [response, error] = await fetchData<TestProgramPromptResult>(
+    // TODO(#1775): add zod schema
+    const response = await api.post<TestProgramPromptResult>(
       INDEXER.V2.FUNDING_PROGRAMS.PROMPTS.TEST(programId, promptType),
-      "POST",
       data
     );
-    return unwrapResponse(response, error);
+    return unwrapResponse(response);
   },
 
   /**
@@ -93,12 +92,12 @@ export const programPromptService = {
     programId: string,
     promptType: PromptType
   ): Promise<TriggerBulkEvaluationResult> {
-    const [response, error] = await fetchData<TriggerBulkEvaluationResult>(
+    // TODO(#1775): add zod schema
+    const response = await api.post<TriggerBulkEvaluationResult>(
       INDEXER.V2.FUNDING_PROGRAMS.PROMPTS.BULK_EVALUATE(programId),
-      "POST",
       { promptType }
     );
-    return unwrapResponse(response, error);
+    return unwrapResponse(response);
   },
 
   /**
@@ -109,10 +108,10 @@ export const programPromptService = {
    * @returns Job status including progress
    */
   async getJobStatus(programId: string, jobId: string): Promise<BulkEvaluationJob> {
-    const [response, error] = await fetchData<BulkEvaluationJob>(
-      INDEXER.V2.FUNDING_PROGRAMS.PROMPTS.JOB_STATUS(programId, jobId),
-      "GET"
+    // TODO(#1775): add zod schema
+    const response = await api.get<BulkEvaluationJob>(
+      INDEXER.V2.FUNDING_PROGRAMS.PROMPTS.JOB_STATUS(programId, jobId)
     );
-    return unwrapResponse(response, error);
+    return unwrapResponse(response);
   },
 };

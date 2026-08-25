@@ -8,13 +8,10 @@ import {
   KeyRound,
   LogOutIcon,
   Settings,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
-import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
-import { ParagraphIcon } from "@/components/Icons/Paragraph";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import {
   Menubar,
   MenubarContent,
@@ -22,13 +19,14 @@ import {
   MenubarMenu,
   MenubarTrigger,
 } from "@/components/ui/menubar";
+import { useAccountIdentity } from "@/hooks/useAccountIdentity";
 import { useAuth } from "@/hooks/useAuth";
-import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
+import { followLinks } from "@/src/components/navbar/follow-links";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
-import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 import { MenuSection } from "./menu-components";
 import { useNavbarPermissions } from "./navbar-permissions-context";
@@ -38,29 +36,6 @@ const menuStyles = {
   itemIcon: "text-muted-foreground w-4 h-4",
   itemText: "text-foreground text-sm font-medium",
 };
-
-const socialMediaLinks = [
-  {
-    name: "Twitter",
-    href: SOCIALS.TWITTER,
-    icon: TwitterIcon,
-  },
-  {
-    name: "Telegram",
-    href: SOCIALS.TELEGRAM,
-    icon: TelegramIcon,
-  },
-  {
-    name: "Discord",
-    href: SOCIALS.DISCORD,
-    icon: DiscordIcon,
-  },
-  {
-    name: "Paragraph",
-    href: SOCIALS.PARAGRAPH,
-    icon: ParagraphIcon,
-  },
-];
 
 const _formatAddress = (addr: string) => {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -82,12 +57,12 @@ const getUserEmail = (
 
 export function NavbarUserMenu() {
   // Get permission state from context (prevents duplicate hook calls across navbar)
-  const { isLoggedIn, address, ready, isRegistryAllowed } = useNavbarPermissions();
+  const { isLoggedIn, address, ready, walletsReady, isRegistryAllowed } = useNavbarPermissions();
 
-  // useAuth only needed for logout function
-  const { logout, user } = useAuth();
+  // useAuth only needed for logout / connect-wallet actions
+  const { logout, user, connectWallet } = useAuth();
 
-  const { profile } = useContributorProfile(address);
+  const { name: accountName } = useAccountIdentity();
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
   const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
@@ -105,11 +80,16 @@ export function NavbarUserMenu() {
   // hydration gap `authenticated` is true while `user` and `wallets[0].address`
   // are still loading, so the trigger would render a blank avatar and the
   // dropdown would say "No wallet connected" for an actually-connected user.
-  // Show the skeleton instead — a wallet user always resolves an address and a
-  // social user always resolves a farcaster/email identity, so this only covers
-  // the transient loading window.
+  //
+  // Gate this on `walletsReady` — the signal that Privy has finished hydrating
+  // wallets — NOT on "did an identity resolve?". The latter has no upper bound:
+  // when the user disconnects the site inside their wallet extension, a
+  // wallet-only session resolves no identity for the rest of its life, so the
+  // skeleton became permanent and took the Log out item down with it. Once
+  // wallets are resolved, always render the menu: it degrades to "No wallet
+  // connected" plus Connect wallet / Log out, so there is always a way out.
   const hasResolvedIdentity = Boolean(user?.farcaster || getUserEmail(user) || address);
-  if (!hasResolvedIdentity) {
+  if (!walletsReady && !hasResolvedIdentity) {
     return <NavbarUserSkeleton />;
   }
 
@@ -132,23 +112,16 @@ export function NavbarUserMenu() {
             ) : (
               <CircleUser className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 text-muted-foreground" />
             )}
-            {user?.farcaster ? (
-              <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                {user.farcaster.displayName || user.farcaster.username}
+            {/* One resolution, shared with the identity hint published to a
+                tenant's marketing site — see useAccountIdentity. The chain is
+                unchanged; it just no longer lives in two places. */}
+            {accountName ? (
+              // `inline-block`, not `inline`: max-width and truncation do
+              // nothing on a non-replaced inline box, so a long name wrapped to
+              // a second line and pushed the row's height instead of ellipsing.
+              <span className="text-sm text-muted-foreground hidden xl:inline-block px-2 max-w-[22ch] truncate whitespace-nowrap">
+                {accountName}
               </span>
-            ) : getUserEmail(user) ? (
-              <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                {getUserEmail(user)}
-              </span>
-            ) : profile?.data?.name ? (
-              <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                {profile?.data?.name}
-              </span>
-            ) : address ? (
-              <EthereumAddressToProfileName
-                address={address}
-                className="text-sm text-muted-foreground hidden xl:inline px-2"
-              />
             ) : null}
           </div>
         </MenubarTrigger>
@@ -179,6 +152,18 @@ export function NavbarUserMenu() {
                 )}
               </div>
             </MenubarItem>
+            {/* Recovery path for a session whose wallet was disconnected from
+                the extension side. useAuth logs wallet-only sessions out, but a
+                social user who unlinked their wallet stays signed in and needs a
+                way to reconnect one. */}
+            {!address && (
+              <MenubarItem className="w-full cursor-pointer" onClick={connectWallet}>
+                <div className="flex flex-row items-center gap-2 w-full">
+                  <Wallet className={menuStyles.itemIcon} />
+                  <span className={menuStyles.itemText}>Connect wallet</span>
+                </div>
+              </MenubarItem>
+            )}
           </div>
           <hr className="h-[1px] w-full border-border" />
           <div className="flex flex-col w-full">
@@ -234,22 +219,17 @@ export function NavbarUserMenu() {
           <div className="flex flex-col w-full">
             <MenuSection title="Follow" variant="desktop" />
             <div className="flex flex-row items-center w-full justify-between gap-2">
-              {socialMediaLinks.map((social) => {
-                const IconComponent = social.icon;
-                return (
-                  <ExternalLink
-                    key={social.name}
-                    href={social.href}
-                    className={cn(
-                      menuStyles.itemText,
-                      "flex items-center justify-center rounded-full transition-colors p-2"
-                    )}
-                    aria-label={social.name}
-                  >
-                    <IconComponent className="w-5 h-5" />
-                  </ExternalLink>
-                );
-              })}
+              {followLinks.map((link) => (
+                <FollowLinkAnchor
+                  key={link.name}
+                  link={link}
+                  className={cn(
+                    menuStyles.itemText,
+                    "flex items-center justify-center rounded-full transition-colors p-2"
+                  )}
+                  iconClassName="w-5 h-5"
+                />
+              ))}
             </div>
           </div>
           <hr className="h-[1px] w-full border-border" />

@@ -1,8 +1,16 @@
 import type { AssignApplicationReviewersRequest } from "../application-reviewers.service";
 import { applicationReviewersService } from "../application-reviewers.service";
 
-// Mock fetchData for GET and PUT requests
-vi.mock("@/utilities/fetchData");
+// Mock the typed api client for GET and PUT requests
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
+}));
 
 vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
@@ -10,10 +18,12 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Import fetchData mock to access it in tests
-import fetchData from "@/utilities/fetchData";
+// Import api mock to access it in tests
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
+const mockApiPut = api.put as vi.MockedFunction<typeof api.put>;
 
 describe("applicationReviewersService", () => {
   beforeEach(() => {
@@ -33,41 +43,28 @@ describe("applicationReviewersService", () => {
     };
 
     it("should assign reviewers successfully", async () => {
-      mockFetchData.mockResolvedValue([
-        { message: "Reviewers assigned successfully" },
-        null,
-        null,
-        200,
-      ]);
+      mockApiPut.mockResolvedValue({ message: "Reviewers assigned successfully" });
 
       await applicationReviewersService.assignReviewers(applicationId, mockRequest);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPut).toHaveBeenCalledWith(
         `/v2/funding-applications/${applicationId}/reviewers`,
-        "PUT",
-        mockRequest,
-        {},
-        {},
-        true
+        mockRequest
       );
-      expect(mockFetchData).toHaveBeenCalledTimes(1);
+      expect(mockApiPut).toHaveBeenCalledTimes(1);
     });
 
     it("should handle assigning only app reviewers", async () => {
       const request: AssignApplicationReviewersRequest = {
         appReviewerAddresses: ["0x1234567890123456789012345678901234567890"],
       };
-      mockFetchData.mockResolvedValue([{ message: "Success" }, null, null, 200]);
+      mockApiPut.mockResolvedValue({ message: "Success" });
 
       await applicationReviewersService.assignReviewers(applicationId, request);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPut).toHaveBeenCalledWith(
         `/v2/funding-applications/${applicationId}/reviewers`,
-        "PUT",
-        request,
-        {},
-        {},
-        true
+        request
       );
     });
 
@@ -75,17 +72,13 @@ describe("applicationReviewersService", () => {
       const request: AssignApplicationReviewersRequest = {
         milestoneReviewerAddresses: ["0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"],
       };
-      mockFetchData.mockResolvedValue([{ message: "Success" }, null, null, 200]);
+      mockApiPut.mockResolvedValue({ message: "Success" });
 
       await applicationReviewersService.assignReviewers(applicationId, request);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPut).toHaveBeenCalledWith(
         `/v2/funding-applications/${applicationId}/reviewers`,
-        "PUT",
-        request,
-        {},
-        {},
-        true
+        request
       );
     });
 
@@ -94,17 +87,13 @@ describe("applicationReviewersService", () => {
         appReviewerAddresses: [],
         milestoneReviewerAddresses: [],
       };
-      mockFetchData.mockResolvedValue([{ message: "Success" }, null, null, 200]);
+      mockApiPut.mockResolvedValue({ message: "Success" });
 
       await applicationReviewersService.assignReviewers(applicationId, request);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPut).toHaveBeenCalledWith(
         `/v2/funding-applications/${applicationId}/reviewers`,
-        "PUT",
-        request,
-        {},
-        {},
-        true
+        request
       );
     });
 
@@ -119,22 +108,24 @@ describe("applicationReviewersService", () => {
           "0x4444444444444444444444444444444444444444",
         ],
       };
-      mockFetchData.mockResolvedValue([{ message: "Success" }, null, null, 200]);
+      mockApiPut.mockResolvedValue({ message: "Success" });
 
       await applicationReviewersService.assignReviewers(applicationId, request);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
+      expect(mockApiPut).toHaveBeenCalledWith(
         `/v2/funding-applications/${applicationId}/reviewers`,
-        "PUT",
-        request,
-        {},
-        {},
-        true
+        request
       );
     });
 
     it("should throw error on API failure", async () => {
-      mockFetchData.mockResolvedValue([null, "Bad Request", null, 400]);
+      mockApiPut.mockRejectedValue(
+        new HttpError(400, {
+          endpoint: `/v2/funding-applications/${applicationId}/reviewers`,
+          method: "PUT",
+          body: { message: "Bad Request" },
+        })
+      );
 
       await expect(
         applicationReviewersService.assignReviewers(applicationId, mockRequest)
@@ -142,7 +133,13 @@ describe("applicationReviewersService", () => {
     });
 
     it("should handle 404 error", async () => {
-      mockFetchData.mockResolvedValue([null, "Application not found", null, 404]);
+      mockApiPut.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: `/v2/funding-applications/${applicationId}/reviewers`,
+          method: "PUT",
+          body: { message: "Application not found" },
+        })
+      );
 
       await expect(
         applicationReviewersService.assignReviewers(applicationId, mockRequest)
@@ -150,7 +147,13 @@ describe("applicationReviewersService", () => {
     });
 
     it("should handle 422 validation error", async () => {
-      mockFetchData.mockResolvedValue([null, "Reviewer not configured", null, 422]);
+      mockApiPut.mockRejectedValue(
+        new HttpError(422, {
+          endpoint: `/v2/funding-applications/${applicationId}/reviewers`,
+          method: "PUT",
+          body: { message: "Reviewer not configured" },
+        })
+      );
 
       await expect(
         applicationReviewersService.assignReviewers(applicationId, mockRequest)
@@ -158,7 +161,13 @@ describe("applicationReviewersService", () => {
     });
 
     it("should handle network errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Network error", null, 500]);
+      mockApiPut.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: `/v2/funding-applications/${applicationId}/reviewers`,
+          method: "PUT",
+          body: { message: "Network error" },
+        })
+      );
 
       await expect(
         applicationReviewersService.assignReviewers(applicationId, mockRequest)
@@ -174,15 +183,16 @@ describe("applicationReviewersService", () => {
         appReviewers: ["0x1234567890123456789012345678901234567890"],
         milestoneReviewers: ["0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"],
       };
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await applicationReviewersService.getAssignedReviewers(applicationId);
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetchData).toHaveBeenCalledWith(
-        `/v2/funding-applications/${applicationId}/reviewers`
+      expect(mockApiGet).toHaveBeenCalledWith(
+        `/v2/funding-applications/${applicationId}/reviewers`,
+        expect.anything()
       );
-      expect(mockFetchData).toHaveBeenCalledTimes(1);
+      expect(mockApiGet).toHaveBeenCalledTimes(1);
     });
 
     it("should return empty arrays when no reviewers assigned", async () => {
@@ -190,7 +200,7 @@ describe("applicationReviewersService", () => {
         appReviewers: [],
         milestoneReviewers: [],
       };
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await applicationReviewersService.getAssignedReviewers(applicationId);
 
@@ -198,7 +208,7 @@ describe("applicationReviewersService", () => {
     });
 
     it("should handle missing fields in response", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200]);
+      mockApiGet.mockResolvedValue({});
 
       const result = await applicationReviewersService.getAssignedReviewers(applicationId);
 
@@ -209,14 +219,9 @@ describe("applicationReviewersService", () => {
     });
 
     it("should handle partial fields in response", async () => {
-      mockFetchData.mockResolvedValue([
-        {
-          appReviewers: ["0x1234567890123456789012345678901234567890"],
-        },
-        null,
-        null,
-        200,
-      ]);
+      mockApiGet.mockResolvedValue({
+        appReviewers: ["0x1234567890123456789012345678901234567890"],
+      });
 
       const result = await applicationReviewersService.getAssignedReviewers(applicationId);
 
@@ -227,7 +232,13 @@ describe("applicationReviewersService", () => {
     });
 
     it("should return empty arrays for 404 error", async () => {
-      mockFetchData.mockResolvedValue([null, "Application Reviewers Not Found", null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: `/v2/funding-applications/${applicationId}/reviewers`,
+          method: "GET",
+          body: { message: "Application Reviewers Not Found" },
+        })
+      );
 
       const result = await applicationReviewersService.getAssignedReviewers(applicationId);
 
@@ -238,7 +249,13 @@ describe("applicationReviewersService", () => {
     });
 
     it("should return empty arrays when error message includes 'No reviewers found'", async () => {
-      mockFetchData.mockResolvedValue([null, "No reviewers found for this application", null, 404]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(404, {
+          endpoint: `/v2/funding-applications/${applicationId}/reviewers`,
+          method: "GET",
+          body: { message: "No reviewers found for this application" },
+        })
+      );
 
       const result = await applicationReviewersService.getAssignedReviewers(applicationId);
 
@@ -249,7 +266,13 @@ describe("applicationReviewersService", () => {
     });
 
     it("should throw error for non-404 errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Internal Server Error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: `/v2/funding-applications/${applicationId}/reviewers`,
+          method: "GET",
+          body: { message: "Internal Server Error" },
+        })
+      );
 
       await expect(applicationReviewersService.getAssignedReviewers(applicationId)).rejects.toThrow(
         "Internal Server Error"
@@ -257,7 +280,13 @@ describe("applicationReviewersService", () => {
     });
 
     it("should throw error for network errors", async () => {
-      mockFetchData.mockResolvedValue([null, "Network error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: `/v2/funding-applications/${applicationId}/reviewers`,
+          method: "GET",
+          body: { message: "Network error" },
+        })
+      );
 
       await expect(applicationReviewersService.getAssignedReviewers(applicationId)).rejects.toThrow(
         "Network error"
@@ -275,7 +304,7 @@ describe("applicationReviewersService", () => {
           "0x4444444444444444444444444444444444444444",
         ],
       };
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await applicationReviewersService.getAssignedReviewers(applicationId);
 
@@ -288,13 +317,14 @@ describe("applicationReviewersService", () => {
         appReviewers: ["0x1234567890123456789012345678901234567890"],
         milestoneReviewers: [],
       };
-      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await applicationReviewersService.getAssignedReviewers(differentId);
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetchData).toHaveBeenCalledWith(
-        `/v2/funding-applications/${differentId}/reviewers`
+      expect(mockApiGet).toHaveBeenCalledWith(
+        `/v2/funding-applications/${differentId}/reviewers`,
+        expect.anything()
       );
     });
   });

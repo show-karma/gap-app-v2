@@ -15,6 +15,7 @@ interface StatusHistoryItem {
 interface ApplicationStatusStepperProps {
   status: ApplicationStatus;
   statusHistory: StatusHistoryItem[];
+  currentStatusDate?: string;
 }
 
 const STATUS_SUBTITLES: Record<string, string> = {
@@ -27,21 +28,47 @@ const STATUS_SUBTITLES: Record<string, string> = {
   rejected: "Not approved this round",
 };
 
-export function ApplicationStatusStepper({ status, statusHistory }: ApplicationStatusStepperProps) {
+export function ApplicationStatusStepper({
+  status,
+  statusHistory,
+  currentStatusDate,
+}: ApplicationStatusStepperProps) {
   const heroVisual = getStatusVisual(status);
 
-  // Oldest → newest so the timeline reads top-to-bottom chronologically.
-  const sortedHistory = useMemo(
-    () =>
-      [...(statusHistory ?? [])].sort(
-        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      ),
-    [statusHistory]
-  );
+  const { currentHistoryItem, priorHistory } = useMemo(() => {
+    const sortedHistory = [...(statusHistory ?? [])].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const normalizedStatus = status.toLowerCase().replace(/-/g, "_");
+    let currentIndex = -1;
+
+    for (let index = sortedHistory.length - 1; index >= 0; index -= 1) {
+      const itemStatus = sortedHistory[index]?.status.toLowerCase().replace(/-/g, "_");
+      if (itemStatus === normalizedStatus) {
+        currentIndex = index;
+        break;
+      }
+    }
+
+    return {
+      currentHistoryItem: currentIndex >= 0 ? sortedHistory[currentIndex] : undefined,
+      priorHistory:
+        currentIndex >= 0
+          ? sortedHistory.filter((_, index) => index !== currentIndex)
+          : sortedHistory,
+    };
+  }, [status, statusHistory]);
+
+  const statusDate = currentHistoryItem?.timestamp ?? currentStatusDate;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-      <div className="mb-5 flex items-center gap-3">
+      <div
+        className={cn(
+          "flex items-center gap-3",
+          (currentHistoryItem?.reason || priorHistory.length > 0) && "mb-5"
+        )}
+      >
         <div
           className={cn(
             "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full",
@@ -54,17 +81,29 @@ export function ApplicationStatusStepper({ status, statusHistory }: ApplicationS
           <div className="text-lg font-semibold tracking-tight text-foreground">
             {heroVisual.label}
           </div>
-          <div className="text-[13px] text-muted-foreground">
-            {STATUS_SUBTITLES[status] ?? "Application status"}
+          <div className="flex flex-wrap items-center gap-x-1.5 text-[13px] text-muted-foreground">
+            <span>{STATUS_SUBTITLES[status] ?? "Application status"}</span>
+            {statusDate && (
+              <>
+                <span aria-hidden>·</span>
+                <time dateTime={statusDate}>{formatDate(statusDate)}</time>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {sortedHistory.length > 0 && (
+      {currentHistoryItem?.reason && (
+        <p className="mb-4 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+          {currentHistoryItem.reason}
+        </p>
+      )}
+
+      {priorHistory.length > 0 && (
         <ol className="relative">
-          {sortedHistory.map((item, index) => {
+          {priorHistory.map((item, index) => {
             const visual = getStatusVisual(item.status);
-            const isLast = index === sortedHistory.length - 1;
+            const isLast = index === priorHistory.length - 1;
             return (
               <li key={`${item.timestamp}-${index}`} className="relative flex gap-3 pb-4 last:pb-0">
                 {!isLast && (

@@ -3,7 +3,7 @@ import type {
   PaginatedFundingPrograms,
   PaginatedFundingProgramsResponse,
 } from "@/src/features/funding-map/types/funding-program";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 const DEFAULT_RESPONSE: PaginatedFundingPrograms = {
@@ -22,11 +22,12 @@ export const getFundingOpportunities = cache(
         limit: "50",
       });
 
-      const [response, error] = await fetchData<PaginatedFundingProgramsResponse>(
+      // TODO(#1775): add zod schema
+      const response = await api.get<PaginatedFundingProgramsResponse>(
         `${INDEXER.V2.REGISTRY.GET_ALL}?${params.toString()}`
       );
 
-      if (error || !response) {
+      if (!response) {
         return DEFAULT_RESPONSE;
       }
 

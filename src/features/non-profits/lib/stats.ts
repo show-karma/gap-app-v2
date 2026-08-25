@@ -20,4 +20,14 @@ export const FILINGS_STATS = {
   indexedLabel: "Over 2M filings indexed",
   /** Hero metadata strip combining count + dollars (title case). */
   indexedShortLabel: "Over 2M filings · $1.2T tracked",
+  /** Spelled-out span of giving history covered by the corpus (prose fragment). */
+  historySpanLong: "seven years",
+  /**
+   * UTC date the figures above were last verified against the indexer corpus
+   * and approved in copy review (DEV-613). Surfaces as the visible
+   * "figures last reviewed" line on /data/foundation-funding. Update this
+   * date only in the same change that re-verifies the counts; never stamp
+   * "today" onto unchanged figures.
+   */
+  figuresReviewedOn: "2026-08-04",
 } as const;

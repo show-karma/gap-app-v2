@@ -104,3 +104,86 @@ describe("useWidgetStream", () => {
     expect(useAgentChatStore.getState().error).toBe("rate limited");
   });
 });
+
+describe("useWidgetStream auth", () => {
+  /**
+   * The endpoint authenticates optionally: anonymous visitors get answers,
+   * signed-in users get personalized ones. So the header has to appear when a
+   * host can supply a token and stay away when it cannot — and neither case may
+   * stop someone chatting.
+   */
+  const headersOf = (call: number = 0) =>
+    mockFetch.mock.calls[call][1].headers as Record<string, string>;
+
+  const send = async (getAuthToken?: () => unknown) => {
+    mockFetch.mockResolvedValueOnce(createSSEResponse([]));
+    const { result } = renderHook(() =>
+      useWidgetStream({
+        apiUrl: "https://test.api/v2/agent/stream",
+        communityId: "filecoin",
+        getAuthToken: getAuthToken as never,
+      })
+    );
+    await act(async () => {
+      await result.current.sendMessage("Hi");
+    });
+  };
+
+  it("sends no Authorization header when the host supplies no callback", async () => {
+    await send(undefined);
+
+    expect(headersOf()).not.toHaveProperty("Authorization");
+    expect(headersOf()["Content-Type"]).toBe("application/json");
+  });
+
+  it("sends the token as a bearer when the host supplies one", async () => {
+    await send(() => "tok_123");
+
+    expect(headersOf().Authorization).toBe("Bearer tok_123");
+  });
+
+  it("awaits an async callback, so a refresh can happen first", async () => {
+    await send(async () => "tok_async");
+
+    expect(headersOf().Authorization).toBe("Bearer tok_async");
+  });
+
+  it("stays anonymous when the callback returns null", async () => {
+    // A signed-out visitor on a host that has the callback wired up.
+    await send(() => null);
+
+    expect(headersOf()).not.toHaveProperty("Authorization");
+  });
+
+  it("stays anonymous when the callback throws, rather than failing the message", async () => {
+    await send(() => {
+      throw new Error("token lookup exploded");
+    });
+
+    expect(headersOf()).not.toHaveProperty("Authorization");
+    expect(useAgentChatStore.getState().error).toBeNull();
+  });
+
+  it("asks for a token on every message, so a stale one is never reused", async () => {
+    const getAuthToken = vi.fn().mockReturnValueOnce("tok_first").mockReturnValueOnce("tok_second");
+    mockFetch.mockResolvedValue(createSSEResponse([]));
+
+    const { result } = renderHook(() =>
+      useWidgetStream({
+        apiUrl: "https://test.api/v2/agent/stream",
+        communityId: "filecoin",
+        getAuthToken,
+      })
+    );
+    await act(async () => {
+      await result.current.sendMessage("first");
+    });
+    await act(async () => {
+      await result.current.sendMessage("second");
+    });
+
+    expect(getAuthToken).toHaveBeenCalledTimes(2);
+    expect(headersOf(0).Authorization).toBe("Bearer tok_first");
+    expect(headersOf(1).Authorization).toBe("Bearer tok_second");
+  });
+});

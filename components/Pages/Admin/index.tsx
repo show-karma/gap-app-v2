@@ -6,6 +6,7 @@ import debounce from "lodash.debounce";
 import type React from "react";
 import { useEffect, useState } from "react";
 import CommunityStats from "@/components/CommunityStats";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useAllCommunitiesWithAdmins } from "@/hooks/useAllCommunitiesWithAdmins";
 import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
@@ -128,13 +129,6 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   const { data: config, isLoading: configLoading } = useCommunityConfig(slug, isOwner);
   const [localRank, setLocalRank] = useState<number>(0);
 
-  function shortenHex(hexString: string) {
-    const firstPart = hexString.substring(0, 6);
-    const lastPart = hexString.substring(hexString.length - 6);
-
-    return `${firstPart}...${lastPart}`;
-  }
-
   const isPublic = config?.public === true || config?.public === undefined;
   const rank = config?.rank || 0;
 
@@ -230,7 +224,9 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
           matchingCommunityAdmin.admins.length > 0 &&
           matchingCommunityAdmin.admins.map((admin: any, index: number) => (
             <div className="flex gap-2 p-5" key={index}>
-              <div>{shortenHex(admin.user.id)}</div>
+              <div>
+                <EthereumAddressToProfileName address={admin.user.id} />
+              </div>
               <RemoveAdmin
                 UUID={community.uid}
                 chainid={community.chainID}

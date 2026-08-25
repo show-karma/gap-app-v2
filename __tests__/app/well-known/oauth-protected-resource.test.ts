@@ -20,7 +20,7 @@ describe("/.well-known/oauth-protected-resource route handler", () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
     const res = GET();
     const body = await res.json();
-    expect(body.resource).toBe(`${INDEXER_URL}/v2/mcp`);
+    expect(body.resource).toBe(`${INDEXER_URL}/mcp`);
   });
 
   it("advertises NEXT_PUBLIC_GAP_OAUTH_URL as the authorization server", async () => {

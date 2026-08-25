@@ -180,10 +180,11 @@ vi.mock("@/store/modals/contributorProfile", () => ({
   }),
 }));
 
-const mockFetchData = vi.fn().mockResolvedValue([{}, null, null, 200]);
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: (...args: unknown[]) => mockFetchData(...args),
+const mockApiPost = vi.fn().mockResolvedValue({});
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    post: (...args: unknown[]) => mockApiPost(...args),
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({

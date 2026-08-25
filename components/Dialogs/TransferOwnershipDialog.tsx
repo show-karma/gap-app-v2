@@ -10,8 +10,8 @@ import { useWallet } from "@/hooks/useWallet";
 import { communityAdminsService } from "@/services/community-admins.service";
 import { useProjectStore } from "@/store";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
+import { api } from "@/utilities/api/client";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
 import { errorManager } from "../Utilities/errorManager";
@@ -87,7 +87,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), {});
           }
           while (retries > 0) {
             const isTransfered = await isOwnershipTransfered(

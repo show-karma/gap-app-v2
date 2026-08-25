@@ -5,14 +5,26 @@
  */
 
 import { type Track, trackService } from "@/services/tracks";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData utility
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+// Mock the typed api client
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    getPaginated: vi.fn(),
+    request: vi.fn(),
+  },
 }));
+
+function httpError(message: string, status = 500) {
+  return new HttpError(status, { endpoint: "/test", method: "GET", body: { message } });
+}
 
 describe("trackService (V2)", () => {
   const mockTrack: Track = {
@@ -46,47 +58,37 @@ describe("trackService (V2)", () => {
     const communityUID = "0x1234567890123456789012345678901234567890";
 
     it("should fetch all tracks for a community", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ tracks: mockTracks });
 
       const result = await trackService.getAllTracks(communityUID);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.get).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.LIST(communityUID, false),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        expect.objectContaining({ isAuthorized: false })
       );
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe("track-123");
     });
 
     it("should include archived tracks when requested", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ tracks: mockTracks });
 
       await trackService.getAllTracks(communityUID, true);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.get).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.LIST(communityUID, true),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        expect.objectContaining({ isAuthorized: false })
       );
     });
 
     it("should throw error when fetch fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Network error"]);
+      (api.get as vi.Mock).mockRejectedValue(httpError("Network error"));
 
-      await expect(trackService.getAllTracks(communityUID)).rejects.toThrow("Network error");
+      await expect(trackService.getAllTracks(communityUID)).rejects.toThrow();
     });
 
     it("should convert date strings to Date objects", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ tracks: mockTracks });
 
       const result = await trackService.getAllTracks(communityUID);
 
@@ -99,24 +101,19 @@ describe("trackService (V2)", () => {
     const programId = "program-123";
 
     it("should fetch tracks for a program", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ tracks: mockTracks });
 
       const result = await trackService.getProgramTracks(programId);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.get).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.PROGRAM_TRACKS(programId),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        expect.objectContaining({ isAuthorized: false })
       );
       expect(result).toHaveLength(2);
     });
 
     it("should throw error when fetch fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Program not found"]);
+      (api.get as vi.Mock).mockRejectedValue(httpError("Program not found", 404));
 
       await expect(trackService.getProgramTracks(programId)).rejects.toThrow();
     });
@@ -124,7 +121,7 @@ describe("trackService (V2)", () => {
 
   describe("createTrack", () => {
     it("should create a new track", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockTrack, null]);
+      (api.post as vi.Mock).mockResolvedValue(mockTrack);
 
       const result = await trackService.createTrack(
         "Test Track",
@@ -132,24 +129,20 @@ describe("trackService (V2)", () => {
         "0x1234567890123456789012345678901234567890"
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.post).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.CREATE(),
-        "POST",
         {
           name: "Test Track",
           description: "Test description",
           communityUID: "0x1234567890123456789012345678901234567890",
         },
-        {},
-        {},
-        true,
-        false
+        expect.any(Object)
       );
       expect(result.name).toBe("Test Track");
     });
 
     it("should throw error when creation fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Track already exists"]);
+      (api.post as vi.Mock).mockRejectedValue(httpError("Track already exists", 409));
 
       await expect(
         trackService.createTrack(
@@ -164,7 +157,7 @@ describe("trackService (V2)", () => {
   describe("updateTrack", () => {
     it("should update an existing track", async () => {
       const updatedTrack = { ...mockTrack, name: "Updated Track" };
-      (fetchData as vi.Mock).mockResolvedValue([updatedTrack, null]);
+      (api.put as vi.Mock).mockResolvedValue(updatedTrack);
 
       const result = await trackService.updateTrack(
         "track-123",
@@ -172,23 +165,19 @@ describe("trackService (V2)", () => {
         "New description"
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.put).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.UPDATE("track-123"),
-        "PUT",
         {
           name: "Updated Track",
           description: "New description",
         },
-        {},
-        {},
-        true,
-        false
+        expect.any(Object)
       );
       expect(result.name).toBe("Updated Track");
     });
 
     it("should throw error when update fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Track not found"]);
+      (api.put as vi.Mock).mockRejectedValue(httpError("Track not found", 404));
 
       await expect(trackService.updateTrack("track-123", "Updated Track")).rejects.toThrow();
     });
@@ -197,24 +186,19 @@ describe("trackService (V2)", () => {
   describe("archiveTrack", () => {
     it("should archive a track", async () => {
       const archivedTrack = { ...mockTrack, isArchived: true };
-      (fetchData as vi.Mock).mockResolvedValue([archivedTrack, null]);
+      (api.delete as vi.Mock).mockResolvedValue(archivedTrack);
 
       const result = await trackService.archiveTrack("track-123");
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.delete).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.ARCHIVE("track-123"),
-        "DELETE",
-        {},
-        {},
-        {},
-        true,
-        false
+        expect.any(Object)
       );
       expect(result.isArchived).toBe(true);
     });
 
     it("should throw error when archive fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Track not found"]);
+      (api.delete as vi.Mock).mockRejectedValue(httpError("Track not found", 404));
 
       await expect(trackService.archiveTrack("track-123")).rejects.toThrow();
     });
@@ -225,23 +209,17 @@ describe("trackService (V2)", () => {
     const trackIds = ["track-1", "track-2"];
 
     it("should assign tracks to a program", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{}, null]);
+      (api.post as vi.Mock).mockResolvedValue({});
 
       await trackService.assignTracksToProgram(programId, trackIds);
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.TRACKS.ASSIGN_TO_PROGRAM(programId),
-        "POST",
-        { trackIds },
-        {},
-        {},
-        true,
-        false
-      );
+      expect(api.post).toHaveBeenCalledWith(INDEXER.V2.TRACKS.ASSIGN_TO_PROGRAM(programId), {
+        trackIds,
+      });
     });
 
     it("should throw error when assignment fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Program not found"]);
+      (api.post as vi.Mock).mockRejectedValue(httpError("Program not found", 404));
 
       await expect(trackService.assignTracksToProgram(programId, trackIds)).rejects.toThrow();
     });
@@ -249,18 +227,12 @@ describe("trackService (V2)", () => {
 
   describe("removeTrackFromProgram", () => {
     it("should remove a track from a program", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{}, null]);
+      (api.delete as vi.Mock).mockResolvedValue({});
 
       await trackService.removeTrackFromProgram("program-123", "track-123");
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM("program-123", "track-123"),
-        "DELETE",
-        {},
-        {},
-        {},
-        true,
-        false
+      expect(api.delete).toHaveBeenCalledWith(
+        INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM("program-123", "track-123")
       );
     });
   });
@@ -270,24 +242,19 @@ describe("trackService (V2)", () => {
     const programId = "program-123";
 
     it("should fetch tracks for a project within a program", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ tracks: mockTracks });
 
       const result = await trackService.getProjectTracks(projectId, programId);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.get).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.PROJECT_TRACKS(projectId, programId),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        expect.objectContaining({ isAuthorized: false })
       );
       expect(result).toBeDefined();
     });
 
     it("should throw error when fetch fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Project not found"]);
+      (api.get as vi.Mock).mockRejectedValue(httpError("Project not found", 404));
 
       await expect(trackService.getProjectTracks(projectId, programId)).rejects.toThrow();
     });
@@ -295,7 +262,7 @@ describe("trackService (V2)", () => {
 
   describe("assignTracksToProject", () => {
     it("should assign tracks to a project", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{}, null]);
+      (api.post as vi.Mock).mockResolvedValue({});
 
       await trackService.assignTracksToProject(
         "project-123",
@@ -303,48 +270,55 @@ describe("trackService (V2)", () => {
         "program-123"
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.TRACKS.ASSIGN_TO_PROJECT("project-123"),
-        "POST",
-        { trackIds: ["track-1", "track-2"], programId: "program-123" },
-        {},
-        {},
-        true,
-        false
+      expect(api.post).toHaveBeenCalledWith(INDEXER.V2.TRACKS.ASSIGN_TO_PROJECT("project-123"), {
+        trackIds: ["track-1", "track-2"],
+        programId: "program-123",
+      });
+    });
+  });
+
+  describe("unassignTracksFromProject", () => {
+    it("should unassign tracks from a project via the low-level request escape hatch", async () => {
+      (api.request as vi.Mock).mockResolvedValue({ data: {}, status: 200, pageInfo: null });
+
+      await trackService.unassignTracksFromProject("program-123", "project-123", ["track-1"]);
+
+      expect(api.request).toHaveBeenCalledWith(
+        "DELETE",
+        INDEXER.V2.TRACKS.UNASSIGN_FROM_PROJECT("program-123", "project-123"),
+        { trackIds: ["track-1"] }
       );
+    });
+
+    it("should throw error when unassignment fails", async () => {
+      (api.request as vi.Mock).mockRejectedValue(httpError("Project not found", 404));
+
+      await expect(
+        trackService.unassignTracksFromProject("program-123", "project-123", ["track-1"])
+      ).rejects.toThrow();
     });
   });
 
   describe("getProjectsByTrack", () => {
     it("should fetch projects by track", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ projects: [] }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ projects: [] });
 
       await trackService.getProjectsByTrack("community-123", "program-123", "track-123");
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.get).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.PROJECTS_BY_TRACK("community-123", "program-123", "track-123"),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        expect.objectContaining({ isAuthorized: false })
       );
     });
 
     it("should work without track filter", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([{ projects: [] }, null]);
+      (api.get as vi.Mock).mockResolvedValue({ projects: [] });
 
       await trackService.getProjectsByTrack("community-123", "program-123");
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(api.get).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.PROJECTS_BY_TRACK("community-123", "program-123", undefined),
-        "GET",
-        {},
-        {},
-        {},
-        false,
-        false
+        expect.objectContaining({ isAuthorized: false })
       );
     });
   });

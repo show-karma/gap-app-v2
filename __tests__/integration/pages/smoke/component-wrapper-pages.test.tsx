@@ -36,8 +36,17 @@ vi.mock("@/components/Pages/Admin/SumupAdmin", () => ({
   default: () => <div data-testid="sumup-admin">SumupAdmin</div>,
 }));
 
-vi.mock("@/components/Pages/Dashboard/Dashboard", () => ({
-  Dashboard: () => <div data-testid="dashboard-component">Dashboard</div>,
+// The dashboard overview reads modules from the layout-level DashboardProvider
+// (which runs the data orchestration); the page itself just renders the grid.
+vi.mock("@/components/Pages/Dashboard/DashboardProvider", () => ({
+  useDashboardContext: () => ({
+    modules: [{ key: "reviews" }],
+    showSuperAdmin: false,
+    advisorLoading: false,
+  }),
+}));
+vi.mock("@/components/Pages/Dashboard/v3/BentoGrid", () => ({
+  BentoGrid: () => <div data-testid="dashboard-component">BentoGrid</div>,
 }));
 
 vi.mock("@/components/Pages/Communities/CommunitiesPage", () => ({
@@ -152,7 +161,7 @@ describe("Admin pages", () => {
 });
 
 describe("Top-level component-wrapper pages", () => {
-  it("/dashboard renders Dashboard", async () => {
+  it("/dashboard renders the dashboard overview", async () => {
     await renderPage(() => import("@/app/dashboard/page"));
     expect(screen.getByTestId("dashboard-component")).toBeInTheDocument();
   });

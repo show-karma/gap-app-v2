@@ -1,304 +1,263 @@
 /**
- * Signer trust tests for useZeroDevSigner hook.
+ * Signer trust regression tests for useZeroDevSigner (issue #1574, #1573).
  *
- * Tests the getAttestationSigner execution paths:
- * - Email + gasless chain -> gasless signer
- * - GaslessProviderError is NOT caught (re-thrown)
- * - Non-GaslessProviderError falls back to embedded wallet
- * - Email + non-gasless chain -> embedded wallet signer
- * - External wallet -> external signer
- * - No wallet -> throws
- * - isGaslessAvailable logic
- * - didUserLoginWithEmailOrSocial detection
+ * The bug class: an email/Google/Farcaster user (embedded signing mode) with a
+ * stale, UNLINKED external wallet connected (a lingering MetaMask from a previous
+ * session) had the attestation signer fall through to that foreign wallet —
+ * prompting a signature for someone else's account.
+ *
+ * These tests render the REAL hook and assert the foreign wallet's
+ * getEthereumProvider is NEVER invoked for embedded-mode users, and that the
+ * failure surfaces as an explicit, retryable error instead.
  */
 
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: vi.fn().mockReturnValue({
-    ready: true,
-    user: {
-      linkedAccounts: [{ type: "email" }],
-    },
-  }),
-  useWallets: vi.fn().mockReturnValue({
-    wallets: [
-      {
-        walletClientType: "privy",
-        address: "0xEmbedded",
-        switchChain: vi.fn().mockResolvedValue(undefined),
-        getEthereumProvider: vi.fn().mockResolvedValue({}),
-      },
-      {
-        walletClientType: "metamask",
-        address: "0xExternal",
-      },
-    ],
-  }),
+const { mockPrivyState, mockUseChainId } = vi.hoisted(() => ({
+  mockPrivyState: {
+    ready: true as boolean,
+    user: null as { linkedAccounts: Array<{ type: string; address?: string }> } | null,
+    wallets: [] as Array<{
+      address: string;
+      walletClientType: string;
+      switchChain: ReturnType<typeof vi.fn>;
+      getEthereumProvider: ReturnType<typeof vi.fn>;
+    }>,
+  },
+  mockUseChainId: vi.fn().mockReturnValue(10),
 }));
 
-vi.mock("wagmi", () => ({
-  useChainId: vi.fn().mockReturnValue(10),
-}));
+vi.mock("wagmi", () => ({ useChainId: () => mockUseChainId() }));
 
-vi.mock("@/utilities/eas-wagmi-utils", () => ({
-  walletClientToSigner: vi.fn().mockResolvedValue({ signMessage: vi.fn() }),
+vi.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: () => ({
+    ready: mockPrivyState.ready,
+    walletsReady: true,
+    user: mockPrivyState.user,
+    wallets: mockPrivyState.wallets,
+  }),
 }));
 
 vi.mock("@/utilities/wallet-helpers", () => ({
-  safeGetWalletClient: vi.fn().mockResolvedValue({
-    walletClient: {
-      account: { address: "0xExternal" },
-      chain: { id: 10 },
-    },
-    error: null,
-  }),
+  safeGetWalletClient: vi.fn().mockResolvedValue({ walletClient: null, error: "not used" }),
 }));
 
-const { mockGaslessSigner, mockGaslessClient } = vi.hoisted(() => ({
-  mockGaslessSigner: { signMessage: () => {}, address: "0xEmbedded" },
-  mockGaslessClient: { sendTransaction: () => {} },
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
+  walletClientToSigner: vi.fn().mockResolvedValue({ getAddress: vi.fn() }),
 }));
 
-vi.mock("@/utilities/gasless", () => ({
-  createGaslessClient: vi.fn().mockResolvedValue(null),
-  createPrivySignerForGasless: vi.fn().mockResolvedValue({}),
-  getGaslessSigner: vi.fn().mockResolvedValue(mockGaslessSigner),
-  isChainSupportedForGasless: vi.fn().mockReturnValue(true),
-  GaslessProviderError: class GaslessProviderError extends Error {
-    provider: string;
-    chainId: number;
-    constructor(message: string, provider: string, chainId: number) {
-      super(message);
-      this.name = "GaslessProviderError";
-      this.provider = provider;
-      this.chainId = chainId;
-    }
-  },
+vi.mock("@/utilities/network", () => ({
+  appNetwork: [{ id: 10, name: "Optimism" }],
 }));
 
-// Mock BrowserProvider since it's from ethers and requires a real provider
+vi.mock("viem", () => ({
+  createWalletClient: vi.fn(() => ({})),
+  custom: vi.fn((provider: unknown) => provider),
+}));
+
 vi.mock("ethers", () => ({
-  BrowserProvider: vi.fn().mockImplementation(() => ({
-    getSigner: vi.fn().mockResolvedValue({
-      signMessage: vi.fn(),
-      address: "0xEmbedded",
-    }),
-  })),
+  BrowserProvider: class {
+    getNetwork = async () => ({ chainId: 10n });
+    getSigner = async () => ({ getAddress: vi.fn() });
+  },
   Signer: class {},
 }));
 
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+// gasless is resolved to the __mocks__ stub via the vitest alias.
 import {
   createGaslessClient,
   createPrivySignerForGasless,
-  GaslessProviderError,
   getGaslessSigner,
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useZeroDevSigner } from "../../../hooks/useZeroDevSigner";
+import { WALLET_READY_TIMEOUT_MS } from "../../../utilities/wallet/waitForUsableWallet";
 
-describe("Signer trust tests", () => {
+const EMBEDDED = "0xEmbedded1111111111111111111111111111111111";
+const FOREIGN_METAMASK = "0x9b75AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
+function foreignMetaMask() {
+  return {
+    address: FOREIGN_METAMASK,
+    walletClientType: "metamask",
+    switchChain: vi.fn().mockResolvedValue(undefined),
+    getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+  };
+}
+
+function embeddedWallet(address = EMBEDDED) {
+  return {
+    address,
+    walletClientType: "privy",
+    switchChain: vi.fn().mockResolvedValue(undefined),
+    getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn(), __chainId: 10 }),
+  };
+}
+
+describe("useZeroDevSigner — linked-wallet signing trust (issue #1574)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrivyState.ready = true;
+    mockPrivyState.user = null;
+    mockPrivyState.wallets = [];
+    mockUseChainId.mockReturnValue(10);
+    (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(false);
+    (createGaslessClient as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (createPrivySignerForGasless as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (getGaslessSigner as ReturnType<typeof vi.fn>).mockResolvedValue(null);
   });
 
   afterEach(() => {
+    // Two tests fast-forward the bounded wallet wait with fake timers — always
+    // restore real timers so they can't leak into a later test.
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  // -------------------------------------------------------------------------
-  // didUserLoginWithEmailOrSocial detection (tested indirectly)
-  // -------------------------------------------------------------------------
-  describe("email/social login detection", () => {
-    it("detects email login from linkedAccounts", () => {
-      const user = { linkedAccounts: [{ type: "email" }] };
-      const isEmailOrSocial = user.linkedAccounts.some(
-        (a: any) => a.type === "email" || a.type === "google_oauth"
-      );
-      expect(isEmailOrSocial).toBe(true);
-    });
+  it("email user + stale unlinked MetaMask, embedded not hydrated: throws SignerUnavailableError after the bounded wait and never touches the foreign wallet", async () => {
+    vi.useFakeTimers();
+    const foreign = foreignMetaMask();
+    mockPrivyState.user = { linkedAccounts: [{ type: "email" }] };
+    mockPrivyState.wallets = [foreign];
 
-    it("detects google_oauth login", () => {
-      const user = { linkedAccounts: [{ type: "google_oauth" }] };
-      const isEmailOrSocial = user.linkedAccounts.some(
-        (a: any) => a.type === "email" || a.type === "google_oauth"
-      );
-      expect(isEmailOrSocial).toBe(true);
-    });
+    const { result } = renderHook(() => useZeroDevSigner());
 
-    it("returns false for external wallet login", () => {
-      const user = { linkedAccounts: [{ type: "wallet" }] };
-      const isEmailOrSocial = user.linkedAccounts.some(
-        (a: any) => a.type === "email" || a.type === "google_oauth"
-      );
-      expect(isEmailOrSocial).toBe(false);
-    });
+    // The foreign address must never be exposed as the attestation identity.
+    expect(result.current.attestationAddress).toBeNull();
+    expect(result.current.hasExternalWallet).toBe(false);
 
-    it("returns false for null user", () => {
-      const user = null;
-      const isEmailOrSocial = user
-        ? (user as any).linkedAccounts.some(
-            (a: any) => a.type === "email" || a.type === "google_oauth"
-          )
-        : false;
-      expect(isEmailOrSocial).toBe(false);
+    // The foreign wallet never becomes usable, so the bounded wallet wait runs
+    // its full course and classifies the failure as provisioning — it must NOT
+    // resolve by falling back to the unlinked MetaMask.
+    const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+      name: "SignerUnavailableError",
+      reason: "embedded-wallet-provisioning",
+      expected: true,
     });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+    });
+    await assertion;
+
+    // The regression guard: the foreign wallet's provider is NEVER requested.
+    expect(foreign.getEthereumProvider).not.toHaveBeenCalled();
+    expect(foreign.switchChain).not.toHaveBeenCalled();
   });
 
-  // -------------------------------------------------------------------------
-  // Gasless availability logic
-  // -------------------------------------------------------------------------
-  describe("isGaslessAvailable logic", () => {
-    it("true when email login + embedded wallet + gasless-supported chain", () => {
-      const isEmailOrSocial = true;
-      const hasEmbeddedWallet = true;
-      const chainSupported = true;
-      expect(isEmailOrSocial && hasEmbeddedWallet && chainSupported).toBe(true);
+  it("email user + embedded present + stale MetaMask: embedded-direct failure throws, external path never reached", async () => {
+    const foreign = foreignMetaMask();
+    const embedded = embeddedWallet();
+    // Force the embedded-direct path to fail.
+    embedded.getEthereumProvider = vi.fn().mockRejectedValue(new Error("embedded provider down"));
+    mockPrivyState.user = {
+      linkedAccounts: [{ type: "email" }, { type: "wallet", address: EMBEDDED }],
+    };
+    mockPrivyState.wallets = [foreign, embedded];
+
+    const { result } = renderHook(() => useZeroDevSigner());
+
+    expect(result.current.attestationAddress).toBe(EMBEDDED);
+
+    await act(async () => {
+      await expect(result.current.getAttestationSigner(10)).rejects.toThrow(
+        /Failed to obtain signer from embedded wallet/
+      );
     });
 
-    it("false when not email login", () => {
-      const isEmailOrSocial = false;
-      const hasEmbeddedWallet = true;
-      const chainSupported = true;
-      expect(isEmailOrSocial && hasEmbeddedWallet && chainSupported).toBe(false);
-    });
-
-    it("false when no embedded wallet", () => {
-      const isEmailOrSocial = true;
-      const hasEmbeddedWallet = false;
-      const chainSupported = true;
-      expect(isEmailOrSocial && hasEmbeddedWallet && chainSupported).toBe(false);
-    });
-
-    it("false when chain not supported for gasless", () => {
-      const isEmailOrSocial = true;
-      const hasEmbeddedWallet = true;
-      const chainSupported = false;
-      expect(isEmailOrSocial && hasEmbeddedWallet && chainSupported).toBe(false);
-    });
+    // The foreign external wallet must never be used to sign.
+    expect(foreign.getEthereumProvider).not.toHaveBeenCalled();
   });
 
-  // -------------------------------------------------------------------------
-  // getAttestationSigner paths — tested via logic simulation
-  // -------------------------------------------------------------------------
-  describe("getAttestationSigner execution paths", () => {
-    it("Case 1: email + gasless chain -> gasless signer when client created", async () => {
-      vi.mocked(createGaslessClient).mockResolvedValueOnce(mockGaslessClient);
-      vi.mocked(getGaslessSigner).mockResolvedValueOnce(mockGaslessSigner as any);
+  it("wallet-login user with a LINKED external wallet: external path is used (unchanged)", async () => {
+    const linked = {
+      address: FOREIGN_METAMASK,
+      walletClientType: "metamask",
+      switchChain: vi.fn().mockResolvedValue(undefined),
+      getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+    };
+    mockPrivyState.user = {
+      linkedAccounts: [{ type: "wallet", address: FOREIGN_METAMASK }],
+    };
+    mockPrivyState.wallets = [linked];
 
-      // Simulate the hook logic for Case 1
-      const isEmailOrSocialLogin = true;
-      const embeddedWallet = {
-        switchChain: vi.fn().mockResolvedValue(undefined),
-      };
-      const targetChainId = 10;
+    const { result } = renderHook(() => useZeroDevSigner());
 
-      if (isEmailOrSocialLogin && embeddedWallet && isChainSupportedForGasless(targetChainId)) {
-        await embeddedWallet.switchChain(targetChainId);
-        const signer = await createPrivySignerForGasless(embeddedWallet as any, targetChainId);
-        const client = await createGaslessClient(targetChainId, signer as any);
-        if (client) {
-          const ethersSigner = await getGaslessSigner(client, targetChainId);
-          expect(ethersSigner).toBe(mockGaslessSigner);
-          return;
-        }
-      }
-      // Should not reach here
-      expect.unreachable("Should have returned gasless signer");
+    expect(result.current.attestationAddress).toBe(FOREIGN_METAMASK);
+
+    await act(async () => {
+      await result.current.getAttestationSigner(10);
     });
 
-    it("Case 1 fallback: gasless client returns null -> falls back", async () => {
-      vi.mocked(createGaslessClient).mockResolvedValueOnce(null);
-
-      const client = await createGaslessClient(10, {} as any);
-      expect(client).toBeNull();
-      // The hook would fall through to Case 2 (embedded wallet direct)
-    });
-
-    it("GaslessProviderError is NOT caught — re-thrown", async () => {
-      const error = new GaslessProviderError("Quota exceeded", "zerodev", 10);
-
-      // Simulate the hook logic: GaslessProviderError should be re-thrown
-      const shouldRethrow = error instanceof GaslessProviderError;
-      expect(shouldRethrow).toBe(true);
-    });
-
-    it("Non-GaslessProviderError falls back to embedded wallet", async () => {
-      const error = new Error("Some random error");
-      const shouldRethrow = error.constructor.name === "GaslessProviderError";
-      expect(shouldRethrow).toBe(false);
-      // In the hook, this means we fall through to Case 2
-    });
-
-    it("Case 3: external wallet returns signer", async () => {
-      const { walletClient, error } = await (safeGetWalletClient as any)(10);
-      expect(error).toBeNull();
-      expect(walletClient).toBeDefined();
-
-      const signer = await walletClientToSigner(walletClient);
-      expect(signer).toBeDefined();
-    });
-
-    it("Case 3: external wallet error throws", async () => {
-      vi.mocked(safeGetWalletClient).mockResolvedValueOnce({
-        walletClient: null,
-        error: "Failed to connect",
-      });
-
-      const { walletClient, error } = await (safeGetWalletClient as any)(10);
-      expect(walletClient).toBeNull();
-      expect(error).toBeTruthy();
-      // The hook would throw: "Failed to get wallet client: ..."
-    });
-
-    it("No wallet available throws error", () => {
-      // When no embedded or external wallet exists
-      const externalWallet = null;
-      const embeddedWallet = null;
-
-      if (!externalWallet && !embeddedWallet) {
-        expect(() => {
-          throw new Error("No wallet available for signing");
-        }).toThrow("No wallet available for signing");
-      }
-    });
+    // The linked external wallet IS used (legitimate wallet-login signing).
+    expect(linked.switchChain).toHaveBeenCalledWith(10);
+    expect(linked.getEthereumProvider).toHaveBeenCalled();
   });
 
-  // -------------------------------------------------------------------------
-  // Wallet type detection
-  // -------------------------------------------------------------------------
-  describe("wallet type detection", () => {
-    it("identifies embedded wallet by walletClientType === privy", () => {
-      const wallets = [
-        { walletClientType: "privy", address: "0x1" },
-        { walletClientType: "metamask", address: "0x2" },
-      ];
-      const embedded = wallets.find((w) => w.walletClientType === "privy");
-      expect(embedded).toBeDefined();
-      expect(embedded!.address).toBe("0x1");
+  it("only an unlinked wallet connected for a wallet-login user: no foreign signing", async () => {
+    vi.useFakeTimers();
+    const foreign = foreignMetaMask();
+    mockPrivyState.user = {
+      // The user logged in with a DIFFERENT wallet than the one now connected.
+      linkedAccounts: [{ type: "wallet", address: EMBEDDED }],
+    };
+    mockPrivyState.wallets = [foreign];
+
+    const { result } = renderHook(() => useZeroDevSigner());
+
+    expect(result.current.attestationAddress).toBeNull();
+
+    // The unlinked wallet never counts as usable — the bounded wait times out
+    // with the typed "no wallet" classification instead of foreign signing.
+    const assertion = expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+      name: "SignerUnavailableError",
+      reason: "no-wallet-connected",
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(WALLET_READY_TIMEOUT_MS + 500);
+    });
+    await assertion;
+
+    expect(foreign.getEthereumProvider).not.toHaveBeenCalled();
+  });
+
+  // Regression for the main↔branch merge: when the embedded path fails for an
+  // embedded-mode user who ALSO has a wallet LINKED to their account connected,
+  // signing must fall back to that linked wallet rather than dead-ending. The
+  // foreign-wallet invariant still holds because resolveSigningWallets only
+  // surfaces linked wallets as `externalWallet`.
+  it("email user + embedded present but failing + LINKED external: falls back to the linked wallet", async () => {
+    const LINKED_EXTERNAL = "0x5555555555555555555555555555555555555555";
+    const embedded = embeddedWallet();
+    // Force the embedded-direct path to fail.
+    embedded.getEthereumProvider = vi.fn().mockRejectedValue(new Error("embedded provider down"));
+    const linkedExternal = {
+      address: LINKED_EXTERNAL,
+      walletClientType: "metamask",
+      switchChain: vi.fn().mockResolvedValue(undefined),
+      getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+    };
+    mockPrivyState.user = {
+      linkedAccounts: [
+        { type: "email" },
+        { type: "wallet", address: EMBEDDED },
+        { type: "wallet", address: LINKED_EXTERNAL },
+      ],
+    };
+    mockPrivyState.wallets = [embedded, linkedExternal];
+
+    const { result } = renderHook(() => useZeroDevSigner());
+
+    // Identity stays the embedded wallet (its address is still linked + preferred).
+    expect(result.current.attestationAddress).toBe(EMBEDDED);
+
+    await act(async () => {
+      await result.current.getAttestationSigner(10);
     });
 
-    it("identifies external wallet by walletClientType !== privy", () => {
-      const wallets = [
-        { walletClientType: "privy", address: "0x1" },
-        { walletClientType: "metamask", address: "0x2" },
-      ];
-      const external = wallets.find((w) => w.walletClientType !== "privy");
-      expect(external).toBeDefined();
-      expect(external!.address).toBe("0x2");
-    });
-
-    it("returns null when no embedded wallet", () => {
-      const wallets = [{ walletClientType: "metamask", address: "0x2" }];
-      const embedded = wallets.find((w) => w.walletClientType === "privy") || null;
-      expect(embedded).toBeNull();
-    });
-
-    it("returns null when wallet list is empty", () => {
-      const wallets: any[] = [];
-      const embedded = wallets.find((w) => w.walletClientType === "privy") || null;
-      expect(embedded).toBeNull();
-    });
+    // The embedded path was attempted first, then fell back to the LINKED external.
+    expect(embedded.getEthereumProvider).toHaveBeenCalled();
+    expect(linkedExternal.switchChain).toHaveBeenCalledWith(10);
+    expect(linkedExternal.getEthereumProvider).toHaveBeenCalled();
   });
 });

@@ -1,8 +1,16 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/utilities/fetchData", () => ({
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -47,10 +55,11 @@ vi.mock("@/constants/projects-explorer", () => ({
 
 import { fetchApplicationByProjectUID } from "@/services/funding-applications";
 import { getExplorerProjects } from "@/services/projects-explorer.service";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
-const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+const mockApiGet = api.get as ReturnType<typeof vi.fn>;
 
 describe("React Query integration trust tests", () => {
   let queryClient: QueryClient;
@@ -279,7 +288,7 @@ describe("React Query integration trust tests", () => {
 
   describe("service function integration", () => {
     it("getExplorerProjects can be used as queryFn", async () => {
-      mockFetchData.mockResolvedValue([[{ details: { title: "Project 1" } }], null, null, 200]);
+      mockApiGet.mockResolvedValue([{ details: { title: "Project 1" } }]);
 
       const result = await queryClient.fetchQuery({
         queryKey: ["projects-explorer", ""],
@@ -290,7 +299,7 @@ describe("React Query integration trust tests", () => {
     });
 
     it("fetchApplicationByProjectUID can be used as queryFn", async () => {
-      mockFetchData.mockResolvedValue([{ id: "app-1", status: "submitted" }, null, null, 200]);
+      mockApiGet.mockResolvedValue({ id: "app-1", status: "submitted" });
 
       const result = await queryClient.fetchQuery({
         queryKey: ["application-by-project-uid", "p1"],
@@ -301,7 +310,13 @@ describe("React Query integration trust tests", () => {
     });
 
     it("failed service call causes QueryClient to enter error state", async () => {
-      mockFetchData.mockResolvedValue([null, "Server Error", null, 500]);
+      mockApiGet.mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/applications/by-project/p-fail",
+          method: "GET",
+          body: { message: "Server Error" },
+        })
+      );
 
       const state = queryClient.getQueryState(["application-by-project-uid", "p-fail"]);
 

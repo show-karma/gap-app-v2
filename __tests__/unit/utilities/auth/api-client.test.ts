@@ -214,10 +214,16 @@ describe("createAuthenticatedApiClient", () => {
       expect(TokenManager.clearCache).not.toHaveBeenCalled();
     });
 
-    it("should not retry when error has no response object", async () => {
+    it("should retry transient network errors before rejecting", async () => {
       vi.mocked(TokenManager.getToken).mockResolvedValue("token");
 
-      const client = createAuthenticatedApiClient("https://api.test.local");
+      const client = createAuthenticatedApiClient("https://api.test.local", 30000, {
+        retries: 2,
+        baseDelayMs: 0,
+        maxDelayMs: 0,
+        jitter: 0,
+        reconnectToastAfterAttempt: Number.POSITIVE_INFINITY,
+      });
 
       let callCount = 0;
       client.defaults.adapter = async (config: any) => {
@@ -226,7 +232,8 @@ describe("createAuthenticatedApiClient", () => {
       };
 
       await expect(client.get("/endpoint")).rejects.toThrow();
-      expect(callCount).toBe(1);
+      // Original attempt + 2 retries
+      expect(callCount).toBe(3);
     });
   });
 });

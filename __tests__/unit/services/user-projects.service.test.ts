@@ -3,18 +3,25 @@
  * @description Tests for fetching user-owned projects using V2 endpoint
  */
 
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import {
   fetchMyProjects,
   fetchMyProjectsPaginated,
 } from "@/utilities/sdk/projects/fetchMyProjects";
 
-// Mock fetchData utility
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+// Mock the api client
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+  },
 }));
+
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
+const mockApiGet = api.get as vi.Mock;
 
 describe("User Projects Service (V2)", () => {
   const mockProjects = [
@@ -62,77 +69,53 @@ describe("User Projects Service (V2)", () => {
     const mockAddress = "0xabcdef1234567890123456789012345678901234" as `0x${string}`;
 
     it("should fetch user projects successfully", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockApiGet.mockResolvedValue(mockPaginatedResponse);
 
       const result = await fetchMyProjects(mockAddress);
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.USER.PROJECTS(1, 100),
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(INDEXER.V2.USER.PROJECTS(1, 100));
       expect(result).toHaveLength(2);
       expect(result[0].details.title).toBe("Test Project 1");
     });
 
     it("should fetch projects even when no address provided (JWT auth)", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockApiGet.mockResolvedValue(mockPaginatedResponse);
 
       const result = await fetchMyProjects(undefined);
 
-      expect(fetchData).toHaveBeenCalled();
+      expect(mockApiGet).toHaveBeenCalled();
       expect(result).toHaveLength(2);
     });
 
     it("should throw when fetch fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Unauthorized"]);
+      mockApiGet.mockRejectedValue(new Error("Unauthorized"));
 
       await expect(fetchMyProjects(mockAddress)).rejects.toThrow("Unauthorized");
     });
 
     it("should handle custom page and limit", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockApiGet.mockResolvedValue(mockPaginatedResponse);
 
       await fetchMyProjects(mockAddress, 2, 50);
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.USER.PROJECTS(2, 50),
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(INDEXER.V2.USER.PROJECTS(2, 50));
     });
   });
 
   describe("fetchMyProjectsPaginated", () => {
     it("should fetch paginated user projects", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockApiGet.mockResolvedValue(mockPaginatedResponse);
 
       const result = await fetchMyProjectsPaginated(1, 20);
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.USER.PROJECTS(1, 20),
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(INDEXER.V2.USER.PROJECTS(1, 20));
       expect(result).not.toBeNull();
       expect(result?.projects).toHaveLength(2);
       expect(result?.pagination.total).toBe(2);
     });
 
     it("should return null when fetch fails", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([null, "Unauthorized"]);
+      mockApiGet.mockRejectedValue(new Error("Unauthorized"));
 
       const result = await fetchMyProjectsPaginated();
 
@@ -140,19 +123,11 @@ describe("User Projects Service (V2)", () => {
     });
 
     it("should use default pagination values", async () => {
-      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockApiGet.mockResolvedValue(mockPaginatedResponse);
 
       await fetchMyProjectsPaginated();
 
-      expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.V2.USER.PROJECTS(1, 20),
-        "GET",
-        {},
-        {},
-        {},
-        true,
-        false
-      );
+      expect(mockApiGet).toHaveBeenCalledWith(INDEXER.V2.USER.PROJECTS(1, 20));
     });
   });
 });

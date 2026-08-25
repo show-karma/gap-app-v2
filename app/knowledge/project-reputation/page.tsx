@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "How Projects Build Reputation Through Funding";
 const description =
@@ -12,9 +15,11 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/project-reputation",
+  path: PAGES.KNOWLEDGE.ARTICLE("project-reputation"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("project-reputation");
 
 export default function ProjectReputationPage() {
   return (
@@ -22,26 +27,28 @@ export default function ProjectReputationPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Project Reputation", href: "/knowledge/project-reputation" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Project Reputation", href: PAGES.KNOWLEDGE.ARTICLE("project-reputation") },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/project-reputation"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("project-reputation")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Project Reputation", url: "/knowledge/project-reputation" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Project Reputation", url: PAGES.KNOWLEDGE.ARTICLE("project-reputation") },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">How Projects Build Reputation Through Funding</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">How Projects Build Reputation Through Funding</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -83,25 +90,25 @@ export default function ProjectReputationPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/onchain-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What is onchain reputation?
             </Link>
             <Link
-              href="/knowledge/reputation-compounding"
+              href={PAGES.KNOWLEDGE.ARTICLE("reputation-compounding")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → How reputation compounds in open funding
             </Link>
             <Link
-              href="/knowledge/project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What are project profiles?
             </Link>
             <Link
-              href="/knowledge/project-registry"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-registry")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Public project registries
@@ -113,7 +120,7 @@ export default function ProjectReputationPage() {
           <h2 className="text-xl font-semibold">Karma's role</h2>
           <p className="text-gray-700 dark:text-gray-300">
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"

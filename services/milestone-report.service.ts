@@ -1,8 +1,25 @@
 import type { PendingVerificationAPIResponse } from "@/hooks/usePendingVerificationMilestones";
 import type { ReportAPIResponse } from "@/hooks/useReportPageData";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic message. Falls back to a plain `Error.message` (or
+ * `String(error)`) for non-HTTP `ApiError`s.
+ */
+function httpErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 const EMPTY_REPORT_RESPONSE: ReportAPIResponse = {
   data: [],
@@ -45,8 +62,13 @@ export const milestoneReportService = {
       url += `&reviewerAddress=${encodeURIComponent(reviewerAddress)}`;
     }
 
-    const [data, error] = await fetchData<ReportAPIResponse>(url);
-    if (error) throw new Error(String(error));
+    let data: ReportAPIResponse | null;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<ReportAPIResponse>(url);
+    } catch (error) {
+      throw new Error(httpErrorMessage(error));
+    }
     return data || { ...EMPTY_REPORT_RESPONSE, pageInfo: { totalItems: 0, page: 1, pageLimit } };
   },
 
@@ -66,8 +88,13 @@ export const milestoneReportService = {
       url += `&reviewerAddress=${encodeURIComponent(reviewerAddress)}`;
     }
 
-    const [data, error] = await fetchData<PendingVerificationAPIResponse>(url);
-    if (error) throw new Error(String(error));
+    let data: PendingVerificationAPIResponse | null;
+    try {
+      // TODO(#1775): add zod schema
+      data = await api.get<PendingVerificationAPIResponse>(url);
+    } catch (error) {
+      throw new Error(httpErrorMessage(error));
+    }
     return data || { data: [], pageInfo: { totalItems: 0, page: 1, pageLimit } };
   },
 };

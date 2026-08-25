@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 export class ApplicationAccessError extends Error {
@@ -81,22 +82,40 @@ export function useApplicationAccess(
       if (!referenceNumber) {
         throw ApplicationAccessError.unknown("Reference number is required");
       }
-      const [response, fetchError, , httpStatus] = await fetchData<ApplicationAccessInfo>(
-        INDEXER.V2.FUNDING_APPLICATIONS.ACCESS(referenceNumber)
-      );
-      if (fetchError || !response) {
-        if (httpStatus === 401 || httpStatus === 403) {
-          throw ApplicationAccessError.auth("Authentication required or access denied");
-        }
-        if (httpStatus === 404) {
-          throw ApplicationAccessError.notFound("Application not found");
-        }
-        if (!httpStatus || httpStatus === 0 || httpStatus >= 500) {
+      try {
+        // TODO(#1775): add zod schema
+        const response = await api.get<ApplicationAccessInfo>(
+          INDEXER.V2.FUNDING_APPLICATIONS.ACCESS(referenceNumber)
+        );
+        if (!response) {
           throw ApplicationAccessError.network("Failed to connect to the server");
         }
-        throw ApplicationAccessError.unknown(fetchError ?? "Failed to check access");
+        return response;
+      } catch (fetchError) {
+        if (fetchError instanceof ApplicationAccessError) throw fetchError;
+
+        if (isApiError(fetchError) && fetchError instanceof HttpError) {
+          const httpStatus = fetchError.status;
+          if (httpStatus === 401 || httpStatus === 403) {
+            throw ApplicationAccessError.auth(
+              "Authentication required or access denied",
+              fetchError
+            );
+          }
+          if (httpStatus === 404) {
+            throw ApplicationAccessError.notFound("Application not found", fetchError);
+          }
+          if (httpStatus >= 500) {
+            throw ApplicationAccessError.network("Failed to connect to the server", fetchError);
+          }
+          throw ApplicationAccessError.unknown(
+            fetchError.message ?? "Failed to check access",
+            fetchError
+          );
+        }
+        // Network / timeout / aborted — no HTTP status at all.
+        throw ApplicationAccessError.network("Failed to connect to the server", fetchError);
       }
-      return response;
     },
     enabled: !!referenceNumber && enabled && ready,
     staleTime: 1000 * 30,

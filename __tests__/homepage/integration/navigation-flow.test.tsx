@@ -1,7 +1,7 @@
 /**
  * Homepage Navigation Flow Integration Tests
  * Tests the funder-focused home page navigation: hero CTAs and the
- * two-row "How Karma works" section CTAs.
+ * two-row "Why Karma" section CTAs.
  */
 
 import HomePage from "@/app/page";
@@ -25,23 +25,25 @@ describe("Homepage Navigation Flows", () => {
       expect(rel.includes("noopener") || rel.includes("noreferrer")).toBe(true);
     });
 
-    it("should render the See how Karma works secondary CTA anchoring to #how-it-works", async () => {
+    it("should render the Why funders pick Karma secondary CTA anchoring to #why-karma", async () => {
       renderWithProviders(await HomePage());
 
-      const anchorLinks = screen.getAllByRole("link", { name: /See how Karma works/i });
+      const anchorLinks = screen.getAllByRole("link", { name: /Why funders pick Karma/i });
       expect(anchorLinks.length).toBeGreaterThanOrEqual(1);
-      expect(anchorLinks[0]).toHaveAttribute("href", "#how-it-works");
+      expect(anchorLinks[0]).toHaveAttribute("href", "#why-karma");
     });
   });
 
-  describe("How Karma works rows", () => {
+  describe("Why Karma rows", () => {
     it("should render both product rows", async () => {
       renderWithProviders(await HomePage());
 
       expect(
         screen.getByText(/Generate a donor-ready research brief in 10 minutes/i)
       ).toBeInTheDocument();
-      expect(screen.getByText(/AI-powered software for grant programs/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Cut application review time by 70% and pay on proof of work/i)
+      ).toBeInTheDocument();
     });
 
     it("should route the Nonprofit Research row CTA to /donor-advisors", async () => {

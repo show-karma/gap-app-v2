@@ -21,7 +21,7 @@ import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { Grant } from "@/types/v2/grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -46,6 +46,9 @@ const updateSchema = z.object({
     .or(z.literal("")),
   completionPercentage: z.string().refine(
     (value) => {
+      // Number("") === 0 and Number(" ") === 0, so an empty or whitespace-only
+      // string would slip through as 0%
+      if (value.trim() === "") return false;
       const num = Number(value);
       return !Number.isNaN(num) && num >= 0 && num <= 100;
     },
@@ -127,7 +130,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const pathname = usePathname();
 
   const createGrantUpdate = async (grantToUpdate: Grant, data: UpdateType) => {
-    if (!address || !project) return;
+    if (!project) return;
     startAttestation("Posting update...");
     try {
       const setup = await setupChainAndWallet({
@@ -161,7 +164,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), {});
         }
         updateStep("indexing");
         const attestUID = grantUpdate.uid;

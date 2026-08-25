@@ -4,6 +4,7 @@ import {
   fetchDiligenceResponseContext,
   getCandidateDiligence,
   getDiligenceTemplate,
+  getOutreachPreview,
   requestIntro,
   saveDiligenceTemplate,
   submitDiligenceResponse,
@@ -14,6 +15,8 @@ import type {
   CandidateDiligenceView,
   DiligenceResponseContext,
   DiligenceTemplate,
+  OutreachAction,
+  OutreachPreview,
   RequestIntroResult,
   SaveDiligenceTemplateRequest,
   SubmitDiligenceResponseRequest,
@@ -24,33 +27,81 @@ import type {
 
 export const diligenceTemplateQueryKey = ["donor-research", "diligence", "template"] as const;
 
+/**
+ * Prefix shared by every report-scoped template entry. Deliberately NOT nested
+ * under {@link diligenceTemplateQueryKey} — React Query matches keys by prefix,
+ * so nesting would make any `/me` invalidation sweep every report-scoped copy
+ * as a side effect rather than a decision.
+ */
+const REPORT_DILIGENCE_TEMPLATE_KEY_PREFIX = [
+  "donor-research",
+  "diligence",
+  "report-template",
+] as const;
+
+/** Report-owner-scoped template (see {@link useDiligenceTemplate}). */
+export const reportDiligenceTemplateQueryKey = (reportId: string) =>
+  [...REPORT_DILIGENCE_TEMPLATE_KEY_PREFIX, reportId] as const;
+
 export const candidateDiligenceQueryKey = (reportId: string, candidateId: string) =>
   ["donor-research", "diligence", "candidate", reportId, candidateId] as const;
 
 export const diligenceResponseContextQueryKey = (token: string) =>
   ["donor-research", "diligence", "response-context", token] as const;
 
+export const outreachPreviewQueryKey = (
+  reportId: string,
+  candidateId: string,
+  action: OutreachAction
+) => ["donor-research", "diligence", "outreach-preview", reportId, candidateId, action] as const;
+
 // -- Advisor: template -------------------------------------------------------
 
-/** Loads the advisor's diligence template. Always a stable shape (no 404). */
-export function useDiligenceTemplate() {
+/**
+ * Loads a diligence template. Always a stable shape (no 404).
+ *
+ * Pass `reportId` from inside a report to read the template of that report's
+ * OWNER — the one an outreach from this report will freeze. Omit it for the
+ * caller's own template (the standalone editor page).
+ */
+export function useDiligenceTemplate(reportId?: string) {
   return useQuery<DiligenceTemplate>({
-    queryKey: diligenceTemplateQueryKey,
-    queryFn: getDiligenceTemplate,
+    queryKey: reportId ? reportDiligenceTemplateQueryKey(reportId) : diligenceTemplateQueryKey,
+    queryFn: () => getDiligenceTemplate(reportId),
     staleTime: 60_000,
   });
 }
 
 /**
- * Wholesale-replaces the advisor's diligence template, seeding the cache with
- * the saved result so the editor reflects the server's canonical copy.
+ * Wholesale-replaces a diligence template, seeding the cache with the saved
+ * result so the editor reflects the server's canonical copy. `reportId`
+ * selects the report owner's template — see {@link useDiligenceTemplate}.
+ *
+ * One row can be cached under several keys — the caller's `/me` copy, plus one
+ * per report that resolves to the same owner — so a save seeds the key it
+ * wrote and drops every OTHER copy. Nothing here can tell which reports share
+ * an owner, and a stale copy is a correctness bug (the empty-template guard
+ * would keep showing the first-run editor for up to `staleTime`), so the sweep
+ * is deliberately wide: these are cheap single-row reads.
  */
-export function useSaveDiligenceTemplate() {
+export function useSaveDiligenceTemplate(reportId?: string) {
   const queryClient = useQueryClient();
   return useMutation<DiligenceTemplate, Error, SaveDiligenceTemplateRequest>({
-    mutationFn: (body) => saveDiligenceTemplate(body),
+    mutationFn: (body) => saveDiligenceTemplate(body, reportId),
     onSuccess: (saved) => {
-      queryClient.setQueryData(diligenceTemplateQueryKey, saved);
+      queryClient.setQueryData(
+        reportId ? reportDiligenceTemplateQueryKey(reportId) : diligenceTemplateQueryKey,
+        saved
+      );
+      // Skipped when the `/me` key IS the one just seeded, so the fresh copy
+      // doesn't get immediately marked stale and refetched.
+      if (reportId) {
+        queryClient.invalidateQueries({ queryKey: diligenceTemplateQueryKey });
+      }
+      queryClient.invalidateQueries({
+        queryKey: REPORT_DILIGENCE_TEMPLATE_KEY_PREFIX,
+        predicate: (query) => query.queryKey[3] !== reportId,
+      });
     },
   });
 }
@@ -74,13 +125,39 @@ export function useCandidateDiligence(
 }
 
 /**
+ * Loads the exact outreach email a send action would dispatch, for the
+ * preview-and-edit step. `staleTime: 0` + refetch on mount so every dialog
+ * open shows the current composition (the intro body embeds live Q&A context).
+ */
+export function useOutreachPreview(
+  reportId: string,
+  candidateId: string,
+  action: OutreachAction,
+  enabled = true
+) {
+  return useQuery<OutreachPreview>({
+    queryKey: outreachPreviewQueryKey(reportId, candidateId, action),
+    queryFn: () => getOutreachPreview(reportId, candidateId, action),
+    enabled: enabled && !!reportId && !!candidateId,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
  * Ask Questions (202, async). Invalidates the candidate view so the new
  * `in_progress` / `blocked` state is reflected after the outbox dispatches.
+ * `body` carries the advisor-edited email body — pass it ONLY when edited so
+ * an untouched preview lets the backend compose its own default.
  */
 export function useAskQuestions() {
   const queryClient = useQueryClient();
-  return useMutation<AskQuestionsResponse, Error, { reportId: string; candidateId: string }>({
-    mutationFn: ({ reportId, candidateId }) => askQuestions(reportId, candidateId),
+  return useMutation<
+    AskQuestionsResponse,
+    Error,
+    { reportId: string; candidateId: string; body?: string }
+  >({
+    mutationFn: ({ reportId, candidateId, body }) => askQuestions(reportId, candidateId, body),
     onSuccess: (_data, { reportId, candidateId }) => {
       queryClient.invalidateQueries({
         queryKey: candidateDiligenceQueryKey(reportId, candidateId),
@@ -92,12 +169,17 @@ export function useAskQuestions() {
 /**
  * Connect / named intro (202 | 422-email). On a queued result invalidates the
  * candidate view. The `email_required` branch is surfaced to the caller (it
- * resolves, not rejects) so the UI can run the email-capture flow.
+ * resolves, not rejects) so the UI can run the email-capture flow. `body`
+ * follows the same only-when-edited contract as {@link useAskQuestions}.
  */
 export function useRequestIntro() {
   const queryClient = useQueryClient();
-  return useMutation<RequestIntroResult, Error, { reportId: string; candidateId: string }>({
-    mutationFn: ({ reportId, candidateId }) => requestIntro(reportId, candidateId),
+  return useMutation<
+    RequestIntroResult,
+    Error,
+    { reportId: string; candidateId: string; body?: string }
+  >({
+    mutationFn: ({ reportId, candidateId, body }) => requestIntro(reportId, candidateId, body),
     onSuccess: (result, { reportId, candidateId }) => {
       if (result.kind === "queued") {
         queryClient.invalidateQueries({

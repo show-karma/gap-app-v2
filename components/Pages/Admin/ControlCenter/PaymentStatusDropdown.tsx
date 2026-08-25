@@ -23,6 +23,7 @@ import {
 import { useUpdateMilestonePaymentStatus } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { MilestonePaymentStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { cn } from "@/utilities/tailwind";
+import type { OnRequestDeleteDisbursement, OnRequestRecordPayment } from "./paymentRequestTypes";
 
 const STATUS_OPTIONS: {
   value: MilestonePaymentStatus;
@@ -63,11 +64,8 @@ interface PaymentStatusDropdownProps {
   grantUID: string;
   communityUID: string;
   paymentStatusDate?: string | null;
-  onRequestRecordPayment?: (
-    milestoneLabel: string,
-    targetStatus: "awaiting_signatures" | "disbursed"
-  ) => void;
-  onRequestDeleteDisbursement?: (milestoneLabel: string) => void;
+  onRequestRecordPayment?: OnRequestRecordPayment;
+  onRequestDeleteDisbursement?: OnRequestDeleteDisbursement;
 }
 
 export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
@@ -94,7 +92,7 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
 
       // "Awaiting sigs" and "Disbursed" open the Record Payment dialog
       if (status === "awaiting_signatures" || status === "disbursed") {
-        onRequestRecordPayment?.(milestoneLabel, status);
+        onRequestRecordPayment?.(milestoneUID, milestoneLabel, status);
         return;
       }
 
@@ -130,8 +128,8 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
 
   const handleConfirmUnpaid = useCallback(() => {
     setConfirmingUnpaid(false);
-    onRequestDeleteDisbursement?.(milestoneLabel);
-  }, [milestoneLabel, onRequestDeleteDisbursement]);
+    onRequestDeleteDisbursement?.(milestoneUID);
+  }, [milestoneUID, onRequestDeleteDisbursement]);
 
   return (
     <>

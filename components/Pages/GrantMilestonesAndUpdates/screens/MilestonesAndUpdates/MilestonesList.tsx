@@ -11,6 +11,7 @@ import type { UnifiedMilestone, ProjectUpdate as V2ProjectUpdate } from "@/types
 import { normalizeTimestamp } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
 import { buildGrantMilestoneOrderMap } from "@/utilities/milestones/assignGrantMilestoneOrder";
+import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { cn } from "@/utilities/tailwind";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
@@ -159,7 +160,11 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const { completedMilestones, pendingMilestones, allMilestones } = useMemo(() => {
     const unsortedCompleted = generalArray.filter((item) => isCompleted(item));
     const unsortedPending = generalArray.filter(
-      (item) => !isCompleted(item) && item.type !== "update"
+      (item) =>
+        !isCompleted(item) &&
+        item.type !== "update" &&
+        // status lives on the wrapped milestone (item.object), not the item
+        !isCancelledMilestoneStatus(item.object?.currentStatus)
     );
 
     // For completed items: use completion date or creation date, descending (newest first)

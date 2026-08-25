@@ -1,13 +1,21 @@
 import { GrantCommentsService } from "@/src/features/grant-comments/api/grant-comments-service";
 import type { GrantComment } from "@/src/features/grant-comments/types";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
+const mockApiPost = api.post as vi.MockedFunction<typeof api.post>;
+const mockApiPut = api.put as vi.MockedFunction<typeof api.put>;
+const mockApiDelete = api.delete as vi.MockedFunction<typeof api.delete>;
 
 function createMockComment(overrides: Partial<GrantComment> = {}): GrantComment {
   return {
@@ -33,19 +41,16 @@ describe("GrantCommentsService", () => {
   describe("getComments", () => {
     it("should return comments on success", async () => {
       const comments = [createMockComment(), createMockComment({ id: "comment-2" })];
-      mockFetchData.mockResolvedValue([{ comments }, null, null, 200] as any);
+      mockApiGet.mockResolvedValue({ comments } as any);
 
       const result = await GrantCommentsService.getComments("project-123", "program-456");
 
       expect(result).toEqual(comments);
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/grants/project-123/program-456/comments",
-        "GET"
-      );
+      expect(mockApiGet).toHaveBeenCalledWith("/v2/grants/project-123/program-456/comments");
     });
 
     it("should throw on error instead of silently returning empty array", async () => {
-      mockFetchData.mockResolvedValue([null, "Network error", null, 500] as any);
+      mockApiGet.mockRejectedValue(new Error("Network error"));
 
       await expect(GrantCommentsService.getComments("project-123", "program-456")).rejects.toThrow(
         "Network error"
@@ -53,7 +58,7 @@ describe("GrantCommentsService", () => {
     });
 
     it("should return empty array when data has no comments", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200] as any);
+      mockApiGet.mockResolvedValue({} as any);
 
       const result = await GrantCommentsService.getComments("project-123", "program-456");
       expect(result).toEqual([]);
@@ -63,7 +68,7 @@ describe("GrantCommentsService", () => {
   describe("createComment", () => {
     it("should create a comment and return it", async () => {
       const comment = createMockComment();
-      mockFetchData.mockResolvedValue([{ comment }, null, null, 201] as any);
+      mockApiPost.mockResolvedValue({ comment } as any);
 
       const result = await GrantCommentsService.createComment(
         "project-123",
@@ -72,15 +77,13 @@ describe("GrantCommentsService", () => {
       );
 
       expect(result).toEqual(comment);
-      expect(mockFetchData).toHaveBeenCalledWith(
-        "/v2/grants/project-123/program-456/comments",
-        "POST",
-        { content: "New comment" }
-      );
+      expect(mockApiPost).toHaveBeenCalledWith("/v2/grants/project-123/program-456/comments", {
+        content: "New comment",
+      });
     });
 
     it("should throw on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Unauthorized", null, 401] as any);
+      mockApiPost.mockRejectedValue(new Error("Unauthorized"));
 
       await expect(
         GrantCommentsService.createComment("project-123", "program-456", "content")
@@ -88,7 +91,7 @@ describe("GrantCommentsService", () => {
     });
 
     it("should throw when response is missing comment", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200] as any);
+      mockApiPost.mockResolvedValue({} as any);
 
       await expect(
         GrantCommentsService.createComment("project-123", "program-456", "content")
@@ -99,18 +102,18 @@ describe("GrantCommentsService", () => {
   describe("editComment", () => {
     it("should edit a comment and return updated version", async () => {
       const comment = createMockComment({ content: "Updated content" });
-      mockFetchData.mockResolvedValue([{ comment }, null, null, 200] as any);
+      mockApiPut.mockResolvedValue({ comment } as any);
 
       const result = await GrantCommentsService.editComment("comment-1", "Updated content");
 
       expect(result).toEqual(comment);
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/grant-comments/comment-1", "PUT", {
+      expect(mockApiPut).toHaveBeenCalledWith("/v2/grant-comments/comment-1", {
         content: "Updated content",
       });
     });
 
     it("should throw on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Not found", null, 404] as any);
+      mockApiPut.mockRejectedValue(new Error("Not found"));
 
       await expect(GrantCommentsService.editComment("comment-1", "content")).rejects.toThrow(
         "Not found"
@@ -118,7 +121,7 @@ describe("GrantCommentsService", () => {
     });
 
     it("should throw when response is missing comment", async () => {
-      mockFetchData.mockResolvedValue([{}, null, null, 200] as any);
+      mockApiPut.mockResolvedValue({} as any);
 
       await expect(GrantCommentsService.editComment("comment-1", "content")).rejects.toThrow(
         "Unexpected API response: missing comment"
@@ -128,15 +131,15 @@ describe("GrantCommentsService", () => {
 
   describe("deleteComment", () => {
     it("should delete a comment successfully", async () => {
-      mockFetchData.mockResolvedValue([null, null, null, 204] as any);
+      mockApiDelete.mockResolvedValue(undefined as any);
 
       await expect(GrantCommentsService.deleteComment("comment-1")).resolves.toBeUndefined();
 
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/grant-comments/comment-1", "DELETE");
+      expect(mockApiDelete).toHaveBeenCalledWith("/v2/grant-comments/comment-1");
     });
 
     it("should throw on error", async () => {
-      mockFetchData.mockResolvedValue([null, "Forbidden", null, 403] as any);
+      mockApiDelete.mockRejectedValue(new Error("Forbidden"));
 
       await expect(GrantCommentsService.deleteComment("comment-1")).rejects.toThrow("Forbidden");
     });

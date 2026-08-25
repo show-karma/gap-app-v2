@@ -33,7 +33,7 @@ const APPLICATION_STATUS_ITEMS: DropdownItem[] = [
   { id: "under_review", label: "Under Review", color: "#3b82f6" },
   { id: "approved", label: "Approved", color: "#22c55e" },
   { id: "in_progress", label: "In Progress", color: "#8b5cf6" },
-  { id: "rejected", label: "Rejected", color: "#ef4444" },
+  { id: "rejected", label: "Declined", color: "#ef4444" },
   { id: "revision_requested", label: "Revision Requested", color: "#f97316" },
   { id: "resubmitted", label: "Resubmitted", color: "#06b6d4" },
   { id: "withdrawn", label: "Withdrawn", color: "#6b7280" },

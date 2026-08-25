@@ -3,6 +3,7 @@
 import { AlertCircle, Search } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useMixpanel } from "@/hooks/useMixpanel";
+import { PAGES } from "@/utilities/pages";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import { useFundingFilters } from "../hooks/use-funding-filters";
 import { useFundingProgramByCompositeId, useFundingPrograms } from "../hooks/use-funding-programs";
@@ -12,6 +13,22 @@ import { FundingMapCardSkeleton } from "./funding-map-card-skeleton";
 import { FundingMapFilters } from "./funding-map-filters";
 import { FundingMapPagination } from "./funding-map-pagination";
 import { FundingProgramDetailsDialog } from "./funding-program-details-dialog";
+
+/**
+ * Crawlable detail-page URL for a program, when one exists. Programs
+ * configured on Karma with a community get a real
+ * /community/[slug]/programs/[programId] page; giving the card that href
+ * puts a followable anchor in the server-rendered HTML (the dialog
+ * behavior on click remains for JS users). Returns undefined for
+ * registry-only programs, which keep the plain dialog card.
+ */
+export function getProgramDetailHref(program: FundingProgramResponse): string | undefined {
+  const communitySlug = program.communities?.[0]?.slug;
+  if (!program.isOnKarma || !program.programId || !communitySlug) {
+    return undefined;
+  }
+  return PAGES.COMMUNITY.PROGRAM_DETAIL(communitySlug, program.programId);
+}
 
 /**
  * Extract MongoDB _id as string - handles both V2 API (string) and legacy ({ $oid: string }) formats
@@ -152,6 +169,7 @@ export function FundingMapList() {
                 key={getProgramId(program)}
                 program={program}
                 onClick={() => handleProgramClick(program)}
+                href={getProgramDetailHref(program)}
                 cardPosition={index}
                 page={filters.page}
               />

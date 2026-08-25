@@ -1,5 +1,6 @@
 import type { SlackOAuthRegisterWorkspaceInput, SlackOAuthWorkspace } from "@/types/slack-oauth";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -24,58 +25,36 @@ export const slackOauthService = {
    * not have registered one yet.
    */
   async getWorkspace(slug: string): Promise<SlackOAuthWorkspace | null> {
-    const [data, error, , status] = await fetchData<SlackOAuthWorkspace>(
-      INDEXER.SLACK_OAUTH.WORKSPACE(slug),
-      "GET",
-      {},
-      {},
-      {},
-      true
-    );
-    if (status === 404) return null;
-    if (error) throw new Error(error);
-    return data ?? null;
+    try {
+      // TODO(#1775): add zod schema
+      const data = await api.get<SlackOAuthWorkspace>(INDEXER.SLACK_OAUTH.WORKSPACE(slug));
+      return data ?? null;
+    } catch (error) {
+      if (isApiError(error) && error instanceof HttpError && error.status === 404) return null;
+      throw error;
+    }
   },
 
   async registerWorkspace(
     slug: string,
     input: SlackOAuthRegisterWorkspaceInput
   ): Promise<SlackOAuthWorkspace> {
-    const [data, error] = await fetchData<SlackOAuthWorkspace>(
-      INDEXER.SLACK_OAUTH.WORKSPACE(slug),
-      "POST",
-      input,
-      {},
-      {},
-      true
-    );
-    if (error) throw new Error(error);
+    // TODO(#1775): add zod schema
+    const data = await api.post<SlackOAuthWorkspace>(INDEXER.SLACK_OAUTH.WORKSPACE(slug), input);
     if (!data) throw new Error("Register returned empty response");
     return data;
   },
 
   async deleteWorkspace(slug: string, uid: string): Promise<void> {
-    const [, error] = await fetchData<void>(
-      INDEXER.SLACK_OAUTH.WORKSPACE_BY_UID(slug, uid),
-      "DELETE",
-      {},
-      {},
-      {},
-      true
-    );
-    if (error) throw new Error(error);
+    await api.delete(INDEXER.SLACK_OAUTH.WORKSPACE_BY_UID(slug, uid));
   },
 
   async testWorkspace(slug: string, uid: string): Promise<TestWorkspaceResponse> {
-    const [data, error] = await fetchData<TestWorkspaceResponse>(
+    // TODO(#1775): add zod schema
+    const data = await api.post<TestWorkspaceResponse>(
       INDEXER.SLACK_OAUTH.WORKSPACE_TEST(slug, uid),
-      "POST",
-      {},
-      {},
-      {},
-      true
+      {}
     );
-    if (error) throw new Error(error);
     if (!data) throw new Error("Test returned empty response");
     return data;
   },
@@ -90,15 +69,8 @@ export const slackOauthService = {
    * `window.location.href = authorizeUrl` to navigate.
    */
   async getSlackAuthorizeUrl(slug: string): Promise<string> {
-    const [data, error] = await fetchData<{ authorizeUrl: string }>(
-      INDEXER.SLACK_OAUTH.AUTHORIZE_URL(slug),
-      "GET",
-      {},
-      {},
-      {},
-      true
-    );
-    if (error) throw new Error(error);
+    // TODO(#1775): add zod schema
+    const data = await api.get<{ authorizeUrl: string }>(INDEXER.SLACK_OAUTH.AUTHORIZE_URL(slug));
     if (!data?.authorizeUrl) {
       throw new Error("Authorize URL response was empty");
     }

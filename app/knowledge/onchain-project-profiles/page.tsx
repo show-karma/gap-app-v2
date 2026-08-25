@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const title = "Onchain Project Profiles (Without Blockchain Complexity)";
 const description =
@@ -12,9 +15,11 @@ const description =
 export const metadata: Metadata = customMetadata({
   title,
   description,
-  path: "/knowledge/onchain-project-profiles",
+  path: PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("onchain-project-profiles");
 
 export default function OnchainProjectProfilesPage() {
   return (
@@ -22,28 +27,36 @@ export default function OnchainProjectProfilesPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Onchain Project Profiles", href: "/knowledge/onchain-project-profiles" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          {
+            label: "Onchain Project Profiles",
+            href: PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles"),
+          },
         ]}
       />
       <ArticleJsonLd
         title={title}
         description={description}
-        url="/knowledge/onchain-project-profiles"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Onchain Project Profiles", url: "/knowledge/onchain-project-profiles" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          {
+            name: "Onchain Project Profiles",
+            url: PAGES.KNOWLEDGE.ARTICLE("onchain-project-profiles"),
+          },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">
-          Onchain Project Profiles (Without Blockchain Complexity)
-        </h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">
+            Onchain Project Profiles (Without Blockchain Complexity)
+          </h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -90,7 +103,7 @@ export default function OnchainProjectProfilesPage() {
           <h2 className="text-xl font-semibold">How Karma fits</h2>
           <p className="text-gray-700 dark:text-gray-300">
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
@@ -102,7 +115,7 @@ export default function OnchainProjectProfilesPage() {
           </p>
           <p className="pt-2">
             <Link
-              href="/create-project-profile"
+              href={PAGES.CREATE_PROJECT_PROFILE}
               className="text-blue-600 hover:underline dark:text-blue-400 font-semibold"
             >
               → Create your project profile
@@ -114,13 +127,13 @@ export default function OnchainProjectProfilesPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/project-profiles"
+              href={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What are project profiles?
             </Link>
             <Link
-              href="/knowledge/onchain-reputation"
+              href={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → What is onchain reputation?

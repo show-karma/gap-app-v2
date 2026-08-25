@@ -1,3 +1,5 @@
+import { appOrigin } from "@/utilities/domains";
+
 const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
 
 export const envVars = {
@@ -35,10 +37,7 @@ export const envVars = {
   PROFILE_ID: isDev
     ? "0x418102f570483423fc7d431e0efd1cc5d49f2b3fe4c85cb7d837bcfa83e7db03"
     : "0xf123b01fbc8e244131dd1078c8c6778a7037855139f01e65e0e424e06584edd2",
-  VERCEL_URL:
-    process.env.NEXT_PUBLIC_ENV === "production"
-      ? `https://karmahq.xyz`
-      : "https://staging.karmahq.xyz",
+  APP_ORIGIN: appOrigin(),
   OSO_API_KEY: process.env.NEXT_PUBLIC_OSO_API_KEY || "",
   PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID || "",
   ENV: process.env.NEXT_PUBLIC_ENV || "development",
@@ -48,6 +47,11 @@ export const envVars = {
   // Karma platform-owned Telegram bot handle (without leading @).
   // Hardcoded — single bot used across all environments.
   KARMA_TELEGRAM_BOT_HANDLE: "karmahq_support_bot",
+  // Sanity Blog CMS — see sanity/env.ts for the module that consumes these.
+  NEXT_PUBLIC_SANITY_PROJECT_ID: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
+  NEXT_PUBLIC_SANITY_DATASET: (process.env.NEXT_PUBLIC_SANITY_DATASET || "production") as string,
+  NEXT_PUBLIC_SANITY_API_VERSION: (process.env.NEXT_PUBLIC_SANITY_API_VERSION ||
+    "2024-01-01") as string,
 };
 
 // Re-exported as a named constant so callers can `import { KARMA_TELEGRAM_BOT_HANDLE }`

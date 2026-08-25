@@ -29,4 +29,5 @@ export const useSetupChainAndWallet = vi.fn().mockReturnValue({
   smartWalletAddress: null,
   hasEmbeddedWallet: false,
   hasExternalWallet: false,
+  signerStatus: "ready",
 });

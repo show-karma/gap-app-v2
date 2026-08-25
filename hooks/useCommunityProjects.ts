@@ -1,7 +1,8 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import fetchData from "@/utilities/fetchData";
+import { z } from "zod";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 export interface CommunityProject {
@@ -9,6 +10,16 @@ export interface CommunityProject {
   title: string;
   slug: string;
 }
+
+// Items are a mix of shapes (some carry `details.title`, others a bare
+// `title`) so only the envelope is validated — item fields stay untyped
+// rather than inventing a schema stricter than reality.
+// TODO(#1775): add zod schema for item shape
+const CommunityProjectsEnvelopeSchema = z
+  .object({
+    payload: z.array(z.unknown()).optional(),
+  })
+  .passthrough();
 
 export function useCommunityProjects(programId?: string | null) {
   const { communityId } = useParams();
@@ -23,13 +34,9 @@ export function useCommunityProjects(programId?: string | null) {
       queryParams.selectedProgramId = programId; // This maps to 'programIds' in the URL
     }
 
-    const [data, error] = await fetchData(
-      INDEXER.COMMUNITY.V2.PROJECTS(communityId as string, queryParams)
-    );
-
-    if (error) {
-      throw error;
-    }
+    const data = await api.get(INDEXER.COMMUNITY.V2.PROJECTS(communityId as string, queryParams), {
+      schema: CommunityProjectsEnvelopeSchema,
+    });
 
     // Transform the API response to extract project information
     // The API returns projects in the 'payload' array directly

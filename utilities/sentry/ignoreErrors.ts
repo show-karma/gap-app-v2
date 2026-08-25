@@ -74,8 +74,12 @@ const notFoundErrors = ["Project not found", "Community not found"];
 // the manual `Sentry.captureException` the error boundaries call on a
 // non-recoverable second attempt — so suppressing the signature here would also
 // drop the genuinely-broken cases we want to see. Recovery is gated entirely by
-// the boundaries: the first attempt hard-reloads without capturing and the
-// second (recovery exhausted) reports normally. See utilities/isChunkLoadError.ts.
+// the boundaries (render-path: `app/error.tsx`, `app/global-error.tsx`,
+// `components/ErrorBoundary.tsx`) and the window-level listeners for
+// non-render paths (`utilities/chunkRecovery.ts`, gated via `beforeSend` in
+// `instrumentation-client.ts`): the first attempt hard-reloads without
+// capturing and the second (recovery exhausted) reports normally. See
+// utilities/isChunkLoadError.ts.
 
 // Anonymous-traffic errors. When a logged-out user lands on a public page
 // (e.g. /project/:projectId), some indexer routes (or SDK callers) still
@@ -103,6 +107,22 @@ const reconciliationDomMutationErrors = [
   /null is not an object \(evaluating '.*\.(parentNode|removeChild)/,
 ];
 
+// Browser extensions and injected third-party scripts ship JavaScript minified
+// with `javascript-obfuscator`, whose identifiers are hex-mangled like `_0x4761`.
+// When such a script (injected via DOM `insertBefore`) references a variable its
+// own obfuscated bundle never defined, Safari throws
+// `ReferenceError: Can't find variable: _0x4761` and V8 throws
+// `_0x4761 is not defined` at global scope (`mechanism: onerror`). The frames are
+// all `webkit-masked-url://hidden/` with obfuscated names — none of it is our
+// code (this repo contains zero `_0x*` identifiers), and an error boundary can't
+// catch a global-scope onerror. Filter the whole class; the hex-identifier shape
+// guarantees we never mask a genuine application ReferenceError.
+// See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-25E
+const obfuscatedInjectedScriptErrors = [
+  /Can't find variable: _0x[0-9a-f]+/i,
+  /_0x[0-9a-f]+ is not defined/i,
+];
+
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
   "rejected the request",
@@ -123,4 +143,5 @@ export const sentryIgnoreErrors = [
   ...streamingAbortErrors,
   ...anonymousAuthErrors,
   ...reconciliationDomMutationErrors,
+  ...obfuscatedInjectedScriptErrors,
 ];

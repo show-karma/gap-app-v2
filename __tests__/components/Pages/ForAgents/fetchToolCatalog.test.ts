@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { STATIC_FALLBACK_TOOLS } from "@/components/Pages/ForAgents/content";
+import { STATIC_FALLBACK_TOOLS } from "@/components/Pages/ForAgents/fallbackTools";
 import { fetchToolCatalog } from "@/components/Pages/ForAgents/fetchToolCatalog";
 import type { PublicToolMetadata } from "@/components/Pages/ForAgents/types";
 
@@ -118,7 +118,7 @@ describe("fetchToolCatalog", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toMatch(/\/v2\/mcp\/tools$/);
+    expect(url).toMatch(/\/mcp\/tools$/);
     expect(init).toMatchObject({ next: { revalidate: 3600 } });
     expect(init.signal).toBeDefined();
   });

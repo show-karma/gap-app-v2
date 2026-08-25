@@ -1,20 +1,21 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "../fetchData";
+import { api } from "../api/client";
 import { INDEXER } from "../indexer";
+
+// TODO(#1775): add zod schema — endpoint shape is otherwise untyped.
+interface CommunityHeaderStatsResponse {
+  noOfPrograms?: number;
+  noOfGrants?: number;
+  noOfProjects?: number;
+  [key: string]: unknown;
+}
 
 export const getHeaderStats = async (communityId: string) => {
   try {
-    const [data, error] = await fetchData(
+    const data = await api.get<CommunityHeaderStatsResponse>(
       INDEXER.COMMUNITY.PAGE_HEADER_STATS(communityId),
-      "GET",
-      {},
-      {},
-      {},
-      false
+      { isAuthorized: false }
     );
-    if (error) {
-      throw new Error(error || "Error fetching header stats");
-    }
     return {
       noOfPrograms: data.noOfPrograms,
       noOfGrants: data.noOfGrants,

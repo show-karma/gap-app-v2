@@ -9,12 +9,14 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { waitForCommunityIndexed } from "@/utilities/waitForCommunityIndexed";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../ui/button";
@@ -36,6 +38,8 @@ type SchemaType = z.infer<typeof schema>;
 interface CreateCommunityResponse {
   slug: string;
   uid: string;
+  status?: "pending" | "indexed";
+  message?: string;
 }
 
 const sanitizeSlug = (slug: string) => slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
@@ -116,17 +120,23 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     setIsLoading(true);
 
     try {
-      // Check slug availability in community namespace and auto-increment if taken
+      // Check slug availability in community namespace and auto-increment if taken.
+      // Availability checks are best-effort: a failure here silently falls
+      // through and the original slug is submitted as-is (matches legacy
+      // fetchData behavior, which never threw for this call).
       let slug = sanitizeSlug(data.slug);
-      const [slugCheck] = await fetchData(INDEXER.COMMUNITY.V2.SLUG_CHECK(slug), "GET");
+      // TODO(#1775): add zod schema
+      const slugCheck = await api
+        .get<{ available: boolean }>(INDEXER.COMMUNITY.V2.SLUG_CHECK(slug))
+        .catch(() => undefined);
       if (slugCheck && !slugCheck.available) {
         let counter = 1;
         let available = false;
         while (!available && counter < 100) {
-          const [check] = await fetchData(
-            INDEXER.COMMUNITY.V2.SLUG_CHECK(`${slug}-${counter}`),
-            "GET"
-          );
+          // TODO(#1775): add zod schema
+          const check = await api
+            .get<{ available: boolean }>(INDEXER.COMMUNITY.V2.SLUG_CHECK(`${slug}-${counter}`))
+            .catch(() => undefined);
           if (check?.available) {
             slug = `${slug}-${counter}`;
             available = true;
@@ -136,48 +146,57 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         }
       }
 
-      const [result, error, , status] = await fetchData<CreateCommunityResponse>(
-        "/v2/communities",
-        "POST",
-        {
-          name: data.name,
-          description: description || data.name,
-          imageURL: data.imageURL,
-          slug,
-          chainID: selectedChain,
-        },
-        {},
-        {},
-        true
-      );
-
-      if (error) {
-        const lowerError = (error as string).toLowerCase();
-        if (status === 403 && lowerError.includes("community limit")) {
-          toast.error("You've reached the free tier limit of 1 community. Contact us to upgrade.", {
-            duration: 10000,
-          });
-          return;
-        }
-        throw new Error(error as string);
-      }
+      // TODO(#1775): add zod schema — `slug` is intentionally optional below,
+      // the "could not determine its URL" branch depends on it being absent.
+      const result = await api.post<CreateCommunityResponse>("/v2/communities", {
+        name: data.name,
+        description: description || data.name,
+        imageURL: data.imageURL,
+        slug,
+        chainID: selectedChain,
+      });
 
       const communitySlug = result?.slug;
       if (!communitySlug) {
         toast.error("Community created but could not determine its URL. Check your dashboard.");
         return;
       }
-      toast.success("Community created successfully!");
+      const isPending = result?.status === "pending";
+      toast.success(
+        isPending
+          ? "Community created on-chain — finalizing indexing, this can take a moment…"
+          : "Community created successfully!"
+      );
       closeModal();
       try {
         await refreshCommunities();
       } catch {
         // Non-critical — community was already created
       }
+      if (isPending) {
+        await waitForCommunityIndexed(communitySlug);
+      }
       router.push(PAGES.COMMUNITY.ALL_GRANTS(communitySlug));
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes("already exists")) {
+      let message: string | undefined;
+      if (isApiError(error) && error instanceof HttpError) {
+        const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+        const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+        message = bodyMessage || causeMessage || error.message;
+
+        if (error.status === 403 && message.toLowerCase().includes("community limit")) {
+          toast.error("You've reached the free tier limit of 1 community. Contact us to upgrade.", {
+            duration: 10000,
+          });
+          return;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      } else {
+        message = String(error);
+      }
+
+      if (message?.includes("already exists")) {
         toast.error("A community with this slug already exists. Please choose a different slug.");
       } else {
         toast.error("Failed to create community. Please try again.");

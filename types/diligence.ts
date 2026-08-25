@@ -104,6 +104,23 @@ export interface CandidateDiligenceView {
   actions: CandidateDiligenceActions;
 }
 
+/** Which outreach email a preview describes (maps to the two send actions). */
+export type OutreachAction = "diligence" | "intro";
+
+/**
+ * GET .../outreach-preview?action=… — the exact email the matching send action
+ * would dispatch. `bodyText` is the editable default composition; `subject` is
+ * system-owned. `fixedFooter` is non-editable content appended at send time
+ * (the secure-link note for `diligence`, null for `intro`).
+ */
+export interface OutreachPreview {
+  action: OutreachAction;
+  subject: string;
+  bodyText: string;
+  fixedFooter: string | null;
+  editable: { subject: boolean; body: boolean };
+}
+
 /** 202 response from POST .../diligence-requests. */
 export interface AskQuestionsResponse {
   requestId: string;
@@ -186,4 +203,11 @@ export const DILIGENCE_RESPONSE_LIMITS = {
   MAX_ANSWERS: 50,
   ANSWER_TEXT_MAX: 5000,
   QUESTION_ID_MAX: 128,
+} as const;
+
+export const OUTREACH_BODY_LIMITS = {
+  /** Backend rejects trimmed bodies above this (OutreachActionBodySchema). */
+  MAX_CHARS: 10_000,
+  /** Show the live character counter once the body passes this. */
+  COUNTER_THRESHOLD: 9_000,
 } as const;
