@@ -1,75 +1,65 @@
 "use client";
 
-import { BanknotesIcon } from "@heroicons/react/24/outline";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { redirect, useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { CreateDisbursementModal } from "@/src/features/payout-disbursement/components/CreateDisbursementModal";
-import { getPaidAllocationIds } from "@/src/features/payout-disbursement/components/MilestoneSelectionStep";
 import { useSavePayoutConfig } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type {
   CommunityPayoutsSorting,
-  GrantDisbursementInfo,
   PayoutConfigItem,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
-import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
 import { BulkPayoutImportPanel } from "./BulkPayoutImportPanel";
+import { ControlCenterDetailsSidebar } from "./ControlCenterDetailsSidebar";
+import { ControlCenterSkeleton } from "./ControlCenterSkeleton";
+import {
+  ControlCenterCommunityError,
+  ControlCenterHeader,
+  ControlCenterNotAuthorized,
+  ControlCenterPayoutsError,
+} from "./ControlCenterStates";
 import { ControlCenterTable, type TableRow } from "./ControlCenterTable";
+import { CreateDisbursementFab } from "./CreateDisbursementFab";
 import { FilterToolbar } from "./FilterToolbar";
-import { ProjectDetailsSidebar } from "./ProjectDetailsSidebar";
 import { useControlCenterData } from "./useControlCenterData";
+import { useControlCenterUrlState } from "./useControlCenterUrlState";
+import { useDisbursementModal } from "./useDisbursementModal";
+import { useGrantDetailsModal, useLastKnownGrant } from "./useGrantDetailsModal";
 
-// ─── Main component ──────────────────────────────────────────────────────────
+function isCommunityNotFound(error: { message?: string } | null | undefined): boolean {
+  return error?.message === "Community not found" || !!error?.message?.includes("422");
+}
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This page intentionally orchestrates URL state, data-loading guards, and modal coordination in one container component.
 export function ControlCenterPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { ready: authReady } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
 
-  // URL-driven state
-  const selectedProgramId = searchParams.get("programId");
-  const itemsPerPage = Number(searchParams.get("limit")) || 25;
-  const currentPage = Number(searchParams.get("page")) || 1;
-  const searchQuery = searchParams.get("search") || "";
-  const sortBy = (searchParams.get("sortBy") as CommunityPayoutsSorting["sortBy"]) || undefined;
-  const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || undefined;
-  const agreementFilter = searchParams.get("agreementStatus") as
-    | "signed"
-    | "not_signed"
-    | undefined;
-  const invoiceFilter = searchParams.get("invoiceStatus") as
-    | "all_received"
-    | "needs_invoices"
-    | "has_invoices"
-    | undefined;
-  const disbursementFilter = searchParams.get("status") as
-    | "NOT_STARTED"
-    | "IN_PROGRESS"
-    | "COMPLETED"
-    | undefined;
-  const kycFilter = searchParams.get("kycStatus") || undefined;
-  const projectParam = searchParams.get("project") || undefined;
-  const filterSignature = JSON.stringify({
+  const url = useControlCenterUrlState();
+  const {
     selectedProgramId,
+    itemsPerPage,
+    currentPage,
+    searchQuery,
+    sortBy,
+    sortOrder,
     agreementFilter,
     invoiceFilter,
     disbursementFilter,
     kycFilter,
-    searchQuery,
-  });
+    projectParam,
+    grantParam,
+    hasActiveFilters,
+    navigate,
+    replaceQuery,
+    clearAll,
+  } = url;
 
-  // Local state
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [selectedGrants, setSelectedGrants] = useState<Set<string>>(new Set());
+  const [dataVersion, setDataVersion] = useState(0);
 
   // Sync localSearch when URL changes (browser back/forward)
   useEffect(() => {
@@ -88,51 +78,6 @@ export function ControlCenterPage() {
     kycFilter,
     searchQuery,
   ]);
-
-  // Modal states
-  const [isDisbursementModalOpen, setIsDisbursementModalOpen] = useState(false);
-  const [grantsForDisbursement, setGrantsForDisbursement] = useState<GrantDisbursementInfo[]>([]);
-
-  // Details sidebar state
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [detailsGrantUid, setDetailsGrantUid] = useState<string | null>(null);
-  const [dataVersion, setDataVersion] = useState(0);
-
-  // URL param helper
-  const createQueryString = useCallback(
-    (updates: Record<string, string | null>) => {
-      const newParams = new URLSearchParams(searchParams.toString());
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value === null || value === "") {
-          newParams.delete(key);
-        } else {
-          newParams.set(key, value);
-        }
-      });
-      return newParams.toString();
-    },
-    [searchParams]
-  );
-
-  const previousFilterSignature = useRef(filterSignature);
-
-  // Safety net: whenever any filter changes, force page back to 1.
-  useEffect(() => {
-    if (previousFilterSignature.current === filterSignature) {
-      return;
-    }
-
-    previousFilterSignature.current = filterSignature;
-
-    if (currentPage === 1) {
-      return;
-    }
-
-    const query = createQueryString({ page: "1" });
-    router.replace(`${pathname}?${query}`);
-  }, [createQueryString, currentPage, filterSignature, pathname, router]);
-
-  // ─── Data fetching (extracted hook) ───────────────────────────────────────
 
   const {
     community,
@@ -172,362 +117,111 @@ export function ControlCenterPage() {
     itemsPerPage,
   });
 
-  // Derive live grant from current data, with ref fallback so the sidebar
-  // doesn't blank when the user navigates to a different page while it's open.
-  const detailsGrantRef = useRef<TableRow | null>(null);
-  const detailsModalGrant = useMemo(() => {
-    if (!detailsGrantUid) {
-      detailsGrantRef.current = null;
-      return null;
-    }
-    const fresh = paginatedData.find((r) => r.grantUid === detailsGrantUid) ?? null;
-    if (fresh) {
-      detailsGrantRef.current = fresh;
-      return fresh;
-    }
-    // Grant left current page — keep last known snapshot so sidebar stays populated
-    return detailsGrantRef.current;
-  }, [detailsGrantUid, paginatedData]);
+  const { detailsGrantUid, detailsModalOpen, openDetails, closeDetails, setDetailsModalOpen } =
+    useGrantDetailsModal({
+      projectParam,
+      grantParam,
+      searchQuery,
+      isLoading: isLoadingPayouts,
+      rows: tableData,
+      replaceQuery,
+    });
+  const detailsModalGrant = useLastKnownGrant(detailsGrantUid, paginatedData);
 
-  // Auto-open project details sidebar when ?project=<slug> is in the URL.
-  //
-  // The project may be on any page of the paginated dataset, so we can't rely
-  // on a simple tableData scan. Instead we use the existing `search` param as
-  // a proxy: the backend search filter matches exact project slugs, so setting
-  // search=<slug> collapses the dataset to just that project. Once the filtered
-  // data loads and the match is found the sidebar opens, then both `project`
-  // and the transient `search` param are stripped from the URL.
-  //
-  // If search=<slug> is already active but the project is still not found the
-  // slug doesn't exist in this community — we clean up the URL and give up.
-  const autoOpenedProjectRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!projectParam || isLoadingPayouts) return;
-    if (autoOpenedProjectRef.current === projectParam) return;
-
-    const match = tableData.find((row) => row.projectSlug === projectParam);
-    if (!match) {
-      if (searchQuery === projectParam) {
-        // Already filtered by this slug but no match — project not in community.
-        router.replace(`${pathname}?${createQueryString({ project: null, search: null })}`);
-      } else {
-        // Narrow the dataset to this slug and retry when data reloads.
-        router.replace(`${pathname}?${createQueryString({ search: projectParam, page: "1" })}`);
-      }
-      return;
-    }
-
-    autoOpenedProjectRef.current = projectParam;
-    setDetailsGrantUid(match.grantUid);
-    setDetailsModalOpen(true);
-    // Strip `project` and the transient search param we may have injected.
-    const clearSearch = searchQuery === projectParam ? null : searchQuery || null;
-    router.replace(`${pathname}?${createQueryString({ project: null, search: clearSearch })}`);
-  }, [projectParam, isLoadingPayouts, tableData, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  const disbursementModal = useDisbursementModal({ payoutConfigMap, disbursementMap });
 
   const saveBulkImportMutation = useSavePayoutConfig();
-
   const handleApplyBulkConfigs = useCallback(
     async (configs: PayoutConfigItem[]) => {
       if (!community?.uid) {
         throw new Error("Community UID not available");
       }
-      return saveBulkImportMutation.mutateAsync({
-        communityUID: community.uid,
-        configs,
-      });
+      return saveBulkImportMutation.mutateAsync({ communityUID: community.uid, configs });
     },
     [community?.uid, saveBulkImportMutation]
   );
 
-  // ─── URL param handlers ──────────────────────────────────────────────────
-
-  const handleProgramChange = (programId: string | null) => {
-    const query = createQueryString({ programId, page: "1" });
-    router.push(`${pathname}?${query}`);
-  };
-
-  const handleItemsPerPageChange = (value: string) => {
-    const query = createQueryString({ limit: value, page: "1" });
-    router.push(`${pathname}?${query}`);
-  };
-
-  const handlePageChange = (page: number) => {
-    const query = createQueryString({ page: page.toString() });
-    router.push(`${pathname}?${query}`);
-  };
-
   const handleSort = (column: CommunityPayoutsSorting["sortBy"]) => {
-    let newSortOrder: "asc" | "desc" = "asc";
-    if (sortBy === column) {
-      newSortOrder = sortOrder === "asc" ? "desc" : "asc";
-    }
-    const query = createQueryString({
-      sortBy: column || null,
-      sortOrder: newSortOrder,
-      page: "1",
-    });
-    router.push(`${pathname}?${query}`);
+    const newSortOrder = sortBy === column && sortOrder === "asc" ? "desc" : "asc";
+    navigate({ sortBy: column || null, sortOrder: newSortOrder, page: "1" });
   };
 
-  const handleSearch = () => {
-    const query = createQueryString({ search: localSearch || null, page: "1" });
-    router.push(`${pathname}?${query}`);
-  };
+  const handleFilterChange = (key: string, value: string | null) =>
+    navigate({ [key]: value, page: "1" });
 
-  const handleFilterChange = (key: string, value: string | null) => {
-    const query = createQueryString({ [key]: value, page: "1" });
-    router.push(`${pathname}?${query}`);
+  const handleClearFilters = () => {
+    setLocalSearch("");
+    clearAll();
   };
-
-  // ─── Selection handlers ──────────────────────────────────────────────────
 
   const handleSelectGrant = (uid: string, checked: boolean) => {
     setSelectedGrants((prev) => {
       const next = new Set(prev);
-      if (checked) {
-        next.add(uid);
-      } else {
-        next.delete(uid);
-      }
+      if (checked) next.add(uid);
+      else next.delete(uid);
       return next;
     });
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedGrants(new Set(selectableGrants.map((item) => item.grantUid)));
-    } else {
-      setSelectedGrants(new Set());
-    }
+    setSelectedGrants(checked ? new Set(selectableGrants.map((item) => item.grantUid)) : new Set());
   };
-
-  // ─── Modal handlers ──────────────────────────────────────────────────────
 
   const handleOpenDisbursementModal = () => {
     const selectedItems = paginatedData.filter(
       (item) => selectedGrants.has(item.grantUid) && !getCheckboxDisabledState(item).disabled
     );
-
     if (selectedItems.length === 0) {
       toast.error("Please select grants with valid payout addresses and amounts");
       return;
     }
-
-    const grantsInfo: GrantDisbursementInfo[] = selectedItems.map((item) => {
-      const payoutAddress = item.currentPayoutAddress || "";
-      const approvedAmount = item.currentAmount || "0";
-
-      const payoutConfig = payoutConfigMap[item.grantUid];
-      const milestoneAllocations = payoutConfig?.milestoneAllocations || [];
-
-      const disbursementHistory = disbursementMap[item.grantUid]?.history || [];
-      const paidAllocationIds = getPaidAllocationIds(disbursementHistory);
-
-      return {
-        grantUID: item.grantUid,
-        projectUID: item.projectUid,
-        grantName: item.grantName,
-        projectName: item.projectName,
-        payoutAddress,
-        approvedAmount,
-        totalsByToken: disbursementMap[item.grantUid]?.totalsByToken || [],
-        milestoneAllocations,
-        paidAllocationIds,
-      };
-    });
-
-    setGrantsForDisbursement(grantsInfo);
-    setIsDisbursementModalOpen(true);
+    disbursementModal.openFor(selectedItems);
   };
 
-  const handleDisbursementModalClose = () => {
-    setIsDisbursementModalOpen(false);
-    setGrantsForDisbursement([]);
+  const handleCreateDisbursementFromDetails = (grant: TableRow) => {
+    closeDetails();
+    disbursementModal.openFor([grant]);
   };
 
-  const handleDisbursementSuccess = () => {
-    setSelectedGrants(new Set());
+  const handleDataChanged = () => {
     refreshPayouts();
     setDataVersion((v) => v + 1);
   };
 
-  // ─── Open details sidebar ──────────────────────────────────────────────────
-
-  const handleOpenDetails = (item: TableRow) => {
-    setDetailsGrantUid(item.grantUid);
-    setDetailsModalOpen(true);
+  const handleDisbursementSuccess = () => {
+    setSelectedGrants(new Set());
+    handleDataChanged();
   };
 
-  // ─── Computed layout values ─────────────────────────────────────────────
-
-  const hasActiveFilters = !!(
-    agreementFilter ||
-    invoiceFilter ||
-    disbursementFilter ||
-    kycFilter ||
-    searchQuery ||
-    selectedProgramId
-  );
-
-  const handleClearFilters = () => {
-    setLocalSearch("");
-    router.push(pathname);
-  };
-
-  // ─── Error / redirect handling ───────────────────────────────────────────
-
-  useEffect(() => {
-    if (
-      communityError?.message === "Community not found" ||
-      communityError?.message?.includes("422")
-    ) {
-      router.push(PAGES.NOT_FOUND);
-    }
-  }, [communityError]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ─── Error state (checked before loading to avoid infinite skeleton) ────
-
-  if (
-    communityError &&
-    !communityError.message?.includes("422") &&
-    communityError.message !== "Community not found"
-  ) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 gap-4">
-        <p className="text-lg text-red-600 dark:text-red-400">Failed to load community data</p>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
-      </div>
-    );
+  if (isCommunityNotFound(communityError)) {
+    redirect(PAGES.NOT_FOUND);
   }
 
-  // ─── Loading state ───────────────────────────────────────────────────────
+  if (communityError) {
+    return <ControlCenterCommunityError />;
+  }
 
   if (!authReady || isLoadingCommunity || !community || loadingAdmin || isLoadingPayouts) {
-    const skeletonCols = 8;
-    const skeletonColumnKeys = Array.from(
-      { length: skeletonCols },
-      (_, colNumber) => `skeleton-col-${colNumber + 1}`
-    );
-    const skeletonRowKeys = Array.from(
-      { length: 6 },
-      (_, rowNumber) => `skeleton-row-${rowNumber + 1}`
-    );
-
-    return (
-      <div className="my-4 flex flex-col gap-6 w-full">
-        <div className="flex flex-col gap-1 px-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Skeleton className="h-4 w-40" />
-          </div>
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-4 w-80 mt-1" />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 px-4">
-          <Skeleton className="h-9 w-[150px] rounded-md" />
-          <Skeleton className="h-9 w-[150px] rounded-md" />
-          <Skeleton className="h-9 w-[150px] rounded-md" />
-          <Skeleton className="h-9 w-[150px] rounded-md" />
-          <Skeleton className="h-9 w-[200px] rounded-md" />
-        </div>
-
-        <div className="px-4">
-          <div className="w-full overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-800">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-zinc-900">
-                  {skeletonColumnKeys.map((columnKey) => (
-                    <th key={columnKey} className="h-11 px-4">
-                      <Skeleton className="h-3 w-16" />
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
-                {skeletonRowKeys.map((rowKey) => (
-                  <tr key={rowKey}>
-                    {skeletonColumnKeys.map((columnKey, columnIndex) => (
-                      <td key={`${rowKey}-${columnKey}`} className="px-4 py-3">
-                        <Skeleton
-                          className={cn(
-                            "h-4",
-                            columnIndex === 0 ? "w-4" : columnIndex === 1 ? "w-32" : "w-20"
-                          )}
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
+    return <ControlCenterSkeleton />;
   }
-
-  // ─── Payouts error state ───────────────────────────────────────────────
 
   if (payoutsError && !payoutsData) {
-    return (
-      <div className="my-4 flex flex-col gap-6 w-full">
-        <div className="flex flex-col gap-1 px-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">
-            Control Center
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
-            Overview of project KYB, agreements, milestones, invoices, and payments
-          </p>
-        </div>
-        <div className="flex flex-col items-center justify-center h-64 gap-3">
-          <p className="text-sm text-red-600 dark:text-red-400">
-            Failed to load payouts data. Please try again.
-          </p>
-          <Button variant="outline" size="sm" onClick={refreshPayouts}>
-            Retry
-          </Button>
-        </div>
-      </div>
-    );
+    return <ControlCenterPayoutsError onRetry={refreshPayouts} />;
   }
-
-  // ─── Not authorized ──────────────────────────────────────────────────────
 
   if (!hasAccess) {
-    return (
-      <div className="flex w-full items-center justify-center h-96">
-        <p className="text-lg">
-          {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || "Control Center")}
-        </p>
-      </div>
-    );
+    return <ControlCenterNotAuthorized communityName={community?.details?.name} />;
   }
-
-  // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
     <div className="my-4 flex flex-col gap-6 w-full">
-      {/* Page Header */}
-      <div className="flex flex-col gap-1 px-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">
-              Control Center
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
-              Overview of project KYB, agreements, milestones, invoices, and payments
-            </p>
-          </div>
-        </div>
-      </div>
+      <ControlCenterHeader />
 
-      {/* Toolbar */}
       <FilterToolbar
         localSearch={localSearch}
         onLocalSearchChange={setLocalSearch}
-        onSearch={handleSearch}
-        onProgramChange={handleProgramChange}
+        onSearch={() => navigate({ search: localSearch || null, page: "1" })}
+        onProgramChange={(programId) => navigate({ programId, page: "1" })}
         agreementFilter={agreementFilter}
         invoiceFilter={invoiceFilter}
         disbursementFilter={disbursementFilter}
@@ -542,7 +236,7 @@ export function ControlCenterPage() {
         }}
         onClearAll={handleClearFilters}
         itemsPerPage={itemsPerPage}
-        onItemsPerPageChange={handleItemsPerPageChange}
+        onItemsPerPageChange={(value) => navigate({ limit: value, page: "1" })}
       />
 
       <BulkPayoutImportPanel
@@ -552,14 +246,13 @@ export function ControlCenterPage() {
         isApplying={saveBulkImportMutation.isPending}
       />
 
-      {/* Table */}
       <ControlCenterTable
         paginatedData={paginatedData}
         selectedGrants={selectedGrants}
         selectableGrants={selectableGrants}
         onSelectGrant={handleSelectGrant}
         onSelectAll={handleSelectAll}
-        onOpenDetails={handleOpenDetails}
+        onOpenDetails={(item) => openDetails(item.grantUid)}
         onSort={handleSort}
         sortBy={sortBy}
         sortOrder={sortOrder}
@@ -575,87 +268,39 @@ export function ControlCenterPage() {
         hasActiveFilters={hasActiveFilters}
         onClearFilters={handleClearFilters}
         currentPage={currentPage}
-        onPageChange={handlePageChange}
+        onPageChange={(page) => navigate({ page: page.toString() })}
         itemsPerPage={itemsPerPage}
         totalItems={kycFilter ? paginatedData.length : totalItems}
       />
 
-      {/* Create Disbursement Modal */}
       <CreateDisbursementModal
-        isOpen={isDisbursementModalOpen}
-        onClose={handleDisbursementModalClose}
+        isOpen={disbursementModal.isOpen}
+        onClose={disbursementModal.close}
         communityUID={community?.uid || ""}
-        grants={grantsForDisbursement}
+        grants={disbursementModal.grants}
         onSuccess={handleDisbursementSuccess}
       />
 
-      {/* Project Details Sidebar */}
-      <ProjectDetailsSidebar
+      <ControlCenterDetailsSidebar
         grant={detailsModalGrant}
         open={detailsModalOpen}
-        dataVersion={dataVersion}
         onOpenChange={(nextOpen) => {
-          setDetailsModalOpen(nextOpen);
-          if (!nextOpen) setDetailsGrantUid(null);
+          if (nextOpen) setDetailsModalOpen(true);
+          else closeDetails();
         }}
         communityUID={community?.uid || ""}
-        invoiceRequired={
-          detailsModalGrant ? (invoiceRequiredMap[detailsModalGrant.grantUid] ?? false) : false
-        }
-        kycStatus={
-          detailsModalGrant ? (kycStatuses.get(detailsModalGrant.projectUid) ?? null) : null
-        }
-        disbursementInfo={
-          detailsModalGrant ? (disbursementMap[detailsModalGrant.grantUid] ?? null) : null
-        }
-        agreement={detailsModalGrant ? (agreementMap[detailsModalGrant.grantUid] ?? null) : null}
-        milestoneInvoices={detailsModalGrant ? (invoiceMap[detailsModalGrant.grantUid] ?? []) : []}
-        milestoneAllocations={
-          detailsModalGrant
-            ? (payoutConfigMap[detailsModalGrant.grantUid]?.milestoneAllocations ?? null)
-            : null
-        }
-        onConfigSuccess={() => {
-          refreshPayouts();
-          setDataVersion((v) => v + 1);
-        }}
-        onCreateDisbursement={() => {
-          if (!detailsModalGrant) return;
-          setDetailsModalOpen(false);
-          setDetailsGrantUid(null);
-          const item = detailsModalGrant;
-          const payoutConfig = payoutConfigMap[item.grantUid];
-          const disbursementHistory = disbursementMap[item.grantUid]?.history || [];
-          setGrantsForDisbursement([
-            {
-              grantUID: item.grantUid,
-              projectUID: item.projectUid,
-              grantName: item.grantName,
-              projectName: item.projectName,
-              payoutAddress: item.currentPayoutAddress || "",
-              approvedAmount: item.currentAmount || "0",
-              totalsByToken: disbursementMap[item.grantUid]?.totalsByToken || [],
-              milestoneAllocations: payoutConfig?.milestoneAllocations || [],
-              paidAllocationIds: getPaidAllocationIds(disbursementHistory),
-            },
-          ]);
-          setIsDisbursementModalOpen(true);
-        }}
+        dataVersion={dataVersion}
+        invoiceRequiredMap={invoiceRequiredMap}
+        kycStatuses={kycStatuses}
+        disbursementMap={disbursementMap}
+        agreementMap={agreementMap}
+        invoiceMap={invoiceMap}
+        payoutConfigMap={payoutConfigMap}
+        onConfigSuccess={handleDataChanged}
+        onCreateDisbursement={handleCreateDisbursementFromDetails}
       />
 
-      {/* Floating Create Disbursement Button */}
-      {selectedGrants.size > 0 && (
-        <div className="fixed bottom-6 right-6 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <button
-            type="button"
-            onClick={handleOpenDisbursementModal}
-            className="flex items-center gap-3 px-6 py-4 bg-brand-blue hover:bg-brand-blue/80 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
-          >
-            <BanknotesIcon className="h-6 w-6" />
-            Create Disbursement ({selectedGrants.size})
-          </button>
-        </div>
-      )}
+      <CreateDisbursementFab count={selectedGrants.size} onClick={handleOpenDisbursementModal} />
     </div>
   );
 }
