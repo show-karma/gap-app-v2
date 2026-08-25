@@ -2,7 +2,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import type { CommunityPayoutsSorting } from "@/src/features/payout-disbursement/types/payout-disbursement";
 
-export type QueryUpdates = Record<string, string | null>;
+type QueryUpdates = Record<string, string | null>;
 
 function applyUpdates(current: URLSearchParams, updates: QueryUpdates): string {
   const next = new URLSearchParams(current.toString());
