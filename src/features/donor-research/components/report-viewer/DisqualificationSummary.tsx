@@ -44,31 +44,30 @@ export function DisqualificationSummary({ candidates }: DisqualificationSummaryP
   const total = disqualified.length;
 
   return (
-    <output className="mb-8 block overflow-hidden rounded-lg border border-border bg-card">
-      <div className="border-b border-border/60 px-5 py-3">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+    <output className="block overflow-hidden rounded-sf-card border border-sf-line bg-sf-card">
+      <div className="border-b border-sf-line px-5 py-3.5">
+        <p className="text-[10.5px] font-[650] uppercase tracking-[0.14em] text-sf-muted">
           Compliance verdict
         </p>
-        <p className="mt-1 text-base font-medium text-foreground">
+        <p className="mt-1 text-[15px] font-[600] text-sf-heading">
           All {total} {pluralize("candidate", total)} failed the hard compliance gate.
         </p>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+        <p className="mt-1 max-w-2xl text-[13px] text-sf-muted">
           No qualifying candidates surfaced. Most often the criteria pulled into a stratum the IRS
-          hasn't indexed recently — try broadening geography or cause to draw from a different
-          slice.
+          hasn't indexed recently. Try broadening geography or cause to draw from a different slice.
         </p>
       </div>
 
       {ordered.length > 0 ? (
-        <dl className="divide-y divide-border/60">
+        <dl className="divide-y divide-sf-line">
           {ordered.map(([reason, count]) => (
-            <div key={reason} className="flex items-center justify-between gap-4 px-5 py-2.5">
-              <dt className="text-sm text-foreground">{REASON_LABELS[reason] ?? reason}</dt>
+            <div className="flex items-center justify-between gap-4 px-5 py-2.5" key={reason}>
+              <dt className="text-[13px] text-sf-ink">{REASON_LABELS[reason] ?? reason}</dt>
               <dd className="flex items-baseline gap-1.5">
-                <span className="font-mono text-sm font-medium tabular-nums text-foreground">
+                <span className="font-mono text-[13px] font-[600] tabular-nums text-sf-heading">
                   {count}
                 </span>
-                <span className="text-xs text-muted-foreground">/ {total}</span>
+                <span className="text-[11px] text-sf-muted">/ {total}</span>
               </dd>
             </div>
           ))}

@@ -87,9 +87,15 @@ export function projectHandlers(options?: { list?: MockProject[]; detail?: Parti
       return HttpResponse.json(list);
     }),
 
-    http.get(`${BASE}/v2/projects/slug/check/:slug`, ({ params }) =>
-      HttpResponse.json({ available: params.slug !== detail.slug })
-    ),
+    http.get(`${BASE}/v2/projects/slug/check/:slug`, ({ params }) => {
+      const available = params.slug !== detail.slug;
+      // Mirror the indexer payload exactly — it returns `title`, not `slug`.
+      return HttpResponse.json(
+        available
+          ? { available }
+          : { available, existingProject: { uid: detail.uid, title: detail.title } }
+      );
+    }),
 
     http.get(`${BASE}/v2/projects/:projectIdOrSlug`, ({ params }) => {
       const id = params.projectIdOrSlug as string;
@@ -126,20 +132,6 @@ export function projectHandlers(options?: { list?: MockProject[]; detail?: Parti
     http.post(`${BASE}/v2/projects/contracts/address-availability`, async ({ request }) => {
       const body = (await request.json()) as Record<string, unknown>;
       return HttpResponse.json({ available: true, ...body });
-    }),
-
-    http.get(`${BASE}/v2/projects/contracts/deployer`, () =>
-      HttpResponse.json({ deployer: "0x0000000000000000000000000000000000000000" })
-    ),
-
-    http.post(`${BASE}/v2/projects/contracts/verify-message`, async ({ request }) => {
-      const body = (await request.json()) as Record<string, unknown>;
-      return HttpResponse.json({ verified: true, ...body });
-    }),
-
-    http.post(`${BASE}/v2/projects/contracts/verify-signature`, async ({ request }) => {
-      const body = (await request.json()) as Record<string, unknown>;
-      return HttpResponse.json({ verified: true, ...body });
     }),
 
     http.get(`${BASE}/v2/projects/logos/presigned`, () =>

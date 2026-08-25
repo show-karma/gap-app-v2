@@ -31,13 +31,30 @@ vi.mock("@/src/features/program-registry/services/program-registry.service", () 
       title: formData.name,
       description: formData.description,
       shortDescription: formData.shortDescription,
+      adminEmails: formData.adminEmails,
+      financeEmails: formData.financeEmails,
     })),
   },
 }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+// The form pulls admin/finance emails from the admin-aware single-config
+// endpoint via useProgramConfig -> getProgramConfiguration. Mock the service
+// method (not the hook) so the real React Query timing is preserved.
+vi.mock("@/services/fundingPlatformService", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/fundingPlatformService")>();
+  const getProgramConfiguration = vi.fn().mockResolvedValue(null);
+  return {
+    ...actual,
+    fundingProgramsAPI: { ...actual.fundingProgramsAPI, getProgramConfiguration },
+    fundingPlatformService: {
+      ...actual.fundingPlatformService,
+      programs: { ...actual.fundingPlatformService.programs, getProgramConfiguration },
+    },
+  };
+});
+
+vi.mock("@/utilities/api/client", () => ({
+  api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -201,7 +218,8 @@ vi.mock("@/components/Utilities/DateTimePicker", () => ({
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import fetchData from "@/utilities/fetchData";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+import { api } from "@/utilities/api/client";
 
 // Test data
 const mockProgramId = "program-123";
@@ -294,11 +312,14 @@ describe("ProgramDetailsTab", () => {
     vi.mocked(ProgramRegistryService.extractProgramId).mockReturnValue(mockProgramDbId);
     vi.mocked(ProgramRegistryService.updateProgram).mockResolvedValue(undefined);
 
-    vi.mocked(fetchData).mockImplementation(async (url: string) => {
+    // Default: no separate config data — form sources emails from `program`.
+    vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockResolvedValue(null);
+
+    vi.mocked(api.get).mockImplementation(async (url: string) => {
       if (url.includes("find")) {
-        return [mockProgram, null];
+        return mockProgram;
       }
-      return [null, null];
+      return null;
     });
   });
 
@@ -335,22 +356,22 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should show error state when program fails to load", async () => {
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [null, "Failed to load program"];
+      vi.mocked(api.get).mockImplementation(async () => {
+        throw new Error("Failed to load program");
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
 
       await waitFor(() => {
-        // The error message comes from the error string passed to fetchData
+        // The error message comes from the Error thrown by api.get
         expect(screen.getByText("Failed to load program")).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
       });
     });
 
     it("should show 'Program not found' when program is null", async () => {
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [null, null];
+      vi.mocked(api.get).mockImplementation(async () => {
+        return null;
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -361,8 +382,8 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should handle array response from API", async () => {
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [[mockProgram], null];
+      vi.mocked(api.get).mockImplementation(async () => {
+        return [mockProgram];
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -675,12 +696,12 @@ describe("ProgramDetailsTab", () => {
 
       await waitFor(
         () => {
-          // Should call fetchData for initial load, then refetch after update
+          // Should call api.get for initial load, then refetch after update
           // Update now uses ProgramRegistryService.updateProgram
           expect(ProgramRegistryService.updateProgram).toHaveBeenCalled();
-          // fetchData should be called at least twice (initial load + refetch)
-          expect(fetchData).toHaveBeenCalledTimes(2);
-          const calls = vi.mocked(fetchData).mock.calls;
+          // api.get should be called at least twice (initial load + refetch)
+          expect(api.get).toHaveBeenCalledTimes(2);
+          const calls = vi.mocked(api.get).mock.calls;
           const lastCall = calls[calls.length - 1];
           expect(lastCall[0]).toContain("find");
         },
@@ -842,13 +863,13 @@ describe("ProgramDetailsTab", () => {
     it("should allow retry when program fails to load", async () => {
       const user = userEvent.setup();
       let fetchAttempt = 0;
-      vi.mocked(fetchData).mockImplementation(async () => {
+      vi.mocked(api.get).mockImplementation(async () => {
         fetchAttempt++;
         if (fetchAttempt === 1) {
-          return [null, "Failed to load program"];
+          throw new Error("Failed to load program");
         }
         // On retry, return success
-        return [mockProgram, null];
+        return mockProgram;
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -869,6 +890,123 @@ describe("ProgramDetailsTab", () => {
     });
   });
 
+  describe("Admin/Finance emails from admin-aware config (DEV-499)", () => {
+    // The community-list endpoint that hydrates `program` strips admin/finance
+    // email PII, so the form base arrives without them.
+    const strippedProgram: GrantProgram = {
+      ...mockProgram,
+      metadata: {
+        ...mockProgram.metadata!,
+        adminEmails: undefined,
+        financeEmails: undefined,
+      },
+    };
+
+    // The single-config endpoint (useProgramConfig) returns them to staff/admins.
+    const adminEmails = ["sejal@protocol.ai", "brynn@fil.org"];
+    const financeEmails = ["andreas@autonomousprojects.co", "brynn@fil.org"];
+    const configWithEmails = {
+      ...mockProgram,
+      metadata: {
+        ...mockProgram.metadata!,
+        adminEmails,
+        financeEmails,
+      },
+    };
+
+    beforeEach(() => {
+      vi.mocked(api.get).mockImplementation(async (url: string) => {
+        if (url.includes("find")) {
+          return strippedProgram;
+        }
+        return null;
+      });
+      vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockResolvedValue(
+        configWithEmails as Awaited<
+          ReturnType<typeof fundingPlatformService.programs.getProgramConfiguration>
+        >
+      );
+    });
+
+    it("should populate email inputs from the config when the list-sourced program has them stripped", async () => {
+      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
+      });
+
+      const adminTags = screen.getAllByTestId("email-tag-admin").map((el) => el.textContent);
+      expect(adminTags).toEqual(expect.arrayContaining(adminEmails));
+
+      const financeTags = screen.getAllByTestId("email-tag-finance").map((el) => el.textContent);
+      expect(financeTags).toEqual(expect.arrayContaining(financeEmails));
+    });
+
+    it("should preserve existing emails on save instead of overwriting them with an empty array", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
+      });
+
+      const nameInput = screen.getByLabelText(/program name/i);
+      await user.type(nameInput, " Updated");
+
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+      await waitFor(() => {
+        expect(ProgramRegistryService.updateProgram).toHaveBeenCalledWith(
+          mockProgramId,
+          expect.objectContaining({ adminEmails, financeEmails })
+        );
+      });
+    });
+
+    it("should keep showing the loading spinner while the config is still loading", async () => {
+      // Never-resolving config keeps useProgramConfig in its loading state.
+      vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockReturnValue(
+        new Promise(() => {})
+      );
+
+      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
+
+      expect(await screen.findByRole("status")).toBeInTheDocument();
+      expect(screen.queryByLabelText(/program name/i)).not.toBeInTheDocument();
+    });
+
+    it("should block the form with a retry when the config fails to load", async () => {
+      vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockRejectedValue(
+        new Error("boom")
+      );
+
+      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/failed to load program configuration/i)).toBeInTheDocument();
+      });
+      expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+      // Form must not be editable when we can't confirm the stored emails.
+      expect(screen.queryByLabelText(/program name/i)).not.toBeInTheDocument();
+    });
+
+    it("should still show read-only details when the config fails to load for a read-only viewer", async () => {
+      vi.mocked(fundingPlatformService.programs.getProgramConfiguration).mockRejectedValue(
+        new Error("boom")
+      );
+
+      renderWithProviders(
+        <ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} readOnly />
+      );
+
+      // Read-only viewers can't save, so a config failure must not hide the view.
+      await waitFor(() => {
+        expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByRole("button", { name: /retry/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe("Date Handling", () => {
     it("should handle program with no dates", async () => {
       const programWithoutDates = {
@@ -880,8 +1018,8 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [programWithoutDates, null];
+      vi.mocked(api.get).mockImplementation(async () => {
+        return programWithoutDates;
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -904,8 +1042,8 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      vi.mocked(fetchData).mockImplementation(async () => {
-        return [programWithoutBudget, null];
+      vi.mocked(api.get).mockImplementation(async () => {
+        return programWithoutBudget;
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);

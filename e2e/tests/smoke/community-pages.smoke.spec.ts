@@ -15,7 +15,7 @@ const COMMUNITY_SLUG = MOCK_COMMUNITIES.optimism.slug;
  * (projects, grants, updates, stats) across both URL shapes that the
  * middleware supports:
  *
- *   1. Standard host:  karmahq.xyz/community/<slug>/<page>
+ *   1. Standard host:  www.karmahq.org/community/<slug>/<page>
  *   2. Whitelabel host: app.opgrants.io/<page>  (rewritten by middleware)
  *
  * The whitelabel variants also act as regression tests for the slim

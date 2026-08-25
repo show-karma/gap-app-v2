@@ -1,4 +1,6 @@
-import fetchData from "@/utilities/fetchData";
+import { z } from "zod";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -7,6 +9,29 @@ import { INDEXER } from "@/utilities/indexer";
 export interface AssignApplicationReviewersRequest {
   appReviewerAddresses?: string[]; // Program reviewer addresses
   milestoneReviewerAddresses?: string[]; // Milestone reviewer addresses
+}
+
+const AssignedReviewersResponseSchema = z
+  .object({
+    appReviewers: z.array(z.string()).optional(),
+    milestoneReviewers: z.array(z.string()).optional(),
+  })
+  .passthrough();
+
+/**
+ * Extracts the same human-readable error message the legacy `fetchData`
+ * adapter surfaced for an `HttpError`: prefer the server response body's
+ * `message`, then the original axios error's message, then the client's
+ * synthetic message. Falls back to a plain `Error.message` (or
+ * `String(error)`) for non-HTTP `ApiError`s.
+ */
+function httpErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const bodyMessage = (error.body as { message?: string } | undefined)?.message;
+    const causeMessage = (error.cause as { message?: string } | undefined)?.message;
+    return bodyMessage || causeMessage || error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
 }
 
 /**
@@ -20,17 +45,10 @@ export const applicationReviewersService = {
     applicationId: string,
     request: AssignApplicationReviewersRequest
   ): Promise<void> {
-    const [, error] = await fetchData(
-      INDEXER.V2.FUNDING_APPLICATIONS.REVIEWERS(applicationId),
-      "PUT",
-      request,
-      {},
-      {},
-      true
-    );
-
-    if (error) {
-      throw new Error(error);
+    try {
+      await api.put(INDEXER.V2.FUNDING_APPLICATIONS.REVIEWERS(applicationId), request);
+    } catch (error) {
+      throw new Error(httpErrorMessage(error));
     }
   },
 
@@ -41,20 +59,26 @@ export const applicationReviewersService = {
     appReviewers: string[];
     milestoneReviewers: string[];
   }> {
-    const [data, error, , status] = await fetchData<{
-      appReviewers?: string[];
-      milestoneReviewers?: string[];
-    }>(INDEXER.V2.FUNDING_APPLICATIONS.REVIEWERS(applicationId));
+    try {
+      const data = await api.get<z.infer<typeof AssignedReviewersResponseSchema>>(
+        INDEXER.V2.FUNDING_APPLICATIONS.REVIEWERS(applicationId),
+        { schema: AssignedReviewersResponseSchema }
+      );
 
-    // Handle "No reviewers found" as empty arrays, not an error
-    if (error || status === 404) {
-      // Check if it's a "not found" error
+      return {
+        appReviewers: data?.appReviewers || [],
+        milestoneReviewers: data?.milestoneReviewers || [],
+      };
+    } catch (error) {
+      const status = error instanceof HttpError ? error.status : undefined;
+      const message = httpErrorMessage(error);
+
+      // Handle "No reviewers found" as empty arrays, not an error
       if (
         status === 404 ||
-        (typeof error === "string" &&
-          (error.includes("404") ||
-            error.includes("Application Reviewers Not Found") ||
-            error.includes("No reviewers found")))
+        message.includes("404") ||
+        message.includes("Application Reviewers Not Found") ||
+        message.includes("No reviewers found")
       ) {
         return {
           appReviewers: [],
@@ -62,12 +86,7 @@ export const applicationReviewersService = {
         };
       }
       // Re-throw other errors
-      throw new Error(error || "Failed to fetch reviewers");
+      throw new Error(message || "Failed to fetch reviewers");
     }
-
-    return {
-      appReviewers: data?.appReviewers || [],
-      milestoneReviewers: data?.milestoneReviewers || [],
-    };
   },
 };

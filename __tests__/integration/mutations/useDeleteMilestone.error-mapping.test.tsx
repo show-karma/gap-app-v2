@@ -69,7 +69,6 @@ function createMilestone(
     status: "pending",
     completionDetails: null,
     verificationDetails: null,
-    fundingApplicationCompletion: null,
     ...overrides,
   };
 }

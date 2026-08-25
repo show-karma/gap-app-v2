@@ -234,6 +234,16 @@ export function StatsTable({
             ) : (
               reports?.map((report) => {
                 const completed = isFullyCompleted(report);
+                // DEV-496: one canonical milestone link per row. On this reviewer
+                // surface that's the manage review page; fall back to the public
+                // grant page only when the row has no programId to review against.
+                const milestoneHref = report.programId
+                  ? PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(
+                      communityId,
+                      normalizeProgramId(report.programId),
+                      report.projectUid
+                    )
+                  : PAGES.PROJECT.MILESTONES_AND_UPDATES(report.projectSlug, report.grantUid);
                 return (
                   <tr
                     key={`${report.grantUid}-${report.programId ?? ""}`}
@@ -278,10 +288,7 @@ export function StatsTable({
                     </td>
                     <td className="px-4 py-3">
                       <Link
-                        href={`${PAGES.PROJECT.GRANT(
-                          report.projectSlug,
-                          report.grantUid
-                        )}/milestones-and-updates#all`}
+                        href={milestoneHref}
                         className="text-sm text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 tabular-nums transition-colors"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -291,10 +298,7 @@ export function StatsTable({
                     </td>
                     <td className="px-4 py-3">
                       <Link
-                        href={`${PAGES.PROJECT.GRANT(
-                          report.projectSlug,
-                          report.grantUid
-                        )}/milestones-and-updates#pending`}
+                        href={milestoneHref}
                         className={cn(
                           "text-sm tabular-nums transition-colors",
                           report.pendingMilestones > 0
@@ -312,10 +316,7 @@ export function StatsTable({
                         const pastDueCount = report.pastDueMilestones ?? 0;
                         return (
                           <Link
-                            href={`${PAGES.PROJECT.GRANT(
-                              report.projectSlug,
-                              report.grantUid
-                            )}/milestones-and-updates#past-due`}
+                            href={milestoneHref}
                             aria-label={`${pastDueCount} past due milestones for ${report.grantTitle}`}
                             className={cn(
                               "text-sm tabular-nums transition-colors",
@@ -334,10 +335,7 @@ export function StatsTable({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Link
-                          href={`${PAGES.PROJECT.GRANT(
-                            report.projectSlug,
-                            report.grantUid
-                          )}/milestones-and-updates#completed`}
+                          href={milestoneHref}
                           className="text-sm text-gray-900 dark:text-white tabular-nums hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                           target="_blank"
                           rel="noopener noreferrer"
@@ -353,7 +351,7 @@ export function StatsTable({
                     <td className="px-4 py-3">
                       {report.programId && (
                         <Link
-                          href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
+                          href={PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(
                             communityId,
                             normalizeProgramId(report.programId),
                             report.projectUid

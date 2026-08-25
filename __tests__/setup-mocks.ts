@@ -13,6 +13,11 @@
  *   - @/components/Utilities/errorManager  (was in 31 files)
  *   - react-hot-toast  (was in 29 files)
  *   - next/navigation  (used by components that call useRouter/usePathname)
+ *
+ * NOTE: motion/react (Framer Motion) is deliberately NOT mocked globally — a
+ * suite-wide stub would mask real animation/exit behavior in non-dashboard
+ * tests. The v3 dashboard tests that render motion opt in per-file via
+ * `vi.mock("motion/react", () => import("../helpers/motion-mock"))`.
  */
 
 // ---------------------------------------------------------------------------
@@ -33,8 +38,7 @@
 // the PR that introduces the font.
 //
 // Fonts currently used in source:
-//   - Spectral            (app/layout.tsx, donor-research report-brief/fonts.ts)
-//   - Bricolage_Grotesque (donor-research report-brief/fonts.ts)
+//   - Spectral (app/layout.tsx)
 //
 // Individual test files may still override these with their own vi.mock().
 // ---------------------------------------------------------------------------
@@ -46,7 +50,7 @@ const mockFontLoader = () => ({
 
 vi.mock("next/font/google", () => ({
   Spectral: mockFontLoader,
-  Bricolage_Grotesque: mockFontLoader,
+  JetBrains_Mono: mockFontLoader,
 }));
 
 vi.mock("next/font/local", () => ({
@@ -84,6 +88,20 @@ vi.mock("next/navigation", () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// next/headers
+// Server components that read the request host (whitelabel detection, robots)
+// call headers(), which throws "called outside a request scope" when a test
+// renders the component directly instead of through a Next request. Default to
+// the canonical host — the non-whitelabel case every such test already assumes.
+// Tests exercising tenant behavior override this with their own vi.mock().
+// ---------------------------------------------------------------------------
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers({ host: "www.karmahq.org" }),
+  cookies: async () => new Map(),
+  draftMode: async () => ({ isEnabled: false }),
+}));
+
+// ---------------------------------------------------------------------------
 // @/utilities/enviromentVars
 // Most tests only need NEXT_PUBLIC_GAP_INDEXER_URL. Tests that need RPC
 // values or other env vars should provide their own vi.mock() override.
@@ -98,13 +116,21 @@ vi.mock("@/utilities/enviromentVars", () => ({
     ENV: "development",
     RPC: {},
     PROJECT_ID: "",
-    VERCEL_URL: "https://staging.karmahq.xyz",
+    APP_ORIGIN: "https://staging.karmahq.org",
     OSO_API_KEY: "",
     PRIVY_APP_ID: "",
     ZERODEV_PROJECT_ID: "",
     ALCHEMY_POLICY_ID: "",
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "",
     KARMA_TELEGRAM_BOT_HANDLE: "test_bot",
+    // Sanity Blog CMS — keep in sync with the real defaults in
+    // utilities/enviromentVars.ts / utilities/env.schema.ts so any test that
+    // transitively imports @/sanity/lib/client doesn't crash on a missing
+    // apiVersion (createClient treats an explicit `undefined` apiVersion key
+    // differently from an omitted one).
+    NEXT_PUBLIC_SANITY_PROJECT_ID: "",
+    NEXT_PUBLIC_SANITY_DATASET: "production",
+    NEXT_PUBLIC_SANITY_API_VERSION: "2024-01-01",
   },
   // Named re-export — mirror the production module.
   KARMA_TELEGRAM_BOT_HANDLE: "test_bot",

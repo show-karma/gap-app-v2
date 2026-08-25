@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 
 // Mock Headless UI Dialog components
 vi.mock("@headlessui/react", () => {
@@ -92,11 +94,12 @@ vi.mock("@heroicons/react/24/solid", () => ({
   XMarkIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
 }));
 
-// Mock fetchData
-const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: (...args: any[]) => mockFetchData(...args),
+// Mock the typed api client
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+  },
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -164,12 +167,8 @@ describe("CommunityDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: slug is available, API returns success with slug
-    mockFetchData.mockImplementation((url: string) => {
-      if (url.includes("slug-check")) {
-        return Promise.resolve([{ available: true }, null, null, 200]);
-      }
-      return Promise.resolve([{ uid: "0xnew", slug: "test-slug", chainID: 10 }, null, null, 201]);
-    });
+    (api.get as vi.Mock).mockResolvedValue({ available: true });
+    (api.post as vi.Mock).mockResolvedValue({ uid: "0xnew", slug: "test-slug", chainID: 10 });
   });
 
   describe("Rendering", () => {
@@ -233,13 +232,9 @@ describe("CommunityDialog", () => {
       await user.click(screen.getByText("Create Community"));
 
       await waitFor(() => {
-        expect(mockFetchData).toHaveBeenCalledWith(
+        expect(api.post).toHaveBeenCalledWith(
           "/v2/communities",
-          "POST",
-          expect.objectContaining({ name: "Test Community", slug: "test-slug" }),
-          {},
-          {},
-          true
+          expect.objectContaining({ name: "Test Community", slug: "test-slug" })
         );
       });
 
@@ -252,12 +247,13 @@ describe("CommunityDialog", () => {
   describe("Error handling", () => {
     it("should show error toast on API failure", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockImplementation((url: string) => {
-        if (url.includes("slug-check")) {
-          return Promise.resolve([{ available: true }, null, null, 200]);
-        }
-        return Promise.resolve([null, "Server error", null, 500]);
-      });
+      (api.post as vi.Mock).mockRejectedValue(
+        new HttpError(500, {
+          endpoint: "/v2/communities",
+          method: "POST",
+          body: { message: "Server error" },
+        })
+      );
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       await user.click(screen.getByText("New Community"));
@@ -286,12 +282,13 @@ describe("CommunityDialog", () => {
 
     it("should show community limit toast on 403", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockImplementation((url: string) => {
-        if (url.includes("slug-check")) {
-          return Promise.resolve([{ available: true }, null, null, 200]);
-        }
-        return Promise.resolve([null, "Community limit reached", null, 403]);
-      });
+      (api.post as vi.Mock).mockRejectedValue(
+        new HttpError(403, {
+          endpoint: "/v2/communities",
+          method: "POST",
+          body: { message: "Community limit reached" },
+        })
+      );
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       await user.click(screen.getByText("New Community"));
@@ -321,12 +318,13 @@ describe("CommunityDialog", () => {
 
     it("should show slug exists toast", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockImplementation((url: string) => {
-        if (url.includes("slug-check")) {
-          return Promise.resolve([{ available: true }, null, null, 200]);
-        }
-        return Promise.resolve([null, 'Community with slug "test" already exists', null, 409]);
-      });
+      (api.post as vi.Mock).mockRejectedValue(
+        new HttpError(409, {
+          endpoint: "/v2/communities",
+          method: "POST",
+          body: { message: 'Community with slug "test" already exists' },
+        })
+      );
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       await user.click(screen.getByText("New Community"));
@@ -355,12 +353,7 @@ describe("CommunityDialog", () => {
 
     it("should show error toast when response has no slug", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockImplementation((url: string) => {
-        if (url.includes("slug-check")) {
-          return Promise.resolve([{ available: true }, null, null, 200]);
-        }
-        return Promise.resolve([{ uid: "0xnew", chainID: 10 }, null, null, 201]);
-      });
+      (api.post as vi.Mock).mockResolvedValue({ uid: "0xnew", chainID: 10 });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       await user.click(screen.getByText("New Community"));
@@ -391,12 +384,7 @@ describe("CommunityDialog", () => {
   describe("Form data preservation on error", () => {
     it("should preserve form data when API call fails", async () => {
       const user = userEvent.setup();
-      mockFetchData.mockImplementation((url: string) => {
-        if (url.includes("slug-check")) {
-          return Promise.resolve([{ available: true }, null, null, 200]);
-        }
-        return Promise.reject(new Error("Network error"));
-      });
+      (api.post as vi.Mock).mockRejectedValue(new Error("Network error"));
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       await user.click(screen.getByText("New Community"));
@@ -513,14 +501,7 @@ describe("CommunityDialog", () => {
       expect(await screen.findByText("Too short")).toBeInTheDocument();
 
       // Validation blocked submission: no create POST, no success toast.
-      expect(mockFetchData).not.toHaveBeenCalledWith(
-        "/v2/communities",
-        "POST",
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything()
-      );
+      expect(api.post).not.toHaveBeenCalled();
       expect(mockToastSuccess).not.toHaveBeenCalled();
     });
 
@@ -535,14 +516,7 @@ describe("CommunityDialog", () => {
       // slug's min(3) message renders (mocked MESSAGES.COMMUNITY_FORM.SLUG).
       expect(await screen.findByText("Slug required")).toBeInTheDocument();
 
-      expect(mockFetchData).not.toHaveBeenCalledWith(
-        "/v2/communities",
-        "POST",
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything()
-      );
+      expect(api.post).not.toHaveBeenCalled();
       expect(mockToastSuccess).not.toHaveBeenCalled();
     });
 
@@ -557,14 +531,7 @@ describe("CommunityDialog", () => {
       // imageURL's min(1) message renders (mocked MESSAGES.COMMUNITY_FORM.IMAGE_URL).
       expect(await screen.findByText("Image URL required")).toBeInTheDocument();
 
-      expect(mockFetchData).not.toHaveBeenCalledWith(
-        "/v2/communities",
-        "POST",
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything()
-      );
+      expect(api.post).not.toHaveBeenCalled();
       expect(mockToastSuccess).not.toHaveBeenCalled();
     });
 
@@ -578,7 +545,8 @@ describe("CommunityDialog", () => {
       expect(screen.getByText("Slug required")).toBeInTheDocument();
 
       // Nothing reached the network layer at all.
-      expect(mockFetchData).not.toHaveBeenCalled();
+      expect(api.get).not.toHaveBeenCalled();
+      expect(api.post).not.toHaveBeenCalled();
       expect(mockToastSuccess).not.toHaveBeenCalled();
       // Dialog stays open so the user can correct the form.
       expect(screen.getByTestId("dialog")).toBeInTheDocument();

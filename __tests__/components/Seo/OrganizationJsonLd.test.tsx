@@ -1,6 +1,11 @@
 import { render } from "@testing-library/react";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
-import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL } from "@/utilities/meta";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
+  ORGANIZATION_DESCRIPTION,
+  SITE_URL,
+} from "@/utilities/meta";
 import "@testing-library/jest-dom";
 
 describe("OrganizationJsonLd", () => {
@@ -54,10 +59,19 @@ describe("OrganizationJsonLd", () => {
       expect(schema.logo).toBe(`${SITE_URL}/logo/karma-logo.svg`);
     });
 
-    it("should use DEFAULT_DESCRIPTION", () => {
+    it("should use the entity-level ORGANIZATION_DESCRIPTION, not the page fallback", () => {
       const { container } = render(<OrganizationJsonLd />);
       const schema = getOrganizationSchema(container);
-      expect(schema.description).toBe(DEFAULT_DESCRIPTION);
+      expect(schema.description).toBe(ORGANIZATION_DESCRIPTION);
+      expect(schema.description).not.toBe(DEFAULT_DESCRIPTION);
+    });
+
+    it("should name all three target audiences", () => {
+      const { container } = render(<OrganizationJsonLd />);
+      const schema = getOrganizationSchema(container);
+      for (const audience of ["Foundations", "Donor advisors", "Nonprofits"]) {
+        expect(schema.description).toContain(audience);
+      }
     });
 
     it("should include social profiles in sameAs", () => {

@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
-import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { layoutTheme } from "@/src/helper/theme";
 import { karmaLinks } from "@/utilities/karma/karma";
@@ -20,7 +19,7 @@ const navigationLinks = [
   { label: "For Projects", href: PAGES.FOR_PROJECTS },
   { label: "For Funders", href: PAGES.HOME },
   { label: "For AI Agents", href: PAGES.FOR_AGENTS },
-  { label: "Blog", href: SOCIALS.PARAGRAPH },
+  { label: "Blog", href: PAGES.BLOG },
   { label: "Guide", href: SOCIALS.DOCS },
   { label: "API Docs", href: karmaLinks.apiDocs },
   { label: "Skills", href: karmaLinks.skills },
@@ -43,11 +42,6 @@ const socialMediaLinks = [
     name: "Discord",
     href: SOCIALS.DISCORD,
     icon: DiscordIcon,
-  },
-  {
-    name: "Paragraph",
-    href: SOCIALS.PARAGRAPH,
-    icon: ParagraphIcon,
   },
 ];
 

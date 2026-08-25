@@ -29,8 +29,9 @@ export function ToolCatalogContent({ tools }: ToolCatalogContentProps) {
           The full tool catalog
         </h2>
         <p className="text-base text-muted-foreground">
-          Every public MCP tool a Karma-connected agent can call without authentication, grouped by
-          category. The machine-readable list lives at{" "}
+          Every public MCP tool a Karma-connected agent can call, grouped by category. The catalog
+          is discoverable without credentials; invoking a tool requires a signed-in session (OAuth
+          2.1 or API key). The machine-readable list lives at{" "}
           <a
             href="/.well-known/mcp-tools.json"
             className="font-medium text-primary underline-offset-4 hover:underline"

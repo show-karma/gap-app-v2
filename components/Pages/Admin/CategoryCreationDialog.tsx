@@ -12,7 +12,7 @@ import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 
@@ -59,15 +59,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({ refres
       if (!isAuth) {
         await authenticate();
       }
-      const [_request, error] = await fetchData(
-        INDEXER.CATEGORIES.CREATE(communityId),
-        "POST",
-        data,
-        {},
-        {},
-        true
-      );
-      if (error) throw new Error("An error occurred while creating the category");
+      await api.post(INDEXER.CATEGORIES.CREATE(communityId), data);
       toast.success("Category created successfully");
       refreshCategories();
       closeModal();

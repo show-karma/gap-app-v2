@@ -1,19 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { programService } from "@/services/programs";
-
-// Query keys
-export const PROGRAM_QUERY_KEYS = {
-  all: ["programs"] as const,
-  community: (communityId: string) =>
-    [...PROGRAM_QUERY_KEYS.all, "community", communityId] as const,
-};
+import { getCommunityPrograms } from "@/services/community-programs.service";
+import type { CommunityProgram } from "@/types/v2/community-program";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface UseCommunityProgramsOptions {
   enabled?: boolean;
 }
 
 /**
- * Hook to fetch programs for a community
+ * Canonical hook for fetching a community's funding programs from the public
+ * V2 endpoint. Returns typed {@link CommunityProgram}s; the underlying service
+ * re-throws on failure so `isError` reflects real fetch outages.
  */
 export const useCommunityPrograms = (
   communityId: string,
@@ -21,9 +18,9 @@ export const useCommunityPrograms = (
 ) => {
   const { enabled = true } = options;
 
-  return useQuery({
-    queryKey: PROGRAM_QUERY_KEYS.community(communityId),
-    queryFn: () => programService.getCommunityPrograms(communityId),
+  return useQuery<CommunityProgram[]>({
+    queryKey: QUERY_KEYS.COMMUNITY.PROGRAMS(communityId),
+    queryFn: () => getCommunityPrograms(communityId),
     enabled: !!communityId && enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

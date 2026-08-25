@@ -4,6 +4,7 @@ import { blo } from "blo";
 import Image from "next/image";
 import type React from "react";
 import { useEffect, useMemo } from "react";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useENS } from "@/store/ens";
 import { useUserProfiles } from "@/store/userProfiles";
@@ -18,14 +19,24 @@ interface Props {
   pictureClassName?: string;
 }
 
+/** Local-part of an email ("alice@example.com" → "alice"). The full address is never rendered. */
+function emailLocalPart(email: string | undefined): string | undefined {
+  if (!email) return undefined;
+  return email.split("@")[0] || undefined;
+}
+
 /**
  * Displays a human-readable name for an Ethereum address.
  *
  * Fallback chain (highest priority first):
  * 1. ContributorProfile.name (on-chain attestation)
  * 2. Privy name (from public user profiles endpoint)
- * 3. Privy email (from same endpoint, only when name absent)
- * 4. ENS name
+ * 3. ENS name
+ * 4. Self identity — ONLY when the address is the logged-in user's own wallet:
+ *    a provider display name (Google name, Farcaster/Twitter/Discord handle) or,
+ *    as a last resort, the local-part of their email. Never a full email, and
+ *    never any of this for other people (PII). Spares a self user their own
+ *    meaningless embedded-wallet address.
  * 5. Truncated address (0xabcd...1234)
  *
  * When showProfilePicture is true, renders a 24×24 avatar to the left.
@@ -42,6 +53,7 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
   const populateEns = useENS((state) => state.populateEns);
   const profiles = useUserProfiles((state) => state.profiles);
   const populateProfiles = useUserProfiles((state) => state.populateProfiles);
+  const { user, wallets } = usePrivyBridge();
 
   const lowerCasedAddress = address?.toLowerCase();
 
@@ -72,7 +84,30 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
   const privyProfile = lowerCasedAddress ? profiles[lowerCasedAddress] : undefined;
   const ensEntry = lowerCasedAddress ? ensData[lowerCasedAddress as `0x${string}`] : undefined;
 
-  // Compute display name: contributor → privy.name → privy.email → ens.name → truncated address
+  // Only surface a personal identity when the address is the viewer's own
+  // wallet. These fields are PII and must never become a public label for
+  // other people; this only spares a self user their meaningless 0x address.
+  const isSelf = useMemo(() => {
+    if (!lowerCasedAddress) return false;
+    return wallets.some((wallet) => wallet.address?.toLowerCase() === lowerCasedAddress);
+  }, [wallets, lowerCasedAddress]);
+
+  // Prefer a real name/handle across whichever provider Privy authenticated the
+  // self user with; only fall back to the email's local-part. Never render the
+  // full email (PII), and never any of this for other people.
+  const selfIdentity =
+    isSelf && user
+      ? user.google?.name ||
+        user.farcaster?.displayName ||
+        user.farcaster?.username ||
+        user.twitter?.name ||
+        user.twitter?.username ||
+        user.discord?.username ||
+        emailLocalPart(user.email?.address || user.google?.email || user.apple?.email) ||
+        undefined
+      : undefined;
+
+  // Compute display name: contributor → privy.name → ens.name → (self) identity → truncated address
   const displayName = useMemo(() => {
     if (!isValidAddress) return address ?? "";
 
@@ -80,12 +115,20 @@ const EthereumAddressToProfileName: React.FC<Props> = ({
 
     if (privyProfile?.isTried && privyProfile.name) return privyProfile.name;
 
-    if (privyProfile?.isTried && privyProfile.email) return privyProfile.email;
-
     if (ensEntry?.name) return ensEntry.name;
 
+    if (selfIdentity) return selfIdentity;
+
     return addressToDisplay;
-  }, [isValidAddress, address, contributorProfile, privyProfile, ensEntry, addressToDisplay]);
+  }, [
+    isValidAddress,
+    address,
+    contributorProfile,
+    privyProfile,
+    ensEntry,
+    selfIdentity,
+    addressToDisplay,
+  ]);
 
   // Compute avatar when showProfilePicture is true
   const avatarSrc = useMemo(() => {

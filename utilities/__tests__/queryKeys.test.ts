@@ -336,7 +336,18 @@ describe("queryKeys", () => {
       it("should return as const tuple", () => {
         const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "test" });
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(6);
+        expect(key.length).toBe(7);
+      });
+
+      it("should place the page dimension in slot 6 and default it to 1", () => {
+        expect(QUERY_KEYS.PROJECT.EXPLORER_INFINITE({})[6]).toBe(1);
+        expect(QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ page: 3 })[6]).toBe(3);
+      });
+
+      it("should generate different keys for different pages", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ page: 1 });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ page: 2 });
+        expect(key1).not.toEqual(key2);
       });
 
       it("should generate different keys for hasPayoutAddress filter", () => {

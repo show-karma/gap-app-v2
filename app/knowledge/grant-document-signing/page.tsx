@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getKnowledgeArticleDate } from "@/app/knowledge/articleDates";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 export const metadata: Metadata = customMetadata({
   title: "Document Signing in Grant Programs",
   description:
     "Understand why grant agreements must be tracked as part of the funding workflow. Learn how integrated document signing prevents operational chaos and payment delays.",
-  path: "/knowledge/grant-document-signing",
+  path: PAGES.KNOWLEDGE.ARTICLE("grant-document-signing"),
   ogType: "article",
 });
+
+const PUBLISHED_AT = getKnowledgeArticleDate("grant-document-signing");
 
 export default function GrantDocumentSigningPage() {
   return (
@@ -19,26 +24,28 @@ export default function GrantDocumentSigningPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Knowledge", href: "/knowledge" },
-          { label: "Document Signing", href: "/knowledge/grant-document-signing" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Document Signing", href: PAGES.KNOWLEDGE.ARTICLE("grant-document-signing") },
         ]}
       />
       <ArticleJsonLd
         title="Document Signing in Grant Programs"
         description="Understand why grant agreements must be tracked as part of the funding workflow. Learn how integrated document signing prevents operational chaos and payment delays."
-        url="/knowledge/grant-document-signing"
-        datePublished="2025-01-15"
-        dateModified="2026-03-24"
+        url={PAGES.KNOWLEDGE.ARTICLE("grant-document-signing")}
+        datePublished={PUBLISHED_AT}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },
-          { name: "Knowledge", url: "/knowledge" },
-          { name: "Document Signing", url: "/knowledge/grant-document-signing" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Document Signing", url: PAGES.KNOWLEDGE.ARTICLE("grant-document-signing") },
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Document Signing in Grant Programs</h1>
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">Document Signing in Grant Programs</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -81,25 +88,25 @@ export default function GrantDocumentSigningPage() {
           <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-lifecycle"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
             <Link
-              href="/knowledge/grant-accountability"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-accountability")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
             </Link>
             <Link
-              href="/knowledge/grant-kyc"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-kyc")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → KYC in grant programs
             </Link>
             <Link
-              href="/knowledge/grant-fund-disbursement"
+              href={PAGES.KNOWLEDGE.ARTICLE("grant-fund-disbursement")}
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant fund disbursement
@@ -111,7 +118,7 @@ export default function GrantDocumentSigningPage() {
           <h2 className="text-xl font-semibold">Karma's role</h2>
           <p className="text-gray-700 dark:text-gray-300">
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"

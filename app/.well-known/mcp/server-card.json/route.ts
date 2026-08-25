@@ -42,7 +42,7 @@ export function GET() {
     version: "1.0.0",
     protocolVersion: MCP_PROTOCOL_VERSION,
     transport: "http",
-    url: `${apiUrl}/v2/mcp`,
+    url: `${apiUrl}/mcp`,
     documentation: `${SITE_URL}/mcp/connect`,
     openapi: `${SITE_URL}/openapi.json`,
     authentication: {

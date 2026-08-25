@@ -5,8 +5,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { type IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { FC } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
@@ -33,7 +32,8 @@ import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { formatDate } from "@/utilities/formatDate";
 import { sendImpactAnswers } from "@/utilities/impact";
 import { INDEXER } from "@/utilities/indexer";
@@ -42,9 +42,16 @@ import { PAGES } from "@/utilities/pages";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
+import {
+  describeProviderConflict,
+  detectInjectedProviderConflict,
+  isProviderConflictError,
+  startInjectedProviderDiscovery,
+} from "@/utilities/wallet/providerConflict";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { errorManager } from "../Utilities/errorManager";
-import { type CategorizedIndicator, OutputsSection } from "./Outputs";
+import { OutputsSection } from "./Outputs/OutputsSection";
+import type { CategorizedIndicator } from "./Outputs/types";
 
 interface GrantOption {
   title: string;
@@ -170,7 +177,6 @@ const GrantSearchDropdown: FC<{
 const getFormErrorMessage = (errors: any, formValues: any) => {
   const errorMessages = [];
 
-  // Check for validation errors first
   if (errors.title?.message) {
     errorMessages.push(errors.title.message);
   } else if (!formValues.title) {
@@ -183,7 +189,6 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
     errorMessages.push("Description is required");
   }
 
-  // Check outputs
   if (errors.outputs?.message) {
     errorMessages.push("Please check your metrics values");
   } else if (formValues.outputs?.length > 0) {
@@ -195,7 +200,6 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
     }
   }
 
-  // Check deliverables
   if (errors.deliverables) {
     const hasDeliverableErrors = errors.deliverables.some((d: any) => d?.name || d?.proof);
     if (hasDeliverableErrors) {
@@ -220,7 +224,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, hasEmbeddedWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const router = useRouter();
   const pathname = usePathname();
@@ -229,13 +233,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch updates using dedicated hook
   const { rawData: projectUpdatesData, refetch: refetchUpdates } = useProjectUpdates(
     project?.uid || ""
   );
   const projectUpdates = projectUpdatesData?.projectUpdates || [];
 
-  // Fetch grants using dedicated hook
   const { grants: projectGrants } = useProjectGrants(project?.uid || "");
 
   const { register, handleSubmit, watch, control, setValue, formState, reset, setError } =
@@ -260,10 +262,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     projectIdentifier: project?.uid,
   });
 
-  // Fetch auto-synced indicators from API
   const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
 
-  // Get communities from selected grants
   const watchedGrantIds = watch("grants") || [];
   const selectedCommunities = useMemo(() => {
     const communities = new Map<string, { uid: string; name: string }>();
@@ -283,7 +283,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     return Array.from(communities.values());
   }, [watchedGrantIds, grants, projectGrants]);
 
-  // Fetch community indicators for all selected communities
   const _communityIndicatorQueries = selectedCommunities.map((community) => ({
     queryKey: ["communityIndicators", community.uid],
     queryFn: () => getIndicatorsByCommunity(community.uid),
@@ -314,10 +313,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     enabled: selectedCommunities.length > 0,
   });
 
-  // Fetch unlinked indicators
   const { data: unlinkedIndicatorsData = [] } = useUnlinkedIndicators();
 
-  // Categorized indicators combining project, community, and unlinked indicators
   const categorizedIndicators = useMemo((): CategorizedIndicator[] => {
     const projectIndicators: CategorizedIndicator[] = (indicatorsData || []).map((indicator) => ({
       ...indicator,
@@ -506,8 +503,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     name: output.name,
   }));
 
+  // Collect EIP-6963 wallet announcements while the form is open so that, if a
+  // send later dies to duelling extensions, the recovery message can name them
+  // instead of saying "a conflict". Idempotent and never throws.
+  useEffect(() => {
+    startInjectedProviderDiscovery();
+  }, []);
+
   const createProjectUpdate = async (data: UpdateType) => {
-    if (!address || !project) return;
+    if (!project) return;
 
     startAttestation(isEditMode ? "Updating activity..." : "Posting activity...");
     try {
@@ -610,18 +614,64 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
       const projectUpdate = new ProjectUpdate(projectUpdateData as any);
 
-      await projectUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      // Snapshot the activities that already existed BEFORE the first send.
+      // Unlike project creation there is no deterministic identifier to poll
+      // for (the on-chain UID only exists once the tx mines), so "did a
+      // timed-out attempt actually land?" is answered by looking for an
+      // activity that is both new to this session and carries this title.
+      const knownUpdateUids = new Set(
+        (projectUpdatesData?.projectUpdates ?? []).map((update) => update.uid)
+      );
+      const hasAlreadyLanded = async () => {
+        const { data: latest } = await refetchUpdates();
+        return !!latest?.projectUpdates?.some(
+          (update) => !knownUpdateUids.has(update.uid) && update.title === data.title
+        );
+      };
+
+      // Retry the send on a transient wallet/bundler timeout, exactly as
+      // project creation does (GAP-FRONTEND-1Y2). Until now this flow had no
+      // retry AND no idempotency guard, so a single blip abandoned the whole
+      // activity — GAP-FRONTEND-23J lost a user's monthly impact report that
+      // way. `attestWithRetry` polls the guard before every resend so a
+      // slow-but-landed attempt is never duplicated on-chain.
+      //
+      // A wallet-provider conflict is deliberately NOT retried:
+      // `isRetryableChainError` classifies it out, so `attestWithRetry`
+      // rethrows it on the first attempt instead of burning three.
+      const { result: res, recoveredByIdempotencyGuard } = await attestWithRetry({
+        send: () => projectUpdate.attest(walletSigner as any, changeStepperStep),
+        hasAlreadyLanded,
+      });
+
+      await (async () => {
         let retries = 1000;
-        const txHash = res?.tx[0]?.hash;
+        const txHash = recoveredByIdempotencyGuard ? undefined : res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), "POST", {});
+          try {
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), {});
+          } catch (listenerError) {
+            // SUPPRESSED: best-effort notify; indexing poll below retries regardless (matches legacy fetchData, which never surfaced errors here).
+            errorManager("Failed to notify attestation listener", listenerError, {
+              projectUID: projectUpdate.uid,
+              txHash,
+            });
+          }
         }
         updateStep("indexing");
         while (retries > 0) {
           try {
             const attestUID = projectUpdate.uid;
             const { data: updatesData } = await refetchUpdates();
-            const alreadyExists = updatesData?.projectUpdates.find((u) => u.uid === attestUID);
+            // When the idempotency guard recovered a timed-out attempt there is
+            // no fresh UID on `projectUpdate` to match — the activity that
+            // landed came from the abandoned send. Fall back to the same
+            // new-uid-plus-title identity the guard used.
+            const alreadyExists = recoveredByIdempotencyGuard
+              ? updatesData?.projectUpdates.find(
+                  (u) => !knownUpdateUids.has(u.uid) && u.title === data.title
+                )
+              : updatesData?.projectUpdates.find((u) => u.uid === attestUID);
 
             if (alreadyExists) {
               retries = 0;
@@ -630,7 +680,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               );
               afterSubmit?.();
               setTimeout(() => {
-                const updatesPath = PAGES.PROJECT.UPDATES(projectSlug || projectUid);
+                const updatesPath = PAGES.PROJECT.OVERVIEW(projectSlug || projectUid);
                 dismiss();
 
                 // Only show share dialog for new activities, not edits
@@ -661,13 +711,25 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         }
-      });
+      })();
     } catch (error) {
-      showError(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
+      // A wallet-provider conflict is not "try again shortly" — the browser is
+      // broken, not the network, and retrying is what this user already did
+      // twice before giving up. Name the conflicting extensions and point at a
+      // route that never touches the poisoned `window.ethereum`.
+      const conflict = isProviderConflictError(error)
+        ? describeProviderConflict(detectInjectedProviderConflict())
+        : null;
+      showError(conflict ?? MESSAGES.PROJECT_UPDATE_FORM.ERROR);
       errorManager(
         `Error of user ${address} creating project activity for project ${project?.uid}`,
         error,
         {
+          attestation: {
+            entity: "ProjectUpdate",
+            chainId: project?.chainID,
+            signingMode: hasEmbeddedWallet ? "embedded" : "external",
+          },
           projectUID: project?.uid,
           address: address,
           data: {
@@ -684,7 +746,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           } as IProjectUpdate,
         },
         {
-          error: MESSAGES.PROJECT_UPDATE_FORM.ERROR,
+          error: conflict ?? MESSAGES.PROJECT_UPDATE_FORM.ERROR,
         }
       );
     } finally {

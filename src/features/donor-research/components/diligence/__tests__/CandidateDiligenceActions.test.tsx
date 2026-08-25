@@ -28,7 +28,14 @@ const emptyTemplate: DiligenceTemplate = { questions: [], updatedAt: null };
 vi.mock("@/hooks/useDiligence", () => ({
   useCandidateDiligence: (...args: unknown[]) => mockUseCandidateDiligence(...args),
   useDiligenceTemplate: () => ({ data: emptyTemplate, isLoading: false, isError: false }),
+  useOutreachPreview: () => ({
+    data: undefined,
+    isLoading: true,
+    isError: false,
+    refetch: vi.fn(),
+  }),
   useAskQuestions: () => ({ mutate: vi.fn(), isPending: false }),
+  useSaveDiligenceTemplate: () => ({ mutate: vi.fn(), isPending: false }),
   useRequestIntro: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateAdvisorEmail: () => ({ mutate: vi.fn(), isPending: false }),
 }));
@@ -56,7 +63,9 @@ describe("CandidateDiligenceActions", () => {
   it("renders an inline loading state", () => {
     mockUseCandidateDiligence.mockReturnValue({ isLoading: true, isError: false, data: undefined });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("Loading actions…")).toBeInTheDocument();
   });
@@ -69,7 +78,9 @@ describe("CandidateDiligenceActions", () => {
       refetch: mockRefetch,
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("Couldn't load actions.")).toBeInTheDocument();
     screen.getByRole("button", { name: "Retry" }).click();
@@ -86,7 +97,9 @@ describe("CandidateDiligenceActions", () => {
       }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByRole("button", { name: "Ask questions" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Connect" })).not.toBeDisabled();
@@ -99,9 +112,51 @@ describe("CandidateDiligenceActions", () => {
       data: buildView({ coarseStatus: "intro_sent" }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("Intro sent")).toBeInTheDocument();
+  });
+
+  it("labels a queued intro 'Intro queued', never 'Intro sent'", () => {
+    mockUseCandidateDiligence.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: buildView({
+        coarseStatus: "intro_sent",
+        intro: { introRequestId: "i1", requestedAt: "2026-07-07T00:00:00Z", sentAt: null },
+      }),
+    });
+
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
+
+    expect(screen.getByText("Intro queued")).toBeInTheDocument();
+    expect(screen.queryByText(/Intro sent/)).not.toBeInTheDocument();
+  });
+
+  it("labels a delivered intro 'Intro sent' with the relative time detail", () => {
+    mockUseCandidateDiligence.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: buildView({
+        coarseStatus: "intro_sent",
+        intro: {
+          introRequestId: "i1",
+          requestedAt: "2026-07-01T00:00:00Z",
+          sentAt: "2026-07-06T00:00:00Z",
+        },
+      }),
+    });
+
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
+
+    expect(screen.getAllByText(/Intro sent/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Intro queued")).not.toBeInTheDocument();
   });
 
   it("renders no badge for not_requested", () => {
@@ -111,7 +166,9 @@ describe("CandidateDiligenceActions", () => {
       data: buildView({ coarseStatus: "not_requested" }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.queryByText("Questions sent")).not.toBeInTheDocument();
     expect(screen.queryByText("Answered")).not.toBeInTheDocument();
@@ -134,7 +191,9 @@ describe("CandidateDiligenceActions", () => {
       }),
     });
 
-    render(<CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" />);
+    render(
+      <CandidateDiligenceActions reportId="report-1" candidateId="candidate-1" viewer="owner" />
+    );
 
     expect(screen.getByText("What is your annual budget?")).toBeInTheDocument();
     expect(screen.getByText("$1.2M")).toBeInTheDocument();

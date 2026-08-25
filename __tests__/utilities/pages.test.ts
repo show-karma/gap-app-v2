@@ -1,6 +1,28 @@
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { PAGES } from "@/utilities/pages";
 
 describe("PAGES constants", () => {
+  describe("COMMUNITY.REPORT_DETAIL", () => {
+    it("appends the config slug so same-date reports get distinct URLs", () => {
+      const quarterly = PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06", "quarterly-review");
+      const health = PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06", "portfolio-health");
+
+      expect(quarterly).toBe("/community/filpgf/reports/2026-07-06/quarterly-review");
+      expect(health).toBe("/community/filpgf/reports/2026-07-06/portfolio-health");
+      expect(quarterly).not.toBe(health);
+    });
+
+    it("falls back to the run-date-only URL when no slug is available", () => {
+      expect(PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06")).toBe(
+        "/community/filpgf/reports/2026-07-06"
+      );
+      expect(PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06", null)).toBe(
+        "/community/filpgf/reports/2026-07-06"
+      );
+    });
+  });
+
   describe("COMMUNITY.APPLICATION_SUCCESS", () => {
     it("returns correct path format", () => {
       const result = PAGES.COMMUNITY.APPLICATION_SUCCESS("optimism", "app-123");
@@ -76,9 +98,9 @@ describe("PAGES constants", () => {
     });
   });
 
-  describe("REVIEWER.FUNDING_PLATFORM.MILESTONES", () => {
+  describe("MANAGE.FUNDING_PLATFORM.MILESTONES", () => {
     it("adds an encoded milestone hash for reviewer milestone review links", () => {
-      const result = PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
+      const result = PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(
         "filecoin",
         "992",
         "project-uid",
@@ -102,6 +124,65 @@ describe("PAGES constants", () => {
 
     it("COMMUNITIES is /communities", () => {
       expect(PAGES.COMMUNITIES).toBe("/communities");
+    });
+  });
+
+  describe("PAGES.BLOG", () => {
+    it("BLOG is /blog", () => {
+      expect(PAGES.BLOG).toBe("/blog");
+    });
+
+    it("BLOG_POST builds a slug path", () => {
+      const result = PAGES.BLOG_POST("my-first-post");
+      expect(result).toBe("/blog/my-first-post");
+    });
+
+    it("BLOG_POST handles different slugs distinctly", () => {
+      const path1 = PAGES.BLOG_POST("post-a");
+      const path2 = PAGES.BLOG_POST("post-b");
+      expect(path1).not.toBe(path2);
+    });
+  });
+
+  describe("PAGES.KNOWLEDGE", () => {
+    it("ROOT is /knowledge", () => {
+      expect(PAGES.KNOWLEDGE.ROOT).toBe("/knowledge");
+    });
+
+    it("ARTICLE builds a slug path under the index route", () => {
+      expect(PAGES.KNOWLEDGE.ARTICLE("grant-lifecycle")).toBe("/knowledge/grant-lifecycle");
+      expect(PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")).toBe("/knowledge/onchain-reputation");
+    });
+
+    it("ARTICLE resolves every article directory to its own route", () => {
+      const dir = path.resolve(__dirname, "../../app/knowledge");
+      const slugs = readdirSync(dir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
+
+      expect(slugs.length).toBeGreaterThan(0);
+      for (const slug of slugs) {
+        expect(PAGES.KNOWLEDGE.ARTICLE(slug)).toBe(`${PAGES.KNOWLEDGE.ROOT}/${slug}`);
+      }
+      expect(new Set(slugs.map(PAGES.KNOWLEDGE.ARTICLE)).size).toBe(slugs.length);
+    });
+
+    it("is the only source of knowledge routes in the article pages", () => {
+      const dir = path.resolve(__dirname, "../../app/knowledge");
+      const pages = readdirSync(dir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => path.join(dir, entry.name, "page.tsx"))
+        .concat(path.join(dir, "page.tsx"));
+
+      // A quote immediately before the path catches a hardcoded route in any
+      // string form — "/knowledge", '/knowledge' and `/knowledge`. Asserting on
+      // the bare substring would not work: every article imports
+      // `@/app/knowledge/articleDates`, so the path appears legitimately.
+      const hardcodedRoute = /["'`]\/knowledge/;
+
+      for (const page of pages) {
+        expect(readFileSync(page, "utf8")).not.toMatch(hardcodedRoute);
+      }
     });
   });
 });

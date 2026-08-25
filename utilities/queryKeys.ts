@@ -94,6 +94,26 @@ export const QUERY_KEYS = {
   },
   APPLICATIONS: {
     BY_PROJECT_UID: (projectUID: string) => ["application-by-project-uid", projectUID] as const,
+    GRANTEE_ACCESS: (address?: string, communitySlug?: string, programId?: string) =>
+      [
+        "application-grantee-access",
+        address ?? null,
+        communitySlug ?? null,
+        programId ?? null,
+      ] as const,
+    GRANTEE_MILESTONE_ACCESS: (
+      address?: string,
+      communitySlug?: string,
+      programId?: string,
+      projectUid?: string
+    ) =>
+      [
+        "application-grantee-milestone-access",
+        address ?? null,
+        communitySlug ?? null,
+        programId ?? null,
+        projectUid ?? null,
+      ] as const,
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
     INVOICE_CONFIG: (referenceNumber: string) =>
       ["applicationInvoiceConfig", referenceNumber] as const,
@@ -109,8 +129,6 @@ export const QUERY_KEYS = {
       ["reviewers", "community", communityUID, "programs"] as const,
   },
   CONTRACTS: {
-    DEPLOYER: (network: string, contractAddress: string) =>
-      ["contract-deployer", network, contractAddress] as const,
     VALIDATION: {
       ALL: ["contract-validation"] as const,
       VALIDATE: (params: { address: string; network: string; excludeProjectId?: string }) =>
@@ -125,6 +143,10 @@ export const QUERY_KEYS = {
     PROJECTS: (slug: string, options?: unknown) =>
       ["community-projects-v2", slug, options] as const,
     GRANTS: (communitySlug: string) => ["community-grants", communitySlug] as const,
+    // Kept as ["programs", "community", …] (the pre-consolidation value) so the
+    // cache shared across all useCommunityPrograms consumers stays stable.
+    PROGRAMS: (communityUIDorSlug: string) =>
+      ["programs", "community", communityUIDorSlug] as const,
     CATEGORIES: (communityUIDorSlug?: string) =>
       ["communityCategories", communityUIDorSlug] as const,
     IS_ADMIN: (communityUid?: string, chainId?: number, address?: string, signer?: unknown) =>
@@ -239,6 +261,7 @@ export const QUERY_KEYS = {
       sortOrder?: string;
       limit?: number;
       hasPayoutAddress?: boolean;
+      page?: number;
     }) =>
       [
         "projects-explorer-infinite",
@@ -247,6 +270,7 @@ export const QUERY_KEYS = {
         params.sortOrder || "desc",
         params.limit ?? 50,
         params.hasPayoutAddress ?? false,
+        params.page ?? 1,
       ] as const,
   },
   INDICATORS: {

@@ -13,7 +13,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -125,15 +125,10 @@ export const ProjectObjectiveForm = ({
           const _fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number), {});
           } else {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(newObjective.uid, project?.chainID as number),
-              "POST",
               {}
             );
           }
@@ -153,7 +148,7 @@ export const ProjectObjectiveForm = ({
                   setTimeout(() => {
                     dismiss();
                     router.push(
-                      PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || "")
+                      PAGES.PROJECT.OVERVIEW(project?.details?.slug || project?.uid || "")
                     );
                   }, 1500);
                 }
@@ -229,15 +224,10 @@ export const ProjectObjectiveForm = ({
           const _fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
+            await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number), {});
           } else {
-            await fetchData(
+            await api.post(
               INDEXER.ATTESTATION_LISTENER(objectiveInstance.uid, project?.chainID as number),
-              "POST",
               {}
             );
           }

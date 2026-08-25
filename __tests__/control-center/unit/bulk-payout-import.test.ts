@@ -10,7 +10,13 @@ import type { PayoutGrantConfig } from "@/src/features/payout-disbursement/types
 
 describe("bulkPayoutImport utilities", () => {
   it("extracts slug from project URL", () => {
-    expect(extractProjectSlug("https://karmahq.xyz/project/My-Slug?foo=bar")).toBe("my-slug");
+    expect(extractProjectSlug("https://www.karmahq.org/project/My-Slug?foo=bar")).toBe("my-slug");
+  });
+
+  it("still extracts slugs from legacy .xyz project URLs", () => {
+    // Operators paste links copied years ago, and on-chain attestation payloads
+    // embed .xyz URLs immutably — inbound parsing accepts both TLDs forever.
+    expect(extractProjectSlug("https://karmahq.org/project/My-Slug?foo=bar")).toBe("my-slug");
   });
 
   it("parses rows with flexible headers", () => {

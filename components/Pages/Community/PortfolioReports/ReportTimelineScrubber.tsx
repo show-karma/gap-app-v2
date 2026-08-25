@@ -68,6 +68,11 @@ export function ReportTimelineScrubber({ entries, activeKey, onJumpTo }: Props) 
     else last.entries.push(e);
   }
 
+  // Sticky offset: `top-24` (6rem) = the global navbar's 4rem, which stays
+  // pinned to the viewport on every host (whitelabel-navbar is `sticky top-0`
+  // with an `h-16` bar; navbar.tsx is `fixed top-0` over an equivalent spacer),
+  // plus 2rem of breathing room. `max-h` reserves the same 6rem at the top and
+  // 2rem at the bottom so a long timeline scrolls inside itself.
   return (
     <nav
       aria-label="Reports timeline"

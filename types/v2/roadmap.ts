@@ -82,19 +82,17 @@ export type GrantMilestoneVerificationDetails = {
   attestationUID?: string;
 };
 
-export type FundingApplicationMilestoneCompletion = {
-  id: string;
-  referenceNumber: string;
-  milestoneFieldLabel: string;
-  milestoneTitle: string;
-  completionText: string;
-  ownerAddress: string;
-  isVerified: boolean;
-  verifiedBy?: string;
-  verifiedAt?: string | null;
-  verificationComment?: string;
-  createdAt: string;
-  updatedAt: string;
+/**
+ * Display-only cancellation metadata for a cancelled milestone (DEV-523).
+ * Sourced from either the on-chain cancellation overlay (project-updates
+ * endpoint) or the milestone's statusHistory (grants endpoint), so every
+ * field is optional — a status-only cancellation carries no metadata at all.
+ */
+export type MilestoneCancellationInfo = {
+  uid?: string;
+  cancelledBy?: string | null;
+  cancelledAt?: string | null;
+  reason?: string | null;
 };
 
 export type GrantInfo = {
@@ -119,7 +117,8 @@ export type GrantMilestoneWithDetails = {
   grant?: GrantInfo;
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
-  fundingApplicationCompletion?: FundingApplicationMilestoneCompletion | null;
+  /** On-chain cancellation overlay (DEV-523). Present only when status === "cancelled". */
+  cancellation?: MilestoneCancellationInfo | null;
   invoiceInfo?: {
     status: string;
     receivedAt: string | null;
@@ -258,6 +257,18 @@ export type UnifiedMilestone = {
   source: UnifiedMilestoneSource;
   chainID: number;
   refUID: string;
+  /**
+   * Raw on-chain milestone status (e.g. "cancelled") when known (DEV-523).
+   * `completed` is a delivered-only boolean and cannot represent cancellation,
+   * so consumers must check this to detect a terminal cancelled milestone.
+   */
+  currentStatus?: string;
+  /**
+   * Cancellation metadata (who/when/why) for a cancelled milestone (DEV-523),
+   * rendered by CancelledMilestoneBanner. May be absent even when
+   * `currentStatus === "cancelled"` (status-only cancellation).
+   */
+  cancellation?: MilestoneCancellationInfo | null;
   projectUpdate?: ProjectUpdate;
   /** Grant update for display - uses conversion type for flexibility, or SDK type */
   grantUpdate?: ConversionGrantUpdate | IGrantUpdate;

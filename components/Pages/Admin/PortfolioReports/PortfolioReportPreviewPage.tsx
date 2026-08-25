@@ -13,6 +13,11 @@ interface Props {
   reportId: string;
 }
 
+/**
+ * Admin preview of a single report, addressed by report id. Renders the report
+ * document inline (drafts included — the report is fetched from the auth-gated
+ * admin endpoint), so it stays reachable regardless of publish status.
+ */
 export function PortfolioReportPreviewPage({ community, reportId }: Props) {
   const slug = community.details.slug;
   const { data: report, isLoading, isError, refetch } = usePortfolioReport(slug, reportId);

@@ -1,8 +1,11 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
+import { MilestoneAuthorityNotice } from "@/src/features/applications/components/MilestoneAuthorityNotice";
 import { OffChainMilestoneRow } from "@/src/features/applications/components/OffChainMilestoneRow";
 import { OnChainMilestoneRow } from "@/src/features/applications/components/OnChainMilestoneRow";
 import { useApplicationInvoiceConfig } from "@/src/features/applications/hooks/use-application-invoice-config";
+import { useMilestoneSubmissionAuthority } from "@/src/features/applications/hooks/use-milestone-submission-authority";
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 
 // Narrow structural prop — the tab only needs the milestone-relevant
@@ -14,6 +17,12 @@ export interface MilestonesTabApplication {
   projectUID?: string;
   status: string;
   milestoneStatuses?: MilestoneStatusEntry[];
+}
+
+// Stable key: prefer milestoneUID; fall back to fieldLabel:title for
+// application-source slots not yet anchored on-chain (no UID).
+function milestoneEntryKey(entry: MilestoneStatusEntry): string {
+  return entry.milestoneUID ?? `${entry.source}:${entry.fieldLabel ?? ""}:${entry.title}`;
 }
 
 interface MilestonesTabProps {
@@ -38,6 +47,15 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
     application.referenceNumber,
     { enabled: invoiceRequired !== false }
   );
+
+  // Being the APPLICANT is not enough to submit a completion — the indexer
+  // authorizes the resulting attestation against PROJECT authority; see the
+  // hook for why both signals are required.
+  const authority = useMilestoneSubmissionAuthority({
+    isApplicant: isOwner,
+    projectUID: application.projectUID,
+  });
+  const canSubmitCompletion = authority.status === "authorized";
 
   const showInvoice = !!invoiceConfig?.invoiceRequired && !!invoiceConfig?.grantUID;
   const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
@@ -67,13 +85,21 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
       <div className="border-b border-border px-5 py-4">
         <h2 className="text-base font-semibold text-foreground">Milestones</h2>
       </div>
+      {authority.status === "denied" && <MilestoneAuthorityNotice variant="denied" />}
+      {authority.status === "unverified" && (
+        <MilestoneAuthorityNotice variant="unverified" onRetry={authority.retry} />
+      )}
       <div className="space-y-3 p-5">
         {entries.map((entry) => {
-          // Stable key: prefer milestoneUID; fall back to fieldLabel:title
-          // for application-source slots that haven't been anchored on-chain
-          // yet (no UID).
-          const key =
-            entry.milestoneUID ?? `${entry.source}:${entry.fieldLabel ?? ""}:${entry.title}`;
+          const key = milestoneEntryKey(entry);
+
+          // Tri-state rule: while authorization resolves, render a skeleton —
+          // neither the affordance nor a denial.
+          if (authority.status === "resolving") {
+            return (
+              <Skeleton key={key} data-testid="milestone-row-skeleton" className="h-16 w-full" />
+            );
+          }
 
           if (entry.source === "application") {
             // Prefer milestoneUID matching when both sides have one; same-title
@@ -91,7 +117,7 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
                 key={key}
                 entry={entry}
                 referenceNumber={application.referenceNumber}
-                isEditable={isOwner}
+                isEditable={canSubmitCompletion}
                 showInvoice={showInvoice}
                 existingInvoice={existingInvoice}
                 isInvoiceConfigLoading={isInvoiceConfigLoading}
@@ -99,17 +125,16 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
             );
           }
 
-          // Project-source row — requires projectUID for the "View on
-          // project page" link. The indexer only emits project-source
-          // entries when application.projectUID is set, so this is
-          // defensive rather than load-bearing.
+          // Project-source row — requires projectUID for the "View on project
+          // page" link. The indexer only emits project-source entries when
+          // application.projectUID is set, so this is defensive.
           if (!application.projectUID) return null;
           return (
             <OnChainMilestoneRow
               key={key}
               entry={entry}
               referenceNumber={application.referenceNumber}
-              isEditable={isOwner}
+              isEditable={canSubmitCompletion}
               projectUid={application.projectUID}
             />
           );

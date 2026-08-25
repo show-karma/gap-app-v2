@@ -2,8 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import type { InvalidInfo } from "@/components/Pages/Project/ContractAddressItem";
 import type { NetworkAddressPair } from "@/components/Pages/Project/types";
+import { api } from "@/utilities/api/client";
 import { getContractKey } from "@/utilities/contractKey";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -36,18 +36,12 @@ const validateContractAddress = async ({
     ...(excludeProjectId && { excludeProjectId }),
   });
 
-  const [data, error] = await fetchData(
-    `${INDEXER.PROJECT.CONTRACTS.CHECK_ADDRESS()}?${params.toString()}`,
-    "GET",
-    {},
-    {},
-    {},
-    true // authenticated
+  // TODO(#1775): add zod schema — response can be falsy on success (see the
+  // `data || { isAvailable: true }` fallback below), so a strict object
+  // schema would throw ContractViolationError on that legitimate shape.
+  const data = await api.get<ContractAddressValidationResult>(
+    `${INDEXER.PROJECT.CONTRACTS.CHECK_ADDRESS()}?${params.toString()}`
   );
-
-  if (error) {
-    throw new Error(error);
-  }
 
   return data || { isAvailable: true };
 };

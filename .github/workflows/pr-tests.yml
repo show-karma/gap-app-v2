@@ -50,18 +50,26 @@ concurrency:
 # previous "changed" mode (vitest --changed) was dropped: the transitive
 # import graph pulled in most of the suite anyway (~8 min on one runner),
 # so a sharded full run is both faster wall-clock and a stronger signal.
+#
+# Shard count is 6 rather than 4: the jsdom + axe accessibility suites are
+# memory-heavy, and with only four shards a single shard could accumulate
+# enough of them to push a runner past its RSS limit and get OOM-killed
+# (crash with no test failures). More, thinner shards keep per-shard peak
+# memory down while also improving wall-clock through extra parallelism.
 env:
-  SHARD_COUNT: 4
+  SHARD_COUNT: 6
 
 jobs:
-  # ── Step 1: run tests (4 shards) ────────────────────────────────────────────
+  # ── Step 1: run tests (6 shards) ────────────────────────────────────────────
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Raised from 10: the memory-capped run (see below) is slower per shard
+    # than the old uncapped parallel run.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
 
     steps:
       - name: Checkout code
@@ -69,8 +77,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -89,13 +95,25 @@ jobs:
         # Invoke vitest directly: `pnpm run test -- <flags>` forwards the
         # literal `--` to vitest, which then parses the flags as test-name
         # filters — silently running the whole suite unsharded.
+        # OOM background: the jsdom + axe suites build large JS-heap structures.
+        # With --max-old-space-size=8192 on a 16 GB runner V8 had no reason to
+        # GC until ~8 GB, so a shard's heap plus external memory accumulated
+        # until the OS killed the worker (a crash with no test failures, no V8
+        # "heap limit" line). The real fix is the 6144 MB heap cap: it makes V8
+        # collect aggressively so RSS stays well under the 16 GB runner limit.
+        # --maxWorkers=2 (down from the default = CPU count, but not fully
+        # serial) keeps at most two files' live heaps on the shared thread pool
+        # at once — comfortably inside the 6 GB cap given the six-way split and
+        # the render-once homepage a11y suite — while recovering most of the
+        # parallelism that --maxWorkers=1 gave up.
         run: |
           pnpm exec vitest run --project unit \
             --reporter=dot \
+            --maxWorkers=2 \
             --shard=${{ matrix.shard }}/${{ env.SHARD_COUNT }}
         env:
           NODE_ENV: test
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=6144
 
       # Upload a tiny outcome artifact so the report job can aggregate across
       # shards. Matrix job outputs only return the LAST shard's value, so

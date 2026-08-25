@@ -1,7 +1,8 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { UpdatesFeedFilters } from "@/types/v2/project-profile.types";
 import type { UpdatesApiResponse } from "@/types/v2/roadmap";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -101,29 +102,37 @@ export const getProjectUpdates = async (
   const qs = buildUpdatesQueryString({ milestoneStatus, ...queryFilters });
   const url = `${baseUrl}${qs}`;
 
-  const [data, error, , status] = await fetchData<UpdatesApiResponse>(
-    url,
-    "GET",
-    {},
-    {},
-    {},
-    isAuthorized,
-    false,
-    undefined,
-    signal
-  );
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<UpdatesApiResponse>(url, { isAuthorized, signal });
+    if (!data) {
+      errorManager("Project Updates API Error: empty response", undefined, {
+        context: "project-updates.service",
+      });
+      return emptyResponse;
+    }
+    return data;
+  } catch (error) {
     // Missing project routes are expected for unknown slugs and should not be sent to Sentry.
-    if (status === 404) {
+    if (isApiError(error) && error instanceof HttpError && error.status === 404) {
       return emptyResponse;
     }
 
     errorManager(`Project Updates API Error: ${error}`, error, {
       context: "project-updates.service",
     });
-    return emptyResponse;
-  }
 
-  return data;
+    // Rethrow. Returning `emptyResponse` here made a failed fetch
+    // indistinguishable from a project that genuinely has no updates: the feed
+    // rendered "No activities to display" with no error and no retry, and
+    // React Query never saw a rejection, so its error state — and every error
+    // banner built on it — could not fire at all. Callers that only want to
+    // tolerate a missing project are already served by the 404 branch above.
+    //
+    // The prefetch callers are unaffected: `prefetchQuery` swallows rejections
+    // and `dehydrate` omits failed queries, so the client simply refetches.
+    // `useUpdateActions` benefits too — it previously read a failed fetch as
+    // "the update is gone" and reported a deletion that may not have happened.
+    throw error;
+  }
 };

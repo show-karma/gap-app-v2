@@ -13,10 +13,15 @@
  * doesn't need Privy / wagmi / SDK / Next router context.
  */
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entities";
 
 const mockUseApplicationInvoiceConfig = vi.fn();
+const mockUsePermissionsQuery = vi.fn();
+
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: (...args: unknown[]) => mockUsePermissionsQuery(...args),
+}));
 
 vi.mock("@/src/features/applications/hooks/use-application-invoice-config", () => ({
   useApplicationInvoiceConfig: (...args: unknown[]) => mockUseApplicationInvoiceConfig(...args),
@@ -26,14 +31,17 @@ vi.mock("@/src/features/applications/components/OffChainMilestoneRow", () => ({
   OffChainMilestoneRow: ({
     entry,
     existingInvoice,
+    isEditable,
   }: {
     entry: MilestoneStatusEntry;
     existingInvoice?: { invoiceFileKey: string | null };
+    isEditable: boolean;
   }) => (
     <div
       data-testid="off-chain-row"
       data-uid={entry.milestoneUID ?? ""}
       data-field-label={entry.fieldLabel ?? ""}
+      data-editable={String(isEditable)}
       data-existing-invoice-key={existingInvoice?.invoiceFileKey ?? ""}
     >
       {entry.title}
@@ -45,14 +53,17 @@ vi.mock("@/src/features/applications/components/OnChainMilestoneRow", () => ({
   OnChainMilestoneRow: ({
     entry,
     projectUid,
+    isEditable,
   }: {
     entry: MilestoneStatusEntry;
     projectUid: string;
+    isEditable: boolean;
   }) => (
     <div
       data-testid="on-chain-row"
       data-uid={entry.milestoneUID ?? ""}
       data-project-uid={projectUid}
+      data-editable={String(isEditable)}
     >
       {entry.title}
     </div>
@@ -94,6 +105,13 @@ function makeEntry(overrides: Partial<MilestoneStatusEntry> = {}): MilestoneStat
 beforeEach(() => {
   vi.clearAllMocks();
   mockUseApplicationInvoiceConfig.mockReturnValue({ data: null, isLoading: false });
+  mockUsePermissionsQuery.mockReturnValue({
+    data: { isProjectOwner: true, isProjectAdmin: false, isProjectMember: true },
+    isPending: false,
+    isPlaceholderData: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
 });
 
 describe("MilestonesTab", () => {
@@ -269,5 +287,229 @@ describe("MilestonesTab", () => {
     const row = screen.getByTestId("off-chain-row");
     expect(row).toHaveTextContent("Not anchored yet");
     expect(row).toHaveAttribute("data-uid", "");
+  });
+});
+
+/**
+ * Project-authority gating.
+ *
+ * Being the APPLICANT is an off-chain funding-platform role. Submitting a
+ * milestone completion writes an on-chain attestation that the indexer
+ * authorizes against PROJECT authority (owner / MemberOf / resolver admin,
+ * fanned over linked wallets). When an application is linked to a project the
+ * applicant has no authority on, EAS accepts the attestation, the grantee pays
+ * gas, and the indexer discards it — silently. The tab must therefore require
+ * BOTH signals before offering the action.
+ */
+describe("MilestonesTab project-authority gating", () => {
+  const entries = [
+    makeEntry({ source: "application", milestoneUID: "0xapp-1", title: "App milestone" }),
+    makeEntry({ source: "project", milestoneUID: "0xproj-1", title: "Project milestone" }),
+  ];
+
+  function renderWithAuthority(
+    permissions: Record<string, boolean> | null,
+    {
+      isOwner = true,
+      isPending = false,
+      isPlaceholderData = false,
+      isError = false,
+      hasLinkedProject = true,
+      refetch = vi.fn(),
+    } = {}
+  ) {
+    mockUsePermissionsQuery.mockReturnValue({
+      data: permissions,
+      isPending,
+      isPlaceholderData,
+      isError,
+      refetch,
+    });
+    return render(
+      <MilestonesTab
+        application={makeApplication({
+          milestoneStatuses: entries,
+          projectUID: hasLinkedProject ? PROJECT_UID : undefined,
+        })}
+        isOwner={isOwner}
+      />
+    );
+  }
+
+  function editableFlags() {
+    return [...screen.getAllByTestId(/^(off|on)-chain-row$/)].map((el) =>
+      el.getAttribute("data-editable")
+    );
+  }
+
+  it("should_make_rows_editable_when_applicant_is_the_project_owner", () => {
+    renderWithAuthority({
+      isProjectOwner: true,
+      isProjectAdmin: false,
+      isProjectMember: false,
+    });
+
+    expect(editableFlags()).toEqual(["true", "true"]);
+  });
+
+  it("should_make_rows_editable_when_applicant_is_only_a_project_member", () => {
+    // MemberOf alone is an accepted arm in the indexer's validator, so the UI
+    // must not demand owner/admin — that would hide the action from grantees
+    // the indexer would happily admit.
+    renderWithAuthority({
+      isProjectOwner: false,
+      isProjectAdmin: false,
+      isProjectMember: true,
+    });
+
+    expect(editableFlags()).toEqual(["true", "true"]);
+  });
+
+  it("should_make_rows_editable_when_applicant_is_an_on_chain_project_admin", () => {
+    renderWithAuthority({
+      isProjectOwner: false,
+      isProjectAdmin: true,
+      isProjectMember: false,
+    });
+
+    expect(editableFlags()).toEqual(["true", "true"]);
+  });
+
+  it("should_lock_rows_when_applicant_has_no_project_authority", () => {
+    renderWithAuthority({
+      isProjectOwner: false,
+      isProjectAdmin: false,
+      isProjectMember: false,
+    });
+
+    expect(editableFlags()).toEqual(["false", "false"]);
+  });
+
+  it("should_explain_why_submission_is_blocked_when_applicant_has_no_project_authority", () => {
+    renderWithAuthority({
+      isProjectOwner: false,
+      isProjectAdmin: false,
+      isProjectMember: false,
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent(/not authorized on the Karma project/i);
+  });
+
+  it("should_render_a_skeleton_instead_of_rows_while_project_authority_is_still_resolving", () => {
+    // No-glimpse rule: a tri-state auth signal must never render the
+    // privileged affordance during the pending window — and per the
+    // tri-state rule the resolving window renders a skeleton, not the
+    // rows in a locked state.
+    renderWithAuthority(null, { isPending: true });
+
+    expect(screen.getAllByTestId("milestone-row-skeleton")).toHaveLength(2);
+    expect(screen.queryByTestId("off-chain-row")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("on-chain-row")).not.toBeInTheDocument();
+  });
+
+  it("should_not_show_the_blocked_notice_while_authority_is_still_resolving", () => {
+    renderWithAuthority(null, { isPending: true });
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("should_fail_closed_when_the_permissions_query_errors_out", () => {
+    renderWithAuthority(null, { isError: true });
+
+    expect(editableFlags()).toEqual(["false", "false"]);
+  });
+
+  it("should_say_permissions_could_not_be_verified_rather_than_claiming_unauthorized_on_error", () => {
+    // An unresolved query is not a denial. Telling a legitimately authorized
+    // grantee they are "not authorized" because the permissions call failed
+    // sends them chasing access they already have.
+    renderWithAuthority(null, { isError: true });
+
+    expect(screen.getByRole("status")).toHaveTextContent(/could not verify/i);
+  });
+
+  it("should_not_be_submittable_when_a_background_refetch_fails_with_stale_last_good_permissions", () => {
+    // Regression (CodeRabbit Major): on a background REFETCH failure React
+    // Query keeps the last-good `data`, so authority would read as authorized
+    // off stale permissions. An errored lookup must resolve to unverified —
+    // which is NOT submittable — regardless of any retained data.
+    renderWithAuthority(
+      { isProjectOwner: true, isProjectAdmin: true, isProjectMember: true },
+      { isError: true }
+    );
+
+    expect(editableFlags()).toEqual(["false", "false"]);
+    expect(screen.getByRole("status")).toHaveTextContent(/could not verify/i);
+  });
+
+  it("should_offer_a_retry_wired_to_the_permissions_refetch_when_authority_is_unverified", () => {
+    const refetch = vi.fn();
+    renderWithAuthority(null, { isError: true, refetch });
+
+    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should_render_a_skeleton_while_showing_placeholder_permissions_from_a_previously_viewed_project", () => {
+    // usePermissionsQuery sets `placeholderData: keepPreviousData`, so moving
+    // between applications keeps the PRIOR project's resolved permissions with
+    // status "success". Trusting that would flash the submit affordance for a
+    // project the applicant has no authority on — the exact glimpse this fix
+    // exists to remove. Placeholder data is "still resolving" → skeleton.
+    renderWithAuthority(
+      { isProjectOwner: true, isProjectAdmin: true, isProjectMember: true },
+      { isPlaceholderData: true }
+    );
+
+    expect(screen.getAllByTestId("milestone-row-skeleton")).toHaveLength(2);
+    expect(screen.queryByTestId("off-chain-row")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("on-chain-row")).not.toBeInTheDocument();
+  });
+
+  it("should_not_show_the_blocked_notice_while_permissions_are_placeholder_data", () => {
+    renderWithAuthority(
+      { isProjectOwner: true, isProjectAdmin: true, isProjectMember: true },
+      { isPlaceholderData: true }
+    );
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("should_lock_rows_when_the_application_has_no_linked_project_to_resolve_authority_against", () => {
+    // No projectUID means the query is disabled and authority is unknowable —
+    // a disabled v5 query reports isPending=true forever, so this must not be
+    // mistaken for "still loading" (no eternal skeleton) and must not
+    // silently unlock the form. Unknowable is unverified, not a denial.
+    renderWithAuthority(null, { isPending: true, hasLinkedProject: false });
+
+    // The project-source row is dropped entirely without a projectUID, so only
+    // the application-source row renders — and it must be locked.
+    expect(editableFlags()).toEqual(["false"]);
+    expect(screen.queryByTestId("milestone-row-skeleton")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/could not verify/i);
+  });
+
+  it("should_not_show_the_blocked_notice_to_non_applicants", () => {
+    // A reviewer/admin viewing the application never had the affordance;
+    // telling them they're "not authorized" would be noise.
+    renderWithAuthority(
+      { isProjectOwner: false, isProjectAdmin: false, isProjectMember: false },
+      { isOwner: false }
+    );
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("should_scope_the_permissions_query_to_the_linked_project_and_skip_it_for_non_applicants", () => {
+    renderWithAuthority(
+      { isProjectOwner: false, isProjectAdmin: false, isProjectMember: false },
+      { isOwner: false }
+    );
+
+    expect(mockUsePermissionsQuery).toHaveBeenCalledWith(
+      { projectId: PROJECT_UID },
+      { enabled: false }
+    );
   });
 });

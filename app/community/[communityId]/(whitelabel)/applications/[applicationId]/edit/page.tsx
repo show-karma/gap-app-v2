@@ -1,7 +1,7 @@
 import { Lock } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { PAGES } from "@/utilities/pages";
 import { ApplicationEditClient } from "./ApplicationEditClient";
 
@@ -12,10 +12,16 @@ export default async function ApplicationEditPage({
 }) {
   const { communityId, applicationId } = await params;
 
-  const [application] = await fetchData<Application>(
-    `/v2/funding-applications/${applicationId}`,
-    "GET"
-  );
+  // TODO(#1775): add zod schema
+  let application: Application | null;
+  try {
+    application = await api.get<Application>(`/v2/funding-applications/${applicationId}`);
+  } catch {
+    // SUPPRESSED: SSR degrade-to-null is intentional — a missing/private/
+    // failed application fetch renders the "Not Available" fallback below
+    // instead of crashing the server (matches legacy fetchData behavior).
+    application = null;
+  }
 
   if (!application) {
     return (

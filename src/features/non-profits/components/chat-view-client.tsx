@@ -365,10 +365,11 @@ export function ChatView({ searchId }: { searchId?: string }) {
 
   const showEmpty = messages.length === 0 && !isSearching;
   const lastTurn = messages[messages.length - 1];
-  const showNudge = useMemo(
-    () => messages.some((m) => m.status === "done" && m.entities.length > 0),
-    [messages]
-  );
+  // Any completed turn is enough — a search that returned nothing still means
+  // the user has seen the agent work, and gating on `entities.length > 0` left
+  // narrow viewports with no connector CTA at all on a zero-result search while
+  // the (unconditional) rail kept showing one above `xl`.
+  const showNudge = useMemo(() => messages.some((m) => m.status === "done"), [messages]);
 
   // Not-found state: the conversation URL is private to another account,
   // deleted, or never existed (server 404 with no local query to re-run).
@@ -484,8 +485,11 @@ export function ChatView({ searchId }: { searchId?: string }) {
                   </div>
                 )
               )}
+              {/* The connector CTA lives in the right rail (SearchRail), which
+                  only renders at `xl`. Below that the rail is hidden, so the
+                  inline banner is the fallback rather than a duplicate. */}
               {showNudge && (
-                <div className="mx-auto w-full max-w-2xl">
+                <div className="mx-auto w-full max-w-2xl xl:hidden">
                   <ConnectorNudge />
                 </div>
               )}

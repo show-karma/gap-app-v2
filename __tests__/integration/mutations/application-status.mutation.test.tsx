@@ -3,7 +3,7 @@
  *
  * Tests the updateStatusMutation in useFundingApplication hook:
  * - PUT /v2/funding-applications/:applicationId/status
- * - Invalidates application cache on success
+ * - Invalidates application cache on settle (success and failure both re-sync)
  * - Shows error toast on failure
  */
 
@@ -119,7 +119,7 @@ describe("useFundingApplication.updateStatus (mutation integration)", () => {
     });
 
     // Verify that the cache was affected by the mutation (data should be refreshed)
-    // The mutation's onSuccess calls invalidateQueries. With gcTime:0 and no active
+    // The mutation's onSettled calls invalidateQueries. With gcTime:0 and no active
     // observers, the query may be GC'd (undefined state) or marked stale.
     // We verify the API was called correctly and the success flow completed instead.
     expect(capturedUrl).toBe(`/v2/funding-applications/${APPLICATION_ID}/status`);
@@ -150,7 +150,7 @@ describe("useFundingApplication.updateStatus (mutation integration)", () => {
     expect(capturedBody.reason).toBe("");
   });
 
-  it("shows error toast on status update failure", async () => {
+  it("shows the backend error message on status update failure", async () => {
     const mockApp = createMockApplication({ id: APPLICATION_ID });
 
     server.use(
@@ -170,10 +170,33 @@ describe("useFundingApplication.updateStatus (mutation integration)", () => {
 
     await waitFor(() => expect(result.current.isUpdatingStatus).toBe(false));
 
+    expect(toast.error).toHaveBeenCalledWith("Forbidden");
+  });
+
+  it("falls back to the generic message when the backend sends none", async () => {
+    const mockApp = createMockApplication({ id: APPLICATION_ID });
+
+    server.use(
+      http.get("*/v2/funding-applications/:applicationId", () => HttpResponse.json(mockApp)),
+      http.put("*/v2/funding-applications/:applicationId/status", () =>
+        HttpResponse.json({}, { status: 403 })
+      )
+    );
+
+    const { result } = renderHookWithProviders(() => useFundingApplication(APPLICATION_ID));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      result.current.updateStatus({ status: "approved" });
+    });
+
+    await waitFor(() => expect(result.current.isUpdatingStatus).toBe(false));
+
     expect(toast.error).toHaveBeenCalledWith("Failed to update application status");
   });
 
-  it("does not invalidate cache on failure", async () => {
+  it("does not corrupt cached data on failure", async () => {
     const mockApp = createMockApplication({ id: APPLICATION_ID });
     const queryKey = ["funding-application", APPLICATION_ID];
 

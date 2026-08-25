@@ -3,6 +3,7 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,6 +14,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { useSubmitMilestoneCompletion } from "../hooks/use-submit-milestone-completion";
 import {
+  isMilestoneCancelled,
   isMilestoneCompleted,
   isMilestoneLate,
   isMilestoneVerified,
@@ -60,12 +62,14 @@ export function OnChainMilestoneRow({
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState("");
 
+  const isCancelled = isMilestoneCancelled(entry);
   const isVerified = isMilestoneVerified(entry);
   const isCompleted = isMilestoneCompleted(entry) && !isVerified;
   const isLate = isMilestoneLate(entry);
   // Project-source rows always have a milestoneUID (the indexer only
   // emits them from grant.milestones[], which by construction has UIDs).
-  const canEdit = isEditable && !isVerified && !!entry.milestoneUID;
+  // A cancelled milestone is terminal — no completion can be submitted.
+  const canEdit = isEditable && !isVerified && !isCancelled && !!entry.milestoneUID;
   const isWaitingForIndexer = isSubmittingTitle(entry.milestoneUID, entry.title);
 
   const completionEntry = entry.completed ?? null;
@@ -133,7 +137,11 @@ export function OnChainMilestoneRow({
             </Popover>
           </div>
           <div className="flex items-center gap-2">
-            {isVerified ? (
+            {isCancelled ? (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 line-through dark:bg-zinc-700 dark:text-zinc-400">
+                Cancelled
+              </span>
+            ) : isVerified ? (
               <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                 Verified
               </span>
@@ -234,7 +242,7 @@ export function OnChainMilestoneRow({
                       </p>
                     )}
                     <p className="text-xs text-zinc-400 mt-1">
-                      Verified by: {verifiedEntry.attester}
+                      Verified by: <EthereumAddressToProfileName address={verifiedEntry.attester} />
                     </p>
                   </div>
                 )}

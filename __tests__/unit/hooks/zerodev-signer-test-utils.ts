@@ -16,7 +16,7 @@ export const EMBEDDED_WALLET_ADDRESS = "0xEmbedded111111111111111111111111111111
 export const EXTERNAL_WALLET_ADDRESS = "0xExternal2222222222222222222222222222222222";
 
 export interface MockUser {
-  linkedAccounts: Array<{ type: string }>;
+  linkedAccounts: Array<{ type: string; address?: string }>;
 }
 
 export interface EmbeddedWalletOptions {

@@ -75,6 +75,18 @@ describe("KycStatusIcon", () => {
       expect(icon).toBeInTheDocument();
       expect(icon).toHaveClass("text-amber-500");
     });
+
+    it("should render NOT_APPLICABLE icon for not applicable status", () => {
+      render(
+        <KycStatusIcon
+          status={createMockStatus({ status: KycVerificationStatus.NOT_APPLICABLE })}
+        />
+      );
+
+      const icon = screen.getByLabelText("Not Applicable");
+      expect(icon).toBeInTheDocument();
+      expect(icon).toHaveClass("text-gray-400");
+    });
   });
 
   describe("size variants", () => {
@@ -221,6 +233,32 @@ describe("KycStatusBadge", () => {
       // Badge shows only status label
       expect(screen.getByText("Not Started")).toBeInTheDocument();
     });
+
+    it("should render type-agnostic label for NOT_APPLICABLE even with a verificationType", () => {
+      render(
+        <KycStatusBadge
+          status={createMockStatus({
+            status: KycVerificationStatus.NOT_APPLICABLE,
+            verificationType: KycVerificationType.KYB,
+          })}
+        />
+      );
+
+      // No "KYB" prefix — the exemption covers both KYC and KYB
+      expect(screen.getByText("Not Applicable")).toBeInTheDocument();
+      expect(screen.queryByText(/KYB not applicable/)).not.toBeInTheDocument();
+    });
+
+    it("should render NOT_APPLICABLE as the only outline chip", () => {
+      const { container } = render(
+        <KycStatusBadge
+          status={createMockStatus({ status: KycVerificationStatus.NOT_APPLICABLE })}
+        />
+      );
+
+      const badge = container.querySelector("span.inline-flex");
+      expect(badge).toHaveClass("bg-transparent", "ring-1", "ring-inset", "ring-gray-300");
+    });
   });
 
   describe("tooltip on badge", () => {
@@ -248,6 +286,29 @@ describe("KycStatusBadge", () => {
 
       const expiresRows = await screen.findAllByText(/Expires:/);
       expect(expiresRows.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("should suppress the Type line in tooltip for NOT_APPLICABLE", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <KycStatusBadge
+          status={createMockStatus({
+            status: KycVerificationStatus.NOT_APPLICABLE,
+            verificationType: KycVerificationType.KYC,
+          })}
+        />
+      );
+
+      const badge = screen.getByText("Not Applicable").closest("span");
+      await user.hover(badge!);
+
+      const descriptions = await screen.findAllByText(
+        "KYC/KYB is not required for this application"
+      );
+      expect(descriptions.length).toBeGreaterThanOrEqual(1);
+      // The exemption is type-agnostic — a "Type: KYC" line would imply it covers only one
+      expect(screen.queryByText(/Type:/)).not.toBeInTheDocument();
     });
   });
 

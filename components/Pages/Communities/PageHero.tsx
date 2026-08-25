@@ -16,6 +16,12 @@ interface PageHeroProps {
   description?: ReactNode;
   kpis?: KpiItem[];
   rightSlot?: ReactNode;
+  /**
+   * Rendered under the description, in the title column. For controls that
+   * belong to the page rather than beside it — a filter reads as part of the
+   * heading it narrows, which `rightSlot` pushes to the far edge instead.
+   */
+  leftSlot?: ReactNode;
   className?: string;
   compact?: boolean;
 }
@@ -34,6 +40,7 @@ export function PageHero({
   description,
   kpis,
   rightSlot,
+  leftSlot,
   className,
   compact = false,
 }: PageHeroProps) {
@@ -74,6 +81,8 @@ export function PageHero({
               {description}
             </p>
           ) : null}
+
+          {leftSlot ? <div className="mt-5">{leftSlot}</div> : null}
         </div>
 
         {hasRight ? (

@@ -71,7 +71,6 @@ const fullApiResponse: UpdatesApiResponse = {
       },
       completionDetails: null,
       verificationDetails: null,
-      fundingApplicationCompletion: null,
     },
   ],
   grantUpdates: [],
@@ -139,32 +138,27 @@ describe("getProjectUpdates (MSW-backed)", () => {
       expect(result.grantUpdates).toEqual([]);
     });
 
-    it("returns empty response on 500 server error", async () => {
+    // A failure must NOT resolve to an empty response. Doing so made a broken
+    // fetch indistinguishable from a project with no updates: the feed showed
+    // "No activities to display" with no error and no retry, and React Query
+    // never saw a rejection so no error state could fire. Only 404 (unknown
+    // project) resolves to empty — see the test above.
+    it("throws on a 500 server error instead of resolving to an empty response", async () => {
       server.use(
         http.get(`${BASE}/v2/projects/:projectIdOrSlug/updates`, () =>
           HttpResponse.json({ message: "Internal Server Error" }, { status: 500 })
         )
       );
 
-      const result = await getProjectUpdates("test-project");
-
-      expect(result.projectUpdates).toEqual([]);
-      expect(result.projectMilestones).toEqual([]);
-      expect(result.grantMilestones).toEqual([]);
-      expect(result.grantUpdates).toEqual([]);
+      await expect(getProjectUpdates("test-project")).rejects.toThrow();
     });
 
-    it("returns empty response on network error", async () => {
+    it("throws on a network error instead of resolving to an empty response", async () => {
       server.use(
         http.get(`${BASE}/v2/projects/:projectIdOrSlug/updates`, () => HttpResponse.error())
       );
 
-      const result = await getProjectUpdates("test-project");
-
-      expect(result.projectUpdates).toEqual([]);
-      expect(result.projectMilestones).toEqual([]);
-      expect(result.grantMilestones).toEqual([]);
-      expect(result.grantUpdates).toEqual([]);
+      await expect(getProjectUpdates("test-project")).rejects.toThrow();
     });
   });
 

@@ -3,9 +3,7 @@
  *
  * Note: The usePermissions module has a pre-existing SWC transpilation issue
  * that prevents direct hook testing (only the last export is available).
- * These tests verify the core matching logic extracted from the hook, and
- * integration testing is covered by useCanVerifyMilestone.test.tsx which
- * mocks useIsReviewer at the boundary.
+ * These tests verify the core matching logic extracted from the hook.
  */
 
 import type { FundingProgram } from "@/services/fundingPlatformService";

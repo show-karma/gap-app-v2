@@ -20,8 +20,8 @@ import { Role } from "@/src/core/rbac/types";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import type { Project as ProjectResponse } from "@/types/v2/project";
+import { api } from "@/utilities/api/client";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -183,7 +183,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
-    if (!address || !project) return;
+    if (!project) return;
     startAttestation("Merging projects...");
     try {
       const setup = await setupChainAndWallet({
@@ -214,7 +214,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+          await api.post(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), {});
         }
         while (retries > 0) {
           await refreshProject()

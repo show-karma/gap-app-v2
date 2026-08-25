@@ -6,11 +6,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
-}));
-
 vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: { getToken: vi.fn(async () => "test-token") },
 }));

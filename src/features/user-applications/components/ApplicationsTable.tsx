@@ -3,6 +3,7 @@
 import { Edit, Eye, FileText } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
+import { formatApplicationStatus } from "@/utilities/application-status";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { UserApplicationsSortBy } from "../types";
@@ -34,10 +35,6 @@ function getStatusColor(status: ApplicationStatus): string {
     default:
       return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
   }
-}
-
-function formatStatusLabel(status: ApplicationStatus): string {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 const columns: Array<{
@@ -119,7 +116,7 @@ export function ApplicationsTable({
                     getStatusColor(app.status)
                   )}
                 >
-                  {formatStatusLabel(app.status)}
+                  {formatApplicationStatus(app.status)}
                 </span>
               </td>
               <td className="px-4 py-3 text-muted-foreground">{formatDate(app.createdAt)}</td>

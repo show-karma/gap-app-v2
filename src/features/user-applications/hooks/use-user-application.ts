@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Application } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import type { UseUserApplicationReturn } from "../types";
 
 export function useUserApplication(
@@ -14,11 +14,8 @@ export function useUserApplication(
         throw new Error("Application ID is required");
       }
 
-      const [res, err] = await fetchData<Application>(
-        `/v2/funding-applications/${applicationId}`,
-        "GET"
-      );
-      if (err) throw new Error(err);
+      // TODO(#1775): add zod schema
+      const res = await api.get<Application>(`/v2/funding-applications/${applicationId}`);
       if (!res) throw new Error("Application not found");
       return res;
     },

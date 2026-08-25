@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { useCommunityCategories } from "@/hooks/communities/useCommunityCategories";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
@@ -9,8 +10,8 @@ import { useProjectDiscovery } from "@/hooks/communities/useProjectDiscovery";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import type { IndicatorDistribution } from "@/services/projectDiscovery";
 import { Link } from "@/src/components/navigation/Link";
-import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
 import type { Category, ImpactIndicator } from "@/types/impactMeasurement";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { PAGES } from "@/utilities/pages";
 import { DiscoveryResults } from "./DiscoveryResults";
 import { FilterSelect } from "./FilterSelect";
@@ -18,7 +19,7 @@ import { IndicatorSliders } from "./IndicatorSliders";
 
 const UNTITLED_PROGRAM = "Untitled Program";
 
-const programLabel = (program: FundingProgramResponse | null): string =>
+const programLabel = (program: CommunityProgram | null): string =>
   program?.metadata?.title || UNTITLED_PROGRAM;
 
 // Static empty-state help — hoisted so it isn't re-created on every render.
@@ -41,7 +42,7 @@ export const ProjectDiscovery = () => {
   const programs = programsQuery.data ?? [];
 
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedProgram, setSelectedProgram] = useState<FundingProgramResponse | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<CommunityProgram | null>(null);
   const [endorserInput, setEndorserInput] = useState<string>("");
   const [endorsers, setEndorsers] = useState<string[]>([]);
   const [indicatorDistribution, setIndicatorDistribution] = useState<IndicatorDistribution>({});
@@ -251,7 +252,9 @@ export const ProjectDiscovery = () => {
                   key={endorser}
                   className="flex items-center gap-2 bg-primary/5 text-primary rounded-full px-4 py-2 group hover:bg-primary/10 transition-colors"
                 >
-                  <span className="text-sm font-medium truncate max-w-[200px]">{endorser}</span>
+                  <span className="text-sm font-medium truncate max-w-[200px]" title={endorser}>
+                    <EthereumAddressToProfileName address={endorser} />
+                  </span>
                   <button
                     type="button"
                     onClick={() => handleEndorserRemove(endorser)}

@@ -16,6 +16,10 @@ export async function generateMetadata({
   const community = await getCommunityDetails(communityId);
   const communityName = community?.details?.name || communityId;
 
+  // No self-canonical: this route is a client-rendered shell, so it is absent
+  // from the sitemap and consolidates onto the community root canonical it
+  // inherits from the layout. Give it server-rendered content first, then a
+  // canonical and a sitemap entry together.
   return {
     title: `${communityName} Milestone Updates | ${PROJECT_NAME}`,
     description: `Stay up to date with milestone progress from ${communityName} grantees. Track completed, pending, and overdue milestones across all funded projects on ${PROJECT_NAME}.`,

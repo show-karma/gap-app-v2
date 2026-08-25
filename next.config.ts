@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
+import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
+
+const FRAME_SRC =
+  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com";
 
 const securityHeaders = [
   {
@@ -11,8 +15,25 @@ const securityHeaders = [
   },
   {
     key: "Content-Security-Policy",
-    value:
-      "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com; frame-ancestors 'self';",
+    value: `${FRAME_SRC}; frame-ancestors 'self';`,
+  },
+];
+
+/**
+ * The token bridge is the one route a tenant's marketing site may frame: it
+ * hands a signed-in visitor's access token to that site over postMessage, so
+ * the chat there can answer as them. See `utilities/token-bridge/origins.ts`
+ * for the allowlist and `src/features/token-bridge/` for the route.
+ *
+ * X-Frame-Options has no allowlist form, so this route drops it and relies on
+ * frame-ancestors, which supersedes it in every browser that supports CSP2.
+ * Browsers old enough to lack that support refuse the frame — the site then
+ * answers as a visitor, not on an unprotected page.
+ */
+const tokenBridgeHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: `${FRAME_SRC}; frame-ancestors 'self' ${allTokenBridgeOrigins().join(" ")};`,
   },
 ];
 
@@ -69,47 +90,8 @@ const nextConfig: NextConfig = {
       "semver",
     ],
   },
-  eslint: {
-    dirs: ["app", "components", "utilities", "hooks", "store", "types"],
-    ignoreDuringBuilds: false,
-  },
   typescript: {
     ignoreBuildErrors: false,
-  },
-  webpack: (config, { isServer, webpack }) => {
-    // Fix for browserslist and other Node.js modules
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        path: false,
-        os: false,
-        crypto: false,
-        stream: false,
-        http: false,
-        https: false,
-        zlib: false,
-        querystring: false,
-        events: false,
-        url: false,
-        buffer: false,
-        util: false,
-      };
-    }
-
-    // Add external modules that should not be bundled
-    config.externals.push("pino-pretty", "lokijs", "encoding");
-
-    // Exclude Storybook story files from the build
-    config.plugins.push(
-      new webpack.IgnorePlugin({
-        resourceRegExp: /\.stories\.(tsx?|jsx?)$/,
-      })
-    );
-
-    return config;
   },
   transpilePackages: ["@show-karma/karma-gap-sdk"],
   images: {
@@ -119,19 +101,35 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
+    // Next 16 defaults images.qualities to [75], coercing any other quality
+    // prop to the closest listed value. The app uses quality={50}/{100} in a
+    // few places (CommunityProjectEvaluatorPage) — list them explicitly so
+    // those renders keep their existing quality instead of silently
+    // shifting to 75.
+    qualities: [50, 75, 100],
   },
   async headers() {
-    return [
+    // The catch-all skips the token bridge rather than layering over it: two
+    // rules setting Content-Security-Policy on one path emit the header twice,
+    // and browsers enforce the intersection — which would keep the stricter
+    // frame-ancestors and silently block the frame.
+    const headerRules = [
       {
-        source: "/(.*)",
+        source: `/((?!${TOKEN_BRIDGE_PATH.slice(1)}$).*)`,
         headers: securityHeaders,
       },
       {
-        // Content-hashed build assets are safe to cache forever: a new deploy
-        // emits new filenames, so a stale cache entry is never served for new
-        // code. This is Next's default for `/_next/static/*`; we declare it
-        // explicitly so the stale-deploy chunk recovery contract is documented
-        // and survives any future header changes.
+        source: TOKEN_BRIDGE_PATH,
+        headers: tokenBridgeHeaders,
+      },
+    ];
+    // Content-hashed build assets are safe to cache forever: a new deploy emits
+    // new filenames, so a stale cache entry is never served for new code. This
+    // ONLY holds in production. In dev, Turbopack reuses stable chunk
+    // filenames, so an immutable cache pins stale code in the browser and edits
+    // never appear without a hard refresh — so we apply it in production only.
+    if (process.env.NODE_ENV === "production") {
+      headerRules.push({
         source: "/_next/static/:path*",
         headers: [
           {
@@ -139,11 +137,27 @@ const nextConfig: NextConfig = {
             value: "public, max-age=31536000, immutable",
           },
         ],
-      },
-    ];
+      });
+    }
+    return headerRules;
   },
   async redirects() {
     return [
+      // Donor research renamed the advisor-facing "Clients" concept to
+      // "Personas". Keep existing bookmarks and shared internal links valid.
+      {
+        source: "/nonprofit-research/clients/:path*",
+        destination: "/nonprofit-research/personas/:path*",
+        permanent: true,
+      },
+      // The AI-readiness checker moved from /scanner to /nonprofits/is-ai-ready.
+      // The wildcard covers both the landing page and the /scans/:id report so
+      // old links (including v1.7.74 shares) keep working.
+      {
+        source: "/scanner/:path*",
+        destination: "/nonprofits/is-ai-ready/:path*",
+        permanent: true,
+      },
       // Bare /community has no content of its own — the listing lives at /communities.
       // Redirecting at the edge (vs. a page that calls permanentRedirect) keeps the bare
       // path from 404'ing without shipping a route bundle. Closes #1312.
@@ -193,7 +207,12 @@ const nextConfig: NextConfig = {
         destination: "/community/:communityId/funding-opportunities",
         permanent: true,
       },
-      // Redirect old project update routes
+      // The project Updates view is consolidated into the project root
+      // (/project/:projectId now renders the v2 UpdatesContent). Redirect the
+      // legacy singular /update AND plural /updates paths there so old links,
+      // bookmarks, and shared update URLs land on the canonical page. The
+      // separate Updates tab has been removed and share links now point to the
+      // root, so this no longer bounces the tab (the earlier breakage).
       {
         source: "/project/:projectId/update",
         destination: "/project/:projectId",
@@ -228,11 +247,21 @@ const withSentry = withSentryConfig(
     project: "gap-frontend",
     tunnelRoute: "/monitoring",
     reactComponentAnnotation: true,
-    debug: true,
+    // `silent: true` above already suppresses plugin logging; `debug: true`
+    // contradicted it and re-enabled verbose sourcemap diagnostics on every
+    // build for output nobody reads.
+    debug: false,
   },
   {
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
+    // Sentry's "widen" mode uploads source maps for a larger set of client
+    // files than the ones actually referenced by the emitted bundles — its
+    // own docs note this increases build time, and it grows the sourcemap
+    // set held/processed during the build. The Next 16 Turbopack build is
+    // already at the edge of the 8 GB build container, so the marginally
+    // prettier frames are not worth the headroom. Sourcemaps for the real
+    // bundles are still generated and uploaded, so stack traces stay
+    // symbolicated.
+    widenClientFileUpload: false,
 
     // Remove transpileClientSDK as it's deprecated in Next.js 15
     // transpileClientSDK: true,
@@ -257,4 +286,25 @@ const withSentry = withSentryConfig(
   }
 );
 
-export default withSentry;
+// The Sentry SDK is switched OFF at runtime on every non-production
+// deployment — sentry.server.config.ts, sentry.edge.config.ts and
+// instrumentation-client.ts all set `enabled: NEXT_PUBLIC_VERCEL_ENV ===
+// "production"`. Preview builds were still paying the full build-time cost
+// of the Sentry plugin (source map generation/processing/upload plus
+// reactComponentAnnotation, an SWC transform applied to every component in
+// the tree) to produce artifacts for an SDK that never initializes on those
+// deployments.
+//
+// That work happens inside the Turbopack compile phase, which is exactly
+// where the 8 GB preview build container is OOM-killed (exit 137), so
+// skipping it on previews removes pure waste rather than trading anything
+// away.
+//
+// Deliberately fail-safe: only an explicit "preview" opts out. If the
+// variable is missing or holds anything else — including a production build
+// or a local build — Sentry stays fully enabled, so production
+// instrumentation can never be dropped by accident.
+const isPreviewBuild =
+  process.env.VERCEL_ENV === "preview" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+
+export default isPreviewBuild ? bundleAnalyzer : withSentry;
