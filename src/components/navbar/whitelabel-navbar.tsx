@@ -342,6 +342,13 @@ export function WhitelabelNavbar() {
               </DropdownMenu>
             )}
 
+            {/* Tenant items that sit to the right of the social menu. */}
+            <DesktopTenantNavItems
+              items={tenant.navigation?.itemsAfterSocialLinks}
+              showClaimFunds={false}
+              claimFundsHref={undefined}
+            />
+
             {/* Karma Assistant */}
             <NavbarAssistantButton className="mr-1" />
 
@@ -426,6 +433,14 @@ export function WhitelabelNavbar() {
                   ))}
                 </div>
               )}
+
+              {/* Tenant items that sit after the social menu, as on desktop. */}
+              <MobileTenantNavItems
+                items={tenant.navigation?.itemsAfterSocialLinks}
+                showClaimFunds={false}
+                claimFundsHref={undefined}
+                onNavigate={() => setIsMenuOpen(false)}
+              />
             </div>
 
             {/* Mobile auth — reuse main app components */}

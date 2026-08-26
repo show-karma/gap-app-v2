@@ -247,7 +247,6 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
           { label: "All reports", href: "/reports" },
         ],
       },
-      { label: "Blog", href: "https://filpgf.io/blog/", isExternal: true },
       {
         label: "About",
         items: [
@@ -258,6 +257,11 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
     ],
     /* This tenant calls the social-links menu "Connect", not "Resources". */
     socialLinksLabel: "Connect",
+    /*
+     * Blog sits to the right of Connect, matching the landing site's header
+     * (filecoin-grants `src/data/nav.ts`). The two are meant to read as one.
+     */
+    itemsAfterSocialLinks: [{ label: "Blog", href: "https://filpgf.io/blog/", isExternal: true }],
     socialLinks: {
       twitter: "https://twitter.com/Filecoin",
       discord: "https://discord.gg/yeQ2hcd2TD",
