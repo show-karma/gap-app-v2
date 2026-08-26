@@ -191,6 +191,37 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
       {
         label: "Funding",
         items: [
+          /*
+           * Mirrors the landing site's Funding menu — filecoin-grants
+           * `src/data/nav.ts`. The two headers are meant to read as one, so a
+           * change here needs the same change there, and vice versa.
+           *
+           * Funding is read by track, not by batch: these are the three
+           * standing community tracks from GET /v2/tracks, and the ids are
+           * opaque records rather than slugs. The explorer filters on
+           * `trackIds`, so an entry lists the projects in that track rather
+           * than the batch they happened to be funded in.
+           */
+          {
+            label: "Funding Programs",
+            items: [
+              {
+                label: "Kernel",
+                href: "https://app.filpgf.io/projects?trackIds=6a8c89712fbfc662a244471e",
+                isExternal: true,
+              },
+              {
+                label: "R&D",
+                href: "https://app.filpgf.io/projects?trackIds=6a8c89712fbfc662a2444720",
+                isExternal: true,
+              },
+              {
+                label: "Revenue Development",
+                href: "https://app.filpgf.io/projects?trackIds=6a8c89712fbfc662a244471f",
+                isExternal: true,
+              },
+            ],
+          },
           // The ProPGF overview (filpgf.io/propgf/) is deliberately not listed
           // while no round is open; the page stays reachable by URL. Restore the
           // "Overview" item here and in the landing site's nav together when a
@@ -198,56 +229,10 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
           // Whitelabel-only navbar, so the clean path is safe here and saves the
           // /community/filecoin/* -> / redirect hop.
           { label: COMMITMENTS_AND_DISBURSEMENTS, href: "/financials" },
-          { label: "RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
           {
-            label: "Grants",
-            items: [
-              {
-                label: "Batch 1",
-                href: "https://app.filpgf.io/projects?programId=1013",
-                isExternal: true,
-              },
-              {
-                label: "Batch 2",
-                href: "https://app.filpgf.io/projects?programId=992",
-                isExternal: true,
-              },
-              {
-                label: "Batch 3",
-                href: "https://app.filpgf.io/projects?programId=1479",
-                isExternal: true,
-              },
-              {
-                label: "Pods Track",
-                href: "https://app.filpgf.io/projects?programId=1039",
-                isExternal: true,
-              },
-            ],
-          },
-          {
-            label: "Applications",
-            items: [
-              {
-                label: "Batch 1",
-                href: "https://app.filpgf.io/browse-applications?programId=1013",
-                isExternal: true,
-              },
-              {
-                label: "Batch 2",
-                href: "https://app.filpgf.io/browse-applications?programId=992",
-                isExternal: true,
-              },
-              {
-                label: "Batch 3",
-                href: "https://app.filpgf.io/browse-applications?programId=1479",
-                isExternal: true,
-              },
-              {
-                label: "Pods Track",
-                href: "https://app.filpgf.io/browse-applications?programId=1039",
-                isExternal: true,
-              },
-            ],
+            label: "RetroPGF - Paused",
+            href: "https://www.fil-retropgf.io/",
+            isExternal: true,
           },
         ],
       },
