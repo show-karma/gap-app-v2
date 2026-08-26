@@ -1,16 +1,10 @@
 "use client";
 
-import { CpuChipIcon } from "@heroicons/react/24/outline";
-import { type FC, memo } from "react";
+import { ChevronRightIcon, CpuChipIcon } from "@heroicons/react/24/outline";
+import { type FC, memo, useState } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import type { SimocracyEvaluationRow } from "@/services/fundingApplicationIntegrations.service";
-import { AIEvaluationCard } from "../AIAnalysisTab/AIEvaluationCard";
+import { cn } from "@/utilities/tailwind";
 import { MarginalValueCurve } from "./MarginalValueCurve";
 
 export interface SimocracyEvaluationCardProps {
@@ -24,57 +18,82 @@ function simDisplayName(evaluation: SimocracyEvaluationRow): string {
 }
 
 const SimocracyEvaluationCardComponent: FC<SimocracyEvaluationCardProps> = ({ evaluation }) => {
-  const icon = evaluation.sim.avatar ? (
-    <ProfilePicture
-      imageURL={evaluation.sim.avatar}
-      name={simDisplayName(evaluation)}
-      size="20"
-      className="h-5 w-5"
-      alt=""
-    />
-  ) : (
-    <CpuChipIcon className="h-5 w-5" />
-  );
+  const [showConstitution, setShowConstitution] = useState(false);
+  const [showFullReasoning, setShowFullReasoning] = useState(false);
+  const name = simDisplayName(evaluation);
 
   return (
-    <AIEvaluationCard
-      title={simDisplayName(evaluation)}
-      subtitle={evaluation.model ?? "Model not recorded"}
-      icon={icon}
-    >
-      <div className="space-y-4">
-        {evaluation.prompt !== null && (
-          <Accordion type="single" collapsible>
-            <AccordionItem
-              value="constitution"
-              className="border border-gray-200 dark:border-gray-700 rounded-md px-3 border-b"
-            >
-              <AccordionTrigger className="text-gray-700 dark:text-gray-300 py-2.5">
-                Constitution
-              </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
-                  {evaluation.prompt}
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        )}
-
-        <p className="text-sm text-gray-900 dark:text-white whitespace-pre-line">
-          {evaluation.reasoning}
-        </p>
-
-        {evaluation.mvf.length > 0 && (
-          <div>
-            <h4 className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-              Marginal value curve
-            </h4>
-            <MarginalValueCurve points={evaluation.mvf} />
+    <article className="flex flex-col rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-800">
+      <header className="flex items-center justify-between gap-3 px-4 pt-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {evaluation.sim.avatar ? (
+            <ProfilePicture
+              imageURL={evaluation.sim.avatar}
+              name={name}
+              size="32"
+              className="h-8 w-8 rounded-md [image-rendering:pixelated]"
+              alt=""
+            />
+          ) : (
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
+              <CpuChipIcon className="h-5 w-5" />
+            </span>
+          )}
+          <div className="min-w-0">
+            <h4 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{name}</h4>
+            <p className="truncate font-mono text-[11px] text-gray-500 dark:text-gray-400">
+              {evaluation.model ?? "model not recorded"}
+            </p>
           </div>
-        )}
+        </div>
+      </header>
+
+      <div className="flex-1 space-y-3 px-4 py-3.5">
+        {evaluation.mvf.length > 0 && <MarginalValueCurve points={evaluation.mvf} />}
+
+        <div>
+          <p
+            className={cn(
+              "whitespace-pre-line text-sm leading-relaxed text-gray-700 dark:text-gray-300",
+              !showFullReasoning && "line-clamp-5"
+            )}
+          >
+            {evaluation.reasoning}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowFullReasoning((open) => !open)}
+            className="mt-1 text-xs font-medium text-gray-500 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          >
+            {showFullReasoning ? "Show less" : "Show more"}
+          </button>
+        </div>
       </div>
-    </AIEvaluationCard>
+
+      {evaluation.prompt !== null && (
+        <footer className="border-t border-gray-100 px-4 py-2 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => setShowConstitution((open) => !open)}
+            aria-expanded={showConstitution}
+            className="flex items-center gap-1 text-xs font-medium text-gray-600 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          >
+            <ChevronRightIcon
+              className={cn(
+                "h-3.5 w-3.5 transition-transform duration-150 motion-reduce:transition-none",
+                showConstitution && "rotate-90"
+              )}
+            />
+            Constitution
+          </button>
+          {showConstitution && (
+            <p className="mt-2 max-w-prose whitespace-pre-line pb-1.5 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+              {evaluation.prompt}
+            </p>
+          )}
+        </footer>
+      )}
+    </article>
   );
 };
 

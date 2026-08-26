@@ -77,6 +77,7 @@ export default function ApplicationDetailView({
     isLoadingComments,
     isAdmin,
     canViewNotes,
+    showIntegrationsTab,
     canEditApplication,
     canEditPostApproval,
     showStatusActions,
@@ -207,16 +208,23 @@ export default function ApplicationDetailView({
         </TabPanel>
       ),
     },
-    {
-      id: "integrations",
-      label: "Integrations",
-      icon: TabIcons.Integrations,
-      content: (
-        <TabPanel>
-          <IntegrationsTab referenceNumber={application.referenceNumber} />
-        </TabPanel>
-      ),
-    },
+    // Integrations tab only renders when the program has at least one enabled
+    // integration. Conditional spread fails closed: no entry exists while the
+    // integrations index loads or when every integration is disabled.
+    ...(showIntegrationsTab
+      ? [
+          {
+            id: "integrations",
+            label: "Integrations",
+            icon: TabIcons.Integrations,
+            content: (
+              <TabPanel>
+                <IntegrationsTab referenceNumber={application.referenceNumber} />
+              </TabPanel>
+            ),
+          } satisfies TabConfig,
+        ]
+      : []),
     {
       id: "comments",
       label: "Comments",

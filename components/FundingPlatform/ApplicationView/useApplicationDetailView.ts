@@ -10,6 +10,7 @@ import {
   type ScrollAnchorId,
 } from "@/components/FundingPlatform/ApplicationView/usePendingScroll";
 import { isAllowedStatusTransition } from "@/components/FundingPlatform/statusTransitions";
+import { useApplicationIntegrations } from "@/hooks/useApplicationIntegrations";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import {
@@ -21,6 +22,7 @@ import {
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
+import { hasEnabledIntegration } from "@/services/fundingApplicationIntegrations.service";
 import {
   Permission,
   useIsFundingPlatformAdmin,
@@ -151,6 +153,12 @@ export function useApplicationDetailView({
     // tab simply isn't in `tabs`, so the render's Math.max(0, findIndex(-1))
     // falls back to the Application tab. (No side effect is keyed on "notes".)
   }, [application, activeTabId, isApprovedApplication]);
+
+  // Integrations tab renders only when the program has at least one ENABLED
+  // integration. Fails closed like the Notes tab: no entry exists while the
+  // index loads or when every integration is disabled.
+  const { data: integrations } = useApplicationIntegrations(application?.referenceNumber ?? "");
+  const showIntegrationsTab = hasEnabledIntegration(integrations);
 
   const { data: program, config } = useProgramConfig(programId);
   // chainId from program config, needed for V1 components
@@ -391,6 +399,7 @@ export function useApplicationDetailView({
     // Permissions / derived flags
     isAdmin,
     canViewNotes,
+    showIntegrationsTab,
     canEditApplication,
     canEditPostApproval,
     showStatusActions,

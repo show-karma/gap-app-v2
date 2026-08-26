@@ -7,7 +7,10 @@ import { Button } from "@/components/Utilities/Button";
 import {
   useApplicationIntegrations,
   useSimocracyEvaluations,
+  useSimocracyProgramSummary,
 } from "@/hooks/useApplicationIntegrations";
+import { isIntegrationEnabled } from "@/services/fundingApplicationIntegrations.service";
+import { cn } from "@/utilities/tailwind";
 import { SimocracyEvaluationCard } from "./SimocracyEvaluationCard";
 
 export interface IntegrationsTabProps {
@@ -99,17 +102,77 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Simocracy — {count} {pluralize("sim evaluation", count)}
-        </h3>
-        <span className="text-xs font-mono text-gray-400 dark:text-gray-500" title="Run id">
-          Run {data.runId}
+      <SimocracySectionHeader
+        count={count}
+        programId={data.programId}
+        runId={data.runId}
+        proposalUri={data.evaluations[0]?.proposalUri}
+      />
+      <div className="grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-3">
+        {data.evaluations.map((evaluation) => (
+          <SimocracyEvaluationCard key={evaluation.sim.simUri} evaluation={evaluation} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+interface SimocracySectionHeaderProps {
+  count: number;
+  programId: string;
+  runId: string | null;
+  proposalUri?: string;
+}
+
+const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
+  count,
+  programId,
+  runId,
+  proposalUri,
+}) => {
+  const { data: summary } = useSimocracyProgramSummary(programId);
+
+  const isRatified = summary?.decisionStatus === "ratified";
+  const allocation =
+    isRatified && proposalUri
+      ? summary?.allocations?.find((entry) => entry.proposalUri === proposalUri)
+      : undefined;
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="flex items-center gap-3">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Simocracy</h3>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {count} {pluralize("sim evaluation", count)}
         </span>
       </div>
-      {data.evaluations.map((evaluation) => (
-        <SimocracyEvaluationCard key={evaluation.sim.simUri} evaluation={evaluation} />
-      ))}
+      <div className="flex items-center gap-2">
+        {typeof allocation?.amount === "number" && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium tabular-nums text-green-700 dark:bg-green-900/20 dark:text-green-400">
+            Allocated ${allocation.amount.toLocaleString()}
+          </span>
+        )}
+        {summary?.decisionStatus && (
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
+              isRatified
+                ? "bg-gray-100 text-gray-700 dark:bg-zinc-700 dark:text-gray-300"
+                : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+            )}
+          >
+            {summary.decisionStatus}
+          </span>
+        )}
+        {runId && (
+          <span
+            className="font-mono text-[11px] text-gray-400 dark:text-gray-500"
+            title={`Mechanism run ${runId}`}
+          >
+            {runId.slice(0, 16)}…
+          </span>
+        )}
+      </div>
     </div>
   );
 };
@@ -139,7 +202,7 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber }) =
     );
   }
 
-  const hasSimocracy = data.some((integration) => integration.key === "simocracy");
+  const hasSimocracy = isIntegrationEnabled(data, "simocracy");
 
   return (
     <div className="space-y-6">
@@ -147,8 +210,8 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber }) =
         <SimocracySection referenceNumber={referenceNumber} />
       ) : (
         <EmptyState
-          title="No supported integrations"
-          description="None of this program's integrations are supported in this view yet."
+          title="No active integrations"
+          description="None of this program's integrations are enabled for this view."
         />
       )}
     </div>

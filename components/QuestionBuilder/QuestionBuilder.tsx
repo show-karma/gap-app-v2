@@ -34,6 +34,8 @@ import {
   EmptyStateGuidance,
   PostApprovalEmptyState,
 } from "@/components/FundingPlatform/EmptyStateGuidance";
+import { SimLinksCard } from "@/components/FundingPlatform/Integrations/SimLinksCard";
+import { SimocracyConfigCard } from "@/components/FundingPlatform/Integrations/SimocracyConfigCard";
 import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
 import { NotificationConfigTab } from "@/components/FundingPlatform/QuestionBuilder/NotificationConfigTab";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
@@ -42,6 +44,7 @@ import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatfor
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import { useAuth } from "@/hooks/useAuth";
 import { useUpdateProgramEnrollment } from "@/hooks/useFundingPlatform";
 import type { FormField, FormSchema } from "@/types/question-builder";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -62,6 +65,7 @@ const TAB_KEYS = [
   "program-details",
   "kyc-settings",
   "notification-config",
+  "integrations",
 ] as const;
 
 const DEFAULT_TAB: SidebarTabKey = "build";
@@ -149,6 +153,7 @@ export function QuestionBuilder({
   // Backend also enforces 403, but hiding the tab avoids dead-end UI for
   // reviewers / non-admins who can otherwise reach the QuestionBuilder.
   const { hasAccess: hasCommunityAdminAccess } = useCommunityAdminAccess(communityId);
+  const { address: viewerAddress } = useAuth();
 
   // Mutation for toggling open enrollment (anyoneCanJoin)
   const { updateEnrollment, isPending: isEnrollmentPending } = useUpdateProgramEnrollment(
@@ -914,6 +919,18 @@ export function QuestionBuilder({
               />
               {/* Save Button at bottom of Settings tab */}
               {renderSaveButton()}
+            </div>
+          </div>
+        ) : activeTab === "integrations" ? (
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-4xl mx-auto space-y-6">
+              <SimocracyConfigCard programId={programId} canEdit={!readOnly} />
+              <SimLinksCard
+                programId={programId}
+                canManage={!readOnly}
+                isReviewer={readOnly}
+                viewerAddress={viewerAddress}
+              />
             </div>
           </div>
         ) : activeTab === "ai-config" ? (

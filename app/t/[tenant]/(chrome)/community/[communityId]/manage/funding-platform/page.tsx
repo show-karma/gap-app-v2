@@ -9,6 +9,7 @@ import {
   EyeIcon as EyeIconOutline,
   ListBulletIcon,
   MagnifyingGlassIcon,
+  PuzzlePieceIcon,
   UsersIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
@@ -649,6 +650,17 @@ function FundingPlatformContent() {
                     >
                       <Cog6ToothIcon className="w-3.5 h-3.5" />
                       {isAdmin ? "Settings" : "Config"}
+                    </Link>
+                    <Link
+                      href={PAGES.MANAGE.FUNDING_PLATFORM.INTEGRATIONS(
+                        communityId,
+                        program.programId
+                      )}
+                      data-testid={`program-integrations-${program.programId}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                    >
+                      <PuzzlePieceIcon className="w-3.5 h-3.5" />
+                      Integrations
                     </Link>
                     <Link
                       href={getProgramApplyUrl(communityId, program.programId, whitelabelOrigin)}
