@@ -35,6 +35,23 @@ export interface SimocracyEvaluationsResponse {
   evaluations: SimocracyEvaluationRow[];
 }
 
+export interface SimocracyAllocation {
+  proposalTitle?: string;
+  proposalUri?: string;
+  amount?: number;
+}
+
+export interface SimocracyProgramSummary {
+  programId: string;
+  gatheringUri: string;
+  enabled: boolean;
+  sims: SimocracySim[];
+  latestRunId: string | null;
+  decisionStatus: string | null;
+  ratifiedAt: string | null;
+  allocations: SimocracyAllocation[] | null;
+}
+
 interface IntegrationsIndexResponse {
   integrations: IntegrationSummary[];
 }
@@ -81,4 +98,79 @@ export async function fetchSimocracyEvaluations(
     ...data,
     evaluations: data.evaluations ?? [],
   };
+}
+
+export async function fetchSimocracyProgramSummary(
+  programId: string
+): Promise<SimocracyProgramSummary> {
+  let data: SimocracyProgramSummary | null;
+  try {
+    data = await api.get<SimocracyProgramSummary>(
+      INDEXER.V2.FUNDING_PROGRAMS.INTEGRATION_SIMOCRACY(programId)
+    );
+  } catch (error) {
+    throw new Error(httpErrorMessage(error));
+  }
+
+  if (!data) {
+    throw new Error("Empty response from simocracy program summary");
+  }
+
+  return data;
+}
+
+export function hasEnabledIntegration(integrations: IntegrationSummary[] | undefined): boolean {
+  return (integrations ?? []).some((integration) => integration.enabled);
+}
+
+export function isIntegrationEnabled(
+  integrations: IntegrationSummary[] | undefined,
+  key: string
+): boolean {
+  return (integrations ?? []).some((integration) => integration.key === key && integration.enabled);
+}
+
+export interface SimocracySimLink {
+  simUri: string;
+  publicAddress: string;
+}
+
+interface SimLinksResponse {
+  links: SimocracySimLink[];
+}
+
+export async function fetchSimocracySimLinks(programId: string): Promise<SimocracySimLink[]> {
+  try {
+    const data = await api.get<SimLinksResponse>(INDEXER.V2.FUNDING_PROGRAMS.SIM_LINKS(programId));
+    return data?.links ?? [];
+  } catch (error) {
+    throw new Error(httpErrorMessage(error));
+  }
+}
+
+export async function addSimocracySimLink(
+  programId: string,
+  link: SimocracySimLink
+): Promise<SimocracySimLink[]> {
+  try {
+    const data = await api.post<SimLinksResponse>(
+      INDEXER.V2.FUNDING_PROGRAMS.SIM_LINKS(programId),
+      {
+        links: [link],
+      }
+    );
+    return data?.links ?? [];
+  } catch (error) {
+    throw new Error(httpErrorMessage(error));
+  }
+}
+
+export async function deleteSimocracySimLink(programId: string, simUri: string): Promise<void> {
+  try {
+    await api.delete(INDEXER.V2.FUNDING_PROGRAMS.SIM_LINKS(programId), {
+      params: { simUri },
+    });
+  } catch (error) {
+    throw new Error(httpErrorMessage(error));
+  }
 }

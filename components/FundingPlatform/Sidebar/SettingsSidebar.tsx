@@ -7,6 +7,7 @@ import {
   CpuChipIcon,
   DocumentTextIcon,
   IdentificationIcon,
+  PuzzlePieceIcon,
   UserGroupIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
@@ -23,7 +24,8 @@ export type SidebarTabKey =
   | "reviewers"
   | "program-details"
   | "kyc-settings"
-  | "notification-config";
+  | "notification-config"
+  | "integrations";
 
 interface SidebarSection {
   title: string;
@@ -124,6 +126,12 @@ const getSidebarSections = (
         label: "AI Evaluation",
         icon: CpuChipIcon,
         description: "Configure AI-powered evaluation",
+      },
+      {
+        key: "integrations",
+        label: "Integrations",
+        icon: PuzzlePieceIcon,
+        description: "External evaluation integrations",
       },
     ],
   },

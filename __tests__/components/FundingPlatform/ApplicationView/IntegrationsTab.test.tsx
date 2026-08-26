@@ -12,9 +12,11 @@ import type {
 const mockFetchIntegrations = vi.fn();
 const mockFetchSimocracy = vi.fn();
 
-vi.mock("@/services/fundingApplicationIntegrations.service", () => ({
+vi.mock("@/services/fundingApplicationIntegrations.service", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/fundingApplicationIntegrations.service")>()),
   fetchApplicationIntegrations: (...args: unknown[]) => mockFetchIntegrations(...args),
   fetchSimocracyEvaluations: (...args: unknown[]) => mockFetchSimocracy(...args),
+  fetchSimocracyProgramSummary: () => new Promise(() => {}),
 }));
 
 function createEvaluation(overrides: Partial<SimocracyEvaluationRow> = {}): SimocracyEvaluationRow {
@@ -144,8 +146,9 @@ describe("IntegrationsTab", () => {
       await waitFor(() => expect(screen.getByText("S3")).toBeInTheDocument());
       expect(screen.getByText("deepseek/deepseek-v4-flash-0731")).toBeInTheDocument();
       expect(screen.getByText("Curve anchors at ~$197.")).toBeInTheDocument();
-      expect(screen.getByText(/Run spg-008qx5b0-a6mnyn5tvpwr/)).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: /1 sim evaluation$/ })).toBeInTheDocument();
+      expect(screen.getByTitle("Mechanism run spg-008qx5b0-a6mnyn5tvpwr")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Simocracy" })).toBeInTheDocument();
+      expect(screen.getByText("1 sim evaluation")).toBeInTheDocument();
     });
 
     it("pluralizes the evaluation count", async () => {
@@ -163,19 +166,17 @@ describe("IntegrationsTab", () => {
 
       renderTab();
 
-      await waitFor(() =>
-        expect(screen.getByRole("heading", { name: /2 sim evaluations$/ })).toBeInTheDocument()
-      );
+      await waitFor(() => expect(screen.getByText("2 sim evaluations")).toBeInTheDocument());
     });
 
-    it("renders the marginal-value rows for each mvf point", async () => {
+    it("renders the marginal-value bar with one segment per interval", async () => {
       mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
       mockFetchSimocracy.mockResolvedValue(createSimocracyResponse());
 
       renderTab();
 
-      await waitFor(() => expect(screen.getByText(/at \$0 → value 0\.90/)).toBeInTheDocument());
-      expect(screen.getByText(/at \$197 → value 0\.00/)).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText("Marginal value")).toBeInTheDocument());
+      expect(screen.getByRole("tooltip")).toHaveTextContent("0.90 at $0–$197");
     });
 
     it("omits the Constitution section when the prompt is null", async () => {
@@ -198,7 +199,7 @@ describe("IntegrationsTab", () => {
 
       await waitFor(() => expect(screen.getByText("S3")).toBeInTheDocument());
       expect(screen.queryByText("S4")).not.toBeInTheDocument();
-      expect(screen.getAllByText(/at \$/)).toHaveLength(2);
+      expect(screen.getAllByRole("tooltip")).toHaveLength(1);
     });
   });
 });

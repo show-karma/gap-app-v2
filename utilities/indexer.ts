@@ -138,6 +138,10 @@ export const INDEXER = {
         return `/v2/funding-program-configs/${programId}/check-permission?${params.toString()}`;
       },
       MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
+      INTEGRATION_SIMOCRACY: (programId: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy`,
+      SIM_LINKS: (programId: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy/sim-links`,
       PROMPTS: {
         GET: (programId: string) => `/v2/funding-program-configs/${programId}/prompts`,
         SAVE: (programId: string, promptType: "external" | "internal") =>
