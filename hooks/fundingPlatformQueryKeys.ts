@@ -47,4 +47,9 @@ export const QUERY_KEYS = {
     "application-versions",
     applicationIdOrReference,
   ],
+  applicationIntegrations: (referenceNumber: string) => [
+    "application-integrations",
+    referenceNumber,
+  ],
+  simocracyEvaluations: (referenceNumber: string) => ["simocracy-evaluations", referenceNumber],
 };

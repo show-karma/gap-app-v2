@@ -318,6 +318,11 @@ vi.mock("@/components/FundingPlatform/ApplicationView/AIAnalysisTab", () => ({
     React.createElement("div", { "data-testid": "ai-analysis-tab" }, "AI Analysis Tab"),
 }));
 
+vi.mock("@/components/FundingPlatform/ApplicationView/IntegrationsTab", () => ({
+  IntegrationsTab: () =>
+    React.createElement("div", { "data-testid": "integrations-tab" }, "Integrations Tab"),
+}));
+
 vi.mock("@/components/FundingPlatform/ApplicationView/DiscussionTab", () => ({
   DiscussionTab: () =>
     React.createElement("div", { "data-testid": "discussion-tab" }, "Discussion Tab"),
