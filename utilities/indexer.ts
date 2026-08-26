@@ -183,6 +183,10 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/grantee-contacts`,
       REVIEWER_INBOX: (communityId: string, qs?: string) =>
         `/v2/funding-applications/community/${communityId}/reviewer-inbox${qs ? `?${qs}` : ""}`,
+      INTEGRATIONS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/integrations`,
+      INTEGRATION_SIMOCRACY: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/integrations/simocracy`,
     },
     // Admin milestone queue detail: lifecycle timeline + follow-up action items.
     MILESTONE_ACTION_ITEMS: {

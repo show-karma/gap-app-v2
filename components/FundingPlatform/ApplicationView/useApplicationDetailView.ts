@@ -40,7 +40,14 @@ import { PAGES } from "@/utilities/pages";
 // Whitelist used when seeding activeTabId from the `?tab=` query
 // param. Keeps unknown values from drifting the polling-gate state
 // away from the actually-rendered tab.
-const KNOWN_TAB_IDS = ["application", "milestones", "ai-analysis", "comments", "notes"] as const;
+const KNOWN_TAB_IDS = [
+  "application",
+  "milestones",
+  "ai-analysis",
+  "integrations",
+  "comments",
+  "notes",
+] as const;
 type KnownTabId = (typeof KNOWN_TAB_IDS)[number];
 
 export function isKnownTabId(value: string | null): value is KnownTabId {

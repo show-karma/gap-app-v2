@@ -17,6 +17,7 @@ import EditPostApprovalModal from "@/components/FundingPlatform/ApplicationView/
 import HeaderActions, {
   type ApplicationStatus,
 } from "@/components/FundingPlatform/ApplicationView/HeaderActions";
+import { IntegrationsTab } from "@/components/FundingPlatform/ApplicationView/IntegrationsTab";
 import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
 import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
@@ -203,6 +204,16 @@ export default function ApplicationDetailView({
             program={program}
             onEvaluationComplete={refetchApplication}
           />
+        </TabPanel>
+      ),
+    },
+    {
+      id: "integrations",
+      label: "Integrations",
+      icon: TabIcons.Integrations,
+      content: (
+        <TabPanel>
+          <IntegrationsTab referenceNumber={application.referenceNumber} />
         </TabPanel>
       ),
     },
