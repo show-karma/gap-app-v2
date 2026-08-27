@@ -202,7 +202,15 @@ export interface AnalyticsEventMap {
   funding_map_submit_program_clicked: Record<string, never>;
   funding_map_create_profile_clicked: Record<string, never>;
   funding_map_agent_tab_clicked: { tab: string };
-  funding_map_agent_prompt_copied: { program_id: string | null };
+  funding_map_agent_prompt_copied: {
+    program_id: string | null;
+    /**
+     * False when the clipboard API rejected — the copy affordance is the whole
+     * point of the agent card, so a silent failure has to be visible in the
+     * report rather than looking like a successful copy.
+     */
+    copied: boolean;
+  };
   funding_map_empty_results: { has_filters: boolean; query_length: number };
   funding_map_load_error: FailureProps;
 

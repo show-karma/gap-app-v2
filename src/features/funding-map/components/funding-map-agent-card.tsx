@@ -25,16 +25,19 @@ export function FundingMapAgentCard() {
   const [, copyToClipboard] = useCopyToClipboard();
 
   const handleCopy = async () => {
+    let copied = true;
     try {
       await copyToClipboard(AGENT_PROMPT);
     } catch {
       // SUPPRESSED: the clipboard API rejects when the document is not focused
       // or permission is denied. Neither is actionable, and the visible prompt
-      // is still on screen for the user to copy by hand.
+      // is still on screen for the user to copy by hand — but the failure is
+      // reported below so it does not read as a successful copy.
+      copied = false;
     }
     // The card is the sidebar's, not a program's, so there is no program to
     // attribute the copy to.
-    track("funding_map_agent_prompt_copied", { program_id: null });
+    track("funding_map_agent_prompt_copied", { program_id: null, copied });
   };
 
   const codeBlock = () => (
