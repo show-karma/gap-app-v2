@@ -9,6 +9,7 @@ import { MarginalValueCurve } from "./MarginalValueCurve";
 
 export interface SimocracyEvaluationCardProps {
   evaluation: SimocracyEvaluationRow;
+  fundedAmount?: number | null;
 }
 
 function simDisplayName(evaluation: SimocracyEvaluationRow): string {
@@ -17,7 +18,10 @@ function simDisplayName(evaluation: SimocracyEvaluationRow): string {
   return uri.length > 40 ? `…${uri.slice(-24)}` : uri;
 }
 
-const SimocracyEvaluationCardComponent: FC<SimocracyEvaluationCardProps> = ({ evaluation }) => {
+const SimocracyEvaluationCardComponent: FC<SimocracyEvaluationCardProps> = ({
+  evaluation,
+  fundedAmount,
+}) => {
   const [showConstitution, setShowConstitution] = useState(false);
   const [showFullReasoning, setShowFullReasoning] = useState(false);
   const name = simDisplayName(evaluation);
@@ -49,7 +53,9 @@ const SimocracyEvaluationCardComponent: FC<SimocracyEvaluationCardProps> = ({ ev
       </header>
 
       <div className="flex-1 space-y-3 px-4 py-3.5">
-        {evaluation.mvf.length > 0 && <MarginalValueCurve points={evaluation.mvf} />}
+        {evaluation.mvf.length > 0 && (
+          <MarginalValueCurve points={evaluation.mvf} funded={fundedAmount} />
+        )}
 
         <div>
           <p

@@ -66,6 +66,7 @@ interface SimocracySectionProps {
 
 const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber }) => {
   const { data, isLoading, isError, error, refetch } = useSimocracyEvaluations(referenceNumber);
+  const { data: summary } = useSimocracyProgramSummary(data?.programId ?? "");
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -110,7 +111,17 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber }) => {
       />
       <div className="grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-3">
         {data.evaluations.map((evaluation) => (
-          <SimocracyEvaluationCard key={evaluation.sim.simUri} evaluation={evaluation} />
+          <SimocracyEvaluationCard
+            key={evaluation.sim.simUri}
+            evaluation={evaluation}
+            fundedAmount={
+              summary?.decisionStatus === "ratified"
+                ? (summary.allocations?.find(
+                    (entry) => entry.proposalUri === evaluation.proposalUri
+                  )?.amount ?? null)
+                : null
+            }
+          />
         ))}
       </div>
     </div>
