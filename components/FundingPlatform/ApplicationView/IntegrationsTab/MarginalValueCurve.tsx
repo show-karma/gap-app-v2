@@ -5,12 +5,8 @@ import type { SimocracyMvfPoint } from "@/services/fundingApplicationIntegration
 
 export interface MarginalValueCurveProps {
   points: SimocracyMvfPoint[];
-}
-
-interface Segment {
-  from: number;
-  to: number;
-  valueMilli: number;
+  /** Ratified allocation for this proposal, drawn as a vertical marker. */
+  funded?: number | null;
 }
 
 function formatValue(marginalValueMilli: number): string {
@@ -21,71 +17,100 @@ function formatDollars(dollars: number): string {
   return `$${dollars.toLocaleString()}`;
 }
 
-// The mvf is piecewise-constant: each anchor's value holds until the next one.
-function toSegments(points: SimocracyMvfPoint[]): Segment[] {
-  const sorted = [...points].sort((a, b) => a.dollars - b.dollars);
-  const segments: Segment[] = [];
-  for (let i = 0; i < sorted.length - 1; i += 1) {
-    if (sorted[i].marginalValueMilli <= 0) continue;
-    segments.push({
-      from: sorted[i].dollars,
-      to: sorted[i + 1].dollars,
-      valueMilli: sorted[i].marginalValueMilli,
-    });
-  }
-  return segments;
-}
+const TOP_PAD_PCT = 10;
 
-export const MarginalValueCurve: FC<MarginalValueCurveProps> = ({ points }) => {
-  const segments = toSegments(points);
-  if (segments.length === 0) return null;
+export const MarginalValueCurve: FC<MarginalValueCurveProps> = ({ points, funded }) => {
+  const anchors = [...points].sort((a, b) => a.dollars - b.dollars);
+  if (anchors.length < 2) return null;
 
-  const total = segments[segments.length - 1].to;
-  const maxValue = Math.max(...segments.map((segment) => segment.valueMilli));
-  const boundaries = [segments[0].from, ...segments.map((segment) => segment.to)];
+  const total = anchors[anchors.length - 1].dollars;
+  const maxValue = Math.max(...anchors.map((anchor) => anchor.marginalValueMilli));
+  if (total <= 0 || maxValue <= 0) return null;
+
+  const xPct = (dollars: number) => (dollars / total) * 100;
+  const yPct = (valueMilli: number) => 100 - (valueMilli / maxValue) * (100 - TOP_PAD_PCT);
+
+  const linePoints = anchors
+    .map((anchor) => `${xPct(anchor.dollars)},${yPct(anchor.marginalValueMilli)}`)
+    .join(" ");
+  const areaPoints = `${linePoints} 100,100 0,100`;
+
+  const fundedX = funded != null && funded > 0 ? Math.min(xPct(funded), 100) : null;
 
   return (
     <div className="select-none">
-      <p className="mb-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-        Marginal value
-      </p>
-      <div
-        className="flex h-2.5 w-full gap-px overflow-hidden rounded-full"
-        title="The sim's marginal value at each funding level — darker is higher"
-      >
-        {segments.map((segment) => (
+      <div className="mb-1 flex items-baseline justify-between">
+        <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Marginal value</p>
+        {fundedX !== null ? (
+          <p className="text-[11px] font-medium tabular-nums text-gray-700 dark:text-gray-300">
+            funded {formatDollars(funded as number)}
+          </p>
+        ) : (
+          <p className="text-[11px] tabular-nums text-gray-400 dark:text-gray-500">
+            {formatValue(maxValue)} max
+          </p>
+        )}
+      </div>
+
+      <div className="relative h-20">
+        <svg
+          className="absolute inset-0 h-full w-full text-blue-600 dark:text-blue-400"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <polygon points={areaPoints} fill="currentColor" fillOpacity="0.12" />
+          <polyline
+            points={linePoints}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+
+        {fundedX !== null && (
           <div
-            key={`${segment.from}-${segment.to}`}
-            className="group relative h-full bg-blue-600 dark:bg-blue-400"
+            className="absolute inset-y-0 border-l border-dashed border-gray-400 dark:border-gray-500"
+            style={{ left: `${fundedX}%` }}
+            title={`Funded ${formatDollars(funded as number)}`}
+          />
+        )}
+
+        {anchors.map((anchor) => (
+          <span
+            key={anchor.dollars}
+            className="group absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-blue-600 bg-white dark:border-blue-400 dark:bg-zinc-800"
             style={{
-              width: `${((segment.to - segment.from) / total) * 100}%`,
-              opacity: 0.25 + 0.75 * (segment.valueMilli / maxValue),
+              left: `${xPct(anchor.dollars)}%`,
+              top: `${yPct(anchor.marginalValueMilli)}%`,
             }}
           >
             <span
               role="tooltip"
-              className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 dark:bg-zinc-100 dark:text-zinc-900"
+              className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 dark:bg-zinc-100 dark:text-zinc-900"
             >
-              {formatValue(segment.valueMilli)} at {formatDollars(segment.from)}–
-              {formatDollars(segment.to)}
+              {formatValue(anchor.marginalValueMilli)} at {formatDollars(anchor.dollars)}
             </span>
-          </div>
+          </span>
         ))}
       </div>
+
       <div className="relative mt-1 h-4 text-[11px] tabular-nums text-gray-500 dark:text-gray-400">
-        {boundaries.map((dollars, index) => (
+        {anchors.map((anchor, index) => (
           <span
-            key={dollars}
+            key={anchor.dollars}
             className="absolute"
             style={
               index === 0
                 ? { left: 0 }
-                : index === boundaries.length - 1
+                : index === anchors.length - 1
                   ? { right: 0 }
-                  : { left: `${(dollars / total) * 100}%`, transform: "translateX(-50%)" }
+                  : { left: `${xPct(anchor.dollars)}%`, transform: "translateX(-50%)" }
             }
           >
-            {formatDollars(dollars)}
+            {formatDollars(anchor.dollars)}
           </span>
         ))}
       </div>

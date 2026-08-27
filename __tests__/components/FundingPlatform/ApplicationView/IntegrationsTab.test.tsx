@@ -169,14 +169,17 @@ describe("IntegrationsTab", () => {
       await waitFor(() => expect(screen.getByText("2 sim evaluations")).toBeInTheDocument());
     });
 
-    it("renders the marginal-value bar with one segment per interval", async () => {
+    it("renders the marginal-value curve with one dot per anchor", async () => {
       mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
       mockFetchSimocracy.mockResolvedValue(createSimocracyResponse());
 
       renderTab();
 
       await waitFor(() => expect(screen.getByText("Marginal value")).toBeInTheDocument());
-      expect(screen.getByRole("tooltip")).toHaveTextContent("0.90 at $0–$197");
+      const tooltips = screen.getAllByRole("tooltip");
+      expect(tooltips).toHaveLength(2);
+      expect(tooltips[0]).toHaveTextContent("0.90 at $0");
+      expect(tooltips[1]).toHaveTextContent("0.00 at $197");
     });
 
     it("omits the Constitution section when the prompt is null", async () => {
@@ -199,7 +202,7 @@ describe("IntegrationsTab", () => {
 
       await waitFor(() => expect(screen.getByText("S3")).toBeInTheDocument());
       expect(screen.queryByText("S4")).not.toBeInTheDocument();
-      expect(screen.getAllByRole("tooltip")).toHaveLength(1);
+      expect(screen.getAllByRole("tooltip")).toHaveLength(2);
     });
   });
 });
