@@ -97,6 +97,7 @@ export default function ProgramIntegrationsPage() {
               canManage={canEdit}
               isReviewer={isReviewer}
               viewerAddress={address}
+              communityUID={program?.communityUID}
             />
           </div>
         </div>

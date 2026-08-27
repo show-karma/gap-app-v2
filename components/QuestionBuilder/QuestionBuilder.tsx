@@ -930,6 +930,7 @@ export function QuestionBuilder({
                 canManage={!readOnly}
                 isReviewer={readOnly}
                 viewerAddress={viewerAddress}
+                communityUID={program?.communityUID}
               />
             </div>
           </div>
