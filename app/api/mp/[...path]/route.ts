@@ -1,3 +1,4 @@
+import { isIP } from "node:net";
 import * as Sentry from "@sentry/nextjs";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -19,6 +20,11 @@ import { type NextRequest, NextResponse } from "next/server";
  * internet write events into someone else's Mixpanel project through our
  * origin, so every request has to prove it carries *our* project token.
  *
+ * What upstream receives is a re-encoding of the payload this route decoded and
+ * validated — never the caller's original bytes. Forwarding the original would
+ * reopen the whole class of parser-differential attacks: a body that this
+ * route reads as one thing and Mixpanel reads as another.
+ *
  * REVIEW-WAIVED: rate limiting follows in a separate PR (needs Redis)
  */
 
@@ -32,11 +38,15 @@ const MIXPANEL_API_ORIGIN = "https://api.mixpanel.com";
  */
 const ALLOWED_PATHS = new Set(["track", "engage", "groups"]);
 
-const ALLOWED_CONTENT_TYPES = ["application/x-www-form-urlencoded", "application/json"];
+/** Exact media types, compared after stripping parameters. */
+const ALLOWED_MEDIA_TYPES = new Set(["application/x-www-form-urlencoded", "application/json"]);
+
+const FORM_MEDIA_TYPE = "application/x-www-form-urlencoded";
 
 /**
- * Mixpanel's own per-request limit is well under this; the cap is here to stop
- * an unbounded body being buffered into the route worker's memory.
+ * Mixpanel's own per-request limit is well under this. The cap is enforced
+ * while reading rather than after, so an oversized body is abandoned mid-stream
+ * instead of being buffered into the route worker's memory first.
  */
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -48,12 +58,6 @@ const NO_STORE = {
   Pragma: "no-cache",
 } as const;
 
-const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
-// Deliberately permissive: this value is only ever forwarded to Mixpanel as a
-// geolocation hint, so the check exists to reject header injection and
-// free-text, not to validate every RFC 4291 form.
-const IPV6 = /^[0-9a-fA-F:]{2,45}$/;
-
 interface RouteContext {
   params: Promise<{ path: string[] }>;
 }
@@ -64,11 +68,9 @@ const resolveUpstreamPath = (segments: string[] | undefined): string | null => {
   return ALLOWED_PATHS.has(joined) ? joined : null;
 };
 
-const isIpAddress = (value: string): boolean => {
-  const v4 = value.match(IPV4);
-  if (v4) return v4.slice(1).every((octet) => Number(octet) <= 255);
-  return value.includes(":") && IPV6.test(value);
-};
+/** `application/json; charset=utf-8` -> `application/json`. */
+const mediaTypeOf = (contentType: string | null): string =>
+  (contentType ?? "").split(";")[0].trim().toLowerCase();
 
 /**
  * The client's own IP, so Mixpanel geolocates the visitor and not the server.
@@ -82,25 +84,84 @@ const isIpAddress = (value: string): boolean => {
  */
 const clientIp = (request: NextRequest): string | null => {
   const realIp = request.headers.get("x-real-ip")?.trim();
-  if (realIp && isIpAddress(realIp)) return realIp;
+  if (realIp && isIP(realIp) !== 0) return realIp;
 
   const forwarded = request.headers.get("x-forwarded-for");
   if (!forwarded) return null;
   const entries = forwarded.split(",");
   const rightmost = entries[entries.length - 1].trim();
-  return isIpAddress(rightmost) ? rightmost : null;
+  return isIP(rightmost) !== 0 ? rightmost : null;
 };
+
+/**
+ * Reads the body, abandoning it the moment it exceeds the cap. Returns null
+ * when the cap was hit, so the caller can answer 413 without ever having held
+ * the whole payload.
+ */
+async function readBodyWithinCap(request: NextRequest): Promise<string | null> {
+  const stream = request.body;
+  if (!stream) return "";
+
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      total += value.byteLength;
+      if (total > MAX_BODY_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      // SUPPRESSED: releasing a lock on a cancelled reader throws in some
+      // runtimes. The body is already fully handled either way.
+    }
+  }
+
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
+type PayloadResult =
+  | { ok: true; payload: unknown }
+  | { ok: false; status: 400 | 403; error: string };
+
+const MALFORMED: PayloadResult = { ok: false, status: 400, error: "Malformed payload" };
+const REJECTED: PayloadResult = { ok: false, status: 403, error: "Payload rejected" };
 
 /**
  * Recovers the JSON payload the SDK sent. `mixpanel-browser` posts either
  * `data=<base64 JSON>` or `data=<JSON>` as a form field, depending on
- * `api_payload_format`; a bare JSON body is also accepted.
+ * `api_payload_format`.
+ *
+ * A form body must carry EXACTLY one `data` field. Two is not a browser SDK —
+ * it is someone hoping this route reads the first and Mixpanel reads the last.
  */
-const decodePayload = (body: string, contentType: string): unknown => {
-  const raw = contentType.includes("application/json")
-    ? body
-    : (new URLSearchParams(body).get("data") ?? "");
-  if (!raw) return null;
+const decodePayload = (body: string, mediaType: string): PayloadResult => {
+  let raw = body;
+
+  if (mediaType === FORM_MEDIA_TYPE) {
+    const values = new URLSearchParams(body).getAll("data");
+    if (values.length !== 1) return MALFORMED;
+    raw = values[0];
+  }
+
+  if (!raw) return MALFORMED;
 
   const candidates = [raw];
   try {
@@ -112,12 +173,12 @@ const decodePayload = (body: string, contentType: string): unknown => {
 
   for (const candidate of candidates) {
     try {
-      return JSON.parse(candidate);
+      return { ok: true, payload: JSON.parse(candidate) };
     } catch {
       // SUPPRESSED: try the next encoding before giving up.
     }
   }
-  return null;
+  return MALFORMED;
 };
 
 const recordsOf = (payload: unknown): Record<string, unknown>[] | null => {
@@ -144,15 +205,33 @@ const tokenOf = (record: Record<string, unknown>, upstreamPath: string): unknown
   return record.$token;
 };
 
-/** Every record must belong to this deployment's Mixpanel project. */
-const carriesOurToken = (body: string, contentType: string, upstreamPath: string): boolean => {
+/** Decodes the body and proves every record belongs to this deployment. */
+function validatePayload(body: string, mediaType: string, upstreamPath: string): PayloadResult {
+  const decoded = decodePayload(body, mediaType);
+  if (!decoded.ok) return decoded;
+
+  const records = recordsOf(decoded.payload);
+  if (!records) return MALFORMED;
+  // An empty batch is nothing to forward — malformed, not unauthorised.
+  if (records.length === 0) return MALFORMED;
+
   const expected = process.env.NEXT_PUBLIC_MIXPANEL_KEY;
-  if (!expected) return false;
+  if (!expected) return REJECTED;
+  if (!records.every((record) => tokenOf(record, upstreamPath) === expected)) return REJECTED;
 
-  const records = recordsOf(decodePayload(body, contentType));
-  if (!records || records.length === 0) return false;
+  return decoded;
+}
 
-  return records.every((record) => tokenOf(record, upstreamPath) === expected);
+/**
+ * Re-serialises exactly what was validated, so upstream cannot read the body
+ * differently from this route.
+ */
+const canonicalBody = (payload: unknown, mediaType: string): string => {
+  const json = JSON.stringify(payload);
+  if (mediaType !== FORM_MEDIA_TYPE) return json;
+  return new URLSearchParams({
+    data: Buffer.from(json, "utf-8").toString("base64"),
+  }).toString();
 };
 
 const reject = (status: number, error: string) =>
@@ -163,19 +242,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const upstreamPath = resolveUpstreamPath(path);
   if (!upstreamPath) return reject(404, "Path not allowed");
 
-  const contentType = request.headers.get("content-type") ?? "";
-  if (!ALLOWED_CONTENT_TYPES.some((allowed) => contentType.includes(allowed))) {
+  const mediaType = mediaTypeOf(request.headers.get("content-type"));
+  if (!ALLOWED_MEDIA_TYPES.has(mediaType)) {
     return reject(415, "Unsupported content type");
   }
 
-  const body = await request.text();
-  if (Buffer.byteLength(body, "utf-8") > MAX_BODY_BYTES) {
+  // Declared length first: a caller that announces an oversized body is
+  // refused without reading a byte of it.
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
     return reject(413, "Payload too large");
   }
 
-  if (!carriesOurToken(body, contentType, upstreamPath)) {
-    return reject(403, "Payload rejected");
-  }
+  const body = await readBodyWithinCap(request);
+  if (body === null) return reject(413, "Payload too large");
+
+  const validated = validatePayload(body, mediaType, upstreamPath);
+  if (!validated.ok) return reject(validated.status, validated.error);
 
   // `ip=1` tells Mixpanel to geolocate from the request rather than from the
   // payload, which is what makes the X-REAL-IP header below take effect.
@@ -185,7 +268,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const headers: Record<string, string> = {
     Accept: "application/json",
-    "Content-Type": contentType,
+    "Content-Type": mediaType,
   };
   const ip = clientIp(request);
   if (ip) headers["X-REAL-IP"] = ip;
@@ -194,7 +277,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const upstream = await fetch(upstreamUrl, {
       method: "POST",
       headers,
-      body,
+      body: canonicalBody(validated.payload, mediaType),
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
 

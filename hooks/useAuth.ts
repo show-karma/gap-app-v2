@@ -5,7 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
+import { setPendingLogoutReason } from "@/utilities/analytics/auth-transitions";
 import { track } from "@/utilities/analytics/client";
+import {
+  ENTRY_POINT_SURFACES,
+  type EntryPoint,
+  type EntryPointSurface,
+  ROUTE_ENTRY_POINT_PREFIX,
+} from "@/utilities/analytics/events";
 import { toPageGroup } from "@/utilities/analytics/route-pattern";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
@@ -69,6 +76,16 @@ const AUTH_FAILURE_THRESHOLD = 3;
  */
 const PRIVY_SESSION_COOKIE_NAME = "privy-session";
 const POST_LOGIN_REDIRECT_KEY = "postLoginRedirect";
+
+/**
+ * `adaptedLogin` is handed straight to `onClick` at many call sites, which
+ * would pass a MouseEvent as the first argument. Only a real surface id is
+ * accepted; anything else falls back to the route family.
+ */
+const isEntryPoint = (value: unknown): value is EntryPoint =>
+  typeof value === "string" &&
+  (ENTRY_POINT_SURFACES.includes(value as EntryPointSurface) ||
+    value.startsWith(ROUTE_ENTRY_POINT_PREFIX));
 
 export const setPostLoginRedirect = (url: string) => {
   if (typeof window === "undefined") return;
@@ -242,7 +259,10 @@ export const useAuth = () => {
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
-      track("logout", { reason: "user_switch" });
+      // Records the reason only. `AnalyticsProvider` emits the single `logout`
+      // event on the authenticated true->false transition — useAuth has ~100
+      // call sites, and emitting here produced one event per mounted instance.
+      setPendingLogoutReason("user_switch");
       logout();
     }
 
@@ -337,7 +357,7 @@ export const useAuth = () => {
     const timer = setTimeout(() => {
       if (walletDisconnectLogoutFired) return;
       walletDisconnectLogoutFired = true;
-      track("logout", { reason: "wallet_disconnect" });
+      setPendingLogoutReason("wallet_disconnect");
       logout();
     }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
 
@@ -361,7 +381,7 @@ export const useAuth = () => {
       authFailureCount.current += 1;
       if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
         authFailureCount.current = 0;
-        track("logout", { reason: "cross_tab" });
+        setPendingLogoutReason("cross_tab");
         logout();
       }
     };
@@ -460,7 +480,7 @@ export const useAuth = () => {
             if (user && !compareAllWallets(user, newAddress)) {
               // A different wallet at the browser level is a different identity,
               // which is the same session boundary as Privy's own user switch.
-              track("logout", { reason: "user_switch" });
+              setPendingLogoutReason("user_switch");
               logout();
             }
           },
@@ -498,9 +518,15 @@ export const useAuth = () => {
       // of the auto-login effect — so the funnel opens here rather than at
       // either call site. Calling adaptedLogin on an already-signed-in user is
       // a no-op and must not open a funnel it will never close.
-      if (!authenticated || needsWalletReconnect) {
+      // Gated on `ready`: before Privy resolves, `authenticated` is false for
+      // everyone, so a call here cannot tell a signed-out visitor from a
+      // signed-in one whose session has not hydrated yet. Reporting a start
+      // that may already be a no-op is worse than reporting nothing.
+      if (ready && (!authenticated || needsWalletReconnect)) {
         track("login_started", {
-          entry_point: typeof entryPoint === "string" ? entryPoint : toPageGroup(pathname),
+          entry_point: isEntryPoint(entryPoint)
+            ? entryPoint
+            : (`${ROUTE_ENTRY_POINT_PREFIX}${toPageGroup(pathname)}` as EntryPoint),
         });
       }
 
@@ -516,6 +542,10 @@ export const useAuth = () => {
       // may not register with wagmi, so treat wallets.length > 0 as effectively connected.
       if (needsWalletReconnect) {
         shouldLoginAfterLogout.current = true;
+        // Not the user signing out: the session is torn down so wagmi can
+        // re-attach the external wallet, and the auto-login effect signs them
+        // straight back in.
+        setPendingLogoutReason("wallet_reconnect");
         await logout();
         return;
       }
@@ -526,15 +556,16 @@ export const useAuth = () => {
         login();
       }
     },
-    [authenticated, needsWalletReconnect, pathname, logout, login]
+    [ready, authenticated, needsWalletReconnect, pathname, logout, login]
   );
 
   /**
-   * The logout handed to product code. Every *internal* logout above reports
+   * The logout handed to product code. Every *internal* logout above records
    * its own reason; anything a component calls is the user asking to sign out.
+   * The event itself is emitted once, by `AnalyticsProvider`.
    */
   const trackedLogout = useCallback(async () => {
-    track("logout", { reason: "user" });
+    setPendingLogoutReason("user");
     return logout();
   }, [logout]);
 

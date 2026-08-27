@@ -85,6 +85,14 @@ let client: Mixpanel | null = null;
  * clears them — can put the deployment and tenant context back.
  */
 let currentContext: SuperProperties = {};
+/** Whether the deployment/tenant context survived its `register` call. */
+let contextRegistered = false;
+/**
+ * The community the device is currently grouped into. Held here because
+ * `reset()` drops the group binding along with everything else, and a signed-out
+ * visitor still browsing a community must keep reporting as that community.
+ */
+let currentCommunityId: string | null = null;
 let strictForTests = false;
 
 const isBrowser = (): boolean => typeof window !== "undefined";
@@ -100,8 +108,32 @@ const baseSuperProperties = (): SuperProperties => ({
   app_version: process.env.NEXT_PUBLIC_APP_VERSION || "unknown",
 });
 
+/**
+ * Registers the deployment and tenant context, once. Separate from `init` and
+ * separately retried: `init` succeeding and `register` throwing are different
+ * failures, and re-running `init` to recover a failed register would be a much
+ * bigger hammer than the problem needs.
+ *
+ * Registers `currentContext` as well as the base, so a tenant registered
+ * before a transient init failure is not lost on the retry.
+ */
+const ensureContextRegistered = (mixpanel: Mixpanel): void => {
+  if (contextRegistered) return;
+  try {
+    mixpanel.register({ ...baseSuperProperties(), ...currentContext });
+    contextRegistered = true;
+  } catch {
+    // SUPPRESSED: retried on the next call. Losing the tenant property is
+    // worth one more attempt; it is not worth failing the event that
+    // triggered this.
+  }
+};
+
 const getClient = (): Mixpanel | null => {
-  if (client) return client;
+  if (client) {
+    ensureContextRegistered(client);
+    return client;
+  }
   if (!isAnalyticsEnabled()) return null;
 
   const token = process.env.NEXT_PUBLIC_MIXPANEL_KEY as string;
@@ -119,19 +151,20 @@ const getClient = (): Mixpanel | null => {
       // than by default so enabling it has to be a deliberate, reviewed change.
       record_sessions_percent: 0,
     });
-    mp.register(baseSuperProperties());
-    // Only latch the singleton once init actually succeeded. A throw here is
-    // usually transient (storage briefly unavailable, an extension racing the
-    // SDK), so the next call retries instead of disabling analytics for the
-    // lifetime of the page.
+    // Latched the moment `init` succeeds. A throw from `init` itself is usually
+    // transient (storage briefly unavailable, an extension racing the SDK), so
+    // that case retries; but once the SDK is initialised, re-initialising it
+    // because a later call failed would be wrong.
     client = mp;
-    return client;
   } catch {
     // SUPPRESSED: a broken analytics bootstrap (storage disabled, SDK throwing
     // under a privacy extension) must degrade to "no analytics", never to a
     // crashed app. Nothing actionable to report from the client.
     return null;
   }
+
+  ensureContextRegistered(client);
+  return client;
 };
 
 const safely = (operation: (mixpanel: Mixpanel) => void): void => {
@@ -169,6 +202,12 @@ const contextToRestore = (): SuperProperties => {
 const resetAndRestoreContext = (mixpanel: Mixpanel): void => {
   mixpanel.reset();
   mixpanel.register(contextToRestore());
+  // `reset` clears the group binding too. Without this, logging out on a
+  // community route silently detaches every subsequent event from that
+  // community — and the visitor is still standing on its page.
+  if (currentCommunityId) {
+    mixpanel.set_group(COMMUNITY_GROUP_KEY, currentCommunityId);
+  }
 };
 
 const definedEntries = (props: SuperProperties): SuperProperties => {
@@ -292,6 +331,7 @@ export function unregisterSuperProperty(key: keyof SuperProperties | string): vo
  * that binding is what community group analytics aggregate on.
  */
 export function setCommunityGroup(communityId: string | null): void {
+  currentCommunityId = communityId;
   if (!communityId) {
     safely((mixpanel) => {
       mixpanel.set_group(COMMUNITY_GROUP_KEY, []);
@@ -315,6 +355,8 @@ export const __setStrictAnalyticsForTests = (enabled: boolean): void => {
 /** Test-only: forget the singleton and registered context between test cases. */
 export const __resetAnalyticsClientForTests = (): void => {
   client = null;
+  contextRegistered = false;
   currentContext = {};
+  currentCommunityId = null;
   strictForTests = false;
 };

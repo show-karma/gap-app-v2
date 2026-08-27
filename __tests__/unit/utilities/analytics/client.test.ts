@@ -205,6 +205,59 @@ describe("analytics client", () => {
       expect(mp.track).toHaveBeenCalledWith("logout", { reason: "cross_tab" });
     });
 
+    it("does not re-initialise the SDK when only the follow-up register failed", () => {
+      enable();
+      mp.register.mockImplementationOnce(() => {
+        throw new Error("storage briefly unavailable");
+      });
+
+      track("logout", { reason: "user" });
+      track("logout", { reason: "cross_tab" });
+
+      // init succeeded the first time; re-running it would be a much bigger
+      // hammer than a failed register needs.
+      expect(mp.init).toHaveBeenCalledTimes(1);
+      expect(mp.track).toHaveBeenCalledTimes(2);
+    });
+
+    it("retries the context register on the next call", () => {
+      enable();
+      mp.register.mockImplementationOnce(() => {
+        throw new Error("storage briefly unavailable");
+      });
+
+      track("logout", { reason: "user" });
+      expect(mp.register).toHaveBeenCalledTimes(1);
+
+      track("logout", { reason: "cross_tab" });
+
+      expect(mp.register).toHaveBeenCalledTimes(2);
+      expect(mp.register).toHaveBeenLastCalledWith({
+        env: "production",
+        app_version: "1.8.7",
+      });
+    });
+
+    it("registers the tenant a failed init had already been told about", () => {
+      enable();
+      mp.init.mockImplementationOnce(() => {
+        throw new Error("storage disabled");
+      });
+      // A tenant registered while analytics could not initialise is held in
+      // module state; losing it on the retry would report the tenant as the
+      // default one for the rest of the page.
+      registerSuperProperties({ tenant: "filecoin", is_whitelabel: true });
+
+      track("logout", { reason: "user" });
+
+      expect(mp.register).toHaveBeenCalledWith({
+        env: "production",
+        app_version: "1.8.7",
+        tenant: "filecoin",
+        is_whitelabel: true,
+      });
+    });
+
     it("keeps session replay off — the DOM here holds grant and donor detail", () => {
       enable();
       track("logout", { reason: "user" });
@@ -560,6 +613,42 @@ describe("analytics client", () => {
       // it visited, which is what group analytics aggregate on.
       expect(mp.set_group).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, []);
       expect(mp.unregister).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY);
+    });
+
+    it("re-binds the community after a logout on a community route", () => {
+      enable();
+      setCommunityGroup("gitcoin");
+      identifyUser("did:privy:alice");
+      mp.set_group.mockClear();
+
+      resetIdentity();
+
+      // `reset` clears the group binding as well as the identity, and the
+      // visitor is still standing on the community's page.
+      expect(mp.set_group).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
+    });
+
+    it("re-binds the community across a user switch", () => {
+      enable();
+      setCommunityGroup("gitcoin");
+      identifyUser("did:privy:alice");
+      mp.set_group.mockClear();
+
+      identifyUser("did:privy:bob");
+
+      expect(mp.set_group).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
+    });
+
+    it("does not re-bind a community the visitor has already left", () => {
+      enable();
+      setCommunityGroup("gitcoin");
+      setCommunityGroup(null);
+      identifyUser("did:privy:alice");
+      mp.set_group.mockClear();
+
+      resetIdentity();
+
+      expect(mp.set_group).not.toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
     });
   });
 });

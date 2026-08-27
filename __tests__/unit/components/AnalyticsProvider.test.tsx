@@ -12,10 +12,14 @@ import { join } from "node:path";
 import { render } from "@testing-library/react";
 import { AnalyticsProvider } from "@/components/Utilities/AnalyticsProvider";
 import {
+  __resetPendingLogoutReasonForTests,
+  setPendingLogoutReason,
+} from "@/utilities/analytics/auth-transitions";
+import {
   identifyUser,
   registerSuperProperties,
   resetIdentity,
-  setCommunityGroup,
+  track,
   trackPageView,
 } from "@/utilities/analytics/client";
 
@@ -24,7 +28,18 @@ vi.mock("@/utilities/analytics/client", () => ({
   registerSuperProperties: vi.fn(),
   resetIdentity: vi.fn(),
   setCommunityGroup: vi.fn(),
+  track: vi.fn(),
   trackPageView: vi.fn(),
+}));
+
+/**
+ * The community group is bound by the community layout from the RESOLVED uid,
+ * not read off the URL — `/community/[communityId]` accepts a slug or a uid, so
+ * the URL segment would split one community into two Mixpanel groups.
+ */
+const boundCommunityMock = vi.fn<() => string | null>(() => null);
+vi.mock("@/utilities/analytics/community-group", () => ({
+  useBoundCommunityId: () => boundCommunityMock(),
 }));
 
 const usePathnameMock = vi.fn();
@@ -69,7 +84,9 @@ const setWhitelabel = (isWhitelabel = false, communitySlug: string | null = null
 describe("AnalyticsProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetPendingLogoutReasonForTests();
     usePathnameMock.mockReturnValue("/");
+    boundCommunityMock.mockReturnValue(null);
     setAuth();
     setWhitelabel();
   });
@@ -238,38 +255,101 @@ describe("AnalyticsProvider", () => {
       render(<AnalyticsProvider />);
 
       expect(trackPageView).toHaveBeenCalledWith({
-        route_pattern: "/project/:id/updates",
+        route_pattern: "/project/:projectId/updates",
         page_group: "project",
         community_id: null,
       });
     });
 
-    it("attaches the community group on a community route", () => {
+    it("reports the community by the uid the layout bound, not the URL segment", () => {
       usePathnameMock.mockReturnValue("/community/gitcoin/grants");
+      boundCommunityMock.mockReturnValue("0xcommunityuid");
+
       render(<AnalyticsProvider />);
 
-      expect(setCommunityGroup).toHaveBeenCalledWith("gitcoin");
       expect(trackPageView).toHaveBeenCalledWith({
-        route_pattern: "/community/:id/grants",
+        route_pattern: "/community/:communityId/grants",
         page_group: "community",
-        community_id: "gitcoin",
+        community_id: "0xcommunityuid",
       });
     });
 
-    it("clears the community group off community routes", () => {
-      usePathnameMock.mockReturnValue("/project/my-project");
-      render(<AnalyticsProvider />);
+    it("waits for the layout to resolve the community before reporting the view", () => {
+      // Emitting now and a corrected one a tick later would double-count the
+      // view; a community page view without its community is not a useful row.
+      usePathnameMock.mockReturnValue("/community/gitcoin");
+      boundCommunityMock.mockReturnValue(null);
 
-      expect(setCommunityGroup).toHaveBeenCalledWith(null);
+      const { rerender } = render(<AnalyticsProvider />);
+      expect(trackPageView).not.toHaveBeenCalled();
+
+      boundCommunityMock.mockReturnValue("0xcommunityuid");
+      rerender(<AnalyticsProvider />);
+
+      expect(trackPageView).toHaveBeenCalledTimes(1);
+      expect(trackPageView).toHaveBeenCalledWith(
+        expect.objectContaining({ community_id: "0xcommunityuid" })
+      );
     });
 
-    it("sets the group before sending the page view so the view carries it", () => {
-      usePathnameMock.mockReturnValue("/community/gitcoin");
+    it("does not wait for a community on a route that has none", () => {
+      usePathnameMock.mockReturnValue("/project/my-project");
+      boundCommunityMock.mockReturnValue(null);
+
       render(<AnalyticsProvider />);
 
-      const groupOrder = vi.mocked(setCommunityGroup).mock.invocationCallOrder[0];
+      expect(trackPageView).toHaveBeenCalledWith({
+        route_pattern: "/project/:projectId",
+        page_group: "project",
+        community_id: null,
+      });
+    });
+
+    it("waits for Privy before reporting where the visitor is", () => {
+      // A view emitted before identity resolves is attributed to whoever the
+      // PREVIOUS session was — Mixpanel restores that from localStorage
+      // synchronously while Privy resolves asynchronously.
+      setAuth({ ready: false });
+      usePathnameMock.mockReturnValue("/funding-map");
+
+      render(<AnalyticsProvider />);
+
+      expect(trackPageView).not.toHaveBeenCalled();
+    });
+
+    it("settles identity before reporting the page", () => {
+      setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+      usePathnameMock.mockReturnValue("/funding-map");
+
+      render(<AnalyticsProvider />);
+
+      const identifyOrder = vi.mocked(identifyUser).mock.invocationCallOrder[0];
       const viewOrder = vi.mocked(trackPageView).mock.invocationCallOrder[0];
-      expect(groupOrder).toBeLessThan(viewOrder);
+      expect(identifyOrder).toBeLessThan(viewOrder);
+    });
+
+    it("reports one view for a remount on the same route", () => {
+      // React Strict Mode mounts every effect twice in development, and any
+      // remount replays it. The same route under the same identity is the same
+      // view.
+      usePathnameMock.mockReturnValue("/funding-map");
+      const { rerender } = render(<AnalyticsProvider />);
+      rerender(<AnalyticsProvider />);
+      rerender(<AnalyticsProvider />);
+
+      expect(trackPageView).toHaveBeenCalledTimes(1);
+    });
+
+    it("reports the same route again once the identity behind it changes", () => {
+      // Signing in without navigating is a new session on the same screen, and
+      // the dedupe must not swallow its first view.
+      usePathnameMock.mockReturnValue("/funding-map");
+      const { rerender } = render(<AnalyticsProvider />);
+
+      setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+      rerender(<AnalyticsProvider />);
+
+      expect(trackPageView).toHaveBeenCalledTimes(2);
     });
 
     it("tracks a view on each client navigation", () => {
@@ -317,5 +397,94 @@ describe("AnalyticsProvider mounting (layout nesting)", () => {
     expect(close).toBeGreaterThan(open);
     expect(mount).toBeGreaterThan(open);
     expect(mount).toBeLessThan(close);
+  });
+});
+
+/**
+ * `logout` is emitted here and nowhere else. `useAuth` mounts at ~100 call
+ * sites and every instance runs the same session-ending guards, so emitting
+ * there produced one event per mounted instance. The guards record the reason;
+ * this component — of which exactly one is mounted — reports it once.
+ */
+describe("AnalyticsProvider — logout", () => {
+  const signedIn = () => setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+
+  const loggedOut = () => setAuth({ authenticated: false, user: null });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    __resetPendingLogoutReasonForTests();
+    usePathnameMock.mockReturnValue("/funding-map");
+    setWhitelabel();
+  });
+
+  it("reports the transition out of an authenticated session", () => {
+    signedIn();
+    const { rerender } = render(<AnalyticsProvider />);
+
+    setPendingLogoutReason("cross_tab");
+    loggedOut();
+    rerender(<AnalyticsProvider />);
+
+    expect(track).toHaveBeenCalledWith("logout", { reason: "cross_tab" });
+  });
+
+  it("defaults to the user having signed out themselves", () => {
+    signedIn();
+    const { rerender } = render(<AnalyticsProvider />);
+
+    loggedOut();
+    rerender(<AnalyticsProvider />);
+
+    expect(track).toHaveBeenCalledWith("logout", { reason: "user" });
+  });
+
+  it("reports once, not once per re-render after the transition", () => {
+    signedIn();
+    const { rerender } = render(<AnalyticsProvider />);
+
+    loggedOut();
+    rerender(<AnalyticsProvider />);
+    rerender(<AnalyticsProvider />);
+    rerender(<AnalyticsProvider />);
+
+    expect(vi.mocked(track).mock.calls.filter(([name]) => name === "logout")).toHaveLength(1);
+  });
+
+  it("does not report a visitor who was never signed in", () => {
+    loggedOut();
+    render(<AnalyticsProvider />);
+
+    expect(track).not.toHaveBeenCalledWith("logout", expect.anything());
+    // The identity is still cleared — a reload into a signed-out state must
+    // drop whatever Mixpanel persisted.
+    expect(resetIdentity).toHaveBeenCalled();
+  });
+
+  it("does not report before Privy has resolved", () => {
+    setAuth({ ready: false, authenticated: false });
+    render(<AnalyticsProvider />);
+
+    expect(track).not.toHaveBeenCalledWith("logout", expect.anything());
+  });
+
+  it("clears the reason, so the next sign-out does not inherit it", () => {
+    signedIn();
+    const { rerender } = render(<AnalyticsProvider />);
+
+    setPendingLogoutReason("wallet_disconnect");
+    loggedOut();
+    rerender(<AnalyticsProvider />);
+
+    signedIn();
+    rerender(<AnalyticsProvider />);
+    loggedOut();
+    rerender(<AnalyticsProvider />);
+
+    const reasons = vi
+      .mocked(track)
+      .mock.calls.filter(([name]) => name === "logout")
+      .map(([, props]) => (props as { reason: string }).reason);
+    expect(reasons).toEqual(["wallet_disconnect", "user"]);
   });
 });

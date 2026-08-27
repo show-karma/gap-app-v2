@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cache } from "react";
 import { WhitelabelJsonLd } from "@/components/Seo/WhitelabelJsonLd";
+import { CommunityAnalyticsGroup } from "@/components/Utilities/CommunityAnalyticsGroup";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
@@ -110,8 +111,15 @@ export default async function Layout(props: { children: React.ReactNode; params:
 
   const canonicalUrl = isWhitelabel && config ? `https://${config.domain}` : undefined;
 
+  // Free: `getCommunityDetails` is request-cached and `generateMetadata` has
+  // already resolved this community. Analytics groups on the UID rather than on
+  // the URL segment, which may be either a slug or a uid — the same community
+  // would otherwise reach Mixpanel as two different groups.
+  const community = await getCommunityDetails(communityId);
+
   return (
     <>
+      <CommunityAnalyticsGroup uid={community?.uid ?? null} />
       {isWhitelabel && tenantConfig && canonicalUrl && (
         <WhitelabelJsonLd tenant={tenantConfig} url={canonicalUrl} />
       )}

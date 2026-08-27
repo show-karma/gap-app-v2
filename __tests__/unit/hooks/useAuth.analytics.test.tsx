@@ -1,17 +1,22 @@
 /**
- * @file Tests for the `login_started` / `logout` events useAuth emits.
+ * @file Tests for what useAuth contributes to the auth funnel.
  *
- * The point of interest is *which* logout fired: the hook ends a session for
- * four different reasons and the activation/retention reports only make sense
- * if a wallet extension disconnecting is distinguishable from a user clicking
- * Log out. Each reason is driven through its real trigger rather than by
- * calling a helper directly.
+ * It emits exactly one event itself — `login_started`. It does NOT emit
+ * `logout`: the hook mounts at ~100 call sites and every instance runs the same
+ * guards, so emitting there produced one event per mounted instance. The guards
+ * now only RECORD why the session is ending, and `AnalyticsProvider` — of which
+ * one is mounted — reports it. These tests pin the recorded reason for each
+ * trigger; the single emission is covered in the provider's own tests.
  */
 
 import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  __resetPendingLogoutReasonForTests,
+  takePendingLogoutReason,
+} from "@/utilities/analytics/auth-transitions";
 import { track } from "@/utilities/analytics/client";
 
 // Undo the global mock of useAuth so we exercise the real hook
@@ -105,15 +110,13 @@ const resetBridge = () =>
     isConnected: false,
   });
 
-const loggedReasons = () =>
-  vi
-    .mocked(track)
-    .mock.calls.filter(([name]) => name === "logout")
-    .map(([, props]) => (props as { reason: string }).reason);
+/** Every `logout` this hook emitted directly — which must always be none. */
+const emittedLogouts = () => vi.mocked(track).mock.calls.filter(([name]) => name === "logout");
 
 describe("useAuth analytics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetPendingLogoutReasonForTests();
     mockPathname.mockReturnValue("/funding-map");
     resetBridge();
   });
@@ -137,7 +140,7 @@ describe("useAuth analytics", () => {
         await result.current.login();
       });
 
-      expect(track).toHaveBeenCalledWith("login_started", { entry_point: "project" });
+      expect(track).toHaveBeenCalledWith("login_started", { entry_point: "route:project" });
     });
 
     it("ignores the click event a bare onClick handler would pass", async () => {
@@ -147,7 +150,34 @@ describe("useAuth analytics", () => {
         await result.current.login({ type: "click" } as unknown as string);
       });
 
-      expect(track).toHaveBeenCalledWith("login_started", { entry_point: "funding-map" });
+      expect(track).toHaveBeenCalledWith("login_started", {
+        entry_point: "route:funding-map",
+      });
+    });
+
+    it("rejects a surface id that is not in the closed union", async () => {
+      const { result } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.login("some_invented_surface");
+      });
+
+      expect(track).toHaveBeenCalledWith("login_started", {
+        entry_point: "route:funding-map",
+      });
+    });
+
+    it("stays silent until Privy is ready", async () => {
+      // Before `ready`, `authenticated` is false for everyone, so a start
+      // reported here may already be a no-op.
+      setBridge({ ready: false });
+      const { result } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.login("navbar");
+      });
+
+      expect(track).not.toHaveBeenCalled();
     });
 
     it("does not open a funnel it will never close for an already signed-in user", async () => {
@@ -185,36 +215,56 @@ describe("useAuth analytics", () => {
       expect(track).toHaveBeenCalledWith("login_started", { entry_point: "navbar" });
       expect(mockLogout).toHaveBeenCalledTimes(1);
       // The teardown is machinery, not the user signing out.
-      expect(loggedReasons()).toEqual([]);
+      expect(emittedLogouts()).toEqual([]);
+      expect(takePendingLogoutReason()).toBe("wallet_reconnect");
     });
   });
 
-  describe("logout", () => {
-    it("reports a user-initiated sign-out", async () => {
-      setBridge({ authenticated: true, user: walletUser("user-1"), wallets: [WALLET] });
+  describe("logout reasons", () => {
+    const signedIn = () =>
+      setBridge({
+        authenticated: true,
+        user: walletUser("user-1"),
+        wallets: [WALLET],
+        isConnected: true,
+      });
+
+    it("never emits the event itself, at any of its sites", async () => {
+      signedIn();
       const { result } = renderHook(() => useAuth());
 
       await act(async () => {
         await result.current.logout();
       });
 
-      expect(track).toHaveBeenCalledWith("logout", { reason: "user" });
+      expect(emittedLogouts()).toEqual([]);
+    });
+
+    it("records a user-initiated sign-out", async () => {
+      signedIn();
+      const { result } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.logout();
+      });
+
+      expect(takePendingLogoutReason()).toBe("user");
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
 
-    it("reports the same reason through the disconnect alias", async () => {
-      setBridge({ authenticated: true, user: walletUser("user-1"), wallets: [WALLET] });
+    it("records the same reason through the disconnect alias", async () => {
+      signedIn();
       const { result } = renderHook(() => useAuth());
 
       await act(async () => {
         await result.current.disconnect();
       });
 
-      expect(track).toHaveBeenCalledWith("logout", { reason: "user" });
+      expect(takePendingLogoutReason()).toBe("user");
     });
 
-    it("reports a Privy shared-auth user switch", async () => {
-      setBridge({ authenticated: true, user: walletUser("user-1"), wallets: [WALLET] });
+    it("records a Privy shared-auth user switch", async () => {
+      signedIn();
       const { rerender } = renderHook(() => useAuth());
 
       setBridge({ user: walletUser("user-2") });
@@ -222,13 +272,13 @@ describe("useAuth analytics", () => {
         rerender();
       });
 
-      expect(loggedReasons()).toContain("user_switch");
+      expect(takePendingLogoutReason()).toBe("user_switch");
     });
 
-    it("reports a wallet disconnect once the grace period elapses", async () => {
+    it("records a wallet disconnect once the grace period elapses", async () => {
       vi.useFakeTimers();
       try {
-        setBridge({ authenticated: true, user: walletUser("user-1"), wallets: [WALLET] });
+        signedIn();
         const { rerender } = renderHook(() => useAuth());
 
         setBridge({ wallets: [] });
@@ -236,16 +286,29 @@ describe("useAuth analytics", () => {
           rerender();
         });
 
-        expect(loggedReasons()).not.toContain("wallet_disconnect");
-
         act(() => {
           vi.runOnlyPendingTimers();
         });
 
-        expect(loggedReasons()).toContain("wallet_disconnect");
+        expect(takePendingLogoutReason()).toBe("wallet_disconnect");
       } finally {
         vi.useRealTimers();
       }
+    });
+
+    it("keeps one reason no matter how many hook instances are mounted", async () => {
+      signedIn();
+      const first = renderHook(() => useAuth());
+      renderHook(() => useAuth());
+
+      await act(async () => {
+        await first.result.current.logout();
+      });
+
+      expect(emittedLogouts()).toEqual([]);
+      expect(takePendingLogoutReason()).toBe("user");
+      // Read once and cleared, so a later unrelated logout cannot inherit it.
+      expect(takePendingLogoutReason()).toBe("user");
     });
   });
 });

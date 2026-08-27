@@ -106,6 +106,68 @@ describe("redactSensitiveProps", () => {
     });
   });
 
+  describe("objects", () => {
+    it("scans one object level, since Mixpanel flattens it into columns anyway", () => {
+      const { safe, dropped } = redactSensitiveProps({
+        context: { step: "review", email: "alice@example.test" },
+      });
+
+      expect(safe).toEqual({ context: { step: "review" } });
+      expect(dropped).toEqual(["context"]);
+    });
+
+    it("keeps an object whose contents are all safe", () => {
+      const props = { context: { step: "review", attempt: 2, valid: true } };
+
+      expect(redactSensitiveProps(props)).toEqual({ safe: props, dropped: [] });
+    });
+
+    it("drops a value inside an object that holds an identifier", () => {
+      const { safe } = redactSensitiveProps({
+        context: { actor: "0x1234567890abcdef1234567890abcdef12345678", step: "review" },
+      });
+
+      expect(safe).toEqual({ context: { step: "review" } });
+    });
+
+    it("drops a second container level rather than walking an arbitrary tree", () => {
+      const { safe, dropped } = redactSensitiveProps({
+        context: { step: "review", nested: { deeper: "value" } },
+      });
+
+      expect(safe).toEqual({ context: { step: "review" } });
+      expect(dropped).toEqual(["context"]);
+    });
+
+    it("still drops an object whose key is PII by name", () => {
+      const { safe } = redactSensitiveProps({ wallet: { chain: 10 } });
+
+      expect(safe).toEqual({});
+    });
+
+    it("scans objects inside an array at the same one level", () => {
+      const { safe, dropped } = redactSensitiveProps({
+        steps: [{ name: "review", email: "alice@example.test" }, { name: "submit" }],
+      });
+
+      expect(safe).toEqual({ steps: [{ name: "review" }, { name: "submit" }] });
+      expect(dropped).toEqual(["steps"]);
+    });
+
+    it("drops an array nested inside an array", () => {
+      const { safe } = redactSensitiveProps({ matrix: [["a"], "b"] });
+
+      expect(safe).toEqual({ matrix: ["b"] });
+    });
+
+    it("keeps null, which is a value and not a container", () => {
+      const { safe, dropped } = redactSensitiveProps({ results_count: null });
+
+      expect(safe).toEqual({ results_count: null });
+      expect(dropped).toEqual([]);
+    });
+  });
+
   it("reports every dropped property so strict mode can name them", () => {
     const { dropped } = redactSensitiveProps({
       email: "a@b.test",

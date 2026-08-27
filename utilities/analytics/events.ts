@@ -24,16 +24,57 @@
  */
 
 /**
- * Where a flow was launched from — a stable UI surface id (`"navbar"`,
- * `"project_page_cta"`, `"my_projects_empty_state"`), never a pathname. Callers
- * that cannot name their surface fall back to the route family (`page_group`),
- * which is bounded and carries no identifiers.
+ * A stable UI surface a flow can be launched from.
+ *
+ * Closed on purpose. A bare `string` here is how `entry_point` becomes a
+ * hundred near-duplicate values that no report can group by — and how a raw
+ * pathname, ids and all, ends up in the dashboard.
  */
-export type EntryPoint = string;
+export type EntryPointSurface =
+  | "project_dialog"
+  | "my_projects"
+  | "scanner_submit_form"
+  | "scanner_site_no_report"
+  | "donation_checkout"
+  | "donation_onramp"
+  /**
+   * The sign-in entry. Reserved rather than in use: threading real surface ids
+   * through `useAuth`'s ~100 call sites is a separate change, and keeping the
+   * union closed is what makes that change type-checked instead of free-form.
+   */
+  | "navbar";
+
+/**
+ * Where a flow was launched from. Either a named surface, or — for callers that
+ * cannot name theirs yet — the route family they were on, which is bounded and
+ * carries no identifiers. The `route:` prefix keeps the two visibly distinct in
+ * a report rather than silently mixing named surfaces with page names.
+ */
+export type EntryPoint = EntryPointSurface | `route:${string}`;
+
+/** Runtime companion to `EntryPointSurface`, for validating an untyped caller. */
+export const ENTRY_POINT_SURFACES = [
+  "project_dialog",
+  "my_projects",
+  "scanner_submit_form",
+  "scanner_site_no_report",
+  "donation_checkout",
+  "donation_onramp",
+  "navbar",
+] as const satisfies readonly EntryPointSurface[];
+
+/** Prefix marking an entry point derived from the route rather than named. */
+export const ROUTE_ENTRY_POINT_PREFIX = "route:";
 
 export type AuthMethod = "email" | "google" | "wallet" | "farcaster" | "unknown";
 
-export type LogoutReason = "user" | "wallet_disconnect" | "cross_tab" | "user_switch";
+export type LogoutReason =
+  | "user"
+  | "wallet_disconnect"
+  | "cross_tab"
+  | "user_switch"
+  /** The session was torn down so wagmi could re-attach the external wallet. */
+  | "wallet_reconnect";
 
 export type ApplicationCommentTargetType = "application" | "grant" | "report";
 
