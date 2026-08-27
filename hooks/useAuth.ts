@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
+import { track } from "@/utilities/analytics/client";
+import { toPageGroup } from "@/utilities/analytics/route-pattern";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 import { hasNonWalletIdentity } from "@/utilities/auth/has-non-wallet-identity";
@@ -240,6 +242,7 @@ export const useAuth = () => {
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
+      track("logout", { reason: "user_switch" });
       logout();
     }
 
@@ -334,6 +337,7 @@ export const useAuth = () => {
     const timer = setTimeout(() => {
       if (walletDisconnectLogoutFired) return;
       walletDisconnectLogoutFired = true;
+      track("logout", { reason: "wallet_disconnect" });
       logout();
     }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
 
@@ -357,6 +361,7 @@ export const useAuth = () => {
       authFailureCount.current += 1;
       if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
         authFailureCount.current = 0;
+        track("logout", { reason: "cross_tab" });
         logout();
       }
     };
@@ -453,6 +458,9 @@ export const useAuth = () => {
             if (!newAddress) return;
 
             if (user && !compareAllWallets(user, newAddress)) {
+              // A different wallet at the browser level is a different identity,
+              // which is the same session boundary as Privy's own user switch.
+              track("logout", { reason: "user_switch" });
               logout();
             }
           },
@@ -466,34 +474,69 @@ export const useAuth = () => {
     };
   }, [ready, authenticated, hasExternalWallet, user, logout]);
 
-  const adaptedLogin = useCallback(async () => {
-    if (typeof window !== "undefined" && !authenticated) {
-      const existingRedirect = getPostLoginRedirect();
-      if (!existingRedirect) {
-        setPostLoginRedirect(`${window.location.pathname}${window.location.hash}`);
-      }
-    }
+  // Whether an authenticated session has to be torn down and re-established
+  // because wagmi lost the external wallet (see the branch that uses it below).
+  const needsWalletReconnect =
+    !isConnected &&
+    authenticated &&
+    wallets.length > 0 &&
+    !wallets.some((w) => w.walletClientType === "privy");
 
-    // If authenticated but wallet not connected via wagmi, force re-login only when
-    // the user has external wallets (not embedded). Embedded wallets (from Privy)
-    // may not register with wagmi, so treat wallets.length > 0 as effectively connected.
-    if (
-      !isConnected &&
-      authenticated &&
-      wallets.length > 0 &&
-      !wallets.some((w) => w.walletClientType === "privy")
-    ) {
-      shouldLoginAfterLogout.current = true;
-      await logout();
-      return;
-    }
-    // Don't call Privy's login() when already authenticated (e.g. Farcaster users
-    // with no wallet). Calling login() on an authenticated user triggers a
-    // "already logged in" warning and does nothing useful.
-    if (!authenticated) {
-      login();
-    }
-  }, [isConnected, authenticated, wallets.length, logout, login]);
+  /**
+   * Opens the sign-in flow.
+   *
+   * `entryPoint` names the surface the user clicked from (`"navbar"`,
+   * `"project_page_cta"`) and is what the activation funnel is segmented by.
+   * It is typed `unknown` and guarded rather than typed `string` because many
+   * call sites pass this straight to `onClick`, which would hand it a
+   * MouseEvent. Callers that do not name their surface fall back to the route
+   * family — bounded, and carrying no identifiers, unlike a raw pathname.
+   */
+  const adaptedLogin = useCallback(
+    async (entryPoint?: unknown) => {
+      // Both branches below end in Privy's login() — the reconnect one by way
+      // of the auto-login effect — so the funnel opens here rather than at
+      // either call site. Calling adaptedLogin on an already-signed-in user is
+      // a no-op and must not open a funnel it will never close.
+      if (!authenticated || needsWalletReconnect) {
+        track("login_started", {
+          entry_point: typeof entryPoint === "string" ? entryPoint : toPageGroup(pathname),
+        });
+      }
+
+      if (typeof window !== "undefined" && !authenticated) {
+        const existingRedirect = getPostLoginRedirect();
+        if (!existingRedirect) {
+          setPostLoginRedirect(`${window.location.pathname}${window.location.hash}`);
+        }
+      }
+
+      // If authenticated but wallet not connected via wagmi, force re-login only when
+      // the user has external wallets (not embedded). Embedded wallets (from Privy)
+      // may not register with wagmi, so treat wallets.length > 0 as effectively connected.
+      if (needsWalletReconnect) {
+        shouldLoginAfterLogout.current = true;
+        await logout();
+        return;
+      }
+      // Don't call Privy's login() when already authenticated (e.g. Farcaster users
+      // with no wallet). Calling login() on an authenticated user triggers a
+      // "already logged in" warning and does nothing useful.
+      if (!authenticated) {
+        login();
+      }
+    },
+    [authenticated, needsWalletReconnect, pathname, logout, login]
+  );
+
+  /**
+   * The logout handed to product code. Every *internal* logout above reports
+   * its own reason; anything a component calls is the user asking to sign out.
+   */
+  const trackedLogout = useCallback(async () => {
+    track("logout", { reason: "user" });
+    return logout();
+  }, [logout]);
 
   const connectedAndAuth = useMemo(() => {
     if (isE2EMockAuthenticated) {
@@ -512,7 +555,7 @@ export const useAuth = () => {
   return {
     // Core authentication (Privy handles everything)
     authenticate: adaptedLogin, // Just use Privy's login
-    disconnect: logout, // Just use Privy's logout
+    disconnect: trackedLogout,
 
     // State from Privy
     ready: effectiveReady,
@@ -526,7 +569,7 @@ export const useAuth = () => {
 
     // Privy methods
     login: adaptedLogin,
-    logout,
+    logout: trackedLogout,
     getAccessToken,
     connectWallet, // Connect wallet without full login
 

@@ -55,6 +55,11 @@ const AiReferrerTracker = dynamic(
   { ssr: false }
 );
 
+const AnalyticsProvider = dynamic(
+  () => import("@/components/Utilities/AnalyticsProvider").then((mod) => mod.AnalyticsProvider),
+  { ssr: false }
+);
+
 interface DeferredLayoutComponentsProps {
   toasterConfig: {
     position: "top-right";
@@ -84,6 +89,7 @@ export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutCompon
       <SpeedInsights />
       <HotjarAnalytics />
       <AiReferrerTracker />
+      <AnalyticsProvider />
       <ContributorProfileDialog />
       <ApiKeyManagementModal />
       <OnboardingDialog />
