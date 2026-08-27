@@ -4,10 +4,10 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useAuth } from "@/hooks/useAuth";
-import { useMixpanel } from "@/hooks/useMixpanel";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { track } from "@/utilities/analytics/client";
+import { toErrorCode } from "@/utilities/analytics/error-code";
 import { api } from "@/utilities/api/client";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
@@ -25,6 +25,12 @@ import { useProjectGrants } from "./v2/useProjectGrants";
 export type MilestoneEditData = Partial<
   Pick<IMilestone, "title" | "description" | "startsAt" | "endsAt" | "priority">
 >;
+
+/** The fields the editor actually supplied — field *names* only, never values. */
+const changedFields = (data: MilestoneEditData): string[] =>
+  Object.entries(data)
+    .filter(([, value]) => value !== undefined)
+    .map(([field]) => field);
 
 interface UseMilestoneEditOptions {
   /** Override project UID when not on a project page (e.g. admin review page) */
@@ -52,8 +58,6 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
   const projectUid = options?.projectUid || storeProject?.uid || "";
   const projectSlug = options?.projectSlug || storeProject?.details?.slug || "";
   const { refetch: refetchGrants } = useProjectGrants(projectUid);
-  const { address: authAddress } = useAuth();
-  const { mixpanel } = useMixpanel();
 
   const invalidateAllProjectQueries = async () => {
     const invalidations: Promise<void>[] = [];
@@ -121,17 +125,12 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     setIsEditing(true);
     showLoading("Editing milestone...");
 
-    // The on-chain attester for the new+revoke attestations is the Karma
-    // admin wallet, so audit of who *requested* the edit lives in analytics.
-    mixpanel.reportEvent({
-      event: "milestone:edit:requested",
-      properties: {
-        requestedBy: authAddress,
-        milestoneUID: milestone.uid,
-        milestoneTitle: milestone.title,
-        programId,
-        chainID: milestone.chainID,
-      },
+    // Which fields the editor actually touched is the reportable part — the
+    // requester is the identified Mixpanel user, not an event property.
+    const fieldsChanged = changedFields(newData);
+    track("milestone_edit_requested", {
+      milestone_id: milestone.uid,
+      fields_changed: fieldsChanged,
     });
 
     try {
@@ -179,29 +178,15 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
       );
 
       await invalidateAllProjectQueries();
-      mixpanel.reportEvent({
-        event: "milestone:edit:success",
-        properties: {
-          requestedBy: authAddress,
-          milestoneUID: milestone.uid,
-          newMilestoneUID: response.data.newMilestoneUID,
-          programId,
-          chainID: milestone.chainID,
-          txHash: response.data.txHash,
-          revocationSuccess: response.data.revocationSuccess,
-        },
+      track("milestone_edit_completed", {
+        milestone_id: milestone.uid,
+        fields_changed: fieldsChanged,
       });
       showSuccess("Milestone edited successfully!");
     } catch (error) {
-      mixpanel.reportEvent({
-        event: "milestone:edit:failed",
-        properties: {
-          requestedBy: authAddress,
-          milestoneUID: milestone.uid,
-          programId,
-          chainID: milestone.chainID,
-          error: error instanceof Error ? error.message : String(error),
-        },
+      track("milestone_edit_failed", {
+        milestone_id: milestone.uid,
+        error_code: toErrorCode(error),
       });
       showError("There was an error editing the milestone");
       errorManager("Error editing milestone", error, {

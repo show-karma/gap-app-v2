@@ -8,6 +8,11 @@ import { OnrampError } from "@/hooks/donation/onramp-errors";
 import type { OnrampProvider, OnrampSessionRequest } from "@/hooks/donation/types";
 import { DEFAULT_ONRAMP_PROVIDER } from "@/lib/onramp";
 import { donationsService } from "@/services/donations.service";
+import { track } from "@/utilities/analytics/client";
+import { toErrorCode } from "@/utilities/analytics/error-code";
+
+/** Stable surface id for the fiat-to-crypto donation path. */
+const ONRAMP_ENTRY_POINT = "donation_onramp";
 
 interface UseOnrampParams {
   projectUid: string;
@@ -70,6 +75,12 @@ export const useOnramp = ({
         ...(country && { country }),
       };
 
+      track("donation_started", {
+        project_count: 1,
+        entry_point: ONRAMP_ENTRY_POINT,
+        used_onramp: true,
+      });
+
       const sessionResponse = await donationsService.createOnrampSession(request);
 
       return {
@@ -79,6 +90,11 @@ export const useOnramp = ({
       };
     },
     onError: (err) => {
+      track("donation_failed", {
+        project_count: 1,
+        used_onramp: true,
+        error_code: toErrorCode(err),
+      });
       const error =
         err instanceof OnrampError
           ? err

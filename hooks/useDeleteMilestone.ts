@@ -3,12 +3,12 @@ import type { AxiosError } from "axios";
 import axios from "axios";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useAuth } from "@/hooks/useAuth";
-import { useMixpanel } from "@/hooks/useMixpanel";
 import type {
   GrantMilestoneWithCompletion,
   ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
+import { track } from "@/utilities/analytics/client";
+import { toErrorCode } from "@/utilities/analytics/error-code";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
@@ -102,8 +102,6 @@ export const useDeleteMilestone = ({
 }: UseDeleteMilestoneParams) => {
   const queryClient = useQueryClient();
   const { showError, showSuccess } = useAttestationToast();
-  const { address } = useAuth();
-  const { mixpanel } = useMixpanel();
 
   const deleteMilestoneMutation = useMutation({
     mutationFn: async (milestone: GrantMilestoneWithCompletion) => {
@@ -114,20 +112,10 @@ export const useDeleteMilestone = ({
         throw new Error("Cannot delete milestone: missing programId");
       }
 
-      // The on-chain attester for the revocation is always the Karma admin
-      // wallet, so the only audit trail of who *requested* the delete lives
-      // in product analytics. Tracking before the network call captures
-      // intent even if the request fails downstream.
-      mixpanel.reportEvent({
-        event: "milestone:delete:requested",
-        properties: {
-          requestedBy: address,
-          milestoneUID: milestone.uid,
-          milestoneTitle: milestone.title,
-          programId,
-          chainID: milestone.chainId,
-        },
-      });
+      // Tracked before the network call so intent is captured even if the
+      // request fails downstream. Who requested it is not an event property:
+      // the requester is the identified Mixpanel user.
+      track("milestone_delete_requested", { milestone_id: milestone.uid });
 
       const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL, 60000);
 
@@ -159,17 +147,8 @@ export const useDeleteMilestone = ({
       });
       return { previousData };
     },
-    onSuccess: (data, milestone) => {
-      mixpanel.reportEvent({
-        event: "milestone:delete:success",
-        properties: {
-          requestedBy: address,
-          milestoneUID: milestone.uid,
-          programId,
-          chainID: milestone.chainId,
-          revocationTxHash: data.revocationTxHash,
-        },
-      });
+    onSuccess: (_data, milestone) => {
+      track("milestone_delete_completed", { milestone_id: milestone.uid });
       showSuccess("Milestone deleted");
       onSuccess?.();
     },
@@ -184,19 +163,9 @@ export const useDeleteMilestone = ({
       const backendMessage = axiosError?.response?.data?.message;
       const userMessage = deleteMilestoneErrorMessage(error, milestone.title);
 
-      mixpanel.reportEvent({
-        event: "milestone:delete:failed",
-        properties: {
-          requestedBy: address,
-          milestoneUID: milestone.uid,
-          programId,
-          chainID: milestone.chainId,
-          // Stable axios prose keeps Mixpanel funnel grouping intact; `userMessage` ships the human copy.
-          error: error?.message,
-          userMessage,
-          backendStatus: status,
-          backendMessage,
-        },
+      track("milestone_delete_failed", {
+        milestone_id: milestone.uid,
+        error_code: toErrorCode(axiosError ?? error),
       });
       showError(userMessage);
 

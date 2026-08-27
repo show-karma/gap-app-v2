@@ -15,6 +15,8 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
+import { track } from "@/utilities/analytics/client";
+import { toErrorCode } from "@/utilities/analytics/error-code";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -220,6 +222,13 @@ export const MilestonesScreen: React.FC = () => {
               clearMilestonesForms();
               retries = 0;
               changeStepperStep("indexed");
+              track("grant_added_completed", {
+                project_id: selectedProject.uid,
+                grant_id: grant.uid,
+                community_id: newGrantData.community || null,
+                program_id: newGrantData.programId || null,
+                milestones_count: milestonesData.length,
+              });
               showSuccess(
                 flowType === "grant"
                   ? MESSAGES.GRANT.CREATE.SUCCESS
@@ -280,6 +289,11 @@ export const MilestonesScreen: React.FC = () => {
           }
         });
     } catch (error: any) {
+      track("grant_added_failed", {
+        project_id: selectedProject.uid,
+        community_id: formData.community || null,
+        error_code: toErrorCode(error),
+      });
       showError(
         flowType === "grant"
           ? MESSAGES.GRANT.CREATE.ERROR(formData.title)

@@ -89,9 +89,7 @@ vi.mock("@/hooks/useAttestationToast", () => ({
   }),
 }));
 
-vi.mock("@/hooks/useMixpanel", () => ({
-  useMixpanel: () => ({ mixpanel: { reportEvent: vi.fn() } }),
-}));
+vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
 vi.mock("@/components/Utilities/errorManager", () => ({ errorManager: vi.fn() }));
 

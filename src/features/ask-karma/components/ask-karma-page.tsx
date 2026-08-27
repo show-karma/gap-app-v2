@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
+import { track } from "@/utilities/analytics/client";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
@@ -69,9 +70,15 @@ export function AskKarmaPage({ config, communityId }: AskKarmaPageProps) {
         if (transitionTimeout.current) clearTimeout(transitionTimeout.current);
         transitionTimeout.current = setTimeout(() => setView("chat"), FADE_OUT_MS);
       }
+      // The message itself is the visitor's question and never leaves the app;
+      // how deep into a conversation they are is what the funnel needs.
+      track("ask_karma_message_sent", {
+        persona: persona ?? null,
+        message_index: messages.length,
+      });
       sendMessage(text);
     },
-    [isStreaming, sendMessage, view]
+    [isStreaming, sendMessage, view, persona, messages.length]
   );
 
   const handleBack = useCallback(() => {

@@ -13,6 +13,7 @@ import type {
   IFundingProgramConfig,
   IPaginatedApplicationsResponse,
 } from "@/types/funding-platform";
+import { track } from "@/utilities/analytics/client";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
@@ -389,6 +390,10 @@ export const fundingApplicationsAPI = {
       `/v2/funding-applications/${applicationId}/status`,
       request
     );
+    // Tracked here rather than in a hook: four screens drive this one call, and
+    // instrumenting each of their mutations would drift apart. The reason text
+    // is deliberately not reported — it is free-form admin prose.
+    track("application_status_changed", { application_id: applicationId, to: request.status });
     return response.data;
   },
 

@@ -39,7 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMixpanel } from "@/hooks/useMixpanel";
+import { track } from "@/utilities/analytics/client";
 import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -372,7 +372,6 @@ export function FundingProgramDetailsDialog({
   isNotFound = false,
   cardClickedRef,
 }: FundingProgramDetailsDialogProps) {
-  const { mixpanel } = useMixpanel("karma");
   const openTimeRef = useRef<number>(0);
   const hasTrackedOpenRef = useRef(false);
 
@@ -381,27 +380,12 @@ export function FundingProgramDetailsDialog({
     if (open && program && !hasTrackedOpenRef.current) {
       hasTrackedOpenRef.current = true;
       openTimeRef.current = Date.now();
-      const source = cardClickedRef?.current ? "card_click" : "direct_url";
       if (cardClickedRef) {
         cardClickedRef.current = false;
       }
-      mixpanel.reportEvent({
-        event: "funding-map:details-open",
-        properties: {
-          programId: program.programId,
-          programTitle: program.metadata?.title,
-          organization:
-            program.communities
-              ?.filter((c) => c.name)
-              .map((c) => c.name)
-              .join(", ") || program.metadata?.organizations?.join(", "),
-          isOnKarma: program.isOnKarma,
-          isActive: isProgramActive(program),
-          source,
-        },
-      });
+      track("funding_map_details_opened", { program_id: program.programId ?? "" });
     }
-  }, [open, program, mixpanel, cardClickedRef]);
+  }, [open, program, cardClickedRef]);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
@@ -411,12 +395,11 @@ export function FundingProgramDetailsDialog({
       }
     }
     if (!newOpen && program) {
-      mixpanel.reportEvent({
-        event: "funding-map:details-close",
-        properties: {
-          programId: program.programId,
-          timeViewedMs: Date.now() - openTimeRef.current,
-        },
+      track("funding_map_details_closed", {
+        program_id: program.programId ?? "",
+        open_duration_s: openTimeRef.current
+          ? Math.round((Date.now() - openTimeRef.current) / 1000)
+          : null,
       });
     }
     onOpenChange(newOpen);
@@ -442,7 +425,6 @@ export function FundingProgramDetailsDialog({
 }
 
 function DialogContentInner({ program }: { program: FundingProgramResponse }) {
-  const { mixpanel } = useMixpanel("karma");
   const { metadata, isOnKarma, communities, programId } = program;
   const opportunityType: OpportunityType = program.type ?? "grant";
   const isNonGrant = opportunityType !== "grant";
@@ -509,10 +491,10 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
             </div>
             <SocialLinks
               socialLinks={metadata?.socialLinks}
-              onLinkClick={(linkType, url) => {
-                mixpanel.reportEvent({
-                  event: "funding-map:social-link-click",
-                  properties: { programId, linkType, url },
+              onLinkClick={(linkType) => {
+                track("funding_map_social_link_clicked", {
+                  program_id: programId ?? "",
+                  network: linkType,
                 });
               }}
             />
@@ -671,10 +653,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-muted-foreground transition-colors"
               onClick={() => {
-                mixpanel.reportEvent({
-                  event: "funding-map:bug-bounty-click",
-                  properties: { programId, url: bugBounty },
-                });
+                track("funding_map_bug_bounty_clicked", { program_id: programId ?? "" });
               }}
             >
               <Bug className="h-4 w-4" />
@@ -691,15 +670,9 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => {
-                    mixpanel.reportEvent({
-                      event: "funding-map:apply-click",
-                      properties: {
-                        programId,
-                        programTitle: title,
-                        isOnKarma,
-                        isActive,
-                        applyType: "submission_url",
-                      },
+                    track("funding_map_apply_clicked", {
+                      program_id: programId ?? "",
+                      apply_target: "external",
                     });
                   }}
                 >
@@ -717,17 +690,12 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
             <CommunityApplyButton
               program={program}
               isActive={isActive}
-              onApplyClick={(applyType, communityName) => {
-                mixpanel.reportEvent({
-                  event: "funding-map:apply-click",
-                  properties: {
-                    programId,
-                    programTitle: title,
-                    isOnKarma,
-                    isActive,
-                    communityName,
-                    applyType,
-                  },
+              onApplyClick={(applyType) => {
+                // "karma" is an application filled in on this app; every other
+                // target hands the applicant off to the programme's own site.
+                track("funding_map_apply_clicked", {
+                  program_id: programId ?? "",
+                  apply_target: applyType === "karma" ? "internal" : "external",
                 });
               }}
             />
@@ -740,15 +708,9 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => {
-                    mixpanel.reportEvent({
-                      event: "funding-map:apply-click",
-                      properties: {
-                        programId,
-                        programTitle: title,
-                        isOnKarma,
-                        isActive,
-                        applyType: "external",
-                      },
+                    track("funding_map_apply_clicked", {
+                      program_id: programId ?? "",
+                      apply_target: "external",
                     });
                   }}
                 >
@@ -777,10 +739,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
               rel="noopener noreferrer"
               className="text-foreground hover:underline font-medium"
               onClick={() => {
-                mixpanel.reportEvent({
-                  event: "funding-map:claim-program-click",
-                  properties: { programId, programTitle: title },
-                });
+                track("funding_map_claim_program_clicked", { program_id: programId });
               }}
             >
               Claim

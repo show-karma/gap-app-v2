@@ -100,7 +100,12 @@ export interface AnalyticsEventMap {
     has_proof: boolean;
   };
   milestone_completion_failed: FailureProps & { milestone_id: string };
-  milestone_verified: { milestone_id: string; verifier_role: "admin" | "reviewer" | "community" };
+  /**
+   * `verifier_role` is not carried: the verification hook is shared by the
+   * admin review screen and the inbox, and neither passes a role down. The
+   * verifier's own role is on their Mixpanel profile.
+   */
+  milestone_verified: { milestone_id: string };
   milestone_edit_requested: { milestone_id: string; fields_changed: string[] };
   milestone_edit_completed: { milestone_id: string; fields_changed: string[] };
   milestone_edit_failed: FailureProps & { milestone_id: string };
@@ -111,11 +116,16 @@ export interface AnalyticsEventMap {
   milestone_uncancel_completed: { milestone_id: string };
 
   // --------------------------------------------------------- funding platform
-  application_started: { program_id: string; community_id: string; has_project: boolean };
-  application_step_completed: {
+  application_started: {
     program_id: string;
-    step: string;
-    step_index: number;
+    community_id: string;
+    /**
+     * Whether the applicant was signed in when the form opened. Replaces the
+     * originally-planned `has_project`: the apply page cannot know whether the
+     * visitor owns a Karma project without an extra request made purely for
+     * analytics, and an unauthenticated visitor never has one anyway.
+     */
+    is_authenticated: boolean;
   };
   application_submitted: {
     program_id: string;
@@ -126,13 +136,19 @@ export interface AnalyticsEventMap {
   application_submit_failed: FailureProps & { program_id: string };
   post_approval_submitted: { application_id: string; program_id: string };
   post_approval_submit_failed: FailureProps & { application_id: string; program_id: string };
-  application_status_changed: {
+  /**
+   * `from` and `actor_role` are not carried: the status write goes through one
+   * service call shared by four screens, none of which hand it the previous
+   * status, and the actor's role is on their Mixpanel profile. The transition
+   * itself is reconstructable from the application's own status history.
+   */
+  application_status_changed: { application_id: string; to: string };
+  reviewer_assigned: {
+    /** The assignment is per application; the hook that performs it has no program id. */
     application_id: string;
-    from: string;
-    to: string;
-    actor_role: "admin" | "reviewer";
+    reviewer_type: "app" | "milestone";
+    reviewer_count: number;
   };
-  reviewer_assigned: { program_id: string; reviewer_count: number };
   comment_posted: {
     target_type: ApplicationCommentTargetType;
     is_public: boolean;
@@ -140,20 +156,24 @@ export interface AnalyticsEventMap {
   };
 
   // --------------------------------------------------------------- donations
+  /**
+   * The donation cart is not scoped to a community and the app holds no USD
+   * conversion client-side, so these carry the checkout's own shape rather than
+   * a `community_id` / `total_usd` the frontend would have to invent.
+   */
   donation_started: {
-    community_id: string;
-    project_ids_count: number;
+    project_count: number;
     entry_point: EntryPoint;
-  };
-  donation_completed: {
-    community_id: string;
-    total_usd: number;
-    /** ERC-20 symbol. Named `currency` because the PII guard drops a bare `token`. */
-    currency: string;
-    chain_id: number;
     used_onramp: boolean;
   };
-  donation_failed: FailureProps & { community_id: string; used_onramp: boolean };
+  donation_completed: {
+    project_count: number;
+    /** ERC-20 symbols paid in. Named `currencies` — the PII guard drops `token`. */
+    currencies: string[];
+    chain_ids: number[];
+    used_onramp: boolean;
+  };
+  donation_failed: FailureProps & { project_count: number; used_onramp: boolean };
 
   // --------------------------------------------------------------- discovery
   search_performed: {
@@ -252,7 +272,6 @@ export const ANALYTICS_EVENT_NAMES = [
   "milestone_cancel_completed",
   "milestone_uncancel_completed",
   "application_started",
-  "application_step_completed",
   "application_submitted",
   "application_submit_failed",
   "post_approval_submitted",

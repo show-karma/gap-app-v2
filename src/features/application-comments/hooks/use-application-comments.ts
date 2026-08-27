@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { track } from "@/utilities/analytics/client";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { CommentsService } from "../api/comments-service";
 import type { ApplicationComment, UseApplicationCommentsReturn } from "../types";
@@ -46,6 +47,9 @@ export function useApplicationComments({
   const addCommentMutation = useMutation({
     mutationFn: (content: string) => CommentsService.createComment(applicationId, content),
     onSuccess: (newComment) => {
+      // Reviewer-side comments on an application are always internal and never
+      // threaded — this hook has no reply affordance.
+      track("comment_posted", { target_type: "application", is_public: false, is_reply: false });
       queryClient.setQueryData<ApplicationComment[]>(queryKey, (old) => [
         ...(old ?? []),
         newComment,

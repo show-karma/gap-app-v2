@@ -28,6 +28,7 @@ function NoReportForSite({ domain, url }: { readonly domain: string; readonly ur
   const [rateLimit, setRateLimit] = useState<RateLimitState | null>(null);
   const submittingRef = useRef(false);
   const { mutate, isPending } = useSubmitScan({
+    entryPoint: "scanner_site_no_report",
     onSuccess: (response) => {
       submittingRef.current = false;
       if (response.created) {
