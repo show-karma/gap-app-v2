@@ -5,6 +5,7 @@ import {
   addSimocracySimLink,
   deleteSimocracySimLink,
   fetchApplicationIntegrations,
+  fetchSimocracyCouncil,
   fetchSimocracyEvaluations,
   fetchSimocracyProgramSummary,
   fetchSimocracySimLinks,
@@ -40,6 +41,18 @@ export function useSimocracyProgramSummary(
   return useQuery({
     queryKey: QUERY_KEYS.simocracyProgramSummary(programId ?? ""),
     queryFn: () => fetchSimocracyProgramSummary(programId ?? ""),
+    enabled: (options?.enabled ?? true) && !!programId,
+    staleTime: INTEGRATIONS_STALE_TIME_MS,
+  });
+}
+
+export function useSimocracyCouncil(
+  programId: string | undefined,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.simocracyCouncil(programId ?? ""),
+    queryFn: () => fetchSimocracyCouncil(programId ?? ""),
     enabled: (options?.enabled ?? true) && !!programId,
     staleTime: INTEGRATIONS_STALE_TIME_MS,
   });
