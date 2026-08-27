@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  useSimocracyCouncil,
   useSimocracyProgramSummary,
   useSimocracySimLinkMutations,
   useSimocracySimLinks,
@@ -30,7 +31,7 @@ import { useCommunityReviewers } from "@/hooks/useCommunityReviewers";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import type {
-  SimocracySim,
+  SimocracyCouncilSim,
   SimocracySimLink,
 } from "@/services/fundingApplicationIntegrations.service";
 import { shortAddress } from "@/utilities/shortAddress";
@@ -86,7 +87,8 @@ const LinksSkeleton: FC = () => (
 
 interface SimLinkRowProps {
   link: SimocracySimLink;
-  sim?: SimocracySim;
+  sim?: SimocracyCouncilSim;
+  reviewerName?: string;
   canDelete: boolean;
   isDeleting: boolean;
   onDelete: (simUri: string) => Promise<void>;
@@ -95,6 +97,7 @@ interface SimLinkRowProps {
 const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
   link,
   sim,
+  reviewerName,
   canDelete,
   isDeleting,
   onDelete,
@@ -142,12 +145,24 @@ const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
-        <span
-          className="font-mono text-xs text-gray-600 dark:text-gray-300"
-          title={link.publicAddress}
-        >
-          {shortAddress(link.publicAddress)}
-        </span>
+        {reviewerName ? (
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-sm text-gray-900 dark:text-white">{reviewerName}</span>
+            <span
+              className="font-mono text-xs text-gray-500 dark:text-gray-400"
+              title={link.publicAddress}
+            >
+              {shortAddress(link.publicAddress)}
+            </span>
+          </span>
+        ) : (
+          <span
+            className="font-mono text-xs text-gray-600 dark:text-gray-300"
+            title={link.publicAddress}
+          >
+            {shortAddress(link.publicAddress)}
+          </span>
+        )}
         <button
           type="button"
           aria-label="Copy address"
@@ -198,6 +213,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
     refetch: refetchLinks,
   } = useSimocracySimLinks(programId);
   const { data: summary } = useSimocracyProgramSummary(programId);
+  const { data: council } = useSimocracyCouncil(programId, { enabled: canManage });
   const { addSimLinkAsync, isAdding, deleteSimLinkAsync, isDeleting, deletingSimUri } =
     useSimocracySimLinkMutations(programId);
 
@@ -220,17 +236,25 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
     });
 
   const simsByUri = useMemo(() => {
-    const map = new Map<string, SimocracySim>();
+    const map = new Map<string, SimocracyCouncilSim>();
     for (const sim of summary?.sims ?? []) {
+      map.set(sim.simUri, {
+        simUri: sim.simUri,
+        simName: sim.simName,
+        avatar: sim.avatar,
+        ownerDid: "",
+      });
+    }
+    for (const sim of council ?? []) {
       map.set(sim.simUri, sim);
     }
     return map;
-  }, [summary?.sims]);
+  }, [summary?.sims, council]);
 
   const unlinkedSims = useMemo(() => {
     const linked = new Set((links ?? []).map((link) => link.simUri));
-    return (summary?.sims ?? []).filter((sim) => !linked.has(sim.simUri));
-  }, [summary?.sims, links]);
+    return [...simsByUri.values()].filter((sim) => !linked.has(sim.simUri));
+  }, [simsByUri, links]);
 
   const isCustom = selectedSim === CUSTOM_SIM_VALUE || unlinkedSims.length === 0;
 
@@ -267,6 +291,14 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
     }
     return options;
   }, [communityReviewers, programReviewerOptions]);
+
+  const reviewerNameByAddress = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const reviewer of [...communityReviewerOptions, ...programReviewerOptions]) {
+      if (reviewer.name) map.set(reviewer.publicAddress.toLowerCase(), reviewer.name);
+    }
+    return map;
+  }, [programReviewerOptions, communityReviewerOptions]);
 
   const hasReviewerOptions =
     programReviewerOptions.length > 0 || communityReviewerOptions.length > 0;
@@ -359,6 +391,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
               key={link.simUri}
               link={link}
               sim={simsByUri.get(link.simUri)}
+              reviewerName={reviewerNameByAddress.get(link.publicAddress.toLowerCase())}
               canDelete={
                 canManage ||
                 (isReviewer &&

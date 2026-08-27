@@ -130,6 +130,28 @@ export function isIntegrationEnabled(
   return (integrations ?? []).some((integration) => integration.key === key && integration.enabled);
 }
 
+export interface SimocracyCouncilSim {
+  simUri: string;
+  simName: string | null;
+  avatar: string | null;
+  ownerDid: string;
+}
+
+interface CouncilResponse {
+  sims: SimocracyCouncilSim[];
+}
+
+export async function fetchSimocracyCouncil(programId: string): Promise<SimocracyCouncilSim[]> {
+  try {
+    const data = await api.get<CouncilResponse>(
+      INDEXER.V2.FUNDING_PROGRAMS.SIMOCRACY_COUNCIL(programId)
+    );
+    return data?.sims ?? [];
+  } catch (error) {
+    throw new Error(httpErrorMessage(error));
+  }
+}
+
 export interface SimocracySimLink {
   simUri: string;
   publicAddress: string;

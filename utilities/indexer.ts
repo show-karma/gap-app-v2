@@ -140,6 +140,8 @@ export const INDEXER = {
       MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
       INTEGRATION_SIMOCRACY: (programId: string) =>
         `/v2/funding-programs/${programId}/integrations/simocracy`,
+      SIMOCRACY_COUNCIL: (programId: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy/council`,
       SIM_LINKS: (programId: string) =>
         `/v2/funding-programs/${programId}/integrations/simocracy/sim-links`,
       PROMPTS: {

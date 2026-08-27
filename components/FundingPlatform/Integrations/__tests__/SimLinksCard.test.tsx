@@ -9,12 +9,15 @@ import { SimLinksCard } from "../SimLinksCard";
 
 const mockUseSimocracySimLinks = vi.fn();
 const mockUseSimocracyProgramSummary = vi.fn();
+const mockUseSimocracyCouncil = vi.fn(() => ({ data: undefined }));
 const mockAddSimLinkAsync = vi.fn();
 const mockDeleteSimLinkAsync = vi.fn();
 
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useSimocracySimLinks: (programId: string) => mockUseSimocracySimLinks(programId),
   useSimocracyProgramSummary: (programId: string) => mockUseSimocracyProgramSummary(programId),
+  useSimocracyCouncil: (programId: string, options?: { enabled?: boolean }) =>
+    mockUseSimocracyCouncil(programId, options),
   useSimocracySimLinkMutations: () => ({
     addSimLinkAsync: mockAddSimLinkAsync,
     isAdding: false,
