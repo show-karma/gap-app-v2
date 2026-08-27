@@ -15,7 +15,9 @@ import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -24,13 +26,14 @@ import {
   useSimocracySimLinkMutations,
   useSimocracySimLinks,
 } from "@/hooks/useApplicationIntegrations";
+import { useCommunityReviewers } from "@/hooks/useCommunityReviewers";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import type {
   SimocracySim,
   SimocracySimLink,
 } from "@/services/fundingApplicationIntegrations.service";
 import { shortAddress } from "@/utilities/shortAddress";
-import { cn } from "@/utilities/tailwind";
 
 const simUriSchema = z
   .string()
@@ -45,6 +48,13 @@ const addressSchema = z
   .regex(/^0x[0-9a-fA-F]{40}$/, "Must be a valid Ethereum address (0x…)");
 
 const CUSTOM_SIM_VALUE = "__custom__";
+const CUSTOM_ADDRESS_VALUE = "__custom__";
+
+interface ReviewerOption {
+  publicAddress: string;
+  name: string;
+  email: string;
+}
 
 function truncateMiddle(value: string, head = 24, tail = 12): string {
   if (value.length <= head + tail + 1) return value;
@@ -58,6 +68,8 @@ export interface SimLinksCardProps {
   /** Reviewers without PROGRAM_EDIT may only manage a link for their own address. */
   isReviewer: boolean;
   viewerAddress?: string;
+  /** Enables the reviewer picker (program + community reviewer lists) for admins. */
+  communityUID?: string;
 }
 
 const LinksSkeleton: FC = () => (
@@ -176,6 +188,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
   canManage,
   isReviewer,
   viewerAddress,
+  communityUID,
 }) => {
   const {
     data: links,
@@ -190,11 +203,21 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
 
   const [selectedSim, setSelectedSim] = useState<string>("");
   const [customSimUri, setCustomSimUri] = useState("");
+  const [selectedReviewer, setSelectedReviewer] = useState<string>("");
   const [address, setAddress] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const canAdd = canManage || isReviewer;
   const normalizedViewer = viewerAddress?.toLowerCase();
+
+  const { data: programReviewers, isLoading: isLoadingProgramReviewers } = useProgramReviewers(
+    canManage ? programId : ""
+  );
+  const { items: communityReviewers, isLoading: isLoadingCommunityReviewers } =
+    useCommunityReviewers({
+      communityUID: communityUID ?? "",
+      enabled: canManage && !!communityUID,
+    });
 
   const simsByUri = useMemo(() => {
     const map = new Map<string, SimocracySim>();
@@ -210,6 +233,46 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
   }, [summary?.sims, links]);
 
   const isCustom = selectedSim === CUSTOM_SIM_VALUE || unlinkedSims.length === 0;
+
+  const programReviewerOptions = useMemo<ReviewerOption[]>(
+    () =>
+      (programReviewers ?? [])
+        .filter(
+          (reviewer): reviewer is typeof reviewer & { publicAddress: string } =>
+            !!reviewer.publicAddress
+        )
+        .map((reviewer) => ({
+          publicAddress: reviewer.publicAddress,
+          name: reviewer.name,
+          email: reviewer.email,
+        })),
+    [programReviewers]
+  );
+
+  const communityReviewerOptions = useMemo<ReviewerOption[]>(() => {
+    const inProgram = new Set(
+      programReviewerOptions.map((reviewer) => reviewer.publicAddress.toLowerCase())
+    );
+    const seen = new Set<string>();
+    const options: ReviewerOption[] = [];
+    for (const reviewer of communityReviewers ?? []) {
+      const key = reviewer.publicAddress.toLowerCase();
+      if (inProgram.has(key) || seen.has(key)) continue;
+      seen.add(key);
+      options.push({
+        publicAddress: reviewer.publicAddress,
+        name: reviewer.name,
+        email: reviewer.email,
+      });
+    }
+    return options;
+  }, [communityReviewers, programReviewerOptions]);
+
+  const hasReviewerOptions =
+    programReviewerOptions.length > 0 || communityReviewerOptions.length > 0;
+  const isLoadingReviewers = isLoadingProgramReviewers || isLoadingCommunityReviewers;
+  const isCustomAddress =
+    selectedReviewer === CUSTOM_ADDRESS_VALUE || (!isLoadingReviewers && !hasReviewerOptions);
 
   if (isLoadingLinks) {
     return <LinksSkeleton />;
@@ -238,10 +301,18 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
       setFormError(parsedUri.error.issues[0]?.message ?? "Invalid sim AT-URI");
       return;
     }
-    const rawAddress = canManage ? address : (viewerAddress ?? "");
+    const rawAddress = canManage
+      ? isCustomAddress
+        ? address
+        : selectedReviewer
+      : (viewerAddress ?? "");
     const parsedAddress = addressSchema.safeParse(rawAddress);
     if (!parsedAddress.success) {
-      setFormError(parsedAddress.error.issues[0]?.message ?? "Invalid address");
+      setFormError(
+        canManage && !isCustomAddress && !selectedReviewer
+          ? "Select a reviewer"
+          : (parsedAddress.error.issues[0]?.message ?? "Invalid address")
+      );
       return;
     }
     setFormError(null);
@@ -249,7 +320,10 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
       await addSimLinkAsync({ simUri: parsedUri.data, publicAddress: parsedAddress.data });
       setSelectedSim("");
       setCustomSimUri("");
-      if (canManage) setAddress("");
+      if (canManage) {
+        setAddress("");
+        setSelectedReviewer("");
+      }
     } catch {
       // SUPPRESSED: the mutation's onError owns the failure toast; the form
       // keeps its values so the user can correct and retry.
@@ -354,24 +428,99 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                 />
               )}
             </div>
-            <div className="sm:w-56">
-              <input
-                type="text"
-                value={canManage ? address : (viewerAddress ?? "")}
-                onChange={(event) => {
-                  setAddress(event.target.value);
-                  if (formError) setFormError(null);
-                }}
-                disabled={!canManage}
-                placeholder="0x…"
-                spellCheck={false}
-                aria-label="Reviewer address"
-                title={canManage ? undefined : "Reviewers can only link sims to their own address"}
-                className={cn(
-                  "block w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500",
-                  !canManage && "cursor-not-allowed opacity-60"
-                )}
-              />
+            <div className="space-y-2 sm:w-64">
+              {canManage ? (
+                <>
+                  {(hasReviewerOptions || isLoadingReviewers) && (
+                    <Select
+                      value={selectedReviewer}
+                      onValueChange={(value) => {
+                        setSelectedReviewer(value);
+                        if (formError) setFormError(null);
+                      }}
+                      disabled={isLoadingReviewers && !hasReviewerOptions}
+                    >
+                      <SelectTrigger aria-label="Select a reviewer">
+                        <SelectValue
+                          placeholder={
+                            isLoadingReviewers && !hasReviewerOptions
+                              ? "Loading reviewers…"
+                              : "Select a reviewer"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {programReviewerOptions.length > 0 && (
+                          <SelectGroup>
+                            <SelectLabel>Program reviewers</SelectLabel>
+                            {programReviewerOptions.map((reviewer) => (
+                              <SelectItem
+                                key={reviewer.publicAddress}
+                                value={reviewer.publicAddress}
+                              >
+                                <span className="flex items-center gap-2">
+                                  <span className="truncate">
+                                    {reviewer.name || reviewer.email}
+                                  </span>
+                                  <span className="shrink-0 font-mono text-xs text-gray-400">
+                                    {shortAddress(reviewer.publicAddress)}
+                                  </span>
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        )}
+                        {communityReviewerOptions.length > 0 && (
+                          <SelectGroup>
+                            <SelectLabel>Community reviewers</SelectLabel>
+                            {communityReviewerOptions.map((reviewer) => (
+                              <SelectItem
+                                key={reviewer.publicAddress}
+                                value={reviewer.publicAddress}
+                              >
+                                <span className="flex items-center gap-2">
+                                  <span className="truncate">
+                                    {reviewer.name || reviewer.email}
+                                  </span>
+                                  <span className="shrink-0 font-mono text-xs text-gray-400">
+                                    {shortAddress(reviewer.publicAddress)}
+                                  </span>
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        )}
+                        <SelectItem value={CUSTOM_ADDRESS_VALUE}>Custom address…</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {isCustomAddress && (
+                    <input
+                      type="text"
+                      value={address}
+                      onChange={(event) => {
+                        setAddress(event.target.value);
+                        if (formError) setFormError(null);
+                      }}
+                      placeholder="0x…"
+                      spellCheck={false}
+                      aria-label="Reviewer address"
+                      className="block w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+                    />
+                  )}
+                </>
+              ) : (
+                <input
+                  type="text"
+                  value={viewerAddress ?? ""}
+                  disabled
+                  placeholder="0x…"
+                  spellCheck={false}
+                  aria-label="Reviewer address"
+                  title="Reviewers can only link sims to their own address"
+                  className="block w-full cursor-not-allowed rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 opacity-60 placeholder:text-gray-400 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+                />
+              )}
             </div>
             <Button
               variant="primary"
