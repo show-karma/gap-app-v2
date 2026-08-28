@@ -1,0 +1,5 @@
+export function Negative({ selected }: { selected: boolean }) {
+  const label = "Hello!";
+  const shout = "Wow! amazing";
+  return <span className={!selected ? "bg-brand" : "bg-primary-500"}>{label + shout}</span>;
+}

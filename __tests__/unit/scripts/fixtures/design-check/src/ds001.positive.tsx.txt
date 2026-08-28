@@ -1,0 +1,11 @@
+export function Positive() {
+  return (
+    <div>
+      <span className="bg-[#123456]">hex</span>
+      <span className="text-[rgb(20,30,40)]">rgb</span>
+      <span className="shadow-[0_4px_6px_rgba(0,0,0,0.1)]">shadow</span>
+      <span className="border-[hsl(210,50%,50%)]">hsl</span>
+      <span className="hover:bg-[oklch(0.7_0.1_200)]">oklch</span>
+    </div>
+  );
+}

@@ -76,5 +76,86 @@ Enforcement is layered:
 
 - **Claude edit hook** (`.claude/hooks/post-edit-antipatterns.sh`) — semantic/absence checks, on every agent edit: `return null` in data components, missing `useMutation`, `useRouter`/`useParams` in `useEffect` deps, raw `navigator.clipboard`.
 - **Biome** — lint/format. **Pre-commit** also runs tests. **CI bot** comments anti-pattern violations on PRs.
+- **Design system** (`pnpm design:check`) — see below.
 
 Don't repeat any of the above in code review — it's automated.
+
+### Design system (`pnpm design:check`)
+
+`scripts/check-design-system.js` blocks design-system deviations **on the lines a change adds**. Legacy debt in a file you merely touch never blocks you — locally, in pre-commit, or in CI.
+
+| ID | Sev | Detects | Not a violation |
+|----|-----|---------|-----------------|
+| DS001 `arbitrary-color-class` | error | `bg-[#123456]`, `text-[rgb(20,30,40)]`, `shadow-[…rgba(…)…]`, `oklch(…)` | `bg-[rgb(var(--x))]`, `bg-[var(--x)]`, `bg-[hsl(var(--x)/0.5)]`, palette classes |
+| DS002 `raw-color-literal` | error | `#hex` (3/4/6/8 digits) / `rgb[a](digits)` / `hsl[a](digits)` / `oklch(digits)` / `oklab(digits)` in strings, templates, JSX attributes — **including** the value of a `--custom-prop` key, which DS003 skips | comments, `url(#clip)`, `href="#top"`, anything inside `var(…)`, `components/Icons/**` |
+| DS003 `inline-style-literal` | error | a literal colour, size or font on a visual key: `color`, `background*`, `border*`, `outline*`, `fill`, `stroke`, `boxShadow`, `textShadow`, `caretColor`, `accentColor`, `textDecorationColor`, `columnRuleColor`, `fontSize`, `fontFamily`. Named CSS colours (`"white"`) count | `var(…)` values, expressions, `--custom-prop` keys (DS002 still checks the value), CSS-wide keywords (`none`, `inherit`, `transparent`, `currentColor`, `auto`), layout keys (`width`, `zIndex`, `transform`), and **any file that imports `next/og` or `@vercel/og`** or matches `inlineStyleExemptGlobs` — Satori renders inline styles only |
+| DS004 `important-prefix` | error | any `!` override, including the no-dash (`!flex`, `!underline`, `md:!absolute`), negative (`!-mt-2`) and arbitrary-property (`![color:red]`) forms | `!selected && …` (not a string), `"Hello!"`, a bare `"!"` |
+| DS005 `raw-primitive` | error | `<button>`, `<input>`, `<select>`, `<textarea>` outside `components/ui/**` | `<input type="hidden">` only — `type="file"` is **not** exempt, `components/ui/input.tsx` already styles `file:` pseudo-elements |
+| DS006 `arbitrary-scale` | warn | spacing and typography only: `p*`/`m*`, `gap*`, `space-x/y`, `text` (size), `leading`, `tracking`, `rounded*`, `indent` — e.g. `p-[13px]`, `text-[15px]`, `tracking-[0.14em]` | **every sizing utility** (`w`, `h`, `min-*`, `max-*`, `size`, `basis`, `inset`, `top/right/bottom/left`, `translate`) — a layout dimension is legitimately arbitrary — plus `calc(…)`, `var(--x)`, `z-[…]`, `grid-cols-[…]`, and the `scaleDefinitionFiles` |
+| DS007 `css-color-literal` | error | `#hex` / `rgb[a]()` / `hsl[a]()` / **`oklch()`** / `oklab()` with numeric arguments in `.css` / `.scss` | `var(…)`, `rgb(var(--x))`, comments, id selectors (`#app {`), the token-definition files, and every path in the shared exclude list (`src/stories/**` included) |
+| DS000 `bad-waiver` | error | waiver with no rule id, a reason under 10 characters, or no matching finding on the next line | — |
+
+Precedence dedupes the *same* defect only: a colour literal is reported once (DS001 > DS002, DS003 > DS002). Two different defects on one candidate are both reported — `!bg-[#123456]` yields DS004 **and** DS001.
+
+Each mode reads the revision its line numbers belong to: `--staged` scans the **index** blob (`git show :<path>`), `--changed` scans **HEAD**, `--worktree` scans the working copy. So staging a fix, or editing on after `git add`, never shifts a finding onto the wrong line.
+
+Token consumption is always allowed — Tailwind theme classes and `var(--x)` / `rgb(var(--x))` / `hsl(var(--x))` anywhere. Every exemption lives in `scripts/design-check.config.json` and is rule-scoped, never file-wide:
+
+| Config key | Exempts | From |
+|---|---|---|
+| `tokenDefinitionFiles` | the files that *define* the palette (`tailwind.config.js`, `widget/tailwind.config.ts`, `src/infrastructure/theme/config.ts`, `styles/globals.css`, `styles/__theme_colors.scss`, `dashboard-soft.css`, `utilities/whitelabel-config.ts`) | DS001, DS002, DS003, DS007 |
+| `scaleDefinitionFiles` | the files that *define* the spacing/type scale | DS006 only |
+| `iconGlobs` (`components/Icons/**`) | SVG path fills — assets, not tokens | DS002 only |
+| `primitiveExemptGlobs` (`components/ui/**`) | the shadcn primitives themselves | DS005 only |
+| `inlineStyleExemptGlobs` + `inlineStyleExemptImports` | `next/og` / `@vercel/og` image routes, where Satori supports inline styles only | DS003 only |
+
+Legacy debt is **not** exempted — `styles/non-profits-landing.css` keeps its 84 DS007 findings on purpose. The added-lines gate means they never block you; the baseline stops them growing. Scan roots are the Tailwind `content` globs plus `utilities/**`, `hooks/**`, `services/**`, `store/**` and `widget/**` (the widget ships through `pnpm build:widget`), plus every `.css`/`.scss`. MDX is out of scope in v1.
+
+```bash
+pnpm design:check                          # whole repo, exit 1 on errors
+pnpm design:check --report                 # whole repo, never exit 1
+pnpm design:check --changed --base origin/main   # lines added by base...HEAD (three-dot)
+pnpm design:check --staged                 # lines added in the index (what pre-commit runs)
+pnpm design:check --worktree path/to/File.tsx    # lines added vs HEAD (what the edit hook runs)
+pnpm design:check --files a.tsx b.scss     # whole-file, report-only debugging aid
+pnpm design:check --report --json          # { mode, base, summary, findings, waivers }
+```
+
+`.husky/pre-push` runs `--changed --base origin/main` after `pnpm typecheck`, so a push that would fail the blocking gate is caught before it leaves your machine. It refreshes `origin/main` first; if that cannot be resolved — offline, a fork without the remote, a detached checkout — it prints one warning line and skips rather than bricking the push. Errors block, warnings never do.
+
+The JSON envelope is `{ mode, base, summary, findings, waivers }`, plus `truncated` when the displayed list was capped. Counts in `summary` — and the exit code — always cover **every** finding; only `findings` is capped, at 500 per file, keeping errors and waived findings first.
+
+`waivers` is **never capped**: it holds every waived finding with the fields the PR-body check needs (`file`, `line`, `waiverAdded`, `waiverRules`, `waiverReason`). Anything validating waivers must read that array — reading them from the capped `findings` let a waiver past the cap escape review — and must fail closed if it is absent.
+
+Exit `2` means the checker **failed closed** — an unresolvable base, no merge base, an invalid `severity` block in the config, a source file over 2 MB, or a crash. It never reports "0 findings" when it could not do its job. Findings are capped at 500 per file; the summary keeps the true counts.
+
+The `severity` block in `scripts/design-check.config.json` is live: it overrides a rule's level (`error` or `warn` only, known rule ids only) and an invalid entry fails the run rather than being ignored.
+
+**Waivers.** Put `// design-check-ignore: DS00X <reason of 10+ characters>` (or `{/* … */}`) on the line directly above the violation. One comment may cover several rules — `DS001,DS004` — because a single candidate can carry more than one defect (`!bg-[#123456]` is both an `!important` override and a colour literal, and is reported as **two** findings; precedence only dedupes the *same* defect). Every listed id must match a finding on the next line, or it is a DS000 orphan.
+
+Waived findings still appear in the PR comment, and every waiver a PR adds must have a matching entry under a `## Review waivers` heading in the PR description — **one line per waiver comment, not one line per rule**, carrying the same comma-joined id set:
+
+```
+## Review waivers
+
+- DS001 components/Foo.tsx:12 — tenant-supplied brand swatch, migration tracked in DEV-999
+- DS001,DS004 src/features/x/y.tsx:42 — forced over a vendor stylesheet we do not control
+```
+
+Format: `- <ids> <path>:<line> — <reason>`, where `<line>` is the **violation** line (not the waiver comment's), `<ids>` is comma-joined (order does not matter, no empty entries — `DS001,,DS004` and a trailing comma are DS000), and `<reason>` is 10+ characters. A path containing spaces may be wrapped in backticks or quotes. A missing section, a missing entry, a partial id set, a split one-line-per-rule entry, a duplicate entry, a short reason, or a stale entry all fail the check — a stale entry fails even when the PR adds no waiver at all.
+
+**Enforcement on `main`.** Two layers, because neither alone is enough:
+
+- **Before merge** — `checklist` blocks the PR. It only *has* to pass once it is a required check, which needs a repo admin (currently only `maheshmurthy`) to apply the branch ruleset:
+
+  ```bash
+  gh api -X POST repos/show-karma/gap-app-v2/rulesets     --input .github/rulesets/main-quality-gates.json
+  ```
+
+  That ruleset requires `checklist`, `quality-gate`, `baseline-guard`, `gate-guard` and `build`, blocks deletion and force-push on `main`, and lets an admin bypass only through a PR. It is the intended end state; applying it is a follow-up, not a blocker.
+
+- **After merge** — `.github/workflows/design-gate-main.yml` re-runs the check on every push to `main` over exactly the lines the merge added. On an error-severity finding it opens a `revert/design-gate-<sha>` PR labelled `design-gate-revert`, comments the findings on the originating PR, and — if the revert conflicts — opens an issue and fails instead. It never merges anything. This is what makes enforcement independent of an admin actually applying the ruleset.
+
+**Changing the gate itself.** The files that define or enforce these checks — the checker, its config, `quality-gate.js`, both workflows, `.husky/pre-commit`, `CODEOWNERS`, `.github/rulesets/**` — are guarded by the `gate-guard` job: a PR touching any of them fails unless it carries the **`gate-change`** label. `.github/CODEOWNERS` lists the same paths and is informational; `main` requires no code-owner review.
+
+**Refreshing the repo-wide snapshot.** `quality-baseline.json` holds a per-rule count under `violations.design`. Never hand-edit it: run `pnpm quality --update-baseline=design` (≈3 s — it skips every other collector) and land the change on a PR labelled `quality-baseline`, which is what `quality-gate.yml` requires to let the file change.

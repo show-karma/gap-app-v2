@@ -1,8 +1,29 @@
-# Codeowners for quality-gate sensitive files.
-# Changes to the baseline must be reviewed — the PR also requires the
-# `quality-baseline` label (enforced in .github/workflows/quality-gate.yml).
+# Codeowners for the files that define or enforce the quality gates.
+#
+# These paths are the gates themselves: whoever can change them unreviewed can
+# switch enforcement off. Owner review is the mitigation Rival's round-3
+# blocker asks for — it only bites once branch protection has "Require review
+# from Code Owners" enabled on `main` (see docs/plans/dev-557-static-design-check.md §8).
+#
+# Owner must be a team that actually exists, or GitHub silently treats the rule
+# as unowned and never requests a review. `@show-karma/dev` is verified via
+# `gh api orgs/show-karma/teams`; `@show-karma/engineering` (used here before)
+# does not exist and its rules were inert.
 
-/quality-baseline.json @show-karma/engineering
-/quality-limits.json   @show-karma/engineering
-/scripts/quality-gate.js @show-karma/engineering
-/.github/workflows/quality-gate.yml @show-karma/engineering
+# Quality-gate metrics and the committed baseline.
+/quality-baseline.json                  @show-karma/dev
+/quality-limits.json                    @show-karma/dev
+/scripts/quality-gate.js                @show-karma/dev
+/.github/workflows/quality-gate.yml     @show-karma/dev
+
+# Design-system check (DEV-557): the checker, its rule configuration and the
+# workflow that blocks on it.
+/scripts/check-design-system.js         @show-karma/dev
+/scripts/design-check.config.json       @show-karma/dev
+/.github/workflows/pr-checklist.yml     @show-karma/dev
+
+# Local enforcement entry point.
+/.husky/pre-commit                      @show-karma/dev
+
+# This file decides who reviews the above.
+/.github/CODEOWNERS                     @show-karma/dev

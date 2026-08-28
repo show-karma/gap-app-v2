@@ -1,0 +1,244 @@
+name: Design Gate (main)
+
+# Post-merge safety net. The PR-time gate (pr-checklist.yml) only blocks when
+# it is a required check, and making it required needs a repo admin to apply
+# .github/rulesets/main-quality-gates.json. Until then — and afterwards, for
+# anything that bypasses the ruleset — this catches a design-system violation
+# that reached `main` and proposes the revert. It never merges anything.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Base sha to diff from'
+        required: true
+      head:
+        description: 'Head sha to diff to'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: design-gate-main
+  cancel-in-progress: false
+
+jobs:
+  design-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Resolve the range
+        id: range
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_AFTER: ${{ github.sha }}
+          INPUT_BASE: ${{ inputs.base }}
+          INPUT_HEAD: ${{ inputs.head }}
+        run: |
+          BASE="${INPUT_BASE:-$EVENT_BEFORE}"
+          HEAD_SHA="${INPUT_HEAD:-$EVENT_AFTER}"
+          # A branch's first push reports the zero sha as `before`; there is no
+          # range to check and nothing was "added by a merge".
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No usable base sha — skipping."
+            exit 0
+          fi
+          if [ "$BASE" = "$HEAD_SHA" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Empty range — skipping."
+            exit 0
+          fi
+          {
+            echo "skip=false"
+            echo "base=$BASE"
+            echo "head=$HEAD_SHA"
+            echo "short=$(printf '%s' "$HEAD_SHA" | cut -c1-7)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: steps.range.outputs.skip == 'false'
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.range.outputs.head }}
+          fetch-depth: 0
+          # The revert branch is pushed from this job, so the credential has to
+          # persist here.
+          persist-credentials: true
+
+      - name: Setup pnpm
+        if: steps.range.outputs.skip == 'false'
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        if: steps.range.outputs.skip == 'false'
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.range.outputs.skip == 'false'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Design system check on the merged range
+        if: steps.range.outputs.skip == 'false'
+        id: design
+        env:
+          BASE_SHA: ${{ steps.range.outputs.base }}
+        run: |
+          mkdir -p .quality
+          set +e
+          node scripts/check-design-system.js \
+            --changed --base "$BASE_SHA" --json --report > .quality/design-main.json
+          STATUS=$?
+          set -e
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::design checker failed closed (exit $STATUS)"
+            exit 1
+          fi
+          if ! jq -e '.summary.error' .quality/design-main.json > /dev/null 2>&1; then
+            echo "::error::design checker produced invalid JSON"
+            exit 1
+          fi
+          echo "errors=$(jq -r '.summary.error' .quality/design-main.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Propose a revert when main regressed
+        if: steps.range.outputs.skip == 'false' && steps.design.outputs.errors != '0'
+        uses: actions/github-script@v8
+        env:
+          HEAD_SHA: ${{ steps.range.outputs.head }}
+          SHORT_SHA: ${{ steps.range.outputs.short }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('node:fs');
+            const { execFileSync } = require('node:child_process');
+
+            const sha = process.env.HEAD_SHA;
+            const short = process.env.SHORT_SHA;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const branch = `revert/design-gate-${short}`;
+
+            const report = JSON.parse(fs.readFileSync('.quality/design-main.json', 'utf8'));
+            const blocking = (report.findings || []).filter(
+              (f) => !f.waived && f.severity === 'error'
+            );
+
+            const findingsTable = () => {
+              let out = '| Rule | Location | Issue | Suggestion |\n|---|---|---|---|\n';
+              for (const f of blocking.slice(0, 50)) {
+                out += `| ${f.rule} | \`${f.file}:${f.line}\` | ${f.message} | ${f.hint || '—'} |\n`;
+              }
+              if (blocking.length > 50) out += `\n_…and ${blocking.length - 50} more._\n`;
+              return out;
+            };
+
+            // Which PR brought this in, if any.
+            let originPr = null;
+            try {
+              const { data } = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${owner}/${repo} type:pr is:merged ${sha}`,
+                per_page: 5,
+              });
+              originPr = data.items?.[0]?.number ?? null;
+            } catch (err) {
+              core.warning(`Could not find the originating PR: ${err.message}`);
+            }
+
+            // Idempotent: if a revert PR for this sha is already open, stop.
+            const existing = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            if (existing.some((p) => p.head.ref === branch)) {
+              core.info(`Revert PR for ${short} already open — nothing to do.`);
+              return;
+            }
+
+            const git = (...args) =>
+              execFileSync('git', args, { encoding: 'utf8' }).trim();
+
+            git('config', 'user.name', 'github-actions[bot]');
+            git('config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com');
+
+            // `-m 1` only for a merge commit: reverting relative to the first
+            // parent is what undoes the merged branch.
+            const parents = git('rev-list', '--parents', '-n', '1', sha).split(' ').length - 1;
+            const revertArgs =
+              parents > 1 ? ['revert', '--no-edit', '-m', '1', sha] : ['revert', '--no-edit', sha];
+
+            let conflicted = false;
+            try {
+              git('checkout', '-b', branch);
+              git(...revertArgs);
+              git('push', 'origin', branch);
+            } catch (err) {
+              conflicted = true;
+              core.warning(`Revert could not be created cleanly: ${err.message}`);
+            }
+
+            const body =
+              `The design gate found **${blocking.length}** error-severity finding(s) on the lines ` +
+              `commit ${short} added to \`main\`.\n\n${findingsTable()}\n` +
+              (originPr ? `\nOriginating PR: #${originPr}\n` : '') +
+              `\nThis revert is **not** auto-merged — review it, or land a fix forward and close it.\n`;
+
+            if (conflicted) {
+              const issue = await github.rest.issues.create({
+                owner,
+                repo,
+                title: `design-gate: manual revert needed for ${short}`,
+                body:
+                  `An automatic revert of ${short} did not apply cleanly, so it needs a manual ` +
+                  `fix-forward or revert.\n\n${body}`,
+              });
+              core.info(`Opened issue #${issue.data.number}`);
+            } else {
+              const pr = await github.rest.pulls.create({
+                owner,
+                repo,
+                base: 'main',
+                head: branch,
+                title: `revert: design-gate violation in ${originPr ? `#${originPr}` : short} (${short})`,
+                body,
+              });
+              try {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: pr.data.number,
+                  labels: ['design-gate-revert'],
+                });
+              } catch (err) {
+                core.warning(`Could not label the revert PR: ${err.message}`);
+              }
+              core.info(`Opened revert PR #${pr.data.number}`);
+            }
+
+            // Tell the original PR either way.
+            if (originPr) {
+              try {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: originPr,
+                  body: `## 🎨 Design gate — regression on \`main\`\n\n${body}`,
+                });
+              } catch (err) {
+                core.warning(`Could not comment on #${originPr}: ${err.message}`);
+              }
+            }
+
+            if (conflicted) {
+              core.setFailed(`Automatic revert of ${short} conflicted — manual action required.`);
+            }

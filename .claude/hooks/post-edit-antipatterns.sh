@@ -86,6 +86,26 @@ esac
 # (Barrel exports and heavy eager imports are no longer machine-checked; see
 #  the pre-PR checklist in CLAUDE.md.)
 
+# === Design-system check (DEV-557) ===
+# Same added-lines semantics as CI and pre-commit: only lines this edit added
+# relative to HEAD are considered, so legacy debt in a touched file stays
+# silent. Advisory only — a PostToolUse hook cannot block.
+# `|| true` on every step: `set -e` is on, and a checker that fails closed
+# (exit 2) must not abort the script before the other issues are printed.
+DESIGN_JSON=$(node "$(dirname "$0")/../../scripts/check-design-system.js" \
+  --worktree "$FILE_PATH" --json --report 2>/dev/null || true)
+if [ -n "$DESIGN_JSON" ]; then
+  DESIGN_ISSUES=$(printf '%s' "$DESIGN_JSON" | jq -r '
+    (.findings // [])
+    | map(select(.waived == false and .severity == "error"))
+    | .[]
+    | "\\n- \(.rule) (L:\(.line)): \(.message)" + (if .hint then " → \(.hint)" else "" end)
+  ' 2>/dev/null | tr -d '\r\n' || true)
+  if [ -n "$DESIGN_ISSUES" ]; then
+    ISSUES="${ISSUES}${DESIGN_ISSUES}"
+  fi
+fi
+
 if [ -n "$ISSUES" ]; then
   jq -n --arg fp "$FILE_PATH" --arg issues "$ISSUES" \
     '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: ("Anti-pattern check found issues in " + $fp + ":" + $issues + "\nPlease fix these before continuing.")}}'

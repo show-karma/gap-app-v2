@@ -2,20 +2,17 @@ name: PR Quality Checklist
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
     branches: ['**']
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '**/*.png'
-      - '**/*.jpg'
-      - '**/*.jpeg'
-      - '**/*.svg'
-      - '**/*.gif'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
-      - 'LICENSE'
-      - '.gitignore'
+    # No paths-ignore. This job is a required check on `main`, and a skipped
+    # job reports no status at all — a doc-only PR would sit unmergeable
+    # forever. It stays cheap on such PRs: the checker finds nothing in the
+    # diff to scan and exits 0 in seconds.
+
+# Least privilege: the job reads the repo and writes one PR comment.
+permissions:
+  contents: read
+  pull-requests: write
 
 concurrency:
   group: pr-checklist-${{ github.event.pull_request.number }}
@@ -24,20 +21,55 @@ concurrency:
 jobs:
   checklist:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The design check needs a full clone plus a pnpm install; 10 minutes was
+    # tight even before that.
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          # Shallow checkout — we only need PR HEAD plus the immutable PR
-          # base SHA below.
-          fetch-depth: 1
+          # The RAW PR head, not the merge ref, with full history. Both are
+          # load-bearing for the design check: `base...HEAD` on the raw head
+          # computes the same tree locally and in CI even after the base
+          # branch advances, and the three-dot merge base needs real history.
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          # Every later step runs PR-authored code (the checker, its config,
+          # the installed toolchain). Do not leave this job's token in
+          # .git/config where that code could read it. Nothing here pushes.
+          persist-credentials: false
 
-      - name: Fetch immutable PR base SHA
+      - name: Fetch and validate the immutable PR base SHA
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: git fetch --no-tags --depth=1 origin "$PR_BASE_SHA"
+        run: |
+          git fetch --no-tags origin "$PR_BASE_SHA"
+          # Fail closed: without a resolvable base every diff-scoped check
+          # below would silently report "nothing changed".
+          if ! git rev-parse --verify --quiet "$PR_BASE_SHA^{commit}" > /dev/null; then
+            echo "::error::PR base SHA $PR_BASE_SHA does not resolve after fetch"
+            exit 1
+          fi
+          if ! git merge-base "$PR_BASE_SHA" HEAD > /dev/null; then
+            echo "::error::no merge base between $PR_BASE_SHA and the PR head"
+            exit 1
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      # The design checker only needs `typescript` and node; quality-gate.js is
+      # not run in this workflow. `--ignore-scripts` keeps a PR from executing
+      # arbitrary install hooks in the same job as the write-capable token.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Run anti-pattern checks
         id: antipatterns
@@ -109,71 +141,339 @@ jobs:
             } >> "$GITHUB_OUTPUT"
           fi
 
+      # Design-system check. `--report` means the checker never exits 1 on
+      # findings, so any non-zero exit here is a real failure (unresolvable
+      # base, no merge base, crash) and must fail the step rather than be
+      # reported as "0 findings".
+      - name: Design system check
+        id: design
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          mkdir -p .quality
+
+          set +e
+          node scripts/check-design-system.js \
+            --changed --base "$PR_BASE_SHA" --json --report > .quality/design.json
+          CHECKER_STATUS=$?
+          set -e
+
+          # `status` is written exactly once on every path, so the value the
+          # later steps read is never ambiguous.
+          if [ "$CHECKER_STATUS" -ne 0 ]; then
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+            echo "::error::design checker failed closed (exit $CHECKER_STATUS)"
+            exit 1
+          fi
+          if ! jq -e '.summary.error' .quality/design.json > /dev/null 2>&1; then
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+            echo "::error::design checker produced invalid JSON"
+            exit 1
+          fi
+
+          {
+            echo "status=ok"
+            echo "errors=$(jq -r '.summary.error' .quality/design.json)"
+            echo "warnings=$(jq -r '.summary.warn' .quality/design.json)"
+            echo "waived=$(jq -r '.summary.waived' .quality/design.json)"
+          } >> "$GITHUB_OUTPUT"
+
+          node scripts/check-design-system.js --changed --base "$PR_BASE_SHA" || true
+
+      - name: Upload design report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: design-report
+          path: .quality/design.json
+          if-no-files-found: ignore
+
+      # Always create or update one marker-anchored comment, including on a
+      # clean PR. On a fork the token is read-only, so a comment failure is
+      # non-fatal and the same markdown goes to the job summary instead — the
+      # blocking step below still runs either way.
       - name: Comment PR with results
         if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const antipatternCount = parseInt(process.env.AP_COUNT || '0');
-            const missingCount = parseInt(process.env.MR_COUNT || '0');
-            const totalIssues = antipatternCount + missingCount;
+            const fs = require('node:fs');
+            const MARKER = '<!-- pr-quality-checklist -->';
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('Quality Checklist')
-            );
+            const antipatternCount = parseInt(process.env.AP_COUNT || '0', 10);
+            const missingCount = parseInt(process.env.MR_COUNT || '0', 10);
+            const designStatus = process.env.DESIGN_STATUS || 'failed';
 
-            if (totalIssues === 0) {
-              if (botComment) {
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: botComment.id,
-                  body: '## Quality Checklist\n\nAll automated checks passed.',
-                });
-              }
-              return;
+            let report = null;
+            try {
+              report = JSON.parse(fs.readFileSync('.quality/design.json', 'utf8'));
+            } catch {
+              report = null;
             }
 
-            let body = '## Quality Checklist\n\n';
-            body += `Found **${totalIssues}** issue(s) to address before merge.\n\n`;
+            let body = `${MARKER}\n## Quality Checklist\n\n`;
 
             if (antipatternCount > 0) {
-              body += '### Anti-Pattern Violations\n\n';
-              body += '```\n';
+              body += '### Anti-Pattern Violations\n\n```\n';
               body += process.env.AP_DETAILS || '';
               body += '\n```\n\n';
             }
 
             if (missingCount > 0) {
               body += '### Missing Route Files\n\n';
-              body += (process.env.MR_DETAILS || '') + '\n\n';
+              body += `${process.env.MR_DETAILS || ''}\n\n`;
             }
 
-            body += '---\n*Automated quality check*';
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body,
-              });
+            body += '### 🎨 Design system\n\n';
+            if (designStatus !== 'ok' || !report) {
+              body +=
+                'The design checker **failed** — it could not produce a report ' +
+                '(unresolvable base, missing merge base, or a crash). ' +
+                'This blocks the PR by design; see the job log.\n\n';
             } else {
-              await github.rest.issues.createComment({
+              const s = report.summary;
+              const blocking = (report.findings || []).filter(
+                (f) => !f.waived && f.severity === 'error'
+              );
+              const warnings = (report.findings || []).filter(
+                (f) => !f.waived && f.severity === 'warn'
+              );
+              // From the uncapped array, so the reviewer is shown every waiver
+              // the blocking step will demand a PR-body entry for.
+              const waivers = report.waivers || (report.findings || []).filter((f) => f.waived);
+
+              body += `**${s.error}** error(s), **${s.warn}** warning(s), **${s.waived}** waived on the lines this PR adds.\n\n`;
+
+              const rows = (list, title) => {
+                if (!list.length) return '';
+                let out = `<details open><summary>${title} (${list.length})</summary>\n\n`;
+                out += '| Rule | Location | Issue | Suggestion |\n|---|---|---|---|\n';
+                for (const f of list.slice(0, 50)) {
+                  const loc = `\`${f.file}:${f.line}\``;
+                  out += `| ${f.rule} | ${loc} | ${f.message} | ${f.hint || '—'} |\n`;
+                }
+                if (list.length > 50) out += `\n_…and ${list.length - 50} more._\n`;
+                return `${out}\n</details>\n\n`;
+              };
+
+              body += rows(blocking, '❌ Blocking');
+              body += rows(warnings, '⚠️ Warnings');
+
+              if (waivers.length) {
+                body += `<details open><summary>Waivers (${waivers.length})</summary>\n\n`;
+                // One line per waiver comment, carrying the same comma-joined
+                // rule set the PR body has to declare.
+                const seen = new Set();
+                let listed = 0;
+                for (const f of waivers) {
+                  const key = `${f.file}:${f.line}`;
+                  if (seen.has(key)) continue;
+                  seen.add(key);
+                  // Bound the rendered list: a comment over ~65 kB is rejected
+                  // by the API. The count above and the blocking step below
+                  // still cover every waiver.
+                  if (listed++ >= 50) continue;
+                  body += `- \`${f.waiverRules || f.rule}\` \`${key}\` — ${f.waiverReason || '(no reason)'}\n`;
+                }
+                if (listed > 50) body += `\n_…and ${listed - 50} more waiver(s)._\n`;
+                body +=
+                  '\nEvery waiver added by this PR must also be listed under ' +
+                  '`## Review waivers` in the PR description.\n\n</details>\n\n';
+              }
+
+              if (!blocking.length && !warnings.length && !waivers.length) {
+                body += 'No design-system findings on the added lines. ✅\n\n';
+              }
+            }
+
+            if (antipatternCount === 0 && missingCount === 0 && designStatus === 'ok') {
+              const errs = parseInt(process.env.DESIGN_ERRORS || '0', 10);
+              if (errs === 0) body += '---\nAll automated checks passed.\n';
+            }
+
+            body += '\n---\n*Automated quality check*';
+
+            // The job summary always carries the report, so a fork PR that
+            // cannot comment still publishes it somewhere reviewable.
+            await core.summary.addRaw(body).write();
+
+            try {
+              // Paginate: listComments returns one page, so on a PR with more
+              // than 100 comments the marker would not be found and every run
+              // would append another checklist comment instead of updating one.
+              const comments = await github.paginate(github.rest.issues.listComments, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body,
+                per_page: 100,
               });
+              const existing = comments.find((c) => c.body?.includes(MARKER));
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+              }
+            } catch (err) {
+              core.warning(
+                `Could not post the checklist comment (read-only token on a fork?): ${err.message}. ` +
+                  'The full report is in the job summary.'
+              );
             }
         env:
           AP_COUNT: ${{ steps.antipatterns.outputs.count }}
           AP_DETAILS: ${{ steps.antipatterns.outputs.details }}
           MR_COUNT: ${{ steps.missing_routes.outputs.count }}
           MR_DETAILS: ${{ steps.missing_routes.outputs.details }}
+          DESIGN_STATUS: ${{ steps.design.outputs.status }}
+          DESIGN_ERRORS: ${{ steps.design.outputs.errors }}
+
+      # Every waiver this PR adds has to be declared in the PR description, so
+      # a reviewer sees it without reading the diff. Missing section, missing
+      # entry and stale entry are all failures.
+      - name: Check design waivers are declared in the PR body
+        if: always() && steps.design.outputs.status == 'ok'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('node:fs');
+            const report = JSON.parse(fs.readFileSync('.quality/design.json', 'utf8'));
+
+            // Waivers come from the UNCAPPED `waivers` array, never from
+            // `findings`, which is truncated for display — reading them there
+            // meant a waiver past the per-file cap was never checked against
+            // the PR body. Fail closed if the checker did not provide it.
+            if (!Array.isArray(report.waivers)) {
+              core.setFailed(
+                'The design report has no `waivers` array — it was produced by an older ' +
+                  'checker, or is truncated. Refusing to validate waivers against a capped list.'
+              );
+              return;
+            }
+            const added = report.waivers.filter((f) => f.waived && f.waiverAdded);
+
+            // One waiver comment can cover several rules on one line, and the PR
+            // body declares it as ONE entry carrying the comma-joined set.
+            const norm = (rules) => [...new Set(rules.map((r) => r.trim().toUpperCase()))].sort().join(',');
+            const waivers = new Map();
+            for (const f of added) {
+              const key = `${f.file}:${f.line}`;
+              if (!waivers.has(key)) {
+                waivers.set(key, { file: f.file, line: f.line, rules: norm((f.waiverRules || f.rule).split(',')) });
+              }
+            }
+
+            // Parse the section BEFORE deciding on the empty case: a stale entry
+            // left behind after the waiver was removed must still fail, and that
+            // is exactly the zero-added-waivers state (Rival R2).
+            const body = context.payload.pull_request?.body || '';
+            const section = body.split(/^##\s+Review waivers\s*$/im)[1];
+            const sectionBody = section === undefined ? null : section.split(/^##\s+/m)[0];
+
+            // The path is parsed greedily up to the FINAL `:<digits> —`, and a
+            // backticked or quoted path is unwrapped, so a path with spaces can
+            // be declared at all — the scanner supports such paths.
+            const ENTRY = /^\s*[-*]\s+(DS\d{3}(?:\s*,\s*DS\d{3})*)\s+(.+):(\d+)\s+[—–-]\s+(.+?)\s*$/i;
+            const unwrap = (p) => p.trim().replace(/^[`'"]|[`'"]$/g, '').trim();
+            const entries = (sectionBody === null ? [] : sectionBody.split('\n'))
+              .map((line) => ENTRY.exec(line))
+              .filter(Boolean)
+              .map((m) => ({
+                rules: norm(m[1].split(',')),
+                file: unwrap(m[2]),
+                line: Number(m[3]),
+                reason: m[4],
+                raw: m[0].trim(),
+              }));
+
+            const problems = [];
+
+            // Duplicate declarations for one waiver are ambiguous: reject rather
+            // than letting the first match decide.
+            const seen = new Map();
+            for (const e of entries) {
+              const key = `${e.file}:${e.line}`;
+              if (seen.has(key)) {
+                problems.push(
+                  `duplicate entry for \`${key}\` — declare each waiver once, with its full rule set`
+                );
+              } else {
+                seen.set(key, e);
+              }
+            }
+
+            if (waivers.size > 0 && sectionBody === null) {
+              core.setFailed(
+                'This PR adds design-check waivers but its description has no `## Review waivers` ' +
+                  `section. Add one entry per waiver:\n${[...waivers.values()]
+                    .map((w) => `- ${w.rules} ${w.file}:${w.line} — <reason>`)
+                    .join('\n')}`
+              );
+              return;
+            }
+
+            for (const w of waivers.values()) {
+              const at = seen.get(`${w.file}:${w.line}`);
+              if (!at) {
+                problems.push(`missing entry: \`- ${w.rules} ${w.file}:${w.line} — <reason>\``);
+              } else if (at.rules !== w.rules) {
+                problems.push(
+                  `wrong rule set for ${w.file}:${w.line} — the waiver covers \`${w.rules}\`, ` +
+                    `the PR body declares \`${at.rules}\``
+                );
+              } else if (at.reason.trim().length < 10) {
+                problems.push(`reason too short for ${w.rules} ${w.file}:${w.line} (needs 10+ characters)`);
+              }
+            }
+
+            // Stale entries are checked even when the PR adds no waiver at all.
+            for (const e of entries) {
+              if (!waivers.has(`${e.file}:${e.line}`)) {
+                problems.push(
+                  `stale entry: \`${e.rules} ${e.file}:${e.line}\` matches no waiver added by this PR`
+                );
+              }
+            }
+
+            if (problems.length) {
+              core.setFailed(
+                `\`## Review waivers\` does not match the waivers in the diff:\n- ${problems.join('\n- ')}`
+              );
+            } else if (waivers.size === 0) {
+              core.info('No design-check waivers added by this PR, and no stale entries.');
+            }
+
+      # Separate blocking step so the comment above is always posted first.
+      - name: Fail on design errors
+        if: always()
+        # Step outputs reach the shell through env, never through `${{ }}`
+        # interpolation into the script body.
+        env:
+          DESIGN_STATUS: ${{ steps.design.outputs.status }}
+          DESIGN_ERRORS: ${{ steps.design.outputs.errors }}
+        run: |
+          if [ "$DESIGN_STATUS" != "ok" ]; then
+            echo "::error::design check did not complete — failing closed"
+            exit 1
+          fi
+          case "$DESIGN_ERRORS" in
+            ''|*[!0-9]*)
+              echo "::error::design error count \"$DESIGN_ERRORS\" is not a number — failing closed"
+              exit 1
+              ;;
+          esac
+          if [ "$DESIGN_ERRORS" -gt 0 ]; then
+            echo "::error::$DESIGN_ERRORS design-system error(s) on the lines this PR adds. See the Quality Checklist comment."
+            exit 1
+          fi
+          echo "No blocking design-system findings."

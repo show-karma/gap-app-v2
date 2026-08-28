@@ -1,0 +1,8 @@
+export function Precedence() {
+  return (
+    <div>
+      <span className="bg-[#fff]">ds001 only</span>
+      <span style={{ color: "#fff" }}>ds003 only</span>
+    </div>
+  );
+}

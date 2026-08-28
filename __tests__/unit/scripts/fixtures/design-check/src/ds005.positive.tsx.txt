@@ -1,0 +1,11 @@
+export function Positive() {
+  return (
+    <form>
+      <button type="submit">Send</button>
+      <input type="text" />
+      <select><option>a</option></select>
+      <textarea />
+      <input type="file" />
+    </form>
+  );
+}
