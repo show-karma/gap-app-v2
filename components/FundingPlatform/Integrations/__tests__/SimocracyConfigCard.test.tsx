@@ -4,6 +4,14 @@ import type { ReactNode } from "react";
 import { SimocracyConfigCard } from "../SimocracyConfigCard";
 
 const mockUseProgramConfig = vi.fn();
+vi.mock("@/hooks/useApplicationIntegrations", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    useSimocracyCouncil: () => ({ data: undefined }),
+    useSimocracyProgramSummary: () => ({ data: undefined }),
+  };
+});
 vi.mock("@/hooks/useFundingPlatform", () => ({
   useProgramConfig: (programId: string) => mockUseProgramConfig(programId),
 }));
@@ -96,17 +104,19 @@ describe("SimocracyConfigCard", () => {
   });
 
   describe("success state", () => {
-    it("seeds the form from the saved config", async () => {
+    it("shows the saved gathering read-only with a Change control", async () => {
       mockUseProgramConfig.mockReturnValue(createConfigResult());
 
       renderCard();
 
       await waitFor(() => {
-        expect(screen.getByLabelText("Gathering AT-URI")).toHaveValue(
-          "at://did:plc:abc/org.simocracy.gathering/xyz"
-        );
+        expect(
+          screen.getByText("at://did:plc:abc/org.simocracy.gathering/xyz")
+        ).toBeInTheDocument();
       });
       expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
+      expect(screen.getByRole("button", { name: /change/i })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^save$/i })).not.toBeInTheDocument();
     });
 
     it("shows an inline validation error and does not save an invalid AT-URI", async () => {
@@ -114,6 +124,7 @@ describe("SimocracyConfigCard", () => {
 
       renderCard();
 
+      fireEvent.click(await screen.findByRole("button", { name: /change/i }));
       fireEvent.change(screen.getByLabelText("Gathering AT-URI"), {
         target: { value: "https://not-an-at-uri" },
       });
@@ -129,6 +140,7 @@ describe("SimocracyConfigCard", () => {
 
       renderCard();
 
+      fireEvent.click(await screen.findByRole("button", { name: /change/i }));
       fireEvent.change(screen.getByLabelText("Gathering AT-URI"), {
         target: { value: "at://did:plc:new/org.simocracy.gathering/next" },
       });
@@ -146,7 +158,7 @@ describe("SimocracyConfigCard", () => {
       });
     });
 
-    it("includes the flipped toggle state in the saved payload", async () => {
+    it("saves the flipped toggle immediately when a gathering is configured", async () => {
       mockUseProgramConfig.mockReturnValue(createConfigResult());
       mockUpdateProgramConfiguration.mockResolvedValue({});
 
@@ -154,8 +166,6 @@ describe("SimocracyConfigCard", () => {
 
       fireEvent.click(screen.getByRole("switch"));
       expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
-
-      fireEvent.click(screen.getByRole("button", { name: /save/i }));
 
       await waitFor(() => {
         expect(mockUpdateProgramConfiguration).toHaveBeenCalledWith("simo-test-1", {
@@ -168,25 +178,17 @@ describe("SimocracyConfigCard", () => {
         });
       });
     });
-
-    it("disables the save button when nothing changed", () => {
-      mockUseProgramConfig.mockReturnValue(createConfigResult());
-
-      renderCard();
-
-      expect(screen.getByRole("button", { name: /save/i })).toBeDisabled();
-    });
   });
 
   describe("read-only (reviewer)", () => {
-    it("disables the form and hides the save button", () => {
+    it("disables the toggle and hides the edit controls", () => {
       mockUseProgramConfig.mockReturnValue(createConfigResult());
 
       renderCard({ canEdit: false });
 
-      expect(screen.getByLabelText("Gathering AT-URI")).toBeDisabled();
       expect(screen.getByRole("switch")).toBeDisabled();
-      expect(screen.queryByRole("button", { name: /save/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /change/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^save$/i })).not.toBeInTheDocument();
     });
   });
 });
