@@ -20,13 +20,13 @@
     "knipUnusedDeps": 19,
     "knipDuplicates": 33,
     "design": {
-      "total": 2796,
+      "total": 2799,
       "byRule": {
         "DS005": 1056,
         "DS006": 1164,
         "DS001": 173,
         "DS002": 195,
-        "DS004": 101,
+        "DS004": 104,
         "DS003": 20,
         "DS007": 87
       }

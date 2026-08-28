@@ -15,6 +15,7 @@ const designCheck = require("../../../scripts/check-design-system.js") as {
   isScannable: (file: string, config: DesignConfig) => boolean;
   filterByAddedLines: (findings: Finding[], added: Set<number> | null) => Finding[];
   toPosix: (p: string) => string;
+  inRanges: (pos: number, ranges: number[][], sorted?: boolean) => boolean;
   RULES: Record<string, { id: string; severity: "error" | "warn"; name: string }>;
 };
 
@@ -25,7 +26,10 @@ interface DesignConfig {
   scanGlobs: string[];
   exclude: string[];
   tokenDefinitionFiles: string[];
+  scaleDefinitionFiles: string[];
   iconGlobs: string[];
+  inlineStyleExemptGlobs: string[];
+  inlineStyleExemptImports: string[];
   severity: Record<string, "error" | "warn">;
   hints: Record<string, string>;
 }
@@ -42,6 +46,9 @@ interface Finding {
   hint: string | null;
   waived: boolean;
   waiverLine: number | null;
+  waiverReason: string | null;
+  waiverRules: string | null;
+  waiverAdded: boolean;
 }
 
 const SCRIPT = path.resolve(__dirname, "../../../scripts/check-design-system.js");
@@ -190,6 +197,37 @@ describe("DS004 important-prefix", () => {
 
   it.each(['"Hello!"', '"Wow! amazing"', '"!"'])("does not flag %s", (snippet) => {
     expect(countOf(scan(`const c = ${snippet};`), "DS004")).toBe(0);
+  });
+
+  // Rival R3: requiring a dash after the `!` missed utilities this repo really
+  // uses — ApplicationsFullView.tsx:147 `!flex`, sidebar-below-navbar.ts:14
+  // `md:!absolute`, narrative-block.tsx:43 `!underline`.
+  it.each([
+    ["!flex", "no-dash utility"],
+    ["!underline", "no-dash utility"],
+    ["md:!absolute", "no-dash utility behind a variant"],
+    ["!-mt-2", "negative utility"],
+    ["![color:red]", "arbitrary property"],
+    ["!hidden", "no-dash utility"],
+    ["lg:hover:!block", "no-dash utility behind stacked variants"],
+  ])("flags %s (%s)", (cls) => {
+    expect(countOf(scan(`const c = "${cls}";`), "DS004")).toBe(1);
+  });
+
+  it.each(['"!"', '"!!"', '"!1"', '"! spaced"'])(
+    "does not treat %s as an important utility",
+    (snippet) => {
+      expect(countOf(scan(`const c = ${snippet};`), "DS004")).toBe(0);
+    }
+  );
+
+  it("does not flag a negated identifier, which is code and not a string", () => {
+    expect(countOf(scan("const c = !selected ? a : b;"), "DS004")).toBe(0);
+  });
+
+  it("counts every important utility in one class string", () => {
+    const text = 'const c = "font-medium !text-brand !underline !decoration-brand/40";';
+    expect(countOf(scan(text), "DS004")).toBe(3);
   });
 });
 
@@ -597,6 +635,106 @@ describe("non-tsx sources", () => {
       config,
     });
     expect(countOf(findings, "DS001")).toBe(2);
+  });
+});
+
+describe("configured severities (Rival R7)", () => {
+  const writeConfig = (severity: unknown): string => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "design-cfg-"));
+    const file = path.join(dir, "design-check.config.json");
+    fs.writeFileSync(file, JSON.stringify({ ...config, severity }));
+    return file;
+  };
+
+  it("applies a configured override instead of the built-in level", () => {
+    const escalated = { ...config, severity: { ...config.severity, DS006: "error" as const } };
+    const [finding] = scanText({
+      file: "components/A.tsx",
+      text: 'const c = "p-[13px]";',
+      config: escalated,
+    });
+    expect(finding.rule).toBe("DS006");
+    expect(finding.severity).toBe("error");
+  });
+
+  it("can also relax a rule to a warning", () => {
+    const relaxed = { ...config, severity: { ...config.severity, DS001: "warn" as const } };
+    const [finding] = scanText({
+      file: "components/A.tsx",
+      text: 'const c = "bg-[#123456]";',
+      config: relaxed,
+    });
+    expect(finding.severity).toBe("warn");
+  });
+
+  it("falls back to the built-in level when a rule is not configured", () => {
+    const { severity: _dropped, ...withoutSeverity } = config as Record<string, unknown>;
+    const [finding] = scanText({
+      file: "components/A.tsx",
+      text: 'const c = "p-[13px]";',
+      config: withoutSeverity as DesignConfig,
+    });
+    expect(finding.severity).toBe("warn");
+  });
+
+  it("rejects an unknown rule id rather than silently ignoring it", () => {
+    expect(() => loadConfig(writeConfig({ DS999: "error" }))).toThrow(/unknown rule/i);
+  });
+
+  it("rejects an unknown severity value", () => {
+    expect(() => loadConfig(writeConfig({ DS001: "fatal" }))).toThrow(/expected "error" or "warn"/);
+  });
+
+  it("rejects a severity block that is not an object", () => {
+    expect(() => loadConfig(writeConfig(["DS001"]))).toThrow(/must be an object/);
+  });
+
+  it("fails closed on a config that is not valid JSON", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "design-cfg-"));
+    const file = path.join(dir, "broken.json");
+    fs.writeFileSync(file, "{ not json");
+    expect(() => loadConfig(file)).toThrow(/not valid JSON/);
+  });
+
+  it("fails closed on a missing config file", () => {
+    expect(() => loadConfig(path.join(os.tmpdir(), "definitely-absent.json"))).toThrow(
+      /cannot read/i
+    );
+  });
+});
+
+describe("pathological input stays bounded (Rival R6)", () => {
+  it("handles a literal with many var() spans and colour hits in well under 2 s", () => {
+    // O(N²) range checking made this quadratic: every colour hit rescanned the
+    // whole var() list. 2 000 of each is ~4 M comparisons the old way.
+    const chunks: string[] = [];
+    for (let i = 0; i < 2000; i++) {
+      chunks.push(`var(--token-${i})`, `#${(i % 0x1000000).toString(16).padStart(6, "0")}`);
+    }
+    const text = `const c = "${chunks.join(" ")}";`;
+    const started = Date.now();
+    const findings = scan(text);
+    const elapsed = Date.now() - started;
+    expect(findings.length).toBeGreaterThan(0);
+    expect(elapsed).toBeLessThan(2000);
+  });
+
+  it("binary-searches sorted ranges and still answers correctly", () => {
+    const ranges = Array.from({ length: 64 }, (_, i) => [i * 10, i * 10 + 5]);
+    for (let pos = 0; pos < 640; pos++) {
+      expect(designCheck.inRanges(pos, ranges)).toBe(pos % 10 < 5);
+    }
+  });
+
+  it("agrees with the linear scan on an unsorted list", () => {
+    const ranges = [
+      [100, 110],
+      [10, 20],
+      [50, 60],
+    ];
+    expect(designCheck.inRanges(15, ranges, false)).toBe(true);
+    expect(designCheck.inRanges(105, ranges, false)).toBe(true);
+    expect(designCheck.inRanges(30, ranges, false)).toBe(false);
   });
 });
 

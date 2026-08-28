@@ -267,10 +267,54 @@ function matchesAny(file, globs) {
   return (globs || []).some((g) => matchGlob(file, g));
 }
 
+const SEVERITIES = new Set(["error", "warn"]);
+
+/**
+ * The `severity` block is a real policy knob, not decoration: it overrides the
+ * built-in level per rule. Validate it at load so a typo fails closed instead
+ * of silently doing nothing (Rival R7).
+ */
+function validateConfig(config, source) {
+  const severity = config.severity;
+  if (severity === undefined) return config;
+  if (typeof severity !== "object" || severity === null || Array.isArray(severity)) {
+    throw new FailClosed(`${source}: "severity" must be an object of rule id → "error" | "warn"`);
+  }
+  for (const [rule, level] of Object.entries(severity)) {
+    if (!RULES[rule]) {
+      throw new FailClosed(
+        `${source}: "severity" names unknown rule \`${rule}\` (known: ${Object.keys(RULES).join(", ")})`
+      );
+    }
+    if (!SEVERITIES.has(level)) {
+      throw new FailClosed(
+        `${source}: severity for ${rule} is \`${level}\`, expected "error" or "warn"`
+      );
+    }
+  }
+  return config;
+}
+
 function loadConfig(configPath) {
   const target = configPath || DEFAULT_CONFIG_PATH;
-  const raw = fs.readFileSync(target, "utf8");
-  return JSON.parse(raw);
+  let raw;
+  try {
+    raw = fs.readFileSync(target, "utf8");
+  } catch (err) {
+    throw new FailClosed(`cannot read design-check config ${target}: ${err.message}`);
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new FailClosed(`design-check config ${target} is not valid JSON: ${err.message}`);
+  }
+  return validateConfig(parsed, path.relative(process.cwd(), target) || target);
+}
+
+/** Configured level for a rule, falling back to the built-in one. */
+function severityFor(config, rule) {
+  return config.severity?.[rule] ?? RULES[rule].severity;
 }
 
 function isScannable(file, config) {
@@ -352,8 +396,33 @@ function varRanges(text) {
   return ranges;
 }
 
-function inRanges(pos, ranges) {
-  return ranges.some(([s, e]) => pos >= s && pos < e);
+/**
+ * Membership test over a range list. Ranges are produced in ascending start
+ * order everywhere they are built, so a binary search is safe and keeps a
+ * pathological literal (N `var()` spans x N colour hits) linear rather than
+ * quadratic (Rival R6). `sorted: false` falls back to a scan.
+ */
+/** Sorts a range list in place so inRanges() may binary-search it. */
+function sortRanges(ranges) {
+  ranges.sort((a, b) => a[0] - b[0]);
+  return ranges;
+}
+
+function inRanges(pos, ranges, sorted = true) {
+  if (!ranges || ranges.length === 0) return false;
+  if (!sorted || ranges.length < 8) {
+    return ranges.some(([s, e]) => pos >= s && pos < e);
+  }
+  let lo = 0;
+  let hi = ranges.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const [start, end] = ranges[mid];
+    if (pos < start) hi = mid - 1;
+    else if (pos >= end) lo = mid + 1;
+    else return true;
+  }
+  return false;
 }
 
 // ── Tailwind candidate lexer ────────────────────────────────────────────────
@@ -392,7 +461,12 @@ function parseCandidate(token) {
   if (opacityAt > lastColon) util = token.slice(utilStart, opacityAt);
   let important = false;
   if (util.startsWith("!")) {
-    important = /^![a-z][a-z0-9]*-/.test(util);
+    // Any plausible utility after the `!` counts, including the no-dash
+    // (`!flex`, `!underline`), negative (`!-mt-2`) and arbitrary-property
+    // (`![color:red]`) forms. Requiring a dash missed `!flex`, `md:!absolute`
+    // and `!underline`, all live in this repo (Rival R3). `"Hello!"` never
+    // reaches here (the `!` is trailing) and a bare `"!"` leaves nothing.
+    important = /^!-?(?:[a-z]|\[)/.test(util);
     util = util.slice(1);
     offset += 1;
   }
@@ -468,6 +542,9 @@ function scanText({ file, text, config }) {
       : scriptCommentRanges(rel, text);
     applyWaivers(rel, text, index, findings, comments);
   }
+  // Apply the configured severities in one place rather than threading the
+  // config through every makeFinding() call site.
+  for (const f of findings) f.severity = severityFor(config, f.rule);
   return findings.sort((a, b) => a.line - b.line || a.col - b.col || a.rule.localeCompare(b.rule));
 }
 
@@ -501,7 +578,7 @@ function scriptCommentRanges(rel, text) {
   };
   visit(sourceFile);
   add(ts.getLeadingCommentRanges(text, 0));
-  return ranges;
+  return sortRanges(ranges);
 }
 
 /** Byte ranges of every comment in a stylesheet. */
@@ -516,7 +593,7 @@ function cssCommentRanges(text, isScss) {
       ranges.push([start, start + m[2].length]);
     }
   }
-  return ranges;
+  return sortRanges(ranges);
 }
 
 // ── scanner: TS / JS / TSX ──────────────────────────────────────────────────
@@ -596,7 +673,6 @@ function scanScript(rel, text, index, config) {
   // DS001 / DS004 / DS006 / DS002 over every string-ish literal.
   const ds001Ranges = [];
   for (const lit of literals) {
-    const vars = varRanges(lit.raw);
     for (const cand of lexCandidates(lit.raw)) {
       const parsed = parseCandidate(cand.token);
       const tokenStart = lit.start + cand.start;
@@ -649,25 +725,34 @@ function scanScript(rel, text, index, config) {
         );
       }
     }
+  }
 
-    if (isTokenFile || isIconFile) continue;
-    for (const hit of findColorLiterals(lit.raw)) {
-      const abs = lit.start + hit.start;
-      if (inRanges(hit.start, vars)) continue;
-      if (inRanges(abs, ds001Ranges)) continue;
-      if (inRanges(abs, styleObjectRanges)) continue;
-      findings.push(
-        makeFinding(
-          "DS002",
-          rel,
-          index,
-          abs,
-          lit.start + hit.end,
-          hit.value,
-          `Raw colour literal \`${hit.value}\` — use a theme class or a CSS variable.`,
-          hintFor(config, hit.value)
-        )
-      );
+  // DS002 runs as a second pass so both suppression lists are complete and can
+  // be sorted once — inRanges() binary-searches them, which is what keeps a
+  // literal with N var() spans and N colour hits linear instead of quadratic.
+  if (!isTokenFile && !isIconFile) {
+    sortRanges(ds001Ranges);
+    sortRanges(styleObjectRanges);
+    for (const lit of literals) {
+      const vars = varRanges(lit.raw);
+      for (const hit of findColorLiterals(lit.raw)) {
+        const abs = lit.start + hit.start;
+        if (inRanges(hit.start, vars)) continue;
+        if (inRanges(abs, ds001Ranges)) continue;
+        if (inRanges(abs, styleObjectRanges)) continue;
+        findings.push(
+          makeFinding(
+            "DS002",
+            rel,
+            index,
+            abs,
+            lit.start + hit.end,
+            hit.value,
+            `Raw colour literal \`${hit.value}\` — use a theme class or a CSS variable.`,
+            hintFor(config, hit.value)
+          )
+        );
+      }
     }
   }
 
@@ -1002,22 +1087,84 @@ function readIfExists(abs) {
  * `--staged` must read the index blob, not the working copy the developer has
  * kept editing. `--changed` diffs commits, so it reads HEAD.
  */
-function readRevision(root, file, source) {
-  if (source === "worktree") return readIfExists(path.join(root, file));
-  const spec = source === "index" ? `:${file}` : `HEAD:${file}`;
-  const res = git(root, ["show", spec]);
-  // Absent in that tree (staged deletion, new file only on disk) — nothing to
-  // scan, and the diff parser will not have produced added lines for it.
-  return res.status === 0 ? res.stdout : null;
+function revisionSpec(file, source) {
+  return source === "index" ? `:${file}` : `HEAD:${file}`;
 }
+
+/**
+ * Reads many blobs in ONE `git cat-file --batch` instead of spawning a process
+ * per file (Rival R6). Returns `path → contents`; a path missing from the tree
+ * is simply absent from the map.
+ */
+function readRevisions(root, files, source) {
+  const out = new Map();
+  if (!files.length) return out;
+  const res = spawnSync("git", ["-c", "core.quotepath=false", "cat-file", "--batch"], {
+    cwd: root,
+    input: `${files.map((f) => revisionSpec(f, source)).join("\n")}\n`,
+    // No `encoding`: stdout must stay a Buffer because the batch protocol is
+    // byte-counted, and a blob may hold multi-byte characters.
+    maxBuffer: 1024 * 1024 * 512,
+  });
+  if (res.error) throw new FailClosed(`git cat-file failed to launch: ${res.error.message}`);
+  const buf = res.stdout || Buffer.alloc(0);
+
+  let cursor = 0;
+  for (const file of files) {
+    const nl = buf.indexOf(0x0a, cursor);
+    if (nl === -1) break;
+    const header = buf.toString("utf8", cursor, nl);
+    // "<sha> <type> <size>" for a hit, "<spec> missing" otherwise.
+    const parts = header.split(" ");
+    if (parts[parts.length - 1] === "missing") {
+      cursor = nl + 1;
+      continue;
+    }
+    const size = Number(parts[2]);
+    if (!Number.isFinite(size)) break;
+    const start = nl + 1;
+    out.set(file, buf.toString("utf8", start, start + size));
+    cursor = start + size + 1; // trailing newline after the blob
+  }
+  return out;
+}
+
+// A single source file this large is not hand-written product code; parsing it
+// would let one PR burn the whole CI runner. Fail closed and name the path.
+const MAX_SOURCE_BYTES = 2 * 1024 * 1024;
+// Emitting hundreds of thousands of findings would blow the JSON and the PR
+// comment. Truncate the list but keep the true counts in the summary.
+const MAX_FINDINGS_PER_FILE = 500;
 
 function scanFiles(root, config, entries, source = "worktree") {
   const findings = [];
-  for (const { file, added } of entries) {
-    if (!isScannable(file, config)) continue;
-    const text = readRevision(root, file, source);
+  const scannable = entries.filter(({ file }) => isScannable(file, config));
+  const blobs =
+    source === "worktree"
+      ? null
+      : readRevisions(
+          root,
+          scannable.map((e) => e.file),
+          source
+        );
+
+  for (const { file, added } of scannable) {
+    const text = blobs ? (blobs.get(file) ?? null) : readIfExists(path.join(root, file));
     if (text === null) continue;
-    findings.push(...filterByAddedLines(scanText({ file, text, config }), added));
+    if (Buffer.byteLength(text, "utf8") > MAX_SOURCE_BYTES) {
+      throw new FailClosed(
+        `${file} is larger than ${MAX_SOURCE_BYTES} bytes — refusing to scan it rather than stall the run`
+      );
+    }
+    const fileFindings = filterByAddedLines(scanText({ file, text, config }), added);
+    if (fileFindings.length > MAX_FINDINGS_PER_FILE) {
+      const kept = fileFindings.slice(0, MAX_FINDINGS_PER_FILE);
+      kept.truncatedFrom = fileFindings.length;
+      findings.push(...kept);
+      findings.truncated = (findings.truncated ?? 0) + (fileFindings.length - kept.length);
+    } else {
+      findings.push(...fileFindings);
+    }
   }
   return findings;
 }
@@ -1264,6 +1411,7 @@ if (require.main === module) main();
 module.exports = {
   RULES,
   filterByAddedLines,
+  inRanges,
   isScannable,
   lexCandidates,
   loadConfig,
