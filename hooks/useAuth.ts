@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
@@ -49,6 +50,19 @@ let walletDisconnectLogoutFired = false;
 // stale duplicates behind that outlive the transition they described. One
 // switch is one action. Cleared when the session actually ends.
 let userSwitchLogoutFiredFor: string | null = null;
+
+/**
+ * Test-only: forget a switch a previous case acted on.
+ *
+ * Module state outlives a test, so without this the second case to drive a
+ * `user-1 -> user-2` switch finds the guard already fired for it and silently
+ * does nothing — the test then passes or fails on what ran before it. The
+ * counterpart to `__resetPendingLogoutReasonForTests` in `auth-transitions`,
+ * which exists for the same reason.
+ */
+export const __resetUserSwitchGuardForTests = (): void => {
+  userSwitchLogoutFiredFor = null;
+};
 
 /**
  * How long the wallet list must stay empty before a wallet-only session is
@@ -579,8 +593,8 @@ export const useAuth = () => {
     let unwatch: (() => void) | undefined;
     let cancelled = false;
 
-    Promise.all([import("@wagmi/core"), import("@/utilities/wagmi/privy-config")]).then(
-      ([{ watchAccount }, { privyConfig }]) => {
+    Promise.all([import("@wagmi/core"), import("@/utilities/wagmi/privy-config")])
+      .then(([{ watchAccount }, { privyConfig }]) => {
         if (cancelled) return;
         unwatch = watchAccount(privyConfig, {
           onChange(account) {
@@ -599,8 +613,22 @@ export const useAuth = () => {
             }
           },
         });
-      }
-    );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        // The wagmi chunk failed to load, or `watchAccount` rejected the config
+        // it was handed. Nothing user-facing has broken, but wallet-switch
+        // detection is now OFF for this session — a different wallet at the
+        // browser level will no longer end the session — so it is reported
+        // rather than swallowed.
+        //
+        // Un-caught, this rejected into the void: it does not fail a render, so
+        // it surfaced as an unhandled rejection that failed whichever unrelated
+        // test happened to be running when it landed.
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
+          tags: { hook: "useAuth", operation: "watch_account_setup" },
+        });
+      });
 
     return () => {
       cancelled = true;

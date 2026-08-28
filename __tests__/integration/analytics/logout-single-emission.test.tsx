@@ -17,7 +17,7 @@ import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import { act, render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { AnalyticsProvider } from "@/components/Utilities/AnalyticsProvider";
-import { useAuth } from "@/hooks/useAuth";
+import { __resetUserSwitchGuardForTests, useAuth } from "@/hooks/useAuth";
 import { __resetPendingLogoutReasonForTests } from "@/utilities/analytics/auth-transitions";
 import { track } from "@/utilities/analytics/client";
 
@@ -90,15 +90,10 @@ vi.mock("@/contexts/privy-bridge-context", () => ({
   PRIVY_BRIDGE_DEFAULTS: {},
 }));
 
-// `useAuth` reaches wagmi through a dynamic import, so the config it is handed
-// has to be watchable — a bare `{}` makes the real `watchAccount` throw inside a
-// floating promise, which surfaces as an unrelated unhandled rejection.
-const wagmiConfigDouble = { subscribe: () => () => undefined };
-
 vi.mock("@wagmi/core", () => ({ watchAccount: vi.fn(() => vi.fn()) }));
 vi.mock("@/utilities/wagmi/privy-config", () => ({
-  privyConfig: wagmiConfigDouble,
-  getPrivyWagmiConfig: vi.fn(() => wagmiConfigDouble),
+  privyConfig: {},
+  getPrivyWagmiConfig: vi.fn(() => ({})),
 }));
 vi.mock("@/utilities/query-client", () => ({
   queryClient: { clear: vi.fn(), invalidateQueries: vi.fn() },
@@ -234,6 +229,7 @@ describe("logout — one event per session, whatever ended it", () => {
     vi.clearAllMocks();
     logoutEndsTheSession();
     __resetPendingLogoutReasonForTests();
+    __resetUserSwitchGuardForTests();
     firstConsumerLogout.current = null;
     firstConsumerLogin.current = null;
     signedOut();

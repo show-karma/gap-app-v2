@@ -12,7 +12,7 @@
 import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { __resetUserSwitchGuardForTests, useAuth } from "@/hooks/useAuth";
 import {
   __resetPendingLogoutReasonForTests,
   takePendingLogoutReason,
@@ -117,6 +117,7 @@ describe("useAuth analytics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     __resetPendingLogoutReasonForTests();
+    __resetUserSwitchGuardForTests();
     mockPathname.mockReturnValue("/funding-map");
     resetBridge();
   });
@@ -281,6 +282,7 @@ describe("useAuth analytics", () => {
 
       // Read the other way round, from a fresh switch, it is user-1's.
       __resetPendingLogoutReasonForTests();
+      __resetUserSwitchGuardForTests();
       setBridge({ user: walletUser("user-3") });
       await act(async () => {
         rerender();
