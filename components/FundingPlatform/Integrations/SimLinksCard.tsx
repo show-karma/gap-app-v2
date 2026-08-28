@@ -248,7 +248,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
 
   const linkedCouncilCount = (council ?? []).filter((sim) => linkedUris.has(sim.simUri)).length;
 
-  const isCustom = selectedSim === CUSTOM_SIM_VALUE || unlinkedSims.length === 0;
+  const isCustom = selectedSim === CUSTOM_SIM_VALUE || (!canManage && unlinkedSims.length === 0);
 
   const programReviewerOptions = useMemo<ReviewerOption[]>(
     () =>
@@ -605,7 +605,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
               )}
             </div>
             <div className="flex-1 space-y-2">
-              {unlinkedSims.length > 0 && (
+              {(canManage || unlinkedSims.length > 0) && (
                 <Select
                   value={selectedSim}
                   onValueChange={(value) => {
@@ -614,7 +614,13 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                   }}
                 >
                   <SelectTrigger aria-label="Select a sim">
-                    <SelectValue placeholder="Select a sim" />
+                    <SelectValue
+                      placeholder={
+                        unlinkedSims.length > 0
+                          ? `Select a sim — ${unlinkedSims.length} unlinked`
+                          : "Select a sim — all linked"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {unlinkedSims.map((sim) => (
