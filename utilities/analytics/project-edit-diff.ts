@@ -61,30 +61,50 @@ const SOCIAL_LINK_TYPES = [
 ] as const;
 
 /**
- * A missing value, a null one and an empty string all mean "not filled in".
- * Without this, clearing an already-empty optional field reads as a change on
- * every submit — and every project that has never set `problem` reports it as
- * edited each time anything else is.
- */
-const isBlank = (value: unknown): boolean => value === undefined || value === null || value === "";
-
-/**
- * Order-insensitive for tags and custom links: the form rebuilds those arrays
- * from scratch on every render, so their order is an artefact of the UI rather
- * than something the user changed.
+ * Reduces a value to a form where equal means unchanged.
+ *
+ * Three things happen here, and the order of the first two is the whole point.
+ *
+ * **Blank is blank.** Missing, null, empty and whitespace-only all mean "not
+ * filled in". Without that, clearing an already-empty optional field reads as a
+ * change on every submit, and every project that has never set `problem`
+ * reports it as edited each time anything else is.
+ *
+ * **Scalars are normalised BEFORE anything is filtered out.** A nested member
+ * holding `"   "` is not blank by identity, so filtering first kept it — and it
+ * then canonicalised to `""`, which is exactly what a missing member had been
+ * dropped for being. One survived as an empty entry and the other vanished, so
+ * the two compared unequal and produced a diff nobody made.
+ *
+ * **Order does not count** for tags and custom links: the form rebuilds those
+ * arrays from scratch on every render, so their order is an artefact of the UI
+ * rather than something the user changed. A member or element that reduces to
+ * nothing is dropped at that point — a blank custom-link row the form left
+ * behind is not a link.
  */
 const canonical = (value: unknown): string => {
-  if (isBlank(value)) return "";
+  if (value === undefined || value === null) return "";
+
   if (Array.isArray(value)) {
-    return JSON.stringify(value.map((item) => canonical(item)).sort());
+    const items = value
+      .map((item) => canonical(item))
+      .filter((item) => item !== "")
+      .sort();
+    // An empty container reduces to the same nothing as a missing one — the
+    // form always submits an array where the stored entity may simply omit it.
+    return items.length === 0 ? "" : JSON.stringify(items);
   }
+
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>)
-      .filter(([, entry]) => !isBlank(entry))
       .map(([key, entry]) => [key, canonical(entry)] as const)
+      .filter(([, entry]) => entry !== "")
       .sort(([a], [b]) => a.localeCompare(b));
-    return JSON.stringify(entries);
+    // Likewise an object whose every member is blank: an empty custom-link row
+    // the form left behind is not a link, and must not read as one.
+    return entries.length === 0 ? "" : JSON.stringify(entries);
   }
+
   return String(value).trim();
 };
 

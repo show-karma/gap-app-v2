@@ -46,12 +46,22 @@ describe("auth-transitions", () => {
       expect(takePendingLogoutReason(ALICE)).toBe("user");
     });
 
-    it("matches a record made before the identity was known", () => {
-      // A guard that fired while Privy was still resolving can only be about
-      // the session that was live at the time.
+    it("records nothing at all when the identity is not known yet", () => {
+      // A cause with no identity attached cannot be matched to the session it
+      // describes. Treating it as matching everybody is how it ends up
+      // labelling a stranger's sign-out an hour later, so a guard that fires
+      // before Privy has resolved the user records nothing and the event falls
+      // back to "user" — the honest answer when nobody can say whose it was.
+      expect(beginLogout("cross_tab", null)).toBeNull();
+
+      expect(takePendingLogoutReason(ALICE)).toBe("user");
+    });
+
+    it("leaves the slot free for a guard that does know the identity", () => {
       beginLogout("cross_tab", null);
 
-      expect(takePendingLogoutReason(ALICE)).toBe("cross_tab");
+      expect(beginLogout("wallet_disconnect", ALICE)).not.toBeNull();
+      expect(takePendingLogoutReason(ALICE)).toBe("wallet_disconnect");
     });
   });
 
@@ -156,6 +166,16 @@ describe("auth-transitions", () => {
     it("is not borrowed by a signed-out transition with no identity", () => {
       beginLogout("cross_tab", ALICE);
 
+      expect(takePendingLogoutReason(null)).toBe("user");
+    });
+
+    it("matches only on exact equality, never on a null wildcard", () => {
+      // Both directions: a null departing identity does not match a recorded
+      // one, and a null recorded one cannot be created at all.
+      expect(beginLogout("cross_tab", null)).toBeNull();
+      expect(takePendingLogoutReason(null)).toBe("user");
+
+      beginLogout("wallet_disconnect", ALICE);
       expect(takePendingLogoutReason(null)).toBe("user");
     });
   });

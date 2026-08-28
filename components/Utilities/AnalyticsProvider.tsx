@@ -77,7 +77,18 @@ const settleIdentity = (identity: ResolvedIdentity, memory: SessionMemory): void
   memory.wasAuthenticated.current = authenticated;
 
   if (authenticated && userId) {
-    if (memory.lastIdentity.current !== userId) {
+    const departing = memory.lastIdentity.current;
+
+    // A continuous switch: Privy swapped the user without ever passing through
+    // an unauthenticated state, so A's session ended here and nowhere else. It
+    // is reported for A, with A's recorded cause, BEFORE B is identified —
+    // afterwards the departing identity is gone and the exit would be filed
+    // under whoever arrived.
+    if (departing !== null && departing !== userId) {
+      track("logout", { reason: takePendingLogoutReason(departing) });
+    }
+
+    if (departing !== userId) {
       memory.lastIdentity.current = userId;
       memory.identityEpoch.current += 1;
     }
@@ -193,21 +204,27 @@ export function AnalyticsProvider() {
 
     settleIdentity({ authenticated, userId, email, address, authMethods }, memory);
 
-    // On a community route, wait for the layout to bind the community before
-    // reporting the view. A community page view that does not name its community
-    // is not a useful row, and emitting one now and a corrected one a tick later
-    // would double-count it.
-    const onCommunityRoute = toCommunityId(pathname) !== null;
-    if (onCommunityRoute && boundCommunityId === null) return;
-
+    // Identity is settled, so the community can be written — and it is written
+    // on EVERY settled run, before the page view is gated below.
+    //
+    // Moving from community A to community B goes A -> null -> B, because the
+    // old layout unpublishes before the new one resolves. Returning early on
+    // that null left the device still bound to A, so anything emitted in the
+    // gap was attributed to a community the visitor had already left.
+    //
+    // Only on change: the effect re-runs on every navigation, and `set_group`
+    // is a network call.
     syncCommunitySlug(boundCommunitySlug, memory);
 
-    // Identity is settled, so the group can be written. Only on change: the
-    // effect re-runs on every navigation, and `set_group` is a network call.
     if (memory.lastGroup.current !== boundCommunityId) {
       memory.lastGroup.current = boundCommunityId;
       setCommunityGroup(boundCommunityId);
     }
+
+    // The page VIEW does wait for the layout to bind the community. A community
+    // page view that does not name its community is not a useful row, and
+    // emitting one now and a corrected one a tick later would double-count it.
+    if (toCommunityId(pathname) !== null && boundCommunityId === null) return;
 
     // Strict Mode mounts every effect twice in development, and a remount for
     // any other reason replays this one too. A view is the same view when the

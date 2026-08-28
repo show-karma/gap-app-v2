@@ -56,12 +56,16 @@ export interface SuperProperties {
   wallet_connected?: boolean;
   auth_method?: string;
   /**
-   * The community segment as it appears in the URL, on `/community/[…]` routes.
+   * The community's canonical slug, on `/community/[…]` routes.
    *
    * Readable, not authoritative: `community_id` is the resolved UID and is what
    * grouping joins on, but a report filtered by hand is far easier to write
-   * against `gitcoin` than against `0x8dfb…`. The segment is whatever the
-   * visitor followed — a slug or a uid — and is unregistered on leaving.
+   * against `gitcoin` than against `0x8dfb…`.
+   *
+   * Taken from the community the layout RESOLVED, never from the URL segment —
+   * that route accepts a uid too, so reading it off the path would put uids
+   * into the one property whose whole purpose is to be readable. Unregistered
+   * on leaving the community.
    */
   community_slug?: string;
 }

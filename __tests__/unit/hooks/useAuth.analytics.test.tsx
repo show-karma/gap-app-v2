@@ -272,9 +272,19 @@ describe("useAuth analytics", () => {
         rerender();
       });
 
-      // Recorded against the identity Privy has ALREADY swapped in, because
-      // that is the one the provider will have settled on by the time the
-      // session actually ends.
+      // Recorded against the DEPARTING identity. Privy has already swapped
+      // `user` to user-2, but the session that is ending is user-1's — the
+      // provider consumes this against the user it had identified, and
+      // recording the new id would attribute user-1's exit to user-2.
+      expect(takePendingLogoutReason("user-2")).toBe("user");
+      expect(takePendingLogoutReason("user-1")).toBe("user");
+
+      // Read the other way round, from a fresh switch, it is user-1's.
+      __resetPendingLogoutReasonForTests();
+      setBridge({ user: walletUser("user-3") });
+      await act(async () => {
+        rerender();
+      });
       expect(takePendingLogoutReason("user-2")).toBe("user_switch");
     });
 

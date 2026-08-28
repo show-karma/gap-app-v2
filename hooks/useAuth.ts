@@ -7,6 +7,7 @@ import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { abandonLogout, beginLogout } from "@/utilities/analytics/auth-transitions";
 import { track } from "@/utilities/analytics/client";
+import type { LogoutReason } from "@/utilities/analytics/events";
 import {
   ENTRY_POINT_SURFACES,
   type EntryPoint,
@@ -43,6 +44,25 @@ let walletDisconnectLogoutFired = false;
  * after `walletsReady` flips true; logging out on that transient blip is the
  * sign-out loop this delay exists to prevent.
  */
+/**
+ * The guards below cannot await their own logout — they run inside effects and
+ * timers. `runLogout` has already retracted the recorded cause by the time this
+ * runs, so there is nothing further to do or report here.
+ */
+// SUPPRESSED: handled inside runLogout; a failed internal logout is not
+// separately actionable at the guard.
+const ignoreLogoutFailure = (): void => undefined;
+
+/**
+ * How long a resolved `logout()` is given to actually end the session.
+ *
+ * Privy resolves the promise and flips `authenticated` in a render after it, so
+ * the two are not simultaneous. Long enough for that render to commit under
+ * load; short enough that a cause which ended nothing cannot still be sitting
+ * there when the user does something else.
+ */
+const LOGOUT_TRANSITION_GRACE_MS = 250;
+
 const WALLET_DISCONNECT_LOGOUT_DELAY_MS = 1000;
 
 /**
@@ -152,6 +172,7 @@ const clearWagmiState = () => {
  * the SDK loads, the bridge returns safe defaults (ready=false, authenticated=false).
  */
 export const useAuth = () => {
+  const bridge = usePrivyBridge();
   const {
     ready,
     authenticated,
@@ -163,7 +184,7 @@ export const useAuth = () => {
     wallets,
     walletsReady,
     isConnected,
-  } = usePrivyBridge();
+  } = bridge;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -198,6 +219,19 @@ export const useAuth = () => {
    * built not to do.
    */
   const currentUserIdRef = useRef<string | null>(user?.id ?? null);
+  /**
+   * The bridge itself, so the session can be read AFTER an `await` rather than
+   * as whatever a render happened to capture.
+   *
+   * This is what tells a `logout()` that ended a session apart from one that
+   * RESOLVED and ended nothing — Privy ignored the call, or the session was
+   * already gone. The second kind records a cause that describes nothing, and
+   * it has to be retracted rather than left to label whichever transition
+   * happens next. Reading a destructured boolean out of a closure could not
+   * answer that: it is the value from before the logout.
+   */
+  const bridgeRef = useRef(bridge);
+  bridgeRef.current = bridge;
   const authFailureCount = useRef(0);
   // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
   const walletsSnapshotRef = useRef<string[]>([]);
@@ -206,6 +240,42 @@ export const useAuth = () => {
   // Tracks the wallet address across renders to detect the undefined→defined
   // transition once Privy/Wagmi finish hydrating after auth (see refetch barrier).
   const prevAddressRef = useRef<Hex | undefined>(address);
+
+  /**
+   * Ends the session and records why, as one operation.
+   *
+   * Every internal guard below decides that a session must end; the reason it
+   * decided is only true if the session actually ends. So the record and the
+   * `logout()` call belong together, and the three ways an attempt can fail to
+   * end anything are all handled here rather than at six call sites:
+   *
+   *   - `logout()` rejects: the session survives, retract immediately.
+   *   - `logout()` resolves and the session is STILL authenticated: it ended
+   *     nothing. Privy flips `authenticated` in a render after the promise
+   *     settles, so the judgement waits {@link LOGOUT_TRANSITION_GRACE_MS} for
+   *     that render to commit; if the session is still standing then, retract.
+   *   - Nothing comes back at all (a tab closed mid-flight): the record's own
+   *     expiry is the backstop.
+   *
+   * `AnalyticsProvider` emits the single `logout` event on the transition —
+   * `useAuth` has ~100 call sites, and emitting here produced one event per
+   * mounted instance.
+   */
+  const runLogout = useCallback(
+    async (reason: LogoutReason, userId: string | null): Promise<void> => {
+      const attempt = beginLogout(reason, userId);
+      try {
+        await logout();
+      } catch (error) {
+        abandonLogout(attempt);
+        throw error;
+      }
+      setTimeout(() => {
+        if (bridgeRef.current.authenticated) abandonLogout(attempt);
+      }, LOGOUT_TRANSITION_GRACE_MS);
+    },
+    [logout]
+  );
 
   /**
    * AUTH STATE CHANGE DETECTION
@@ -267,21 +337,16 @@ export const useAuth = () => {
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
-      // Records the reason only. `AnalyticsProvider` emits the single `logout`
-      // event on the authenticated true->false transition — useAuth has ~100
-      // call sites, and emitting here produced one event per mounted instance.
-      // The reason is bound to the identity that will be live when the session
-      // actually ends — Privy has already swapped `user` to the new id, and the
-      // provider identifies that one before the transition lands. Recording the
-      // OLD id here would make the provider reject the reason as belonging to
-      // someone else and report a plain "user" sign-out.
-      const attempt = beginLogout("user_switch", user.id);
-      Promise.resolve(logout()).catch(() => abandonLogout(attempt));
+      // Bound to the DEPARTING identity. Privy has already swapped `user` to
+      // the new id, but the session that is ending is the previous one — the
+      // provider consumes this reason against the user it had identified, and
+      // recording the new id would attribute A's exit to B.
+      void runLogout("user_switch", prevUserIdRef.current ?? null).catch(ignoreLogoutFailure);
     }
 
     prevAuthRef.current = authenticated;
     prevUserIdRef.current = user?.id;
-  }, [authenticated, user?.id, logout]);
+  }, [authenticated, user?.id, runLogout]);
 
   // Snapshot wallet addresses at auth time for secure wallet-switch detection (P2-06)
   useEffect(() => {
@@ -370,12 +435,11 @@ export const useAuth = () => {
     const timer = setTimeout(() => {
       if (walletDisconnectLogoutFired) return;
       walletDisconnectLogoutFired = true;
-      const attempt = beginLogout("wallet_disconnect", currentUserIdRef.current);
-      Promise.resolve(logout()).catch(() => abandonLogout(attempt));
+      void runLogout("wallet_disconnect", currentUserIdRef.current).catch(ignoreLogoutFailure);
     }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, logout]);
+  }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, runLogout]);
 
   useEffect(() => {
     currentUserIdRef.current = user?.id ?? null;
@@ -398,8 +462,7 @@ export const useAuth = () => {
       authFailureCount.current += 1;
       if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
         authFailureCount.current = 0;
-        const attempt = beginLogout("cross_tab", currentUserIdRef.current);
-        Promise.resolve(logout()).catch(() => abandonLogout(attempt));
+        void runLogout("cross_tab", currentUserIdRef.current).catch(ignoreLogoutFailure);
       }
     };
 
@@ -457,7 +520,7 @@ export const useAuth = () => {
       clearInterval(intervalId);
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [ready, authenticated, logout]);
+  }, [ready, authenticated, runLogout]);
 
   // Handle wallet switching: logout if switched to non-linked wallet
   // Using wagmi's watchAccount as recommended by Privy docs
@@ -497,8 +560,7 @@ export const useAuth = () => {
             if (user && !compareAllWallets(user, newAddress)) {
               // A different wallet at the browser level is a different identity,
               // which is the same session boundary as Privy's own user switch.
-              const attempt = beginLogout("user_switch", user.id);
-              Promise.resolve(logout()).catch(() => abandonLogout(attempt));
+              void runLogout("user_switch", user.id).catch(ignoreLogoutFailure);
             }
           },
         });
@@ -509,7 +571,7 @@ export const useAuth = () => {
       cancelled = true;
       unwatch?.();
     };
-  }, [ready, authenticated, hasExternalWallet, user, logout]);
+  }, [ready, authenticated, hasExternalWallet, user, runLogout]);
 
   // Whether an authenticated session has to be torn down and re-established
   // because wagmi lost the external wallet (see the branch that uses it below).
@@ -562,13 +624,7 @@ export const useAuth = () => {
         // Not the user signing out: the session is torn down so wagmi can
         // re-attach the external wallet, and the auto-login effect signs them
         // straight back in.
-        const attempt = beginLogout("wallet_reconnect", currentUserIdRef.current);
-        try {
-          await logout();
-        } catch (error) {
-          abandonLogout(attempt);
-          throw error;
-        }
+        await runLogout("wallet_reconnect", currentUserIdRef.current);
         return;
       }
       // Don't call Privy's login() when already authenticated (e.g. Farcaster users
@@ -578,7 +634,7 @@ export const useAuth = () => {
         login();
       }
     },
-    [ready, authenticated, needsWalletReconnect, pathname, logout, login]
+    [ready, authenticated, needsWalletReconnect, pathname, runLogout, login]
   );
 
   /**
@@ -586,15 +642,7 @@ export const useAuth = () => {
    * its own reason; anything a component calls is the user asking to sign out.
    * The event itself is emitted once, by `AnalyticsProvider`.
    */
-  const trackedLogout = useCallback(async () => {
-    const attempt = beginLogout("user", currentUserIdRef.current);
-    try {
-      return await logout();
-    } catch (error) {
-      abandonLogout(attempt);
-      throw error;
-    }
-  }, [logout]);
+  const trackedLogout = useCallback(() => runLogout("user", currentUserIdRef.current), [runLogout]);
 
   const connectedAndAuth = useMemo(() => {
     if (isE2EMockAuthenticated) {

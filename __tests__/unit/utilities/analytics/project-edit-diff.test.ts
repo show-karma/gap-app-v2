@@ -171,6 +171,41 @@ describe("changedProjectFields", () => {
     ).toEqual([]);
   });
 
+  it.each([
+    ["whitespace-only", "   "],
+    ["empty", ""],
+    ["missing", undefined],
+  ])("treats a %s nested member the same as any other blank one", (_label, name) => {
+    // These three all mean "not filled in". Filtering blanks BEFORE normalising
+    // kept `"   "` as an empty entry while dropping the missing one, so two
+    // values that mean the same thing compared unequal and invented a diff.
+    const changed = changedProjectFields(previous(), {
+      ...unchangedSubmission(),
+      customLinks: [
+        { name: "Docs", url: "https://docs.test" },
+        { name: name as string, url: "" },
+      ],
+    });
+
+    expect(changed).toEqual([]);
+  });
+
+  it("treats a whitespace-only scalar as unchanged from an empty one", () => {
+    expect(
+      changedProjectFields(previous(), { ...unchangedSubmission(), missionSummary: "   " })
+    ).toEqual([]);
+  });
+
+  it("still reports a nested member that actually gained a value", () => {
+    // The blank collapsing must not swallow a real edit.
+    const changed = changedProjectFields(previous(), {
+      ...unchangedSubmission(),
+      customLinks: [{ name: "Documentation", url: "https://docs.test" }],
+    });
+
+    expect(changed).toEqual(["customLinks"]);
+  });
+
   it("reports a custom link added, removed or renamed", () => {
     expect(
       changedProjectFields(previous(), {

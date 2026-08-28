@@ -13,6 +13,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ANALYTICS_EVENT_NAMES } from "@/utilities/analytics/events";
+import { catalogEventProperties } from "./catalog-source";
 
 const PLAN_PATH = join(process.cwd(), "docs/analytics/tracking-plan.md");
 
@@ -33,6 +34,7 @@ const lines = plan.split(/\r?\n/);
  * name.
  */
 const EVENT_TABLE_HEADER = "Event | Fires when | Properties | Board";
+const PROPERTIES_COLUMN = 2;
 const EVENT_NAME = /^`([a-z][a-z0-9_]*)`$/;
 
 const isTableRow = (line: string): boolean => line.trimStart().startsWith("|");
@@ -46,8 +48,9 @@ const normaliseRow = (line: string): string[] =>
     .split("|")
     .map((cell) => cell.trim());
 
-const documentedEvents = (): Set<string> => {
-  const names = new Set<string>();
+/** Each documented event, mapped to the row that documents it. */
+const documentedRows = (): Map<string, string[]> => {
+  const rows = new Map<string, string[]>();
   let inEventTable = false;
 
   for (const line of lines) {
@@ -64,14 +67,26 @@ const documentedEvents = (): Set<string> => {
     if (!inEventTable) continue;
 
     const match = EVENT_NAME.exec(cells[0] ?? "");
-    if (match) names.add(match[1]);
+    if (match) rows.set(match[1], cells);
   }
 
-  return names;
+  return rows;
+};
+
+/**
+ * The property names a row claims. An em dash means "none", which is how the
+ * plan writes an event that carries no properties at all.
+ */
+const documentedProperties = (cells: string[]): string[] => {
+  const cell = cells[PROPERTIES_COLUMN] ?? "";
+  if (cell === "" || cell === "—" || cell === "-") return [];
+  return [...cell.matchAll(/`([a-z_][a-z0-9_]*)`/g)].map((match) => match[1]);
 };
 
 describe("tracking plan", () => {
-  const documented = documentedEvents();
+  const rows = documentedRows();
+  const documented = new Set(rows.keys());
+  const catalog = catalogEventProperties();
 
   it("found the plan's event tables", () => {
     // A path typo or a reformat that broke the tables would otherwise make
@@ -86,11 +101,34 @@ describe("tracking plan", () => {
   it("documents no event that is not in the catalog", () => {
     // A documented event that no longer fires is worse than an undocumented
     // one: a board built on it reads zero and nobody notices.
-    const catalog = new Set<string>(ANALYTICS_EVENT_NAMES);
-    const extra = [...documented].filter((name) => !catalog.has(name));
+    const names = new Set<string>(ANALYTICS_EVENT_NAMES);
+    const extra = [...documented].filter((name) => !names.has(name));
 
     expect(extra).toEqual([]);
   });
+
+  it("read the catalog's own property names", () => {
+    // The source parser below is the load-bearing part of the next assertion;
+    // if it silently found nothing, every property check would pass vacuously.
+    expect(catalog.size).toBe(ANALYTICS_EVENT_NAMES.length);
+    expect(catalog.get("login_started")).toEqual(["entry_point"]);
+    expect(catalog.get("project_create_failed")).toEqual(["error_code", "chain_id"]);
+  });
+
+  it.each(ANALYTICS_EVENT_NAMES.map((name) => [name]))(
+    "lists the real properties of %s",
+    (name) => {
+      // A Properties column that has drifted from the catalog is worse than no
+      // column at all, because it reads as an answer. Nothing but this keeps
+      // the prose honest — TypeScript only checks the emit sites.
+      const cells = rows.get(name);
+      if (!cells) throw new Error(`${name} has no row`);
+
+      expect([...documentedProperties(cells)].sort()).toEqual(
+        [...(catalog.get(name) ?? [])].sort()
+      );
+    }
+  );
 
   it("names the server-side plan, so the two halves are findable from each other", () => {
     expect(plan).toContain("gap-indexer/docs/analytics/server-events.md");

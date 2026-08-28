@@ -74,16 +74,31 @@ const mockBridgeState = {
   isConnected: false,
 };
 
+/**
+ * One bridge object, mutated in place — which is what makes this harness able to
+ * model the case that matters.
+ *
+ * `useAuth` judges whether a `logout()` actually ended a session by reading the
+ * bridge AFTER the promise resolves. A `logout()` that signs out mutates this
+ * object as part of resolving, so that read sees the truth without waiting for
+ * React; a `logout()` that ends nothing leaves it alone, and the attempt
+ * retracts its own cause. Tests drive renders explicitly with `rerender`.
+ */
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => mockBridgeState,
   PrivyBridgeContext: { Provider: ({ children }: { children: ReactNode }) => children },
   PRIVY_BRIDGE_DEFAULTS: {},
 }));
 
+// `useAuth` reaches wagmi through a dynamic import, so the config it is handed
+// has to be watchable — a bare `{}` makes the real `watchAccount` throw inside a
+// floating promise, which surfaces as an unrelated unhandled rejection.
+const wagmiConfigDouble = { subscribe: () => () => undefined };
+
 vi.mock("@wagmi/core", () => ({ watchAccount: vi.fn(() => vi.fn()) }));
 vi.mock("@/utilities/wagmi/privy-config", () => ({
-  privyConfig: {},
-  getPrivyWagmiConfig: vi.fn(() => ({})),
+  privyConfig: wagmiConfigDouble,
+  getPrivyWagmiConfig: vi.fn(() => wagmiConfigDouble),
 }));
 vi.mock("@/utilities/query-client", () => ({
   queryClient: { clear: vi.fn(), invalidateQueries: vi.fn() },
@@ -114,10 +129,14 @@ const setBridge = (overrides: Partial<typeof mockBridgeState>) =>
  * against the same bridge state — which is what a real page looks like.
  */
 const firstConsumerLogout = { current: null as null | (() => Promise<unknown>) };
+const firstConsumerLogin = {
+  current: null as null | ((entryPoint?: string) => Promise<unknown> | unknown),
+};
 
 function ConsumerA() {
-  const { logout } = useAuth();
+  const { logout, login } = useAuth();
   firstConsumerLogout.current = logout;
+  firstConsumerLogin.current = login as never;
   return null;
 }
 
@@ -152,15 +171,71 @@ const signedIn = (id = "user-1") =>
     isConnected: true,
   });
 
+/** One step of fake time, comfortably inside the pending cause's own expiry. */
+const AUTH_CHECK_STEP_MS = 5000;
+/** Enough steps to cover the guard's initial delay plus several check intervals. */
+const AUTH_CHECK_MAX_STEPS = 120;
+
+/**
+ * Runs fake time forward until the guard has actually ended the session, then
+ * renders once so the provider sees the transition.
+ *
+ * In small steps, and stopping as soon as the session is gone: a single long
+ * jump ages the recorded cause past its expiry before anything can consume it,
+ * which is the harness outrunning the app rather than a defect in it.
+ */
+const advanceUntilSignedOut = async (rerender: (ui: ReactNode) => void) => {
+  for (let step = 0; step < AUTH_CHECK_MAX_STEPS; step++) {
+    if (!mockBridgeState.authenticated) break;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(AUTH_CHECK_STEP_MS);
+    });
+  }
+  await act(async () => {
+    rerender(<App />);
+  });
+};
+
 const signedOut = () =>
   setBridge({ ready: true, authenticated: false, user: null, wallets: [], isConnected: false });
+
+/**
+ * A `logout()` that really signs out, which is what Privy does: the promise
+ * resolves and the session is gone. The bridge is flipped here rather than by
+ * each test, because the ORDER matters — `useAuth` judges whether an attempt
+ * ended anything by looking at the session shortly after the promise settles.
+ */
+const logoutEndsTheSession = () =>
+  mockLogout.mockImplementation(async () => {
+    signedOut();
+  });
+
+/** A `logout()` that comes back cleanly and leaves the session standing. */
+const logoutEndsNothing = () => mockLogout.mockResolvedValue(undefined);
+
+/** A `logout()` that fails outright. */
+const logoutRejects = () => mockLogout.mockRejectedValue(new Error("privy unreachable"));
+
+/**
+ * Lets the grace period in `useAuth` elapse, which is when a resolved attempt
+ * that ended nothing retracts its own cause. Requires fake timers.
+ */
+const settleLogoutJudgement = async () => {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(LOGOUT_GRACE_SPAN_MS);
+  });
+};
+
+/** Comfortably past `LOGOUT_TRANSITION_GRACE_MS` in `useAuth`. */
+const LOGOUT_GRACE_SPAN_MS = 2000;
 
 describe("logout — one event per session, whatever ended it", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockLogout.mockResolvedValue(undefined);
+    logoutEndsTheSession();
     __resetPendingLogoutReasonForTests();
     firstConsumerLogout.current = null;
+    firstConsumerLogin.current = null;
     signedOut();
   });
 
@@ -171,8 +246,6 @@ describe("logout — one event per session, whatever ended it", () => {
     await act(async () => {
       await firstConsumerLogout.current?.();
     });
-
-    signedOut();
     await act(async () => {
       rerender(<App />);
     });
@@ -180,22 +253,30 @@ describe("logout — one event per session, whatever ended it", () => {
     expect(logoutEvents()).toEqual(["user"]);
   });
 
-  it("reports a Privy user switch once, with the switch as the cause", async () => {
+  it("reports a Privy user switch against the user who left, not the one who arrived", async () => {
+    // Privy swaps `user` without ever passing through an unauthenticated state.
+    // The session that ended is user-1's, and it ended at that moment — so the
+    // provider reports it there, before identifying user-2.
+    //
+    // The forced logout that follows then ends user-2's momentary session, and
+    // that is reported too. Two events, because two sessions ended; the one
+    // that matters carries the switch as its cause and is attributed to the
+    // user who actually left.
     signedIn("user-1");
     const { rerender } = render(<App />);
 
-    // Both consumers see the id change and both decide to end the session.
     setBridge({ user: walletUser("user-2") });
     await act(async () => {
       rerender(<App />);
     });
 
-    signedOut();
+    expect(logoutEvents()).toEqual(["user_switch"]);
+
     await act(async () => {
       rerender(<App />);
     });
 
-    expect(logoutEvents()).toEqual(["user_switch"]);
+    expect(logoutEvents()[0]).toBe("user_switch");
   });
 
   it("reports a wallet disconnect once, after both consumers' timers fire", async () => {
@@ -211,17 +292,106 @@ describe("logout — one event per session, whatever ended it", () => {
 
       // Each consumer scheduled its own grace timer; the module-level flag
       // collapses them into one logout call, and the provider into one event.
-      act(() => {
-        vi.runOnlyPendingTimers();
+      await act(async () => {
+        await vi.runOnlyPendingTimersAsync();
       });
-
-      signedOut();
-      act(() => {
+      await act(async () => {
         rerender(<App />);
       });
 
       expect(mockLogout).toHaveBeenCalledTimes(1);
       expect(logoutEvents()).toEqual(["wallet_disconnect"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("reports a cross-tab sign-out once, with the cross-tab cause", async () => {
+    // Both consumers run the same auth-check interval against the same bridge,
+    // so both reach the failure threshold and both decide to end the session.
+    vi.useFakeTimers();
+    try {
+      signedIn();
+      const { rerender } = render(<App />);
+
+      // Every check finds no token and no session; after the threshold the
+      // guard gives up on the session.
+      //
+      // Advanced in small steps rather than one long jump, because fake timers
+      // move `Date.now()` too: a single ten-minute jump would age the recorded
+      // cause past its own expiry before the render that consumes it, which is
+      // an artefact of the harness rather than anything the app does.
+      await advanceUntilSignedOut(rerender);
+
+      expect(logoutEvents()).toEqual(["cross_tab"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("reports a wallet reconnect once, and not as the user signing out", async () => {
+    // wagmi lost the external wallet, so the session is torn down for it to be
+    // re-attached and the auto-login effect signs the user straight back in.
+    // That is machinery, not somebody leaving.
+    setBridge({
+      ready: true,
+      authenticated: true,
+      user: walletUser("user-1"),
+      wallets: [WALLET],
+      walletsReady: true,
+      isConnected: false,
+    });
+    const { rerender } = render(<App />);
+
+    await act(async () => {
+      await firstConsumerLogin.current?.("navbar");
+    });
+    await act(async () => {
+      rerender(<App />);
+    });
+
+    expect(logoutEvents()).toEqual(["wallet_reconnect"]);
+  });
+
+  it("does not label a later transition with a cause whose logout resolved but ended nothing", async () => {
+    // The nastiest of the three: `logout()` came back cleanly and the session is
+    // still standing. There is no error to notice, so the cause it recorded
+    // would sit there looking valid until something unrelated consumed it.
+    vi.useFakeTimers();
+    try {
+      signedIn();
+      // Privy accepts the call and does nothing — already signed out elsewhere,
+      // or the call is a no-op for this session.
+      logoutEndsNothing();
+      const { rerender } = render(<App />);
+
+      setBridge({ wallets: [] });
+      act(() => {
+        rerender(<App />);
+      });
+      await act(async () => {
+        await vi.runOnlyPendingTimersAsync();
+      });
+      await settleLogoutJudgement();
+
+      // Still authenticated: nothing ended, and the attempt has now retracted
+      // its own cause rather than waiting out the record's ten-second expiry.
+      expect(logoutEvents()).toEqual([]);
+
+      // The wallet comes back, so the disconnect guard stands down, and then
+      // Privy drops the session on its own with no guard involved. That exit
+      // must not inherit the cause of an attempt that ended nothing.
+      logoutEndsTheSession();
+      setBridge({ wallets: [WALLET] });
+      act(() => {
+        rerender(<App />);
+      });
+      signedOut();
+      act(() => {
+        rerender(<App />);
+      });
+
+      expect(logoutEvents()).toEqual(["user"]);
     } finally {
       vi.useRealTimers();
     }
@@ -235,7 +405,7 @@ describe("logout — one event per session, whatever ended it", () => {
     vi.useFakeTimers();
     try {
       signedIn();
-      mockLogout.mockRejectedValue(new Error("privy unreachable"));
+      logoutRejects();
       const { rerender } = render(<App />);
 
       setBridge({ wallets: [] });
@@ -250,7 +420,7 @@ describe("logout — one event per session, whatever ended it", () => {
       expect(logoutEvents()).toEqual([]);
 
       // The wallet comes back, so the disconnect guard stands down.
-      mockLogout.mockResolvedValue(undefined);
+      logoutEndsTheSession();
       setBridge({ wallets: [WALLET] });
       act(() => {
         rerender(<App />);
@@ -270,7 +440,7 @@ describe("logout — one event per session, whatever ended it", () => {
 
   it("reports nothing when a logout attempt leaves the session standing", async () => {
     signedIn();
-    mockLogout.mockRejectedValue(new Error("privy unreachable"));
+    logoutRejects();
     const { rerender } = render(<App />);
 
     await act(async () => {

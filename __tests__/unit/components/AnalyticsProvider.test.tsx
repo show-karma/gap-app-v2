@@ -505,6 +505,45 @@ describe("AnalyticsProvider — write ordering", () => {
     expect(setCommunityGroup).toHaveBeenLastCalledWith(null);
   });
 
+  it("clears community A on the way to community B, even through the gap", () => {
+    // Moving between two communities goes A -> null -> B: the old layout
+    // unpublishes before the new one resolves. Returning early on that null
+    // left the device bound to A, so anything emitted in the gap was
+    // attributed to a community the visitor had already left.
+    setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+    bindCommunity("0xfirst", "first");
+    const { rerender } = render(<AnalyticsProvider />);
+
+    usePathnameMock.mockReturnValue("/community/second");
+    bindCommunity(null);
+    rerender(<AnalyticsProvider />);
+
+    bindCommunity("0xsecond", "second");
+    rerender(<AnalyticsProvider />);
+
+    expect(vi.mocked(setCommunityGroup).mock.calls.map(([id]) => id)).toEqual([
+      "0xfirst",
+      null,
+      "0xsecond",
+    ]);
+  });
+
+  it("still holds the page view back while the new community is unresolved", () => {
+    // Only the VIEW waits. The group must not.
+    setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+    bindCommunity("0xfirst", "first");
+    const { rerender } = render(<AnalyticsProvider />);
+    vi.mocked(trackPageView).mockClear();
+    vi.mocked(setCommunityGroup).mockClear();
+
+    usePathnameMock.mockReturnValue("/community/second");
+    bindCommunity(null);
+    rerender(<AnalyticsProvider />);
+
+    expect(setCommunityGroup).toHaveBeenCalledWith(null);
+    expect(trackPageView).not.toHaveBeenCalled();
+  });
+
   it("does not rewrite an unchanged binding on every navigation", () => {
     setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
     const { rerender } = render(<AnalyticsProvider />);
@@ -723,6 +762,57 @@ describe("AnalyticsProvider — logout", () => {
     rerender(<AnalyticsProvider />);
 
     expect(track).toHaveBeenCalledWith("logout", { reason: "user" });
+  });
+
+  it("reports a continuous user switch against the DEPARTING user", () => {
+    // Privy can swap `user` without ever passing through an unauthenticated
+    // state. A's session ended at that moment and nowhere else, so it has to be
+    // reported before B is identified — afterwards the departing identity is
+    // gone and the exit would be filed under whoever arrived.
+    signedIn();
+    const { rerender } = render(<AnalyticsProvider />);
+    beginLogout("user_switch", "did:privy:alice");
+
+    setAuth({ authenticated: true, user: { id: "did:privy:bob" } });
+    rerender(<AnalyticsProvider />);
+
+    expect(track).toHaveBeenCalledWith("logout", { reason: "user_switch" });
+    expect(identifyUser).toHaveBeenLastCalledWith("did:privy:bob", expect.any(Object));
+  });
+
+  it("reports the departure before identifying the arriving user", () => {
+    signedIn();
+    const { rerender } = render(<AnalyticsProvider />);
+    vi.mocked(identifyUser).mockClear();
+    vi.mocked(track).mockClear();
+    beginLogout("user_switch", "did:privy:alice");
+
+    setAuth({ authenticated: true, user: { id: "did:privy:bob" } });
+    rerender(<AnalyticsProvider />);
+
+    expect(vi.mocked(track).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(identifyUser).mock.invocationCallOrder[0]
+    );
+  });
+
+  it("does not borrow A's cause for B when the switch reason was never recorded", () => {
+    signedIn();
+    const { rerender } = render(<AnalyticsProvider />);
+
+    setAuth({ authenticated: true, user: { id: "did:privy:bob" } });
+    rerender(<AnalyticsProvider />);
+
+    expect(track).toHaveBeenCalledWith("logout", { reason: "user" });
+  });
+
+  it("reports nothing on a re-render that does not change the identity", () => {
+    signedIn();
+    const { rerender } = render(<AnalyticsProvider />);
+
+    setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+    rerender(<AnalyticsProvider />);
+
+    expect(track).not.toHaveBeenCalledWith("logout", expect.anything());
   });
 
   it("reports once, not once per re-render after the transition", () => {
