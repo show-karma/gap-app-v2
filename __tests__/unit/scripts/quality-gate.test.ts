@@ -53,6 +53,19 @@ const qualityGate = require("../../../scripts/quality-gate.js") as {
   matchGlob: (path: string, glob: string) => boolean;
   countLines: (abs: string) => number;
   mergeDesignBaseline: (baseline: Metrics, design: DesignMetric) => Metrics;
+  assertUsableBaseline: (baseline: unknown, label: string) => Metrics;
+  updateDesignBaseline: (input: {
+    baselinePath: string;
+    design: DesignMetric;
+    fs?: {
+      readFileSync: (p: string, enc: string) => string;
+      writeFileSync: (p: string, data: string) => void;
+      renameSync: (from: string, to: string) => void;
+      unlinkSync: (p: string) => void;
+    };
+    label?: string;
+  }) => Metrics;
+  writeJsonAtomic: (targetPath: string, contents: string) => void;
   parseUpdateBaselineScope: (argv: string[]) => string | null;
   render: (input: {
     status: string;
@@ -355,73 +368,187 @@ describe("quality-gate render() — absent design baseline (Rival R4)", () => {
   });
 });
 
-// Rival R5: a scoped update merges into the existing baseline, so a malformed
-// or unwritable file must fail loudly instead of reporting success.
-describe("quality-gate --update-baseline=design robustness (Rival R5)", () => {
-  const SCRIPT = path.resolve(__dirname, "../../../scripts/quality-gate.js");
-  const BASELINE = path.resolve(__dirname, "../../../quality-baseline.json");
+// Rival R5: a scoped update merges into the existing baseline and rewrites the
+// whole file, so an incomplete one must be rejected and the write must be
+// atomic. The path and the filesystem are injected — no test touches the
+// tracked quality-baseline.json.
+describe("quality-gate updateDesignBaseline() (Rival R5)", () => {
+  const { updateDesignBaseline, assertUsableBaseline, writeJsonAtomic } = qualityGate;
 
-  const runScoped = (extraEnv: NodeJS.ProcessEnv = {}) => {
-    try {
-      const stdout = execFileSync(
-        process.execPath,
-        [SCRIPT, "--update-baseline=design", "--skip-design"],
-        { encoding: "utf8", env: { ...process.env, ...extraEnv } }
-      );
-      return { status: 0, stdout, stderr: "" };
-    } catch (err) {
-      const e = err as { status: number; stdout?: string; stderr?: string };
-      return { status: e.status, stdout: e.stdout ?? "", stderr: e.stderr ?? "" };
-    }
-  };
+  const DESIGN: DesignMetric = { total: 2789, byRule: { DS001: 173 } };
 
-  const withBaseline = <T>(contents: string | null, fn: () => T): T => {
-    const original = fs.readFileSync(BASELINE, "utf8");
+  const completeBaseline = (): Metrics => ({
+    $schema: "./scripts/quality-baseline.schema.json",
+    generatedAt: "2026-08-26T14:36:55.036Z",
+    generatedFromCommit: "6f74e15",
+    coverage: { lines: 1, statements: 2, functions: 3, branches: 4 },
+    duplication: { percent: 1.06, fragments: 68 },
+    violations: { biome: 1151 },
+    oversizedFiles: { "a.ts": { lines: 900, bytes: 1 } },
+    reactDoctor: { score: 0, errors: 64, warnings: 3213 },
+  });
+
+  /** A throwaway baseline file in its own temp directory. */
+  const withTempBaseline = <T>(contents: string | null, fn: (baselinePath: string) => T): T => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "quality-baseline-"));
+    const baselinePath = path.join(dir, "quality-baseline.json");
+    if (contents !== null) fs.writeFileSync(baselinePath, contents);
     try {
-      if (contents === null) fs.rmSync(BASELINE);
-      else fs.writeFileSync(BASELINE, contents);
-      return fn();
+      return fn(baselinePath);
     } finally {
-      fs.writeFileSync(BASELINE, original);
+      fs.rmSync(dir, { recursive: true, force: true });
     }
   };
 
-  it("refuses a scoped update when the baseline is malformed", () => {
-    const res = withBaseline("{ not json at all", () => runScoped());
-    expect(res.status).toBe(2);
-    expect(res.stderr).toMatch(/not valid JSON|missing/i);
-    expect(res.stdout).not.toMatch(/baseline updated/);
+  it("updates only violations.design in a complete baseline", () => {
+    withTempBaseline(JSON.stringify(completeBaseline()), (baselinePath) => {
+      updateDesignBaseline({ baselinePath, design: DESIGN });
+      const written = JSON.parse(fs.readFileSync(baselinePath, "utf8")) as Metrics;
+      expect(written.violations?.design).toEqual(DESIGN);
+      expect(written.violations?.biome).toBe(1151);
+      expect(written.coverage).toEqual(completeBaseline().coverage);
+      expect(written.oversizedFiles).toEqual(completeBaseline().oversizedFiles);
+      expect(written.reactDoctor).toEqual(completeBaseline().reactDoctor);
+    });
   });
 
-  it("refuses a scoped update when the baseline is absent", () => {
-    const res = withBaseline(null, () => runScoped());
-    expect(res.status).toBe(2);
-    expect(res.stdout).not.toMatch(/baseline updated/);
+  it("rejects an empty object, which is valid JSON but not a baseline", () => {
+    withTempBaseline("{}", (baselinePath) => {
+      expect(() => updateDesignBaseline({ baselinePath, design: DESIGN })).toThrow(
+        /missing required section/i
+      );
+      expect(fs.readFileSync(baselinePath, "utf8")).toBe("{}");
+    });
   });
 
-  it("refuses a scoped update when the baseline is not an object", () => {
-    const res = withBaseline('["not", "a", "baseline"]', () => runScoped());
-    expect(res.status).toBe(2);
-    expect(res.stdout).not.toMatch(/baseline updated/);
+  it.each(["coverage", "duplication", "violations", "oversizedFiles", "reactDoctor"])(
+    "rejects a baseline missing %s",
+    (section) => {
+      const partial = completeBaseline() as Record<string, unknown>;
+      delete partial[section];
+      withTempBaseline(JSON.stringify(partial), (baselinePath) => {
+        expect(() => updateDesignBaseline({ baselinePath, design: DESIGN })).toThrow(
+          new RegExp(section)
+        );
+      });
+    }
+  );
+
+  it("rejects a section that is present but not an object", () => {
+    const broken = { ...completeBaseline(), coverage: 42 };
+    withTempBaseline(JSON.stringify(broken), (baselinePath) => {
+      expect(() => updateDesignBaseline({ baselinePath, design: DESIGN })).toThrow(/coverage/);
+    });
   });
 
-  it("leaves the baseline untouched when it refuses", () => {
-    const before = fs.readFileSync(BASELINE, "utf8");
-    withBaseline("{ broken", () => runScoped());
-    expect(fs.readFileSync(BASELINE, "utf8")).toBe(before);
+  it("rejects a malformed baseline", () => {
+    withTempBaseline("{ not json at all", (baselinePath) => {
+      expect(() => updateDesignBaseline({ baselinePath, design: DESIGN })).toThrow(
+        /not valid JSON/i
+      );
+    });
   });
 
-  it("exits 2 rather than reporting success when the write fails", () => {
-    // The design collector is skipped, so violations.design is null and
-    // mergeDesignBaseline() refuses — the same "never say updated" path.
-    const res = runScoped();
-    expect(res.status).toBe(2);
-    expect(res.stdout).not.toMatch(/baseline updated/);
-    expect(res.stderr).toMatch(/refusing|could not write/i);
+  it("rejects an absent baseline", () => {
+    withTempBaseline(null, (baselinePath) => {
+      expect(() => updateDesignBaseline({ baselinePath, design: DESIGN })).toThrow(
+        /missing or not valid JSON/i
+      );
+    });
   });
 
-  it("never writes a baseline built from a failed collector", () => {
-    expect(() => qualityGate.mergeDesignBaseline({}, { failed: true })).toThrow();
+  it("rejects a JSON array", () => {
+    withTempBaseline('["not", "a", "baseline"]', (baselinePath) => {
+      expect(() => updateDesignBaseline({ baselinePath, design: DESIGN })).toThrow(
+        /not a baseline object/i
+      );
+    });
+  });
+
+  it("refuses to write a failed collector", () => {
+    withTempBaseline(JSON.stringify(completeBaseline()), (baselinePath) => {
+      const before = fs.readFileSync(baselinePath, "utf8");
+      expect(() => updateDesignBaseline({ baselinePath, design: { failed: true } })).toThrow(
+        /failed design collector/i
+      );
+      expect(fs.readFileSync(baselinePath, "utf8")).toBe(before);
+    });
+  });
+
+  // The write failure is real: an injected fs throws from writeFileSync.
+  it("propagates a write failure and leaves the baseline untouched", () => {
+    withTempBaseline(JSON.stringify(completeBaseline()), (baselinePath) => {
+      const before = fs.readFileSync(baselinePath, "utf8");
+      const failing = {
+        readFileSync: fs.readFileSync,
+        writeFileSync: () => {
+          throw new Error("ENOSPC: no space left on device");
+        },
+        renameSync: fs.renameSync,
+        unlinkSync: fs.unlinkSync,
+      };
+      expect(() => updateDesignBaseline({ baselinePath, design: DESIGN, fs: failing })).toThrow(
+        /ENOSPC/
+      );
+      expect(fs.readFileSync(baselinePath, "utf8")).toBe(before);
+    });
+  });
+
+  it("propagates a rename failure and cleans up the temp file", () => {
+    withTempBaseline(JSON.stringify(completeBaseline()), (baselinePath) => {
+      const before = fs.readFileSync(baselinePath, "utf8");
+      const failing = {
+        readFileSync: fs.readFileSync,
+        writeFileSync: fs.writeFileSync,
+        renameSync: () => {
+          throw new Error("EPERM: operation not permitted");
+        },
+        unlinkSync: fs.unlinkSync,
+      };
+      expect(() => updateDesignBaseline({ baselinePath, design: DESIGN, fs: failing })).toThrow(
+        /EPERM/
+      );
+      expect(fs.readFileSync(baselinePath, "utf8")).toBe(before);
+      // No stray temp file next to the baseline.
+      const leftovers = fs
+        .readdirSync(path.dirname(baselinePath))
+        .filter((n) => n.endsWith(".tmp"));
+      expect(leftovers).toEqual([]);
+    });
+  });
+
+  it("writes through a temp file and renames it into place", () => {
+    withTempBaseline(JSON.stringify(completeBaseline()), (baselinePath) => {
+      const order: string[] = [];
+      const spy = {
+        readFileSync: fs.readFileSync,
+        writeFileSync: (p: string, data: string) => {
+          order.push(`write:${path.basename(p)}`);
+          fs.writeFileSync(p, data);
+        },
+        renameSync: (from: string, to: string) => {
+          order.push(`rename:${path.basename(from)}→${path.basename(to)}`);
+          fs.renameSync(from, to);
+        },
+        unlinkSync: fs.unlinkSync,
+      };
+      updateDesignBaseline({ baselinePath, design: DESIGN, fs: spy });
+      expect(order).toHaveLength(2);
+      expect(order[0]).toMatch(/^write:\..*\.tmp$/);
+      expect(order[1]).toMatch(/^rename:.*→quality-baseline\.json$/);
+    });
+  });
+
+  it("assertUsableBaseline accepts a complete baseline", () => {
+    expect(() => assertUsableBaseline(completeBaseline(), "test")).not.toThrow();
+  });
+
+  it("writeJsonAtomic leaves no temp file behind on success", () => {
+    withTempBaseline("{}", (baselinePath) => {
+      writeJsonAtomic(baselinePath, '{"ok":true}\n');
+      expect(JSON.parse(fs.readFileSync(baselinePath, "utf8"))).toEqual({ ok: true });
+      expect(fs.readdirSync(path.dirname(baselinePath))).toEqual(["quality-baseline.json"]);
+    });
   });
 });
 

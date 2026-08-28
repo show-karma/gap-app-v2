@@ -365,6 +365,76 @@ function mergeDesignBaseline(baseline, design) {
   };
 }
 
+// A scoped update rewrites the whole file from the object it merged into, so
+// an incomplete baseline would be silently promoted to the real one. `{}` is
+// syntactically valid JSON and must not qualify (Rival R5, round 4).
+const REQUIRED_BASELINE_SECTIONS = [
+  "coverage",
+  "duplication",
+  "violations",
+  "oversizedFiles",
+  "reactDoctor",
+];
+
+function assertUsableBaseline(baseline, label) {
+  if (baseline === null || typeof baseline !== "object" || Array.isArray(baseline)) {
+    throw new Error(`${label} is not a baseline object — refusing a scoped update.`);
+  }
+  const missing = REQUIRED_BASELINE_SECTIONS.filter(
+    (k) => baseline[k] === undefined || baseline[k] === null || typeof baseline[k] !== "object"
+  );
+  if (missing.length) {
+    throw new Error(
+      `${label} is missing required section(s): ${missing.join(", ")} — refusing a scoped update that would discard them. Fix the file, or run the full \`pnpm quality:baseline\`.`
+    );
+  }
+  return baseline;
+}
+
+/**
+ * Writes JSON through a temp file in the same directory and renames it into
+ * place, so an interrupted or failing write can never leave a half-written
+ * baseline behind. `deps.fs` is injectable so a real write failure is testable.
+ */
+function writeJsonAtomic(targetPath, contents, deps = {}) {
+  const io = deps.fs ?? fs;
+  const tmp = path.join(
+    path.dirname(targetPath),
+    `.${path.basename(targetPath)}.${process.pid}.tmp`
+  );
+  io.writeFileSync(tmp, contents);
+  try {
+    io.renameSync(tmp, targetPath);
+  } catch (err) {
+    try {
+      io.unlinkSync(tmp);
+    } catch {
+      /* the temp file is already gone or unreachable */
+    }
+    throw err;
+  }
+}
+
+/**
+ * The whole scoped-update operation, with its filesystem and target path
+ * injected so tests never touch the tracked baseline.
+ */
+function updateDesignBaseline({ baselinePath, design, fs: io = fs, label } = {}) {
+  const name = label ?? path.relative(ROOT, baselinePath) ?? baselinePath;
+  let parsed;
+  try {
+    parsed = JSON.parse(io.readFileSync(baselinePath, "utf8"));
+  } catch {
+    throw new Error(
+      `${name} is missing or not valid JSON — refusing a scoped update that would discard every other metric. Fix the file, or run the full \`pnpm quality:baseline\`.`
+    );
+  }
+  assertUsableBaseline(parsed, name);
+  const next = mergeDesignBaseline(parsed, design);
+  writeJsonAtomic(baselinePath, `${JSON.stringify(next, null, 2)}\n`, { fs: io });
+  return next;
+}
+
 function collectFileSizes(limits) {
   if (FLAGS.skip.sizes) return null;
   log("scanning file sizes…");
@@ -764,20 +834,8 @@ function main() {
   // a real one. Falling back to `{}` here would let a malformed or missing
   // file be replaced by a baseline holding nothing but violations.design
   // (Rival R5).
+  // Read for comparison only; the scoped update re-reads and validates it.
   const baselineRaw = tryReadJson(BASELINE_PATH, null);
-  if (FLAGS.updateBaselineScope === "design") {
-    const rel = path.relative(ROOT, BASELINE_PATH);
-    if (baselineRaw === null) {
-      console.error(
-        `[quality] ${rel} is missing or not valid JSON — refusing a scoped update that would discard every other metric. Fix the file, or run the full \`pnpm quality:baseline\`.`
-      );
-      process.exit(2);
-    }
-    if (typeof baselineRaw !== "object" || Array.isArray(baselineRaw)) {
-      console.error(`[quality] ${rel} is not a baseline object — refusing a scoped update.`);
-      process.exit(2);
-    }
-  }
   const baseline = baselineRaw ?? {};
 
   const current = {
@@ -810,18 +868,12 @@ function main() {
   writeFileSafe(ARTIFACT_PATH, JSON.stringify(current, null, 2));
 
   if (FLAGS.updateBaselineScope === "design") {
-    let next;
+    // Validation, merge and the atomic write all live in updateDesignBaseline,
+    // so the tests exercise exactly the path this takes.
     try {
-      next = mergeDesignBaseline(baseline, current.violations.design);
+      updateDesignBaseline({ baselinePath: BASELINE_PATH, design: current.violations.design });
     } catch (err) {
       console.error(`[quality] ${err.message}`);
-      process.exit(2);
-    }
-    // Only claim success once the write actually succeeded.
-    if (!writeFileSafe(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`)) {
-      console.error(
-        `[quality] could not write ${path.relative(ROOT, BASELINE_PATH)} — the baseline is unchanged.`
-      );
       process.exit(2);
     }
     log(`design baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
@@ -842,9 +894,11 @@ function main() {
       reactDoctor: current.reactDoctor ??
         baseline.reactDoctor ?? { score: 0, errors: 0, warnings: 0, byCategory: {} },
     };
-    if (!writeFileSafe(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`)) {
+    try {
+      writeJsonAtomic(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
+    } catch (err) {
       console.error(
-        `[quality] could not write ${path.relative(ROOT, BASELINE_PATH)} — the baseline is unchanged.`
+        `[quality] could not write ${path.relative(ROOT, BASELINE_PATH)} (${err.message}) — the baseline is unchanged.`
       );
       process.exit(2);
     }
@@ -882,6 +936,9 @@ module.exports = {
   matchGlob,
   countLines,
   mergeDesignBaseline,
+  assertUsableBaseline,
+  updateDesignBaseline,
+  writeJsonAtomic,
   render,
   parseUpdateBaselineScope,
 };
