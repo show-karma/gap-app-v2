@@ -15,7 +15,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { CategoryView } from "./CategoryView";
+import { CategoryView } from "./CategoryViewRenamed";
 import { IndicatorsView } from "./IndicatorsView";
 
 export const metadata = defaultMetadata;
