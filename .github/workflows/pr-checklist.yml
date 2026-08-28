@@ -43,6 +43,10 @@ jobs:
           # branch advances, and the three-dot merge base needs real history.
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          # Every later step runs PR-authored code (the checker, its config,
+          # the installed toolchain). Do not leave this job's token in
+          # .git/config where that code could read it. Nothing here pushes.
+          persist-credentials: false
 
       - name: Fetch and validate the immutable PR base SHA
         env:
@@ -69,9 +73,11 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      # The design checker `require()`s `typescript`, a devDependency.
+      # The design checker only needs `typescript` and node; quality-gate.js is
+      # not run in this workflow. `--ignore-scripts` keeps a PR from executing
+      # arbitrary install hooks in the same job as the write-capable token.
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Run anti-pattern checks
         id: antipatterns
@@ -411,14 +417,24 @@ jobs:
       # Separate blocking step so the comment above is always posted first.
       - name: Fail on design errors
         if: always()
+        # Step outputs reach the shell through env, never through `${{ }}`
+        # interpolation into the script body.
+        env:
+          DESIGN_STATUS: ${{ steps.design.outputs.status }}
+          DESIGN_ERRORS: ${{ steps.design.outputs.errors }}
         run: |
-          if [ "${{ steps.design.outputs.status }}" != "ok" ]; then
+          if [ "$DESIGN_STATUS" != "ok" ]; then
             echo "::error::design check did not complete — failing closed"
             exit 1
           fi
-          ERRORS="${{ steps.design.outputs.errors }}"
-          if [ "${ERRORS:-0}" -gt 0 ]; then
-            echo "::error::$ERRORS design-system error(s) on the lines this PR adds. See the Quality Checklist comment."
+          case "$DESIGN_ERRORS" in
+            ''|*[!0-9]*)
+              echo "::error::design error count \"$DESIGN_ERRORS\" is not a number — failing closed"
+              exit 1
+              ;;
+          esac
+          if [ "$DESIGN_ERRORS" -gt 0 ]; then
+            echo "::error::$DESIGN_ERRORS design-system error(s) on the lines this PR adds. See the Quality Checklist comment."
             exit 1
           fi
           echo "No blocking design-system findings."
