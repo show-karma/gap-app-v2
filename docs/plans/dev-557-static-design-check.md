@@ -161,11 +161,12 @@ fixed hex mapped to `brand` can violate whitelabel intent.
 |---|------|-------|---------|------------|
 | T0 | Rival review rounds 1–2 → APPROVE-WITH-CHANGES, changes incorporated (v3) | Tech Lead + Rival-557 | — | **DONE 2026-08-27** |
 | T1 | Golden corpus + tests first: `__tests__/unit/scripts/check-design-system.test.ts` + fixtures for every rule (≥ 3 positive, ≥ 3 negative each), precedence, waivers, diff-hunk parser (all §6 row 9 cases), each mode | Dev-557 (TDD) | T0 | **DONE** `cd2ef69` — 98 tests + 17 source fixtures + 8 diff fixtures; verified red first (`Cannot find module '../../../scripts/check-design-system.js'`) |
-| T2 | `check-design-system.js` scanner (TS AST + candidate lexer) + config + modes + JSON | Dev-557 | T1 | **DONE** `e8e087c` — T1 green 98/98; full-repo `--report --json` **3.1 s** (budget 10 s), 3 748 findings; content-hash cache not needed. Biome-clean. Per-rule full-repo counts: DS001 173, DS002 201, DS003 44, DS004 101, DS005 1 056, DS006 2 086, DS007 87, DS000 0 |
+| T2 | `check-design-system.js` scanner (TS AST + candidate lexer) + config + modes + JSON | Dev-557 | T1 | **DONE** `e8e087c` — T1 green 98/98; full-repo `--report --json` **3.1 s** (budget 10 s), 3 748 findings; content-hash cache not needed. Biome-clean. Per-rule full-repo counts after the §11 rulings: DS001 173, DS002 211, DS003 44, DS004 101, DS005 1 056, DS006 2 075, DS007 87, DS000 0 — total 3 747 |
 | T3 | `.husky/pre-commit` `--staged`, post-edit hook `--worktree` | Dev-557 | T2 | **DONE** `67493e5` — flow 2 (edit-free legacy file ⇒ hook silent), 15a (staged DS001 ⇒ exit 1), 15b (staged DS006 only ⇒ exit 0), 16 (hook prints DS004 + hint), 17b (staged `.scss` ⇒ DS007 blocks) all verified against this worktree. lint-staged untouched |
 | T4 | `pr-checklist.yml` changes (§5) | Dev-557 | T2 | **DONE** `b0f8085` — (a)–(g) all present; YAML parses, both `github-script` blocks parse. Flows 1, 5, 7, 7b (missing entry), 7c (stale entry), 7d (short reason), 10, 11, 12 verified with an offline harness that extracts the exact script out of the YAML. **Throwaway-PR run still owed — T7/T8** |
 | T5 | `quality-gate.js` collector + `compare()` + `--update-baseline=design` + extend `__tests__/unit/scripts/quality-gate.test.ts` | Dev-557 | T2 | **DONE** `19771fb` — 27 tests (was 15). Flow 13 both ways against the real repo: +1 DS001 ⇒ `design.DS001 173 → 174 (+1)`, exit 1; −1 ⇒ improvement, exit 0. Flow 14: `--update-baseline=design` touches only `violations.design` (13-line diff), 3.2 s. Collector failure ⇒ `design collector failed`, never zeros |
 | T6 | Docs (§5 last two rows) + plan status | Dev-557 | T2–T5 | **DONE** `ebba030` — `gap-app-v2/CLAUDE.md` gains a "Design system" subsection under Enforcement (rule table incl. the "not a violation" column, precedence, all modes, exit-2 contract, waiver format, baseline refresh). Root `CLAUDE.md` Pre-PR colour item extended — **edited in place in `D:/super-gap`, left uncommitted**: it belongs to the umbrella repo, not this branch. §7 filled below; awaiting Tech Lead review |
+| S11 | Apply §11 Tech Lead rulings F1, F3, F4, F5, F7 + the two rulings; add the plan to the branch | Dev-557 | T6 | **DONE** — F1 `e5d603f`, F7 `e5d603f`, both rulings `e5d603f`, F4+F3 `4e0c469`, plan `804b8e9`. F5 needed no change (already outside the `*.tsx` branch; re-verified with a `.scss` file). F2 already held, F6 deferred to Amaury |
 | T7 | Independent verification (see below) | Tester-557 | T2–T5 | **READY** — branch `amaury/dev-557-static-design-check` in worktree `D:/super-gap-worktrees/dev-557`, 7 commits, not pushed. T7(f) coverage already met by the dev suite: **91.78 % lines / 90.89 % statements / 78.04 % branches / 95.38 % functions** on `check-design-system.js` |
 | T8 | Fix T7 findings; open PR via `/git-create-pr` with `## Smoke results` linking the throwaway-PR runs; `/babysit` | Dev-557 | T7 | CI green incl. new blocking step |
 
@@ -247,15 +248,32 @@ These are **binding amendments** to §3–§5; Dev-557 must apply them before T7
 ### Dev handover (T1–T6 complete, 2026-08-27)
 
 Worktree `D:/super-gap-worktrees/dev-557`, branch `amaury/dev-557-static-design-check` off `origin/main`
-(`df5b582`). Seven commits, **not pushed, no PR opened** — Tester verifies first.
+(`df5b582`). Eleven commits, **not pushed, no PR opened** — Tester verifies first. §11 rulings applied.
 
-| Check | Result |
+| Check | Result (re-run after the §11 rulings) |
 |-------|--------|
-| `pnpm typecheck` | pass, 1 m 29 s |
-| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **136 passed** — 109 design-check + 27 quality-gate |
-| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 91.78 % lines, 90.89 % stmts, 78.04 % branches, 95.38 % funcs |
-| `pnpm design:check --report --json` (full repo) | **3.1 s**, 3 748 findings, exit 0 |
+| `pnpm typecheck` | pass, 19 s (incremental; 1 m 29 s cold) |
+| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **163 passed** — 127 design-check + 36 quality-gate |
+| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 91.98 % lines, 91.11 % stmts, 79.04 % branches, 95.58 % funcs |
+| `pnpm design:check --report --json` (full repo) | **2.9–3.5 s over three runs**, 3 747 findings, exit 0 |
 | Biome on the changed files | 0 errors; net **−1** diagnostic vs `origin/main` |
+
+Per-rule full-repo counts: DS001 173, DS002 211, DS003 44, DS004 101, DS005 1 056, DS006 2 075,
+DS007 87, DS000 0. Versus the pre-§11 run: **DS002 +10** and **DS006 +1** from F1 (`widget/**` is
+now a scan root), **DS006 −12** from F7 (the two `scaleDefinitionFiles` held 12 DS006 findings and
+nothing else). `quality-baseline.json` regenerated with `pnpm quality --update-baseline=design`.
+
+### §11 rulings — what changed
+
+| Ref | Outcome |
+|-----|---------|
+| F1 | `widget/**/*.{js,jsx,ts,tsx}` added to `scanGlobs`; `utilities/**` and `hooks/**` were already there. 13 widget findings now counted |
+| F3 | Flag parsing extracted to an exported `parseUpdateBaselineScope()`; bare `--update-baseline` and `--update-baseline=design` both verified end-to-end, unknown scope exits 2. 5 unit tests |
+| F4 | An absent `baseline.violations.design` no longer compares against 0 — the comparison is skipped and a note is printed. Verified by deleting the key from the real baseline: gate passed, note shown. 5 unit tests |
+| F5 | **No change needed** — the hook already calls the checker after `esac`, outside the `*.tsx` branch. Re-verified with a `.scss` edit: DS007 reported |
+| F7 | `scaleDefinitionFiles` config key added with the two named files, exempt from DS006 only; 6 unit tests prove DS001–DS005 still fire there |
+| `!bg-[#123456]` | Already produced both DS004 and DS001; fixture and test added to lock it in |
+| Multi-rule waiver | `design-check-ignore: DS001,DS004 <reason>` implemented in the checker (each id must match or it is a DS000 orphan) and in the workflow, which now groups by waiver and requires one comma-joined PR-body entry. Documented in `gap-app-v2/CLAUDE.md` |
 
 Known issues and deviations, all deliberate:
 
@@ -266,9 +284,10 @@ Known issues and deviations, all deliberate:
 2. **Global coverage thresholds** (`vitest.config.ts`: lines 70 / branches 60) are evaluated over
    whatever ran, so a single-file coverage run can trip them. The command above passes because the
    design checker is now the only instrumented file and clears every threshold on its own.
-3. **Root `CLAUDE.md` edit is uncommitted.** `D:/super-gap/CLAUDE.md` is the umbrella repo, whose
-   `main` has unrelated uncommitted state; I did not commit there. The one-line Pre-PR checklist
-   change is in the working tree for the Tech Lead to land.
+3. **Root `CLAUDE.md` edit is gone.** `D:/super-gap/CLAUDE.md` is the umbrella repo; per the Tech
+   Lead it stays uncommitted for Amaury to decide. That file has since been restructured by someone
+   else and the one-line Pre-PR colour change is no longer in it — it needs re-applying by whoever
+   lands the umbrella change. Not re-applied here, as instructed.
 4. **Waiver PR-body check runs on `edited`.** `pr-checklist.yml` now also triggers on
    `pull_request: edited` so fixing a `## Review waivers` section re-runs the gate without a push.
 5. **DS002 accepts 4-digit hex** (`#rgba`), which in principle could match an issue reference such
