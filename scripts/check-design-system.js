@@ -1145,7 +1145,8 @@ function readRevisions(root, files, source) {
 // would let one PR burn the whole CI runner. Fail closed and name the path.
 const MAX_SOURCE_BYTES = 2 * 1024 * 1024;
 // Emitting hundreds of thousands of findings would blow the JSON and the PR
-// comment. Truncate the list but keep the true counts in the summary.
+// comment. The cap applies to the DISPLAYED list only — every count, and the
+// blocking decision, is computed from the complete set first (Rival R6).
 const MAX_FINDINGS_PER_FILE = 500;
 
 function scanFiles(root, config, entries, source = "worktree") {
@@ -1168,17 +1169,52 @@ function scanFiles(root, config, entries, source = "worktree") {
         `${file} is larger than ${MAX_SOURCE_BYTES} bytes — refusing to scan it rather than stall the run`
       );
     }
-    const fileFindings = filterByAddedLines(scanText({ file, text, config }), added);
-    if (fileFindings.length > MAX_FINDINGS_PER_FILE) {
-      const kept = fileFindings.slice(0, MAX_FINDINGS_PER_FILE);
-      kept.truncatedFrom = fileFindings.length;
-      findings.push(...kept);
-      findings.truncated = (findings.truncated ?? 0) + (fileFindings.length - kept.length);
-    } else {
-      findings.push(...fileFindings);
-    }
+    findings.push(...filterByAddedLines(scanText({ file, text, config }), added));
   }
   return findings;
+}
+
+function sortFindings(findings) {
+  return findings.sort(
+    (a, b) =>
+      a.file.localeCompare(b.file) ||
+      a.line - b.line ||
+      a.col - b.col ||
+      a.rule.localeCompare(b.rule)
+  );
+}
+
+/**
+ * Caps the list shown to a human or JSON consumer at `perFileCap` findings per
+ * file, keeping errors first and waived findings next so the entries that
+ * decide the outcome are never the ones dropped.
+ *
+ * Truncation happens AFTER summarize(): dropping findings first let 500
+ * leading warnings hide a later error and turn a failing run into a pass.
+ */
+function truncateForDisplay(findings, perFileCap = MAX_FINDINGS_PER_FILE) {
+  const byFile = new Map();
+  for (const f of findings) {
+    const list = byFile.get(f.file);
+    if (list) list.push(f);
+    else byFile.set(f.file, [f]);
+  }
+
+  const shown = [];
+  let truncated = 0;
+  const importance = (f) => (f.waived ? 1 : f.severity === "error" ? 0 : 2);
+  for (const list of byFile.values()) {
+    if (list.length <= perFileCap) {
+      shown.push(...list);
+      continue;
+    }
+    const kept = [...list]
+      .sort((a, b) => importance(a) - importance(b) || a.line - b.line || a.col - b.col)
+      .slice(0, perFileCap);
+    truncated += list.length - kept.length;
+    shown.push(...kept);
+  }
+  return { shown: sortFindings(shown), truncated };
 }
 
 function relativeToRoot(root, file) {
@@ -1255,7 +1291,7 @@ function summarize(findings) {
   return summary;
 }
 
-function renderTable(findings, summary, mode) {
+function renderTable(findings, summary, mode, truncated = 0) {
   if (!findings.length) {
     return `[design] ${mode}: no design-system findings.`;
   }
@@ -1275,6 +1311,11 @@ function renderTable(findings, summary, mode) {
     if (hint) lines.push(`${" ".repeat(widths[0])}  ${" ".repeat(widths[1])}  → ${hint}`);
   });
   lines.push("");
+  if (truncated > 0) {
+    lines.push(
+      `[design] ${truncated} finding(s) hidden from this listing (cap ${MAX_FINDINGS_PER_FILE} per file); the counts below cover all of them.`
+    );
+  }
   lines.push(
     `[design] ${mode}: ${summary.error} error(s), ${summary.warn} warning(s), ${summary.waived} waived.`
   );
@@ -1388,20 +1429,18 @@ function run(argv) {
     );
   }
 
-  findings.sort(
-    (a, b) =>
-      a.file.localeCompare(b.file) ||
-      a.line - b.line ||
-      a.col - b.col ||
-      a.rule.localeCompare(b.rule)
-  );
+  sortFindings(findings);
+  // Counts and the exit decision come from EVERY finding; only the list we
+  // print or serialise is capped.
   const summary = summarize(findings);
-  const envelope = { mode: opts.mode, base: opts.base, summary, findings };
+  const { shown, truncated } = truncateForDisplay(findings);
+  const envelope = { mode: opts.mode, base: opts.base, summary, findings: shown };
+  if (truncated > 0) envelope.truncated = truncated;
 
   process.stdout.write(
     opts.json
       ? `${JSON.stringify(envelope, null, 2)}\n`
-      : `${renderTable(findings, summary, opts.mode)}\n`
+      : `${renderTable(shown, summary, opts.mode, truncated)}\n`
   );
 
   if (opts.report || opts.mode === "files") return 0;
@@ -1431,6 +1470,8 @@ module.exports = {
   parseCandidate,
   parseDiff,
   run,
+  sortFindings,
+  truncateForDisplay,
   scanText,
   summarize,
   toPosix,

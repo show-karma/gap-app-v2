@@ -16,6 +16,10 @@ const designCheck = require("../../../scripts/check-design-system.js") as {
   filterByAddedLines: (findings: Finding[], added: Set<number> | null) => Finding[];
   toPosix: (p: string) => string;
   inRanges: (pos: number, ranges: number[][], sorted?: boolean) => boolean;
+  truncateForDisplay: (
+    findings: Finding[],
+    perFileCap?: number
+  ) => { shown: Finding[]; truncated: number };
   RULES: Record<string, { id: string; severity: "error" | "warn"; name: string }>;
 };
 
@@ -766,6 +770,63 @@ describe("pathological input stays bounded (Rival R6)", () => {
     expect(elapsed).toBeLessThan(2000);
   });
 
+  it("keeps errors and waived findings when truncating the displayed list", () => {
+    const base = {
+      file: "components/A.tsx",
+      col: 1,
+      endLine: 1,
+      snippet: "x",
+      message: "m",
+      hint: null,
+      waiverLine: null,
+      waiverReason: null,
+      waiverRules: null,
+      waiverAdded: false,
+    };
+    const findings = [
+      ...Array.from({ length: 10 }, (_, i) => ({
+        ...base,
+        rule: "DS006",
+        severity: "warn" as const,
+        line: i + 1,
+        waived: false,
+      })),
+      { ...base, rule: "DS001", severity: "error" as const, line: 50, waived: false },
+      { ...base, rule: "DS002", severity: "error" as const, line: 60, waived: true },
+    ];
+    const { shown, truncated } = designCheck.truncateForDisplay(findings, 3);
+    expect(truncated).toBe(9);
+    expect(shown).toHaveLength(3);
+    expect(shown.map((f) => f.rule).sort()).toEqual(["DS001", "DS002", "DS006"]);
+  });
+
+  it("truncates per file, not across the whole run", () => {
+    const make = (file: string, n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        file,
+        rule: "DS006",
+        severity: "warn" as const,
+        line: i + 1,
+        col: 1,
+        endLine: i + 1,
+        snippet: "x",
+        message: "m",
+        hint: null,
+        waived: false,
+        waiverLine: null,
+        waiverReason: null,
+        waiverRules: null,
+        waiverAdded: false,
+      }));
+    const { shown, truncated } = designCheck.truncateForDisplay(
+      [...make("a.tsx", 5), ...make("b.tsx", 2)],
+      3
+    );
+    expect(truncated).toBe(2);
+    expect(shown.filter((f) => f.file === "a.tsx")).toHaveLength(3);
+    expect(shown.filter((f) => f.file === "b.tsx")).toHaveLength(2);
+  });
+
   it("binary-searches sorted ranges and still answers correctly", () => {
     const ranges = Array.from({ length: 64 }, (_, i) => [i * 10, i * 10 + 5]);
     for (let pos = 0; pos < 640; pos++) {
@@ -1174,6 +1235,50 @@ describe("CLI modes", () => {
     expect(status).toBe(0);
     expect(json.summary.error).toBe(0);
     expect(json.summary.waived).toBe(1);
+  });
+
+  // Rival R6: the per-file cap used to drop findings BEFORE the summary was
+  // computed, so 500 leading warnings hid a later error and the run passed.
+  it("still blocks when an error follows 500 warnings in one file", () => {
+    const lines = Array.from({ length: 500 }, (_, i) => `const w${i} = "p-[${i + 3}px]";`);
+    lines.push('const boom = "bg-[#123456]";');
+    write("components/Many.tsx", `${lines.join("\n")}\n`);
+    git("add", "components/Many.tsx");
+
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(1);
+    expect(json.summary.error).toBe(1);
+    expect(json.summary.warn).toBe(500);
+    expect(json.summary.byRule.DS001).toBe(1);
+    expect(json.summary.byRule.DS006).toBe(500);
+  });
+
+  it("caps the displayed list but reports how many were hidden", () => {
+    const lines = Array.from({ length: 500 }, (_, i) => `const w${i} = "p-[${i + 3}px]";`);
+    lines.push('const boom = "bg-[#123456]";');
+    write("components/Many.tsx", `${lines.join("\n")}\n`);
+    git("add", "components/Many.tsx");
+
+    const { json } = runJson(["--staged"]);
+    expect(json.findings).toHaveLength(500);
+    expect(json.truncated).toBe(1);
+    // The error survives truncation; a warning is dropped instead.
+    expect(json.findings.some((f: Finding) => f.rule === "DS001")).toBe(true);
+  });
+
+  it("says in the human table how many findings were hidden", () => {
+    const lines = Array.from({ length: 501 }, (_, i) => `const w${i} = "p-[${i + 3}px]";`);
+    write("components/Many.tsx", `${lines.join("\n")}\n`);
+    git("add", "components/Many.tsx");
+
+    const res = run(["--staged", "--report"]);
+    expect(res.stdout).toContain("1 finding(s) hidden");
+    expect(res.stdout).toContain("501 warning(s)");
+  });
+
+  it("omits the truncated key when nothing was hidden", () => {
+    const { json } = runJson(["--report"]);
+    expect(json).not.toHaveProperty("truncated");
   });
 
   it("fails closed on a source file above the size cap", () => {
