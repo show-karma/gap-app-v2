@@ -30,6 +30,7 @@ import {
 } from "@/hooks/useApplicationIntegrations";
 import { useCommunityReviewers } from "@/hooks/useCommunityReviewers";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import type {
   SimocracyCouncilSim,
@@ -202,6 +203,9 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
   } = useSimocracySimLinks(programId);
   const { data: summary } = useSimocracyProgramSummary(programId);
   const { data: council } = useSimocracyCouncil(programId, { enabled: canManage });
+  const { data: programConfig } = useProgramConfig(programId);
+  const integrationDisabled =
+    programConfig?.applicationConfig?.integrations?.simocracy?.enabled === false;
   const { addSimLinkAsync, isAdding, deleteSimLinkAsync, isDeleting, deletingSimUri } =
     useSimocracySimLinkMutations(programId);
 
@@ -367,7 +371,12 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800">
+    <div
+      className={cn(
+        "rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800 transition-opacity",
+        integrationDisabled && "opacity-50"
+      )}
+    >
       <div className="flex items-start justify-between gap-4 px-5 pt-5">
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -379,7 +388,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
         </div>
         {(council?.length ?? 0) > 0 && (
           <div className="flex shrink-0 items-center gap-2 pt-0.5">
-            <div className="flex gap-0.5">
+            <div aria-hidden="true" className="flex max-w-40 flex-wrap gap-0.5">
               {(council ?? []).map((sim) => (
                 <span
                   key={sim.simUri}
