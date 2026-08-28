@@ -266,11 +266,28 @@ describe("MilestoneUpdateForm analytics", () => {
   });
 
   it("does not report a completion when the milestone never indexes as completed", async () => {
+    // The component keeps polling long after this test ends. A distinct
+    // milestone uid keeps that orphaned poll inert: `beforeEach` restores the
+    // completed mock for the next test, and a poll still looking for
+    // MILESTONE_UID would find it and emit inside whichever test is running.
+    const ORPHAN_UID = "0xmilestone-never-indexed";
+    mockProjectById.mockResolvedValue({
+      grants: [
+        {
+          uid: GRANT_UID,
+          milestones: [{ uid: ORPHAN_UID, chainID: 10, complete: mockComplete }],
+        },
+      ],
+    });
     mockRefetchGrants.mockResolvedValue({
-      data: [{ uid: GRANT_UID, milestones: [{ uid: MILESTONE_UID, completed: false }] }],
+      data: [{ uid: GRANT_UID, milestones: [{ uid: ORPHAN_UID, completed: false }] }],
     });
 
-    await submit(makeMilestone(nowSeconds() + DAY_SECONDS));
+    const orphan = {
+      ...(makeMilestone(nowSeconds() + DAY_SECONDS) as object),
+      uid: ORPHAN_UID,
+    } as never;
+    await submit(orphan);
 
     await waitFor(() => expect(mockComplete).toHaveBeenCalled(), { timeout: 4000 });
     expect(completedEvents()).toHaveLength(0);

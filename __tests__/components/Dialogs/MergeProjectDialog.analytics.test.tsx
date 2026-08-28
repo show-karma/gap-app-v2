@@ -19,6 +19,7 @@ const {
   mockSearchProjects,
   mockRefreshProject,
   mockShowSuccess,
+  pointerUid,
 } = vi.hoisted(() => ({
   mockTrack: vi.fn(),
   mockAttest: vi.fn(),
@@ -26,6 +27,9 @@ const {
   mockSearchProjects: vi.fn(),
   mockRefreshProject: vi.fn(),
   mockShowSuccess: vi.fn(),
+  // Mutable so the never-indexes test can give its long-lived poll a pointer
+  // uid the restored mock never returns.
+  pointerUid: { current: "0xpointer" },
 }));
 
 const SOURCE_PROJECT_UID = "0x1111111111111111111111111111111111111111";
@@ -38,7 +42,7 @@ vi.mock("@/utilities/analytics/client", () => ({
 
 vi.mock("@show-karma/karma-gap-sdk", () => ({
   ProjectPointer: class {
-    uid = POINTER_UID;
+    uid = pointerUid.current;
     chainID = 10;
     attest = mockAttest;
   },
@@ -160,6 +164,7 @@ async function selectTargetAndMerge() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  pointerUid.current = POINTER_UID;
   mockSearchProjects.mockResolvedValue([
     {
       uid: TARGET_PROJECT_UID,
@@ -210,6 +215,9 @@ describe("MergeProjectDialog analytics", () => {
   });
 
   it("does not report a merge when the pointer never indexes", async () => {
+    // Polling outlives this test; a distinct pointer uid keeps it inert once
+    // `beforeEach` restores the indexed mock for the next test.
+    pointerUid.current = "0xpointer-never-indexed";
     mockRefreshProject.mockResolvedValue({ pointers: [] });
 
     await selectTargetAndMerge();

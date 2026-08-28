@@ -115,9 +115,9 @@ const grant = { uid: GRANT_UID, chainID: 10, milestones: [] } as never;
 
 const createdEvents = () => mockTrack.mock.calls.filter(([name]) => name === "milestone_created");
 
-async function submit() {
+async function submit(grantOverride: typeof grant = grant) {
   const user = userEvent.setup();
-  render(<MilestoneForm grant={grant} />);
+  render(<MilestoneForm grant={grantOverride} />);
 
   await user.type(screen.getByPlaceholderText("Ex: Finalize requirements"), "A milestone title");
   // `dates.endsAt` is required by the schema, so the form cannot submit without
@@ -187,9 +187,13 @@ describe("MilestoneForm analytics", () => {
   });
 
   it("does not report a creation when the milestone never indexes", async () => {
-    mockRefetchGrants.mockResolvedValue({ data: [{ uid: GRANT_UID, milestones: [] }] });
+    // Polling outlives this test, so it is pointed at a grant uid that the
+    // mock `beforeEach` restores never returns. Otherwise the orphaned poll
+    // finds the indexed milestone and emits inside a later test.
+    const ORPHAN_GRANT = "0xgrant-never-indexed";
+    mockRefetchGrants.mockResolvedValue({ data: [{ uid: ORPHAN_GRANT, milestones: [] }] });
 
-    await submit();
+    await submit({ uid: ORPHAN_GRANT, chainID: 10, milestones: [] } as never);
 
     await waitFor(() => expect(mockAttest).toHaveBeenCalled(), { timeout: 4000 });
     expect(createdEvents()).toHaveLength(0);

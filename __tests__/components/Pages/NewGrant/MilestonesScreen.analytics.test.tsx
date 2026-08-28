@@ -28,6 +28,7 @@ const {
   mockShowSuccess,
   mockShowError,
   mockStoreState,
+  grantUid,
 } = vi.hoisted(() => ({
   mockTrack: vi.fn(),
   mockAttest: vi.fn(),
@@ -36,6 +37,9 @@ const {
   mockShowSuccess: vi.fn(),
   mockShowError: vi.fn(),
   mockStoreState: { current: null as unknown },
+  // The uid the attested Grant reports. Mutable so the never-indexes test can
+  // point its (long-lived) poll at a grant the restored mock never returns.
+  grantUid: { current: "0xgrant" },
 }));
 
 const PROJECT_UID = "0xproject";
@@ -48,7 +52,7 @@ vi.mock("@/utilities/analytics/client", () => ({
 
 vi.mock("@show-karma/karma-gap-sdk", () => ({
   Grant: class {
-    uid = GRANT_UID;
+    uid = grantUid.current;
     chainID = 10;
     recipient = "0xrecipient";
     details: unknown = null;
@@ -198,6 +202,7 @@ const indexTheGrant = () =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  grantUid.current = GRANT_UID;
   mockStoreState.current = buildStore();
   mockAttest.mockResolvedValue({ tx: [{ hash: "0xtx" }] });
   mockSetupChainAndWallet.mockResolvedValue({
@@ -305,8 +310,12 @@ describe("MilestonesScreen analytics", () => {
   });
 
   it("does not report a completion when the grant never indexes its details", async () => {
-    // Grant comes back, but without GrantDetails processed.
-    mockGetProjectGrants.mockResolvedValue([{ uid: GRANT_UID, details: undefined }]);
+    // Grant comes back, but without GrantDetails processed — so the component
+    // polls on well past this test. The attested grant is given a uid the
+    // restored mock never returns, or that orphaned poll would find an indexed
+    // grant and emit inside a later test.
+    grantUid.current = "0xgrant-never-indexed";
+    mockGetProjectGrants.mockResolvedValue([{ uid: "0xgrant-never-indexed", details: undefined }]);
 
     await submit();
 

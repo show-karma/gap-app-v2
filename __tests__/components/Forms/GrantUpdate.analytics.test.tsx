@@ -210,10 +210,18 @@ describe("GrantUpdateForm analytics", () => {
   });
 
   it("does not report a post when the update never indexes", async () => {
-    // Attestation succeeds but the update never appears on the refetched grant.
-    mockGetProjectGrants.mockResolvedValue([{ uid: GRANT_UID, updates: [] }]);
+    // Attestation succeeds but the update never appears on the refetched grant,
+    // so the component polls on (1000 attempts, 1.5s apart) well past the end
+    // of this test. A DIFFERENT grant uid is used here deliberately: `beforeEach`
+    // restores the indexed mock for the next test, and an orphaned poll still
+    // looking for GRANT_UID would find it and emit a second
+    // `grant_update_posted` inside whichever test happened to be running.
+    // Looking for a grant the restored mock never returns keeps it inert.
+    const ORPHAN_GRANT_UID = "0xgrant-never-indexed";
+    const orphanGrant = { ...(grantWithCommunity as object), uid: ORPHAN_GRANT_UID } as never;
+    mockGetProjectGrants.mockResolvedValue([{ uid: ORPHAN_GRANT_UID, updates: [] }]);
 
-    await submit(grantWithCommunity);
+    await submit(orphanGrant);
 
     await waitFor(() => expect(mockAttest).toHaveBeenCalled());
     expect(postedEvents()).toHaveLength(0);
