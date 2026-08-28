@@ -657,6 +657,143 @@ describe("CLI modes", () => {
   });
 });
 
+// The CLI-mode block above shells out, which proves the real exit codes but
+// hides the CLI half from in-process coverage. `run()` returns the exit code
+// instead of calling process.exit, so it can also be driven directly.
+describe("run() in process", () => {
+  let repo: string;
+
+  const git = (...args: string[]) =>
+    execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();
+
+  const write = (rel: string, body: string) => {
+    const abs = path.join(repo, rel);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, body);
+  };
+
+  /** Runs the CLI in this process, capturing stdout. */
+  const capture = (args: string[]) => {
+    const chunks: string[] = [];
+    const original = process.stdout.write;
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      chunks.push(String(chunk));
+      return true;
+    }) as typeof process.stdout.write;
+    try {
+      const code = designCheck.run(["--root", repo, ...args]);
+      return { code, out: chunks.join("") };
+    } finally {
+      process.stdout.write = original;
+    }
+  };
+
+  beforeAll(() => {
+    repo = fs.mkdtempSync(path.join(os.tmpdir(), "design-run-"));
+    git("init", "-q", "-b", "main");
+    git("config", "user.email", "dev@example.com");
+    git("config", "user.name", "Dev");
+    write(
+      "components/Palette.tsx",
+      [
+        "export const Palette = () => (",
+        '  <span className="bg-[#2ed1a8]">brand</span>',
+        '  <span className="p-[13px]">scale</span>',
+        ");",
+        "",
+      ].join("\n")
+    );
+    write("styles/theme.scss", ".a { color: #123456; }\n");
+    git("add", "-A");
+    git("commit", "-qm", "seed");
+  });
+
+  afterAll(() => {
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("prints the help text and exits 0", () => {
+    const { code, out } = capture(["--help"]);
+    expect(code).toBe(0);
+    expect(out).toContain("Usage: node scripts/check-design-system.js");
+    expect(out).toContain("--worktree");
+  });
+
+  it("renders a human table with the curated hint and exits 1", () => {
+    const { code, out } = capture([]);
+    expect(code).toBe(1);
+    expect(out).toContain("components/Palette.tsx:2");
+    expect(out).toContain("DS001");
+    expect(out).toContain("→ bg-brand");
+    expect(out).toContain("2 error(s), 1 warning(s), 0 waived");
+  });
+
+  it("says so plainly when a scan is clean", () => {
+    const { code, out } = capture(["--files", "components/Nope.tsx"]);
+    expect(code).toBe(0);
+    expect(out).toContain("no design-system findings");
+  });
+
+  it("emits JSON when asked and never exits 1 under --report", () => {
+    const { code, out } = capture(["--report", "--json"]);
+    expect(code).toBe(0);
+    const json = JSON.parse(out);
+    expect(json.mode).toBe("full");
+    expect(json.base).toBeNull();
+    expect(json.summary.byRule).toEqual({ DS001: 1, DS006: 1, DS007: 1 });
+  });
+
+  it("throws rather than reporting zero when --changed has no base", () => {
+    expect(() => capture(["--changed"])).toThrow(/--base/);
+  });
+
+  it("throws on an unknown option", () => {
+    expect(() => capture(["--nope"])).toThrow(/unknown option/);
+  });
+
+  it("throws on a stray positional argument", () => {
+    expect(() => capture(["oops.tsx"])).toThrow(/unexpected argument/);
+  });
+
+  it("accepts an explicit --config path", () => {
+    const configPath = path.resolve(__dirname, "../../../scripts/design-check.config.json");
+    const { code } = capture(["--report", "--json", "--config", configPath]);
+    expect(code).toBe(0);
+  });
+
+  it("reports nothing for a tracked file with no local edits", () => {
+    const { code, out } = capture(["--worktree", "components/Palette.tsx", "--json"]);
+    expect(code).toBe(0);
+    expect(JSON.parse(out).findings).toEqual([]);
+  });
+
+  it("reports the added lines of an edited tracked file", () => {
+    write(
+      "components/Palette.tsx",
+      [
+        "export const Palette = () => (",
+        '  <span className="bg-[#2ed1a8]">brand</span>',
+        '  <span className="p-[13px]">scale</span>',
+        '  <span className="text-[#ff0000]">added</span>',
+        ");",
+        "",
+      ].join("\n")
+    );
+    const { code, out } = capture(["--worktree", "components/Palette.tsx", "--json"]);
+    expect(code).toBe(1);
+    const json = JSON.parse(out);
+    expect(json.findings).toHaveLength(1);
+    expect(json.findings[0].line).toBe(4);
+    git("checkout", "--", "components/Palette.tsx");
+  });
+
+  it("reports nothing staged when the index is clean", () => {
+    const { code, out } = capture(["--staged", "--json"]);
+    expect(code).toBe(0);
+    expect(JSON.parse(out).findings).toEqual([]);
+  });
+});
+
 describe("RULES table", () => {
   it("exposes every documented rule with its severity", () => {
     expect(Object.keys(RULES).sort()).toEqual([
