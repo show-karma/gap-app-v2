@@ -436,6 +436,10 @@ function makeFinding(rule, file, index, start, end, snippet, message, hint) {
     hint: hint || null,
     waived: false,
     waiverLine: null,
+    waiverReason: null,
+    // Comma-joined, sorted set of rules the same waiver comment covers. The PR
+    // body declares one line per waiver carrying this exact set.
+    waiverRules: null,
     // Set only in diff modes: true when the waiver comment itself sits on an
     // added line, which is what makes a waiver reviewable in the PR body.
     waiverAdded: false,
@@ -466,6 +470,9 @@ function scanText({ file, text, config }) {
 function scanScript(rel, text, index, config) {
   const findings = [];
   const isTokenFile = (config.tokenDefinitionFiles || []).includes(rel);
+  // Files that define the spacing/type scale itself. Exempt from DS006 ONLY —
+  // every colour and primitive rule still applies to them.
+  const isScaleFile = (config.scaleDefinitionFiles || []).includes(rel);
   const isIconFile = matchesAny(rel, config.iconGlobs);
   const primitivesExempt = matchesAny(rel, config.primitiveExemptGlobs);
 
@@ -556,6 +563,7 @@ function scanScript(rel, text, index, config) {
         continue;
       }
       if (
+        !isScaleFile &&
         SCALE_UTILS.has(parsed.prefix) &&
         isNumericScale(parsed.value) &&
         !(LAYOUT_UTILS.has(parsed.prefix) && parsed.value.endsWith("%"))
@@ -728,59 +736,51 @@ function applyWaivers(rel, text, index, findings) {
       .replace(/\*\/\s*\}?\s*$/, "")
       .replace(/\}\s*$/, "")
       .trim();
-    const parsed = /^:\s*(DS\d{3})\s*(.*)$/.exec(tail);
+    const snippet = (lines[line - 1] ?? "").trim();
+    const badWaiver = (message) =>
+      findings.push(
+        makeFinding("DS000", rel, index, m.index, m.index + m[0].length, snippet, message, null)
+      );
+
+    // One waiver may cover several rules on the same line — a candidate like
+    // `!bg-[#123456]` is legitimately both DS004 and DS001.
+    const parsed = /^:\s*(DS\d{3}(?:\s*,\s*DS\d{3})*)\s*(.*)$/.exec(tail);
     if (!parsed) {
-      findings.push(
-        makeFinding(
-          "DS000",
-          rel,
-          index,
-          m.index,
-          m.index + m[0].length,
-          (lines[line - 1] ?? "").trim(),
-          "Waiver is missing a rule id — write `design-check-ignore: DS00X <reason of at least 10 characters>`.",
-          null
-        )
+      badWaiver(
+        "Waiver is missing a rule id — write `design-check-ignore: DS00X[,DS00Y] <reason of at least 10 characters>`."
       );
       continue;
     }
-    const [, ruleId, reason] = parsed;
+    const [, ruleList, reason] = parsed;
+    const ruleIds = [...new Set(ruleList.split(",").map((r) => r.trim()))];
     if (reason.trim().length < 10) {
-      findings.push(
-        makeFinding(
-          "DS000",
-          rel,
-          index,
-          m.index,
-          m.index + m[0].length,
-          (lines[line - 1] ?? "").trim(),
-          `Waiver for ${ruleId} needs a reason of at least 10 characters.`,
-          null
-        )
-      );
+      badWaiver(`Waiver for ${ruleIds.join(",")} needs a reason of at least 10 characters.`);
       continue;
     }
-    const target = findings.find(
-      (f) => f.rule === ruleId && f.line === line + 1 && !f.waived && f.rule !== "DS000"
-    );
-    if (!target) {
-      findings.push(
-        makeFinding(
-          "DS000",
-          rel,
-          index,
-          m.index,
-          m.index + m[0].length,
-          (lines[line - 1] ?? "").trim(),
-          `Orphan waiver: no ${ruleId} finding on the next line.`,
-          null
-        )
+
+    const matched = [];
+    for (const ruleId of ruleIds) {
+      const target = findings.find(
+        (f) => f.rule === ruleId && f.line === line + 1 && !f.waived && f.rule !== "DS000"
       );
-      continue;
+      // Every listed id must land on something, or the waiver is over-broad.
+      if (!target) {
+        badWaiver(`Orphan waiver: no ${ruleId} finding on the next line.`);
+        continue;
+      }
+      target.waived = true;
+      target.waiverLine = line;
+      target.waiverReason = reason.trim();
+      matched.push(target);
     }
-    target.waived = true;
-    target.waiverLine = line;
-    target.waiverReason = reason.trim();
+
+    // The comma-joined set the PR body must declare, on one line for the whole
+    // waiver rather than one line per rule. Sorted so it is order-independent.
+    const waiverRules = matched
+      .map((f) => f.rule)
+      .sort()
+      .join(",");
+    for (const f of matched) f.waiverRules = waiverRules;
   }
 }
 

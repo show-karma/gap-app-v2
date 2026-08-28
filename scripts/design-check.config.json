@@ -8,6 +8,7 @@
     "utilities/**/*.{js,jsx,ts,tsx}",
     "services/**/*.{js,jsx,ts,tsx}",
     "store/**/*.{js,jsx,ts,tsx}",
+    "widget/**/*.{js,jsx,ts,tsx}",
     "**/*.{css,scss}"
   ],
   "exclude": [
@@ -39,6 +40,10 @@
     "styles/globals.css",
     "styles/__theme_colors.scss",
     "components/Pages/Dashboard/v3/dashboard-soft.css"
+  ],
+  "scaleDefinitionFiles": [
+    "components/Pages/Dashboard/v3/soft-classes.ts",
+    "src/features/donor-research/components/report-brief/table-classes.ts"
   ],
   "iconGlobs": ["components/Icons/**"],
   "primitiveExemptGlobs": ["components/ui/**"],

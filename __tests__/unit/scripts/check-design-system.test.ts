@@ -326,6 +326,103 @@ describe("precedence", () => {
   });
 });
 
+describe("multi-defect candidates and multi-rule waivers", () => {
+  const findings = () => scanFixture("multi-rule.tsx.txt", "components/MultiRule.tsx");
+
+  it("reports both defects of `!bg-[#123456]` — precedence only dedupes colour literals", () => {
+    const onLine4 = findings().filter((f) => f.line === 4);
+    expect(onLine4.map((f) => f.rule).sort()).toEqual(["DS001", "DS004"]);
+  });
+
+  it("accepts one comma-separated waiver covering both rules", () => {
+    const onLine6 = findings().filter((f) => f.line === 6);
+    expect(onLine6.map((f) => f.rule).sort()).toEqual(["DS001", "DS004"]);
+    expect(onLine6.every((f) => f.waived)).toBe(true);
+    expect(onLine6.every((f) => f.waiverLine === 5)).toBe(true);
+  });
+
+  it("stamps every finding of a multi-rule waiver with the same sorted rule set", () => {
+    const onLine6 = findings().filter((f) => f.line === 6);
+    expect(new Set(onLine6.map((f) => f.waiverRules))).toEqual(new Set(["DS001,DS004"]));
+  });
+
+  it("raises DS000 for a listed rule that matches nothing on the next line", () => {
+    const orphans = findings().filter((f) => f.rule === "DS000");
+    expect(orphans).toHaveLength(1);
+    expect(orphans[0].message).toContain("DS006");
+    // The id that did match is still waived.
+    const waivedOnLine8 = findings().filter((f) => f.line === 8 && f.rule === "DS001");
+    expect(waivedOnLine8[0].waived).toBe(true);
+  });
+
+  it("tolerates spaces around the comma", () => {
+    const text = [
+      "// design-check-ignore: DS001, DS004 tenant swatch forced over a vendor sheet",
+      'const c = "!bg-[#123456]";',
+    ].join("\n");
+    const result = scan(text);
+    expect(result.filter((f) => f.waived)).toHaveLength(2);
+    expect(countOf(result, "DS000")).toBe(0);
+  });
+
+  it("keeps a single-rule waiver's rule set to that one rule", () => {
+    const text = [
+      "// design-check-ignore: DS001 tenant swatch supplied by the customer",
+      'const c = "bg-[#123456]";',
+    ].join("\n");
+    expect(scan(text).find((f) => f.rule === "DS001")?.waiverRules).toBe("DS001");
+  });
+});
+
+describe("scaleDefinitionFiles (F7)", () => {
+  const SCALE_FILES = [
+    "components/Pages/Dashboard/v3/soft-classes.ts",
+    "src/features/donor-research/components/report-brief/table-classes.ts",
+  ];
+
+  it("lists both scale-definition files in the shipped config", () => {
+    expect(config.scaleDefinitionFiles).toEqual(SCALE_FILES);
+  });
+
+  it.each(SCALE_FILES)("exempts %s from DS006", (file) => {
+    const findings = scanText({ file, text: fixture("scale-definition.ts.txt"), config });
+    expect(countOf(findings, "DS006")).toBe(0);
+  });
+
+  it.each(SCALE_FILES)("still scans %s for the colour and override rules", (file) => {
+    const findings = scanText({ file, text: fixture("scale-definition.ts.txt"), config });
+    expect(countOf(findings, "DS001")).toBe(1);
+    expect(countOf(findings, "DS004")).toBe(1);
+  });
+
+  it("still reports DS006 in a file that is not exempt", () => {
+    const findings = scanText({
+      file: "components/Other/classes.ts",
+      text: fixture("scale-definition.ts.txt"),
+      config,
+    });
+    expect(countOf(findings, "DS006")).toBe(2);
+  });
+
+  it("keeps DS002 active in a scale-definition file", () => {
+    const findings = scanText({
+      file: SCALE_FILES[0],
+      text: 'export const C = "#2ed1a8";',
+      config,
+    });
+    expect(countOf(findings, "DS002")).toBe(1);
+  });
+
+  it("exempts DS006 only — DS005 still fires in an exempt .tsx", () => {
+    const exempt = { ...config, scaleDefinitionFiles: ["components/Exempt.tsx"] };
+    const text = 'export const R = () => <input className="p-[13px]" placeholder="#2ed1a8" />;';
+    const findings = scanText({ file: "components/Exempt.tsx", text, config: exempt });
+    expect(countOf(findings, "DS006")).toBe(0);
+    expect(countOf(findings, "DS005")).toBe(1);
+    expect(countOf(findings, "DS002")).toBe(1);
+  });
+});
+
 describe("non-tsx sources", () => {
   it("scans .ts constant files holding class strings", () => {
     const findings = scanText({
@@ -347,6 +444,12 @@ describe("isScannable", () => {
     "pages/api/z.js",
     "styles/globals.css",
     "components/Pages/Dashboard/v3/dashboard-soft.css",
+    // F1: scan roots are the tailwind content globs plus these — widget/ ships
+    // through `pnpm build:widget`, so its classes reach users too.
+    "utilities/whitelabel-config.ts",
+    "hooks/useCommunityAccent.ts",
+    "widget/src/App.tsx",
+    "widget/widget.css",
   ])("includes %s", (file) => {
     expect(isScannable(file, config)).toBe(true);
   });

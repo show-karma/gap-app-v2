@@ -95,7 +95,9 @@ Don't repeat any of the above in code review — it's automated.
 | DS007 `css-color-literal` | error | colour literals in `.css` / `.scss` | `var(…)`, comments, the token-definition files |
 | DS000 `bad-waiver` | error | waiver with no rule id, a reason under 10 characters, or no matching finding on the next line | — |
 
-One finding per source range: DS001 wins over DS002, DS003 wins over DS002. Token consumption is always allowed — Tailwind theme classes and `var(--x)` / `rgb(var(--x))` / `hsl(var(--x))` anywhere. Literals are allowed **only** in the `tokenDefinitionFiles` listed in `scripts/design-check.config.json`. MDX is out of scope in v1.
+Precedence dedupes the *same* defect only: a colour literal is reported once (DS001 > DS002, DS003 > DS002). Two different defects on one candidate are both reported — `!bg-[#123456]` yields DS004 **and** DS001.
+
+Token consumption is always allowed — Tailwind theme classes and `var(--x)` / `rgb(var(--x))` / `hsl(var(--x))` anywhere. Colour literals are allowed **only** in the `tokenDefinitionFiles` listed in `scripts/design-check.config.json`; the files in `scaleDefinitionFiles` are exempt from **DS006 only** and every other rule still applies to them. Scan roots are the Tailwind `content` globs plus `utilities/**`, `hooks/**`, `services/**`, `store/**` and `widget/**` (the widget ships through `pnpm build:widget`), plus every `.css`/`.scss`. MDX is out of scope in v1.
 
 ```bash
 pnpm design:check                          # whole repo, exit 1 on errors
@@ -109,14 +111,17 @@ pnpm design:check --report --json          # { mode, base, summary, findings }
 
 Exit `2` means the checker **failed closed** — an unresolvable base, no merge base, or a crash. It never reports "0 findings" when it could not do its job.
 
-**Waivers.** Put `// design-check-ignore: DS00X <reason of 10+ characters>` (or `{/* … */}`) on the line directly above the violation. Waived findings still appear in the PR comment, and every waiver a PR adds must have a matching entry under a `## Review waivers` heading in the PR description:
+**Waivers.** Put `// design-check-ignore: DS00X <reason of 10+ characters>` (or `{/* … */}`) on the line directly above the violation. One comment may cover several rules — `DS001,DS004` — because a single candidate can carry more than one defect (`!bg-[#123456]` is both an `!important` override and a colour literal, and is reported as **two** findings; precedence only dedupes the *same* defect). Every listed id must match a finding on the next line, or it is a DS000 orphan.
+
+Waived findings still appear in the PR comment, and every waiver a PR adds must have a matching entry under a `## Review waivers` heading in the PR description — **one line per waiver comment, not one line per rule**, carrying the same comma-joined id set:
 
 ```
 ## Review waivers
 
 - DS001 components/Foo.tsx:12 — tenant-supplied brand swatch, migration tracked in DEV-999
+- DS001,DS004 src/features/x/y.tsx:42 — forced over a vendor stylesheet we do not control
 ```
 
-A missing section, a missing entry, a reason under 10 characters, or a stale entry all fail the check.
+Format: `- <ids> <path>:<line> — <reason>`, where `<line>` is the **violation** line (not the waiver comment's), `<ids>` is comma-joined (order does not matter), and `<reason>` is 10+ characters. A missing section, a missing entry, a partial id set, a split one-line-per-rule entry, a short reason, or a stale entry all fail the check.
 
 **Refreshing the repo-wide snapshot.** `quality-baseline.json` holds a per-rule count under `violations.design`. Never hand-edit it: run `pnpm quality --update-baseline=design` (≈3 s — it skips every other collector) and land the change on a PR labelled `quality-baseline`, which is what `quality-gate.yml` requires to let the file change.

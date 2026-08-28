@@ -262,8 +262,14 @@ jobs:
 
               if (waivers.length) {
                 body += `<details open><summary>Waivers (${waivers.length})</summary>\n\n`;
+                // One line per waiver comment, carrying the same comma-joined
+                // rule set the PR body has to declare.
+                const seen = new Set();
                 for (const f of waivers) {
-                  body += `- \`${f.rule}\` \`${f.file}:${f.line}\` — ${f.waiverReason || '(no reason)'}\n`;
+                  const key = `${f.file}:${f.line}`;
+                  if (seen.has(key)) continue;
+                  seen.add(key);
+                  body += `- \`${f.waiverRules || f.rule}\` \`${key}\` — ${f.waiverReason || '(no reason)'}\n`;
                 }
                 body +=
                   '\nEvery waiver added by this PR must also be listed under ' +
@@ -339,46 +345,61 @@ jobs:
               return;
             }
 
+            // One waiver comment can cover several rules on one line, and the PR
+            // body declares it as ONE entry carrying the comma-joined set.
+            const norm = (rules) => [...new Set(rules)].sort().join(',');
+            const waivers = new Map();
+            for (const f of added) {
+              const key = `${f.file}:${f.line}`;
+              if (!waivers.has(key)) {
+                waivers.set(key, { file: f.file, line: f.line, rules: f.waiverRules || f.rule });
+              }
+            }
+
             const body = context.payload.pull_request?.body || '';
             const section = body.split(/^##\s+Review waivers\s*$/im)[1];
             if (section === undefined) {
               core.setFailed(
                 'This PR adds design-check waivers but its description has no `## Review waivers` ' +
-                  `section. Add one entry per waiver:\n${added
-                    .map((f) => `- ${f.rule} ${f.file}:${f.line} — <reason>`)
+                  `section. Add one entry per waiver:\n${[...waivers.values()]
+                    .map((w) => `- ${w.rules} ${w.file}:${w.line} — <reason>`)
                     .join('\n')}`
               );
               return;
             }
             const sectionBody = section.split(/^##\s+/m)[0];
 
-            const ENTRY = /^\s*[-*]\s+(DS\d{3})\s+(\S+):(\d+)\s+[—–-]\s+(.+?)\s*$/;
+            const ENTRY = /^\s*[-*]\s+(DS\d{3}(?:\s*,\s*DS\d{3})*)\s+(\S+):(\d+)\s+[—–-]\s+(.+?)\s*$/;
             const entries = sectionBody
               .split('\n')
               .map((line) => ENTRY.exec(line))
               .filter(Boolean)
-              .map((m) => ({ rule: m[1], file: m[2], line: Number(m[3]), reason: m[4] }));
+              .map((m) => ({
+                rules: norm(m[1].split(',').map((r) => r.trim())),
+                file: m[2],
+                line: Number(m[3]),
+                reason: m[4],
+              }));
 
             const problems = [];
-            for (const f of added) {
-              const match = entries.find(
-                (e) => e.rule === f.rule && e.file === f.file && e.line === f.line
-              );
-              if (!match) {
-                problems.push(`missing entry: \`- ${f.rule} ${f.file}:${f.line} — <reason>\``);
-              } else if (match.reason.trim().length < 10) {
+            for (const w of waivers.values()) {
+              const want = norm(w.rules.split(','));
+              const at = entries.find((e) => e.file === w.file && e.line === w.line);
+              if (!at) {
+                problems.push(`missing entry: \`- ${want} ${w.file}:${w.line} — <reason>\``);
+              } else if (at.rules !== want) {
                 problems.push(
-                  `reason too short for ${f.rule} ${f.file}:${f.line} (needs 10+ characters)`
+                  `wrong rule set for ${w.file}:${w.line} — the waiver covers \`${want}\`, ` +
+                    `the PR body declares \`${at.rules}\``
                 );
+              } else if (at.reason.trim().length < 10) {
+                problems.push(`reason too short for ${want} ${w.file}:${w.line} (needs 10+ characters)`);
               }
             }
             for (const e of entries) {
-              const match = added.find(
-                (f) => f.rule === e.rule && f.file === e.file && f.line === e.line
-              );
-              if (!match) {
+              if (![...waivers.values()].some((w) => w.file === e.file && w.line === e.line)) {
                 problems.push(
-                  `stale entry: \`${e.rule} ${e.file}:${e.line}\` matches no waiver added by this PR`
+                  `stale entry: \`${e.rules} ${e.file}:${e.line}\` matches no waiver added by this PR`
                 );
               }
             }
