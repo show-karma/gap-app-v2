@@ -447,8 +447,21 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                 {unlinkedSims.map((sim) => (
                   <div
                     key={sim.simUri}
-                    className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-white py-1 pl-2 pr-1 dark:border-gray-700 dark:bg-zinc-800"
+                    className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-white py-1 pl-1.5 pr-1 dark:border-gray-700 dark:bg-zinc-800"
                   >
+                    {sim.avatar ? (
+                      <ProfilePicture
+                        imageURL={sim.avatar}
+                        name={sim.simName ?? sim.simUri}
+                        size="18"
+                        className="h-[18px] w-[18px] rounded [image-rendering:pixelated]"
+                        alt=""
+                      />
+                    ) : (
+                      <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded bg-gray-100 text-gray-400 dark:bg-zinc-700 dark:text-gray-500">
+                        <CpuChipIcon className="h-3 w-3" />
+                      </span>
+                    )}
                     <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                       {sim.simName ?? truncateMiddle(sim.simUri, 14, 8)}
                     </span>
