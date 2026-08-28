@@ -88,7 +88,7 @@ const LinksSkeleton: FC = () => (
 interface SimLinkRowProps {
   link: SimocracySimLink;
   sim?: SimocracyCouncilSim;
-  reviewerName?: string;
+  reviewer?: ReviewerOption;
   canDelete: boolean;
   isDeleting: boolean;
   onDelete: (simUri: string) => Promise<void>;
@@ -97,7 +97,7 @@ interface SimLinkRowProps {
 const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
   link,
   sim,
-  reviewerName,
+  reviewer,
   canDelete,
   isDeleting,
   onDelete,
@@ -108,69 +108,55 @@ const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
 
   return (
     <li className="flex items-center gap-3 px-5 py-3">
-      {sim?.avatar ? (
-        <ProfilePicture
-          imageURL={sim.avatar}
-          name={name ?? link.simUri}
-          size="28"
-          className="h-7 w-7 rounded-md [image-rendering:pixelated]"
-          alt=""
-        />
-      ) : (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
-          <CpuChipIcon className="h-4 w-4" />
-        </span>
-      )}
-
       <div className="min-w-0 flex-1">
-        {name && (
-          <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{name}</p>
-        )}
-        <div className="flex items-center gap-1.5">
-          <span
-            className="truncate font-mono text-xs text-gray-500 dark:text-gray-400"
-            title={link.simUri}
-          >
-            {truncateMiddle(link.simUri)}
-          </span>
-          <button
-            type="button"
-            aria-label="Copy sim AT-URI"
-            onClick={() => copy(link.simUri, "Sim AT-URI copied")}
-            className="shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-gray-300"
-          >
-            <ClipboardDocumentIcon className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-1.5">
-        {reviewerName ? (
-          <span className="flex items-baseline gap-1.5">
-            <span className="text-sm text-gray-900 dark:text-white">{reviewerName}</span>
-            <span
-              className="font-mono text-xs text-gray-500 dark:text-gray-400"
-              title={link.publicAddress}
-            >
-              {shortAddress(link.publicAddress)}
-            </span>
-          </span>
-        ) : (
-          <span
-            className="font-mono text-xs text-gray-600 dark:text-gray-300"
+        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+          {reviewer?.name || shortAddress(link.publicAddress)}
+        </p>
+        {reviewer?.email && (
+          <p
+            className="truncate text-xs text-gray-500 dark:text-gray-400"
             title={link.publicAddress}
           >
-            {shortAddress(link.publicAddress)}
+            {reviewer.email}
+          </p>
+        )}
+      </div>
+
+      <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:w-72">
+        {sim?.avatar ? (
+          <ProfilePicture
+            imageURL={sim.avatar}
+            name={name ?? link.simUri}
+            size="28"
+            className="h-7 w-7 rounded-md [image-rendering:pixelated]"
+            alt=""
+          />
+        ) : (
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
+            <CpuChipIcon className="h-4 w-4" />
           </span>
         )}
-        <button
-          type="button"
-          aria-label="Copy address"
-          onClick={() => copy(link.publicAddress, "Address copied")}
-          className="rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-gray-300"
-        >
-          <ClipboardDocumentIcon className="h-3.5 w-3.5" />
-        </button>
+        <div className="min-w-0">
+          {name && (
+            <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{name}</p>
+          )}
+          <div className="flex items-center gap-1.5">
+            <span
+              className="truncate font-mono text-[11px] text-gray-500 dark:text-gray-400"
+              title={link.simUri}
+            >
+              {truncateMiddle(link.simUri, 18, 10)}
+            </span>
+            <button
+              type="button"
+              aria-label="Copy sim AT-URI"
+              onClick={() => copy(link.simUri, "Sim AT-URI copied")}
+              className="shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-gray-300"
+            >
+              <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {canDelete && (
@@ -185,7 +171,7 @@ const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
             <TrashIcon className="h-4 w-4" />
           </button>
           <DeleteDialog
-            title={`Remove the link between ${name ?? truncateMiddle(link.simUri)} and ${shortAddress(link.publicAddress)}?`}
+            title={`Remove the link between ${reviewer?.name || shortAddress(link.publicAddress)} and ${name ?? truncateMiddle(link.simUri)}?`}
             deleteFunction={() => onDelete(link.simUri)}
             isLoading={isDeleting}
             buttonElement={null}
@@ -292,10 +278,10 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
     return options;
   }, [communityReviewers, programReviewerOptions]);
 
-  const reviewerNameByAddress = useMemo(() => {
-    const map = new Map<string, string>();
+  const reviewerByAddress = useMemo(() => {
+    const map = new Map<string, ReviewerOption>();
     for (const reviewer of [...communityReviewerOptions, ...programReviewerOptions]) {
-      if (reviewer.name) map.set(reviewer.publicAddress.toLowerCase(), reviewer.name);
+      map.set(reviewer.publicAddress.toLowerCase(), reviewer);
     }
     return map;
   }, [programReviewerOptions, communityReviewerOptions]);
@@ -365,10 +351,11 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800">
       <div className="px-5 pt-5">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Sim links</h2>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+          Link reviewer to Sim
+        </h2>
         <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-          Which reviewer each Sim represents. Only sims linked to a reviewer or admin are surfaced
-          in evaluations.
+          Only sims linked to a reviewer or admin are surfaced in evaluations.
         </p>
       </div>
 
@@ -391,7 +378,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
               key={link.simUri}
               link={link}
               sim={simsByUri.get(link.simUri)}
-              reviewerName={reviewerNameByAddress.get(link.publicAddress.toLowerCase())}
+              reviewer={reviewerByAddress.get(link.publicAddress.toLowerCase())}
               canDelete={
                 canManage ||
                 (isReviewer &&
@@ -411,56 +398,6 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
         <div className="border-t border-gray-100 px-5 py-4 dark:border-gray-700">
           <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Add a link</p>
           <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-            <div className="flex-1 space-y-2">
-              {unlinkedSims.length > 0 && (
-                <Select
-                  value={selectedSim}
-                  onValueChange={(value) => {
-                    setSelectedSim(value);
-                    if (formError) setFormError(null);
-                  }}
-                >
-                  <SelectTrigger aria-label="Select a sim">
-                    <SelectValue placeholder="Select a sim" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {unlinkedSims.map((sim) => (
-                      <SelectItem key={sim.simUri} value={sim.simUri}>
-                        <span className="flex items-center gap-2">
-                          {sim.avatar ? (
-                            <ProfilePicture
-                              imageURL={sim.avatar}
-                              name={sim.simName ?? sim.simUri}
-                              size="20"
-                              className="h-5 w-5 rounded [image-rendering:pixelated]"
-                              alt=""
-                            />
-                          ) : (
-                            <CpuChipIcon className="h-4 w-4 text-gray-400" />
-                          )}
-                          {sim.simName ?? truncateMiddle(sim.simUri, 16, 8)}
-                        </span>
-                      </SelectItem>
-                    ))}
-                    <SelectItem value={CUSTOM_SIM_VALUE}>Custom AT-URI…</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-              {isCustom && (
-                <input
-                  type="text"
-                  value={customSimUri}
-                  onChange={(event) => {
-                    setCustomSimUri(event.target.value);
-                    if (formError) setFormError(null);
-                  }}
-                  placeholder="at://did:plc:…/org.simocracy.sim/…"
-                  spellCheck={false}
-                  aria-label="Sim AT-URI"
-                  className="block w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
-                />
-              )}
-            </div>
             <div className="space-y-2 sm:w-64">
               {canManage ? (
                 <>
@@ -552,6 +489,56 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                   aria-label="Reviewer address"
                   title="Reviewers can only link sims to their own address"
                   className="block w-full cursor-not-allowed rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 opacity-60 placeholder:text-gray-400 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+                />
+              )}
+            </div>
+            <div className="flex-1 space-y-2">
+              {unlinkedSims.length > 0 && (
+                <Select
+                  value={selectedSim}
+                  onValueChange={(value) => {
+                    setSelectedSim(value);
+                    if (formError) setFormError(null);
+                  }}
+                >
+                  <SelectTrigger aria-label="Select a sim">
+                    <SelectValue placeholder="Select a sim" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unlinkedSims.map((sim) => (
+                      <SelectItem key={sim.simUri} value={sim.simUri}>
+                        <span className="flex items-center gap-2">
+                          {sim.avatar ? (
+                            <ProfilePicture
+                              imageURL={sim.avatar}
+                              name={sim.simName ?? sim.simUri}
+                              size="20"
+                              className="h-5 w-5 rounded [image-rendering:pixelated]"
+                              alt=""
+                            />
+                          ) : (
+                            <CpuChipIcon className="h-4 w-4 text-gray-400" />
+                          )}
+                          {sim.simName ?? truncateMiddle(sim.simUri, 16, 8)}
+                        </span>
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={CUSTOM_SIM_VALUE}>Custom AT-URI…</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              {isCustom && (
+                <input
+                  type="text"
+                  value={customSimUri}
+                  onChange={(event) => {
+                    setCustomSimUri(event.target.value);
+                    if (formError) setFormError(null);
+                  }}
+                  placeholder="at://did:plc:…/org.simocracy.sim/…"
+                  spellCheck={false}
+                  aria-label="Sim AT-URI"
+                  className="block w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
                 />
               )}
             </div>

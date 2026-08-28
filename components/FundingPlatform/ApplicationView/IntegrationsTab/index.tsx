@@ -151,11 +151,17 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      <div className="flex items-center gap-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Simocracy</h3>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {count} {pluralize("sim evaluation", count)}
-        </span>
+      <div>
+        <div className="flex items-center gap-3">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Sim evaluations</h3>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {count} {pluralize("sim", count)}
+          </span>
+        </div>
+        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          How each reviewer&apos;s Sim — their AI twin on Simocracy — judged this application in the
+          latest funding round.
+        </p>
       </div>
       <div className="flex items-center gap-2">
         {typeof allocation?.amount === "number" && (
