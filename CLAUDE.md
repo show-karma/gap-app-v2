@@ -121,7 +121,9 @@ pnpm design:check --files a.tsx b.scss     # whole-file, report-only debugging a
 pnpm design:check --report --json          # { mode, base, summary, findings }
 ```
 
-The JSON envelope is `{ mode, base, summary, findings }`, plus `truncated` when the displayed list was capped. Counts in `summary` — and the exit code — always cover **every** finding; only the printed and serialised list is capped, at 500 per file, keeping errors and waived findings first.
+The JSON envelope is `{ mode, base, summary, findings, waivers }`, plus `truncated` when the displayed list was capped. Counts in `summary` — and the exit code — always cover **every** finding; only `findings` is capped, at 500 per file, keeping errors and waived findings first.
+
+`waivers` is **never capped**: it holds every waived finding with the fields the PR-body check needs (`file`, `line`, `waiverAdded`, `waiverRules`, `waiverReason`). Anything validating waivers must read that array — reading them from the capped `findings` let a waiver past the cap escape review — and must fail closed if it is absent.
 
 Exit `2` means the checker **failed closed** — an unresolvable base, no merge base, an invalid `severity` block in the config, a source file over 2 MB, or a crash. It never reports "0 findings" when it could not do its job. Findings are capped at 500 per file; the summary keeps the true counts.
 

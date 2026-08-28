@@ -284,19 +284,25 @@ These are **binding amendments** to §3–§5; Dev-557 must apply them before T7
 | R5 | `{}` passed the null/non-object check and the scoped merge then rewrote the baseline with only `violations.design`. A scoped update now requires `coverage`, `duplication`, `violations`, `oversizedFiles` and `reactDoctor` to be present and object-shaped; writes go through a temp file in the same directory plus a rename; validation, merge and write live in one exported `updateDesignBaseline()` taking its path and filesystem as parameters | `503bcbc` |
 | NEW MAJOR | The R5 tests pointed `BASELINE` at the tracked `quality-baseline.json` and mutated it with finally-restore, so a killed worker could corrupt a tracked quality gate. Every case now uses a baseline in its own temp directory, and a real write failure and rename failure run through an injected filesystem | `503bcbc` |
 
+### Round 5 ruling (Rival re-review — R5 and the tracked-baseline MAJOR resolved)
+
+| Ref | Ruling | Applied |
+|-----|--------|---------|
+| R6b | `truncateForDisplay()` caps `findings[]` at 500 per file and the workflow read its added waivers from that array, so the 501st waiver in a file was never checked against `## Review waivers`. The envelope now carries an **uncapped** `waivers[]` (every waived finding, with `file`, `line`, `waiverAdded`, `waiverRules`, `waiverReason`); the PR-body validation reads only from it and fails closed when it is absent. The checklist comment reads the same array and bounds only what it renders. 501-waiver regression in the suite and in the offline workflow simulation | `346bc09` |
+
 ## 10. Verification report (T7) — to be filled by Tester-557
 
 ### Dev handover (T1–T6 complete, 2026-08-27)
 
 Worktree `D:/super-gap-worktrees/dev-557`, branch `amaury/dev-557-static-design-check` off `origin/main`
-(`df5b582`). Twenty-five commits, **not pushed, no PR opened**. §11 rulings applied; Tester Phase-2a defects D1–D10 and 2c N2/N3 closed; Rival round-3 R1–R9 and round-4 R5/R6 + the tracked-baseline MAJOR closed.
+(`df5b582`). Twenty-seven commits, **not pushed, no PR opened**. §11 rulings applied; Tester Phase-2a defects D1–D10 and 2c N2/N3 closed; Rival round-3 R1–R9 and round-4 R5/R6 + the tracked-baseline MAJOR closed.
 
-| Check | Result (re-run after the Round 4 R5/R6 fixes) |
+| Check | Result (re-run after the Round 5 R6b fix) |
 |-------|--------|
 | `pnpm typecheck` | pass, 20 s (incremental; 1 m 29 s cold) |
-| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **278 passed** — 218 design-check + 60 quality-gate |
-| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 93.20 % lines, 91.78 % stmts, 79.20 % branches, 97.64 % funcs |
-| `pnpm design:check --report --json` (full repo) | **3.2–4.2 s over five warm runs**, 2 789 findings, exit 0 |
+| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **281 passed** — 221 design-check + 60 quality-gate |
+| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 93.21 % lines, 91.81 % stmts, 79.20 % branches, 97.67 % funcs |
+| `pnpm design:check --report --json` (full repo) | 2 789 findings, exit 0. **3.2–4.2 s** warm on an idle machine; 12–16 s while other agents were running. An A/B of this commit against `6931d40` on the loaded machine measured the same range both ways, so R6b costs nothing |
 | Biome on the changed files | 0 errors; net **−1** diagnostic vs `origin/main` |
 
 Per-rule full-repo counts (unchanged by Round 4, which fixed reporting and
