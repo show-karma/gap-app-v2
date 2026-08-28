@@ -2,7 +2,7 @@
 
 Linear: https://linear.app/showkarma/issue/DEV-557/static-design-check
 Branch: `amaury/dev-557-static-design-check` (gap-app-v2, off `origin/main`)
-Status: APPROVED (v3) — Rival round 1 REJECT → v2 → round 2 APPROVE-WITH-CHANGES; all six mandatory changes incorporated below. Implementation may start.
+Status: SHIPPED — PR opened 2026-08-28. Approved as v3 after two planning review rounds; implementation then went through independent verification and four code-review rounds (all findings closed).
 
 ## 1. Requirements
 
