@@ -1,0 +1,11 @@
+/**
+ * DEMONSTRATION ONLY — DO NOT MERGE, DO NOT COPY.
+ * Exists to make DS007 fire; see DesignCheckShowcase.tsx.
+ */
+
+.showcase-legacy {
+  /* DS007 — colour literal in a stylesheet.
+     Correct: color: var(--fg-muted); with the token declared in
+     styles/globals.css, which is the only place literals belong. */
+  color: #667085;
+}
