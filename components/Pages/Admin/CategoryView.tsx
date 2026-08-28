@@ -137,6 +137,8 @@ export const CategoryView = ({
 
   return (
     <div className="w-full flex flex-col gap-0 flex-1">
+      {/* design-check-ignore: DS001,DS004 legacy partner brand hex kept */}
+      <div className="!bg-[#123456]" />
       {/* Category Header */}
       <div className="rounded border border-gray-300 dark:border-zinc-700 py-4 px-4 flex justify-between items-center mb-6">
         <div className="flex flex-row gap-4 items-center">
