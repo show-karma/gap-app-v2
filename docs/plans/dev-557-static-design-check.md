@@ -316,6 +316,31 @@ was deliberately left unexempted. Earlier, §11 F1 had added **DS002 +10 / DS006
 and F7 removed **DS006 −12**. `quality-baseline.json` regenerated with
 `pnpm quality --update-baseline=design` — never by hand.
 
+### T7 evidence — rule x mode
+
+Each cell is the corpus pair (one positive file, one negative file) for that rule run in that mode;
+`PASS` means the emitted finding set matched the expected set exactly. Mode parity was additionally
+asserted byte-identical across the three diff modes over identical added lines. Recall is 5 seeded
+mutations per rule applied to real files; precision is 20 sampled findings per rule over 5 strata.
+
+| Rule | full | `--changed` | `--staged` | `--worktree` | Recall | Precision |
+|------|------|-------------|------------|--------------|--------|-----------|
+| DS000 | PASS | PASS | PASS | PASS | 5/5 (100 %) | n/a (waiver defects) |
+| DS001 | PASS | PASS | PASS | PASS | 5/5 (100 %) | 20/20 (100 %) |
+| DS002 | PASS | PASS | PASS | PASS | 5/5 (100 %) | 20/20 (100 %) |
+| DS003 | PASS | PASS | PASS | PASS | 5/5 (100 %) | 20/20 census (100 %) |
+| DS004 | PASS | PASS | PASS | PASS | 5/5 (100 %) | 20/20 (100 %) |
+| DS005 | PASS | PASS | PASS | PASS | 5/5 (100 %) | 20/20 (100 %) |
+| DS006 | PASS | PASS | PASS | PASS | 5/5 (100 %) | 20/20 (100 %) |
+| DS007 | PASS | PASS | PASS | PASS | 5/5 (100 %) | 20/20 (100 %) |
+
+64/64 cells (8 rules x {positive, negative} x 4 modes). Evidence artefacts from the verification
+harness: `results/corpus-score.json` (per-cell verdicts), `results/parity-*.json` and
+`results/parity.diff` (mode parity), `results/recall.json`, `results/precision-*.json`. Controls:
+`<input type="hidden">` silent, a hex in a `tokenDefinitionFile` silent, a valid waiver yields one
+`waived: true` finding and exit 0, and DS006 is silent in a `scaleDefinitionFile` while DS001 still
+fires there — the exemption is rule-scoped, not file-scoped.
+
 ### §11 rulings — what changed
 
 | Ref | Outcome |
