@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 // it exposes its pure helpers via module.exports so they can be unit tested.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { compare, matchGlob, countLines } = require("../../../scripts/quality-gate.js") as {
-  compare: (current: any, baseline: any) => { regressions: string[]; improvements: string[] };
+  compare: (
+    current: any,
+    baseline: any
+  ) => { regressions: string[]; improvements: string[]; notes: string[] };
   matchGlob: (path: string, glob: string) => boolean;
   countLines: (abs: string) => number;
 };
@@ -180,10 +183,75 @@ describe("quality-gate compare() — design system (DEV-557)", () => {
     expect(regressions.some((r) => r.startsWith("design"))).toBe(false);
   });
 
-  it("flags every rule as new when the baseline has no design section yet", () => {
-    const current = withDesign({ DS001: 2 });
+  // F4: an absent baseline key is "not measured yet", never 0. Treating it as
+  // 0 would fail the very PR that introduces the checker with thousands of
+  // bogus regressions.
+  it("does not compare at all when the baseline has no design section", () => {
+    const current = withDesign({ DS001: 173, DS005: 1056 });
+    const { regressions, improvements } = compare(current, emptyMetrics);
+    expect(regressions.some((r) => r.startsWith("design"))).toBe(false);
+    expect(improvements.some((i) => i.startsWith("design"))).toBe(false);
+  });
+
+  it("notes how to seed the baseline when the design section is absent", () => {
+    const { notes } = compare(withDesign({ DS001: 173 }), emptyMetrics);
+    expect(notes).toContain(
+      "design: no baseline yet — run pnpm quality --update-baseline=design on a PR labelled quality-baseline"
+    );
+  });
+
+  it("emits no note once the baseline has a design section", () => {
+    const { notes } = compare(baseline, baseline);
+    expect(notes.some((n: string) => n.startsWith("design: no baseline"))).toBe(false);
+  });
+
+  it("treats an absent violations object on the baseline the same way", () => {
+    const { regressions, notes } = compare(withDesign({ DS001: 3 }), {});
+    expect(regressions.some((r) => r.startsWith("design"))).toBe(false);
+    expect(notes.some((n: string) => n.startsWith("design: no baseline"))).toBe(true);
+  });
+
+  it("still reports a collector failure even with no baseline to compare against", () => {
+    const current = {
+      ...emptyMetrics,
+      violations: { ...emptyMetrics.violations, design: { failed: true } },
+    };
     const { regressions } = compare(current, emptyMetrics);
-    expect(regressions.some((r) => r.startsWith("design.DS001"))).toBe(true);
+    expect(regressions.some((r) => /design collector failed/i.test(r))).toBe(true);
+  });
+});
+
+// F3: `pnpm quality:baseline` passes the bare flag; the design refresh passes
+// a scoped one. Both must parse, and an unknown scope must not silently
+// refresh everything.
+describe("quality-gate parseUpdateBaselineScope() (F3)", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { parseUpdateBaselineScope } = require("../../../scripts/quality-gate.js") as {
+    parseUpdateBaselineScope: (argv: string[]) => string | null;
+  };
+
+  it("returns null when the flag is absent", () => {
+    expect(parseUpdateBaselineScope([])).toBeNull();
+    expect(parseUpdateBaselineScope(["--report-only", "--ci"])).toBeNull();
+  });
+
+  it("reads the bare flag as a full refresh (pnpm quality:baseline)", () => {
+    expect(parseUpdateBaselineScope(["--update-baseline"])).toBe("all");
+    expect(parseUpdateBaselineScope(["--ci", "--update-baseline"])).toBe("all");
+  });
+
+  it("reads the scoped flag as a design-only refresh", () => {
+    expect(parseUpdateBaselineScope(["--update-baseline=design"])).toBe("design");
+    expect(parseUpdateBaselineScope(["--update-baseline=design", "--ci"])).toBe("design");
+  });
+
+  it("rejects an unknown scope instead of refreshing everything", () => {
+    expect(() => parseUpdateBaselineScope(["--update-baseline=coverage"])).toThrow(/scope/i);
+    expect(() => parseUpdateBaselineScope(["--update-baseline="])).toThrow(/scope/i);
+  });
+
+  it("is not confused by a similarly named flag", () => {
+    expect(parseUpdateBaselineScope(["--update-baselines"])).toBeNull();
   });
 });
 
