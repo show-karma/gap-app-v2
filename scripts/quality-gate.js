@@ -551,6 +551,10 @@ function compare(current, baseline) {
 
 // ── render ──────────────────────────────────────────────────────────────────
 
+// Printed wherever a metric has never been captured. Never `0`, which would
+// read as "measured, and it was zero".
+const NOT_MEASURED = "not measured";
+
 function pad(s, n) {
   s = String(s);
   return s + " ".repeat(Math.max(0, n - s.length));
@@ -638,13 +642,16 @@ function render({ status, current, baseline, regressions, improvements, notes = 
       ),
     ]);
     const cd = c.design;
-    const bd = b.design ?? { total: 0, byRule: {} };
+    // An absent baseline stays absent through rendering. Synthesising
+    // `{ total: 0 }` here made the report contradict compare(), printing
+    // thousands of "new" violations under a passing gate (Rival R4).
+    const bd = b.design;
     if (cd) {
       rows.push([
         "Design system",
-        bd.total ?? 0,
+        bd ? (bd.total ?? 0) : NOT_MEASURED,
         cd.failed ? "collector failed" : (cd.total ?? 0),
-        cd.failed ? "—" : fmtDelta((cd.total ?? 0) - (bd.total ?? 0)),
+        cd.failed || !bd ? "—" : fmtDelta((cd.total ?? 0) - (bd.total ?? 0)),
       ]);
     }
     lines.push(table(rows));
@@ -652,19 +659,28 @@ function render({ status, current, baseline, regressions, improvements, notes = 
 
     if (cd && !cd.failed) {
       const rules = [
-        ...new Set([...Object.keys(bd.byRule ?? {}), ...Object.keys(cd.byRule ?? {})]),
+        ...new Set([...Object.keys(bd?.byRule ?? {}), ...Object.keys(cd.byRule ?? {})]),
       ].sort();
       if (rules.length) {
         lines.push("<details><summary>Design system by rule</summary>\n");
         const ruleRows = [["Rule", "Baseline", "Current", "Δ"]];
         for (const k of rules) {
-          const bv = bd.byRule?.[k] ?? 0;
           const cv = cd.byRule?.[k] ?? 0;
-          ruleRows.push([k, bv, cv, fmtDelta(cv - bv)]);
+          if (!bd) {
+            ruleRows.push([k, NOT_MEASURED, cv, "—"]);
+            continue;
+          }
+          ruleRows.push([k, bd.byRule?.[k] ?? 0, cv, fmtDelta(cv - (bd.byRule?.[k] ?? 0))]);
         }
         lines.push(table(ruleRows));
         lines.push("\n</details>");
         lines.push("");
+        if (!bd) {
+          lines.push(
+            "_No design baseline yet — run `pnpm quality --update-baseline=design` on a PR labelled `quality-baseline`._"
+          );
+          lines.push("");
+        }
       }
     }
   }
@@ -744,7 +760,25 @@ function fmtDelta(n, suffix = "") {
 function main() {
   ensureDir(REPORT_DIR);
   const limits = tryReadJson(LIMITS_PATH, { fileLimits: [] });
-  const baseline = tryReadJson(BASELINE_PATH, {});
+  // A scoped refresh MERGES into the existing baseline, so it must start from
+  // a real one. Falling back to `{}` here would let a malformed or missing
+  // file be replaced by a baseline holding nothing but violations.design
+  // (Rival R5).
+  const baselineRaw = tryReadJson(BASELINE_PATH, null);
+  if (FLAGS.updateBaselineScope === "design") {
+    const rel = path.relative(ROOT, BASELINE_PATH);
+    if (baselineRaw === null) {
+      console.error(
+        `[quality] ${rel} is missing or not valid JSON — refusing a scoped update that would discard every other metric. Fix the file, or run the full \`pnpm quality:baseline\`.`
+      );
+      process.exit(2);
+    }
+    if (typeof baselineRaw !== "object" || Array.isArray(baselineRaw)) {
+      console.error(`[quality] ${rel} is not a baseline object — refusing a scoped update.`);
+      process.exit(2);
+    }
+  }
+  const baseline = baselineRaw ?? {};
 
   const current = {
     generatedAt: new Date().toISOString(),
@@ -781,9 +815,15 @@ function main() {
       next = mergeDesignBaseline(baseline, current.violations.design);
     } catch (err) {
       console.error(`[quality] ${err.message}`);
-      process.exit(1);
+      process.exit(2);
     }
-    writeFileSafe(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
+    // Only claim success once the write actually succeeded.
+    if (!writeFileSafe(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`)) {
+      console.error(
+        `[quality] could not write ${path.relative(ROOT, BASELINE_PATH)} — the baseline is unchanged.`
+      );
+      process.exit(2);
+    }
     log(`design baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
     log("land this on a PR labelled `quality-baseline` — quality-gate.yml guards the file.");
     process.exit(0);
@@ -802,7 +842,12 @@ function main() {
       reactDoctor: current.reactDoctor ??
         baseline.reactDoctor ?? { score: 0, errors: 0, warnings: 0, byCategory: {} },
     };
-    writeFileSafe(BASELINE_PATH, JSON.stringify(next, null, 2) + "\n");
+    if (!writeFileSafe(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`)) {
+      console.error(
+        `[quality] could not write ${path.relative(ROOT, BASELINE_PATH)} — the baseline is unchanged.`
+      );
+      process.exit(2);
+    }
     log(`baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
     process.exit(0);
   }
@@ -837,5 +882,6 @@ module.exports = {
   matchGlob,
   countLines,
   mergeDesignBaseline,
+  render,
   parseUpdateBaselineScope,
 };

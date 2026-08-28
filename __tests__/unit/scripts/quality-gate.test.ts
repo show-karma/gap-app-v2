@@ -1,16 +1,70 @@
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
+
+// Minimal shapes for the metric snapshots the gate compares. Deliberately
+// partial: every field is optional because the collectors legitimately return
+// null when skipped, and a baseline written before a metric existed omits it.
+interface DesignMetric {
+  total?: number;
+  byRule?: Record<string, number>;
+  failed?: boolean;
+}
+
+interface Violations {
+  biome?: number;
+  knipUnusedFiles?: number;
+  knipUnusedExports?: number;
+  knipUnusedTypes?: number;
+  knipUnusedDeps?: number;
+  knipDuplicates?: number;
+  design?: DesignMetric;
+}
+
+interface OversizedFile {
+  lines: number;
+  bytes: number;
+}
+
+interface Metrics {
+  $schema?: string;
+  generatedAt?: string;
+  generatedFromCommit?: string;
+  coverage?: { lines: number; statements: number; functions: number; branches: number };
+  duplication?: { percent: number; fragments: number };
+  violations?: Violations;
+  oversizedFiles?: Record<string, OversizedFile>;
+  reactDoctor?: { score: number; errors: number; warnings: number };
+}
+
+interface CompareResult {
+  regressions: string[];
+  improvements: string[];
+  notes: string[];
+}
 
 // The quality-gate script is a CommonJS Node script with no runtime deps;
 // it exposes its pure helpers via module.exports so they can be unit tested.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { compare, matchGlob, countLines } = require("../../../scripts/quality-gate.js") as {
-  compare: (
-    current: any,
-    baseline: any
-  ) => { regressions: string[]; improvements: string[]; notes: string[] };
+const qualityGate = require("../../../scripts/quality-gate.js") as {
+  compare: (current: Metrics, baseline: Metrics) => CompareResult;
   matchGlob: (path: string, glob: string) => boolean;
   countLines: (abs: string) => number;
+  mergeDesignBaseline: (baseline: Metrics, design: DesignMetric) => Metrics;
+  parseUpdateBaselineScope: (argv: string[]) => string | null;
+  render: (input: {
+    status: string;
+    current: Metrics;
+    baseline: Metrics;
+    regressions: string[];
+    improvements: string[];
+    notes?: string[];
+  }) => string;
 };
+
+const { compare, matchGlob, countLines } = qualityGate;
 
 const emptyMetrics = {
   coverage: { lines: 80, statements: 80, functions: 80, branches: 80 },
@@ -224,11 +278,155 @@ describe("quality-gate compare() — design system (DEV-557)", () => {
 // F3: `pnpm quality:baseline` passes the bare flag; the design refresh passes
 // a scoped one. Both must parse, and an unknown scope must not silently
 // refresh everything.
-describe("quality-gate parseUpdateBaselineScope() (F3)", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { parseUpdateBaselineScope } = require("../../../scripts/quality-gate.js") as {
-    parseUpdateBaselineScope: (argv: string[]) => string | null;
+// Rival R4: compare() correctly skipped an absent baseline, but the renderer
+// synthesised `{ total: 0 }` and printed every rule as a fresh regression —
+// a passing gate whose report claimed thousands of new violations.
+describe("quality-gate render() — absent design baseline (Rival R4)", () => {
+  const { render } = qualityGate;
+
+  const current: Metrics = {
+    ...emptyMetrics,
+    violations: {
+      ...emptyMetrics.violations,
+      design: { total: 2799, byRule: { DS001: 173, DS006: 1164 } },
+    },
   };
+
+  const renderWith = (baseline: Metrics, notes: string[] = []) =>
+    render({ status: "pass", current, baseline, regressions: [], improvements: [], notes });
+
+  it("prints 'not measured' instead of a zero baseline", () => {
+    const out = renderWith(emptyMetrics);
+    expect(out).toContain("not measured");
+    expect(out).not.toMatch(/Design system\s*\|\s*0\s*\|/);
+  });
+
+  it("prints no delta when there is nothing to compare against", () => {
+    const out = renderWith(emptyMetrics);
+    const row = out.split("\n").find((l) => l.includes("Design system")) ?? "";
+    expect(row).not.toMatch(/\+\d/);
+    expect(row).toContain("—");
+  });
+
+  it("shows every per-rule baseline as not measured, with no delta", () => {
+    const out = renderWith(emptyMetrics);
+    const ds001 = out.split("\n").find((l) => l.trimStart().startsWith("| DS001")) ?? "";
+    expect(ds001).toContain("not measured");
+    expect(ds001).not.toMatch(/\+\d/);
+  });
+
+  it("tells the reader how to seed the baseline", () => {
+    expect(renderWith(emptyMetrics)).toContain("--update-baseline=design");
+  });
+
+  it("renders real numbers and deltas once a baseline exists", () => {
+    const baseline: Metrics = {
+      ...emptyMetrics,
+      violations: {
+        ...emptyMetrics.violations,
+        design: { total: 2796, byRule: { DS001: 170, DS006: 1164 } },
+      },
+    };
+    const out = renderWith(baseline);
+    expect(out).not.toContain("not measured");
+    expect(out).toContain("+3");
+  });
+
+  it("shows the collector failure rather than a count", () => {
+    const failed: Metrics = {
+      ...emptyMetrics,
+      violations: { ...emptyMetrics.violations, design: { failed: true } },
+    };
+    const out = render({
+      status: "fail",
+      current: failed,
+      baseline: emptyMetrics,
+      regressions: ["design collector failed"],
+      improvements: [],
+      notes: [],
+    });
+    expect(out).toContain("collector failed");
+  });
+
+  it("renders the notes section when compare() produced one", () => {
+    const out = renderWith(emptyMetrics, ["design: no baseline yet — run it"]);
+    expect(out).toContain("## Notes");
+    expect(out).toContain("design: no baseline yet");
+  });
+});
+
+// Rival R5: a scoped update merges into the existing baseline, so a malformed
+// or unwritable file must fail loudly instead of reporting success.
+describe("quality-gate --update-baseline=design robustness (Rival R5)", () => {
+  const SCRIPT = path.resolve(__dirname, "../../../scripts/quality-gate.js");
+  const BASELINE = path.resolve(__dirname, "../../../quality-baseline.json");
+
+  const runScoped = (extraEnv: NodeJS.ProcessEnv = {}) => {
+    try {
+      const stdout = execFileSync(
+        process.execPath,
+        [SCRIPT, "--update-baseline=design", "--skip-design"],
+        { encoding: "utf8", env: { ...process.env, ...extraEnv } }
+      );
+      return { status: 0, stdout, stderr: "" };
+    } catch (err) {
+      const e = err as { status: number; stdout?: string; stderr?: string };
+      return { status: e.status, stdout: e.stdout ?? "", stderr: e.stderr ?? "" };
+    }
+  };
+
+  const withBaseline = <T>(contents: string | null, fn: () => T): T => {
+    const original = fs.readFileSync(BASELINE, "utf8");
+    try {
+      if (contents === null) fs.rmSync(BASELINE);
+      else fs.writeFileSync(BASELINE, contents);
+      return fn();
+    } finally {
+      fs.writeFileSync(BASELINE, original);
+    }
+  };
+
+  it("refuses a scoped update when the baseline is malformed", () => {
+    const res = withBaseline("{ not json at all", () => runScoped());
+    expect(res.status).toBe(2);
+    expect(res.stderr).toMatch(/not valid JSON|missing/i);
+    expect(res.stdout).not.toMatch(/baseline updated/);
+  });
+
+  it("refuses a scoped update when the baseline is absent", () => {
+    const res = withBaseline(null, () => runScoped());
+    expect(res.status).toBe(2);
+    expect(res.stdout).not.toMatch(/baseline updated/);
+  });
+
+  it("refuses a scoped update when the baseline is not an object", () => {
+    const res = withBaseline('["not", "a", "baseline"]', () => runScoped());
+    expect(res.status).toBe(2);
+    expect(res.stdout).not.toMatch(/baseline updated/);
+  });
+
+  it("leaves the baseline untouched when it refuses", () => {
+    const before = fs.readFileSync(BASELINE, "utf8");
+    withBaseline("{ broken", () => runScoped());
+    expect(fs.readFileSync(BASELINE, "utf8")).toBe(before);
+  });
+
+  it("exits 2 rather than reporting success when the write fails", () => {
+    // The design collector is skipped, so violations.design is null and
+    // mergeDesignBaseline() refuses — the same "never say updated" path.
+    const res = runScoped();
+    expect(res.status).toBe(2);
+    expect(res.stdout).not.toMatch(/baseline updated/);
+    expect(res.stderr).toMatch(/refusing|could not write/i);
+  });
+
+  it("never writes a baseline built from a failed collector", () => {
+    expect(() => qualityGate.mergeDesignBaseline({}, { failed: true })).toThrow();
+  });
+});
+
+describe("quality-gate parseUpdateBaselineScope() (F3)", () => {
+  const { parseUpdateBaselineScope } = qualityGate;
 
   it("returns null when the flag is absent", () => {
     expect(parseUpdateBaselineScope([])).toBeNull();
@@ -256,12 +454,9 @@ describe("quality-gate parseUpdateBaselineScope() (F3)", () => {
 });
 
 describe("quality-gate mergeDesignBaseline() (--update-baseline=design)", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { mergeDesignBaseline } = require("../../../scripts/quality-gate.js") as {
-    mergeDesignBaseline: (baseline: any, design: any) => any;
-  };
+  const { mergeDesignBaseline } = qualityGate;
 
-  const baseline = {
+  const baseline: Metrics = {
     $schema: "./scripts/quality-baseline.schema.json",
     generatedAt: "2026-08-26T14:36:55.036Z",
     generatedFromCommit: "6f74e15",
