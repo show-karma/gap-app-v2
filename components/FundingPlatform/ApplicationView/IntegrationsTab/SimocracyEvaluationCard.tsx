@@ -18,11 +18,42 @@ function simDisplayName(evaluation: SimocracyEvaluationRow): string {
   return uri.length > 40 ? `…${uri.slice(-24)}` : uri;
 }
 
+interface SidecarDisclosureProps {
+  label: string;
+  text: string;
+}
+
+const SidecarDisclosure: FC<SidecarDisclosureProps> = ({ label, text }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        className="flex items-center gap-1 text-xs font-medium text-gray-600 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+      >
+        <ChevronRightIcon
+          className={cn(
+            "h-3.5 w-3.5 transition-transform duration-150 motion-reduce:transition-none",
+            open && "rotate-90"
+          )}
+        />
+        {label}
+      </button>
+      {open && (
+        <p className="mt-2 max-w-prose whitespace-pre-line pb-1.5 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+          {text}
+        </p>
+      )}
+    </div>
+  );
+};
+
 const SimocracyEvaluationCardComponent: FC<SimocracyEvaluationCardProps> = ({
   evaluation,
   fundedAmount,
 }) => {
-  const [showConstitution, setShowConstitution] = useState(false);
   const [showFullReasoning, setShowFullReasoning] = useState(false);
   const name = simDisplayName(evaluation);
 
@@ -79,27 +110,12 @@ const SimocracyEvaluationCardComponent: FC<SimocracyEvaluationCardProps> = ({
         </div>
       </div>
 
-      {evaluation.prompt !== null && (
-        <footer className="border-t border-gray-100 px-4 py-2 dark:border-gray-700">
-          <button
-            type="button"
-            onClick={() => setShowConstitution((open) => !open)}
-            aria-expanded={showConstitution}
-            className="flex items-center gap-1 text-xs font-medium text-gray-600 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-          >
-            <ChevronRightIcon
-              className={cn(
-                "h-3.5 w-3.5 transition-transform duration-150 motion-reduce:transition-none",
-                showConstitution && "rotate-90"
-              )}
-            />
-            Constitution
-          </button>
-          {showConstitution && (
-            <p className="mt-2 max-w-prose whitespace-pre-line pb-1.5 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-              {evaluation.prompt}
-            </p>
+      {(evaluation.prompt !== null || evaluation.style !== null) && (
+        <footer className="space-y-1.5 border-t border-gray-100 px-4 py-2 dark:border-gray-700">
+          {evaluation.prompt !== null && (
+            <SidecarDisclosure label="Constitution" text={evaluation.prompt} />
           )}
+          {evaluation.style !== null && <SidecarDisclosure label="Style" text={evaluation.style} />}
         </footer>
       )}
     </article>

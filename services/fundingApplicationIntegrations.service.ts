@@ -22,6 +22,7 @@ export interface SimocracyEvaluationRow {
   sim: SimocracySim;
   model: string | null;
   prompt: string | null;
+  style: string | null;
   proposalUri: string;
   proposalTitle: string;
   reasoning: string;
