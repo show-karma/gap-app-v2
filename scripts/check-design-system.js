@@ -1452,12 +1452,19 @@ function run(argv) {
 }
 
 function main() {
+  // `process.exitCode`, never `process.exit()`. On Linux a write to a pipe is
+  // asynchronous, so exiting immediately after emitting the report discards
+  // whatever has not drained — a full-repo `--json` run is ~1.4 MB against a
+  // 64 KB pipe buffer, and the consumer received truncated JSON. Redirecting
+  // to a file hid it (file writes are synchronous), so only the quality-gate
+  // collector, which reads through a pipe, ever saw it. Setting exitCode lets
+  // node flush and exit on its own.
   try {
-    process.exit(run(process.argv.slice(2)));
+    process.exitCode = run(process.argv.slice(2));
   } catch (err) {
     process.stderr.write(`[design] failed closed: ${err.message}\n`);
     if (!(err instanceof FailClosed) && err.stack) process.stderr.write(`${err.stack}\n`);
-    process.exit(2);
+    process.exitCode = 2;
   }
 }
 
