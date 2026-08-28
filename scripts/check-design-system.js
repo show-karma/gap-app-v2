@@ -54,6 +54,11 @@ const COLOR_UTILS = new Set([
 ]);
 
 // Tailwind utilities whose arbitrary value is a spacing/type scale step.
+//
+// Sizing utilities (w/h/min-*/max-*/size/basis/inset/top/right/bottom/left,
+// translate) are deliberately NOT here: a layout dimension is legitimately
+// arbitrary — it is driven by the content or the viewport, not by a design
+// scale — and including them made 43 % of DS006 false positives (Tester D3).
 const SCALE_UTILS = new Set([
   "p",
   "px",
@@ -78,21 +83,6 @@ const SCALE_UTILS = new Set([
   "gap-y",
   "space-x",
   "space-y",
-  "w",
-  "h",
-  "min-w",
-  "max-w",
-  "min-h",
-  "max-h",
-  "size",
-  "basis",
-  "inset",
-  "inset-x",
-  "inset-y",
-  "top",
-  "right",
-  "bottom",
-  "left",
   "text",
   "leading",
   "tracking",
@@ -106,25 +96,6 @@ const SCALE_UTILS = new Set([
   "rounded-tr",
   "rounded-br",
   "rounded-bl",
-]);
-
-// Of those, the ones where a percentage is layout, not a scale step.
-const LAYOUT_UTILS = new Set([
-  "w",
-  "h",
-  "min-w",
-  "max-w",
-  "min-h",
-  "max-h",
-  "size",
-  "basis",
-  "inset",
-  "inset-x",
-  "inset-y",
-  "top",
-  "right",
-  "bottom",
-  "left",
 ]);
 
 const RAW_PRIMITIVES = new Set(["button", "input", "select", "textarea"]);
@@ -156,6 +127,33 @@ const STYLE_COLOR_KEYS = new Set([
   "textDecorationColor",
   "columnRuleColor",
 ]);
+// The Tailwind utility that replaces each inline key, so the DS003 hint names
+// something the reader can actually type.
+const TAILWIND_EQUIVALENT = {
+  color: "text-*",
+  background: "bg-*",
+  backgroundColor: "bg-*",
+  backgroundImage: "bg-*",
+  border: "border-*",
+  borderColor: "border-*",
+  borderTopColor: "border-t-*",
+  borderRightColor: "border-r-*",
+  borderBottomColor: "border-b-*",
+  borderLeftColor: "border-l-*",
+  outline: "outline-*",
+  outlineColor: "outline-*",
+  fill: "fill-*",
+  stroke: "stroke-*",
+  boxShadow: "shadow-*",
+  textShadow: "drop-shadow-*",
+  caretColor: "caret-*",
+  accentColor: "accent-*",
+  textDecorationColor: "decoration-*",
+  columnRuleColor: "divide-*",
+  fontSize: "text-*",
+  fontFamily: "font-*",
+};
+
 const STYLE_SIZE_KEYS = new Set(["fontSize"]);
 const STYLE_FONT_KEYS = new Set(["fontFamily"]);
 
@@ -457,12 +455,63 @@ function scanText({ file, text, config }) {
   const rel = toPosix(file);
   const ext = path.extname(rel).toLowerCase();
   const index = lineIndex(text);
-  const findings =
-    ext === ".css" || ext === ".scss"
-      ? scanStylesheet(rel, text, index, config)
-      : scanScript(rel, text, index, config);
-  applyWaivers(rel, text, index, findings);
+  const isStylesheet = ext === ".css" || ext === ".scss";
+  const findings = isStylesheet
+    ? scanStylesheet(rel, text, index, config)
+    : scanScript(rel, text, index, config);
+  const comments = isStylesheet
+    ? cssCommentRanges(text, ext === ".scss")
+    : scriptCommentRanges(rel, text);
+  applyWaivers(rel, text, index, findings, comments);
   return findings.sort((a, b) => a.line - b.line || a.col - b.col || a.rule.localeCompare(b.rule));
+}
+
+/**
+ * Byte ranges of every comment in a TS/JS/TSX source, via the real parser.
+ *
+ * Waivers are only honoured inside comments — a string that merely contains
+ * the phrase must not waive anything and must not raise DS000 either
+ * (Tester D9). JSX `{/* … *\/}` shows up as a JsxExpression with no
+ * expression, which the node walk below covers.
+ */
+function scriptCommentRanges(rel, text) {
+  const ranges = [];
+  const kind = rel.endsWith(".ts") ? ts.ScriptKind.TS : ts.ScriptKind.TSX;
+  let sourceFile;
+  try {
+    sourceFile = ts.createSourceFile(rel, text, ts.ScriptTarget.Latest, true, kind);
+  } catch {
+    return ranges;
+  }
+  const add = (list) => {
+    for (const r of list || []) ranges.push([r.pos, r.end]);
+  };
+  const visit = (node) => {
+    add(ts.getLeadingCommentRanges(text, node.getFullStart()));
+    add(ts.getTrailingCommentRanges(text, node.getEnd()));
+    if (ts.isJsxExpression(node) && !node.expression) {
+      ranges.push([node.getStart(sourceFile), node.getEnd()]);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  add(ts.getLeadingCommentRanges(text, 0));
+  return ranges;
+}
+
+/** Byte ranges of every comment in a stylesheet. */
+function cssCommentRanges(text, isScss) {
+  const ranges = [];
+  for (const m of text.matchAll(/\/\*[\s\S]*?\*\//g)) {
+    ranges.push([m.index, m.index + m[0].length]);
+  }
+  if (isScss) {
+    for (const m of text.matchAll(/(^|[^:])(\/\/[^\n]*)/g)) {
+      const start = m.index + m[1].length;
+      ranges.push([start, start + m[2].length]);
+    }
+  }
+  return ranges;
 }
 
 // ── scanner: TS / JS / TSX ──────────────────────────────────────────────────
@@ -475,6 +524,11 @@ function scanScript(rel, text, index, config) {
   const isScaleFile = (config.scaleDefinitionFiles || []).includes(rel);
   const isIconFile = matchesAny(rel, config.iconGlobs);
   const primitivesExempt = matchesAny(rel, config.primitiveExemptGlobs);
+  // Satori (next/og, @vercel/og) renders with inline styles only — Tailwind
+  // classes and CSS variables do not exist there, so DS003 would emit a hint
+  // nobody can follow. Detected by glob AND by import, because OG routes live
+  // under several conventions (app/api/**/route.tsx among them).
+  let inlineStylesExempt = matchesAny(rel, config.inlineStyleExemptGlobs);
 
   const kind = rel.endsWith(".ts") ? ts.ScriptKind.TS : ts.ScriptKind.TSX;
   let sourceFile;
@@ -483,6 +537,17 @@ function scanScript(rel, text, index, config) {
   } catch {
     // A file the parser cannot handle is reported by tsc, not here.
     return findings;
+  }
+
+  if (!inlineStylesExempt) {
+    const exemptImports = config.inlineStyleExemptImports || [];
+    for (const st of sourceFile.statements) {
+      if (!ts.isImportDeclaration(st) || !ts.isStringLiteral(st.moduleSpecifier)) continue;
+      if (exemptImports.includes(st.moduleSpecifier.text)) {
+        inlineStylesExempt = true;
+        break;
+      }
+    }
   }
 
   const literals = [];
@@ -497,8 +562,10 @@ function scanScript(rel, text, index, config) {
       if (init && ts.isJsxExpression(init) && init.expression) {
         const expr = init.expression;
         if (ts.isObjectLiteralExpression(expr)) {
+          // Still claimed for DS002 precedence even when DS003 is exempt: a
+          // colour literal in an OG route's style object is intentional too.
           styleObjectRanges.push([expr.getStart(sourceFile), expr.getEnd()]);
-          collectInlineStyle(expr, rel, index, findings, config);
+          if (!inlineStylesExempt) collectInlineStyle(expr, rel, index, findings, config);
         }
       }
     }
@@ -562,12 +629,7 @@ function scanScript(rel, text, index, config) {
         );
         continue;
       }
-      if (
-        !isScaleFile &&
-        SCALE_UTILS.has(parsed.prefix) &&
-        isNumericScale(parsed.value) &&
-        !(LAYOUT_UTILS.has(parsed.prefix) && parsed.value.endsWith("%"))
-      ) {
+      if (!isScaleFile && SCALE_UTILS.has(parsed.prefix) && isNumericScale(parsed.value)) {
         findings.push(
           makeFinding(
             "DS006",
@@ -677,7 +739,9 @@ function collectInlineStyle(objectLiteral, rel, index, findings, config) {
         prop.getStart(),
         prop.getEnd(),
         prop.getText().replace(/\s+/g, " "),
-        `Inline style \`${key}\` uses the literal \`${offending}\` — use a Tailwind class or \`var(--token)\`.`,
+        `Inline style \`${key}\` uses the literal \`${offending}\` — move it to a Tailwind theme class ` +
+          `(\`${TAILWIND_EQUIVALENT[key] ?? "the matching utility"}\`) or read a token with ` +
+          `\`${key}: "var(--token)"\`. next/og image routes are exempt and need no waiver.`,
         hintFor(config, offending)
       )
     );
@@ -725,11 +789,17 @@ function scanStylesheet(rel, text, index, config) {
 
 // ── waivers ─────────────────────────────────────────────────────────────────
 
-const WAIVER_RE = /design-check-ignore([^\n]*)/g;
+// Case-insensitive: a waiver written DESIGN-CHECK-IGNORE must be recognised
+// rather than silently ignored (Tester D8).
+const WAIVER_RE = /design-check-ignore([^\n]*)/gi;
 
-function applyWaivers(rel, text, index, findings) {
+function applyWaivers(rel, text, index, findings, commentRanges = null) {
   const lines = text.split("\n");
   for (const m of text.matchAll(WAIVER_RE)) {
+    // Only comments carry waivers. A string that happens to contain the phrase
+    // is data: it waives nothing and must not raise DS000 either (Tester D9).
+    if (commentRanges && !inRanges(m.index, commentRanges)) continue;
+
     const { line } = index.at(m.index);
     const tail = m[1]
       .replace(/-->\s*$/, "")
@@ -743,8 +813,9 @@ function applyWaivers(rel, text, index, findings) {
       );
 
     // One waiver may cover several rules on the same line — a candidate like
-    // `!bg-[#123456]` is legitimately both DS004 and DS001.
-    const parsed = /^:\s*(DS\d{3}(?:\s*,\s*DS\d{3})*)\s*(.*)$/.exec(tail);
+    // `!bg-[#123456]` is legitimately both DS004 and DS001. Rule ids are
+    // matched case-insensitively and normalised to upper case.
+    const parsed = /^:\s*(DS\d{3}(?:\s*,\s*DS\d{3})*)\s*(.*)$/i.exec(tail);
     if (!parsed) {
       badWaiver(
         "Waiver is missing a rule id — write `design-check-ignore: DS00X[,DS00Y] <reason of at least 10 characters>`."
@@ -752,7 +823,7 @@ function applyWaivers(rel, text, index, findings) {
       continue;
     }
     const [, ruleList, reason] = parsed;
-    const ruleIds = [...new Set(ruleList.split(",").map((r) => r.trim()))];
+    const ruleIds = [...new Set(ruleList.split(",").map((r) => r.trim().toUpperCase()))];
     if (reason.trim().length < 10) {
       badWaiver(`Waiver for ${ruleIds.join(",")} needs a reason of at least 10 characters.`);
       continue;
@@ -760,26 +831,28 @@ function applyWaivers(rel, text, index, findings) {
 
     const matched = [];
     for (const ruleId of ruleIds) {
-      const target = findings.find(
+      // EVERY finding of that rule on the next line, not just the first —
+      // `className="bg-[#555555] text-[#666666]"` is two DS001s and one
+      // waiver above it has to cover both (Tester D7).
+      const targets = findings.filter(
         (f) => f.rule === ruleId && f.line === line + 1 && !f.waived && f.rule !== "DS000"
       );
       // Every listed id must land on something, or the waiver is over-broad.
-      if (!target) {
+      if (!targets.length) {
         badWaiver(`Orphan waiver: no ${ruleId} finding on the next line.`);
         continue;
       }
-      target.waived = true;
-      target.waiverLine = line;
-      target.waiverReason = reason.trim();
-      matched.push(target);
+      for (const target of targets) {
+        target.waived = true;
+        target.waiverLine = line;
+        target.waiverReason = reason.trim();
+        matched.push(target);
+      }
     }
 
     // The comma-joined set the PR body must declare, on one line for the whole
     // waiver rather than one line per rule. Sorted so it is order-independent.
-    const waiverRules = matched
-      .map((f) => f.rule)
-      .sort()
-      .join(",");
+    const waiverRules = [...new Set(matched.map((f) => f.rule))].sort().join(",");
     for (const f of matched) f.waiverRules = waiverRules;
   }
 }
@@ -914,11 +987,28 @@ function readIfExists(abs) {
   }
 }
 
-function scanFiles(root, config, entries) {
+/**
+ * Reads the revision of `file` the current mode's line numbers refer to.
+ *
+ * This has to match the tree the diff was taken against or hunk ranges land on
+ * the wrong text: `git diff --cached` compares HEAD to the **index**, so
+ * `--staged` must read the index blob, not the working copy the developer has
+ * kept editing. `--changed` diffs commits, so it reads HEAD.
+ */
+function readRevision(root, file, source) {
+  if (source === "worktree") return readIfExists(path.join(root, file));
+  const spec = source === "index" ? `:${file}` : `HEAD:${file}`;
+  const res = git(root, ["show", spec]);
+  // Absent in that tree (staged deletion, new file only on disk) — nothing to
+  // scan, and the diff parser will not have produced added lines for it.
+  return res.status === 0 ? res.stdout : null;
+}
+
+function scanFiles(root, config, entries, source = "worktree") {
   const findings = [];
   for (const { file, added } of entries) {
     if (!isScannable(file, config)) continue;
-    const text = readIfExists(path.join(root, file));
+    const text = readRevision(root, file, source);
     if (text === null) continue;
     findings.push(...filterByAddedLines(scanText({ file, text, config }), added));
   }
@@ -1121,10 +1211,14 @@ function run(argv) {
         : opts.mode === "staged"
           ? collectStaged(root)
           : collectWorktree(root, opts.files);
+    // Content must come from the same tree the hunk ranges were computed
+    // against — see readRevision().
+    const source = opts.mode === "changed" ? "head" : opts.mode === "staged" ? "index" : "worktree";
     findings = scanFiles(
       root,
       config,
-      [...map.entries()].map(([file, added]) => ({ file, added }))
+      [...map.entries()].map(([file, added]) => ({ file, added })),
+      source
     );
   }
 

@@ -1,0 +1,12 @@
+export function Sizing() {
+  return (
+    <div>
+      <span className="w-[420px] h-[34px]">dimensions</span>
+      <span className="min-h-[400px] max-w-[16rem]">bounds</span>
+      <span className="min-w-[12rem] max-h-[80px]">bounds</span>
+      <span className="size-[18px] basis-[240px]">box</span>
+      <span className="inset-[3px] top-[7px] left-[9px]">position</span>
+      <span className="translate-x-[13px]">transform</span>
+    </div>
+  );
+}

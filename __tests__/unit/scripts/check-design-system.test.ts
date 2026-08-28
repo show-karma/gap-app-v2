@@ -374,6 +374,172 @@ describe("multi-defect candidates and multi-rule waivers", () => {
   });
 });
 
+describe("DS006 excludes sizing utilities (Tester D3)", () => {
+  it("does not flag any layout dimension", () => {
+    const findings = scanFixture("ds006.sizing.tsx.txt", "components/Sizing.tsx");
+    expect(countOf(findings, "DS006")).toBe(0);
+  });
+
+  it.each([
+    "w-[420px]",
+    "h-[34px]",
+    "min-w-[12rem]",
+    "min-h-[400px]",
+    "max-w-[16rem]",
+    "max-h-[80px]",
+    "size-[18px]",
+    "basis-[240px]",
+    "inset-[3px]",
+    "top-[7px]",
+    "right-[7px]",
+    "bottom-[7px]",
+    "left-[9px]",
+    "translate-x-[13px]",
+  ])("does not flag %s", (cls) => {
+    expect(countOf(scan(`const c = "${cls}";`), "DS006")).toBe(0);
+  });
+
+  it.each([
+    "p-[13px]",
+    "px-[18px]",
+    "mt-[7px]",
+    "gap-[5px]",
+    "space-y-[3px]",
+    "text-[13px]",
+    "leading-[22px]",
+    "tracking-[0.14em]",
+    "rounded-[7px]",
+    "indent-[4px]",
+  ])("still flags the spacing/typography utility %s", (cls) => {
+    expect(countOf(scan(`const c = "${cls}";`), "DS006")).toBe(1);
+  });
+});
+
+describe("DS003 is skipped for next/og image routes (Tester D5/D6)", () => {
+  it("skips a file importing from next/og", () => {
+    const findings = scanText({
+      file: "app/api/metadata/knowledge/route.tsx",
+      text: fixture("og-route.tsx.txt"),
+      config,
+    });
+    expect(countOf(findings, "DS003")).toBe(0);
+  });
+
+  it("still applies every other rule inside an exempt file", () => {
+    const findings = scanText({
+      file: "app/api/metadata/knowledge/route.tsx",
+      text: fixture("og-route.tsx.txt"),
+      config,
+    });
+    expect(countOf(findings, "DS001")).toBe(1);
+  });
+
+  it("does not leak the exemption to a file that only mentions next/og", () => {
+    const findings = scanText({
+      file: "components/NotOg.tsx",
+      text: fixture("og-route.tsx.txt").replace('from "next/og"', 'from "./local-og"'),
+      config,
+    });
+    expect(countOf(findings, "DS003")).toBe(3);
+  });
+
+  it.each(["@vercel/og"])("also exempts an import from %s", (mod) => {
+    const text = `import { ImageResponse } from "${mod}";\nexport const A = () => <div style={{ color: "#fff" }} />;`;
+    expect(countOf(scan(text, "components/Og.tsx"), "DS003")).toBe(0);
+  });
+
+  it.each(["app/opengraph-image.tsx", "app/blog/[slug]/twitter-image.tsx", "app/api/og/route.tsx"])(
+    "exempts %s by glob even without the import",
+    (file) => {
+      const text = 'export const A = () => <div style={{ color: "#fff" }} />;';
+      expect(countOf(scanText({ file, text, config }), "DS003")).toBe(0);
+    }
+  );
+
+  it("gives a followable hint naming the Tailwind utility and the exemption", () => {
+    const [finding] = scan('const x = <div style={{ color: "#fff" }} />;');
+    expect(finding.message).toContain("text-*");
+    expect(finding.message).toContain('color: "var(--token)"');
+    expect(finding.message).toContain("next/og");
+  });
+
+  it("keeps DS002 suppressed inside an exempt style object (precedence holds)", () => {
+    const findings = scanText({
+      file: "app/api/og/route.tsx",
+      text: 'export const A = () => <div style={{ color: "#fff" }} />;',
+      config,
+    });
+    expect(findings).toEqual([]);
+  });
+});
+
+describe("waiver edge cases (Tester D7/D8/D9)", () => {
+  const findings = () => scanFixture("waiver-edge.tsx.txt", "components/Edge.tsx");
+
+  it("waives every finding of the listed rule on the next line, not just the first", () => {
+    const onLine6 = findings().filter((f) => f.line === 6 && f.rule === "DS001");
+    expect(onLine6).toHaveLength(2);
+    expect(onLine6.every((f) => f.waived)).toBe(true);
+  });
+
+  it("recognises the keyword and rule id case-insensitively", () => {
+    const onLine8 = findings().filter((f) => f.line === 8 && f.rule === "DS001");
+    expect(onLine8).toHaveLength(1);
+    expect(onLine8[0].waived).toBe(true);
+    expect(onLine8[0].waiverRules).toBe("DS001");
+  });
+
+  it("still raises DS000 for a malformed waiver whatever its case", () => {
+    const bad = findings().filter((f) => f.rule === "DS000");
+    expect(bad).toHaveLength(1);
+    expect(bad[0].line).toBe(9);
+    expect(bad[0].message).toMatch(/rule id/i);
+  });
+
+  it("never treats the phrase inside a string literal as a waiver", () => {
+    // Line 1 is a plain string constant, not a comment.
+    expect(findings().some((f) => f.rule === "DS000" && f.line === 1)).toBe(false);
+  });
+
+  it("does not waive from a string literal either", () => {
+    const text = [
+      'const doc = "design-check-ignore: DS001 explaining the waiver syntax in docs";',
+      'const c = "bg-[#123456]";',
+    ].join("\n");
+    const result = scan(text);
+    expect(countOf(result, "DS000")).toBe(0);
+    expect(result.find((f) => f.rule === "DS001")?.waived).toBe(false);
+  });
+
+  it("honours a waiver in a block comment and in a line comment", () => {
+    const block = [
+      "/* design-check-ignore: DS001 tenant swatch from the payload */",
+      'const c = "bg-[#123456]";',
+    ].join("\n");
+    const line = [
+      "// design-check-ignore: DS001 tenant swatch from the payload",
+      'const c = "bg-[#123456]";',
+    ].join("\n");
+    expect(scan(block).find((f) => f.rule === "DS001")?.waived).toBe(true);
+    expect(scan(line).find((f) => f.rule === "DS001")?.waived).toBe(true);
+  });
+
+  it("honours a waiver in a stylesheet comment but not in a CSS string", () => {
+    const waived = [
+      "/* design-check-ignore: DS007 legacy palette pending tokens */",
+      ".a { color: #123456; }",
+    ].join("\n");
+    const inContent = ['.a::after { content: "design-check-ignore: DS007 not a comment"; }'].join(
+      "\n"
+    );
+    expect(
+      scanText({ file: "styles/x.scss", text: waived, config }).find((f) => f.rule === "DS007")
+        ?.waived
+    ).toBe(true);
+    expect(countOf(scanText({ file: "styles/x.scss", text: inContent, config }), "DS000")).toBe(0);
+  });
+});
+
 describe("scaleDefinitionFiles (F7)", () => {
   const SCALE_FILES = [
     "components/Pages/Dashboard/v3/soft-classes.ts",
@@ -744,6 +910,75 @@ describe("CLI modes", () => {
     expect(res.stdout).toContain("components/Legacy.tsx");
   });
 
+  // D1: `git diff --cached` compares HEAD to the index, so the content that
+  // its line numbers refer to is the index blob — not the working copy the
+  // developer keeps editing after `git add`.
+  it("--staged blocks a staged violation even when the worktree already fixes it", () => {
+    write("components/Drift.tsx", 'export const D = () => <b className="bg-[#BADBAD]" />;\n');
+    git("add", "components/Drift.tsx");
+    write("components/Drift.tsx", 'export const D = () => <b className="bg-brand" />;\n');
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(1);
+    expect(json.findings.map((f: Finding) => f.rule)).toEqual(["DS001"]);
+    git("reset", "-q");
+    fs.rmSync(path.join(repo, "components/Drift.tsx"));
+  });
+
+  it("--staged passes a clean staged change even when the worktree is dirty", () => {
+    write("components/Clean2.tsx", 'export const C = () => <b className="bg-brand" />;\n');
+    git("add", "components/Clean2.tsx");
+    write("components/Clean2.tsx", 'export const C = () => <b className="bg-[#DEAD00]" />;\n');
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(0);
+    expect(json.findings).toEqual([]);
+    git("reset", "-q");
+    fs.rmSync(path.join(repo, "components/Clean2.tsx"));
+  });
+
+  it("--staged applies index line numbers to index content after an insertion", () => {
+    // Stage a violation on line 2, then insert a line above it in the worktree
+    // so the two revisions disagree about where line 2 is.
+    write(
+      "components/Shift.tsx",
+      ["export const S = () => (", '  <b className="bg-[#C0FFEE]" />', ");", ""].join("\n")
+    );
+    git("add", "components/Shift.tsx");
+    write(
+      "components/Shift.tsx",
+      [
+        "// an unstaged comment pushes everything down",
+        "export const S = () => (",
+        '  <b className="bg-[#C0FFEE]" />',
+        ");",
+        "",
+      ].join("\n")
+    );
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(1);
+    expect(json.findings).toHaveLength(1);
+    expect(json.findings[0].line).toBe(2);
+    git("reset", "-q");
+    fs.rmSync(path.join(repo, "components/Shift.tsx"));
+  });
+
+  it("--staged treats a staged new file as fully added", () => {
+    write("components/Fresh.tsx", 'export const F = () => <b className="bg-[#0FF1CE]" />;\n');
+    git("add", "components/Fresh.tsx");
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(1);
+    expect(json.findings.map((f: Finding) => f.file)).toEqual(["components/Fresh.tsx"]);
+    git("reset", "-q");
+    fs.rmSync(path.join(repo, "components/Fresh.tsx"));
+  });
+
+  it("--changed reads content from HEAD, not from a dirty worktree", () => {
+    const head = git("rev-parse", "HEAD");
+    write("components/Legacy.tsx", 'export const L = () => <b className="bg-[#FADED0]" />;\n');
+    const { json } = runJson(["--changed", "--base", head]);
+    expect(json.findings).toEqual([]);
+    git("checkout", "--", "components/Legacy.tsx");
+  });
+
   it("counts a waived finding under waived, not error", () => {
     write(
       "components/Waived.tsx",
@@ -894,6 +1129,35 @@ describe("run() in process", () => {
     const { code, out } = capture(["--staged", "--json"]);
     expect(code).toBe(0);
     expect(JSON.parse(out).findings).toEqual([]);
+  });
+
+  // D10: the untracked branch of --worktree had subprocess-only coverage.
+  it("treats an untracked file as fully added", () => {
+    write("components/Untracked.tsx", 'export const U = () => <b className="bg-[#BEEFED}" />;\n');
+    write("components/Untracked.tsx", 'export const U = () => <b className="bg-[#BEEFED]" />;\n');
+    const { code, out } = capture(["--worktree", "components/Untracked.tsx", "--json"]);
+    expect(code).toBe(1);
+    const json = JSON.parse(out);
+    expect(json.findings).toHaveLength(1);
+    expect(json.findings[0].line).toBe(1);
+    fs.rmSync(path.join(repo, "components/Untracked.tsx"));
+  });
+
+  it("skips an untracked path that does not exist on disk", () => {
+    const { code, out } = capture(["--worktree", "components/Ghost.tsx", "--json"]);
+    expect(code).toBe(0);
+    expect(JSON.parse(out).findings).toEqual([]);
+  });
+
+  it("reads --staged content from the index in process too", () => {
+    write("components/Idx.tsx", 'export const I = () => <b className="bg-[#123456]" />;\n');
+    git("add", "components/Idx.tsx");
+    write("components/Idx.tsx", "export const I = () => null;\n");
+    const { code, out } = capture(["--staged", "--json"]);
+    expect(code).toBe(1);
+    expect(JSON.parse(out).findings[0].file).toBe("components/Idx.tsx");
+    git("reset", "-q");
+    fs.rmSync(path.join(repo, "components/Idx.tsx"));
   });
 });
 

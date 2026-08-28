@@ -39,13 +39,20 @@
     "src/infrastructure/theme/config.ts",
     "styles/globals.css",
     "styles/__theme_colors.scss",
-    "components/Pages/Dashboard/v3/dashboard-soft.css"
+    "components/Pages/Dashboard/v3/dashboard-soft.css",
+    "utilities/whitelabel-config.ts"
   ],
   "scaleDefinitionFiles": [
     "components/Pages/Dashboard/v3/soft-classes.ts",
     "src/features/donor-research/components/report-brief/table-classes.ts"
   ],
   "iconGlobs": ["components/Icons/**"],
+  "inlineStyleExemptGlobs": [
+    "app/**/opengraph-image.tsx",
+    "app/**/twitter-image.tsx",
+    "app/api/og/**"
+  ],
+  "inlineStyleExemptImports": ["next/og", "@vercel/og"],
   "primitiveExemptGlobs": ["components/ui/**"],
   "severity": {
     "DS000": "error",
