@@ -76,5 +76,47 @@ Enforcement is layered:
 
 - **Claude edit hook** (`.claude/hooks/post-edit-antipatterns.sh`) — semantic/absence checks, on every agent edit: `return null` in data components, missing `useMutation`, `useRouter`/`useParams` in `useEffect` deps, raw `navigator.clipboard`.
 - **Biome** — lint/format. **Pre-commit** also runs tests. **CI bot** comments anti-pattern violations on PRs.
+- **Design system** (`pnpm design:check`) — see below.
 
 Don't repeat any of the above in code review — it's automated.
+
+### Design system (`pnpm design:check`)
+
+`scripts/check-design-system.js` blocks design-system deviations **on the lines a change adds**. Legacy debt in a file you merely touch never blocks you — locally, in pre-commit, or in CI.
+
+| ID | Sev | Detects | Not a violation |
+|----|-----|---------|-----------------|
+| DS001 `arbitrary-color-class` | error | `bg-[#123456]`, `text-[rgb(20,30,40)]`, `shadow-[…rgba(…)…]`, `oklch(…)` | `bg-[rgb(var(--x))]`, `bg-[var(--x)]`, `bg-[hsl(var(--x)/0.5)]`, palette classes |
+| DS002 `raw-color-literal` | error | `#hex` / `rgb(digits)` / `hsl(digits)` in strings, templates, JSX attributes | comments, `url(#clip)`, `href="#top"`, anything inside `var(…)`, `components/Icons/**` |
+| DS003 `inline-style-literal` | error | `style={{ color: "#fff" }}`, `fontSize: "14px"`, `boxShadow: "0 0 4px #000"` | `var(…)` values, expressions, `--custom-prop` keys, layout keys (`width`, `zIndex`, `transform`) |
+| DS004 `important-prefix` | error | `!bg-red-500`, `hover:!p-2` | `!selected && …` (not a string), `"Hello!"` |
+| DS005 `raw-primitive` | error | `<button>`, `<input>`, `<select>`, `<textarea>` outside `components/ui/**` | `<input type="hidden">` only — `type="file"` is **not** exempt, `components/ui/input.tsx` already styles `file:` pseudo-elements |
+| DS006 `arbitrary-scale` | warn | `p-[13px]`, `text-[15px]`, `leading-[22px]`, `rounded-[7px]` | `w-[calc(…)]`, `h-[var(--x)]`, `z-[…]`, `grid-cols-[…]`, `w-[50%]` |
+| DS007 `css-color-literal` | error | colour literals in `.css` / `.scss` | `var(…)`, comments, the token-definition files |
+| DS000 `bad-waiver` | error | waiver with no rule id, a reason under 10 characters, or no matching finding on the next line | — |
+
+One finding per source range: DS001 wins over DS002, DS003 wins over DS002. Token consumption is always allowed — Tailwind theme classes and `var(--x)` / `rgb(var(--x))` / `hsl(var(--x))` anywhere. Literals are allowed **only** in the `tokenDefinitionFiles` listed in `scripts/design-check.config.json`. MDX is out of scope in v1.
+
+```bash
+pnpm design:check                          # whole repo, exit 1 on errors
+pnpm design:check --report                 # whole repo, never exit 1
+pnpm design:check --changed --base origin/main   # lines added by base...HEAD (three-dot)
+pnpm design:check --staged                 # lines added in the index (what pre-commit runs)
+pnpm design:check --worktree path/to/File.tsx    # lines added vs HEAD (what the edit hook runs)
+pnpm design:check --files a.tsx b.scss     # whole-file, report-only debugging aid
+pnpm design:check --report --json          # { mode, base, summary, findings }
+```
+
+Exit `2` means the checker **failed closed** — an unresolvable base, no merge base, or a crash. It never reports "0 findings" when it could not do its job.
+
+**Waivers.** Put `// design-check-ignore: DS00X <reason of 10+ characters>` (or `{/* … */}`) on the line directly above the violation. Waived findings still appear in the PR comment, and every waiver a PR adds must have a matching entry under a `## Review waivers` heading in the PR description:
+
+```
+## Review waivers
+
+- DS001 components/Foo.tsx:12 — tenant-supplied brand swatch, migration tracked in DEV-999
+```
+
+A missing section, a missing entry, a reason under 10 characters, or a stale entry all fail the check.
+
+**Refreshing the repo-wide snapshot.** `quality-baseline.json` holds a per-rule count under `violations.design`. Never hand-edit it: run `pnpm quality --update-baseline=design` (≈3 s — it skips every other collector) and land the change on a PR labelled `quality-baseline`, which is what `quality-gate.yml` requires to let the file change.
