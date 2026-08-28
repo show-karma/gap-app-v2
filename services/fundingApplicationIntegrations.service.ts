@@ -97,7 +97,10 @@ export async function fetchSimocracyEvaluations(
 
   return {
     ...data,
-    evaluations: data.evaluations ?? [],
+    evaluations: (data.evaluations ?? []).map((row) => ({
+      ...row,
+      style: row.style ?? null,
+    })),
   };
 }
 
