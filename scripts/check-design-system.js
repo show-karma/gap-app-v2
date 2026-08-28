@@ -436,6 +436,9 @@ function makeFinding(rule, file, index, start, end, snippet, message, hint) {
     hint: hint || null,
     waived: false,
     waiverLine: null,
+    // Set only in diff modes: true when the waiver comment itself sits on an
+    // added line, which is what makes a waiver reviewable in the PR body.
+    waiverAdded: false,
   };
 }
 
@@ -861,8 +864,9 @@ function parseDiff(diffText) {
 function filterByAddedLines(findings, added) {
   if (!added) return findings;
   return findings.filter((f) => {
+    f.waiverAdded = f.waiverLine !== null && added.has(f.waiverLine);
     for (let l = f.line; l <= f.endLine; l++) if (added.has(l)) return true;
-    return f.waiverLine !== null && added.has(f.waiverLine);
+    return f.waiverAdded;
   });
 }
 
