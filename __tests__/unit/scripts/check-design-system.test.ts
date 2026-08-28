@@ -299,6 +299,15 @@ describe("DS007 css-color-literal", () => {
     expect(countOf(scanText({ file: "styles/other.css", text, config }), "DS007")).toBe(1);
   });
 
+  // Tester N3: widget/ became a scan root in F1, and it carries its own
+  // Tailwind theme — a token definition by nature.
+  it("exempts widget/tailwind.config.ts, which defines the widget's tokens", () => {
+    expect(config.tokenDefinitionFiles).toContain("widget/tailwind.config.ts");
+    const text = 'module.exports = { theme: { colors: { brand: "#2ed1a8" } } };';
+    expect(countOf(scanText({ file: "widget/tailwind.config.ts", text, config }), "DS002")).toBe(0);
+    expect(countOf(scanText({ file: "widget/other.ts", text, config }), "DS002")).toBe(1);
+  });
+
   it("does not mistake an id selector for a colour", () => {
     const text = "#app { color: var(--fg); }";
     expect(countOf(scanText({ file: "styles/other.css", text, config }), "DS007")).toBe(0);
@@ -402,6 +411,44 @@ describe("multi-defect candidates and multi-rule waivers", () => {
     expect(result.filter((f) => f.waived)).toHaveLength(2);
     expect(countOf(result, "DS000")).toBe(0);
   });
+
+  // Tester N2: matching a well-formed prefix let a malformed list waive the
+  // part that parsed and swallow the rest into the reason.
+  it.each(["DS001,,DS004", "DS001,", ",DS001", "DS001 ,, DS004", "DS001,,", "DS001,DS004,"])(
+    "raises DS000 and waives nothing for the malformed list %s",
+    (list) => {
+      const text = [
+        `// design-check-ignore: ${list} tenant swatch forced over a vendor sheet`,
+        'const c = "!bg-[#123456]";',
+      ].join("\n");
+      const result = scan(text);
+      expect(countOf(result, "DS000")).toBe(1);
+      expect(result.filter((f) => f.waived)).toHaveLength(0);
+    }
+  );
+
+  it("names the malformed list in the DS000 message", () => {
+    const text = [
+      "// design-check-ignore: DS001,,DS004 tenant swatch forced over a vendor sheet",
+      'const c = "bg-[#123456]";',
+    ].join("\n");
+    const [bad] = scan(text).filter((f) => f.rule === "DS000");
+    expect(bad.message).toContain("DS001,,DS004");
+    expect(bad.message).toMatch(/malformed/i);
+  });
+
+  it.each(["DS001,DS004", "DS001, DS004", "DS001 , DS004"])(
+    "still accepts the well-formed list %s",
+    (list) => {
+      const text = [
+        `// design-check-ignore: ${list} tenant swatch forced over a vendor sheet`,
+        'const c = "!bg-[#123456]";',
+      ].join("\n");
+      const result = scan(text);
+      expect(countOf(result, "DS000")).toBe(0);
+      expect(result.filter((f) => f.waived)).toHaveLength(2);
+    }
+  );
 
   it("keeps a single-rule waiver's rule set to that one rule", () => {
     const text = [

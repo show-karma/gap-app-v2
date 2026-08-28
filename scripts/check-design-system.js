@@ -907,7 +907,11 @@ function applyWaivers(rel, text, index, findings, commentRanges = null) {
     // One waiver may cover several rules on the same line — a candidate like
     // `!bg-[#123456]` is legitimately both DS004 and DS001. Rule ids are
     // matched case-insensitively and normalised to upper case.
-    const parsed = /^:\s*(DS\d{3}(?:\s*,\s*DS\d{3})*)\s*(.*)$/i.exec(tail);
+    // Take the whole id-list region first, then validate it strictly. Matching
+    // a well-formed prefix instead would let `DS001,,DS004` and `DS001,` waive
+    // DS001 and silently swallow the malformed remainder into the reason
+    // (Tester N2).
+    const parsed = /^:\s*((?:DS\d{3}|[,\s])+)(.*)$/i.exec(tail);
     if (!parsed) {
       badWaiver(
         "Waiver is missing a rule id — write `design-check-ignore: DS00X[,DS00Y] <reason of at least 10 characters>`."
@@ -915,6 +919,14 @@ function applyWaivers(rel, text, index, findings, commentRanges = null) {
       continue;
     }
     const [, ruleList, reason] = parsed;
+    if (!/^\s*DS\d{3}(\s*,\s*DS\d{3})*\s*$/i.test(ruleList)) {
+      badWaiver(
+        /DS\d{3}/i.test(ruleList)
+          ? `Waiver rule list \`${ruleList.trim()}\` is malformed — write comma-separated rule ids with no empty entries, e.g. \`DS001,DS004\`.`
+          : "Waiver is missing a rule id — write `design-check-ignore: DS00X[,DS00Y] <reason of at least 10 characters>`."
+      );
+      continue;
+    }
     const ruleIds = [...new Set(ruleList.split(",").map((r) => r.trim().toUpperCase()))];
     if (reason.trim().length < 10) {
       badWaiver(`Waiver for ${ruleIds.join(",")} needs a reason of at least 10 characters.`);

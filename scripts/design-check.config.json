@@ -40,7 +40,8 @@
     "styles/globals.css",
     "styles/__theme_colors.scss",
     "components/Pages/Dashboard/v3/dashboard-soft.css",
-    "utilities/whitelabel-config.ts"
+    "utilities/whitelabel-config.ts",
+    "widget/tailwind.config.ts"
   ],
   "scaleDefinitionFiles": [
     "components/Pages/Dashboard/v3/soft-classes.ts",
