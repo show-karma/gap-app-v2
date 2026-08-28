@@ -1,0 +1,7 @@
+diff --git "a/components/Caf\303\251 Card.tsx" "b/components/Caf\303\251 Card.tsx"
+index 1234567..89abcde 100644
+--- "a/components/Caf\303\251 Card.tsx"
++++ "b/components/Caf\303\251 Card.tsx"
+@@ -2 +2 @@ export const Card = () => (
+-  <span className="text-brand">old</span>
++  <span className="bg-[#123456]">new</span>

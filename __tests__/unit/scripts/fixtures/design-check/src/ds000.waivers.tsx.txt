@@ -1,0 +1,14 @@
+export function Waivers() {
+  return (
+    <div>
+      {/* design-check-ignore: DS001 legacy brand swatch pending token migration */}
+      <span className="bg-[#123456]">valid waiver</span>
+      {/* design-check-ignore */}
+      <span className="bg-[#654321]">bare waiver</span>
+      {/* design-check-ignore: DS001 short */}
+      <span className="bg-[#abcdef]">short reason</span>
+      {/* design-check-ignore: DS004 orphan waiver with a long enough reason */}
+      <span className="bg-brand">no matching finding</span>
+    </div>
+  );
+}
