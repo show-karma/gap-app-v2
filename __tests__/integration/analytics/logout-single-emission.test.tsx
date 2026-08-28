@@ -345,8 +345,8 @@ describe("logout — one event per session, whatever ended it", () => {
       expect(logoutEvents()).toEqual(["user_switch"]);
     });
 
-    it("attempts the teardown once, and leaves B signed in when it fails", async () => {
-      // The state F4 is about: B is authenticated with A's caches already
+    it("leaves B signed in, and invents no sign-out, when every attempt fails", async () => {
+      // The state this is all about: B is authenticated with A's caches already
       // cleared. Nothing invents a sign-out for B on the way there.
       signedIn("user-1");
       logoutRejects();
@@ -354,9 +354,46 @@ describe("logout — one event per session, whatever ended it", () => {
 
       await driveSwitch(rerender);
 
-      expect(mockLogout).toHaveBeenCalledTimes(1);
       expect(mockBridgeState.authenticated).toBe(true);
       expect(logoutEvents()).toEqual(["user_switch"]);
+    });
+
+    it("tries again when the first teardown fails, and ends B on the retry", async () => {
+      // Nothing about Privy's state changes when a teardown fails, so the retry
+      // is the only thing that gets B out of that state.
+      signedIn("user-1");
+      mockLogout
+        .mockRejectedValueOnce(new Error("privy unreachable"))
+        .mockImplementation(async () => {
+          signedOut();
+        });
+      const { rerender } = render(<App />);
+
+      await driveSwitch(rerender);
+      await act(async () => {
+        rerender(<App />);
+      });
+
+      expect(mockLogout).toHaveBeenCalledTimes(2);
+      expect(mockBridgeState.authenticated).toBe(false);
+      expect(logoutEvents()).toEqual(["user_switch", "user_switch"]);
+    });
+
+    it("gives up after the second failure rather than retrying forever", async () => {
+      // If Privy refuses twice it will keep refusing, and an unbounded retry
+      // turns one bad switch into a loop calling logout() for ever.
+      signedIn("user-1");
+      logoutRejects();
+      const { rerender } = render(<App />);
+
+      await driveSwitch(rerender);
+      for (let settle = 0; settle < 3; settle += 1) {
+        await act(async () => {
+          rerender(<App />);
+        });
+      }
+
+      expect(mockLogout).toHaveBeenCalledTimes(2);
     });
 
     it("does not report a second switch that never happened", async () => {
@@ -393,6 +430,10 @@ describe("logout — one event per session, whatever ended it", () => {
         await act(async () => {
           rerender(<App />);
         });
+        // Once per attempt: the first settle retires attempt one and releases
+        // the retry, the second retires that. Only when both are done is the
+        // successor guaranteed cancelled rather than merely pending.
+        await settleLogoutJudgement();
         await settleLogoutJudgement();
 
         expect(logoutEvents()).toEqual(["user_switch"]);

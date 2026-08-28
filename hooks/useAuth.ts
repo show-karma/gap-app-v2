@@ -45,25 +45,53 @@ let authReadyBarrierAddress: Hex | undefined;
 // timer), so there is no SSR request bleed.
 let walletDisconnectLogoutFired = false;
 
-// Which user switch has already been acted on, as `<from>-><to>`. useAuth has
-// ~100+ call sites and every mounted instance notices the same swap, so without
-// this each one calls logout() for it — and each records its own cause, so the
-// instances that run after the provider has consumed the first cause leave
-// stale duplicates behind that outlive the transition they described. One
-// switch is one action. Cleared when the session actually ends.
-let userSwitchLogoutFiredFor: string | null = null;
+/**
+ * The switch this process is currently tearing down, if any.
+ *
+ * `useAuth` has ~100+ call sites and every mounted instance notices the same
+ * swap, so without one shared record each of them calls logout() for it — and
+ * each records its own cause, leaving stale duplicates behind that outlive the
+ * transition they described. One switch is one action.
+ *
+ * It also survives the attempt, because a teardown can fail: `attempts` is what
+ * lets a failure be retried without letting it be retried forever, and
+ * `inFlight` is what stops an unrelated re-render from firing a second logout
+ * while the first is still outstanding.
+ */
+interface PendingUserSwitch {
+  /** `<from>-><to>`. Identifies the switch across re-renders. */
+  key: string;
+  /** The session that ended. `user.id` has already advanced past it. */
+  departing: string;
+  /** The session Privy handed over, and the one being torn down. */
+  arriving: string;
+  attempts: number;
+  inFlight: boolean;
+}
+
+let pendingUserSwitch: PendingUserSwitch | null = null;
+
+/**
+ * How many times the forced teardown is attempted before giving up.
+ *
+ * Bounded because the failure mode being retried is Privy refusing to end the
+ * session: if it refuses twice it will keep refusing, and an unbounded retry
+ * turns one bad switch into a loop that calls logout() forever. Two attempts
+ * covers the transient case and nothing else.
+ */
+const MAX_USER_SWITCH_LOGOUT_ATTEMPTS = 2;
 
 /**
  * Test-only: forget a switch a previous case acted on.
  *
  * Module state outlives a test, so without this the second case to drive a
- * `user-1 -> user-2` switch finds the guard already fired for it and silently
+ * `user-1 -> user-2` switch finds the guard already holding it and silently
  * does nothing — the test then passes or fails on what ran before it. The
  * counterpart to `__resetPendingLogoutReasonForTests` in `auth-transitions`,
  * which exists for the same reason.
  */
 export const __resetUserSwitchGuardForTests = (): void => {
-  userSwitchLogoutFiredFor = null;
+  pendingUserSwitch = null;
 };
 
 /**
@@ -274,6 +302,12 @@ export const useAuth = () => {
    */
   const bridgeRef = useRef(bridge);
   bridgeRef.current = bridge;
+  /**
+   * Bumped when a forced switch teardown ends nothing, purely to bring the
+   * effect below back. Nothing about Privy's state changes when a teardown
+   * fails, so without a dependency that does, the retry would never run.
+   */
+  const [userSwitchAttempt, setUserSwitchAttempt] = useState(0);
   const authFailureCount = useRef(0);
   // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
   const walletsSnapshotRef = useRef<string[]>([]);
@@ -378,7 +412,9 @@ export const useAuth = () => {
       // Clear previous user ID so re-login with a different wallet
       // is not mistaken for a cross-tab user switch.
       prevUserIdRef.current = undefined;
-      userSwitchLogoutFiredFor = null;
+      // The teardown landed (or the session ended some other way), so there is
+      // nothing left to retry.
+      pendingUserSwitch = null;
     }
 
     // Detect user switch: different user.id while *continuously* authenticated.
@@ -386,6 +422,11 @@ export const useAuth = () => {
     // on another subdomain — Privy seamlessly transitions without logout.
     // Force logout to ensure full re-initialization with the new user's state.
     // Only triggers when prevAuthRef is true (no logout happened in between).
+    //
+    // DETECTION is separate from the ATTEMPT below, because a retry cannot
+    // re-detect: `prevUserIdRef` advances to B at the end of this effect, so by
+    // the time a failed teardown asks to be tried again the switch no longer
+    // looks like one. The record remembers it instead.
     if (
       prevAuthRef.current &&
       authenticated &&
@@ -393,64 +434,92 @@ export const useAuth = () => {
       prevUserIdRef.current &&
       user.id !== prevUserIdRef.current
     ) {
-      const transition = `${prevUserIdRef.current}->${user.id}`;
-      if (userSwitchLogoutFiredFor !== transition) {
-        userSwitchLogoutFiredFor = transition;
+      const key = `${prevUserIdRef.current}->${user.id}`;
+      if (pendingUserSwitch?.key !== key) {
+        pendingUserSwitch = {
+          key,
+          departing: prevUserIdRef.current,
+          arriving: user.id,
+          attempts: 0,
+          inFlight: false,
+        };
+        // Once per switch, not once per attempt: a retry is tearing down the
+        // same session, and these are already clear.
         queryClient.clear();
         TokenManager.clearCache();
         clearWagmiState();
-        // A switch ends TWO sessions, and both are the same event to a reader.
-        //
-        // The first is A's, and it ends here: Privy has already swapped `user`
-        // to B, but the session going away is the previous one, so the cause is
-        // bound to the departing id. Recording the new id would attribute A's
-        // exit to B.
-        //
-        // The second is B's. Privy hands B over and this guard immediately
-        // tears that session down so the app can re-initialise, which the
-        // provider would otherwise report as an ordinary `"user"` sign-out that
-        // B never performed. So the teardown is labelled too — queued rather
-        // than recorded outright, because whether this continuation runs before
-        // or after the provider consumes A's cause depends on how React batches
-        // the commit, and a queued successor is promoted either way.
-        //
-        // `user.id` is captured rather than read from a ref later, for the same
-        // reason: the ref tracking the current identity is updated by another
-        // effect of this commit, so reading it from the continuation would
-        // sometimes yield A.
-        const arriving = user.id;
-        let successor: LogoutAttempt = null;
-
-        // The teardown may not happen: `logout()` can reject, or resolve and
-        // leave B signed in. B is then authenticated with its caches already
-        // cleared and nothing to re-establish it, so the guard is released for
-        // a later render to try again, and the successor cause is dropped —
-        // it described a teardown that did not occur.
-        //
-        // A's cause is NOT retracted. Privy ended A's session before any of
-        // this ran, and no failure of ours can un-end it.
-        const releaseSwitch = () => {
-          if (userSwitchLogoutFiredFor === transition) {
-            userSwitchLogoutFiredFor = null;
-          }
-          cancelQueuedLogoutReason(successor);
-          successor = null;
-        };
-
-        void runLogout("user_switch", prevUserIdRef.current ?? null, {
-          onInert: releaseSwitch,
-          retractOnFailure: false,
-        })
-          .then(() => {
-            successor = queueLogoutReason("user_switch", arriving);
-          })
-          .catch(ignoreLogoutFailure);
       }
+    }
+
+    // Tear down the session Privy handed over, so the app re-initialises for
+    // whoever is now signed in.
+    //
+    // `inFlight` is what stops an unrelated re-render from firing a second
+    // logout while the first is still outstanding, and `attempts` is what stops
+    // a failing teardown from being retried forever — if Privy refuses twice it
+    // will keep refusing, and the retry would become a loop.
+    const activeSwitch = pendingUserSwitch;
+    if (
+      activeSwitch &&
+      authenticated &&
+      user?.id === activeSwitch.arriving &&
+      !activeSwitch.inFlight &&
+      activeSwitch.attempts < MAX_USER_SWITCH_LOGOUT_ATTEMPTS
+    ) {
+      activeSwitch.attempts += 1;
+      activeSwitch.inFlight = true;
+
+      // A switch ends TWO sessions, and both are the same event to a reader.
+      //
+      // The first is A's, and it ended at the swap: Privy had already moved
+      // `user` on to B, so the cause is bound to the departing id the record
+      // kept. Recording the current one would attribute A's exit to B.
+      //
+      // The second is B's. Privy hands B over and this tears that session down
+      // so the app can re-initialise, which the provider would otherwise report
+      // as an ordinary `"user"` sign-out that B never performed. So the
+      // teardown is labelled too — queued rather than recorded outright,
+      // because whether this continuation runs before or after the provider
+      // consumes A's cause depends on how React batches the commit, and a
+      // queued successor is promoted either way.
+      let successor: LogoutAttempt = null;
+
+      // The teardown may not happen: `logout()` can reject, or resolve and
+      // leave B signed in. B is then authenticated with A's caches already
+      // cleared, so the attempt is released for another try, and the successor
+      // cause is dropped — it described a teardown that did not occur.
+      //
+      // A's cause is NOT retracted. Privy ended A's session before any of this
+      // ran, and no failure of ours can un-end it.
+      const releaseAttempt = () => {
+        cancelQueuedLogoutReason(successor);
+        successor = null;
+        if (pendingUserSwitch !== activeSwitch) return;
+        activeSwitch.inFlight = false;
+        // Re-runs this effect, which is the only way a retry can happen — no
+        // Privy state changed, so nothing else would bring it back.
+        setUserSwitchAttempt((attempt) => attempt + 1);
+      };
+
+      // A's cause is recorded by the FIRST attempt only. A's session ended at
+      // the swap and was reported then; recording it again on a retry leaves a
+      // second, stale cause for a session that is long gone, and B's teardown
+      // then reads that instead of its own.
+      const departingCause = activeSwitch.attempts === 1 ? activeSwitch.departing : null;
+
+      void runLogout("user_switch", departingCause, {
+        onInert: releaseAttempt,
+        retractOnFailure: false,
+      })
+        .then(() => {
+          successor = queueLogoutReason("user_switch", activeSwitch.arriving);
+        })
+        .catch(ignoreLogoutFailure);
     }
 
     prevAuthRef.current = authenticated;
     prevUserIdRef.current = user?.id;
-  }, [authenticated, user?.id, runLogout]);
+  }, [authenticated, user?.id, runLogout, userSwitchAttempt]);
 
   // Snapshot wallet addresses at auth time for secure wallet-switch detection (P2-06)
   useEffect(() => {
