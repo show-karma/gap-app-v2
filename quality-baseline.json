@@ -18,7 +18,19 @@
     "knipUnusedExports": 413,
     "knipUnusedTypes": 365,
     "knipUnusedDeps": 19,
-    "knipDuplicates": 33
+    "knipDuplicates": 33,
+    "design": {
+      "total": 3748,
+      "byRule": {
+        "DS005": 1056,
+        "DS006": 2086,
+        "DS003": 44,
+        "DS001": 173,
+        "DS002": 201,
+        "DS004": 101,
+        "DS007": 87
+      }
+    }
   },
   "oversizedFiles": {
     "__tests__/components/Admin/NotificationSettingsPage.test.tsx": {

@@ -121,6 +121,114 @@ describe("quality-gate compare()", () => {
   });
 });
 
+describe("quality-gate compare() — design system (DEV-557)", () => {
+  const withDesign = (byRule: Record<string, number>) => ({
+    ...emptyMetrics,
+    violations: {
+      ...emptyMetrics.violations,
+      design: { total: Object.values(byRule).reduce((a, b) => a + b, 0), byRule },
+    },
+  });
+
+  const baseline = withDesign({ DS001: 173, DS005: 1056, DS006: 2086 });
+
+  it("returns no regressions when the design counts match", () => {
+    const { regressions, improvements } = compare(baseline, baseline);
+    expect(regressions).toEqual([]);
+    expect(improvements).toEqual([]);
+  });
+
+  it("flags a per-rule increase like a biome counter", () => {
+    const current = withDesign({ DS001: 174, DS005: 1056, DS006: 2086 });
+    const { regressions } = compare(current, baseline);
+    expect(regressions.some((r) => r.startsWith("design.DS001"))).toBe(true);
+    expect(regressions.some((r) => r.startsWith("design.DS005"))).toBe(false);
+  });
+
+  it("treats a per-rule decrease as an improvement", () => {
+    const current = withDesign({ DS001: 170, DS005: 1056, DS006: 2086 });
+    const { regressions, improvements } = compare(current, baseline);
+    expect(regressions).toEqual([]);
+    expect(improvements.some((i) => i.startsWith("design.DS001"))).toBe(true);
+  });
+
+  it("flags a rule that is new since the snapshot", () => {
+    const current = withDesign({ DS001: 173, DS005: 1056, DS006: 2086, DS007: 4 });
+    const { regressions } = compare(current, baseline);
+    expect(regressions.some((r) => r.startsWith("design.DS007"))).toBe(true);
+  });
+
+  it("does not mix design counters with the biome counter", () => {
+    const current = withDesign({ DS001: 300, DS005: 1056, DS006: 2086 });
+    const { regressions } = compare(current, baseline);
+    expect(regressions.some((r) => r.startsWith("biome"))).toBe(false);
+  });
+
+  it("reports a collector failure as a regression, never as zero findings", () => {
+    const current = {
+      ...emptyMetrics,
+      violations: { ...emptyMetrics.violations, design: { failed: true } },
+    };
+    const { regressions } = compare(current, baseline);
+    expect(regressions.some((r) => /design collector failed/i.test(r))).toBe(true);
+    // A crashed collector must not read as "every rule went to zero".
+    expect(regressions.some((r) => r.startsWith("design.DS001"))).toBe(false);
+  });
+
+  it("ignores design entirely when neither side reports it", () => {
+    const { regressions } = compare(emptyMetrics, emptyMetrics);
+    expect(regressions.some((r) => r.startsWith("design"))).toBe(false);
+  });
+
+  it("flags every rule as new when the baseline has no design section yet", () => {
+    const current = withDesign({ DS001: 2 });
+    const { regressions } = compare(current, emptyMetrics);
+    expect(regressions.some((r) => r.startsWith("design.DS001"))).toBe(true);
+  });
+});
+
+describe("quality-gate mergeDesignBaseline() (--update-baseline=design)", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { mergeDesignBaseline } = require("../../../scripts/quality-gate.js") as {
+    mergeDesignBaseline: (baseline: any, design: any) => any;
+  };
+
+  const baseline = {
+    $schema: "./scripts/quality-baseline.schema.json",
+    generatedAt: "2026-08-26T14:36:55.036Z",
+    generatedFromCommit: "6f74e15",
+    coverage: { lines: 1, statements: 2, functions: 3, branches: 4 },
+    duplication: { percent: 1.06, fragments: 68 },
+    violations: { biome: 1151, knipUnusedFiles: 208 },
+    oversizedFiles: { "a.ts": { lines: 900, bytes: 1 } },
+    reactDoctor: { score: 0, errors: 64, warnings: 3213 },
+  };
+
+  it("changes only violations.design", () => {
+    const design = { total: 3748, byRule: { DS001: 173 } };
+    const next = mergeDesignBaseline(baseline, design);
+    expect(next.violations.design).toEqual(design);
+    expect(next.violations.biome).toBe(1151);
+    expect(next.violations.knipUnusedFiles).toBe(208);
+    expect(next.coverage).toEqual(baseline.coverage);
+    expect(next.duplication).toEqual(baseline.duplication);
+    expect(next.oversizedFiles).toEqual(baseline.oversizedFiles);
+    expect(next.reactDoctor).toEqual(baseline.reactDoctor);
+    expect(next.generatedAt).toBe(baseline.generatedAt);
+    expect(next.generatedFromCommit).toBe(baseline.generatedFromCommit);
+    expect(next.$schema).toBe(baseline.$schema);
+  });
+
+  it("does not mutate the baseline it was given", () => {
+    mergeDesignBaseline(baseline, { total: 1, byRule: { DS001: 1 } });
+    expect(baseline.violations).not.toHaveProperty("design");
+  });
+
+  it("refuses to write a failed collector into the baseline", () => {
+    expect(() => mergeDesignBaseline(baseline, { failed: true })).toThrow();
+  });
+});
+
 describe("quality-gate matchGlob()", () => {
   it("matches simple star within a single segment", () => {
     expect(matchGlob("src/foo.ts", "src/*.ts")).toBe(true);

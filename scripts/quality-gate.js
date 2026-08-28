@@ -26,10 +26,14 @@ Usage: node scripts/quality-gate.js [options]
 
 Options:
   --update-baseline   write current metrics to quality-baseline.json and exit 0
+  --update-baseline=design
+                      refresh ONLY violations.design (skips every other
+                      collector); land it on a PR labelled quality-baseline
   --report-only       generate the markdown report but never exit non-zero
   --ci                also append the report to GITHUB_STEP_SUMMARY (auto on CI)
   --skip-biome        skip Biome lint diagnostics collection
   --skip-coverage     skip vitest coverage collection
+  --skip-design       skip the design-system scan
   --skip-jscpd        skip jscpd duplication scan
   --skip-knip         skip knip dead-code / unused-deps scan
   --skip-react-doctor skip react-doctor health-score scan
@@ -48,18 +52,39 @@ Exit codes:
   process.exit(0);
 }
 
+// `--update-baseline` refreshes every metric; `--update-baseline=design`
+// refreshes only violations.design, which is the only supported way to move
+// the design snapshot (never hand-edit quality-baseline.json).
+const updateBaselineArg = [...argv].find(
+  (a) => a === "--update-baseline" || a.startsWith("--update-baseline=")
+);
+const updateBaselineScope = updateBaselineArg ? (updateBaselineArg.split("=")[1] ?? "all") : null;
+
+if (updateBaselineScope && updateBaselineScope !== "all" && updateBaselineScope !== "design") {
+  console.error(
+    `[quality] unknown --update-baseline scope "${updateBaselineScope}" (expected "design")`
+  );
+  process.exit(2);
+}
+
+// A scoped refresh only writes violations.design, so running the other
+// collectors would cost ~10 minutes for numbers nobody reads.
+const designOnly = updateBaselineScope === "design";
+
 const FLAGS = {
-  updateBaseline: argv.has("--update-baseline"),
+  updateBaseline: updateBaselineScope !== null,
+  updateBaselineScope,
   reportOnly: argv.has("--report-only"),
   ci: argv.has("--ci") || process.env.CI === "true",
   skip: {
-    biome: argv.has("--skip-biome"),
-    typecheck: argv.has("--skip-typecheck"),
-    coverage: argv.has("--skip-coverage"),
-    jscpd: argv.has("--skip-jscpd"),
-    knip: argv.has("--skip-knip"),
-    reactDoctor: argv.has("--skip-react-doctor"),
-    sizes: argv.has("--skip-sizes"),
+    biome: designOnly || argv.has("--skip-biome"),
+    typecheck: designOnly || argv.has("--skip-typecheck"),
+    coverage: designOnly || argv.has("--skip-coverage"),
+    design: argv.has("--skip-design"),
+    jscpd: designOnly || argv.has("--skip-jscpd"),
+    knip: designOnly || argv.has("--skip-knip"),
+    reactDoctor: designOnly || argv.has("--skip-react-doctor"),
+    sizes: designOnly || argv.has("--skip-sizes"),
   },
 };
 
@@ -276,6 +301,54 @@ function collectReactDoctor() {
   return { score, errors, warnings, byCategory };
 }
 
+// Repo-wide design-system snapshot (DEV-557). Per-PR enforcement lives in
+// pr-checklist.yml and only looks at added lines; this counter gives the same
+// regression-vs-snapshot guarantee as the biome/knip counters, no more.
+function collectDesign() {
+  if (FLAGS.skip.design) return null;
+  log("design system…");
+  const res = runCapture("node", [
+    path.join("scripts", "check-design-system.js"),
+    "--report",
+    "--json",
+  ]);
+  // `--report` never exits non-zero on findings, so anything but 0 means the
+  // checker itself failed. Reporting zeros here would silently erase the
+  // whole metric, so fail loudly instead.
+  if (res.status !== 0) {
+    warn(`design checker exited ${res.status}; recording a collector failure.`);
+    return { failed: true };
+  }
+  let parsed = null;
+  try {
+    parsed = JSON.parse(res.stdout);
+  } catch {
+    /* noop */
+  }
+  if (!parsed?.summary?.byRule) {
+    warn("could not parse design checker JSON; recording a collector failure.");
+    return { failed: true };
+  }
+  const byRule = parsed.summary.byRule;
+  const total = Object.values(byRule).reduce((a, b) => a + b, 0);
+  return { total, byRule };
+}
+
+/**
+ * Returns a copy of `baseline` with only `violations.design` replaced. Used by
+ * `--update-baseline=design` so a scoped refresh cannot silently move
+ * coverage, duplication or the oversized-file list.
+ */
+function mergeDesignBaseline(baseline, design) {
+  if (!design || design.failed) {
+    throw new Error("refusing to write a failed design collector into the baseline");
+  }
+  return {
+    ...baseline,
+    violations: { ...(baseline.violations ?? {}), design },
+  };
+}
+
 function collectFileSizes(limits) {
   if (FLAGS.skip.sizes) return null;
   log("scanning file sizes…");
@@ -390,6 +463,29 @@ function compare(current, baseline) {
       const delta = c - b;
       if (delta > 0) regressions.push(`${k} ${b} → ${c} (+${delta})`);
       else if (delta < 0) improvements.push(`${k} ${delta}`);
+    }
+  }
+
+  // Design-system violations — one counter per rule, same semantics as biome.
+  const currentDesign = current.violations?.design;
+  if (currentDesign) {
+    if (currentDesign.failed) {
+      regressions.push(
+        "design collector failed — no repo-wide design snapshot was produced (see the log)"
+      );
+    } else {
+      const baseDesign = baseline.violations?.design ?? { byRule: {} };
+      const rules = new Set([
+        ...Object.keys(baseDesign.byRule ?? {}),
+        ...Object.keys(currentDesign.byRule ?? {}),
+      ]);
+      for (const k of [...rules].sort()) {
+        const b = baseDesign.byRule?.[k] ?? 0;
+        const c = currentDesign.byRule?.[k] ?? 0;
+        const delta = c - b;
+        if (delta > 0) regressions.push(`design.${k} ${b} → ${c} (+${delta})`);
+        else if (delta < 0) improvements.push(`design.${k} ${delta}`);
+      }
     }
   }
 
@@ -517,8 +613,36 @@ function render({ status, current, baseline, regressions, improvements }) {
           Object.keys(baseline.oversizedFiles ?? {}).length
       ),
     ]);
+    const cd = c.design;
+    const bd = b.design ?? { total: 0, byRule: {} };
+    if (cd) {
+      rows.push([
+        "Design system",
+        bd.total ?? 0,
+        cd.failed ? "collector failed" : (cd.total ?? 0),
+        cd.failed ? "—" : fmtDelta((cd.total ?? 0) - (bd.total ?? 0)),
+      ]);
+    }
     lines.push(table(rows));
     lines.push("");
+
+    if (cd && !cd.failed) {
+      const rules = [
+        ...new Set([...Object.keys(bd.byRule ?? {}), ...Object.keys(cd.byRule ?? {})]),
+      ].sort();
+      if (rules.length) {
+        lines.push("<details><summary>Design system by rule</summary>\n");
+        const ruleRows = [["Rule", "Baseline", "Current", "Δ"]];
+        for (const k of rules) {
+          const bv = bd.byRule?.[k] ?? 0;
+          const cv = cd.byRule?.[k] ?? 0;
+          ruleRows.push([k, bv, cv, fmtDelta(cv - bv)]);
+        }
+        lines.push(table(ruleRows));
+        lines.push("\n</details>");
+        lines.push("");
+      }
+    }
   }
 
   if (current.reactDoctor) {
@@ -603,6 +727,7 @@ function main() {
       knipUnusedTypes: 0,
       knipUnusedDeps: 0,
       knipDuplicates: 0,
+      design: collectDesign(),
     },
     oversizedFiles: collectFileSizes(limits) ?? {},
     reactDoctor: collectReactDoctor(),
@@ -618,6 +743,20 @@ function main() {
   }
 
   writeFileSafe(ARTIFACT_PATH, JSON.stringify(current, null, 2));
+
+  if (FLAGS.updateBaselineScope === "design") {
+    let next;
+    try {
+      next = mergeDesignBaseline(baseline, current.violations.design);
+    } catch (err) {
+      console.error(`[quality] ${err.message}`);
+      process.exit(1);
+    }
+    writeFileSafe(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
+    log(`design baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
+    log("land this on a PR labelled `quality-baseline` — quality-gate.yml guards the file.");
+    process.exit(0);
+  }
 
   if (FLAGS.updateBaseline) {
     const next = {
@@ -661,4 +800,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { compare, matchGlob, countLines };
+module.exports = { compare, matchGlob, countLines, mergeDesignBaseline };
