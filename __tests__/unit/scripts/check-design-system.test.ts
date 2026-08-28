@@ -116,7 +116,9 @@ describe("DS001 arbitrary-color-class", () => {
   });
 
   it("reports the line of the offending class", () => {
-    const findings = scan(['const a = 1;', 'const x = <div className="bg-[#123456]" />;'].join("\n"));
+    const findings = scan(
+      ["const a = 1;", 'const x = <div className="bg-[#123456]" />;'].join("\n")
+    );
     expect(findings[0].line).toBe(2);
   });
 });
@@ -133,7 +135,7 @@ describe("DS002 raw-color-literal", () => {
   });
 
   it("never scans comments", () => {
-    const text = ['// Closes #1312', '/* palette was #2ed1a8 */', "const x = 1;"].join("\n");
+    const text = ["// Closes #1312", "/* palette was #2ed1a8 */", "const x = 1;"].join("\n");
     expect(scan(text)).toEqual([]);
   });
 
@@ -161,9 +163,7 @@ describe("DS003 inline-style-literal", () => {
   });
 
   it("flags only the offending key when a style object mixes keys", () => {
-    const findings = scan(
-      'const x = <div style={{ width: "100%", color: "#fff", zIndex: 2 }} />;'
-    );
+    const findings = scan('const x = <div style={{ width: "100%", color: "#fff", zIndex: 2 }} />;');
     expect(countOf(findings, "DS003")).toBe(1);
     expect(findings[0].snippet).toContain("color");
   });
@@ -298,8 +298,10 @@ describe("DS000 bad-waiver", () => {
   it("supports the JSX comment form", () => {
     const text = [
       "export const A = () => (",
-      "  {/* design-check-ignore: DS001 tenant swatch supplied by the customer */}",
-      '  <span className="bg-[#123456]" />',
+      "  <div>",
+      "    {/* design-check-ignore: DS001 tenant swatch supplied by the customer */}",
+      '    <span className="bg-[#123456]" />',
+      "  </div>",
       ");",
     ].join("\n");
     const findings = scan(text);
@@ -528,7 +530,7 @@ describe("CLI modes", () => {
   it("--changed ignores legacy debt in an untouched region", () => {
     write(
       "components/Clean.tsx",
-      "export const Clean = () => <span className=\"bg-brand\">ok</span>;\n"
+      'export const Clean = () => <span className="bg-brand">ok</span>;\n'
     );
     git("add", "-A");
     git("commit", "-qm", "clean");
@@ -540,7 +542,7 @@ describe("CLI modes", () => {
   it("--changed blocks on a violation on an added line", () => {
     write(
       "components/Dirty.tsx",
-      "export const Dirty = () => <span className=\"bg-[#123456]\">no</span>;\n"
+      'export const Dirty = () => <span className="bg-[#123456]">no</span>;\n'
     );
     git("add", "-A");
     git("commit", "-qm", "dirty");
