@@ -7,7 +7,6 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import {
   useSimocracyCouncil,
-  useSimocracyProgramSummary,
   useUpdateSimocracyIntegration,
 } from "@/hooks/useApplicationIntegrations";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -66,9 +65,6 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
   const { data: council } = useSimocracyCouncil(programId, {
     enabled: canEdit && savedEnabled && savedUri.length > 0,
   });
-  const { data: summary } = useSimocracyProgramSummary(programId, {
-    enabled: savedEnabled && savedUri.length > 0,
-  });
 
   if (isLoading) {
     return <ConfigSkeleton />;
@@ -89,7 +85,6 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
   }
 
   const showUriInput = editingUri || savedUri.length === 0;
-  const isRatified = summary?.decisionStatus === "ratified";
 
   const handleToggle = () => {
     const next = !enabled;
@@ -158,30 +153,6 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
                   <span className="text-gray-300 dark:text-zinc-600">·</span>
                   <span>
                     {council?.length} {pluralize("sim", council?.length ?? 0)} in council
-                  </span>
-                </>
-              )}
-              {summary?.latestRunId && (
-                <>
-                  <span className="text-gray-300 dark:text-zinc-600">·</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    Latest run
-                    {summary.decisionStatus ? (
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2 py-px text-[11px] font-medium capitalize",
-                          isRatified
-                            ? "bg-gray-100 text-gray-700 dark:bg-zinc-700 dark:text-gray-300"
-                            : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
-                        )}
-                      >
-                        {summary.decisionStatus}
-                      </span>
-                    ) : (
-                      <span className="inline-flex rounded-full bg-gray-100 px-2 py-px text-[11px] font-medium text-gray-600 dark:bg-zinc-700 dark:text-gray-300">
-                        Unpublished
-                      </span>
-                    )}
                   </span>
                 </>
               )}
