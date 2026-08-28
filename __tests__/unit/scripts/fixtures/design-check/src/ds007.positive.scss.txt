@@ -1,0 +1,5 @@
+.card {
+  color: #2ed1a8;
+  background: rgb(10, 20, 30);
+  border-color: hsl(210, 40%, 60%);
+}

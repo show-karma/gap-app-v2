@@ -1,0 +1,9 @@
+export function Positive() {
+  return (
+    <div>
+      <span className="!bg-red-500">important</span>
+      <span className="hover:!p-2">variant important</span>
+      <span className="dark:md:!text-white">stacked variants</span>
+    </div>
+  );
+}

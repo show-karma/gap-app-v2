@@ -1,0 +1,9 @@
+diff --git a/components/New.tsx b/components/New.tsx
+new file mode 100644
+index 0000000..1234567
+--- /dev/null
++++ b/components/New.tsx
+@@ -0,0 +1,3 @@
++export const New = () => (
++  <span className="bg-[#123456]">new</span>
++);
