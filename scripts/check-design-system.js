@@ -1434,7 +1434,11 @@ function run(argv) {
   // print or serialise is capped.
   const summary = summarize(findings);
   const { shown, truncated } = truncateForDisplay(findings);
-  const envelope = { mode: opts.mode, base: opts.base, summary, findings: shown };
+  // `waivers` is NEVER capped. The PR-body validator has to see every waiver a
+  // PR adds, and reading them out of the truncated `findings` list meant the
+  // 501st waiver in a file was silently never checked (Rival R6b).
+  const waivers = findings.filter((f) => f.waived);
+  const envelope = { mode: opts.mode, base: opts.base, summary, findings: shown, waivers };
   if (truncated > 0) envelope.truncated = truncated;
 
   process.stdout.write(

@@ -1212,8 +1212,70 @@ describe("CLI modes", () => {
 
   it("emits the documented JSON envelope", () => {
     const { json } = runJson(["--report"]);
-    expect(Object.keys(json).sort()).toEqual(["base", "findings", "mode", "summary"]);
+    expect(Object.keys(json).sort()).toEqual(["base", "findings", "mode", "summary", "waivers"]);
     expect(Object.keys(json.summary).sort()).toEqual(["byRule", "error", "waived", "warn"]);
+  });
+
+  // Rival R6b: the workflow validates added waivers against the PR body. It
+  // must never read them out of `findings`, which is capped for display.
+  it("lists every waiver in an uncapped waivers array, past the display cap", () => {
+    const lines: string[] = [];
+    for (let i = 0; i < 501; i++) {
+      lines.push(
+        `// design-check-ignore: DS001 tenant swatch number ${i} supplied by the customer`
+      );
+      lines.push(`const w${i} = "bg-[#${(i % 0x1000000).toString(16).padStart(6, "0")}]";`);
+    }
+    write("components/ManyWaivers.tsx", `${lines.join("\n")}\n`);
+    git("add", "components/ManyWaivers.tsx");
+
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(0);
+    expect(json.summary.waived).toBe(501);
+    // Display is capped; the waiver list is not.
+    expect(json.findings.length).toBe(500);
+    expect(json.truncated).toBe(1);
+    expect(json.waivers).toHaveLength(501);
+    expect(json.waivers.every((w: Finding) => w.waived)).toBe(true);
+    expect(json.waivers.every((w: Finding) => w.waiverAdded)).toBe(true);
+    // The 501st waiver — the one truncation dropped from `findings`.
+    const shown = new Set(
+      json.findings.filter((f: Finding) => f.waived).map((f: Finding) => f.line)
+    );
+    const missing = json.waivers.filter((w: Finding) => !shown.has(w.line));
+    expect(missing).toHaveLength(1);
+    expect(missing[0].waiverRules).toBe("DS001");
+    expect(missing[0].waiverReason).toMatch(/tenant swatch number/);
+  });
+
+  it("carries the fields the PR-body validator needs on every waiver", () => {
+    write(
+      "components/OneWaiver.tsx",
+      [
+        "// design-check-ignore: DS001 tenant supplied swatch, migration tracked in DEV-999",
+        'export const W = () => <b className="bg-[#123456]" />;',
+        "",
+      ].join("\n")
+    );
+    git("add", "components/OneWaiver.tsx");
+    const { json } = runJson(["--staged"]);
+    expect(json.waivers).toHaveLength(1);
+    expect(json.waivers[0]).toMatchObject({
+      rule: "DS001",
+      file: "components/OneWaiver.tsx",
+      line: 2,
+      waived: true,
+      waiverAdded: true,
+      waiverRules: "DS001",
+    });
+    expect(json.waivers[0].waiverReason).toBe(
+      "tenant supplied swatch, migration tracked in DEV-999"
+    );
+  });
+
+  it("emits an empty waivers array when nothing is waived", () => {
+    const { json } = runJson(["--report"]);
+    expect(json.waivers).toEqual([]);
   });
 
   it("prints a human table without --json", () => {

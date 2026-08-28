@@ -247,7 +247,9 @@ jobs:
               const warnings = (report.findings || []).filter(
                 (f) => !f.waived && f.severity === 'warn'
               );
-              const waivers = (report.findings || []).filter((f) => f.waived);
+              // From the uncapped array, so the reviewer is shown every waiver
+              // the blocking step will demand a PR-body entry for.
+              const waivers = report.waivers || (report.findings || []).filter((f) => f.waived);
 
               body += `**${s.error}** error(s), **${s.warn}** warning(s), **${s.waived}** waived on the lines this PR adds.\n\n`;
 
@@ -271,12 +273,18 @@ jobs:
                 // One line per waiver comment, carrying the same comma-joined
                 // rule set the PR body has to declare.
                 const seen = new Set();
+                let listed = 0;
                 for (const f of waivers) {
                   const key = `${f.file}:${f.line}`;
                   if (seen.has(key)) continue;
                   seen.add(key);
+                  // Bound the rendered list: a comment over ~65 kB is rejected
+                  // by the API. The count above and the blocking step below
+                  // still cover every waiver.
+                  if (listed++ >= 50) continue;
                   body += `- \`${f.waiverRules || f.rule}\` \`${key}\` — ${f.waiverReason || '(no reason)'}\n`;
                 }
+                if (listed > 50) body += `\n_…and ${listed - 50} more waiver(s)._\n`;
                 body +=
                   '\nEvery waiver added by this PR must also be listed under ' +
                   '`## Review waivers` in the PR description.\n\n</details>\n\n';
@@ -345,7 +353,19 @@ jobs:
           script: |
             const fs = require('node:fs');
             const report = JSON.parse(fs.readFileSync('.quality/design.json', 'utf8'));
-            const added = (report.findings || []).filter((f) => f.waived && f.waiverAdded);
+
+            // Waivers come from the UNCAPPED `waivers` array, never from
+            // `findings`, which is truncated for display — reading them there
+            // meant a waiver past the per-file cap was never checked against
+            // the PR body. Fail closed if the checker did not provide it.
+            if (!Array.isArray(report.waivers)) {
+              core.setFailed(
+                'The design report has no `waivers` array — it was produced by an older ' +
+                  'checker, or is truncated. Refusing to validate waivers against a capped list.'
+              );
+              return;
+            }
+            const added = report.waivers.filter((f) => f.waived && f.waiverAdded);
 
             // One waiver comment can cover several rules on one line, and the PR
             // body declares it as ONE entry carrying the comma-joined set.
