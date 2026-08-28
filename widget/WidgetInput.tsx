@@ -221,6 +221,7 @@ export const WidgetInput = memo(function WidgetInput({
 
   return (
     <div className="border-t border-border p-3">
+      <div className="bg-[#123456]" />
       <div
         className={cn(
           "group/input flex w-full items-end gap-2 rounded-md border border-input bg-background px-2 py-1.5 shadow-xs",
