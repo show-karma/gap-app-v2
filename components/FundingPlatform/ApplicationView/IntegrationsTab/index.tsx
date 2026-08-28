@@ -11,7 +11,7 @@ import {
 } from "@/hooks/useApplicationIntegrations";
 import { isIntegrationEnabled } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
-import { SimocracyEvaluationCard } from "./SimocracyEvaluationCard";
+import { CouncilEvaluations } from "./CouncilEvaluations";
 
 export interface IntegrationsTabProps {
   referenceNumber: string;
@@ -105,31 +105,19 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber }) => {
     <div className="space-y-4">
       <SimocracySectionHeader
         count={count}
+        linkedCount={summary?.sims?.length}
         programId={data.programId}
         runId={data.runId}
         proposalUri={data.evaluations[0]?.proposalUri}
       />
-      <div className="grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-3">
-        {data.evaluations.map((evaluation) => (
-          <SimocracyEvaluationCard
-            key={evaluation.sim.simUri}
-            evaluation={evaluation}
-            fundedAmount={
-              summary?.decisionStatus === "ratified"
-                ? (summary.allocations?.find(
-                    (entry) => entry.proposalUri === evaluation.proposalUri
-                  )?.amount ?? null)
-                : null
-            }
-          />
-        ))}
-      </div>
+      <CouncilEvaluations evaluations={data.evaluations} linkedSims={summary?.sims} />
     </div>
   );
 };
 
 interface SimocracySectionHeaderProps {
   count: number;
+  linkedCount?: number;
   programId: string;
   runId: string | null;
   proposalUri?: string;
@@ -137,6 +125,7 @@ interface SimocracySectionHeaderProps {
 
 const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
   count,
+  linkedCount,
   programId,
   runId,
   proposalUri,
@@ -155,7 +144,9 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Sim evaluations</h3>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {count} {pluralize("sim", count)}
+            {typeof linkedCount === "number" && linkedCount >= count
+              ? `${count} of ${linkedCount} linked ${pluralize("sim", linkedCount)} responded`
+              : `${count} ${pluralize("sim", count)}`}
           </span>
         </div>
         <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">

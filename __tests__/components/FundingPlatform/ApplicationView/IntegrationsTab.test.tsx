@@ -27,6 +27,7 @@ function createEvaluation(overrides: Partial<SimocracyEvaluationRow> = {}): Simo
     proposalUri: "at://did:plc:def/org.hypercerts.claim.activity/1",
     proposalTitle: "Open Retrieval Metrics Dashboard",
     reasoning: "Curve anchors at ~$197.",
+    style: null,
     mvf: [
       { dollars: 0, marginalValueMilli: 900 },
       { dollars: 197, marginalValueMilli: 0 },
@@ -143,7 +144,7 @@ describe("IntegrationsTab", () => {
 
       renderTab();
 
-      await waitFor(() => expect(screen.getByText("S3")).toBeInTheDocument());
+      await waitFor(() => expect(screen.getAllByText("S3").length).toBeGreaterThan(0));
       expect(screen.getByText("deepseek/deepseek-v4-flash-0731")).toBeInTheDocument();
       expect(screen.getByText("Curve anchors at ~$197.")).toBeInTheDocument();
       expect(screen.getByTitle("Mechanism run spg-008qx5b0-a6mnyn5tvpwr")).toBeInTheDocument();
@@ -169,17 +170,17 @@ describe("IntegrationsTab", () => {
       await waitFor(() => expect(screen.getByText("2 sims")).toBeInTheDocument());
     });
 
-    it("renders the marginal-value curve with one dot per anchor", async () => {
+    it("renders the shared council chart with total-value bars", async () => {
       mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
       mockFetchSimocracy.mockResolvedValue(createSimocracyResponse());
 
       renderTab();
 
       await waitFor(() => expect(screen.getByText("Marginal value")).toBeInTheDocument());
-      const tooltips = screen.getAllByRole("tooltip");
-      expect(tooltips).toHaveLength(2);
-      expect(tooltips[0]).toHaveTextContent("0.90 at $0");
-      expect(tooltips[1]).toHaveTextContent("0.00 at $197");
+      expect(screen.getByText("Where the council lands")).toBeInTheDocument();
+      expect(screen.getByText("$197")).toBeInTheDocument();
+      expect(screen.getByText("First dollar")).toBeInTheDocument();
+      expect(screen.getByText("0.90")).toBeInTheDocument();
     });
 
     it("omits the Constitution section when the prompt is null", async () => {
@@ -190,8 +191,8 @@ describe("IntegrationsTab", () => {
 
       renderTab();
 
-      await waitFor(() => expect(screen.getByText("S3")).toBeInTheDocument());
-      expect(screen.queryByText("Constitution")).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getAllByText("S3").length).toBeGreaterThan(0));
+      expect(screen.queryByText("Constitution & style")).not.toBeInTheDocument();
     });
 
     it("shows nothing for a sim with no row (recused absence, never zeros)", async () => {
@@ -200,9 +201,8 @@ describe("IntegrationsTab", () => {
 
       renderTab();
 
-      await waitFor(() => expect(screen.getByText("S3")).toBeInTheDocument());
+      await waitFor(() => expect(screen.getAllByText("S3").length).toBeGreaterThan(0));
       expect(screen.queryByText("S4")).not.toBeInTheDocument();
-      expect(screen.getAllByRole("tooltip")).toHaveLength(2);
     });
   });
 });

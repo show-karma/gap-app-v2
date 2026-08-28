@@ -7,6 +7,7 @@ import {
   LinkIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import pluralize from "pluralize";
 import { type FC, memo, useMemo, useState } from "react";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -35,6 +36,7 @@ import type {
   SimocracySimLink,
 } from "@/services/fundingApplicationIntegrations.service";
 import { shortAddress } from "@/utilities/shortAddress";
+import { cn } from "@/utilities/tailwind";
 
 const simUriSchema = z
   .string()
@@ -237,10 +239,14 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
     return map;
   }, [summary?.sims, council]);
 
-  const unlinkedSims = useMemo(() => {
-    const linked = new Set((links ?? []).map((link) => link.simUri));
-    return [...simsByUri.values()].filter((sim) => !linked.has(sim.simUri));
-  }, [simsByUri, links]);
+  const linkedUris = useMemo(() => new Set((links ?? []).map((link) => link.simUri)), [links]);
+
+  const unlinkedSims = useMemo(
+    () => [...simsByUri.values()].filter((sim) => !linkedUris.has(sim.simUri)),
+    [simsByUri, linkedUris]
+  );
+
+  const linkedCouncilCount = (council ?? []).filter((sim) => linkedUris.has(sim.simUri)).length;
 
   const isCustom = selectedSim === CUSTOM_SIM_VALUE || unlinkedSims.length === 0;
 
@@ -277,6 +283,18 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
     }
     return options;
   }, [communityReviewers, programReviewerOptions]);
+
+  const linkedAddresses = useMemo(
+    () => new Set((links ?? []).map((link) => link.publicAddress.toLowerCase())),
+    [links]
+  );
+  const simlessReviewers = useMemo(
+    () =>
+      programReviewerOptions.filter(
+        (reviewer) => !linkedAddresses.has(reviewer.publicAddress.toLowerCase())
+      ),
+    [programReviewerOptions, linkedAddresses]
+  );
 
   const reviewerByAddress = useMemo(() => {
     const map = new Map<string, ReviewerOption>();
@@ -350,13 +368,35 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800">
-      <div className="px-5 pt-5">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Link reviewer to Sim
-        </h2>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-          Only sims linked to a reviewer or admin are surfaced in evaluations.
-        </p>
+      <div className="flex items-start justify-between gap-4 px-5 pt-5">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Link reviewer to Sim
+          </h2>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            Only sims linked to a reviewer or admin are surfaced in evaluations.
+          </p>
+        </div>
+        {(council?.length ?? 0) > 0 && (
+          <div className="flex shrink-0 items-center gap-2 pt-0.5">
+            <div className="flex gap-0.5">
+              {(council ?? []).map((sim) => (
+                <span
+                  key={sim.simUri}
+                  className={cn(
+                    "h-1 w-3 rounded-full",
+                    linkedUris.has(sim.simUri)
+                      ? "bg-blue-600 dark:bg-blue-400"
+                      : "bg-gray-200 dark:bg-zinc-700"
+                  )}
+                />
+              ))}
+            </div>
+            <span className="whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+              {linkedCouncilCount} of {council?.length} linked
+            </span>
+          </div>
+        )}
       </div>
 
       {rows.length === 0 ? (
@@ -392,6 +432,78 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
             />
           ))}
         </ul>
+      )}
+
+      {canAdd && (unlinkedSims.length > 0 || simlessReviewers.length > 0) && (
+        <div className="border-t border-gray-100 bg-gray-50 px-5 py-3.5 dark:border-gray-700 dark:bg-zinc-900/40">
+          {unlinkedSims.length > 0 && (
+            <>
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                {unlinkedSims.length} council {pluralize("sim", unlinkedSims.length)}{" "}
+                {unlinkedSims.length === 1 ? "isn't" : "aren't"} linked — their evaluations are
+                dropped from every application.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {unlinkedSims.map((sim) => (
+                  <div
+                    key={sim.simUri}
+                    className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-white py-1 pl-2 pr-1 dark:border-gray-700 dark:bg-zinc-800"
+                  >
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      {sim.simName ?? truncateMiddle(sim.simUri, 14, 8)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSim(sim.simUri);
+                        if (formError) setFormError(null);
+                      }}
+                      className="rounded bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
+                    >
+                      Link
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {canManage && simlessReviewers.length > 0 && (
+            <>
+              <p
+                className={cn(
+                  "text-xs font-medium text-gray-700 dark:text-gray-300",
+                  unlinkedSims.length > 0 && "mt-3"
+                )}
+              >
+                {simlessReviewers.length} program {pluralize("reviewer", simlessReviewers.length)}{" "}
+                {simlessReviewers.length === 1 ? "has" : "have"} no sim — they can still review by
+                hand, but won't appear in the council.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {simlessReviewers.map((reviewer) => (
+                  <div
+                    key={reviewer.publicAddress}
+                    className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-white py-1 pl-2 pr-1 dark:border-gray-700 dark:bg-zinc-800"
+                  >
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      {reviewer.name || reviewer.email}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedReviewer(reviewer.publicAddress);
+                        if (formError) setFormError(null);
+                      }}
+                      className="rounded bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-200 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600"
+                    >
+                      Assign sim
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       )}
 
       {canAdd && (
