@@ -17,34 +17,53 @@ import { ANALYTICS_EVENT_NAMES } from "@/utilities/analytics/events";
 const PLAN_PATH = join(process.cwd(), "docs/analytics/tracking-plan.md");
 
 const plan = readFileSync(PLAN_PATH, "utf-8");
+const lines = plan.split(/\r?\n/);
 
 /**
  * Event names as the plan's event tables cite them.
  *
+ * Cells are normalised before matching, because a markdown formatter pads table
+ * columns to align them — a parser that assumed single spaces would pass on the
+ * file as written and fail the moment anyone ran one.
+ *
  * Scoped to tables under the event header rather than to every table: the plan
- * also has a super-properties table and a profile table whose first column is a
- * backticked snake_case name too, and counting those would let an undocumented
- * event pass because a property happened to share its name.
+ * also has a super-properties table, a profile table and a page-view table
+ * whose first column is a backticked snake_case name too, and counting those
+ * would let an undocumented event pass because a property happened to share its
+ * name.
  */
-const EVENT_TABLE_HEADER = "| Event | Fires when | Properties | Board |";
-const EVENT_ROW = /^\|\s*`([a-z][a-z0-9_]*)`\s*\|/;
+const EVENT_TABLE_HEADER = "Event | Fires when | Properties | Board";
+const EVENT_NAME = /^`([a-z][a-z0-9_]*)`$/;
+
+const isTableRow = (line: string): boolean => line.trimStart().startsWith("|");
+
+/** `|  a  |  b  |` -> `['a', 'b']`, so padding cannot change what a row says. */
+const normaliseRow = (line: string): string[] =>
+  line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
 
 const documentedEvents = (): Set<string> => {
   const names = new Set<string>();
   let inEventTable = false;
 
-  for (const line of plan.split("\n")) {
-    if (line.trim() === EVENT_TABLE_HEADER) {
-      inEventTable = true;
+  for (const line of lines) {
+    if (!isTableRow(line)) {
+      inEventTable = false;
       continue;
     }
-    if (!line.trimStart().startsWith("|")) {
-      inEventTable = false;
+
+    const cells = normaliseRow(line);
+    if (cells.join(" | ") === EVENT_TABLE_HEADER) {
+      inEventTable = true;
       continue;
     }
     if (!inEventTable) continue;
 
-    const match = EVENT_ROW.exec(line);
+    const match = EVENT_NAME.exec(cells[0] ?? "");
     if (match) names.add(match[1]);
   }
 
