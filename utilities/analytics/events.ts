@@ -19,8 +19,11 @@
  *   - Adding an event means adding it here first. `track("free_string")` does
  *     not compile, and the anti-pattern script rejects raw `mixpanel.track`.
  *
- * The human-readable tracking plan (what each event means, which funnel it
- * feeds) lives in `docs/analytics/tracking-plan.md`. Keep the two in sync.
+ * The human-readable plan for THIS catalog (what each event means, which funnel
+ * board it feeds) lives in `docs/analytics/tracking-plan.md` in this repo. The
+ * server catalog — the events a browser cannot witness — has its own, in
+ * `gap-indexer/docs/analytics/server-events.md`. Keep each in sync with its
+ * catalog; a test in each repo enforces it.
  */
 
 /**

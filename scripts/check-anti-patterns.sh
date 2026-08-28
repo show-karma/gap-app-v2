@@ -8,6 +8,28 @@ set -e
 TARGET="${1:-.}"
 ISSUES=0
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# The one module allowed to touch the Mixpanel SDK, as a path suffix so the
+# match works whether the checker is handed a relative or an absolute path.
+ANALYTICS_CLIENT="utilities/analytics/client.ts"
+# The catalog. Exempt because its header documents the very patterns these
+# checks reject — `track("free_string")` and `mixpanel.track` appear there as
+# prose, not as calls.
+ANALYTICS_EVENTS="utilities/analytics/events.ts"
+ANALYTICS_CATALOG="$REPO_ROOT/$ANALYTICS_EVENTS"
+
+# Every name in ANALYTICS_EVENT_NAMES, one per line, for the membership test in
+# check_file. Read once: the alternative is re-parsing the catalog per file, and
+# this script runs over several thousand of them.
+#
+# An empty result disables only the name check; the import and raw-SDK checks do
+# not depend on it.
+CATALOG_NAMES=""
+if [ -f "$ANALYTICS_CATALOG" ]; then
+  CATALOG_NAMES=$(sed -n '/ANALYTICS_EVENT_NAMES = \[/,/^\] as const/p' "$ANALYTICS_CATALOG" \
+    | grep -oE '"[a-z][a-z0-9_]*"' | tr -d '"' || true)
+fi
+
 check_file() {
   local FILE="$1"
 
@@ -167,6 +189,59 @@ check_file() {
         LINES=$(echo "$UNDER_EXPORT" | awk -F: '{print $1}' | tr '\n' ',' | sed 's/,$//')
         FILE_ISSUES="${FILE_ISSUES}\n  [UNDER_EXPORT] L:${LINES} - Underscore-prefixed export. If the import is unused, remove it; don't leak _SYMBOL as a public API."
         ISSUES=$((ISSUES + 1))
+      fi
+
+      # === Analytics ===
+      # One module owns the Mixpanel SDK, and every event name comes from the
+      # catalog. Both rules exist because what they replaced had neither: two
+      # parallel helpers with a documented mount-effect race, `mp.init` on every
+      # event, and free-string names that no report could group and no reader
+      # could find the meaning of.
+      case "$FILE" in
+        *"$ANALYTICS_CLIENT"|*"$ANALYTICS_EVENTS") ;;
+        *)
+          MP_IMPORT=$(grep -nE "from[[:space:]]+['\"]mixpanel-browser['\"]" "$FILE" 2>/dev/null | head -3 || true)
+          if [ -n "$MP_IMPORT" ]; then
+            LINES=$(echo "$MP_IMPORT" | awk -F: '{print $1}' | tr '\n' ',' | sed 's/,$//')
+            FILE_ISSUES="${FILE_ISSUES}\n  [ANALYTICS] L:${LINES} - Only utilities/analytics/client.ts may import mixpanel-browser."
+            ISSUES=$((ISSUES + 1))
+          fi
+
+          RAW_SDK=$(grep -nE '\b(mixpanel|mp)\.(track|track_pageview|identify|reset|register|unregister|people|set_group|get_property|init)\b' "$FILE" 2>/dev/null | head -3 || true)
+          if [ -n "$RAW_SDK" ]; then
+            LINES=$(echo "$RAW_SDK" | awk -F: '{print $1}' | tr '\n' ',' | sed 's/,$//')
+            FILE_ISSUES="${FILE_ISSUES}\n  [ANALYTICS] L:${LINES} - Raw Mixpanel SDK call. Use track()/identifyUser()/registerSuperProperties() from utilities/analytics/client.ts."
+            ISSUES=$((ISSUES + 1))
+          fi
+          ;;
+      esac
+
+      # `track("some_name")` where some_name is not in the catalog. A name the
+      # catalog does not know is one the tracking plan does not document and no
+      # board can join to — and `track()` only type-checks against the catalog,
+      # so a hit here is either a cast or a second `track` helper.
+      case "$FILE" in
+        *"$ANALYTICS_EVENTS") CATALOG_NAMES_FOR_FILE="" ;;
+        *) CATALOG_NAMES_FOR_FILE="$CATALOG_NAMES" ;;
+      esac
+      if [ -n "$CATALOG_NAMES_FOR_FILE" ]; then
+        BAD_NAMES=""
+        TRACK_HITS=$(grep -nE '(^|[^.a-zA-Z0-9_])track\("[a-zA-Z0-9_]*"' "$FILE" 2>/dev/null | head -10 || true)
+        if [ -n "$TRACK_HITS" ]; then
+          while IFS= read -r HIT; do
+            [ -z "$HIT" ] && continue
+            HIT_LINE="${HIT%%:*}"
+            HIT_NAME=$(echo "$HIT" | grep -oE 'track\("[a-zA-Z0-9_]*"' | head -1 | sed 's/track("//; s/"$//')
+            [ -z "$HIT_NAME" ] && continue
+            if ! echo "$CATALOG_NAMES_FOR_FILE" | grep -qx "$HIT_NAME"; then
+              BAD_NAMES="${BAD_NAMES}L:${HIT_LINE} ${HIT_NAME}; "
+            fi
+          done <<< "$TRACK_HITS"
+        fi
+        if [ -n "$BAD_NAMES" ]; then
+          FILE_ISSUES="${FILE_ISSUES}\n  [ANALYTICS] ${BAD_NAMES}- Event name not in ANALYTICS_EVENT_NAMES. Add it to utilities/analytics/events.ts and give it a row in docs/analytics/tracking-plan.md."
+          ISSUES=$((ISSUES + 1))
+        fi
       fi
       ;;
   esac

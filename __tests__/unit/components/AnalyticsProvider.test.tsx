@@ -37,14 +37,23 @@ vi.mock("@/utilities/analytics/client", () => ({
 }));
 
 /**
- * The community group is bound by the community layout from the RESOLVED uid,
- * not read off the URL — `/community/[communityId]` accepts a slug or a uid, so
- * the URL segment would split one community into two Mixpanel groups.
+ * The community group is bound by the community layout from the RESOLVED
+ * community, not read off the URL — `/community/[communityId]` accepts a slug
+ * or a uid, so the URL segment would split one community into two Mixpanel
+ * groups and would put uids into the readable slug property.
  */
-const boundCommunityMock = vi.fn<() => string | null>(() => null);
+interface BoundCommunity {
+  uid: string;
+  slug: string | null;
+}
+const boundCommunityMock = vi.fn<() => BoundCommunity | null>(() => null);
 vi.mock("@/utilities/analytics/community-group", () => ({
-  useBoundCommunityId: () => boundCommunityMock(),
+  useBoundCommunity: () => boundCommunityMock(),
 }));
+
+/** The layout binding a resolved community, uid and canonical slug together. */
+const bindCommunity = (uid: string | null, slug: string | null = "gitcoin") =>
+  boundCommunityMock.mockReturnValue(uid ? { uid, slug } : null);
 
 const usePathnameMock = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -90,7 +99,7 @@ describe("AnalyticsProvider", () => {
     vi.clearAllMocks();
     __resetPendingLogoutReasonForTests();
     usePathnameMock.mockReturnValue("/");
-    boundCommunityMock.mockReturnValue(null);
+    bindCommunity(null);
     setAuth();
     setWhitelabel();
   });
@@ -267,7 +276,7 @@ describe("AnalyticsProvider", () => {
 
     it("reports the community by the uid the layout bound, not the URL segment", () => {
       usePathnameMock.mockReturnValue("/community/gitcoin/grants");
-      boundCommunityMock.mockReturnValue("0xcommunityuid");
+      bindCommunity("0xcommunityuid");
 
       render(<AnalyticsProvider />);
 
@@ -282,12 +291,12 @@ describe("AnalyticsProvider", () => {
       // Emitting now and a corrected one a tick later would double-count the
       // view; a community page view without its community is not a useful row.
       usePathnameMock.mockReturnValue("/community/gitcoin");
-      boundCommunityMock.mockReturnValue(null);
+      bindCommunity(null);
 
       const { rerender } = render(<AnalyticsProvider />);
       expect(trackPageView).not.toHaveBeenCalled();
 
-      boundCommunityMock.mockReturnValue("0xcommunityuid");
+      bindCommunity("0xcommunityuid");
       rerender(<AnalyticsProvider />);
 
       expect(trackPageView).toHaveBeenCalledTimes(1);
@@ -298,7 +307,7 @@ describe("AnalyticsProvider", () => {
 
     it("does not wait for a community on a route that has none", () => {
       usePathnameMock.mockReturnValue("/project/my-project");
-      boundCommunityMock.mockReturnValue(null);
+      bindCommunity(null);
 
       render(<AnalyticsProvider />);
 
@@ -433,7 +442,7 @@ describe("AnalyticsProvider — write ordering", () => {
     vi.clearAllMocks();
     __resetPendingLogoutReasonForTests();
     usePathnameMock.mockReturnValue("/community/gitcoin");
-    boundCommunityMock.mockReturnValue("0xcommunityuid");
+    bindCommunity("0xcommunityuid");
     setAuth();
     setWhitelabel();
   });
@@ -490,7 +499,7 @@ describe("AnalyticsProvider — write ordering", () => {
     const { rerender } = render(<AnalyticsProvider />);
 
     usePathnameMock.mockReturnValue("/funding-map");
-    boundCommunityMock.mockReturnValue(null);
+    bindCommunity(null);
     rerender(<AnalyticsProvider />);
 
     expect(setCommunityGroup).toHaveBeenLastCalledWith(null);
@@ -517,7 +526,7 @@ describe("AnalyticsProvider — the authenticated-but-unresolved gap", () => {
     vi.clearAllMocks();
     __resetPendingLogoutReasonForTests();
     usePathnameMock.mockReturnValue("/funding-map");
-    boundCommunityMock.mockReturnValue(null);
+    bindCommunity(null);
     setWhitelabel();
   });
 
@@ -565,12 +574,12 @@ describe("AnalyticsProvider — community_slug", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     __resetPendingLogoutReasonForTests();
-    boundCommunityMock.mockReturnValue("0xcommunityuid");
+    bindCommunity("0xcommunityuid");
     setAuth();
     setWhitelabel();
   });
 
-  it("registers the route segment on a community route", () => {
+  it("registers the slug the layout resolved", () => {
     usePathnameMock.mockReturnValue("/community/gitcoin/projects");
 
     render(<AnalyticsProvider />);
@@ -578,12 +587,26 @@ describe("AnalyticsProvider — community_slug", () => {
     expect(registerSuperProperties).toHaveBeenCalledWith({ community_slug: "gitcoin" });
   });
 
-  it("decodes an escaped segment", () => {
-    usePathnameMock.mockReturnValue("/community/my%20community");
+  it("registers the canonical slug even when the visitor arrived by uid", () => {
+    // `/community/[communityId]` accepts a uid, and reading the property off the
+    // URL would put that uid into the one property whose job is to be readable.
+    usePathnameMock.mockReturnValue("/community/0x8dfbdeadbeefdeadbeefdeadbeefdeadbeefdead");
+    bindCommunity("0xcommunityuid", "gitcoin");
 
     render(<AnalyticsProvider />);
 
-    expect(registerSuperProperties).toHaveBeenCalledWith({ community_slug: "my community" });
+    expect(registerSuperProperties).toHaveBeenCalledWith({ community_slug: "gitcoin" });
+  });
+
+  it("registers nothing when the resolved community has no slug", () => {
+    usePathnameMock.mockReturnValue("/community/gitcoin");
+    bindCommunity("0xcommunityuid", null);
+
+    render(<AnalyticsProvider />);
+
+    expect(registerSuperProperties).not.toHaveBeenCalledWith(
+      expect.objectContaining({ community_slug: expect.anything() })
+    );
   });
 
   it("unregisters it on leaving the community", () => {
@@ -591,7 +614,7 @@ describe("AnalyticsProvider — community_slug", () => {
     const { rerender } = render(<AnalyticsProvider />);
 
     usePathnameMock.mockReturnValue("/funding-map");
-    boundCommunityMock.mockReturnValue(null);
+    bindCommunity(null);
     rerender(<AnalyticsProvider />);
 
     expect(unregisterSuperProperty).toHaveBeenCalledWith("community_slug");
@@ -599,7 +622,20 @@ describe("AnalyticsProvider — community_slug", () => {
 
   it("registers nothing off a community route", () => {
     usePathnameMock.mockReturnValue("/funding-map");
-    boundCommunityMock.mockReturnValue(null);
+    bindCommunity(null);
+
+    render(<AnalyticsProvider />);
+
+    expect(registerSuperProperties).not.toHaveBeenCalledWith(
+      expect.objectContaining({ community_slug: expect.anything() })
+    );
+  });
+
+  it("waits for the layout before registering anything on a community route", () => {
+    // Same reason the page view waits: a slug written from the URL would be
+    // whatever segment the visitor followed, which may be a uid.
+    usePathnameMock.mockReturnValue("/community/gitcoin");
+    bindCommunity(null);
 
     render(<AnalyticsProvider />);
 

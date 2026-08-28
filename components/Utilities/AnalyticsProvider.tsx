@@ -14,7 +14,7 @@ import {
   trackPageView,
   unregisterSuperProperty,
 } from "@/utilities/analytics/client";
-import { useBoundCommunityId } from "@/utilities/analytics/community-group";
+import { useBoundCommunity } from "@/utilities/analytics/community-group";
 import { toCommunityId, toPageGroup, toRoutePattern } from "@/utilities/analytics/route-pattern";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
@@ -103,15 +103,18 @@ const settleIdentity = (identity: ResolvedIdentity, memory: SessionMemory): void
 };
 
 /**
- * The readable route label, alongside the authoritative uid. Written from the
- * URL because that is the only place it exists — the resolved community carries
- * a uid, and a report filtered by hand wants the word the visitor followed.
+ * The readable label, alongside the authoritative uid — so a report filtered by
+ * hand can say `gitcoin` rather than `0x8dfb…`.
+ *
+ * The layout's resolved slug, never the URL segment: `/community/[communityId]`
+ * accepts a uid too, so reading it off the path would put uids into a property
+ * whose whole purpose is to be readable.
  */
-const syncCommunitySlug = (routeCommunitySlug: string | null, memory: SessionMemory): void => {
-  if (memory.lastCommunitySlug.current === routeCommunitySlug) return;
-  memory.lastCommunitySlug.current = routeCommunitySlug;
-  if (routeCommunitySlug !== null) {
-    registerSuperProperties({ community_slug: routeCommunitySlug });
+const syncCommunitySlug = (slug: string | null, memory: SessionMemory): void => {
+  if (memory.lastCommunitySlug.current === slug) return;
+  memory.lastCommunitySlug.current = slug;
+  if (slug !== null) {
+    registerSuperProperties({ community_slug: slug });
   } else {
     unregisterSuperProperty("community_slug");
   }
@@ -121,11 +124,13 @@ export function AnalyticsProvider() {
   const pathname = usePathname();
   const { isWhitelabel, communitySlug } = useWhitelabel();
   const { ready, authenticated, user, address } = useAuth();
-  // Bound by the community layout from the resolved UID, not read off the URL —
-  // `/community/[communityId]` accepts a slug or a uid, and grouping on the URL
-  // segment splits one community into two groups. The layout only PUBLISHES it;
-  // the write happens below, after identity has settled.
-  const boundCommunityId = useBoundCommunityId();
+  // Bound by the community layout from the RESOLVED community, not read off the
+  // URL — `/community/[communityId]` accepts a slug or a uid, and grouping on
+  // the URL segment splits one community into two groups. The layout only
+  // PUBLISHES it; the write happens below, after identity has settled.
+  const boundCommunity = useBoundCommunity();
+  const boundCommunityId = boundCommunity?.uid ?? null;
+  const boundCommunitySlug = boundCommunity?.slug ?? null;
 
   const userId = user?.id;
   const email = user?.email?.address ?? null;
@@ -188,14 +193,14 @@ export function AnalyticsProvider() {
 
     settleIdentity({ authenticated, userId, email, address, authMethods }, memory);
 
-    const routeCommunitySlug = toCommunityId(pathname);
-    syncCommunitySlug(routeCommunitySlug, memory);
-
     // On a community route, wait for the layout to bind the community before
     // reporting the view. A community page view that does not name its community
     // is not a useful row, and emitting one now and a corrected one a tick later
     // would double-count it.
-    if (routeCommunitySlug !== null && boundCommunityId === null) return;
+    const onCommunityRoute = toCommunityId(pathname) !== null;
+    if (onCommunityRoute && boundCommunityId === null) return;
+
+    syncCommunitySlug(boundCommunitySlug, memory);
 
     // Identity is settled, so the group can be written. Only on change: the
     // effect re-runs on every navigation, and `set_group` is a network call.
@@ -228,6 +233,7 @@ export function AnalyticsProvider() {
     address,
     authMethods,
     boundCommunityId,
+    boundCommunitySlug,
     memory,
   ]);
 

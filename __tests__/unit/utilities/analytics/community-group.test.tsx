@@ -20,7 +20,7 @@ import { render } from "@testing-library/react";
 import * as analyticsClient from "@/utilities/analytics/client";
 import {
   __resetCommunityGroupForTests,
-  useBoundCommunityId,
+  useBoundCommunity,
   useCommunityAnalyticsGroup,
 } from "@/utilities/analytics/community-group";
 
@@ -30,14 +30,19 @@ vi.mock("@/utilities/analytics/client", () => ({
   unregisterSuperProperty: vi.fn(),
 }));
 
-function Binder({ uid }: { uid: string | null }) {
-  useCommunityAnalyticsGroup(uid);
+function Binder({ uid, slug = "gitcoin" }: { uid: string | null; slug?: string | null }) {
+  useCommunityAnalyticsGroup(uid, slug);
   return null;
 }
 
 function Reader() {
-  const bound = useBoundCommunityId();
-  return <span data-testid="bound">{bound ?? "none"}</span>;
+  const bound = useBoundCommunity();
+  return (
+    <>
+      <span data-testid="bound">{bound?.uid ?? "none"}</span>
+      <span data-testid="bound-slug">{bound?.slug ?? "none"}</span>
+    </>
+  );
 }
 
 describe("useCommunityAnalyticsGroup", () => {
@@ -55,6 +60,49 @@ describe("useCommunityAnalyticsGroup", () => {
     );
 
     expect(getByTestId("bound").textContent).toBe("0xcommunityuid");
+  });
+
+  it("publishes the canonical slug beside the uid", () => {
+    // The layout resolved both. Reading the slug off the URL instead would
+    // sometimes yield a uid, because that route accepts either.
+    const { getByTestId } = render(
+      <>
+        <Reader />
+        <Binder uid="0xcommunityuid" slug="gitcoin" />
+      </>
+    );
+
+    expect(getByTestId("bound-slug").textContent).toBe("gitcoin");
+  });
+
+  it("publishes no slug when the resolved community has none", () => {
+    const { getByTestId } = render(
+      <>
+        <Reader />
+        <Binder uid="0xcommunityuid" slug={null} />
+      </>
+    );
+
+    expect(getByTestId("bound").textContent).toBe("0xcommunityuid");
+    expect(getByTestId("bound-slug").textContent).toBe("none");
+  });
+
+  it("republishes when only the slug changed", () => {
+    const { getByTestId, rerender } = render(
+      <>
+        <Reader />
+        <Binder uid="0xcommunityuid" slug="gitcoin" />
+      </>
+    );
+
+    rerender(
+      <>
+        <Reader />
+        <Binder uid="0xcommunityuid" slug="gitcoin-renamed" />
+      </>
+    );
+
+    expect(getByTestId("bound-slug").textContent).toBe("gitcoin-renamed");
   });
 
   it("publishes nothing when the route names no real community", () => {
@@ -117,7 +165,7 @@ describe("useCommunityAnalyticsGroup", () => {
   });
 });
 
-describe("useBoundCommunityId", () => {
+describe("useBoundCommunity", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     __resetCommunityGroupForTests();
