@@ -55,6 +55,15 @@ export interface SuperProperties {
   app_version?: string;
   wallet_connected?: boolean;
   auth_method?: string;
+  /**
+   * The community segment as it appears in the URL, on `/community/[…]` routes.
+   *
+   * Readable, not authoritative: `community_id` is the resolved UID and is what
+   * grouping joins on, but a report filtered by hand is far easier to write
+   * against `gitcoin` than against `0x8dfb…`. The segment is whatever the
+   * visitor followed — a slug or a uid — and is unregistered on leaving.
+   */
+  community_slug?: string;
 }
 
 /**
@@ -313,8 +322,18 @@ export function registerSuperProperties(props: SuperProperties): void {
   });
 }
 
-/** Also reachable for the group key, which Mixpanel registers on `set_group`. */
+/**
+ * Drops a super property. Also reachable for the group key, which Mixpanel
+ * registers on `set_group`.
+ *
+ * Removes it from `currentContext` as well as from the SDK: that record is what
+ * `resetAndRestoreContext` replays after a `reset()`, so leaving the key behind
+ * would resurrect the value on the next logout or user switch.
+ */
 export function unregisterSuperProperty(key: keyof SuperProperties | string): void {
+  if (key in currentContext) {
+    delete currentContext[key as keyof SuperProperties];
+  }
   safely((mixpanel) => {
     mixpanel.unregister(key);
   });

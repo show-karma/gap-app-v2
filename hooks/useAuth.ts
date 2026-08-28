@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
-import { setPendingLogoutReason } from "@/utilities/analytics/auth-transitions";
+import { abandonLogout, beginLogout } from "@/utilities/analytics/auth-transitions";
 import { track } from "@/utilities/analytics/client";
 import {
   ENTRY_POINT_SURFACES,
@@ -190,6 +190,14 @@ export const useAuth = () => {
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
   const prevUserIdRef = useRef<string | undefined>(user?.id);
+  /**
+   * The identity as of the last render, readable from timers, intervals and
+   * stable callbacks. Depending on the id directly in those would tear down and
+   * reschedule the wallet-disconnect timer and the cross-tab interval every
+   * time Privy hands back a new user object, which is exactly what they are
+   * built not to do.
+   */
+  const currentUserIdRef = useRef<string | null>(user?.id ?? null);
   const authFailureCount = useRef(0);
   // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
   const walletsSnapshotRef = useRef<string[]>([]);
@@ -262,8 +270,13 @@ export const useAuth = () => {
       // Records the reason only. `AnalyticsProvider` emits the single `logout`
       // event on the authenticated true->false transition — useAuth has ~100
       // call sites, and emitting here produced one event per mounted instance.
-      setPendingLogoutReason("user_switch");
-      logout();
+      // The reason is bound to the identity that will be live when the session
+      // actually ends — Privy has already swapped `user` to the new id, and the
+      // provider identifies that one before the transition lands. Recording the
+      // OLD id here would make the provider reject the reason as belonging to
+      // someone else and report a plain "user" sign-out.
+      const attempt = beginLogout("user_switch", user.id);
+      Promise.resolve(logout()).catch(() => abandonLogout(attempt));
     }
 
     prevAuthRef.current = authenticated;
@@ -357,12 +370,16 @@ export const useAuth = () => {
     const timer = setTimeout(() => {
       if (walletDisconnectLogoutFired) return;
       walletDisconnectLogoutFired = true;
-      setPendingLogoutReason("wallet_disconnect");
-      logout();
+      const attempt = beginLogout("wallet_disconnect", currentUserIdRef.current);
+      Promise.resolve(logout()).catch(() => abandonLogout(attempt));
     }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
 
     return () => clearTimeout(timer);
   }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, logout]);
+
+  useEffect(() => {
+    currentUserIdRef.current = user?.id ?? null;
+  }, [user?.id]);
 
   // Auto-login after logout completes
   useEffect(() => {
@@ -381,8 +398,8 @@ export const useAuth = () => {
       authFailureCount.current += 1;
       if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
         authFailureCount.current = 0;
-        setPendingLogoutReason("cross_tab");
-        logout();
+        const attempt = beginLogout("cross_tab", currentUserIdRef.current);
+        Promise.resolve(logout()).catch(() => abandonLogout(attempt));
       }
     };
 
@@ -480,8 +497,8 @@ export const useAuth = () => {
             if (user && !compareAllWallets(user, newAddress)) {
               // A different wallet at the browser level is a different identity,
               // which is the same session boundary as Privy's own user switch.
-              setPendingLogoutReason("user_switch");
-              logout();
+              const attempt = beginLogout("user_switch", user.id);
+              Promise.resolve(logout()).catch(() => abandonLogout(attempt));
             }
           },
         });
@@ -545,8 +562,13 @@ export const useAuth = () => {
         // Not the user signing out: the session is torn down so wagmi can
         // re-attach the external wallet, and the auto-login effect signs them
         // straight back in.
-        setPendingLogoutReason("wallet_reconnect");
-        await logout();
+        const attempt = beginLogout("wallet_reconnect", currentUserIdRef.current);
+        try {
+          await logout();
+        } catch (error) {
+          abandonLogout(attempt);
+          throw error;
+        }
         return;
       }
       // Don't call Privy's login() when already authenticated (e.g. Farcaster users
@@ -565,8 +587,13 @@ export const useAuth = () => {
    * The event itself is emitted once, by `AnalyticsProvider`.
    */
   const trackedLogout = useCallback(async () => {
-    setPendingLogoutReason("user");
-    return logout();
+    const attempt = beginLogout("user", currentUserIdRef.current);
+    try {
+      return await logout();
+    } catch (error) {
+      abandonLogout(attempt);
+      throw error;
+    }
   }, [logout]);
 
   const connectedAndAuth = useMemo(() => {

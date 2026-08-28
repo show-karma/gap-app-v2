@@ -58,6 +58,10 @@ import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { track } from "@/utilities/analytics/client";
 import { toErrorCode } from "@/utilities/analytics/error-code";
+import {
+  changedProjectFields,
+  currentProjectEditValues,
+} from "@/utilities/analytics/project-edit-diff";
 import { api } from "@/utilities/api/client";
 import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
@@ -842,6 +846,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         customLinks,
       };
 
+      // Taken BEFORE the update: `updateProject` calls `details.setValues(...)`
+      // on this very object, so a diff computed afterwards is always empty.
+      const fieldsChanged = changedProjectFields(currentProjectEditValues(fetchedProject), {
+        ...newProjectInfo,
+        ...socialData,
+      });
+
       await updateProject(
         fetchedProject,
         newProjectInfo,
@@ -855,11 +866,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         showSuccess
       ).then(async (res) => {
         // Field NAMES only — the values are the project's own content and have
-        // no place on an event.
-        track("project_edited", {
-          project_id: fetchedProject.uid,
-          fields_changed: Object.keys({ ...newProjectInfo, ...socialData }),
-        });
+        // no place on an event. An edit that changed nothing is not an edit.
+        if (fieldsChanged.length > 0) {
+          track("project_edited", {
+            project_id: fetchedProject.uid,
+            fields_changed: fieldsChanged,
+          });
+        }
         // updateProject calls showSuccess internally
         setStep(0);
         // Brief delay to show success, then redirect

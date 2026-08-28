@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
-import { setCommunityGroup } from "./client";
 
 /**
  * Which community the visitor is inside, as a stable UID.
@@ -17,6 +16,13 @@ import { setCommunityGroup } from "./client";
  * different branches of the tree: the community layout binds it, and
  * `AnalyticsProvider` — mounted from the root layout, not inside the community
  * subtree — reads it.
+ *
+ * This module PUBLISHES the uid and nothing else. Writing `set_group` here was
+ * the bug: the layout mounts on its own schedule, with no view of whether Privy
+ * has resolved yet, so on a reload the group write landed while Mixpanel still
+ * held the previous session's identity from localStorage — attributing a
+ * community to whoever was signed in last. The provider owns every SDK write,
+ * and only after it has settled identity.
  */
 
 let boundCommunityUid: string | null = null;
@@ -43,21 +49,23 @@ export const useBoundCommunityId = (): string | null =>
   useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
 /**
- * Binds the community the visitor is inside for as long as this component is
- * mounted. Called once, from the community layout, with the resolved UID.
+ * Publishes the community the visitor is inside for as long as this component
+ * is mounted. Called once, from the community layout, with the resolved UID.
+ *
+ * Publishing only: the provider picks the value up through
+ * {@link useBoundCommunityId} and performs the actual `set_group` inside its
+ * ready-gated effect, after identity is settled.
  */
 export const useCommunityAnalyticsGroup = (uid: string | null | undefined): void => {
   useEffect(() => {
-    const next = uid || null;
-    boundCommunityUid = next;
-    setCommunityGroup(next);
+    boundCommunityUid = uid || null;
     emit();
 
     return () => {
-      // Leaving the community subtree unbinds it, so events on the next screen
-      // are not still attributed to the community the visitor just left.
+      // Leaving the community subtree unpublishes it, so events on the next
+      // screen are not still attributed to the community just left. The
+      // provider turns this into the SDK call that clears the binding.
       boundCommunityUid = null;
-      setCommunityGroup(null);
       emit();
     };
   }, [uid]);

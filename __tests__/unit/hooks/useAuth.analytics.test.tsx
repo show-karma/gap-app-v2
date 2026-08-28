@@ -216,7 +216,7 @@ describe("useAuth analytics", () => {
       expect(mockLogout).toHaveBeenCalledTimes(1);
       // The teardown is machinery, not the user signing out.
       expect(emittedLogouts()).toEqual([]);
-      expect(takePendingLogoutReason()).toBe("wallet_reconnect");
+      expect(takePendingLogoutReason("user-1")).toBe("wallet_reconnect");
     });
   });
 
@@ -248,7 +248,7 @@ describe("useAuth analytics", () => {
         await result.current.logout();
       });
 
-      expect(takePendingLogoutReason()).toBe("user");
+      expect(takePendingLogoutReason("user-1")).toBe("user");
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
 
@@ -260,7 +260,7 @@ describe("useAuth analytics", () => {
         await result.current.disconnect();
       });
 
-      expect(takePendingLogoutReason()).toBe("user");
+      expect(takePendingLogoutReason("user-1")).toBe("user");
     });
 
     it("records a Privy shared-auth user switch", async () => {
@@ -272,7 +272,10 @@ describe("useAuth analytics", () => {
         rerender();
       });
 
-      expect(takePendingLogoutReason()).toBe("user_switch");
+      // Recorded against the identity Privy has ALREADY swapped in, because
+      // that is the one the provider will have settled on by the time the
+      // session actually ends.
+      expect(takePendingLogoutReason("user-2")).toBe("user_switch");
     });
 
     it("records a wallet disconnect once the grace period elapses", async () => {
@@ -290,7 +293,7 @@ describe("useAuth analytics", () => {
           vi.runOnlyPendingTimers();
         });
 
-        expect(takePendingLogoutReason()).toBe("wallet_disconnect");
+        expect(takePendingLogoutReason("user-1")).toBe("wallet_disconnect");
       } finally {
         vi.useRealTimers();
       }
@@ -306,9 +309,9 @@ describe("useAuth analytics", () => {
       });
 
       expect(emittedLogouts()).toEqual([]);
-      expect(takePendingLogoutReason()).toBe("user");
+      expect(takePendingLogoutReason("user-1")).toBe("user");
       // Read once and cleared, so a later unrelated logout cannot inherit it.
-      expect(takePendingLogoutReason()).toBe("user");
+      expect(takePendingLogoutReason("user-1")).toBe("user");
     });
   });
 });

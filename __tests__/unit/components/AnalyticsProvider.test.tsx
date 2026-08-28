@@ -10,17 +10,20 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { render } from "@testing-library/react";
+import { StrictMode } from "react";
 import { AnalyticsProvider } from "@/components/Utilities/AnalyticsProvider";
 import {
   __resetPendingLogoutReasonForTests,
-  setPendingLogoutReason,
+  beginLogout,
 } from "@/utilities/analytics/auth-transitions";
 import {
   identifyUser,
   registerSuperProperties,
   resetIdentity,
+  setCommunityGroup,
   track,
   trackPageView,
+  unregisterSuperProperty,
 } from "@/utilities/analytics/client";
 
 vi.mock("@/utilities/analytics/client", () => ({
@@ -30,6 +33,7 @@ vi.mock("@/utilities/analytics/client", () => ({
   setCommunityGroup: vi.fn(),
   track: vi.fn(),
   trackPageView: vi.fn(),
+  unregisterSuperProperty: vi.fn(),
 }));
 
 /**
@@ -328,16 +332,57 @@ describe("AnalyticsProvider", () => {
       expect(identifyOrder).toBeLessThan(viewOrder);
     });
 
-    it("reports one view for a remount on the same route", () => {
-      // React Strict Mode mounts every effect twice in development, and any
-      // remount replays it. The same route under the same identity is the same
-      // view.
+    it("reports one view across Strict Mode's development effect replay", () => {
+      // The real thing, not a rerender: React 18+ Strict Mode mounts, unmounts
+      // and remounts every effect in development. A rerender with unchanged
+      // dependencies does not re-run an effect at all, so asserting on one
+      // would pass even with the dedupe branch deleted.
       usePathnameMock.mockReturnValue("/funding-map");
+
+      render(
+        <StrictMode>
+          <AnalyticsProvider />
+        </StrictMode>
+      );
+
+      expect(trackPageView).toHaveBeenCalledTimes(1);
+    });
+
+    it("reports one view when the effect re-runs on the same route and identity", () => {
+      // The wallet hydrating is a dependency change, so the effect genuinely
+      // re-runs — but the visitor has not gone anywhere and is still the same
+      // person, so it is still one view.
+      usePathnameMock.mockReturnValue("/funding-map");
+      setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
       const { rerender } = render(<AnalyticsProvider />);
-      rerender(<AnalyticsProvider />);
+
+      setAuth({ authenticated: true, address: "0xabc", user: { id: "did:privy:alice" } });
       rerender(<AnalyticsProvider />);
 
       expect(trackPageView).toHaveBeenCalledTimes(1);
+    });
+
+    it("reports both views when two paths share one template", () => {
+      // The dedupe key is the CONCRETE path. `/project/a` and `/project/b` both
+      // reduce to `/project/:projectId`, so a key built from the template would
+      // silently swallow every navigation between two projects.
+      usePathnameMock.mockReturnValue("/project/project-a");
+      const { rerender } = render(<AnalyticsProvider />);
+
+      usePathnameMock.mockReturnValue("/project/project-b");
+      rerender(<AnalyticsProvider />);
+
+      expect(trackPageView).toHaveBeenCalledTimes(2);
+      expect(trackPageView).toHaveBeenNthCalledWith(1, {
+        route_pattern: "/project/:projectId",
+        page_group: "project",
+        community_id: null,
+      });
+      expect(trackPageView).toHaveBeenNthCalledWith(2, {
+        route_pattern: "/project/:projectId",
+        page_group: "project",
+        community_id: null,
+      });
     });
 
     it("reports the same route again once the identity behind it changes", () => {
@@ -366,6 +411,211 @@ describe("AnalyticsProvider", () => {
         community_id: null,
       });
     });
+  });
+});
+
+/**
+ * The provider owns every SDK write that depends on who the visitor is, and
+ * performs them in one order: identity first, then the community group, then
+ * the page.
+ *
+ * The bug this closes is quiet and only happens on a reload. Mixpanel restores
+ * the previous session's distinct id from localStorage synchronously; Privy
+ * resolves over the network. Anything written in between lands on the wrong
+ * person — and the community layout, which resolves the uid, has no way to know
+ * that.
+ */
+describe("AnalyticsProvider — write ordering", () => {
+  const orderOf = (mock: { mock: { invocationCallOrder: number[] } }) =>
+    mock.mock.invocationCallOrder[0];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    __resetPendingLogoutReasonForTests();
+    usePathnameMock.mockReturnValue("/community/gitcoin");
+    boundCommunityMock.mockReturnValue("0xcommunityuid");
+    setAuth();
+    setWhitelabel();
+  });
+
+  it("writes the group only after identity has settled", () => {
+    setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+
+    render(<AnalyticsProvider />);
+
+    expect(setCommunityGroup).toHaveBeenCalledWith("0xcommunityuid");
+    expect(orderOf(vi.mocked(identifyUser))).toBeLessThan(orderOf(vi.mocked(setCommunityGroup)));
+    expect(orderOf(vi.mocked(setCommunityGroup))).toBeLessThan(orderOf(vi.mocked(trackPageView)));
+  });
+
+  it("writes no group at all before Privy has resolved", () => {
+    // The layout has the uid and would have written it immediately. Mixpanel is
+    // still holding whoever was signed in last, so that write would join THEM
+    // to this community.
+    setAuth({ ready: false });
+
+    render(<AnalyticsProvider />);
+
+    expect(setCommunityGroup).not.toHaveBeenCalled();
+    expect(trackPageView).not.toHaveBeenCalled();
+  });
+
+  it("attributes nothing to the persisted user when Privy resolves to signed-out", () => {
+    setAuth({ ready: false });
+    const { rerender } = render(<AnalyticsProvider />);
+    expect(setCommunityGroup).not.toHaveBeenCalled();
+
+    setAuth({ ready: true, authenticated: false });
+    rerender(<AnalyticsProvider />);
+
+    // The persisted identity is dropped first, and only then is the community
+    // written — so the group lands on the anonymous device, not on user A.
+    expect(orderOf(vi.mocked(resetIdentity))).toBeLessThan(orderOf(vi.mocked(setCommunityGroup)));
+  });
+
+  it("attributes nothing to the persisted user when Privy resolves to a different user", () => {
+    setAuth({ ready: false });
+    const { rerender } = render(<AnalyticsProvider />);
+
+    setAuth({ ready: true, authenticated: true, user: { id: "did:privy:bob" } });
+    rerender(<AnalyticsProvider />);
+
+    expect(identifyUser).toHaveBeenCalledWith("did:privy:bob", expect.any(Object));
+    expect(orderOf(vi.mocked(identifyUser))).toBeLessThan(orderOf(vi.mocked(setCommunityGroup)));
+    expect(orderOf(vi.mocked(identifyUser))).toBeLessThan(orderOf(vi.mocked(trackPageView)));
+  });
+
+  it("clears the binding on the way out of the community subtree", () => {
+    setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+    const { rerender } = render(<AnalyticsProvider />);
+
+    usePathnameMock.mockReturnValue("/funding-map");
+    boundCommunityMock.mockReturnValue(null);
+    rerender(<AnalyticsProvider />);
+
+    expect(setCommunityGroup).toHaveBeenLastCalledWith(null);
+  });
+
+  it("does not rewrite an unchanged binding on every navigation", () => {
+    setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
+    const { rerender } = render(<AnalyticsProvider />);
+
+    usePathnameMock.mockReturnValue("/community/gitcoin/projects");
+    rerender(<AnalyticsProvider />);
+
+    expect(setCommunityGroup).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * `authenticated` is true before `user` arrives. During that gap there is no
+ * identity to attribute anything to, and Mixpanel is still holding the previous
+ * one.
+ */
+describe("AnalyticsProvider — the authenticated-but-unresolved gap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    __resetPendingLogoutReasonForTests();
+    usePathnameMock.mockReturnValue("/funding-map");
+    boundCommunityMock.mockReturnValue(null);
+    setWhitelabel();
+  });
+
+  it("writes nothing while authenticated with no user id", () => {
+    setAuth({ ready: true, authenticated: true, user: null });
+
+    render(<AnalyticsProvider />);
+
+    expect(identifyUser).not.toHaveBeenCalled();
+    expect(resetIdentity).not.toHaveBeenCalled();
+    expect(setCommunityGroup).not.toHaveBeenCalled();
+    expect(trackPageView).not.toHaveBeenCalled();
+  });
+
+  it("reports the page once the uid arrives", () => {
+    setAuth({ ready: true, authenticated: true, user: null });
+    const { rerender } = render(<AnalyticsProvider />);
+
+    setAuth({ ready: true, authenticated: true, user: { id: "did:privy:alice" } });
+    rerender(<AnalyticsProvider />);
+
+    expect(identifyUser).toHaveBeenCalledWith("did:privy:alice", expect.any(Object));
+    expect(trackPageView).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not treat the gap as a session that ended", () => {
+    // Signed in, then a render where Privy has dropped the user but still says
+    // authenticated. Nothing has ended; reporting a logout here would invent one.
+    setAuth({ ready: true, authenticated: true, user: { id: "did:privy:alice" } });
+    const { rerender } = render(<AnalyticsProvider />);
+
+    setAuth({ ready: true, authenticated: true, user: null });
+    rerender(<AnalyticsProvider />);
+
+    expect(track).not.toHaveBeenCalledWith("logout", expect.anything());
+  });
+});
+
+/**
+ * `community_id` is the resolved UID and is what grouping joins on;
+ * `community_slug` is the readable route label beside it. Both exist because
+ * neither answers the other's question.
+ */
+describe("AnalyticsProvider — community_slug", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    __resetPendingLogoutReasonForTests();
+    boundCommunityMock.mockReturnValue("0xcommunityuid");
+    setAuth();
+    setWhitelabel();
+  });
+
+  it("registers the route segment on a community route", () => {
+    usePathnameMock.mockReturnValue("/community/gitcoin/projects");
+
+    render(<AnalyticsProvider />);
+
+    expect(registerSuperProperties).toHaveBeenCalledWith({ community_slug: "gitcoin" });
+  });
+
+  it("decodes an escaped segment", () => {
+    usePathnameMock.mockReturnValue("/community/my%20community");
+
+    render(<AnalyticsProvider />);
+
+    expect(registerSuperProperties).toHaveBeenCalledWith({ community_slug: "my community" });
+  });
+
+  it("unregisters it on leaving the community", () => {
+    usePathnameMock.mockReturnValue("/community/gitcoin");
+    const { rerender } = render(<AnalyticsProvider />);
+
+    usePathnameMock.mockReturnValue("/funding-map");
+    boundCommunityMock.mockReturnValue(null);
+    rerender(<AnalyticsProvider />);
+
+    expect(unregisterSuperProperty).toHaveBeenCalledWith("community_slug");
+  });
+
+  it("registers nothing off a community route", () => {
+    usePathnameMock.mockReturnValue("/funding-map");
+    boundCommunityMock.mockReturnValue(null);
+
+    render(<AnalyticsProvider />);
+
+    expect(registerSuperProperties).not.toHaveBeenCalledWith(
+      expect.objectContaining({ community_slug: expect.anything() })
+    );
+  });
+
+  it("keeps community_id on the UID, never on the slug", () => {
+    usePathnameMock.mockReturnValue("/community/gitcoin");
+
+    render(<AnalyticsProvider />);
+
+    expect(trackPageView).toHaveBeenCalledWith(
+      expect.objectContaining({ community_id: "0xcommunityuid" })
+    );
   });
 });
 
@@ -422,7 +672,7 @@ describe("AnalyticsProvider — logout", () => {
     signedIn();
     const { rerender } = render(<AnalyticsProvider />);
 
-    setPendingLogoutReason("cross_tab");
+    beginLogout("cross_tab", "did:privy:alice");
     loggedOut();
     rerender(<AnalyticsProvider />);
 
@@ -472,7 +722,7 @@ describe("AnalyticsProvider — logout", () => {
     signedIn();
     const { rerender } = render(<AnalyticsProvider />);
 
-    setPendingLogoutReason("wallet_disconnect");
+    beginLogout("wallet_disconnect", "did:privy:alice");
     loggedOut();
     rerender(<AnalyticsProvider />);
 

@@ -1,21 +1,34 @@
 /**
  * @file Tests for the community group binding (utilities/analytics/community-group.ts).
  *
- * The bug this replaced: `/community/[communityId]` accepts either a slug or a
- * uid, so grouping on the URL segment reached Mixpanel as two different groups
- * for one community — and a slug change split its history in two. The layout
- * has already resolved the community, so the binding is by uid.
+ * Two bugs shaped this module, and the tests are split along them.
+ *
+ * The first: `/community/[communityId]` accepts either a slug or a uid, so
+ * grouping on the URL segment reached Mixpanel as two different groups for one
+ * community, and a slug change split its history in two. The binding is by the
+ * uid the layout resolved.
+ *
+ * The second: this module used to call `set_group` itself. The layout mounts on
+ * its own schedule with no view of whether Privy has resolved, so on a reload
+ * that write landed while Mixpanel still held the PREVIOUS session's identity —
+ * joining the wrong person to the community. It now only publishes the uid;
+ * `AnalyticsProvider` performs the write after identity is settled, and the
+ * ordering is covered there.
  */
 
 import { render } from "@testing-library/react";
-import { setCommunityGroup } from "@/utilities/analytics/client";
+import * as analyticsClient from "@/utilities/analytics/client";
 import {
   __resetCommunityGroupForTests,
   useBoundCommunityId,
   useCommunityAnalyticsGroup,
 } from "@/utilities/analytics/community-group";
 
-vi.mock("@/utilities/analytics/client", () => ({ setCommunityGroup: vi.fn() }));
+vi.mock("@/utilities/analytics/client", () => ({
+  setCommunityGroup: vi.fn(),
+  registerSuperProperties: vi.fn(),
+  unregisterSuperProperty: vi.fn(),
+}));
 
 function Binder({ uid }: { uid: string | null }) {
   useCommunityAnalyticsGroup(uid);
@@ -33,39 +46,74 @@ describe("useCommunityAnalyticsGroup", () => {
     __resetCommunityGroupForTests();
   });
 
-  it("binds the resolved uid, not whatever the URL said", () => {
-    render(<Binder uid="0xcommunityuid" />);
+  it("publishes the resolved uid, not whatever the URL said", () => {
+    const { getByTestId } = render(
+      <>
+        <Reader />
+        <Binder uid="0xcommunityuid" />
+      </>
+    );
 
-    expect(setCommunityGroup).toHaveBeenCalledWith("0xcommunityuid");
+    expect(getByTestId("bound").textContent).toBe("0xcommunityuid");
   });
 
-  it("binds nothing when the route names no real community", () => {
-    render(<Binder uid={null} />);
+  it("publishes nothing when the route names no real community", () => {
+    const { getByTestId } = render(
+      <>
+        <Reader />
+        <Binder uid={null} />
+      </>
+    );
 
-    expect(setCommunityGroup).toHaveBeenCalledWith(null);
+    expect(getByTestId("bound").textContent).toBe("none");
   });
 
-  it("unbinds when the visitor leaves the community subtree", () => {
-    const { unmount } = render(<Binder uid="0xcommunityuid" />);
-    vi.mocked(setCommunityGroup).mockClear();
+  it("unpublishes when the visitor leaves the community subtree", () => {
+    function Tree({ inCommunity }: { inCommunity: boolean }) {
+      return (
+        <>
+          <Reader />
+          {inCommunity && <Binder uid="0xcommunityuid" />}
+        </>
+      );
+    }
 
-    unmount();
+    const { getByTestId, rerender } = render(<Tree inCommunity />);
+    rerender(<Tree inCommunity={false} />);
 
     // Without this, events on the next screen are still attributed to the
     // community the visitor just left.
-    expect(setCommunityGroup).toHaveBeenCalledWith(null);
+    expect(getByTestId("bound").textContent).toBe("none");
   });
 
-  it("rebinds when the community changes without a remount", () => {
-    const { rerender } = render(<Binder uid="0xfirst" />);
+  it("republishes when the community changes without a remount", () => {
+    const { getByTestId, rerender } = render(
+      <>
+        <Reader />
+        <Binder uid="0xfirst" />
+      </>
+    );
+    expect(getByTestId("bound").textContent).toBe("0xfirst");
 
-    rerender(<Binder uid="0xsecond" />);
+    rerender(
+      <>
+        <Reader />
+        <Binder uid="0xsecond" />
+      </>
+    );
 
-    expect(vi.mocked(setCommunityGroup).mock.calls.map(([id]) => id)).toEqual([
-      "0xfirst",
-      null,
-      "0xsecond",
-    ]);
+    expect(getByTestId("bound").textContent).toBe("0xsecond");
+  });
+
+  it("never touches the analytics SDK itself", () => {
+    // The whole point of the split. A write from here would race Privy, and the
+    // layout has no way to know that.
+    const { unmount } = render(<Binder uid="0xcommunityuid" />);
+    unmount();
+
+    expect(analyticsClient.setCommunityGroup).not.toHaveBeenCalled();
+    expect(analyticsClient.registerSuperProperties).not.toHaveBeenCalled();
+    expect(analyticsClient.unregisterSuperProperty).not.toHaveBeenCalled();
   });
 });
 
