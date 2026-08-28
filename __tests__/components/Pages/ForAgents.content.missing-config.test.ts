@@ -5,10 +5,10 @@
  * module is imported — the URL is resolved at module load, which is exactly
  * what makes a bad value fail the build rather than reach a user.
  *
- * Both importers of content.ts (`app/for-agents/page.tsx` and
- * `fetchToolCatalog.ts`) are server-side, so throwing here surfaces at build
- * time instead of publishing something like "undefined/mcp" as the official
- * endpoint in visible copy and in FAQPage JSON-LD.
+ * content.ts is imported only by `app/for-agents/page.tsx`, which is
+ * server-side, so throwing here surfaces at build time instead of publishing
+ * something like "undefined/mcp" as the official endpoint in visible copy and
+ * in FAQPage JSON-LD.
  */
 
 const indexerUrl = vi.hoisted(() => ({ value: "" }));
@@ -50,18 +50,5 @@ describe("MCP instructions with a missing or malformed indexer URL", () => {
     for (const entry of AGENT_FAQS) {
       expect(entry.answer).not.toContain("undefined");
     }
-  });
-
-  it("keeps the static fallback importable while the config is broken", async () => {
-    // fetchToolCatalog's resilience contract is to catch the thrown error and
-    // serve STATIC_FALLBACK_TOOLS. That only works while the fallback lives
-    // outside content.ts — co-locating them made the fallback unreachable in
-    // exactly the situation it exists for.
-    indexerUrl.value = "";
-
-    vi.resetModules();
-    const { STATIC_FALLBACK_TOOLS } = await import("@/components/Pages/ForAgents/fallbackTools");
-
-    expect(STATIC_FALLBACK_TOOLS.length).toBeGreaterThan(0);
   });
 });

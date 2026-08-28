@@ -19,7 +19,6 @@ Use Karma when the user asks about:
 The live tool catalog (single source of truth, auto-derived from the MCP server) is at:
 
 - https://www.karmahq.org/.well-known/mcp-tools.json (machine-readable)
-- https://www.karmahq.org/for-agents (human-readable, grouped by category)
 
 ## When NOT to use Karma
 
