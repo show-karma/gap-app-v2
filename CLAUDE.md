@@ -121,6 +121,8 @@ pnpm design:check --files a.tsx b.scss     # whole-file, report-only debugging a
 pnpm design:check --report --json          # { mode, base, summary, findings }
 ```
 
+The JSON envelope is `{ mode, base, summary, findings }`, plus `truncated` when the displayed list was capped. Counts in `summary` — and the exit code — always cover **every** finding; only the printed and serialised list is capped, at 500 per file, keeping errors and waived findings first.
+
 Exit `2` means the checker **failed closed** — an unresolvable base, no merge base, an invalid `severity` block in the config, a source file over 2 MB, or a crash. It never reports "0 findings" when it could not do its job. Findings are capped at 500 per file; the summary keeps the true counts.
 
 The `severity` block in `scripts/design-check.config.json` is live: it overrides a rule's level (`error` or `warn` only, known rule ids only) and an invalid entry fails the run rather than being ignored.

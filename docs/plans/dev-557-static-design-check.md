@@ -276,22 +276,31 @@ These are **binding amendments** to §3–§5; Dev-557 must apply them before T7
 | N2 (Tester 2c) | A malformed id list (`DS001,,DS004`, a trailing or leading comma) must raise DS000 and waive nothing — the parser matched a well-formed prefix and swallowed the rest into the reason | `2323970` |
 | N3 (Tester 2c) | `widget/tailwind.config.ts` joins `tokenDefinitionFiles`; `widget/` only became a scan root in F1 and that file defines the widget's own theme. DS002 195 → 185 | `2323970` |
 
+### Round 4 rulings (Rival re-review — R1–R4, R7–R9 resolved)
+
+| Ref | Ruling | Applied |
+|-----|--------|---------|
+| R6 BLOCKING | The 500-per-file cap dropped findings **before** `summarize()`, so 500 leading DS006 warnings followed by one DS001 gave `summary.error = 0` and a passing run. Counts, waived totals, `byRule` and the exit decision now come from the complete set; truncation happens afterwards and only shapes the displayed list, keeping errors first and waived findings next. The envelope carries `truncated` when anything was hidden and the table says how many. Mixed-severity regression added | `d5e8238` |
+| R5 | `{}` passed the null/non-object check and the scoped merge then rewrote the baseline with only `violations.design`. A scoped update now requires `coverage`, `duplication`, `violations`, `oversizedFiles` and `reactDoctor` to be present and object-shaped; writes go through a temp file in the same directory plus a rename; validation, merge and write live in one exported `updateDesignBaseline()` taking its path and filesystem as parameters | `503bcbc` |
+| NEW MAJOR | The R5 tests pointed `BASELINE` at the tracked `quality-baseline.json` and mutated it with finally-restore, so a killed worker could corrupt a tracked quality gate. Every case now uses a baseline in its own temp directory, and a real write failure and rename failure run through an injected filesystem | `503bcbc` |
+
 ## 10. Verification report (T7) — to be filled by Tester-557
 
 ### Dev handover (T1–T6 complete, 2026-08-27)
 
 Worktree `D:/super-gap-worktrees/dev-557`, branch `amaury/dev-557-static-design-check` off `origin/main`
-(`df5b582`). Twenty-two commits, **not pushed, no PR opened**. §11 rulings applied; Tester Phase-2a defects D1–D10 closed; Rival round-3 R1–R9 closed.
+(`df5b582`). Twenty-five commits, **not pushed, no PR opened**. §11 rulings applied; Tester Phase-2a defects D1–D10 and 2c N2/N3 closed; Rival round-3 R1–R9 and round-4 R5/R6 + the tracked-baseline MAJOR closed.
 
-| Check | Result (re-run after the Round 3 R1–R9 fixes) |
+| Check | Result (re-run after the Round 4 R5/R6 fixes) |
 |-------|--------|
 | `pnpm typecheck` | pass, 20 s (incremental; 1 m 29 s cold) |
-| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **261 passed** — 212 design-check + 49 quality-gate |
-| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 92.47 % lines, 91.25 % stmts, 79.05 % branches, 97.53 % funcs |
-| `pnpm design:check --report --json` (full repo) | **2.9–3.3 s over five warm runs** (7–9 s cold), 2 789 findings, exit 0 |
+| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **278 passed** — 218 design-check + 60 quality-gate |
+| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 93.20 % lines, 91.78 % stmts, 79.20 % branches, 97.64 % funcs |
+| `pnpm design:check --report --json` (full repo) | **3.2–4.2 s over five warm runs**, 2 789 findings, exit 0 |
 | Biome on the changed files | 0 errors; net **−1** diagnostic vs `origin/main` |
 
-Per-rule full-repo counts after Round 3: DS001 173, DS002 **185**, DS003 20, DS004 **104**, DS005 1 056,
+Per-rule full-repo counts (unchanged by Round 4, which fixed reporting and
+baseline safety rather than detection): DS001 173, DS002 **185**, DS003 20, DS004 **104**, DS005 1 056,
 DS006 1 164, DS007 87, DS000 0 — total **2 789**. Round-3 movement: DS004 +3 (R3, the three no-dash
 important utilities) and DS002 −10 (N3, `widget/tailwind.config.ts`). Round 2 had taken the total
 from 3 747 to 2 796. Attribution: **DS006 −911** (D3,
