@@ -87,17 +87,29 @@ Don't repeat any of the above in code review — it's automated.
 | ID | Sev | Detects | Not a violation |
 |----|-----|---------|-----------------|
 | DS001 `arbitrary-color-class` | error | `bg-[#123456]`, `text-[rgb(20,30,40)]`, `shadow-[…rgba(…)…]`, `oklch(…)` | `bg-[rgb(var(--x))]`, `bg-[var(--x)]`, `bg-[hsl(var(--x)/0.5)]`, palette classes |
-| DS002 `raw-color-literal` | error | `#hex` / `rgb(digits)` / `hsl(digits)` in strings, templates, JSX attributes | comments, `url(#clip)`, `href="#top"`, anything inside `var(…)`, `components/Icons/**` |
-| DS003 `inline-style-literal` | error | `style={{ color: "#fff" }}`, `fontSize: "14px"`, `boxShadow: "0 0 4px #000"` | `var(…)` values, expressions, `--custom-prop` keys, layout keys (`width`, `zIndex`, `transform`) |
+| DS002 `raw-color-literal` | error | `#hex` (3/4/6/8 digits) / `rgb[a](digits)` / `hsl[a](digits)` / `oklch(digits)` / `oklab(digits)` in strings, templates, JSX attributes — **including** the value of a `--custom-prop` key, which DS003 skips | comments, `url(#clip)`, `href="#top"`, anything inside `var(…)`, `components/Icons/**` |
+| DS003 `inline-style-literal` | error | a literal colour, size or font on a visual key: `color`, `background*`, `border*`, `outline*`, `fill`, `stroke`, `boxShadow`, `textShadow`, `caretColor`, `accentColor`, `textDecorationColor`, `columnRuleColor`, `fontSize`, `fontFamily`. Named CSS colours (`"white"`) count | `var(…)` values, expressions, `--custom-prop` keys (DS002 still checks the value), CSS-wide keywords (`none`, `inherit`, `transparent`, `currentColor`, `auto`), layout keys (`width`, `zIndex`, `transform`), and **any file that imports `next/og` or `@vercel/og`** or matches `inlineStyleExemptGlobs` — Satori renders inline styles only |
 | DS004 `important-prefix` | error | `!bg-red-500`, `hover:!p-2` | `!selected && …` (not a string), `"Hello!"` |
 | DS005 `raw-primitive` | error | `<button>`, `<input>`, `<select>`, `<textarea>` outside `components/ui/**` | `<input type="hidden">` only — `type="file"` is **not** exempt, `components/ui/input.tsx` already styles `file:` pseudo-elements |
-| DS006 `arbitrary-scale` | warn | `p-[13px]`, `text-[15px]`, `leading-[22px]`, `rounded-[7px]` | `w-[calc(…)]`, `h-[var(--x)]`, `z-[…]`, `grid-cols-[…]`, `w-[50%]` |
-| DS007 `css-color-literal` | error | colour literals in `.css` / `.scss` | `var(…)`, comments, the token-definition files |
+| DS006 `arbitrary-scale` | warn | spacing and typography only: `p*`/`m*`, `gap*`, `space-x/y`, `text` (size), `leading`, `tracking`, `rounded*`, `indent` — e.g. `p-[13px]`, `text-[15px]`, `tracking-[0.14em]` | **every sizing utility** (`w`, `h`, `min-*`, `max-*`, `size`, `basis`, `inset`, `top/right/bottom/left`, `translate`) — a layout dimension is legitimately arbitrary — plus `calc(…)`, `var(--x)`, `z-[…]`, `grid-cols-[…]`, and the `scaleDefinitionFiles` |
+| DS007 `css-color-literal` | error | `#hex` / `rgb[a]()` / `hsl[a]()` / **`oklch()`** / `oklab()` with numeric arguments in `.css` / `.scss` | `var(…)`, `rgb(var(--x))`, comments, id selectors (`#app {`), the token-definition files, and every path in the shared exclude list (`src/stories/**` included) |
 | DS000 `bad-waiver` | error | waiver with no rule id, a reason under 10 characters, or no matching finding on the next line | — |
 
 Precedence dedupes the *same* defect only: a colour literal is reported once (DS001 > DS002, DS003 > DS002). Two different defects on one candidate are both reported — `!bg-[#123456]` yields DS004 **and** DS001.
 
-Token consumption is always allowed — Tailwind theme classes and `var(--x)` / `rgb(var(--x))` / `hsl(var(--x))` anywhere. Colour literals are allowed **only** in the `tokenDefinitionFiles` listed in `scripts/design-check.config.json`; the files in `scaleDefinitionFiles` are exempt from **DS006 only** and every other rule still applies to them. Scan roots are the Tailwind `content` globs plus `utilities/**`, `hooks/**`, `services/**`, `store/**` and `widget/**` (the widget ships through `pnpm build:widget`), plus every `.css`/`.scss`. MDX is out of scope in v1.
+Each mode reads the revision its line numbers belong to: `--staged` scans the **index** blob (`git show :<path>`), `--changed` scans **HEAD**, `--worktree` scans the working copy. So staging a fix, or editing on after `git add`, never shifts a finding onto the wrong line.
+
+Token consumption is always allowed — Tailwind theme classes and `var(--x)` / `rgb(var(--x))` / `hsl(var(--x))` anywhere. Every exemption lives in `scripts/design-check.config.json` and is rule-scoped, never file-wide:
+
+| Config key | Exempts | From |
+|---|---|---|
+| `tokenDefinitionFiles` | the files that *define* the palette (`tailwind.config.js`, `src/infrastructure/theme/config.ts`, `styles/globals.css`, `styles/__theme_colors.scss`, `dashboard-soft.css`, `utilities/whitelabel-config.ts`) | DS001, DS002, DS003, DS007 |
+| `scaleDefinitionFiles` | the files that *define* the spacing/type scale | DS006 only |
+| `iconGlobs` (`components/Icons/**`) | SVG path fills — assets, not tokens | DS002 only |
+| `primitiveExemptGlobs` (`components/ui/**`) | the shadcn primitives themselves | DS005 only |
+| `inlineStyleExemptGlobs` + `inlineStyleExemptImports` | `next/og` / `@vercel/og` image routes, where Satori supports inline styles only | DS003 only |
+
+Legacy debt is **not** exempted — `styles/non-profits-landing.css` keeps its 84 DS007 findings on purpose. The added-lines gate means they never block you; the baseline stops them growing. Scan roots are the Tailwind `content` globs plus `utilities/**`, `hooks/**`, `services/**`, `store/**` and `widget/**` (the widget ships through `pnpm build:widget`), plus every `.css`/`.scss`. MDX is out of scope in v1.
 
 ```bash
 pnpm design:check                          # whole repo, exit 1 on errors
