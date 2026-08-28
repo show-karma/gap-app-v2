@@ -56,7 +56,7 @@ TSX) — tracked as a follow-up. Excluded: `node_modules`, `.next`, `__tests__/*
 | DS003 `inline-style-literal` | error | `style={{…}}` (AST `JsxAttribute` with `ObjectLiteralExpression`) whose visual key (`color`, `background*`, `border*Color`, `outlineColor`, `fill`, `stroke`, `fontFamily`, `fontSize`, `boxShadow`) has a **literal** color/size value. | keys whose value is `var(...)`, an identifier/expression, a `--custom-prop` assignment; layout keys (`width`, `height`, `transform`, `top/left`, `zIndex`) |
 | DS004 `important-prefix` | error | Tailwind candidate with `!` override (`!bg-red-500`, `hover:!p-2`) inside any string literal / template / JSX attr. | `!selected &&` (not a string), `"Hello!"` (no `![a-z]+-` shape) |
 | DS005 `raw-primitive` | **error** | JSX opening element `button`, `input`, `select`, `textarea` outside `components/ui/**`. | `<input type="hidden">` only, and waived cases (e.g. `funding-map-search.tsx:105-117`). `type="file"` is **not** exempt — `components/ui/input.tsx:5-16` already styles `file:` pseudo-elements. |
-| DS006 `arbitrary-scale` | warn | Tailwind candidate `<spacing|type util>-[<number>(px|rem|em|%)?]` and `leading-[…]`, `tracking-[…]`, `rounded-[…]` with numeric literal. | `w-[calc(…)]`, `h-[var(--x)]`, `z-[…]`, `grid-cols-[…]`, `w-[50%]` on `w/h/min/max` (layout, not scale) |
+| DS006 `arbitrary-scale` | warn | Tailwind candidate `<spacing|type util>-[<number>(px|rem|em|%)?]` where the util is **spacing or typography only**: `p*`/`m*`, `gap*`, `space-x/y`, `text`, `leading`, `tracking`, `rounded*`, `indent`. **Amended by Round 2 D3.** | **Every sizing utility** — `w`, `h`, `min-w/h`, `max-w/h`, `size`, `basis`, `inset`, `top/right/bottom/left`, `translate` — regardless of unit: a layout dimension is content- or viewport-driven, not a scale step. Also `calc(…)`, `var(--x)`, `z-[…]`, `grid-cols-[…]`, and the `scaleDefinitionFiles` |
 | DS007 `css-color-literal` | error | `#hex`/`rgb(digits)`/`hsl(digits)` in `.css/.scss` outside `tokenDefinitionFiles`. | `var(--x)`, `rgb(var(--x))`, comments |
 | DS000 `bad-waiver` | error | `design-check-ignore` without a rule ID or without a reason ≥ 10 chars; waiver whose rule ID has no finding on the next line (orphan). | — |
 
@@ -243,25 +243,43 @@ These are **binding amendments** to §3–§5; Dev-557 must apply them before T7
 | `!bg-[#123456]` | **Two findings**: DS004 (important) and DS001 (literal). Precedence dedupes only the *same defect* (a color literal: DS001 > DS002, DS003 > DS002); different defects on one candidate are both reported. |
 | Multi-rule waiver | `// design-check-ignore: DS001,DS004 <reason>` is accepted (comma-separated, no spaces required). Every listed ID must match a finding on the next line; any ID without a match ⇒ DS000 orphan. PR body: **one line per waiver** carrying the same comma-joined ID set, e.g. `- DS001,DS004 src/x.tsx:42 — reason` (not one line per rule). Must be documented in `gap-app-v2/CLAUDE.md`. |
 
+### Round 2 rulings (Tester D1–D10, Phase 2a against `ebba030`)
+
+| Ref | Ruling | Applied |
+|-----|--------|---------|
+| D1 (P1) | `--staged` must scan the **index** blob (`git show :<path>`), not the working tree, so hunk ranges and content come from the same revision. `--changed` reads `HEAD:<path>`; `--worktree` keeps the working copy. | `0ea4051` |
+| D2 (P1) | Duplicate of §11 F4 — a missing `violations.design` is "unmeasured", never `0`. | already fixed in `4e0c469` |
+| D3 | DS006 must **not** apply to sizing utilities (`w`, `h`, `min-w/h`, `max-w/h`, `size`, `inset`, `top/right/bottom/left`, `basis`, `translate`) — layout dimensions are legitimately arbitrary. DS006 keeps spacing and typography only. §3 table amended. | `0ea4051` |
+| D4 | `utilities/whitelabel-config.ts` joins `tokenDefinitionFiles` (per-tenant colour config is a token definition). `styles/non-profits-landing.css` is **not** exempted — it is legacy debt, exactly what the added-lines gate must stop growing; the baseline absorbs it. | `0ea4051` |
+| D5 / D6 | DS003 is skipped for Satori / next-og image routes, which cannot use classes: by AST import detection (`next/og`, `@vercel/og`) **and** by `inlineStyleExemptGlobs` (`app/**/opengraph-image.tsx`, `app/**/twitter-image.tsx`, `app/api/og/**`). The DS003 message now names the Tailwind utility for the key, the `var(--token)` form, and the exemption. | `0ea4051` |
+| D7 | A waiver waives **every** finding of the listed rule ids on the next line, not only the first. | `0ea4051` |
+| D8 | Waiver keyword and rule ids match case-insensitively; a malformed waiver still raises DS000 rather than being silently ignored. | `0ea4051` |
+| D9 | The waiver phrase inside a string literal is data: it waives nothing and raises no DS000. Waivers are honoured only in comments (line, block, JSX, CSS). | `0ea4051` |
+| D10 | In-process coverage for the untracked branch of `--worktree`. | `0ea4051` |
+| D5 docs | §3's undocumented behaviour written down in `gap-app-v2/CLAUDE.md`: DS007 detects `oklch()`/`oklab()`; DS002 still checks a `--custom-prop` value that DS003 skips; the full `STYLE_COLOR_KEYS` list; a per-key exemption table; per-mode revision semantics. | `c589805` |
+
 ## 10. Verification report (T7) — to be filled by Tester-557
 
 ### Dev handover (T1–T6 complete, 2026-08-27)
 
 Worktree `D:/super-gap-worktrees/dev-557`, branch `amaury/dev-557-static-design-check` off `origin/main`
-(`df5b582`). Eleven commits, **not pushed, no PR opened** — Tester verifies first. §11 rulings applied.
+(`df5b582`). Fifteen commits, **not pushed, no PR opened**. §11 rulings applied; Tester Phase-2a defects D1–D10 closed.
 
-| Check | Result (re-run after the §11 rulings) |
+| Check | Result (re-run after the Round 2 D1–D10 fixes) |
 |-------|--------|
-| `pnpm typecheck` | pass, 19 s (incremental; 1 m 29 s cold) |
-| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **163 passed** — 127 design-check + 36 quality-gate |
-| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 91.98 % lines, 91.11 % stmts, 79.04 % branches, 95.58 % funcs |
-| `pnpm design:check --report --json` (full repo) | **2.9–3.5 s over three runs**, 3 747 findings, exit 0 |
+| `pnpm typecheck` | pass, 20 s (incremental; 1 m 29 s cold) |
+| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **212 passed** — 176 design-check + 36 quality-gate |
+| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 92.22 % lines, 91.63 % stmts, 80.28 % branches, 97.26 % funcs |
+| `pnpm design:check --report --json` (full repo) | **3.9–4.8 s over five runs**, 2 796 findings, exit 0 |
 | Biome on the changed files | 0 errors; net **−1** diagnostic vs `origin/main` |
 
-Per-rule full-repo counts: DS001 173, DS002 211, DS003 44, DS004 101, DS005 1 056, DS006 2 075,
-DS007 87, DS000 0. Versus the pre-§11 run: **DS002 +10** and **DS006 +1** from F1 (`widget/**` is
-now a scan root), **DS006 −12** from F7 (the two `scaleDefinitionFiles` held 12 DS006 findings and
-nothing else). `quality-baseline.json` regenerated with `pnpm quality --update-baseline=design`.
+Per-rule full-repo counts after Round 2: DS001 173, DS002 195, DS003 20, DS004 101, DS005 1 056,
+DS006 1 164, DS007 87, DS000 0 — total **2 796**, down from 3 747. Attribution: **DS006 −911** (D3,
+sizing utilities), **DS003 −24** (D5/D6, the three `next/og` routes), **DS002 −16** (D4,
+`utilities/whitelabel-config.ts`). DS007 is unchanged at 87 because `styles/non-profits-landing.css`
+was deliberately left unexempted. Earlier, §11 F1 had added **DS002 +10 / DS006 +1** (`widget/**`)
+and F7 removed **DS006 −12**. `quality-baseline.json` regenerated with
+`pnpm quality --update-baseline=design` — never by hand.
 
 ### §11 rulings — what changed
 
