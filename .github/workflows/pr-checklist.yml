@@ -4,18 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
     branches: ['**']
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '**/*.png'
-      - '**/*.jpg'
-      - '**/*.jpeg'
-      - '**/*.svg'
-      - '**/*.gif'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
-      - 'LICENSE'
-      - '.gitignore'
+    # No paths-ignore. This job is a required check on `main`, and a skipped
+    # job reports no status at all — a doc-only PR would sit unmergeable
+    # forever. It stays cheap on such PRs: the checker finds nothing in the
+    # diff to scan and exits 0 in seconds.
 
 # Least privilege: the job reads the repo and writes one PR comment.
 permissions:

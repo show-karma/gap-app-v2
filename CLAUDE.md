@@ -118,8 +118,10 @@ pnpm design:check --changed --base origin/main   # lines added by base...HEAD (t
 pnpm design:check --staged                 # lines added in the index (what pre-commit runs)
 pnpm design:check --worktree path/to/File.tsx    # lines added vs HEAD (what the edit hook runs)
 pnpm design:check --files a.tsx b.scss     # whole-file, report-only debugging aid
-pnpm design:check --report --json          # { mode, base, summary, findings }
+pnpm design:check --report --json          # { mode, base, summary, findings, waivers }
 ```
+
+`.husky/pre-push` runs `--changed --base origin/main` after `pnpm typecheck`, so a push that would fail the blocking gate is caught before it leaves your machine. It refreshes `origin/main` first; if that cannot be resolved — offline, a fork without the remote, a detached checkout — it prints one warning line and skips rather than bricking the push. Errors block, warnings never do.
 
 The JSON envelope is `{ mode, base, summary, findings, waivers }`, plus `truncated` when the displayed list was capped. Counts in `summary` — and the exit code — always cover **every** finding; only `findings` is capped, at 500 per file, keeping errors and waived findings first.
 
@@ -141,5 +143,19 @@ Waived findings still appear in the PR comment, and every waiver a PR adds must 
 ```
 
 Format: `- <ids> <path>:<line> — <reason>`, where `<line>` is the **violation** line (not the waiver comment's), `<ids>` is comma-joined (order does not matter, no empty entries — `DS001,,DS004` and a trailing comma are DS000), and `<reason>` is 10+ characters. A path containing spaces may be wrapped in backticks or quotes. A missing section, a missing entry, a partial id set, a split one-line-per-rule entry, a duplicate entry, a short reason, or a stale entry all fail the check — a stale entry fails even when the PR adds no waiver at all.
+
+**Enforcement on `main`.** Two layers, because neither alone is enough:
+
+- **Before merge** — `checklist` blocks the PR. It only *has* to pass once it is a required check, which needs a repo admin (currently only `maheshmurthy`) to apply the branch ruleset:
+
+  ```bash
+  gh api -X POST repos/show-karma/gap-app-v2/rulesets     --input .github/rulesets/main-quality-gates.json
+  ```
+
+  That ruleset requires `checklist`, `quality-gate`, `baseline-guard`, `gate-guard` and `build`, blocks deletion and force-push on `main`, and lets an admin bypass only through a PR. It is the intended end state; applying it is a follow-up, not a blocker.
+
+- **After merge** — `.github/workflows/design-gate-main.yml` re-runs the check on every push to `main` over exactly the lines the merge added. On an error-severity finding it opens a `revert/design-gate-<sha>` PR labelled `design-gate-revert`, comments the findings on the originating PR, and — if the revert conflicts — opens an issue and fails instead. It never merges anything. This is what makes enforcement independent of an admin actually applying the ruleset.
+
+**Changing the gate itself.** The files that define or enforce these checks — the checker, its config, `quality-gate.js`, both workflows, `.husky/pre-commit`, `CODEOWNERS`, `.github/rulesets/**` — are guarded by the `gate-guard` job: a PR touching any of them fails unless it carries the **`gate-change`** label. `.github/CODEOWNERS` lists the same paths and is informational; `main` requires no code-owner review.
 
 **Refreshing the repo-wide snapshot.** `quality-baseline.json` holds a per-rule count under `violations.design`. Never hand-edit it: run `pnpm quality --update-baseline=design` (≈3 s — it skips every other collector) and land the change on a PR labelled `quality-baseline`, which is what `quality-gate.yml` requires to let the file change.
