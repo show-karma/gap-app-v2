@@ -277,7 +277,17 @@ export interface AnalyticsEventMap {
   // -------------------------------------------------------------- onboarding
   onboarding_started: { entry_point: EntryPoint };
   onboarding_step_viewed: { step: OnboardingStep };
+  /** Closed BEFORE the last step — a drop-off, and `step` is where it stopped. */
   onboarding_dismissed: { step: OnboardingStep };
+  /**
+   * Closed ON the last step: the walkthrough was seen through to the end.
+   *
+   * Carries no `step` because there is only one it can be. Splitting this out
+   * of `onboarding_dismissed` is what makes the activation board readable —
+   * every finished walkthrough was counted as a drop-off before, so the funnel
+   * showed nobody completing it.
+   */
+  onboarding_completed: Record<string, never>;
 
   // ------------------------------------------------------------- acquisition
   ai_referral_landing: {
@@ -366,6 +376,7 @@ export const ANALYTICS_EVENT_NAMES = [
   "onboarding_started",
   "onboarding_step_viewed",
   "onboarding_dismissed",
+  "onboarding_completed",
   "ai_referral_landing",
 ] as const satisfies readonly AnalyticsEventName[];
 

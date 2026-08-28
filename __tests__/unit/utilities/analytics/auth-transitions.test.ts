@@ -11,7 +11,9 @@ import {
   __resetPendingLogoutReasonForTests,
   abandonLogout,
   beginLogout,
+  cancelQueuedLogoutReason,
   PENDING_TTL_MS,
+  queueLogoutReason,
   takePendingLogoutReason,
 } from "@/utilities/analytics/auth-transitions";
 
@@ -144,6 +146,78 @@ describe("auth-transitions", () => {
 
       expect(beginLogout("cross_tab", ALICE)).not.toBeNull();
       expect(takePendingLogoutReason(ALICE)).toBe("cross_tab");
+    });
+  });
+
+  describe("a successor cause", () => {
+    it("waits behind the pending one and is promoted when it is taken", () => {
+      // One switch ends two sessions. The second cause cannot take the slot
+      // while the first is still in it, and must not be lost for trying.
+      beginLogout("user_switch", ALICE);
+      queueLogoutReason("user_switch", BOB);
+
+      expect(takePendingLogoutReason(ALICE)).toBe("user_switch");
+      expect(takePendingLogoutReason(BOB)).toBe("user_switch");
+    });
+
+    it("is taken directly when nothing is pending", () => {
+      queueLogoutReason("user_switch", BOB);
+
+      expect(takePendingLogoutReason(BOB)).toBe("user_switch");
+    });
+
+    it("can be cancelled by whoever queued it", () => {
+      beginLogout("user_switch", ALICE);
+      const successor = queueLogoutReason("user_switch", BOB);
+
+      cancelQueuedLogoutReason(successor);
+
+      expect(takePendingLogoutReason(ALICE)).toBe("user_switch");
+      expect(takePendingLogoutReason(BOB)).toBe("user");
+    });
+
+    it("can be cancelled after it has already been promoted", () => {
+      // The teardown can fail after the transition that freed the slot, so the
+      // successor may be the PENDING record by the time its owner gives up.
+      beginLogout("user_switch", ALICE);
+      const successor = queueLogoutReason("user_switch", BOB);
+      takePendingLogoutReason(ALICE);
+
+      cancelQueuedLogoutReason(successor);
+
+      expect(takePendingLogoutReason(BOB)).toBe("user");
+    });
+
+    it("ignores a cancellation from a caller that lost the queue race", () => {
+      beginLogout("user_switch", ALICE);
+      queueLogoutReason("user_switch", BOB);
+      const loser = queueLogoutReason("cross_tab", BOB);
+
+      cancelQueuedLogoutReason(loser);
+
+      expect(takePendingLogoutReason(ALICE)).toBe("user_switch");
+      expect(takePendingLogoutReason(BOB)).toBe("user_switch");
+    });
+
+    it("cannot be cancelled after a later cause has taken the slot", () => {
+      const successor = queueLogoutReason("user_switch", BOB);
+      takePendingLogoutReason(BOB);
+      beginLogout("cross_tab", ALICE);
+
+      cancelQueuedLogoutReason(successor);
+
+      expect(takePendingLogoutReason(ALICE)).toBe("cross_tab");
+    });
+
+    it("records nothing without an identity, and first queued wins", () => {
+      expect(queueLogoutReason("user_switch", null)).toBeNull();
+
+      beginLogout("user_switch", ALICE);
+      expect(queueLogoutReason("user_switch", BOB)).not.toBeNull();
+      expect(queueLogoutReason("cross_tab", BOB)).toBeNull();
+
+      takePendingLogoutReason(ALICE);
+      expect(takePendingLogoutReason(BOB)).toBe("user_switch");
     });
   });
 

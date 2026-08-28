@@ -212,6 +212,16 @@ const logoutEndsNothing = () => mockLogout.mockResolvedValue(undefined);
 const logoutRejects = () => mockLogout.mockRejectedValue(new Error("privy unreachable"));
 
 /**
+ * A `logout()` that throws where it is CALLED rather than returning a rejected
+ * promise. A different code path from `logoutRejects` — the throw happens before
+ * any `await` — and the one most likely to escape handling.
+ */
+const logoutThrowsSynchronously = () =>
+  mockLogout.mockImplementation(() => {
+    throw new Error("privy exploded");
+  });
+
+/**
  * Lets the grace period in `useAuth` elapse, which is when a resolved attempt
  * that ended nothing retracts its own cause. Requires fake timers.
  */
@@ -298,6 +308,109 @@ describe("logout — one event per session, whatever ended it", () => {
     });
 
     expect(logoutEvents()).toEqual(["user_switch", "user_switch", "user"]);
+  });
+
+  describe("when the switch teardown does not happen", () => {
+    /**
+     * Privy has already moved A aside by the time any of this runs, so A's exit
+     * is real however the teardown goes. B's is the contingent half: if the
+     * forced logout does not land, B is left authenticated with its caches
+     * already cleared, and the app needs a way to try again rather than sitting
+     * in that state with a `user_switch` queued for a teardown that never was.
+     */
+    const driveSwitch = async (rerender: (ui: ReactNode) => void) => {
+      setBridge({ user: walletUser("user-2") });
+      await act(async () => {
+        rerender(<App />);
+      });
+    };
+
+    it("still reports A's departure when the teardown rejects", async () => {
+      signedIn("user-1");
+      logoutRejects();
+      const { rerender } = render(<App />);
+
+      await driveSwitch(rerender);
+
+      expect(logoutEvents()).toEqual(["user_switch"]);
+    });
+
+    it("still reports A's departure when the teardown throws synchronously", async () => {
+      signedIn("user-1");
+      logoutThrowsSynchronously();
+      const { rerender } = render(<App />);
+
+      await driveSwitch(rerender);
+
+      expect(logoutEvents()).toEqual(["user_switch"]);
+    });
+
+    it("attempts the teardown once, and leaves B signed in when it fails", async () => {
+      // The state F4 is about: B is authenticated with A's caches already
+      // cleared. Nothing invents a sign-out for B on the way there.
+      signedIn("user-1");
+      logoutRejects();
+      const { rerender } = render(<App />);
+
+      await driveSwitch(rerender);
+
+      expect(mockLogout).toHaveBeenCalledTimes(1);
+      expect(mockBridgeState.authenticated).toBe(true);
+      expect(logoutEvents()).toEqual(["user_switch"]);
+    });
+
+    it("does not report a second switch that never happened", async () => {
+      // The successor is cancelled, so B's eventual real exit is B's own — and
+      // A's `user_switch` is not duplicated onto it.
+      signedIn("user-1");
+      logoutRejects();
+      const { rerender } = render(<App />);
+
+      await driveSwitch(rerender);
+
+      logoutEndsTheSession();
+      await act(async () => {
+        await firstConsumerLogout.current?.();
+      });
+      await act(async () => {
+        rerender(<App />);
+      });
+
+      expect(logoutEvents()).toEqual(["user_switch", "user"]);
+    });
+
+    it("does not leave B's cause queued for someone else's sign-out", async () => {
+      // The teardown resolves and ends nothing, so the successor it queued
+      // describes an event that did not happen. A genuine sign-out later is the
+      // user's own.
+      vi.useFakeTimers();
+      try {
+        signedIn("user-1");
+        logoutEndsNothing();
+        const { rerender } = render(<App />);
+
+        setBridge({ user: walletUser("user-2") });
+        await act(async () => {
+          rerender(<App />);
+        });
+        await settleLogoutJudgement();
+
+        expect(logoutEvents()).toEqual(["user_switch"]);
+
+        // B signs out by hand, much later.
+        logoutEndsTheSession();
+        await act(async () => {
+          await firstConsumerLogout.current?.();
+        });
+        await act(async () => {
+          rerender(<App />);
+        });
+
+        expect(logoutEvents()).toEqual(["user_switch", "user"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   it("reports a wallet disconnect once, after both consumers' timers fire", async () => {

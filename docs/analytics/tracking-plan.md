@@ -212,7 +212,8 @@ failure has to be visible in the report rather than looking like a success.
 |---|---|---|---|
 | `onboarding_started` | The onboarding modal opens for the first time. | `entry_point` | Activation |
 | `onboarding_step_viewed` | An onboarding step is shown. | `step` | Activation |
-| `onboarding_dismissed` | Onboarding is closed before finishing. | `step` | Activation |
+| `onboarding_dismissed` | Onboarding is closed before the last step. | `step` | Activation |
+| `onboarding_completed` | Onboarding is closed on the last step. | — | Activation |
 | `ai_referral_landing` | A first visit whose referrer is an AI surface. | `ai_source`, `ai_source_medium`, `ai_landing_path` | — |
 
 The AI first-touch properties also ride along on **every** subsequent event in
@@ -327,7 +328,10 @@ profiles the server writes.
 `project_create_completed`
 
 Onboarding sits alongside it: `onboarding_started` → `onboarding_step_viewed` →
-`onboarding_dismissed` measures where people leave the guided path.
+`onboarding_completed`, with `onboarding_dismissed` and the `step` it carries
+measuring where the people who did not finish left the guided path. Closing on
+the last step is a completion — counting it as a dismissal made the funnel show
+nobody ever finishing.
 
 ### Grantee health
 
@@ -403,8 +407,8 @@ Assumptions this plan depends on, and how each was verified.
 | `set_group` also registers `community_id` as a super property | Verified in `mixpanel-browser`; the group clear unregisters it explicitly. |
 | Privy's `user.id` is the same DID the indexer sees | Verified: `PrivyClient.getIdentityFromJWT` returns `user.id`, now threaded into the request session. |
 | The community layout resolves a community before `AnalyticsProvider` runs its effect | Verified: child effects run before parent effects, and the provider is mounted from the root layout. |
-| `NEXT_PUBLIC_APP_VERSION` is set on preview deploys | Verified for builds that run `next build` from this repo: `next.config.ts` reads the version out of `package.json` rather than from `npm_package_version`, which is unset when the platform invokes the binary directly. A deploy that builds some other way reports `"unknown"` — the property is never absent, so a board grouping by it will show that bucket rather than dropping the rows. |
-| The proxy allowlist is not missing a path the SDK needs | Verified by what the client does NOT enable: `/decide` is only called when feature flags are on (they are not), and the session-replay `/record` paths only when `record_sessions_percent` is above zero (it is `0`, explicitly). Turning either on means widening the allowlist in the same change, or the requests fail silently. |
+| `NEXT_PUBLIC_APP_VERSION` is set on preview deploys | **UNVERIFIED — reasoned from the build config, not observed.** `next.config.ts` reads the version out of `package.json` rather than from `npm_package_version`, which is unset when the platform invokes the binary directly. A deploy that builds some other way reports `"unknown"`. **Check on the next preview:** open any event and confirm `app_version` is a real semver rather than `unknown`. |
+| The proxy allowlist is not missing a path the SDK needs | **UNVERIFIED — reasoned from the client config, not observed.** `/decide` is only called when feature flags are on (they are not) and the session-replay `/record` paths only when `record_sessions_percent` is above zero (it is `0`, explicitly). **Check on the next preview:** watch the network tab for any `/api/mp/` request other than `track`, `engage` or `groups`; there should be none. Turning either feature on means widening the allowlist in the same change, or the requests fail silently. |
 | **Mixpanel project ID Merge mode** | **UNVERIFIED — no dashboard access.** Implemented for **Simplified** ID Merge: `resetIdentity()` on logout, `identify()` on sign-in. **Check Project Settings → Identity Merge before relying on cross-device user counts.** Under Original ID Merge the `reset()` on logout would fragment a user across devices instead of merging them, and the fix is to stop resetting and rely on `identify()` alone. |
 
 ## Review waivers
@@ -428,3 +432,12 @@ Findings accepted with a documented reason rather than a fix, each marked with a
   submitting an application reports null rather than a wrong duration.
 - **Wallet-keyed server events do not merge automatically** with DID-keyed
   browser profiles. See the reconciliation note in the server catalog.
+- **Two windows can misattribute a single `logout` reason,** and both are
+  accepted rather than closed. A second, unrelated sign-out landing inside the
+  250 ms grace that `useAuth` allows a resolved `logout()` to take effect could
+  consume the first one's cause; and two Privy user switches overlapping inside
+  one `logout()` promise could cross their causes. Both need a second session
+  event within a quarter-second of an unrelated first one, which is not a shape
+  real usage produces — and the cost of closing them is per-attempt state on a
+  path that runs at every sign-out. Waived deliberately; see the PR's review
+  waivers.

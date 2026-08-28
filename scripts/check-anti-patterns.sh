@@ -2,6 +2,12 @@
 # Anti-pattern checker for gap-app-v2
 # Usage: ./scripts/check-anti-patterns.sh [file-or-directory]
 # Without args, checks all TS/TSX files in the project
+#
+# The [ANALYTICS] event-name check is line-based and matches a quoted name in
+# the same line as the `track(` that takes it — single quotes, double quotes or
+# a backtick. A name split across lines, or built from a variable, is out of
+# scope: `track()` only type-checks against the catalog, so anything reaching
+# this check by another route is already unusual.
 
 set -e
 
@@ -226,12 +232,12 @@ check_file() {
       esac
       if [ -n "$CATALOG_NAMES_FOR_FILE" ]; then
         BAD_NAMES=""
-        TRACK_HITS=$(grep -nE '(^|[^.a-zA-Z0-9_])track\("[a-zA-Z0-9_]*"' "$FILE" 2>/dev/null | head -10 || true)
+        TRACK_HITS=$(grep -nE '(^|[^.a-zA-Z0-9_])track\([`"'"'"'][a-zA-Z0-9_]*[`"'"'"']' "$FILE" 2>/dev/null | head -10 || true)
         if [ -n "$TRACK_HITS" ]; then
           while IFS= read -r HIT; do
             [ -z "$HIT" ] && continue
             HIT_LINE="${HIT%%:*}"
-            HIT_NAME=$(echo "$HIT" | grep -oE 'track\("[a-zA-Z0-9_]*"' | head -1 | sed 's/track("//; s/"$//')
+            HIT_NAME=$(echo "$HIT" | grep -oE 'track\([`"'"'"'][a-zA-Z0-9_]*[`"'"'"']' | head -1 | sed -E 's/^track\(.//; s/.$//')
             [ -z "$HIT_NAME" ] && continue
             if ! echo "$CATALOG_NAMES_FOR_FILE" | grep -qx "$HIT_NAME"; then
               BAD_NAMES="${BAD_NAMES}L:${HIT_LINE} ${HIT_NAME}; "

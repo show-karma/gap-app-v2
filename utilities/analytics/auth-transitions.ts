@@ -127,12 +127,32 @@ export const beginLogout = (reason: LogoutReason, userId: string | null): Logout
  * Ignored when the identity is not known, and first-queued wins, for the same
  * reasons as {@link beginLogout}.
  */
-export const queueLogoutReason = (reason: LogoutReason, userId: string | null): void => {
-  if (!userId) return;
+export const queueLogoutReason = (reason: LogoutReason, userId: string | null): LogoutAttempt => {
+  if (!userId) return null;
   live();
-  if (queued) return;
-  queued = { reason, userId, token: nextToken++, expiresAt: now() + PENDING_TTL_MS };
+  if (queued) return null;
+  const token = nextToken++;
+  queued = { reason, userId, token, expiresAt: now() + PENDING_TTL_MS };
   live();
+  return { token };
+};
+
+/**
+ * Retracts a queued successor because the teardown it described did not happen.
+ *
+ * Carries an ownership token for the same reason the pending slot does: only
+ * the caller that queued a cause may cancel it, and a cancellation arriving
+ * after the cause was promoted and consumed must not delete whatever has been
+ * recorded since. The promotion is why both slots are checked — a successor can
+ * become the pending record before its owner learns the teardown failed.
+ */
+export const cancelQueuedLogoutReason = (attempt: LogoutAttempt): void => {
+  if (!attempt) return;
+  if (queued?.token === attempt.token) {
+    queued = null;
+    return;
+  }
+  if (pending?.token === attempt.token) pending = null;
 };
 
 /**

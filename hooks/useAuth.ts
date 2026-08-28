@@ -9,6 +9,8 @@ import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import {
   abandonLogout,
   beginLogout,
+  cancelQueuedLogoutReason,
+  type LogoutAttempt,
   queueLogoutReason,
 } from "@/utilities/analytics/auth-transitions";
 import { track } from "@/utilities/analytics/client";
@@ -88,6 +90,20 @@ const ignoreLogoutFailure = (): void => undefined;
  * there when the user does something else.
  */
 const LOGOUT_TRANSITION_GRACE_MS = 250;
+
+interface RunLogoutOptions {
+  /**
+   * Called when the attempt turns out to have ended nothing — `logout()`
+   * rejected, or resolved and left the session standing.
+   */
+  onInert?: () => void;
+  /**
+   * Whether a failed attempt retracts the cause it recorded. True everywhere
+   * except the user switch, where the cause describes a session Privy had
+   * already ended before the attempt began.
+   */
+  retractOnFailure?: boolean;
+}
 
 const WALLET_DISCONNECT_LOGOUT_DELAY_MS = 1000;
 
@@ -283,21 +299,37 @@ export const useAuth = () => {
    *   - Nothing comes back at all (a tab closed mid-flight): the record's own
    *     expiry is the backstop.
    *
+   * `onInert` lets a caller undo whatever else it did on the strength of the
+   * session ending. `retractOnFailure` is for the one caller whose recorded
+   * cause is true regardless: a Privy user switch has already ended A's session
+   * before this runs, so no failure here can un-end it.
+   *
    * `AnalyticsProvider` emits the single `logout` event on the transition —
    * `useAuth` has ~100 call sites, and emitting here produced one event per
    * mounted instance.
    */
   const runLogout = useCallback(
-    async (reason: LogoutReason, userId: string | null): Promise<void> => {
+    async (
+      reason: LogoutReason,
+      userId: string | null,
+      options: RunLogoutOptions = {}
+    ): Promise<void> => {
+      const { onInert, retractOnFailure = true } = options;
       const attempt = beginLogout(reason, userId);
+
+      const inert = () => {
+        if (retractOnFailure) abandonLogout(attempt);
+        onInert?.();
+      };
+
       try {
         await logout();
       } catch (error) {
-        abandonLogout(attempt);
+        inert();
         throw error;
       }
       setTimeout(() => {
-        if (bridgeRef.current.authenticated) abandonLogout(attempt);
+        if (bridgeRef.current.authenticated) inert();
       }, LOGOUT_TRANSITION_GRACE_MS);
     },
     [logout]
@@ -387,8 +419,31 @@ export const useAuth = () => {
         // effect of this commit, so reading it from the continuation would
         // sometimes yield A.
         const arriving = user.id;
-        void runLogout("user_switch", prevUserIdRef.current ?? null)
-          .then(() => queueLogoutReason("user_switch", arriving))
+        let successor: LogoutAttempt = null;
+
+        // The teardown may not happen: `logout()` can reject, or resolve and
+        // leave B signed in. B is then authenticated with its caches already
+        // cleared and nothing to re-establish it, so the guard is released for
+        // a later render to try again, and the successor cause is dropped —
+        // it described a teardown that did not occur.
+        //
+        // A's cause is NOT retracted. Privy ended A's session before any of
+        // this ran, and no failure of ours can un-end it.
+        const releaseSwitch = () => {
+          if (userSwitchLogoutFiredFor === transition) {
+            userSwitchLogoutFiredFor = null;
+          }
+          cancelQueuedLogoutReason(successor);
+          successor = null;
+        };
+
+        void runLogout("user_switch", prevUserIdRef.current ?? null, {
+          onInert: releaseSwitch,
+          retractOnFailure: false,
+        })
+          .then(() => {
+            successor = queueLogoutReason("user_switch", arriving);
+          })
           .catch(ignoreLogoutFailure);
       }
     }
