@@ -58,6 +58,9 @@ const SimocracyEvaluationCardComponent: FC<SimocracyEvaluationCardProps> = ({
         )}
 
         <div>
+          <p className="mb-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+            Sim evaluation
+          </p>
           <p
             className={cn(
               "whitespace-pre-line text-sm leading-relaxed text-gray-700 dark:text-gray-300",

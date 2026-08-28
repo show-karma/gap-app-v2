@@ -215,7 +215,7 @@ export default function ApplicationDetailView({
       ? [
           {
             id: "integrations",
-            label: "Integrations",
+            label: "Simocracy",
             icon: TabIcons.Integrations,
             content: (
               <TabPanel>

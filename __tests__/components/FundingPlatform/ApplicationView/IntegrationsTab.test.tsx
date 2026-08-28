@@ -147,8 +147,8 @@ describe("IntegrationsTab", () => {
       expect(screen.getByText("deepseek/deepseek-v4-flash-0731")).toBeInTheDocument();
       expect(screen.getByText("Curve anchors at ~$197.")).toBeInTheDocument();
       expect(screen.getByTitle("Mechanism run spg-008qx5b0-a6mnyn5tvpwr")).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: "Simocracy" })).toBeInTheDocument();
-      expect(screen.getByText("1 sim evaluation")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Sim evaluations" })).toBeInTheDocument();
+      expect(screen.getByText("1 sim")).toBeInTheDocument();
     });
 
     it("pluralizes the evaluation count", async () => {
@@ -166,7 +166,7 @@ describe("IntegrationsTab", () => {
 
       renderTab();
 
-      await waitFor(() => expect(screen.getByText("2 sim evaluations")).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText("2 sims")).toBeInTheDocument());
     });
 
     it("renders the marginal-value curve with one dot per anchor", async () => {
