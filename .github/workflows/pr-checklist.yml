@@ -346,25 +346,58 @@ jobs:
             const fs = require('node:fs');
             const report = JSON.parse(fs.readFileSync('.quality/design.json', 'utf8'));
             const added = (report.findings || []).filter((f) => f.waived && f.waiverAdded);
-            if (!added.length) {
-              core.info('No design-check waivers added by this PR.');
-              return;
-            }
 
             // One waiver comment can cover several rules on one line, and the PR
             // body declares it as ONE entry carrying the comma-joined set.
-            const norm = (rules) => [...new Set(rules)].sort().join(',');
+            const norm = (rules) => [...new Set(rules.map((r) => r.trim().toUpperCase()))].sort().join(',');
             const waivers = new Map();
             for (const f of added) {
               const key = `${f.file}:${f.line}`;
               if (!waivers.has(key)) {
-                waivers.set(key, { file: f.file, line: f.line, rules: f.waiverRules || f.rule });
+                waivers.set(key, { file: f.file, line: f.line, rules: norm((f.waiverRules || f.rule).split(',')) });
               }
             }
 
+            // Parse the section BEFORE deciding on the empty case: a stale entry
+            // left behind after the waiver was removed must still fail, and that
+            // is exactly the zero-added-waivers state (Rival R2).
             const body = context.payload.pull_request?.body || '';
             const section = body.split(/^##\s+Review waivers\s*$/im)[1];
-            if (section === undefined) {
+            const sectionBody = section === undefined ? null : section.split(/^##\s+/m)[0];
+
+            // The path is parsed greedily up to the FINAL `:<digits> —`, and a
+            // backticked or quoted path is unwrapped, so a path with spaces can
+            // be declared at all — the scanner supports such paths.
+            const ENTRY = /^\s*[-*]\s+(DS\d{3}(?:\s*,\s*DS\d{3})*)\s+(.+):(\d+)\s+[—–-]\s+(.+?)\s*$/i;
+            const unwrap = (p) => p.trim().replace(/^[`'"]|[`'"]$/g, '').trim();
+            const entries = (sectionBody === null ? [] : sectionBody.split('\n'))
+              .map((line) => ENTRY.exec(line))
+              .filter(Boolean)
+              .map((m) => ({
+                rules: norm(m[1].split(',')),
+                file: unwrap(m[2]),
+                line: Number(m[3]),
+                reason: m[4],
+                raw: m[0].trim(),
+              }));
+
+            const problems = [];
+
+            // Duplicate declarations for one waiver are ambiguous: reject rather
+            // than letting the first match decide.
+            const seen = new Map();
+            for (const e of entries) {
+              const key = `${e.file}:${e.line}`;
+              if (seen.has(key)) {
+                problems.push(
+                  `duplicate entry for \`${key}\` — declare each waiver once, with its full rule set`
+                );
+              } else {
+                seen.set(key, e);
+              }
+            }
+
+            if (waivers.size > 0 && sectionBody === null) {
               core.setFailed(
                 'This PR adds design-check waivers but its description has no `## Review waivers` ' +
                   `section. Add one entry per waiver:\n${[...waivers.values()]
@@ -373,37 +406,24 @@ jobs:
               );
               return;
             }
-            const sectionBody = section.split(/^##\s+/m)[0];
 
-            const ENTRY = /^\s*[-*]\s+(DS\d{3}(?:\s*,\s*DS\d{3})*)\s+(\S+):(\d+)\s+[—–-]\s+(.+?)\s*$/;
-            const entries = sectionBody
-              .split('\n')
-              .map((line) => ENTRY.exec(line))
-              .filter(Boolean)
-              .map((m) => ({
-                rules: norm(m[1].split(',').map((r) => r.trim())),
-                file: m[2],
-                line: Number(m[3]),
-                reason: m[4],
-              }));
-
-            const problems = [];
             for (const w of waivers.values()) {
-              const want = norm(w.rules.split(','));
-              const at = entries.find((e) => e.file === w.file && e.line === w.line);
+              const at = seen.get(`${w.file}:${w.line}`);
               if (!at) {
-                problems.push(`missing entry: \`- ${want} ${w.file}:${w.line} — <reason>\``);
-              } else if (at.rules !== want) {
+                problems.push(`missing entry: \`- ${w.rules} ${w.file}:${w.line} — <reason>\``);
+              } else if (at.rules !== w.rules) {
                 problems.push(
-                  `wrong rule set for ${w.file}:${w.line} — the waiver covers \`${want}\`, ` +
+                  `wrong rule set for ${w.file}:${w.line} — the waiver covers \`${w.rules}\`, ` +
                     `the PR body declares \`${at.rules}\``
                 );
               } else if (at.reason.trim().length < 10) {
-                problems.push(`reason too short for ${want} ${w.file}:${w.line} (needs 10+ characters)`);
+                problems.push(`reason too short for ${w.rules} ${w.file}:${w.line} (needs 10+ characters)`);
               }
             }
+
+            // Stale entries are checked even when the PR adds no waiver at all.
             for (const e of entries) {
-              if (![...waivers.values()].some((w) => w.file === e.file && w.line === e.line)) {
+              if (!waivers.has(`${e.file}:${e.line}`)) {
                 problems.push(
                   `stale entry: \`${e.rules} ${e.file}:${e.line}\` matches no waiver added by this PR`
                 );
@@ -411,7 +431,11 @@ jobs:
             }
 
             if (problems.length) {
-              core.setFailed(`\`## Review waivers\` does not match the waivers in the diff:\n- ${problems.join('\n- ')}`);
+              core.setFailed(
+                `\`## Review waivers\` does not match the waivers in the diff:\n- ${problems.join('\n- ')}`
+              );
+            } else if (waivers.size === 0) {
+              core.info('No design-check waivers added by this PR, and no stale entries.');
             }
 
       # Separate blocking step so the comment above is always posted first.
