@@ -67,6 +67,19 @@ function computeGeometry(evaluations: SimocracyEvaluationRow[]): CouncilGeometry
   });
   const maxArea = Math.max(...areas);
 
+  // Nudge overlapping start-labels apart (top-down, 9% minimum separation).
+  const labelTops = sorted.map((anchors) => y(anchors[0].marginalValueMilli));
+  const order = labelTops.map((top, index) => ({ top, index })).sort((a, b) => a.top - b.top);
+  for (let i = 1; i < order.length; i += 1) {
+    if (order[i].top - order[i - 1].top < 9) {
+      order[i].top = order[i - 1].top + 9;
+    }
+  }
+  const adjustedTops: number[] = [];
+  for (const entry of order) {
+    adjustedTops[entry.index] = Math.min(entry.top, 94);
+  }
+
   return {
     total,
     mid: Math.round(total / 2),
@@ -74,7 +87,7 @@ function computeGeometry(evaluations: SimocracyEvaluationRow[]): CouncilGeometry
       line: anchors
         .map((a) => `${x(a.dollars).toFixed(2)},${y(a.marginalValueMilli).toFixed(2)}`)
         .join(" "),
-      labelTopPct: y(anchors[0].marginalValueMilli),
+      labelTopPct: adjustedTops[index],
       firstDollarValue: formatValue(anchors[0].marginalValueMilli),
       relPct: maxArea > 0 ? Math.round((areas[index] / maxArea) * 100) : 0,
     })),

@@ -188,15 +188,31 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
                   )}
                 />
                 {canEdit && (
-                  <Button
-                    variant="primary"
-                    onClick={handleSave}
-                    disabled={updateMutation.isPending}
-                    isLoading={updateMutation.isPending}
-                    className="shrink-0"
-                  >
-                    Save
-                  </Button>
+                  <>
+                    <Button
+                      variant="primary"
+                      onClick={handleSave}
+                      disabled={updateMutation.isPending}
+                      isLoading={updateMutation.isPending}
+                      className="shrink-0"
+                    >
+                      Save
+                    </Button>
+                    {savedUri.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingUri(false);
+                          setGatheringUri(savedUri);
+                          setValidationError(null);
+                        }}
+                        disabled={updateMutation.isPending}
+                        className="shrink-0 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             ) : (
