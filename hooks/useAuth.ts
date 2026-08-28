@@ -5,7 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
-import { abandonLogout, beginLogout } from "@/utilities/analytics/auth-transitions";
+import {
+  abandonLogout,
+  beginLogout,
+  queueLogoutReason,
+} from "@/utilities/analytics/auth-transitions";
 import { track } from "@/utilities/analytics/client";
 import type { LogoutReason } from "@/utilities/analytics/events";
 import {
@@ -37,6 +41,14 @@ let authReadyBarrierAddress: Hex | undefined;
 // wallet state recovers. Client-only (only ever written inside an effect or its
 // timer), so there is no SSR request bleed.
 let walletDisconnectLogoutFired = false;
+
+// Which user switch has already been acted on, as `<from>-><to>`. useAuth has
+// ~100+ call sites and every mounted instance notices the same swap, so without
+// this each one calls logout() for it — and each records its own cause, so the
+// instances that run after the provider has consumed the first cause leave
+// stale duplicates behind that outlive the transition they described. One
+// switch is one action. Cleared when the session actually ends.
+let userSwitchLogoutFiredFor: string | null = null;
 
 /**
  * How long the wallet list must stay empty before a wallet-only session is
@@ -320,6 +332,7 @@ export const useAuth = () => {
       // Clear previous user ID so re-login with a different wallet
       // is not mistaken for a cross-tab user switch.
       prevUserIdRef.current = undefined;
+      userSwitchLogoutFiredFor = null;
     }
 
     // Detect user switch: different user.id while *continuously* authenticated.
@@ -334,14 +347,36 @@ export const useAuth = () => {
       prevUserIdRef.current &&
       user.id !== prevUserIdRef.current
     ) {
-      queryClient.clear();
-      TokenManager.clearCache();
-      clearWagmiState();
-      // Bound to the DEPARTING identity. Privy has already swapped `user` to
-      // the new id, but the session that is ending is the previous one — the
-      // provider consumes this reason against the user it had identified, and
-      // recording the new id would attribute A's exit to B.
-      void runLogout("user_switch", prevUserIdRef.current ?? null).catch(ignoreLogoutFailure);
+      const transition = `${prevUserIdRef.current}->${user.id}`;
+      if (userSwitchLogoutFiredFor !== transition) {
+        userSwitchLogoutFiredFor = transition;
+        queryClient.clear();
+        TokenManager.clearCache();
+        clearWagmiState();
+        // A switch ends TWO sessions, and both are the same event to a reader.
+        //
+        // The first is A's, and it ends here: Privy has already swapped `user`
+        // to B, but the session going away is the previous one, so the cause is
+        // bound to the departing id. Recording the new id would attribute A's
+        // exit to B.
+        //
+        // The second is B's. Privy hands B over and this guard immediately
+        // tears that session down so the app can re-initialise, which the
+        // provider would otherwise report as an ordinary `"user"` sign-out that
+        // B never performed. So the teardown is labelled too — queued rather
+        // than recorded outright, because whether this continuation runs before
+        // or after the provider consumes A's cause depends on how React batches
+        // the commit, and a queued successor is promoted either way.
+        //
+        // `user.id` is captured rather than read from a ref later, for the same
+        // reason: the ref tracking the current identity is updated by another
+        // effect of this commit, so reading it from the continuation would
+        // sometimes yield A.
+        const arriving = user.id;
+        void runLogout("user_switch", prevUserIdRef.current ?? null)
+          .then(() => queueLogoutReason("user_switch", arriving))
+          .catch(ignoreLogoutFailure);
+      }
     }
 
     prevAuthRef.current = authenticated;

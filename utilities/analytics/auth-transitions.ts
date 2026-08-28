@@ -59,13 +59,30 @@ interface PendingLogout {
 export type LogoutAttempt = { token: number } | null;
 
 let pending: PendingLogout | null = null;
+/**
+ * The cause of the teardown that FOLLOWS the pending one, when one transition
+ * is known to produce two. See {@link queueLogoutReason}.
+ */
+let queued: PendingLogout | null = null;
 let nextToken = 1;
 
 const now = (): number => Date.now();
 
-/** Drops a record nothing claimed in time, so a stale cause cannot be read. */
+const expired = (record: PendingLogout | null): boolean =>
+  record !== null && record.expiresAt <= now();
+
+/**
+ * Drops a record nothing claimed in time, and promotes a queued successor into
+ * the empty slot, so a stale cause cannot be read and a queued one is never
+ * stranded behind a consumed record.
+ */
 const live = (): PendingLogout | null => {
-  if (pending && pending.expiresAt <= now()) pending = null;
+  if (expired(pending)) pending = null;
+  if (expired(queued)) queued = null;
+  if (!pending && queued) {
+    pending = queued;
+    queued = null;
+  }
   return pending;
 };
 
@@ -92,6 +109,30 @@ export const beginLogout = (reason: LogoutReason, userId: string | null): Logout
   const token = nextToken++;
   pending = { reason, userId, token, expiresAt: now() + PENDING_TTL_MS };
   return { token };
+};
+
+/**
+ * Records the cause of the teardown that comes AFTER the pending one.
+ *
+ * One transition can produce two: a Privy user switch ends A's session and then
+ * immediately tears down the session it just handed over as B, so a reader sees
+ * two sign-outs where one thing happened. Both belong to the switch.
+ *
+ * A queue rather than a second `beginLogout`, because the two causes are
+ * recorded by code whose relative order is not knowable — the guard's `logout()`
+ * settles as a microtask, and whether that lands before or after the provider
+ * consumes the first cause depends on how React batches the commit. Queueing is
+ * correct either way: the successor is promoted the moment the slot is free.
+ *
+ * Ignored when the identity is not known, and first-queued wins, for the same
+ * reasons as {@link beginLogout}.
+ */
+export const queueLogoutReason = (reason: LogoutReason, userId: string | null): void => {
+  if (!userId) return;
+  live();
+  if (queued) return;
+  queued = { reason, userId, token: nextToken++, expiresAt: now() + PENDING_TTL_MS };
+  live();
 };
 
 /**
@@ -131,4 +172,5 @@ export const takePendingLogoutReason = (departingUserId: string | null): LogoutR
 /** Test-only: forget a reason recorded by a previous case. */
 export const __resetPendingLogoutReasonForTests = (): void => {
   pending = null;
+  queued = null;
 };

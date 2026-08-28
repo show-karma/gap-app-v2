@@ -253,15 +253,15 @@ describe("logout — one event per session, whatever ended it", () => {
     expect(logoutEvents()).toEqual(["user"]);
   });
 
-  it("reports a Privy user switch against the user who left, not the one who arrived", async () => {
-    // Privy swaps `user` without ever passing through an unauthenticated state.
-    // The session that ended is user-1's, and it ended at that moment — so the
-    // provider reports it there, before identifying user-2.
+  it("reports both halves of a Privy user switch as the switch", async () => {
+    // Privy swaps `user` without ever passing through an unauthenticated state,
+    // and the guard immediately tears the arriving session down so the app can
+    // re-initialise. Two sessions end: user-1's, at the moment of the swap, and
+    // user-2's momentary one.
     //
-    // The forced logout that follows then ends user-2's momentary session, and
-    // that is reported too. Two events, because two sessions ended; the one
-    // that matters carries the switch as its cause and is attributed to the
-    // user who actually left.
+    // Both are the SAME event to a reader. The teardown is an app artifact, not
+    // somebody signing out, so reporting the second as "user" would invent a
+    // sign-out user-2 never performed.
     signedIn("user-1");
     const { rerender } = render(<App />);
 
@@ -269,14 +269,39 @@ describe("logout — one event per session, whatever ended it", () => {
     await act(async () => {
       rerender(<App />);
     });
-
-    expect(logoutEvents()).toEqual(["user_switch"]);
-
     await act(async () => {
       rerender(<App />);
     });
 
-    expect(logoutEvents()[0]).toBe("user_switch");
+    expect(logoutEvents()).toEqual(["user_switch", "user_switch"]);
+  });
+
+  it("does not let the switch label an unrelated sign-out that follows it", async () => {
+    // The second `user_switch` is consumed by the teardown it describes, so a
+    // later genuine sign-out is the user's own.
+    signedIn("user-1");
+    const { rerender } = render(<App />);
+
+    setBridge({ user: walletUser("user-2") });
+    await act(async () => {
+      rerender(<App />);
+    });
+    await act(async () => {
+      rerender(<App />);
+    });
+
+    signedIn("user-3");
+    await act(async () => {
+      rerender(<App />);
+    });
+    await act(async () => {
+      await firstConsumerLogout.current?.();
+    });
+    await act(async () => {
+      rerender(<App />);
+    });
+
+    expect(logoutEvents()).toEqual(["user_switch", "user_switch", "user"]);
   });
 
   it("reports a wallet disconnect once, after both consumers' timers fire", async () => {
