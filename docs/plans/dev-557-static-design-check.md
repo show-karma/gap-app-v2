@@ -260,23 +260,41 @@ These are **binding amendments** to §3–§5; Dev-557 must apply them before T7
 | D10 | In-process coverage for the untracked branch of `--worktree`. | `0ea4051` |
 | D5 docs | §3's undocumented behaviour written down in `gap-app-v2/CLAUDE.md`: DS007 detects `oklch()`/`oklab()`; DS002 still checks a `--custom-prop` value that DS003 skips; the full `STYLE_COLOR_KEYS` list; a per-key exemption table; per-mode revision semantics. | `c589805` |
 
+### Round 3 rulings (Rival code review R1–R9)
+
+| Ref | Ruling | Applied |
+|-----|--------|---------|
+| R1 BLOCKER | **Partially accepted** — the split trusted-job design is rejected; see the "Rival R3 blocker" row in §8 for the reasoning. Applied instead: `persist-credentials: false`, `pnpm install --frozen-lockfile --ignore-scripts`, step outputs through `env:` never `${{ }}` interpolation, and `.github/CODEOWNERS` owning the checker, its config, `quality-gate.js`, `quality-baseline.json`, both workflows and `.husky/pre-commit`. **Escalated to Amaury:** CODEOWNERS is inert until branch protection requires code-owner review | `dd58aaf` |
+| R2 MAJOR | Waiver-body validator: parse the section **before** the zero-added-waivers return so a stale entry fails either way; key entries on a normalised `(rules, file, line)` and reject duplicates and wrong rule sets; parse the path greedily up to the final `:<digits> —` and unwrap a backticked or quoted path, so a spaced path can be declared | `1200ff2` |
+| R3 MAJOR | DS004 required a dash after the `!`, missing `!flex`, `md:!absolute`, `!underline` and `!-mt-2` — the first three live in this repo. Any plausible utility after the `!` now counts. DS004 101 → 104 | `9dfe259` |
+| R4 MAJOR | `compare()` skipped an absent design baseline but `render()` synthesised `{ total: 0 }` and printed every rule as a new regression. `undefined` now survives into rendering: "not measured" / "—", plus a line saying how to seed it. Render-level tests | `94eba58` |
+| R5 MAJOR | A scoped `--update-baseline=design` now requires a valid existing baseline (missing / malformed / non-object ⇒ exit 2, file untouched), both update paths honour `writeFileSafe()`'s return, and success is only logged after a successful write | `94eba58` |
+| R6 MAJOR | `inRanges()` binary-searches sorted ranges and DS002 moved to a second pass so both suppression lists are complete and sorted once; `--staged`/`--changed` read every blob in one `git cat-file --batch`; a source file over 2 MB fails closed naming the path; findings are capped at 500 per file with true counts kept in the summary. Bounded pathological fixture asserts < 2 s | `9dfe259` |
+| R7 MINOR | The config's `severity` block was dead. It is now validated at load (known rule ids, `error`/`warn` only, exit 2 otherwise) and applied to every finding | `9dfe259` |
+| R8 MAJOR | CLI-mode tests were cumulative through a shared `beforeAll`. `beforeEach` now builds a fresh repo and each case makes the commits it asserts; verified in isolation with `vitest -t` | `fd637f7` |
+| R9 MINOR | The five `any` annotations in `quality-gate.test.ts` are replaced by `Metrics` / `Violations` / `DesignMetric` / `CompareResult` interfaces | `94eba58` |
+| N2 (Tester 2c) | A malformed id list (`DS001,,DS004`, a trailing or leading comma) must raise DS000 and waive nothing — the parser matched a well-formed prefix and swallowed the rest into the reason | `2323970` |
+| N3 (Tester 2c) | `widget/tailwind.config.ts` joins `tokenDefinitionFiles`; `widget/` only became a scan root in F1 and that file defines the widget's own theme. DS002 195 → 185 | `2323970` |
+
 ## 10. Verification report (T7) — to be filled by Tester-557
 
 ### Dev handover (T1–T6 complete, 2026-08-27)
 
 Worktree `D:/super-gap-worktrees/dev-557`, branch `amaury/dev-557-static-design-check` off `origin/main`
-(`df5b582`). Fifteen commits, **not pushed, no PR opened**. §11 rulings applied; Tester Phase-2a defects D1–D10 closed.
+(`df5b582`). Twenty-two commits, **not pushed, no PR opened**. §11 rulings applied; Tester Phase-2a defects D1–D10 closed; Rival round-3 R1–R9 closed.
 
-| Check | Result (re-run after the Round 2 D1–D10 fixes) |
+| Check | Result (re-run after the Round 3 R1–R9 fixes) |
 |-------|--------|
 | `pnpm typecheck` | pass, 20 s (incremental; 1 m 29 s cold) |
-| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **212 passed** — 176 design-check + 36 quality-gate |
-| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 92.22 % lines, 91.63 % stmts, 80.28 % branches, 97.26 % funcs |
-| `pnpm design:check --report --json` (full repo) | **3.9–4.8 s over five runs**, 2 796 findings, exit 0 |
+| `pnpm vitest run --project unit __tests__/unit/scripts/*.test.ts` | **261 passed** — 212 design-check + 49 quality-gate |
+| `pnpm vitest run --coverage __tests__/unit/scripts/check-design-system.test.ts` | exit 0 — 92.47 % lines, 91.25 % stmts, 79.05 % branches, 97.53 % funcs |
+| `pnpm design:check --report --json` (full repo) | **2.9–3.3 s over five warm runs** (7–9 s cold), 2 789 findings, exit 0 |
 | Biome on the changed files | 0 errors; net **−1** diagnostic vs `origin/main` |
 
-Per-rule full-repo counts after Round 2: DS001 173, DS002 195, DS003 20, DS004 101, DS005 1 056,
-DS006 1 164, DS007 87, DS000 0 — total **2 796**, down from 3 747. Attribution: **DS006 −911** (D3,
+Per-rule full-repo counts after Round 3: DS001 173, DS002 **185**, DS003 20, DS004 **104**, DS005 1 056,
+DS006 1 164, DS007 87, DS000 0 — total **2 789**. Round-3 movement: DS004 +3 (R3, the three no-dash
+important utilities) and DS002 −10 (N3, `widget/tailwind.config.ts`). Round 2 had taken the total
+from 3 747 to 2 796. Attribution: **DS006 −911** (D3,
 sizing utilities), **DS003 −24** (D5/D6, the three `next/og` routes), **DS002 −16** (D4,
 `utilities/whitelabel-config.ts`). DS007 is unchanged at 87 because `styles/non-profits-landing.css`
 was deliberately left unexempted. Earlier, §11 F1 had added **DS002 +10 / DS006 +1** (`widget/**`)

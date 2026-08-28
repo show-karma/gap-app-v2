@@ -89,7 +89,7 @@ Don't repeat any of the above in code review — it's automated.
 | DS001 `arbitrary-color-class` | error | `bg-[#123456]`, `text-[rgb(20,30,40)]`, `shadow-[…rgba(…)…]`, `oklch(…)` | `bg-[rgb(var(--x))]`, `bg-[var(--x)]`, `bg-[hsl(var(--x)/0.5)]`, palette classes |
 | DS002 `raw-color-literal` | error | `#hex` (3/4/6/8 digits) / `rgb[a](digits)` / `hsl[a](digits)` / `oklch(digits)` / `oklab(digits)` in strings, templates, JSX attributes — **including** the value of a `--custom-prop` key, which DS003 skips | comments, `url(#clip)`, `href="#top"`, anything inside `var(…)`, `components/Icons/**` |
 | DS003 `inline-style-literal` | error | a literal colour, size or font on a visual key: `color`, `background*`, `border*`, `outline*`, `fill`, `stroke`, `boxShadow`, `textShadow`, `caretColor`, `accentColor`, `textDecorationColor`, `columnRuleColor`, `fontSize`, `fontFamily`. Named CSS colours (`"white"`) count | `var(…)` values, expressions, `--custom-prop` keys (DS002 still checks the value), CSS-wide keywords (`none`, `inherit`, `transparent`, `currentColor`, `auto`), layout keys (`width`, `zIndex`, `transform`), and **any file that imports `next/og` or `@vercel/og`** or matches `inlineStyleExemptGlobs` — Satori renders inline styles only |
-| DS004 `important-prefix` | error | `!bg-red-500`, `hover:!p-2` | `!selected && …` (not a string), `"Hello!"` |
+| DS004 `important-prefix` | error | any `!` override, including the no-dash (`!flex`, `!underline`, `md:!absolute`), negative (`!-mt-2`) and arbitrary-property (`![color:red]`) forms | `!selected && …` (not a string), `"Hello!"`, a bare `"!"` |
 | DS005 `raw-primitive` | error | `<button>`, `<input>`, `<select>`, `<textarea>` outside `components/ui/**` | `<input type="hidden">` only — `type="file"` is **not** exempt, `components/ui/input.tsx` already styles `file:` pseudo-elements |
 | DS006 `arbitrary-scale` | warn | spacing and typography only: `p*`/`m*`, `gap*`, `space-x/y`, `text` (size), `leading`, `tracking`, `rounded*`, `indent` — e.g. `p-[13px]`, `text-[15px]`, `tracking-[0.14em]` | **every sizing utility** (`w`, `h`, `min-*`, `max-*`, `size`, `basis`, `inset`, `top/right/bottom/left`, `translate`) — a layout dimension is legitimately arbitrary — plus `calc(…)`, `var(--x)`, `z-[…]`, `grid-cols-[…]`, and the `scaleDefinitionFiles` |
 | DS007 `css-color-literal` | error | `#hex` / `rgb[a]()` / `hsl[a]()` / **`oklch()`** / `oklab()` with numeric arguments in `.css` / `.scss` | `var(…)`, `rgb(var(--x))`, comments, id selectors (`#app {`), the token-definition files, and every path in the shared exclude list (`src/stories/**` included) |
@@ -103,7 +103,7 @@ Token consumption is always allowed — Tailwind theme classes and `var(--x)` / 
 
 | Config key | Exempts | From |
 |---|---|---|
-| `tokenDefinitionFiles` | the files that *define* the palette (`tailwind.config.js`, `src/infrastructure/theme/config.ts`, `styles/globals.css`, `styles/__theme_colors.scss`, `dashboard-soft.css`, `utilities/whitelabel-config.ts`) | DS001, DS002, DS003, DS007 |
+| `tokenDefinitionFiles` | the files that *define* the palette (`tailwind.config.js`, `widget/tailwind.config.ts`, `src/infrastructure/theme/config.ts`, `styles/globals.css`, `styles/__theme_colors.scss`, `dashboard-soft.css`, `utilities/whitelabel-config.ts`) | DS001, DS002, DS003, DS007 |
 | `scaleDefinitionFiles` | the files that *define* the spacing/type scale | DS006 only |
 | `iconGlobs` (`components/Icons/**`) | SVG path fills — assets, not tokens | DS002 only |
 | `primitiveExemptGlobs` (`components/ui/**`) | the shadcn primitives themselves | DS005 only |
@@ -121,7 +121,9 @@ pnpm design:check --files a.tsx b.scss     # whole-file, report-only debugging a
 pnpm design:check --report --json          # { mode, base, summary, findings }
 ```
 
-Exit `2` means the checker **failed closed** — an unresolvable base, no merge base, or a crash. It never reports "0 findings" when it could not do its job.
+Exit `2` means the checker **failed closed** — an unresolvable base, no merge base, an invalid `severity` block in the config, a source file over 2 MB, or a crash. It never reports "0 findings" when it could not do its job. Findings are capped at 500 per file; the summary keeps the true counts.
+
+The `severity` block in `scripts/design-check.config.json` is live: it overrides a rule's level (`error` or `warn` only, known rule ids only) and an invalid entry fails the run rather than being ignored.
 
 **Waivers.** Put `// design-check-ignore: DS00X <reason of 10+ characters>` (or `{/* … */}`) on the line directly above the violation. One comment may cover several rules — `DS001,DS004` — because a single candidate can carry more than one defect (`!bg-[#123456]` is both an `!important` override and a colour literal, and is reported as **two** findings; precedence only dedupes the *same* defect). Every listed id must match a finding on the next line, or it is a DS000 orphan.
 
@@ -134,6 +136,6 @@ Waived findings still appear in the PR comment, and every waiver a PR adds must 
 - DS001,DS004 src/features/x/y.tsx:42 — forced over a vendor stylesheet we do not control
 ```
 
-Format: `- <ids> <path>:<line> — <reason>`, where `<line>` is the **violation** line (not the waiver comment's), `<ids>` is comma-joined (order does not matter), and `<reason>` is 10+ characters. A missing section, a missing entry, a partial id set, a split one-line-per-rule entry, a short reason, or a stale entry all fail the check.
+Format: `- <ids> <path>:<line> — <reason>`, where `<line>` is the **violation** line (not the waiver comment's), `<ids>` is comma-joined (order does not matter, no empty entries — `DS001,,DS004` and a trailing comma are DS000), and `<reason>` is 10+ characters. A path containing spaces may be wrapped in backticks or quotes. A missing section, a missing entry, a partial id set, a split one-line-per-rule entry, a duplicate entry, a short reason, or a stale entry all fail the check — a stale entry fails even when the PR adds no waiver at all.
 
 **Refreshing the repo-wide snapshot.** `quality-baseline.json` holds a per-rule count under `violations.design`. Never hand-edit it: run `pnpm quality --update-baseline=design` (≈3 s — it skips every other collector) and land the change on a PR labelled `quality-baseline`, which is what `quality-gate.yml` requires to let the file change.
