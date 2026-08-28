@@ -57,7 +57,7 @@ TSX) — tracked as a follow-up. Excluded: `node_modules`, `.next`, `__tests__/*
 | DS004 `important-prefix` | error | Tailwind candidate with `!` override (`!bg-red-500`, `hover:!p-2`) inside any string literal / template / JSX attr. | `!selected &&` (not a string), `"Hello!"` (no `![a-z]+-` shape) |
 | DS005 `raw-primitive` | **error** | JSX opening element `button`, `input`, `select`, `textarea` outside `components/ui/**`. | `<input type="hidden">` only, and waived cases (e.g. `funding-map-search.tsx:105-117`). `type="file"` is **not** exempt — `components/ui/input.tsx:5-16` already styles `file:` pseudo-elements. |
 | DS006 `arbitrary-scale` | warn | Tailwind candidate `<spacing|type util>-[<number>(px|rem|em|%)?]` where the util is **spacing or typography only**: `p*`/`m*`, `gap*`, `space-x/y`, `text`, `leading`, `tracking`, `rounded*`, `indent`. **Amended by Round 2 D3.** | **Every sizing utility** — `w`, `h`, `min-w/h`, `max-w/h`, `size`, `basis`, `inset`, `top/right/bottom/left`, `translate` — regardless of unit: a layout dimension is content- or viewport-driven, not a scale step. Also `calc(…)`, `var(--x)`, `z-[…]`, `grid-cols-[…]`, and the `scaleDefinitionFiles` |
-| DS007 `css-color-literal` | error | `#hex`/`rgb(digits)`/`hsl(digits)` in `.css/.scss` outside `tokenDefinitionFiles`. | `var(--x)`, `rgb(var(--x))`, comments |
+| DS007 `css-color-literal` | error | `#hex`/`rgb[a](digits)`/`hsl[a](digits)`/`oklch(digits)`/`oklab(digits)` in `.css/.scss` outside `tokenDefinitionFiles`. | `var(--x)`, `rgb(var(--x))`, comments, id selectors (`#app {`), and every path in the shared exclude list |
 | DS000 `bad-waiver` | error | `design-check-ignore` without a rule ID or without a reason ≥ 10 chars; waiver whose rule ID has no finding on the next line (orphan). | — |
 
 **Precedence:** one finding per source range — DS001 > DS002; DS003 > DS002. A literal is
@@ -167,8 +167,8 @@ fixed hex mapped to `brand` can violate whitelabel intent.
 | T5 | `quality-gate.js` collector + `compare()` + `--update-baseline=design` + extend `__tests__/unit/scripts/quality-gate.test.ts` | Dev-557 | T2 | **DONE** `19771fb` — 27 tests (was 15). Flow 13 both ways against the real repo: +1 DS001 ⇒ `design.DS001 173 → 174 (+1)`, exit 1; −1 ⇒ improvement, exit 0. Flow 14: `--update-baseline=design` touches only `violations.design` (13-line diff), 3.2 s. Collector failure ⇒ `design collector failed`, never zeros |
 | T6 | Docs (§5 last two rows) + plan status | Dev-557 | T2–T5 | **DONE** `ebba030` — `gap-app-v2/CLAUDE.md` gains a "Design system" subsection under Enforcement (rule table incl. the "not a violation" column, precedence, all modes, exit-2 contract, waiver format, baseline refresh). Root `CLAUDE.md` Pre-PR colour item extended — **edited in place in `D:/super-gap`, left uncommitted**: it belongs to the umbrella repo, not this branch. §7 filled below; awaiting Tech Lead review |
 | S11 | Apply §11 Tech Lead rulings F1, F3, F4, F5, F7 + the two rulings; add the plan to the branch | Dev-557 | T6 | **DONE** — F1 `e5d603f`, F7 `e5d603f`, both rulings `e5d603f`, F4+F3 `4e0c469`, plan `804b8e9`. F5 needed no change (already outside the `*.tsx` branch; re-verified with a `.scss` file). F2 already held, F6 deferred to Amaury |
-| T7 | Independent verification (see below) | Tester-557 | T2–T5 | **READY** — branch `amaury/dev-557-static-design-check` in worktree `D:/super-gap-worktrees/dev-557`, 7 commits, not pushed. T7(f) coverage already met by the dev suite: **91.78 % lines / 90.89 % statements / 78.04 % branches / 95.38 % functions** on `check-design-system.js` |
-| T8 | Fix T7 findings; open PR via `/git-create-pr` with `## Smoke results` linking the throwaway-PR runs; `/babysit` | Dev-557 | T7 | CI green incl. new blocking step |
+| T7 | Independent verification (see below) | Tester-557 | T2–T5 | **DONE 2026-08-28** — final verdict APPROVE at `6931d40`. 64/64 corpus cells, 100 % recall on all eight rules, 100 % precision on all seven detecting rules, four-mode parity byte-identical, coverage 93.2 % lines. Report in §10 |
+| T8 | Fix T7 findings; open PR with `## Smoke results` linking the throwaway-PR runs | Dev-557 | T7 | **DONE 2026-08-28** — all T7 findings (D1–D10, N2/N3) and four code-review rounds (R1–R9, R6b) closed; PR [#2083](https://github.com/show-karma/gap-app-v2/pull/2083) open with the `quality-baseline` label |
 
 **T7 — Tester scope.** (a) Run the golden corpus through all four modes (`full`, `--changed`,
 `--staged`, `--worktree`) and assert identical findings for identical added lines. (b) **Recall:**
@@ -290,7 +290,7 @@ These are **binding amendments** to §3–§5; Dev-557 must apply them before T7
 |-----|--------|---------|
 | R6b | `truncateForDisplay()` caps `findings[]` at 500 per file and the workflow read its added waivers from that array, so the 501st waiver in a file was never checked against `## Review waivers`. The envelope now carries an **uncapped** `waivers[]` (every waived finding, with `file`, `line`, `waiverAdded`, `waiverRules`, `waiverReason`); the PR-body validation reads only from it and fails closed when it is absent. The checklist comment reads the same array and bounds only what it renders. 501-waiver regression in the suite and in the offline workflow simulation | `346bc09` |
 
-## 10. Verification report (T7) — to be filled by Tester-557
+## 10. Verification report (T7) — APPROVE, 2026-08-28
 
 ### Dev handover (T1–T6 complete, 2026-08-27)
 

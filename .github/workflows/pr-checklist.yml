@@ -307,7 +307,10 @@ jobs:
             await core.summary.addRaw(body).write();
 
             try {
-              const { data: comments } = await github.rest.issues.listComments({
+              // Paginate: listComments returns one page, so on a PR with more
+              // than 100 comments the marker would not be found and every run
+              // would append another checklist comment instead of updating one.
+              const comments = await github.paginate(github.rest.issues.listComments, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,

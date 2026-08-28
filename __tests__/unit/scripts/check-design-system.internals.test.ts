@@ -280,6 +280,9 @@ describe("filterByAddedLines", () => {
     hint: null,
     waived: false,
     waiverLine: null,
+    waiverReason: null,
+    waiverRules: null,
+    waiverAdded: false,
   };
 
   it("keeps a finding whose range intersects an added line", () => {
