@@ -459,10 +459,15 @@ function scanText({ file, text, config }) {
   const findings = isStylesheet
     ? scanStylesheet(rel, text, index, config)
     : scanScript(rel, text, index, config);
-  const comments = isStylesheet
-    ? cssCommentRanges(text, ext === ".scss")
-    : scriptCommentRanges(rel, text);
-  applyWaivers(rel, text, index, findings, comments);
+  // Collecting comment ranges costs a second parse of the file, so only pay it
+  // when there is something to place: the overwhelming majority of files carry
+  // no waiver at all. Without this guard a full-repo scan goes 3 s → 15 s.
+  if (WAIVER_PHRASE_RE.test(text)) {
+    const comments = isStylesheet
+      ? cssCommentRanges(text, ext === ".scss")
+      : scriptCommentRanges(rel, text);
+    applyWaivers(rel, text, index, findings, comments);
+  }
   return findings.sort((a, b) => a.line - b.line || a.col - b.col || a.rule.localeCompare(b.rule));
 }
 
@@ -792,6 +797,8 @@ function scanStylesheet(rel, text, index, config) {
 // Case-insensitive: a waiver written DESIGN-CHECK-IGNORE must be recognised
 // rather than silently ignored (Tester D8).
 const WAIVER_RE = /design-check-ignore([^\n]*)/gi;
+// Non-global twin: `.test()` on a /g regex is stateful and would skip files.
+const WAIVER_PHRASE_RE = /design-check-ignore/i;
 
 function applyWaivers(rel, text, index, findings, commentRanges = null) {
   const lines = text.split("\n");
