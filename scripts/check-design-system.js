@@ -1,3 +1,4 @@
+throw new Error("ds-probe forced crash");
 #!/usr/bin/env node
 /* eslint-disable */
 // Static design-system check (DEV-557).
