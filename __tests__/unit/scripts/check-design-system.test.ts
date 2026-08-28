@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 // check-design-system is a plain CommonJS Node script (it has to run from the
 // bash post-edit hook and from CI without ts-node). Its pure helpers are
@@ -866,6 +866,9 @@ describe("filterByAddedLines", () => {
 
 // ── CLI modes (real git repository) ─────────────────────────────────────────
 
+// Every case builds the exact repository state it asserts. A shared beforeAll
+// made cases cumulative — the three-dot test relied on a commit the previous
+// test happened to make, so running it alone proved nothing (Rival R8).
 describe("CLI modes", () => {
   let repo: string;
   let baseSha: string;
@@ -897,27 +900,31 @@ describe("CLI modes", () => {
     fs.writeFileSync(abs, body);
   };
 
-  beforeAll(() => {
+  const commit = (message: string) => {
+    git("add", "-A");
+    git("-c", "core.hooksPath=/dev/null", "commit", "-qm", message);
+    return git("rev-parse", "HEAD");
+  };
+
+  /** Two legacy DS001 findings that must never block a PR that leaves them alone. */
+  const LEGACY = [
+    "export const Legacy = () => (",
+    '  <span className="bg-[#111111]">a</span>',
+    '  <span className="bg-[#222222]">b</span>',
+    ");",
+    "",
+  ].join("\n");
+
+  beforeEach(() => {
     repo = fs.mkdtempSync(path.join(os.tmpdir(), "design-check-"));
     git("init", "-q", "-b", "main");
     git("config", "user.email", "dev@example.com");
     git("config", "user.name", "Dev");
-    // Legacy debt that must never block a PR that does not touch it.
-    write(
-      "components/Legacy.tsx",
-      [
-        "export const Legacy = () => (",
-        '  <span className="bg-[#111111]">a</span>',
-        '  <span className="bg-[#222222]">b</span>',
-        ");",
-      ].join("\n")
-    );
-    git("add", "-A");
-    git("commit", "-qm", "seed");
-    baseSha = git("rev-parse", "HEAD");
+    write("components/Legacy.tsx", LEGACY);
+    baseSha = commit("seed");
   });
 
-  afterAll(() => {
+  afterEach(() => {
     fs.rmSync(repo, { recursive: true, force: true });
   });
 
@@ -939,8 +946,7 @@ describe("CLI modes", () => {
       "components/Clean.tsx",
       'export const Clean = () => <span className="bg-brand">ok</span>;\n'
     );
-    git("add", "-A");
-    git("commit", "-qm", "clean");
+    commit("clean");
     const { status, json } = runJson(["--changed", "--base", baseSha]);
     expect(status).toBe(0);
     expect(json.findings).toEqual([]);
@@ -951,8 +957,7 @@ describe("CLI modes", () => {
       "components/Dirty.tsx",
       'export const Dirty = () => <span className="bg-[#123456]">no</span>;\n'
     );
-    git("add", "-A");
-    git("commit", "-qm", "dirty");
+    commit("dirty");
     const { status, json } = runJson(["--changed", "--base", baseSha]);
     expect(status).toBe(1);
     expect(json.summary.byRule.DS001).toBe(1);
@@ -960,13 +965,17 @@ describe("CLI modes", () => {
   });
 
   it("--changed uses a three-dot diff so an advanced base is ignored", () => {
-    const head = git("rev-parse", "HEAD");
-    // Advance the base branch with an unrelated violating commit.
+    // This branch's own change.
+    write(
+      "components/Dirty.tsx",
+      'export const Dirty = () => <span className="bg-[#123456]">no</span>;\n'
+    );
+    const head = commit("dirty");
+
+    // The base branch advances with an unrelated violating commit.
     git("checkout", "-q", "-b", "other", baseSha);
     write("components/Unrelated.tsx", 'export const U = () => <b className="bg-[#999999]" />;\n');
-    git("add", "-A");
-    git("commit", "-qm", "unrelated");
-    const advanced = git("rev-parse", "HEAD");
+    const advanced = commit("unrelated");
     git("checkout", "-q", "main");
     expect(git("rev-parse", "HEAD")).toBe(head);
 
@@ -999,7 +1008,6 @@ describe("CLI modes", () => {
     const { status, json } = runJson(["--staged"]);
     expect(status).toBe(1);
     expect(json.findings.map((f: Finding) => f.file)).toEqual(["components/Staged.tsx"]);
-    git("reset", "-q");
   });
 
   it("--staged covers stylesheets, not just TypeScript", () => {
@@ -1008,10 +1016,67 @@ describe("CLI modes", () => {
     const { status, json } = runJson(["--staged"]);
     expect(status).toBe(1);
     expect(json.summary.byRule.DS007).toBe(1);
-    git("reset", "-q");
+  });
+
+  // D1: `git diff --cached` compares HEAD to the index, so the content that
+  // its line numbers refer to is the index blob — not the working copy the
+  // developer keeps editing after `git add`.
+  it("--staged blocks a staged violation even when the worktree already fixes it", () => {
+    write("components/Drift.tsx", 'export const D = () => <b className="bg-[#BADBAD]" />;\n');
+    git("add", "components/Drift.tsx");
+    write("components/Drift.tsx", 'export const D = () => <b className="bg-brand" />;\n');
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(1);
+    expect(json.findings.map((f: Finding) => f.rule)).toEqual(["DS001"]);
+  });
+
+  it("--staged passes a clean staged change even when the worktree is dirty", () => {
+    write("components/Clean2.tsx", 'export const C = () => <b className="bg-brand" />;\n');
+    git("add", "components/Clean2.tsx");
+    write("components/Clean2.tsx", 'export const C = () => <b className="bg-[#DEAD00]" />;\n');
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(0);
+    expect(json.findings).toEqual([]);
+  });
+
+  it("--staged applies index line numbers to index content after an insertion", () => {
+    write(
+      "components/Shift.tsx",
+      ["export const S = () => (", '  <b className="bg-[#C0FFEE]" />', ");", ""].join("\n")
+    );
+    git("add", "components/Shift.tsx");
+    write(
+      "components/Shift.tsx",
+      [
+        "// an unstaged comment pushes everything down",
+        "export const S = () => (",
+        '  <b className="bg-[#C0FFEE]" />',
+        ");",
+        "",
+      ].join("\n")
+    );
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(1);
+    expect(json.findings).toHaveLength(1);
+    expect(json.findings[0].line).toBe(2);
+  });
+
+  it("--staged treats a staged new file as fully added", () => {
+    write("components/Fresh.tsx", 'export const F = () => <b className="bg-[#0FF1CE]" />;\n');
+    git("add", "components/Fresh.tsx");
+    const { status, json } = runJson(["--staged"]);
+    expect(status).toBe(1);
+    expect(json.findings.map((f: Finding) => f.file)).toEqual(["components/Fresh.tsx"]);
+  });
+
+  it("--changed reads content from HEAD, not from a dirty worktree", () => {
+    write("components/Legacy.tsx", 'export const L = () => <b className="bg-[#FADED0]" />;\n');
+    const { json } = runJson(["--changed", "--base", baseSha]);
+    expect(json.findings).toEqual([]);
   });
 
   it("--worktree treats an untracked file as fully added", () => {
+    write("components/Unstaged.tsx", 'export const U = () => <b className="bg-[#fedcba]" />;\n');
     const { status, json } = runJson(["--worktree", "components/Unstaged.tsx"]);
     expect(status).toBe(1);
     expect(json.findings.map((f: Finding) => f.rule)).toEqual(["DS001"]);
@@ -1024,6 +1089,7 @@ describe("CLI modes", () => {
   });
 
   it("--worktree accepts an absolute Windows-style path", () => {
+    write("components/Unstaged.tsx", 'export const U = () => <b className="bg-[#fedcba]" />;\n');
     const abs = path.join(repo, "components", "Unstaged.tsx");
     const { json } = runJson(["--worktree", abs]);
     expect(json.findings).toHaveLength(1);
@@ -1048,75 +1114,6 @@ describe("CLI modes", () => {
     expect(res.stdout).toContain("components/Legacy.tsx");
   });
 
-  // D1: `git diff --cached` compares HEAD to the index, so the content that
-  // its line numbers refer to is the index blob — not the working copy the
-  // developer keeps editing after `git add`.
-  it("--staged blocks a staged violation even when the worktree already fixes it", () => {
-    write("components/Drift.tsx", 'export const D = () => <b className="bg-[#BADBAD]" />;\n');
-    git("add", "components/Drift.tsx");
-    write("components/Drift.tsx", 'export const D = () => <b className="bg-brand" />;\n');
-    const { status, json } = runJson(["--staged"]);
-    expect(status).toBe(1);
-    expect(json.findings.map((f: Finding) => f.rule)).toEqual(["DS001"]);
-    git("reset", "-q");
-    fs.rmSync(path.join(repo, "components/Drift.tsx"));
-  });
-
-  it("--staged passes a clean staged change even when the worktree is dirty", () => {
-    write("components/Clean2.tsx", 'export const C = () => <b className="bg-brand" />;\n');
-    git("add", "components/Clean2.tsx");
-    write("components/Clean2.tsx", 'export const C = () => <b className="bg-[#DEAD00]" />;\n');
-    const { status, json } = runJson(["--staged"]);
-    expect(status).toBe(0);
-    expect(json.findings).toEqual([]);
-    git("reset", "-q");
-    fs.rmSync(path.join(repo, "components/Clean2.tsx"));
-  });
-
-  it("--staged applies index line numbers to index content after an insertion", () => {
-    // Stage a violation on line 2, then insert a line above it in the worktree
-    // so the two revisions disagree about where line 2 is.
-    write(
-      "components/Shift.tsx",
-      ["export const S = () => (", '  <b className="bg-[#C0FFEE]" />', ");", ""].join("\n")
-    );
-    git("add", "components/Shift.tsx");
-    write(
-      "components/Shift.tsx",
-      [
-        "// an unstaged comment pushes everything down",
-        "export const S = () => (",
-        '  <b className="bg-[#C0FFEE]" />',
-        ");",
-        "",
-      ].join("\n")
-    );
-    const { status, json } = runJson(["--staged"]);
-    expect(status).toBe(1);
-    expect(json.findings).toHaveLength(1);
-    expect(json.findings[0].line).toBe(2);
-    git("reset", "-q");
-    fs.rmSync(path.join(repo, "components/Shift.tsx"));
-  });
-
-  it("--staged treats a staged new file as fully added", () => {
-    write("components/Fresh.tsx", 'export const F = () => <b className="bg-[#0FF1CE]" />;\n');
-    git("add", "components/Fresh.tsx");
-    const { status, json } = runJson(["--staged"]);
-    expect(status).toBe(1);
-    expect(json.findings.map((f: Finding) => f.file)).toEqual(["components/Fresh.tsx"]);
-    git("reset", "-q");
-    fs.rmSync(path.join(repo, "components/Fresh.tsx"));
-  });
-
-  it("--changed reads content from HEAD, not from a dirty worktree", () => {
-    const head = git("rev-parse", "HEAD");
-    write("components/Legacy.tsx", 'export const L = () => <b className="bg-[#FADED0]" />;\n');
-    const { json } = runJson(["--changed", "--base", head]);
-    expect(json.findings).toEqual([]);
-    git("checkout", "--", "components/Legacy.tsx");
-  });
-
   it("counts a waived finding under waived, not error", () => {
     write(
       "components/Waived.tsx",
@@ -1130,6 +1127,14 @@ describe("CLI modes", () => {
     expect(status).toBe(0);
     expect(json.summary.error).toBe(0);
     expect(json.summary.waived).toBe(1);
+  });
+
+  it("fails closed on a source file above the size cap", () => {
+    write("components/Huge.tsx", `const x = "${"a".repeat(2 * 1024 * 1024 + 10)}";\n`);
+    git("add", "components/Huge.tsx");
+    const res = run(["--staged"]);
+    expect(res.status).toBe(2);
+    expect(res.stderr).toContain("components/Huge.tsx");
   });
 });
 
