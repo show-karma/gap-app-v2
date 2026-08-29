@@ -1,10 +1,4 @@
 import type { NextConfig } from "next";
-import {
-  NOTEBOOK_ASSET_PATH_PREFIX,
-  NOTEBOOK_ASSET_SOURCE,
-  notebookAssetCacheRules,
-  notebookHeaders,
-} from "./utilities/notebooks/csp";
 import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
@@ -121,28 +115,13 @@ const nextConfig: NextConfig = {
     // frame-ancestors and silently block the frame.
     const headerRules = [
       {
-        source: `/((?!${TOKEN_BRIDGE_PATH.slice(1)}$|${NOTEBOOK_ASSET_PATH_PREFIX.slice(1)}/).*)`,
+        source: `/((?!${TOKEN_BRIDGE_PATH.slice(1)}$).*)`,
         headers: securityHeaders,
       },
       {
         source: TOKEN_BRIDGE_PATH,
         headers: tokenBridgeHeaders,
       },
-      // Notebook bundles get their own policy for the same reason the bridge
-      // does: two rules on one path emit Content-Security-Policy twice and
-      // browsers enforce the intersection, which would drop the directives the
-      // notebook needs (wasm-unsafe-eval, blob: workers) while keeping none of
-      // the ones that matter. The catch-all above excludes this prefix.
-      {
-        source: NOTEBOOK_ASSET_SOURCE,
-        headers: notebookHeaders(),
-      },
-      // Immutable caching for the content-addressed parts of a bundle. Separate
-      // rules rather than extra headers on the one above, because that rule
-      // covers the entry document too and index.html must keep revalidating.
-      // Next emits every matching rule's headers, so these sources are chosen
-      // not to overlap each other or anything else that sets Cache-Control.
-      ...notebookAssetCacheRules(),
     ];
     // Content-hashed build assets are safe to cache forever: a new deploy emits
     // new filenames, so a stale cache entry is never served for new code. This
