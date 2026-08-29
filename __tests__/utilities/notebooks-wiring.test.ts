@@ -1,4 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { NOTEBOOK_REVALIDATE_SECONDS } from "@/services/notebook-overview.service";
 import { tenantNavigation } from "@/src/infrastructure/config/tenant-navigation-config";
 import { EXPLORER_NAV_OVERRIDES, NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
@@ -79,6 +82,32 @@ describe("notebook feature wiring", () => {
       const notebooks = reports?.items?.find((entry) => entry.label === "Notebooks");
 
       expect(notebooks?.href).toBe("/notebooks");
+    });
+  });
+
+  // Next parses segment config statically, so the page cannot import the
+  // constant — it has to repeat the literal. That is a drift hazard: the page
+  // could claim one window while the cache honours another, and nothing would
+  // fail. This is the test that makes them move together.
+  describe("revalidate window", () => {
+    it("declares the same window on the page as the cache uses", () => {
+      const page = fs.readFileSync(
+        path.join(
+          process.cwd(),
+          "app",
+          "community",
+          "[communityId]",
+          "(cover)",
+          "notebooks",
+          "[slug]",
+          "page.tsx"
+        ),
+        "utf8"
+      );
+      const declared = page.match(/export const revalidate = (\d+);/);
+
+      expect(declared).not.toBeNull();
+      expect(Number(declared?.[1])).toBe(NOTEBOOK_REVALIDATE_SECONDS);
     });
   });
 

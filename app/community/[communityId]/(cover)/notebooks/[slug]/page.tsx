@@ -3,10 +3,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { NotebooksUnavailable } from "@/components/Pages/Communities/Notebooks/NotebooksUnavailable";
 import { NotebookViewer } from "@/components/Pages/Communities/Notebooks/NotebookViewer";
-import {
-  getNotebookOverview,
-  NOTEBOOK_REVALIDATE_SECONDS,
-} from "@/services/notebook-overview.service";
+import { getNotebookOverview } from "@/services/notebook-overview.service";
 import { getPublishedNotebook, type NotebookConfig } from "@/services/notebooks.service";
 import { NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
@@ -27,7 +24,10 @@ type Params = Promise<{ communityId: string; slug: string }>;
  * reader looks for it, and becomes the real mechanism the moment the layout's
  * unconditional `headers()` read is lifted.
  */
-export const revalidate = NOTEBOOK_REVALIDATE_SECONDS;
+// Must be a literal: Next parses segment config statically and rejects an
+// imported constant ("Invalid segment configuration export"). Kept in step
+// with NOTEBOOK_REVALIDATE_SECONDS by a test rather than by an import.
+export const revalidate = 3600;
 
 const getCachedCommunity = cache(getCommunityDetails);
 
