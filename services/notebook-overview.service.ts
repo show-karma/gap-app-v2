@@ -1,8 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { unstable_cache } from "next/cache";
-import { z } from "zod";
-import { api } from "@/utilities/api/client";
-import { INDEXER } from "@/utilities/indexer";
+import { getNotebookMetrics } from "./notebooks/notebook-metrics.query";
+import type { NotebookMetrics } from "./notebooks/notebook-metrics.types";
 
 /**
  * Data behind a notebook page's static-first render (Architecture B).
@@ -20,11 +19,10 @@ import { INDEXER } from "@/utilities/indexer";
  * bounded, tunable staleness window with an on-demand escape hatch — and the
  * request path costs a cache read rather than an upstream round trip.
  *
- * B1 SEAM. When WS-B1's executed snapshot lands, it is read HERE, behind the
- * same cache and the same tag, and this API-derived view model becomes the
- * fallback for a community whose snapshot has not been published yet. Nothing
- * above this module needs to change: the page consumes the view model, not the
- * source.
+ * BOUNDARY. The queries and their reconciliation belong to WS-C1
+ * (`services/notebooks/`); this module owns only the freshness layer — the
+ * cache window, the tag, FR5 retention, and the three provenance fields a
+ * chart-ready result cannot know about itself.
  */
 
 /** One hour. Grants data moves slowly; on-demand revalidation covers the rest. */
@@ -35,91 +33,13 @@ export function notebookOverviewTag(communityId: string): string {
   return `notebook-overview:${communityId.toLowerCase()}`;
 }
 
-// ── Wire schema ──────────────────────────────────────────────
-// `passthrough()` throughout: the metrics endpoint is shared with other
-// consumers and gains fields; a new one must not break a published page.
-
-const ProgramFundingSchema = z
-  .object({
-    programId: z.string(),
-    programName: z.string(),
-    primaryCurrency: z.string(),
-    totalAllocated: z.number(),
-    totalDisbursed: z.number(),
-    totalRemaining: z.number(),
-    projectCount: z.number(),
-    avgMilestoneCompletion: z.number(),
-  })
-  .passthrough();
-
-const TrackFundingSchema = z
-  .object({
-    trackId: z.string().nullable(),
-    track: z.string().nullable(),
-    allocated: z.number(),
-    disbursed: z.number(),
-    projects: z.number(),
-    avgMilestoneCompletion: z.number(),
-  })
-  .passthrough();
-
-const FundingTotalsSchema = z
-  .object({
-    allocated: z.number(),
-    disbursed: z.number(),
-    remaining: z.number(),
-    programs: z.number(),
-    distinctProjects: z.number(),
-    avgMilestoneCompletion: z.number(),
-    currencies: z.array(z.string()),
-  })
-  .passthrough();
-
-const CommunityMetricsSchema = z
-  .object({
-    communityUID: z.string(),
-    totalPrograms: z.number(),
-    enabledPrograms: z.number(),
-    totalApplications: z.number(),
-    approvedApplications: z.number(),
-    rejectedApplications: z.number(),
-    pendingApplications: z.number(),
-    underReviewApplications: z.number(),
-    funding: z
-      .object({
-        programs: z.array(ProgramFundingSchema),
-        byTrack: z.array(TrackFundingSchema),
-        totals: FundingTotalsSchema,
-      })
-      .passthrough(),
-  })
-  .passthrough();
-
-export type CommunityMetrics = z.infer<typeof CommunityMetricsSchema>;
-
 // ── View model ───────────────────────────────────────────────
+// The chart-ready shape is WS-C1's contract; this module adds only the three
+// fields that the cache layer alone can know.
 
-export interface NotebookStat {
-  label: string;
-  value: number;
-  /** How to render it — the component owns formatting, not this module. */
-  format: "currency" | "count" | "percent";
-  hint?: string;
-}
+export type { NotebookBar, NotebookStat } from "./notebooks/notebook-metrics.types";
 
-export interface NotebookBar {
-  label: string;
-  /** Filled portion. */
-  value: number;
-  /** Bar total; `value / total` is the filled fraction. */
-  total: number;
-  /** Right-aligned caption, e.g. "$563K of $614K". */
-  caption: string;
-  /** Secondary line under the label. */
-  meta?: string;
-}
-
-export interface NotebookOverview {
+export interface NotebookOverview extends NotebookMetrics {
   /** Where the numbers came from — surfaced to the reader, not decoration. */
   source: "gap-api" | "snapshot";
   /**
@@ -130,100 +50,22 @@ export interface NotebookOverview {
   stale: boolean;
   /** When this payload was computed (ISO). */
   generatedAt: string;
-  currency: string;
-  stats: NotebookStat[];
-  funding: NotebookBar[];
-  completion: NotebookBar[];
-  applications: { label: string; value: number }[];
 }
 
-// ── Mapping ──────────────────────────────────────────────────
-
-function formatCompact(value: number): string {
-  if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `$${Math.round(value / 1_000)}K`;
-  return `$${Math.round(value)}`;
-}
-
-/**
- * Metrics → view model.
- *
- * Exported for tests: the mapping is where the reader-facing meaning is
- * decided (what counts as "committed", how a bar is scaled), so it is worth
- * testing without a network.
- */
-export function toOverview(metrics: CommunityMetrics, generatedAt: string): NotebookOverview {
-  const { totals, programs, byTrack } = metrics.funding;
-  const currency = totals.currencies[0] ?? "";
-
-  const stats: NotebookStat[] = [
-    { label: "Committed", value: totals.allocated, format: "currency" },
-    {
-      label: "Disbursed",
-      value: totals.disbursed,
-      format: "currency",
-      hint: `${formatCompact(totals.remaining)} still to pay out`,
-    },
-    { label: "Funded projects", value: totals.distinctProjects, format: "count" },
-    {
-      label: "Milestone completion",
-      value: totals.avgMilestoneCompletion,
-      format: "percent",
-      hint: `across ${totals.programs} programs`,
-    },
-  ];
-
-  // Every bar is scaled against the LARGEST allocation, not against its own
-  // total, so bar lengths are comparable between programs — a program with a
-  // small budget must not look as large as one with a big budget.
-  const largestAllocation = Math.max(1, ...programs.map((program) => program.totalAllocated));
-
-  const funding: NotebookBar[] = [...programs]
-    .sort((a, b) => b.totalAllocated - a.totalAllocated)
-    .map((program) => ({
-      label: program.programName,
-      value: program.totalDisbursed,
-      total: largestAllocation,
-      caption: `${formatCompact(program.totalDisbursed)} of ${formatCompact(program.totalAllocated)}`,
-      meta: `${program.projectCount} ${program.projectCount === 1 ? "project" : "projects"}`,
-    }));
-
-  // A track row with no track name is the ungrouped remainder, not a track.
-  const completion: NotebookBar[] = byTrack
-    .filter((track) => track.track !== null)
-    .sort((a, b) => b.avgMilestoneCompletion - a.avgMilestoneCompletion)
-    .map((track) => ({
-      label: track.track as string,
-      value: track.avgMilestoneCompletion,
-      total: 100,
-      caption: `${track.avgMilestoneCompletion.toFixed(1)}%`,
-      meta: `${track.projects} ${track.projects === 1 ? "project" : "projects"}`,
-    }));
-
-  const applications = [
-    { label: "Approved", value: metrics.approvedApplications },
-    { label: "Under review", value: metrics.underReviewApplications + metrics.pendingApplications },
-    { label: "Not approved", value: metrics.rejectedApplications },
-  ].filter((entry) => entry.value > 0);
-
-  return {
-    source: "gap-api",
-    stale: false,
-    generatedAt,
-    currency,
-    stats,
-    funding,
-    completion,
-    applications,
-  };
-}
+// ── Loading ──────────────────────────────────────────────────
 
 async function fetchOverview(communityId: string): Promise<NotebookOverview> {
-  const metrics = await api.get<CommunityMetrics>(
-    INDEXER.V2.COMMUNITY_PROGRAM_METRICS(communityId),
-    { schema: CommunityMetricsSchema, isAuthorized: false }
-  );
-  return toOverview(metrics, new Date().toISOString());
+  // WS-C1 owns the queries and the reconciliation behind them: the milestone
+  // figure is the canonical fraction from /stats, not the unweighted mean
+  // /metrics reports, so this page agrees with HeaderStatsCards rather than
+  // quietly disagreeing by a couple of points.
+  const metrics = await getNotebookMetrics(communityId);
+  return {
+    ...metrics,
+    source: "gap-api",
+    stale: false,
+    generatedAt: new Date().toISOString(),
+  };
 }
 
 /**

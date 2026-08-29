@@ -1,5 +1,5 @@
-vi.mock("@/utilities/api/client", () => ({
-  api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+vi.mock("@/services/notebooks/notebook-metrics.query", () => ({
+  getNotebookMetrics: vi.fn(),
 }));
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 // unstable_cache would memoise across cases and hide the FR5 behaviour under
@@ -11,150 +11,29 @@ vi.mock("next/cache", () => ({
 import * as Sentry from "@sentry/nextjs";
 import {
   __resetLastGoodOverview,
-  type CommunityMetrics,
   getNotebookOverview,
   notebookOverviewTag,
-  toOverview,
 } from "@/services/notebook-overview.service";
-import { api } from "@/utilities/api/client";
+import { getNotebookMetrics } from "@/services/notebooks/notebook-metrics.query";
 
-const mockGet = api.get as unknown as ReturnType<typeof vi.fn>;
+const mockGet = getNotebookMetrics as unknown as ReturnType<typeof vi.fn>;
 
-function makeMetrics(overrides: Partial<CommunityMetrics> = {}): CommunityMetrics {
+function makeMetrics() {
   return {
-    communityUID: "0xfilecoin",
-    totalPrograms: 5,
-    enabledPrograms: 2,
-    totalApplications: 205,
-    approvedApplications: 52,
-    rejectedApplications: 151,
-    pendingApplications: 1,
-    underReviewApplications: 1,
-    funding: {
-      programs: [
-        {
-          programId: "1039",
-          programName: "Pods Track",
-          primaryCurrency: "USDC",
-          totalAllocated: 613630,
-          totalDisbursed: 563337,
-          totalRemaining: 50293,
-          projectCount: 3,
-          avgMilestoneCompletion: 100,
-        },
-        {
-          programId: "1479",
-          programName: "Batch 3",
-          primaryCurrency: "",
-          totalAllocated: 2168267,
-          totalDisbursed: 0,
-          totalRemaining: 2168267,
-          projectCount: 18,
-          avgMilestoneCompletion: 0.9,
-        },
-      ],
-      byTrack: [
-        {
-          trackId: null,
-          track: null,
-          allocated: 7273500,
-          disbursed: 5806429,
-          projects: 34,
-          avgMilestoneCompletion: 67.7,
-        },
-        {
-          trackId: "t1",
-          track: "Kernel",
-          allocated: 1812267,
-          disbursed: 0,
-          projects: 13,
-          avgMilestoneCompletion: 1.3,
-        },
-      ],
-      totals: {
-        allocated: 9246697,
-        disbursed: 6369766,
-        remaining: 2928731,
-        programs: 4,
-        distinctProjects: 47,
-        avgMilestoneCompletion: 52.7,
-        currencies: ["USDC"],
-      },
-    },
-    ...overrides,
-  } as CommunityMetrics;
+    currency: "USDC",
+    stats: [
+      { label: "Committed", value: 9246697, format: "currency" as const },
+      { label: "Disbursed", value: 6369766, format: "currency" as const },
+      { label: "Funded projects", value: 48, format: "count" as const },
+      { label: "Milestone completion", value: 52, format: "percent" as const },
+    ],
+    funding: [
+      { label: "Batch 3", value: 0, total: 2168267, caption: "$0 of $2.2M", meta: "18 projects" },
+    ],
+    completion: [{ label: "Kernel", value: 1.3, total: 100, caption: "1.3%", meta: "13 projects" }],
+    applications: [{ label: "Approved", value: 52 }],
+  };
 }
-
-const AT = "2026-08-29T01:00:00.000Z";
-
-describe("toOverview", () => {
-  it("puts the headline totals in the KPI tiles", () => {
-    const overview = toOverview(makeMetrics(), AT);
-
-    expect(overview.stats.map((s) => [s.label, s.value])).toEqual([
-      ["Committed", 9246697],
-      ["Disbursed", 6369766],
-      ["Funded projects", 47],
-      ["Milestone completion", 52.7],
-    ]);
-  });
-
-  // Bars must be comparable BETWEEN programs, so every row is scaled against
-  // the largest allocation. Scaling each row against its own total would make
-  // a small fully-disbursed program look as large as a big one.
-  it("scales every funding bar against the largest allocation", () => {
-    const overview = toOverview(makeMetrics(), AT);
-
-    expect(new Set(overview.funding.map((bar) => bar.total))).toEqual(new Set([2168267]));
-  });
-
-  it("orders funding bars by commitment, largest first", () => {
-    const overview = toOverview(makeMetrics(), AT);
-
-    expect(overview.funding.map((bar) => bar.label)).toEqual(["Batch 3", "Pods Track"]);
-  });
-
-  it("captions a funding bar with both figures", () => {
-    const overview = toOverview(makeMetrics(), AT);
-
-    expect(overview.funding[1].caption).toBe("$563K of $614K");
-  });
-
-  // A byTrack row with a null track is the ungrouped remainder, not a track;
-  // rendering it would double-count every project under a blank label.
-  it("drops the ungrouped remainder from the track bars", () => {
-    const overview = toOverview(makeMetrics(), AT);
-
-    expect(overview.completion.map((bar) => bar.label)).toEqual(["Kernel"]);
-    expect(overview.completion[0].total).toBe(100);
-  });
-
-  it("folds pending into under-review and omits empty buckets", () => {
-    const overview = toOverview(
-      makeMetrics({ approvedApplications: 0, rejectedApplications: 0 }),
-      AT
-    );
-
-    expect(overview.applications).toEqual([{ label: "Under review", value: 2 }]);
-  });
-
-  it("marks a freshly fetched payload as not stale", () => {
-    expect(toOverview(makeMetrics(), AT).stale).toBe(false);
-  });
-
-  it("survives a program list with no allocations without dividing by zero", () => {
-    const metrics = makeMetrics();
-    metrics.funding.programs = metrics.funding.programs.map((program) => ({
-      ...program,
-      totalAllocated: 0,
-      totalDisbursed: 0,
-    }));
-
-    const overview = toOverview(metrics, AT);
-
-    expect(overview.funding.every((bar) => bar.total > 0)).toBe(true);
-  });
-});
 
 describe("getNotebookOverview", () => {
   beforeEach(() => {
