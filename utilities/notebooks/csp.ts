@@ -18,6 +18,8 @@
  * alias resolver exists.
  */
 
+import contract from "./hosting-contract.json";
+
 /** Route the published bundles are served from. */
 export const NOTEBOOK_ASSET_PATH_PREFIX = "/notebooks";
 
@@ -43,21 +45,22 @@ export function notebookAssetPath(communityId: string, slug: string): string {
 }
 
 /**
- * The GAP API origin the notebooks may call, and nothing else.
+ * The external origins the notebook may call, and nothing else.
  *
- * Read from the environment so preview builds talk to the same indexer the app
- * does, but defaulted rather than left blank: an empty value would emit a
- * `connect-src` naming only `'self'`, which fails closed (the notebook shows
- * its own error state) instead of failing open.
+ * Sourced from the bundle's own contract, NOT from this app's
+ * `NEXT_PUBLIC_GAP_INDEXER_URL`. The API base URL is baked into the bundle at
+ * export time, so it is a property of the artifact, not of the deployment
+ * hosting it — reading the app's env instead would emit a policy that happens
+ * to match in production and silently blocks every data fetch on a preview
+ * pointed at a different indexer. That is exactly the failure this function
+ * exists to prevent, and it is why the emitted CSP does not vary by
+ * environment: it is the same policy CI verified, everywhere.
+ *
+ * When the notebook is rebuilt against a different API, the contract changes
+ * with the bundle and this follows it.
  */
-export function gapApiOrigin(): string {
-  const raw = process.env.NEXT_PUBLIC_GAP_INDEXER_URL;
-  if (!raw) return "https://gapapi.karmahq.xyz";
-  try {
-    return new URL(raw).origin;
-  } catch {
-    return "https://gapapi.karmahq.xyz";
-  }
+export function notebookConnectOrigins(): readonly string[] {
+  return contract.externalConnectOrigins;
 }
 
 /**
@@ -70,12 +73,7 @@ export function gapApiOrigin(): string {
  * is the correct failure mode (visible, immediate) rather than a silent
  * loosening.
  */
-export const NOTEBOOK_INLINE_SCRIPT_HASHES = [
-  "'sha256-J66DGBNYRlkjF6eeQbWMJ8sqzD39RgU33eE7Djfk+M8='",
-  "'sha256-wNw1OS5Za9EAkraslcOYnQGFkuy3QICydhaL3nPEhV4='",
-  "'sha256-1xiBsH/czTQ0awUT7tTNz74gYIjmi2e/FQze/BGHGwM='",
-  "'sha256-qyUcnik1lTuTaCysO7aCenroWKFOXMQZtpWaWHUqLo0='",
-] as const;
+export const NOTEBOOK_INLINE_SCRIPT_HASHES: readonly string[] = contract.inlineScriptHashes;
 
 /**
  * CSP for the notebook bundle route.
@@ -95,7 +93,7 @@ export function notebookCsp(): string {
     "default-src 'none'",
     `script-src 'self' 'wasm-unsafe-eval' ${NOTEBOOK_INLINE_SCRIPT_HASHES.join(" ")}`,
     "worker-src blob:",
-    `connect-src 'self' ${gapApiOrigin()}`,
+    `connect-src 'self' ${notebookConnectOrigins().join(" ")}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",

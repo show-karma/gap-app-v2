@@ -112,35 +112,31 @@ describe("notebook hosting contract", () => {
   });
 
   describe("connect-src", () => {
-    it("names only self and the GAP API", async () => {
+    it("names only self and the origins the bundle was built to call", async () => {
       const { notebookCsp } = await loadCsp(CONTRACT_API_ORIGIN);
 
-      expect(directives(notebookCsp()).get("connect-src")).toBe(`'self' ${CONTRACT_API_ORIGIN}`);
+      expect(directives(notebookCsp()).get("connect-src")).toBe(
+        `'self' ${contract.externalConnectOrigins.join(" ")}`
+      );
     });
 
-    it("reduces a URL with a path to its origin", async () => {
-      const { notebookCsp } = await loadCsp(`${CONTRACT_API_ORIGIN}/v2/`);
-
-      expect(directives(notebookCsp()).get("connect-src")).toBe(`'self' ${CONTRACT_API_ORIGIN}`);
-    });
-
-    it("follows the environment so previews reach their own indexer", async () => {
-      const { notebookCsp } = await loadCsp("https://stagapi.karmahq.org");
-
-      expect(directives(notebookCsp()).get("connect-src")).toContain("https://stagapi.karmahq.org");
-    });
-
-    // A blank or malformed value must not degrade into a permissive policy.
+    // The API base URL is baked into the bundle at export time, so it belongs
+    // to the artifact, not the deployment. Reading this app's indexer env
+    // instead would match in production and silently block every data fetch on
+    // a preview pointed at a different indexer — the notebook would render and
+    // then sit empty, which is the worst kind of failure to hand a validator.
     it.each([
+      ["a staging indexer", "https://stagapi.karmahq.org"],
+      ["a localhost indexer", "http://localhost:3001"],
       ["missing", undefined],
       ["empty", ""],
       ["not a URL", "not-a-url"],
-    ])("falls back to a real origin when the env var is %s", async (_label, value) => {
+    ])("does not vary when the app's own indexer env is %s", async (_label, value) => {
       const { notebookCsp } = await loadCsp(value);
-      const connectSrc = directives(notebookCsp()).get("connect-src")!;
 
-      expect(connectSrc).not.toContain("*");
-      expect(connectSrc.split(/\s+/)).toHaveLength(2);
+      expect(directives(notebookCsp()).get("connect-src")).toBe(
+        `'self' ${contract.externalConnectOrigins.join(" ")}`
+      );
     });
 
     // The whole reason vendoring was a deployment gate: any of these hosts
