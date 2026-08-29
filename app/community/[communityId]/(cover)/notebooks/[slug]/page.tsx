@@ -7,6 +7,7 @@ import { getNotebookOverview } from "@/services/notebook-overview.service";
 import { getPublishedNotebook, type NotebookConfig } from "@/services/notebooks.service";
 import { HttpError } from "@/utilities/api/errors";
 import { NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
+import { notebookDemoConfig } from "@/utilities/notebooks-demo-stub";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
 type Params = Promise<{ communityId: string; slug: string }>;
@@ -55,6 +56,14 @@ const getCachedNotebook = cache(
   }
 );
 
+/**
+ * Real config first; the preview-only demo stub only ever fills a 404.
+ * TEMPORARY — see utilities/notebooks-demo-stub.ts. Delete with it.
+ */
+async function resolveNotebook(communityId: string, slug: string): Promise<NotebookConfig | null> {
+  return (await getCachedNotebook(communityId, slug)) ?? notebookDemoConfig(communityId, slug);
+}
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId, slug } = await params;
 
@@ -62,7 +71,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     return {};
   }
 
-  const notebook = await getCachedNotebook(communityId, slug);
+  const notebook = await resolveNotebook(communityId, slug);
   if (!notebook) {
     return {};
   }
@@ -89,7 +98,7 @@ export default async function NotebookPage({ params }: { params: Params }) {
     );
   }
 
-  const notebook = await getCachedNotebook(communityId, slug);
+  const notebook = await resolveNotebook(communityId, slug);
   if (!notebook) {
     notFound();
   }
