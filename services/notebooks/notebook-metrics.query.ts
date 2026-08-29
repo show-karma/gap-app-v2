@@ -4,6 +4,7 @@ import pluralize from "pluralize";
 import { z } from "zod";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
+import { notebookDemoApiBaseUrl } from "@/utilities/notebooks-demo-stub";
 import {
   type NotebookCommunityMetricsDto,
   NotebookCommunityMetricsDtoSchema,
@@ -133,14 +134,19 @@ function toNotebookMetrics(
  */
 export async function getNotebookMetrics(communityId: string): Promise<NotebookMetrics> {
   const validatedCommunityId = CommunityIdSchema.parse(communityId);
+  // TEMPORARY DEMO SCAFFOLD — undefined outside the preview demo, so these two
+  // calls normally read whatever indexer the environment configures. See
+  // utilities/notebooks-demo-stub.ts; delete this line with that module.
+  const baseURL = notebookDemoApiBaseUrl();
   const [metrics, communityStats] = await Promise.all([
     api.get<NotebookCommunityMetricsDto>(
       INDEXER.V2.COMMUNITY_PROGRAM_METRICS(validatedCommunityId),
-      { schema: NotebookCommunityMetricsDtoSchema, isAuthorized: false }
+      { schema: NotebookCommunityMetricsDtoSchema, isAuthorized: false, baseURL }
     ),
     api.get<NotebookCommunityStatsDto>(INDEXER.COMMUNITY.V2.STATS(validatedCommunityId), {
       schema: NotebookCommunityStatsDtoSchema,
       isAuthorized: false,
+      baseURL,
     }),
   ]);
 

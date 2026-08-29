@@ -38,6 +38,34 @@ import type { NotebookConfig } from "@/services/notebooks.service";
  * removed by accident, the blast radius is still one slug on one branch.
  */
 
+/**
+ * Indexer the demo reads metrics from.
+ *
+ * The preview is configured against staging, whose Filecoin data is a thin
+ * copy — 85 projects, 58 of 229 milestones, and zero committed or disbursed
+ * funding. Rendered faithfully that reads to a viewer as "this dashboard is
+ * broken", or worse "Filecoin has funded nothing", rather than as "this is
+ * staging". For a demo whose entire job is to show the real programme, the
+ * numbers have to be the real ones.
+ *
+ * Production GAP data is public, read-only and unauthenticated — the same
+ * bytes any anonymous visitor to app.karmahq.org already receives — so reading
+ * it from a preview grants nothing that was not already public. Only the two
+ * notebook metric calls repoint; every other request on the page keeps reading
+ * whatever the environment configures.
+ */
+const DEMO_METRICS_ORIGIN = "https://gapapi.karmahq.xyz";
+
+/**
+ * Base URL override for the notebook metric calls, or undefined to leave the
+ * client on its configured indexer.
+ *
+ * TEMPORARY — dies with the rest of this module when WS3 deploys.
+ */
+export function notebookDemoApiBaseUrl(): string | undefined {
+  return isNotebookDemoStubEnabled() ? DEMO_METRICS_ORIGIN : undefined;
+}
+
 /** The single branch this demo may build on. */
 const DEMO_BRANCH = "feat/notebook-pages";
 

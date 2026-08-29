@@ -77,3 +77,13 @@ describe("notebook demo stub scope", () => {
     expect(notebookDemoList("filecoin")).toEqual([]);
   });
 });
+
+describe("notebook demo metrics origin", () => {
+  // The repoint rides the same gate as the config stub, so it cannot outlive
+  // it or reach production independently.
+  it("leaves the client on its configured indexer when the gate is closed", async () => {
+    const { notebookDemoApiBaseUrl } = await import("@/utilities/notebooks-demo-stub");
+
+    expect(notebookDemoApiBaseUrl()).toBeUndefined();
+  });
+});
