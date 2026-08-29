@@ -145,12 +145,29 @@ describe("framing headers", () => {
       }
     });
 
-    it("forbids the notebook from framing anything itself", async () => {
+    // `default-src 'none'` is the denial: every fetch type the bundle may make
+    // is then named explicitly, so framing and plugins are refused by fallback
+    // rather than by a directive that could be edited away on its own.
+    it("denies everything the contract does not name", async () => {
       const rules = await getHeaderRules();
       const csp = cspOf(framingRules(rules).find((rule) => rule.source === NOTEBOOK_ASSET_SOURCE)!);
 
-      expect(csp).toContain("frame-src 'none'");
+      expect(csp).toContain("default-src 'none'");
       expect(csp).toContain("object-src 'none'");
+      expect(csp).not.toContain("frame-src");
+    });
+
+    // Sandboxed without allow-same-origin means an opaque origin, so the
+    // bundle's own fetches for the vendored runtime and wheels are cross-origin
+    // with Origin: null. Without this header the notebook never boots.
+    it("lets the opaque-origin frame fetch its own subresources", async () => {
+      const rules = await getHeaderRules();
+      const notebooks = rules.find((rule) => rule.source === NOTEBOOK_ASSET_SOURCE)!;
+      const header = (key: string) => notebooks.headers.find((h) => h.key === key)?.value;
+
+      expect(header("Access-Control-Allow-Origin")).toBe("*");
+      expect(header("Access-Control-Allow-Credentials")).toBeUndefined();
+      expect(header("X-Content-Type-Options")).toBe("nosniff");
     });
   });
 });

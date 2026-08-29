@@ -1,0 +1,31 @@
+{
+  "route": "/notebooks/:path*",
+  "externalConnectOrigins": ["https://gapapi.karmahq.xyz"],
+  "inlineScriptHashes": [
+    "'sha256-J66DGBNYRlkjF6eeQbWMJ8sqzD39RgU33eE7Djfk+M8='",
+    "'sha256-wNw1OS5Za9EAkraslcOYnQGFkuy3QICydhaL3nPEhV4='",
+    "'sha256-1xiBsH/czTQ0awUT7tTNz74gYIjmi2e/FQze/BGHGwM='",
+    "'sha256-qyUcnik1lTuTaCysO7aCenroWKFOXMQZtpWaWHUqLo0='"
+  ],
+  "headers": {
+    "Access-Control-Allow-Origin": "*",
+    "Content-Security-Policy": "default-src 'none'; script-src 'self' 'wasm-unsafe-eval' 'sha256-J66DGBNYRlkjF6eeQbWMJ8sqzD39RgU33eE7Djfk+M8=' 'sha256-wNw1OS5Za9EAkraslcOYnQGFkuy3QICydhaL3nPEhV4=' 'sha256-1xiBsH/czTQ0awUT7tTNz74gYIjmi2e/FQze/BGHGwM=' 'sha256-qyUcnik1lTuTaCysO7aCenroWKFOXMQZtpWaWHUqLo0='; worker-src blob:; connect-src 'self' https://gapapi.karmahq.xyz; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; frame-ancestors 'self'; object-src 'none'; base-uri 'none'; form-action 'none'",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN"
+  },
+  "sandboxTokens": ["allow-scripts"],
+  "notes": [
+    "The self connect source is required for vendored runtime and wheel fetches; GAP API is the only external connect origin.",
+    "Opaque-origin iframe subresources require Access-Control-Allow-Origin: *.",
+    "WS4 must assert the rendered sandbox tokens, not JSX source text."
+  ],
+  "_provenance": {
+    "repo": "show-karma/karma-notebooks",
+    "commit": "cbc482b820573e09979cfbfa9536acae08ba3247",
+    "workflowRun": 33226521076,
+    "artifact": "karma-notebooks-static",
+    "artifactSha256": "b956feeb751133aafd7eb579934ba1b0ec07fd23da760baeeeff080b511edaae",
+    "_note": "Copied verbatim from that run, plus this block. The notebook route headers in csp.ts are asserted against this file; regenerate both together when the bundle is republished."
+  }
+}

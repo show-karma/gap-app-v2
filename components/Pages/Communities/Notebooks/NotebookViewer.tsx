@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { NotebookConfig } from "@/services/notebooks.service";
 import { Link } from "@/src/components/navigation/Link";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
+import { notebookAssetPath } from "@/utilities/notebooks/csp";
 import { NOTEBOOK_EMBED_ENABLED } from "@/utilities/notebooks-gate";
 import { PAGES } from "@/utilities/pages";
 import { NotebookFrame } from "./NotebookFrame";
@@ -39,7 +40,10 @@ export function NotebookViewer({ communityId, notebook }: NotebookViewerProps) {
       </div>
 
       {NOTEBOOK_EMBED_ENABLED ? (
-        <NotebookFrame src={notebook.artifactUrl} title={notebook.name} />
+        // Same-origin path derived from (community, slug) — NOT the config's
+        // `artifactUrl`, which records where CI published the bundle and cannot
+        // know the origin this deployment is served from. See notebookAssetPath.
+        <NotebookFrame src={notebookAssetPath(communityId, notebook.slug)} title={notebook.name} />
       ) : (
         <NotebookPending />
       )}

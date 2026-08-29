@@ -1,8 +1,11 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { tenantNavigation } from "@/src/infrastructure/config/tenant-navigation-config";
 import { EXPLORER_NAV_OVERRIDES, NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
 import { INDEXER } from "@/utilities/indexer";
+import { notebookAssetPath } from "@/utilities/notebooks/csp";
 import { NOTEBOOK_EMBED_ENABLED } from "@/utilities/notebooks-gate";
 import { PAGES } from "@/utilities/pages";
 
@@ -83,13 +86,44 @@ describe("notebook feature wiring", () => {
   });
 
   describe("embed gate", () => {
-    // This assertion is intentionally strict. It is the single line that keeps
-    // a live notebook out of every build until WS1 clears the security gate
-    // (render fix, opaque-origin pre-flight, vendored Pyodide + tightened
-    // connect-src). Flipping it is a deliberate, reviewed change — not a
-    // default that can drift open.
-    it("keeps the frame withheld until the security gate clears", () => {
-      expect(NOTEBOOK_EMBED_ENABLED).toBe(false);
+    // Opened 2026-08-29 after WS1 cleared all three conditions at
+    // karma-notebooks cbc482b (run 33226521076). The assertion stays — it is
+    // now a tripwire in the other direction: the gate must not close by
+    // accident while a bundle is shipped, and it must not reopen silently if
+    // the bundle is ever removed. Either way the change is deliberate.
+    it("is open for the validation preview", () => {
+      expect(NOTEBOOK_EMBED_ENABLED).toBe(true);
+    });
+
+    // The gate and the bundle travel together: an open gate with no bundle
+    // serves a broken frame, and a shipped bundle behind a closed gate is dead
+    // weight in the repo.
+    it("ships the bundle the open gate points at", () => {
+      const entry = path.join(
+        process.cwd(),
+        "public",
+        "notebooks",
+        "filecoin",
+        "grants-overview",
+        "index.html"
+      );
+
+      expect(fs.existsSync(entry)).toBe(NOTEBOOK_EMBED_ENABLED);
+    });
+
+    it("derives the frame src as the same-origin path of that bundle", () => {
+      expect(notebookAssetPath("filecoin", "grants-overview")).toBe(
+        "/notebooks/filecoin/grants-overview/index.html"
+      );
+    });
+
+    // The src is built from route params, so a crafted value must stay inside
+    // the prefix the notebook CSP is scoped to.
+    it("keeps a crafted slug inside the notebook prefix", () => {
+      const src = notebookAssetPath("filecoin", "../../etc/passwd");
+
+      expect(src.startsWith("/notebooks/filecoin/")).toBe(true);
+      expect(src).not.toContain("../");
     });
   });
 });

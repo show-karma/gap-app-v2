@@ -72,12 +72,22 @@ describe("NotebookViewer", () => {
   });
 
   describe("with the embed gate open", () => {
-    it("renders the sandboxed frame pointed at the artifact", async () => {
+    // The src is the SAME-ORIGIN path of the bundle shipped in this deployment,
+    // derived from (community, slug) — not the config's `artifactUrl`, which
+    // records where CI published it and cannot know the origin a given preview
+    // is served from.
+    it("renders the sandboxed frame pointed at the same-origin bundle path", async () => {
       await renderViewer(true);
 
       const frame = screen.getByTitle(notebook.name);
       expect(frame.tagName).toBe("IFRAME");
-      expect(frame).toHaveAttribute("src", notebook.artifactUrl);
+      expect(frame).toHaveAttribute("src", "/notebooks/filecoin/grants-overview/index.html");
+    });
+
+    it("does not use the stored artifactUrl as the frame src", async () => {
+      await renderViewer(true);
+
+      expect(screen.getByTitle(notebook.name)).not.toHaveAttribute("src", notebook.artifactUrl);
     });
 
     // The invariant holds through the composition, not only in isolation.

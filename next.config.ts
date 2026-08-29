@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import {
   NOTEBOOK_ASSET_PATH_PREFIX,
   NOTEBOOK_ASSET_SOURCE,
-  notebookCsp,
+  notebookHeaders,
 } from "./utilities/notebooks/csp";
 import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
@@ -39,24 +39,6 @@ const tokenBridgeHeaders = [
   {
     key: "Content-Security-Policy",
     value: `${FRAME_SRC}; frame-ancestors 'self' ${allTokenBridgeOrigins().join(" ")};`,
-  },
-];
-
-/**
- * Notebook bundles run tenant-authored code on this app's own origin, inside a
- * `sandbox="allow-scripts"` frame. This policy is the other half of that
- * boundary — see `utilities/notebooks/csp.ts` for why `connect-src` is the
- * directive that matters. X-Frame-Options stays SAMEORIGIN alongside
- * `frame-ancestors 'self'`.
- */
-const notebookHeaders = [
-  {
-    key: "X-Frame-Options",
-    value: "SAMEORIGIN",
-  },
-  {
-    key: "Content-Security-Policy",
-    value: notebookCsp(),
   },
 ];
 
@@ -152,7 +134,7 @@ const nextConfig: NextConfig = {
       // the ones that matter. The catch-all above excludes this prefix.
       {
         source: NOTEBOOK_ASSET_SOURCE,
-        headers: notebookHeaders,
+        headers: notebookHeaders(),
       },
     ];
     // Content-hashed build assets are safe to cache forever: a new deploy emits
