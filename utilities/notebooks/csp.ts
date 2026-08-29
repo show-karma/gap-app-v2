@@ -105,6 +105,66 @@ export function notebookCsp(): string {
 }
 
 /**
+ * Sub-directories of a published bundle whose filenames change whenever their
+ * contents do, so a cached copy can never be stale:
+ *
+ * - `assets/` — 726 files, every one content-hashed by the bundler
+ *   (`_baseSet-DehVzRp6.js`).
+ * - `pyodide/` — the runtime and 15 wheels, each carrying its version in the
+ *   filename (`plotly-6.9.0-…whl`); the notebook's own data module carries a
+ *   content hash in its local version segment
+ *   (`grants_data-0.0.0+marimo.b01648caea69-…whl`).
+ *
+ * Everything else in a bundle — `index.html`, the favicons, `manifest.json`,
+ * `storage-shim.js`, `nb-interactive.js` — keeps a revalidating policy, because
+ * those names are stable across republishes. `index.html` in particular MUST
+ * revalidate: it is what points at the hashed assets, so caching it would pin a
+ * reader to an old bundle indefinitely.
+ *
+ * ⚠️ Four files under `pyodide/` are NOT version-named — `pyodide.asm.wasm`,
+ * `pyodide.asm.mjs`, `pyodide-lock.json` and `python_stdlib.zip`. They are
+ * immutable for as long as the Pyodide version does not change, which is true
+ * of every republish of the SAME runtime. A Pyodide upgrade republished to this
+ * same path would serve those four stale to anyone who cached them. The fix is
+ * a version segment in the bundle path
+ * (`/notebooks/<community>/<slug>/<artifactVersion>/…`), which makes the whole
+ * tree immutable-safe; it belongs to the publish pipeline and should land
+ * before the runtime is ever upgraded in place.
+ */
+export const NOTEBOOK_IMMUTABLE_DIRECTORIES = ["assets", "pyodide"] as const;
+
+/**
+ * A year, immutable. These are content-addressed paths, so the browser may
+ * reuse them without asking — which is the point: a repeat visit otherwise
+ * revalidates ~345 requests, including a 9.6MB wasm, and forfeits the "repeat
+ * visit is fast" property the page depends on.
+ */
+export const NOTEBOOK_IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
+/**
+ * Header rules granting immutable caching to the content-addressed directories
+ * of every published bundle.
+ *
+ * Deliberately an allowlist of directories rather than an exclusion of
+ * `index.html`: a rule shaped as "everything except the entry document" would
+ * silently start caching any new unversioned file a future export drops beside
+ * it. Here a new directory has to be added on purpose.
+ *
+ * These sources must not overlap each other, and must not overlap any rule that
+ * also sets Cache-Control — Next emits every matching rule's headers, so two
+ * matches would send the header twice.
+ */
+export function notebookAssetCacheRules(): {
+  source: string;
+  headers: { key: string; value: string }[];
+}[] {
+  return NOTEBOOK_IMMUTABLE_DIRECTORIES.map((directory) => ({
+    source: `${NOTEBOOK_ASSET_PATH_PREFIX}/:community/:slug/${directory}/:path*`,
+    headers: [{ key: "Cache-Control", value: NOTEBOOK_IMMUTABLE_CACHE_CONTROL }],
+  }));
+}
+
+/**
  * Headers for the bundle route.
  *
  * `Access-Control-Allow-Origin: *` is not optional and not a loosening. The

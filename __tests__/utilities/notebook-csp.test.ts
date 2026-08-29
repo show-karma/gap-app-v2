@@ -187,3 +187,107 @@ describe("notebook hosting contract", () => {
     });
   });
 });
+
+/**
+ * F11: every asset was served `public, max-age=0, must-revalidate`, so a repeat
+ * visit revalidated ~345 requests including a 9.6MB wasm — forfeiting the
+ * "repeat visit is fast" property the page depends on.
+ */
+/** Concrete path prefix a cache rule matches, for the pilot bundle. */
+function concretePrefix(source: string): string {
+  return source
+    .slice(0, source.indexOf(":path*"))
+    .replace(":community", "filecoin")
+    .replace(":slug", "grants-overview")
+    .replace(/\/{2,}/g, "/");
+}
+
+describe("notebook asset caching", () => {
+  it("caches the content-addressed directories immutably for a year", async () => {
+    const { notebookAssetCacheRules, NOTEBOOK_IMMUTABLE_CACHE_CONTROL } =
+      await loadCsp(CONTRACT_API_ORIGIN);
+
+    expect(NOTEBOOK_IMMUTABLE_CACHE_CONTROL).toBe("public, max-age=31536000, immutable");
+    for (const rule of notebookAssetCacheRules()) {
+      expect(rule.headers).toEqual([
+        { key: "Cache-Control", value: NOTEBOOK_IMMUTABLE_CACHE_CONTROL },
+      ]);
+    }
+  });
+
+  it("covers the hashed bundle assets and the pyodide runtime", async () => {
+    const { notebookAssetCacheRules } = await loadCsp(CONTRACT_API_ORIGIN);
+    const sources = notebookAssetCacheRules().map((rule) => rule.source);
+
+    expect(sources).toEqual([
+      "/notebooks/:community/:slug/assets/:path*",
+      "/notebooks/:community/:slug/pyodide/:path*",
+    ]);
+  });
+
+  // The entry document is what points at the hashed assets. Caching it would
+  // pin a reader to an old bundle indefinitely, which is exactly the bug a
+  // rollback is supposed to fix.
+  it("never matches the entry document", async () => {
+    const { notebookAssetCacheRules } = await loadCsp(CONTRACT_API_ORIGIN);
+
+    for (const rule of notebookAssetCacheRules()) {
+      expect(
+        "/notebooks/filecoin/grants-overview/index.html".startsWith(concretePrefix(rule.source))
+      ).toBe(false);
+    }
+  });
+
+  it.each(["storage-shim.js", "nb-interactive.js", "manifest.json", "favicon.ico"])(
+    "leaves the unversioned file %s revalidating",
+    async (file) => {
+      const { notebookAssetCacheRules } = await loadCsp(CONTRACT_API_ORIGIN);
+      const url = `/notebooks/filecoin/grants-overview/${file}`;
+
+      for (const rule of notebookAssetCacheRules()) {
+        expect(url.startsWith(concretePrefix(rule.source))).toBe(false);
+      }
+    }
+  );
+
+  // Next emits the headers of EVERY matching rule, so two rules setting
+  // Cache-Control on one path would send the header twice.
+  it("does not overlap another rule that sets Cache-Control", async () => {
+    const nextConfig = (await import("@/next.config")).default;
+    const rules = (await nextConfig.headers!()) as {
+      source: string;
+      headers: { key: string; value: string }[];
+    }[];
+    const cacheRules = rules.filter((rule) =>
+      rule.headers.some((header) => header.key === "Cache-Control")
+    );
+
+    for (const url of [
+      "/notebooks/filecoin/grants-overview/assets/app-DeX3BBVP.js",
+      "/notebooks/filecoin/grants-overview/pyodide/pyodide.asm.wasm",
+      "/notebooks/filecoin/grants-overview/index.html",
+    ]) {
+      const matches = cacheRules.filter((rule) => {
+        const prefix = rule.source
+          .replace(/:path\*$/, "")
+          .replace(":community", "filecoin")
+          .replace(":slug", "grants-overview");
+        return url.startsWith(prefix) && !prefix.startsWith("/_next");
+      });
+      expect(matches.length).toBeLessThanOrEqual(1);
+    }
+  });
+
+  // The security headers and the cache headers are separate rules on
+  // overlapping paths; that is fine only while they share no header key.
+  it("sets no header the security rule already sets", async () => {
+    const { notebookAssetCacheRules, notebookHeaders } = await loadCsp(CONTRACT_API_ORIGIN);
+    const securityKeys = new Set(notebookHeaders().map((header) => header.key));
+
+    for (const rule of notebookAssetCacheRules()) {
+      for (const header of rule.headers) {
+        expect(securityKeys.has(header.key)).toBe(false);
+      }
+    }
+  });
+});
