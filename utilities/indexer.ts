@@ -123,6 +123,16 @@ export const INDEXER = {
       `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
     COMMUNITY_PROGRAM_METRICS: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/metrics`,
+    /**
+     * Notebook pages. Both reads are public and return `published` configs
+     * only — a draft answers 404 exactly as an unknown slug does, so the
+     * viewer cannot distinguish the two (gap-indexer PR #2411).
+     */
+    NOTEBOOK_CONFIGS: {
+      LIST: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/notebook-configs`,
+      GET: (communityIdOrSlug: string, slug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/${slug}`,
+    },
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
       BY_COMMUNITY_ACTIVE: (communityId: string, limit = 100) =>

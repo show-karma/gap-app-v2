@@ -14,6 +14,7 @@
  */
 
 import nextConfig from "@/next.config";
+import { NOTEBOOK_ASSET_PATH_PREFIX, NOTEBOOK_ASSET_SOURCE } from "@/utilities/notebooks/csp";
 import {
   TOKEN_BRIDGE_ORIGINS,
   TOKEN_BRIDGE_PATH,
@@ -37,23 +38,29 @@ const xfoOf = (rule: HeaderRule) =>
 const framingRules = (rules: HeaderRule[]) =>
   rules.filter((rule) => cspOf(rule).includes("frame-ancestors"));
 
+/** Routes that carry their own CSP instead of the catch-all's. */
+const CARVE_OUT_SOURCES = new Set<string>([TOKEN_BRIDGE_PATH, NOTEBOOK_ASSET_SOURCE]);
+
 describe("framing headers", () => {
   it("keeps every route but the bridge same-origin only", async () => {
     const rules = await getHeaderRules();
-    const catchAll = framingRules(rules).find((rule) => rule.source !== TOKEN_BRIDGE_PATH);
+    const catchAll = framingRules(rules).find((rule) => !CARVE_OUT_SOURCES.has(rule.source));
 
     expect(catchAll).toBeDefined();
     expect(cspOf(catchAll!)).toContain("frame-ancestors 'self';");
     expect(xfoOf(catchAll!)).toBe("SAMEORIGIN");
   });
 
-  it("excludes exactly the bridge path from the catch-all", async () => {
+  it("excludes exactly the bridge path and the notebook prefix from the catch-all", async () => {
     const rules = await getHeaderRules();
-    const catchAll = framingRules(rules).find((rule) => rule.source !== TOKEN_BRIDGE_PATH)!;
+    const catchAll = framingRules(rules).find((rule) => !CARVE_OUT_SOURCES.has(rule.source))!;
 
-    // A negative lookahead on the bridge path alone — not a prefix, not a
-    // pattern that could grow to cover a sibling route.
-    expect(catchAll.source).toBe(`/((?!${TOKEN_BRIDGE_PATH.slice(1)}$).*)`);
+    // Two carve-outs, both spelled out: the bridge path exactly (`$`), and the
+    // notebook asset prefix (`/`). Neither is a loose prefix that could grow to
+    // cover a sibling route.
+    expect(catchAll.source).toBe(
+      `/((?!${TOKEN_BRIDGE_PATH.slice(1)}$|${NOTEBOOK_ASSET_PATH_PREFIX.slice(1)}/).*)`
+    );
   });
 
   it("lets only the configured embedders frame the bridge", async () => {
@@ -90,11 +97,60 @@ describe("framing headers", () => {
     }
   });
 
-  it("has exactly two framing rules: the catch-all and the bridge", async () => {
+  it("has exactly three framing rules: the catch-all, the bridge and the notebooks", async () => {
     const rules = await getHeaderRules();
     const sources = framingRules(rules).map((rule) => rule.source);
 
-    expect(sources).toHaveLength(2);
+    expect(sources).toHaveLength(3);
     expect(sources).toContain(TOKEN_BRIDGE_PATH);
+    expect(sources).toContain(NOTEBOOK_ASSET_SOURCE);
+  });
+
+  /**
+   * The notebook carve-out exists to ADD directives the bundle needs
+   * (wasm-unsafe-eval, blob: workers) and to CONSTRAIN where a running notebook
+   * may connect — never to widen who may frame this app. Its framing posture
+   * must stay identical to the catch-all's.
+   */
+  describe("notebook bundles", () => {
+    it("stays same-origin-only, exactly like every other route", async () => {
+      const rules = await getHeaderRules();
+      const notebooks = framingRules(rules).find((rule) => rule.source === NOTEBOOK_ASSET_SOURCE);
+
+      expect(notebooks).toBeDefined();
+      expect(cspOf(notebooks!)).toContain("frame-ancestors 'self'");
+      expect(xfoOf(notebooks!)).toBe("SAMEORIGIN");
+    });
+
+    // The directive that makes same-origin hosting survivable: a script inside
+    // the frame can reach the GAP API and nothing else. A CDN or package host
+    // here would let it fetch and execute arbitrary code on this origin.
+    it("confines the frame to self and the GAP API", async () => {
+      const rules = await getHeaderRules();
+      const csp = cspOf(framingRules(rules).find((rule) => rule.source === NOTEBOOK_ASSET_SOURCE)!);
+      const connectSrc = csp
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) => part.startsWith("connect-src"))!;
+
+      expect(connectSrc).toBeDefined();
+      for (const forbidden of [
+        "pypi.org",
+        "files.pythonhosted.org",
+        "cdn.jsdelivr.net",
+        "unpkg.com",
+        "*",
+      ]) {
+        expect(connectSrc).not.toContain(forbidden);
+      }
+    });
+
+    it("forbids the notebook from framing anything itself", async () => {
+      const rules = await getHeaderRules();
+      const csp = cspOf(framingRules(rules).find((rule) => rule.source === NOTEBOOK_ASSET_SOURCE)!);
+
+      expect(csp).toContain("frame-src 'none'");
+      expect(csp).toContain("object-src 'none'");
+    });
   });
 });
