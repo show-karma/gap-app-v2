@@ -17,9 +17,16 @@ export default function NotebooksError({
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
           <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
         </div>
-        <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
+        <h1 className="text-xl font-semibold text-foreground">
+          Couldn&apos;t load this page&apos;s configuration
+        </h1>
+        {/* Name what actually failed. Saying "community not found" when the
+            community plainly exists sends people to look at community data
+            instead of at the configuration service — it misdirected debugging
+            twice already. */}
         <p className="text-sm text-muted-foreground">
-          We encountered an error loading this notebook. Please try again.
+          We couldn&apos;t load this page&apos;s configuration. The community and its data are fine
+          — it&apos;s the notebook configuration that didn&apos;t load. Please try again.
         </p>
         {error.digest ? (
           <p className="text-xs text-muted-foreground">Error ID: {error.digest}</p>

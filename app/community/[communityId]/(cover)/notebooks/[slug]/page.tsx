@@ -5,6 +5,7 @@ import { NotebooksUnavailable } from "@/components/Pages/Communities/Notebooks/N
 import { NotebookViewer } from "@/components/Pages/Communities/Notebooks/NotebookViewer";
 import { getNotebookOverview } from "@/services/notebook-overview.service";
 import { getPublishedNotebook, type NotebookConfig } from "@/services/notebooks.service";
+import { HttpError } from "@/utilities/api/errors";
 import { NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
@@ -35,13 +36,21 @@ const getCachedCommunity = cache(getCommunityDetails);
  * A draft page and an unknown slug both answer 404 from the API, by design —
  * so both land here as `null` and render the same not-found. Nothing in this
  * route may distinguish them, or a slug probe would enumerate drafts.
+ *
+ * ONLY a 404 means that. Every other failure — the config service being down,
+ * a 500, a timeout, a schema mismatch — is rethrown so the error boundary
+ * handles it. Swallowing those into `null` told a reader "this page does not
+ * exist" when the truth was "we could not load its configuration": a different
+ * cause, a different owner, and it sent people looking at community data
+ * instead of at the config service.
  */
 const getCachedNotebook = cache(
   async (communityId: string, slug: string): Promise<NotebookConfig | null> => {
     try {
       return await getPublishedNotebook(communityId, slug);
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 404) return null;
+      throw error;
     }
   }
 );
