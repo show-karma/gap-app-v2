@@ -21,7 +21,7 @@ export type CancellableMilestone = Pick<GrantMilestoneWithCompletion, "status" |
  * status-only cancellation (legacy rows) carries no overlay at all.
  */
 export const isMilestoneCancelled = (milestone: CancellableMilestone): boolean =>
-  milestone.status === "cancelled" || milestone.cancellation != null;
+  isCancelledMilestoneStatus(milestone.status) || milestone.cancellation != null;
 
 /**
  * Cancellation metadata for data paths that carry `statusHistory` instead of
