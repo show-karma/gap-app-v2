@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Page } from "@playwright/test";
 import { createMockCommunity } from "../../data/communities";
 import { expect, mockJson, test } from "../../fixtures";
@@ -86,7 +88,25 @@ function captureTrackedEvents(page: Page): string[] {
   return names;
 }
 
-const ANALYTICS_ENABLED = Boolean(process.env.NEXT_PUBLIC_MIXPANEL_KEY);
+/**
+ * Whether the app under test has analytics on.
+ *
+ * Next loads `.env` for the dev server; the Playwright runner does not load it
+ * at all. Reading only `process.env` therefore skipped this whole file in
+ * exactly the setup where it can run — a suite that is always green because it
+ * never executes. Fall back to the file the server will read.
+ */
+const analyticsEnabled = (): boolean => {
+  if (process.env.NEXT_PUBLIC_MIXPANEL_KEY) return true;
+  try {
+    const env = readFileSync(join(__dirname, "..", "..", "..", ".env"), "utf-8");
+    return /^\s*NEXT_PUBLIC_MIXPANEL_KEY\s*=\s*\S+/m.test(env);
+  } catch {
+    return false;
+  }
+};
+
+const ANALYTICS_ENABLED = analyticsEnabled();
 
 test.describe("Analytics identity", () => {
   test.skip(
@@ -153,6 +173,9 @@ test.describe("Analytics identity", () => {
     // signed-out load starts from, and `resetIdentity()` is what has to clear
     // it — a session that ends must not leave the previous user's distinct id
     // attached to the next visitor's events.
+    //
+    // The first test in this file is what establishes that the id was there to
+    // begin with; this one owns the clearing half.
     const signedOut = await page.context().newPage();
     captureTrackedEvents(signedOut);
     await signedOut.route(
@@ -160,12 +183,22 @@ test.describe("Analytics identity", () => {
       mockJson(createMockCommunity({ slug: "optimism" }))
     );
 
-    // The identity is still in the shared store at this point — the reset has
-    // to be what removes it, not the new page starting from nothing.
-    expect(await readMixpanelStore(signedOut)).not.toBeNull();
-
     await signedOut.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(signedOut);
+
+    // Guard against a vacuous pass, and it has to sit AFTER the navigation: a
+    // freshly opened page is on `about:blank`, which has no accessible
+    // `localStorage`, so reading it there throws SecurityError rather than
+    // returning the store.
+    //
+    // What it buys: the assertion below would also be satisfied if analytics
+    // had simply never initialised on this page, in which case it proves
+    // nothing about `resetIdentity()`. A present store means the client ran.
+    await expect
+      .poll(async () => await readMixpanelStore(signedOut), {
+        message: "Mixpanel should have initialised on the signed-out page",
+      })
+      .not.toBeNull();
 
     await expect
       .poll(async () => (await readMixpanelStore(signedOut))?.[USER_ID_PROPERTY], {
