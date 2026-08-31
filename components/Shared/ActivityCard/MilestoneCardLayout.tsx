@@ -18,6 +18,8 @@ interface MilestoneCardLayoutProps {
   title: string;
   /** Optional description rendered with ReadMore. */
   description?: string | null;
+  /** Optional banner rendered below the description (e.g. cancellation notice). */
+  banner?: ReactNode;
   /** Optional secondary "View …" link rendered below the description. */
   viewLink?: { href: string; label: string; external?: boolean };
   /** Date for the attribution footer. Footer is hidden when missing. */
@@ -37,6 +39,7 @@ export const MilestoneCardLayout: FC<MilestoneCardLayoutProps> = ({
   pills,
   title,
   description,
+  banner,
   viewLink,
   attributionDate,
   attributionAttester,
@@ -63,6 +66,8 @@ export const MilestoneCardLayout: FC<MilestoneCardLayoutProps> = ({
             <ReadMore side="left">{description}</ReadMore>
           </div>
         ) : null}
+
+        {banner ?? null}
 
         {viewLink ? (
           <Link

@@ -1,0 +1,11 @@
+export function Negative() {
+  return (
+    <div>
+      <span className="bg-[rgb(var(--color-primary))]">token rgb</span>
+      <span className="bg-[var(--brand-bg)]">token var</span>
+      <span className="bg-[hsl(var(--brand-h)/0.5)]">token hsl</span>
+      <span className="bg-brand text-primary-500">palette</span>
+      <span className="text-gray-500 dark:text-zinc-300">default palette</span>
+    </div>
+  );
+}

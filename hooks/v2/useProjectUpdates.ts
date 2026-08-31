@@ -195,6 +195,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       title: milestone.title,
       description: milestone.description,
       currentStatus: milestone.status,
+      cancellation: milestone.cancellation ?? null,
       grantMilestoneOrder: serverOrder,
       completed: isCompleted
         ? {

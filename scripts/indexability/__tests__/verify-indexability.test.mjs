@@ -82,16 +82,20 @@ function healthyRoutes() {
     [`${CANONICAL}/project/this-project-does-not-exist`]: () =>
       htmlPage({ status: 404, robots: "noindex, follow" }),
 
-    // Each exact banned slug must be gone (404/410) + noindex at the canonical
-    // project path (mix of 404 and 410 to prove either is accepted).
+    // Each exact banned slug must be non-indexable at the canonical project
+    // path. A mix of all three accepted shapes proves each one passes: 404 and
+    // 410 for a `gone` decision, and 200 + noindex for a junk project that
+    // really exists and the indexer resolves to `noindex-follow` (which is what
+    // /project/test, /project/delete_test and the QA sweep project return in
+    // production).
     [`${CANONICAL}/project/-1`]: () => htmlPage({ status: 404, robots: "noindex, follow" }),
     [`${CANONICAL}/project/---`]: () => htmlPage({ status: 410, robots: "noindex, follow" }),
     [`${CANONICAL}/project/-nan`]: () => htmlPage({ status: 404, robots: "noindex, follow" }),
-    [`${CANONICAL}/project/test`]: () => htmlPage({ status: 410, robots: "noindex, follow" }),
+    [`${CANONICAL}/project/test`]: () => htmlPage({ status: 200, robots: "noindex, follow" }),
     [`${CANONICAL}/project/delete_test`]: () =>
-      htmlPage({ status: 404, robots: "noindex, follow" }),
+      htmlPage({ status: 200, robots: "noindex, follow" }),
     [`${CANONICAL}/project/qa-bug-sweep-project-1752`]: () =>
-      htmlPage({ status: 410, robots: "noindex, follow" }),
+      htmlPage({ status: 200, robots: "noindex, follow" }),
 
     // Indexer decision endpoint → strict canonical-indexable root decision.
     [`${INDEXER}/v2/projects/${SLUG}/indexability?route=root`]: () =>
@@ -269,7 +273,7 @@ describe("verifyIndexability", () => {
     assert.ok(report.checks.length >= 12);
   });
 
-  it("probes each exact banned slug at canonical /project/{slug}, requiring 404/410 + noindex", async () => {
+  it("accepts every non-indexable shape for an exact banned slug: 404, 410, and 200 + noindex", async () => {
     const report = await runVerify(makeFetch(healthyRoutes()));
 
     for (const slug of ["-1", "---", "-nan", "test", "delete_test", "qa-bug-sweep-project-1752"]) {
@@ -278,8 +282,8 @@ describe("verifyIndexability", () => {
       assert.equal(check.slug, slug);
       assert.equal(check.ok, true);
       assert.ok(
-        check.status === 404 || check.status === 410,
-        `banned slug ${slug} must be 404 or 410`
+        check.status === 200 || check.status === 404 || check.status === 410,
+        `banned slug ${slug} must be 200, 404 or 410`
       );
       assert.equal(check.robots, "noindex, follow");
     }
@@ -296,6 +300,28 @@ describe("verifyIndexability", () => {
     assert.equal(byName(report, "banned-slug:test").ok, false);
     // A sibling banned slug is unaffected.
     assert.equal(byName(report, "banned-slug:-1").ok, true);
+  });
+
+  it("fails a banned slug served 200 with a weaker robots directive than noindex, follow", async () => {
+    const routes = healthyRoutes();
+    // `noindex` alone drops the `follow`, so outbound links stop being crawled.
+    routes[`${CANONICAL}/project/delete_test`] = () => htmlPage({ status: 200, robots: "noindex" });
+
+    const report = await runVerify(makeFetch(routes));
+
+    assert.equal(report.ok, false);
+    assert.equal(byName(report, "banned-slug:delete_test").ok, false);
+  });
+
+  it("fails a banned slug served a redirect instead of a non-indexable page", async () => {
+    const routes = healthyRoutes();
+    // A 308 would funnel the junk slug's authority into a real project.
+    routes[`${CANONICAL}/project/-nan`] = () => redirectTo(`${CANONICAL}/project/${SLUG}`);
+
+    const report = await runVerify(makeFetch(routes));
+
+    assert.equal(report.ok, false);
+    assert.equal(byName(report, "banned-slug:-nan").ok, false);
   });
 
   it("times out a pending check via options.signal and still runs later independent checks", async () => {

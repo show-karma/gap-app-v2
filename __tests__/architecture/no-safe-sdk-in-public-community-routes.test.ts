@@ -24,7 +24,7 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
 
 const PUBLIC_ROUTE_ENTRYPOINTS = [
   "app/community/[communityId]/(with-header)/updates/page.tsx",
-  "app/community/[communityId]/(with-header)/financials/page.tsx",
+  "app/community/[communityId]/(cover)/financials/page.tsx",
 ];
 
 const FORBIDDEN_MODULE_SUBSTRINGS = ["@safe-global/"];

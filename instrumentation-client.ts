@@ -9,6 +9,7 @@ import {
   shouldDropChunkErrorEvent,
 } from "./utilities/chunkRecovery";
 import { isChunkLoadError } from "./utilities/isChunkLoadError";
+import { isBrowserExtensionOnlyError } from "./utilities/sentry/browserExtensionErrors";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 import {
   isTransientHttpError,
@@ -28,6 +29,10 @@ Sentry.init({
   // that name, so drop any event whose crash frame is that injected bundle.
   // Sibling to the chrome.runtime.sendMessage signature already in
   // utilities/sentry/ignoreErrors.ts (browserExtensionErrors).
+  // NOTE: `denyUrls` only inspects the crash frame, so it misses extension
+  // noise whose crash frame is `<anonymous>` or a different injected file.
+  // `isBrowserExtensionOnlyError` in `beforeSend` walks the whole stack and
+  // subsumes this entry; kept as defence in depth.
   // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-257
   denyUrls: [/injectedScript\.bundle\.js/],
   integrations: [],
@@ -50,6 +55,16 @@ Sentry.init({
     // GAP-FRONTEND-20T / utilities/chunkRecovery.ts. Deliberately NOT in
     // `sentryIgnoreErrors` — see the note in utilities/sentry/ignoreErrors.ts.
     if (shouldDropChunkErrorEvent(original)) {
+      return null;
+    }
+    // Duelling wallet extensions wrap each other's injected provider and
+    // recurse until the stack blows, yielding `RangeError: Maximum call stack
+    // size exceeded` with zero first-party frames. Unactionable, and it drags
+    // a session replay up with it (`replaysOnErrorSampleRate` is 1.0).
+    // Matched on frame provenance, never on the message — a genuine runaway
+    // recursion in our own code reads identically and must keep reporting.
+    // See GAP-FRONTEND-26Q / ./utilities/sentry/browserExtensionErrors.ts
+    if (isBrowserExtensionOnlyError(event)) {
       return null;
     }
     if (isChunkLoadError(original)) {

@@ -1,0 +1,13 @@
+const W3 = "design-check-ignore: DS001 this phrase lives in a string, not a comment";
+export function Edge() {
+  return (
+    <div>
+      {/* design-check-ignore: DS001 both swatches come from the tenant payload */}
+      <span className="bg-[#555555] text-[#666666]">two DS001 on one line</span>
+      {/* DESIGN-CHECK-IGNORE: ds001 upper-case keyword and lower-case rule id */}
+      <span className="bg-[#777777]">case-insensitive</span>
+      {/* Design-Check-Ignore: nope */}
+      <span className="bg-[#888888]">malformed but still recognised</span>
+    </div>
+  );
+}
