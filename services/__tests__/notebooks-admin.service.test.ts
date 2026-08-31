@@ -10,6 +10,7 @@ vi.mock("@/utilities/api/client", () => ({
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NOTEBOOK_SEED_SPEC } from "@/services/notebooks/notebook-seed-spec";
+import { NotebookSpecSchema } from "@/services/notebooks/notebook-spec";
 import {
   createNotebook,
   deleteNotebook,
@@ -195,6 +196,45 @@ describe("slugifyNotebookName", () => {
   it("returns an empty string when nothing survives", () => {
     expect(slugifyNotebookName("日本語")).toBe("");
     expect(slugifyNotebookName("!!!")).toBe("");
+  });
+});
+
+describe("per-source date ranges", () => {
+  // An indicator series has dated points, so "all time" is a real answer.
+  it("accepts an all-time window for an indicator series", () => {
+    expect(
+      NotebookSpecSchema.safeParse({
+        version: 1,
+        sections: [
+          {
+            type: "timeseries",
+            source: "indicators",
+            indicatorId: "5fadb30d-558d-45fc-b873-a8fe678cedd4",
+            chartStyle: "line",
+            range: "all",
+            title: "Pool TVL",
+          },
+        ],
+      }).success
+    ).toBe(true);
+  });
+
+  it.each(["30d", "90d", "12m"] as const)("accepts the %s window", (range) => {
+    expect(
+      NotebookSpecSchema.safeParse({
+        version: 1,
+        sections: [
+          {
+            type: "timeseries",
+            source: "indicators",
+            indicatorId: "5fadb30d-558d-45fc-b873-a8fe678cedd4",
+            chartStyle: "line",
+            range,
+            title: "Pool TVL",
+          },
+        ],
+      }).success
+    ).toBe(true);
   });
 });
 

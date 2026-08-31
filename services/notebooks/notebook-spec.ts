@@ -68,6 +68,34 @@ export type NotebookDateRange = (typeof NOTEBOOK_DATE_RANGES)[number];
 export const NOTEBOOK_DEFAULT_DATE_RANGE: NotebookDateRange = "all";
 
 /**
+ * The windows each SOURCE can actually express.
+ *
+ * Not one shared list, because the two sources mean different things by a
+ * window. An indicator series is a set of dated points, so "all time" is a
+ * real and useful answer. The kernel API takes a `windowDays` and computes
+ * over it, so there is no such thing as an unwindowed kernel reading — "all"
+ * would be a token the server cannot honour.
+ *
+ * Offering a source a window it cannot express would produce a section that
+ * renders empty or, worse, silently falls back to a different window than the
+ * one the author picked. Correctness beats a uniform picker.
+ */
+export const NOTEBOOK_DATE_RANGES_BY_SOURCE: Readonly<
+  Record<"indicators" | "kernel", readonly NotebookDateRange[]>
+> = {
+  indicators: ["all", "30d", "90d", "12m"],
+  kernel: ["30d", "90d", "12m"],
+};
+
+/** Whether a source can express a window. */
+export function isValidRangeForSource(
+  source: "indicators" | "kernel",
+  range: NotebookDateRange
+): boolean {
+  return NOTEBOOK_DATE_RANGES_BY_SOURCE[source].includes(range);
+}
+
+/**
  * The window a section asks for, with the default applied.
  *
  * One place, so the renderer, the composer and the cache key cannot drift.
@@ -210,7 +238,14 @@ export const NotebookTimeseriesSectionSchema = z
     title: sectionTitleSchema,
     description: sectionDescriptionSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (section) => isValidRangeForSource(section.source, resolveNotebookDateRange(section.range)),
+    {
+      message: "range is not available for the chosen source",
+      path: ["range"],
+    }
+  );
 
 export const NotebookSectionSchema = z.union([
   NotebookKpisSectionSchema,

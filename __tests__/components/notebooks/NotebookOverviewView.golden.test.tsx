@@ -338,6 +338,43 @@ describe("spec-driven render", () => {
     expect(html).toContain("&lt;script&gt;alert(2)&lt;/script&gt;");
   });
 
+  // PROJECT-WIDE RULE. An absent measurement is not a measurement of zero:
+  // "SLA met: 0%" and "not measured yet" are different claims about a
+  // community's programme, and rendering the second as the first invents a
+  // figure. Kernel KPIs are legitimately null, so this guards the widening.
+  describe("absent KPI values", () => {
+    it("renders a null value as an em-dash, never as zero", () => {
+      const html = renderSpec(
+        { version: 1, sections: [{ type: "kpis", metrics: ["milestoneCompletion"] }] },
+        makeOverview({
+          stats: [
+            {
+              id: "milestoneCompletion",
+              label: "Milestone completion",
+              value: null,
+              format: "percent",
+            },
+          ],
+        })
+      );
+
+      expect(html).toContain("—");
+      expect(html).not.toContain("0.0%");
+    });
+
+    it("still renders a real zero as zero", () => {
+      const html = renderSpec(
+        { version: 1, sections: [{ type: "kpis", metrics: ["committed"] }] },
+        makeOverview({
+          stats: [{ id: "committed", label: "Committed", value: 0, format: "currency" }],
+        })
+      );
+
+      expect(html).toContain("$0");
+      expect(html).not.toContain("—");
+    });
+  });
+
   describe("text blocks", () => {
     it("renders a heading and body", () => {
       const html = renderSpec(

@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { NOTEBOOK_TIME_RANGE_PRESETS } from "@/services/notebooks/notebook-indicators.types";
-import { NOTEBOOK_KERNEL_KPI_IDS } from "@/services/notebooks/notebook-kernel.types";
-import { NOTEBOOK_DATE_RANGES, NOTEBOOK_KPI_METRICS } from "@/services/notebooks/notebook-spec";
+import {
+  NOTEBOOK_KERNEL_KPI_IDS,
+  NOTEBOOK_KERNEL_WINDOW_PRESETS,
+} from "@/services/notebooks/notebook-kernel.types";
+import {
+  NOTEBOOK_DATE_RANGES,
+  NOTEBOOK_DATE_RANGES_BY_SOURCE,
+  NOTEBOOK_KPI_METRICS,
+} from "@/services/notebooks/notebook-spec";
 
 /**
  * Where the spec vocabulary meets the query layer.
@@ -23,6 +30,27 @@ describe("date-range presets", () => {
   // rejects a write and the query layer is what has to honour one.
   it("agree between the persisted vocabulary and the query layer", () => {
     expect([...NOTEBOOK_DATE_RANGES].sort()).toEqual([...NOTEBOOK_TIME_RANGE_PRESETS].sort());
+  });
+
+  // Per SOURCE, because the two sources mean different things by a window: an
+  // indicator series has dated points so "all time" is real, while the kernel
+  // API computes over a windowDays and cannot express an unwindowed reading.
+  it("agree per source with the indicator presets", () => {
+    expect([...NOTEBOOK_DATE_RANGES_BY_SOURCE.indicators].sort()).toEqual(
+      [...NOTEBOOK_TIME_RANGE_PRESETS].sort()
+    );
+  });
+
+  it("agree per source with the kernel window presets", () => {
+    expect([...NOTEBOOK_DATE_RANGES_BY_SOURCE.kernel].sort()).toEqual(
+      [...NOTEBOOK_KERNEL_WINDOW_PRESETS].sort()
+    );
+  });
+
+  // The asymmetry is the point, so assert it rather than let a future tidy-up
+  // "simplify" the two lists back into one.
+  it("do not offer an all-time window for kernel data", () => {
+    expect(NOTEBOOK_DATE_RANGES_BY_SOURCE.kernel).not.toContain("all");
   });
 
   // `all` has to exist on the spec side specifically: it is the default a

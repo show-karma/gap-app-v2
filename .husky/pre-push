@@ -19,3 +19,27 @@ if git rev-parse --verify --quiet origin/main >/dev/null; then
 else
   echo "[design] origin/main not resolvable — skipping the design check for this push."
 fi
+
+# Lint: biome on the files this branch CHANGES, not the whole repo.
+#
+# Repo-wide `biome check .` reports ~3650 pre-existing errors, so running it
+# here would block every push forever. Scoping to changed files makes the hook
+# enforce "do not add new lint debt" without demanding the backlog be paid
+# first. Unlike the design check above there is no added-LINES mode in biome,
+# so a file you touch is checked whole — which occasionally means cleaning
+# something you did not write. That is the intended trade.
+#
+# This exists because a real regression shipped without it: swapping raw form
+# elements for shadcn primitives broke nine label/control associations, and the
+# hook ran typecheck and design:check but not lint, so it reached the branch.
+#
+# Same origin/main handling as the design check: never brick a push on an
+# unreachable remote — CI runs the same check with an authoritative base.
+if git rev-parse --verify --quiet origin/main >/dev/null; then
+  CHANGED=$(git diff --name-only --diff-filter=ACMR origin/main...HEAD     | grep -E '\.(ts|tsx|js|jsx|json|css)$' || true)
+  if [ -n "$CHANGED" ]; then
+    echo "$CHANGED" | xargs pnpm exec biome check || exit 1
+  fi
+else
+  echo "[lint] origin/main not resolvable — skipping the biome check for this push."
+fi

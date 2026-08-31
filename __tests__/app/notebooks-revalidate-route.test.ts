@@ -9,6 +9,7 @@ vi.mock("@/utilities/env", () => ({
   getServerEnv: () => mockGetServerEnv(),
 }));
 
+import type { NextRequest } from "next/server";
 import { POST } from "@/app/api/notebooks/revalidate/route";
 
 const SECRET = "s3cret-token-value";
@@ -23,12 +24,15 @@ function request(options: { token?: string | null; body?: unknown; raw?: string 
   const headers = new Headers({ "content-type": "application/json" });
   if (options.token) headers.set("authorization", options.token);
 
+  // The route only reads `headers`, `json()` and `url`, all of which a plain
+  // Request provides — so a Request IS structurally enough here. Cast through
+  // `unknown` rather than `any`: it names exactly one substitution instead of
+  // switching type checking off for the expression.
   return new Request("https://example.org/api/notebooks/revalidate", {
     method: "POST",
     headers,
     body: options.raw ?? JSON.stringify(options.body ?? { communityId: "filecoin" }),
-    // biome-ignore lint/suspicious/noExplicitAny: NextRequest shape is structural here
-  }) as any;
+  }) as unknown as NextRequest;
 }
 
 describe("POST /api/notebooks/revalidate", () => {

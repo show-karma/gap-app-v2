@@ -3,6 +3,7 @@ import type {
   NotebookOverview,
   NotebookStat,
 } from "@/services/notebook-overview.service";
+import { NOTEBOOK_ABSENT_VALUE } from "@/services/notebooks/notebook-metrics.types";
 import type {
   NotebookBarsSection,
   NotebookKpisSection,
@@ -45,7 +46,14 @@ function formatCurrency(value: number): string {
   return `$${Math.round(value)}`;
 }
 
-function formatStat(value: number, format: "currency" | "count" | "percent"): string {
+/**
+ * A KPI value as text, or the absent marker.
+ *
+ * `null` is NOT zero. An unmeasured figure rendered as "0%" is a claim the
+ * data does not support — see NOTEBOOK_ABSENT_VALUE.
+ */
+function formatStat(value: number | null, format: "currency" | "count" | "percent"): string {
+  if (value === null) return NOTEBOOK_ABSENT_VALUE;
   if (format === "currency") return formatCurrency(value);
   if (format === "percent") return `${value.toFixed(1)}%`;
   return value.toLocaleString("en-US");
