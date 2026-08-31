@@ -102,7 +102,7 @@ function makeCommunityStats(): NotebookCommunityStatsDto {
     totalMilestones: 197,
     projectUpdatesBreakdown: {
       projectCompletedMilestones: 0,
-      grantCompletedMilestones: 102,
+      grantCompletedMilestones: 103,
     },
   };
 }
@@ -185,7 +185,7 @@ describe("getNotebookMetrics", () => {
         label: "Milestone completion",
         value: 52,
         format: "percent",
-        hint: "102 of 197; cancelled excluded",
+        hint: "103 of 197; cancelled excluded",
       },
     ]);
   });

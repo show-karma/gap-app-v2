@@ -123,6 +123,10 @@ export const INDEXER = {
       `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
     COMMUNITY_PROGRAM_METRICS: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/metrics`,
+    KERNEL: {
+      OVERVIEW: (windowDays: number) => `/v2/kernel/overview?windowDays=${windowDays}`,
+      FUNCTIONS: (windowDays: number) => `/v2/kernel/functions?windowDays=${windowDays}`,
+    },
     /**
      * Notebook pages. Both reads are public and return `published` configs
      * only — a draft answers 404 exactly as an unknown slug does, so the
