@@ -242,7 +242,7 @@ function PlanCard({
       type="button"
       variant="outline"
     >
-      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         {presentation.name}
       </span>
       <span className="flex items-baseline gap-1">
@@ -318,7 +318,7 @@ function TopUpSection({
 
   return (
     <div className="mt-1 flex flex-col gap-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         Or top up once
       </p>
       <div className="flex flex-wrap gap-2">

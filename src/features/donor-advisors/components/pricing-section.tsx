@@ -205,8 +205,15 @@ function PricingCard({ plan, entry, freeGrant, isLoading }: PricingCardProps) {
           <h3 className="text-xl font-semibold leading-tight tracking-tight text-foreground">
             {presentation.name}
           </h3>
+          {/* shrink-0 + whitespace-nowrap so the chip can never be squeezed into
+              a two-line lozenge (it was, at <=343px), and tracking-wide to buy
+              back the ~11px of width the 10px -> 12px bump spent. Deliberately
+              tighter than the uppercase micro-labels elsewhere: this one is a
+              filled pill sharing a row with the plan name. */}
           {featured ? (
-            <Badge className="rounded-full text-xs uppercase tracking-widest">Most popular</Badge>
+            <Badge className="shrink-0 whitespace-nowrap rounded-full text-xs uppercase tracking-wide">
+              Most popular
+            </Badge>
           ) : null}
         </div>
         <p className="text-sm leading-relaxed text-muted-foreground">{presentation.tagline}</p>

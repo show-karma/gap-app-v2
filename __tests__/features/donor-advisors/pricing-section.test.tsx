@@ -191,6 +191,20 @@ describe("PricingSection", () => {
     );
   });
 
+  it("keeps the featured chip on one line however narrow the card gets", async () => {
+    // jsdom has no layout, so this pins the two properties that make the wrap
+    // impossible rather than the rendered width: without them flex squeezed the
+    // chip and "MOST POPULAR" broke into a two-line lozenge at <=343px, taller
+    // than the plan name beside it (UX review, PR #2016).
+    mockApiGet.mockResolvedValue(CATALOG);
+    renderSection(qc);
+
+    await waitFor(() => expect(screen.getByText("Most popular")).toBeInTheDocument());
+    const chip = screen.getByText("Most popular");
+    expect(chip.className).toContain("whitespace-nowrap");
+    expect(chip.className).toContain("shrink-0");
+  });
+
   it("uses singular copy when the grant is one report", async () => {
     mockApiGet.mockResolvedValue({ ...CATALOG, freeSignupReportGrant: 1 });
     renderSection(qc);
