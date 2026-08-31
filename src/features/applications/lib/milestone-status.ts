@@ -1,4 +1,5 @@
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
+import { normalizeMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
 /**
  * Build a stable composite key from (fieldLabel, title). A plain
@@ -82,17 +83,21 @@ export function lookupMilestoneStatus(
  */
 export function isMilestoneCancelled(statusEntry?: MilestoneStatusEntry): boolean {
   if (!statusEntry) return false;
-  return statusEntry.currentStatus === "cancelled";
+  return normalizeMilestoneStatus(statusEntry.currentStatus) === "cancelled";
 }
 
 export function isMilestoneVerified(statusEntry?: MilestoneStatusEntry): boolean {
   if (!statusEntry) return false;
-  return statusEntry.currentStatus === "verified" || !!statusEntry.verified;
+  return (
+    normalizeMilestoneStatus(statusEntry.currentStatus) === "verified" || !!statusEntry.verified
+  );
 }
 
 export function isMilestoneCompleted(statusEntry?: MilestoneStatusEntry): boolean {
   if (!statusEntry) return false;
-  return statusEntry.currentStatus === "completed" || !!statusEntry.completed;
+  return (
+    normalizeMilestoneStatus(statusEntry.currentStatus) === "completed" || !!statusEntry.completed
+  );
 }
 
 /**

@@ -11,6 +11,10 @@
 
 import {
   buildMilestoneStatusIndex,
+  isMilestoneCancelled,
+  isMilestoneCompleted,
+  isMilestoneLate,
+  isMilestoneVerified,
   lookupMilestoneStatus,
 } from "@/src/features/applications/lib/milestone-status";
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
@@ -192,5 +196,45 @@ describe("lookupMilestoneStatus", () => {
 
     expect(lookupMilestoneStatus(index, undefined, "field1", "Milestone 1")).toBe(inField1);
     expect(lookupMilestoneStatus(index, undefined, "field2", "Milestone 1")).toBe(inField2);
+  });
+});
+
+/**
+ * The indexer emits `currentStatus` verbatim and mixed-case rows exist, so an
+ * exact-match comparison silently downgraded delivered/cancelled milestones to
+ * Pending (or, worse, to Past Due).
+ */
+describe("display predicates are case-insensitive", () => {
+  it.each(["cancelled", "CANCELLED", "Cancelled"])("treats %s as cancelled", (currentStatus) => {
+    expect(isMilestoneCancelled(makeEntry({ currentStatus }))).toBe(true);
+  });
+
+  it.each(["verified", "VERIFIED", "Verified"])("treats %s as verified", (currentStatus) => {
+    expect(isMilestoneVerified(makeEntry({ currentStatus }))).toBe(true);
+  });
+
+  it.each(["completed", "COMPLETED", "Completed"])("treats %s as completed", (currentStatus) => {
+    expect(isMilestoneCompleted(makeEntry({ currentStatus }))).toBe(true);
+  });
+
+  it("keeps each predicate's own semantics — COMPLETED is not verified", () => {
+    const entry = makeEntry({ currentStatus: "COMPLETED" });
+
+    expect(isMilestoneCompleted(entry)).toBe(true);
+    expect(isMilestoneVerified(entry)).toBe(false);
+    expect(isMilestoneCancelled(entry)).toBe(false);
+  });
+
+  it.each(["COMPLETED", "VERIFIED", "CANCELLED"])(
+    "never reclassifies a past-due %s milestone as late",
+    (currentStatus) => {
+      expect(isMilestoneLate(makeEntry({ currentStatus, dueDate: "2020-01-01" }))).toBe(false);
+    }
+  );
+
+  it("still marks an uppercase PENDING past-due milestone as late", () => {
+    expect(isMilestoneLate(makeEntry({ currentStatus: "PENDING", dueDate: "2020-01-01" }))).toBe(
+      true
+    );
   });
 });

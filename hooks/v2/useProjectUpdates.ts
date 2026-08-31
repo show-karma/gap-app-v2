@@ -11,7 +11,10 @@ import type {
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
 import { assignGrantMilestoneOrder } from "@/utilities/milestones/assignGrantMilestoneOrder";
-import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import {
+  isCancelledMilestoneStatus,
+  isCompletedMilestoneStatus,
+} from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import {
   type MilestoneDueDateInput,
   normalizeMilestoneDueDateMs,
@@ -35,22 +38,6 @@ const UPDATES_REQUEST_TIMEOUT_MS = 15_000;
 const resolveEndsAtSeconds = (raw: MilestoneDueDateInput): number | undefined => {
   const ms = normalizeMilestoneDueDateMs(raw);
   return ms == null ? undefined : Math.floor(ms / 1000);
-};
-
-/**
- * Whether a raw milestone `status` string means the milestone is done.
- *
- * Compared case-insensitively because the indexer stores `currentStatus` in
- * mixed case — `project.repository.ts` matches both `'COMPLETED'` and
- * `'completed'`, and `grant.repository.ts` `$toLower`s the column — then emits
- * it verbatim as `status`, lowercasing only internally when it derives
- * `completionDetails`. An exact-match comparison therefore reads an uppercase
- * `COMPLETED` row as pending, rendering it with a Pending badge and a live
- * "Mark Milestone Complete" button.
- */
-const isCompletedMilestoneStatus = (status: string | null | undefined): boolean => {
-  const normalized = status?.toLowerCase();
-  return normalized === "completed" || normalized === "verified";
 };
 
 /**

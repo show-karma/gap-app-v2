@@ -4,6 +4,11 @@ import {
   normalizeMilestoneDueDateMs,
 } from "@/utilities/milestones/milestoneDueDate";
 
+/**
+ * Deliberately accepts any string: the indexer emits `status` verbatim in mixed
+ * case, so this function — not its callers — is where casing is settled. The
+ * named members stay for editor completion.
+ */
 type MilestoneStatusInput =
   | MilestoneLifecycleStatus
   | "pending"
@@ -11,12 +16,41 @@ type MilestoneStatusInput =
   | "verified"
   | "past_due"
   | "cancelled"
+  | (string & {})
   | null
   | undefined;
 
+/**
+ * Canonical lowercase form of a raw milestone status string.
+ *
+ * The indexer stores `currentStatus` in mixed case — `project.repository.ts`
+ * matches both `'COMPLETED'` and `'completed'`, and `grant.repository.ts`
+ * `$toLower`s the column — then emits it verbatim as `status`, lowercasing only
+ * internally when it derives `completionDetails`. Every consumer that compares
+ * a status string must therefore defend both casings; the lowercase literal
+ * unions in `types/` describe intent, not runtime.
+ */
+export function normalizeMilestoneStatus(status: string | null | undefined): string | undefined {
+  return status?.toLowerCase();
+}
+
 /** True when a milestone status string represents an on-chain cancellation (DEV-523). */
 export function isCancelledMilestoneStatus(status: string | null | undefined): boolean {
-  return status?.toLowerCase() === MilestoneLifecycleStatus.CANCELLED;
+  return normalizeMilestoneStatus(status) === MilestoneLifecycleStatus.CANCELLED;
+}
+
+/**
+ * True when a milestone status string means the milestone is done — completed
+ * or verified. An exact-match comparison reads an uppercase `COMPLETED` row as
+ * pending, rendering a Pending badge and a live "Mark Milestone Complete"
+ * button on work that is already delivered.
+ */
+export function isCompletedMilestoneStatus(status: string | null | undefined): boolean {
+  const normalized = normalizeMilestoneStatus(status);
+  return (
+    normalized === MilestoneLifecycleStatus.COMPLETED ||
+    normalized === MilestoneLifecycleStatus.VERIFIED
+  );
 }
 
 export function getEffectiveMilestoneStatus(
@@ -28,7 +62,8 @@ export function getEffectiveMilestoneStatus(
   // let it default to pending.
   if (isCancelledMilestoneStatus(status)) return MilestoneLifecycleStatus.CANCELLED;
 
-  const normalized = (status as MilestoneLifecycleStatus) || MilestoneLifecycleStatus.PENDING;
+  const normalized = (normalizeMilestoneStatus(status) ||
+    MilestoneLifecycleStatus.PENDING) as MilestoneLifecycleStatus;
   if (normalized !== MilestoneLifecycleStatus.PENDING) return normalized;
 
   const dueMs = normalizeMilestoneDueDateMs(dueDate);
