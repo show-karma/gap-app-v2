@@ -101,7 +101,27 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
+
+import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/errorManager";
+import {
+  MilestoneEditBlockedError,
+  MilestoneEditHalfAppliedError,
+  useMilestoneEdit,
+} from "@/hooks/useMilestoneEdit";
+import { api } from "@/utilities/api/client";
+import { getProjectById } from "@/utilities/sdk";
+import { sentryIgnoreErrors } from "@/utilities/sentry/ignoreErrors";
+
+/** Mirrors how Sentry's InboundFilters matches an event message. */
+const matchesIgnoreList = (message: string) =>
+  sentryIgnoreErrors.some((pattern) =>
+    typeof pattern === "string" ? message.includes(pattern) : pattern.test(message)
+  );
+type FetchedProject = NonNullable<Awaited<ReturnType<typeof getProjectById>>>;
 
 describe("useMilestoneEdit", () => {
   const mockMilestone = {
@@ -171,7 +191,7 @@ describe("useMilestoneEdit", () => {
     });
 
     // Verify the attestation flow was initiated
-    expect(mockStartAttestation).toHaveBeenCalledWith("Step 1/2: Creating updated milestone...");
+    expect(mockStartAttestation).toHaveBeenCalledWith("Step 1/2: Revoking old milestone...");
 
     // Verify flow completes (either success or handled error)
     expect(mockDismiss).toHaveBeenCalled();
@@ -247,5 +267,293 @@ describe("useMilestoneEdit", () => {
     });
 
     expect(mockDismiss).toHaveBeenCalled();
+  });
+
+  it("labels the revocation as step 1 and the re-attestation as step 2", async () => {
+    mockEdit.mockImplementation(async (_signer: any, _data: any, callback: any) => {
+      callback("preparing");
+      callback("confirmed");
+      callback("preparing");
+      callback("confirmed");
+      return { tx: [{ hash: "0xtxhash" }], uids: ["0xnewuid"] };
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await act(async () => {
+      await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+    });
+
+    const stepMessages = mockChangeStepperStep.mock.calls.map((call) => call[0]);
+    expect(stepMessages[0]).toBe("Step 1/2: Revoking old milestone...");
+    expect(stepMessages[1]).toBe("Step 1/2: Old milestone revocation submitted...");
+    expect(stepMessages[2]).toBe("Step 2/2: Saving updated milestone...");
+  });
+
+  it("reports to Sentry directly when the re-attestation fails after the revocation", async () => {
+    const rejection = new Error("User rejected the request");
+    mockEdit.mockImplementation(async (_signer: any, _data: any, callback: any) => {
+      callback("preparing");
+      callback("confirmed");
+      callback("preparing");
+      throw rejection;
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    const editPromise = act(async () => {
+      await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+    });
+
+    await expect(editPromise).rejects.toMatchObject({
+      name: "MilestoneEditHalfAppliedError",
+      message:
+        "The milestone edit did not complete: the updated version may not have been saved, and the original may have been removed. Refresh the page to check whether the milestone still exists before re-creating it.",
+      originalErrorMessage: rejection.message,
+    });
+    await expect(editPromise).rejects.toBeInstanceOf(MilestoneEditHalfAppliedError);
+
+    expect(mockShowError).toHaveBeenCalledWith(
+      "The milestone edit did not complete: the updated version may not have been saved, and the original may have been removed. Refresh the page to check whether the milestone still exists before re-creating it."
+    );
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: expect.objectContaining({
+          originalErrorMessage: "User rejected the request",
+          originalErrorString: expect.stringContaining("User rejected the request"),
+          revokedMilestoneUID: "milestone-001",
+          grantUID: "grant-001",
+          chainID: 10,
+          newMilestoneData: { title: "Updated MVP" },
+        }),
+      })
+    );
+
+    // A sentinel is captured, not the wallet rejection: `sentryIgnoreErrors`
+    // filters manual captures too, so the raw message would never arrive.
+    const captured = vi.mocked(Sentry.captureException).mock.calls[0][0] as Error;
+    expect(captured).not.toBe(rejection);
+    expect(captured.message).not.toBe(rejection.message);
+    expect(captured.message).toBe(
+      "Milestone edit may be half-applied: revoke submitted, re-attest failed"
+    );
+    expect(matchesIgnoreList(rejection.message)).toBe(true);
+    expect(matchesIgnoreList(captured.message)).toBe(false);
+
+    // errorManager would have dropped this rejection to a breadcrumb.
+    expect(errorManager).not.toHaveBeenCalled();
+  });
+
+  it("still routes pre-revocation failures through errorManager", async () => {
+    const failure = new Error("boom");
+    mockEdit.mockImplementation(async (_signer: any, _data: any, callback: any) => {
+      callback("preparing");
+      throw failure;
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow(failure);
+
+    expect(mockShowError).toHaveBeenCalledWith("There was an error editing the milestone");
+    expect(errorManager).toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("does not claim data loss when a step after the SDK edit fails", async () => {
+    mockEdit.mockImplementation(async (_signer: any, _data: any, callback: any) => {
+      callback("preparing");
+      callback("confirmed");
+      callback("preparing");
+      callback("confirmed");
+      return { tx: [{ hash: "0xtxhash" }], uids: ["0xnewuid"] };
+    });
+    const indexingFailure = new Error("attestation listener unavailable");
+    vi.mocked(api.post).mockRejectedValueOnce(indexingFailure);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow(indexingFailure);
+
+    // Both transactions landed, so the user must not be told to re-create it.
+    expect(mockShowError).toHaveBeenCalledWith("There was an error editing the milestone");
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(errorManager).toHaveBeenCalled();
+  });
+
+  const mergedMilestone = {
+    ...mockMilestone,
+    mergedGrants: [
+      { grantUID: "grant-001", milestoneUID: "milestone-001", chainID: 10 },
+      { grantUID: "grant-002", milestoneUID: "milestone-002", chainID: 10 },
+    ],
+  } as any;
+
+  it("aborts a merged edit before any transaction when a sibling is not editable", async () => {
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [
+        { uid: "grant-001", milestones: [{ uid: "milestone-001", refUID: "grant-001" }] },
+        {
+          uid: "grant-002",
+          milestones: [
+            { uid: "milestone-002", refUID: "grant-002", completed: { uid: "completion-1" } },
+          ],
+        },
+      ],
+    } as unknown as FetchedProject);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toMatchObject({
+      name: "MilestoneEditBlockedError",
+      message:
+        "This milestone can't be edited because a copy shared with another grant has already been completed, approved, verified or cancelled. Refresh the page to see the latest milestone status.",
+    });
+
+    expect(mockShowError).not.toHaveBeenCalled();
+    expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(errorManager).not.toHaveBeenCalled();
+  });
+
+  it("aborts a merged edit when a sibling is cancelled", async () => {
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [
+        { uid: "grant-001", milestones: [{ uid: "milestone-001", refUID: "grant-001" }] },
+        {
+          uid: "grant-002",
+          milestones: [
+            { uid: "milestone-002", refUID: "grant-002", cancelled: { uid: "cancellation-1" } },
+          ],
+        },
+      ],
+    } as unknown as FetchedProject);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toBeInstanceOf(MilestoneEditBlockedError);
+
+    expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
+  });
+
+  it("matches merged sibling UIDs regardless of hex casing", async () => {
+    const casingMilestone = {
+      ...mergedMilestone,
+      mergedGrants: [
+        { grantUID: "grant-001", milestoneUID: "0xabcdef", chainID: 10 },
+        { grantUID: "grant-002", milestoneUID: "0x123456", chainID: 10 },
+      ],
+    };
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [
+        { uid: "grant-001", milestones: [{ uid: "0xABCDEF", refUID: "grant-001" }] },
+        {
+          uid: "grant-002",
+          milestones: [{ uid: "0x123456", refUID: "grant-002", approved: { uid: "approval-1" } }],
+        },
+      ],
+    } as unknown as FetchedProject);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(casingMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow("completed, approved, verified or cancelled");
+
+    expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
+  });
+
+  it("blocks a merged edit when a sibling is missing from the fetched project", async () => {
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [{ uid: "grant-001", milestones: [{ uid: "milestone-001", refUID: "grant-001" }] }],
+    } as unknown as FetchedProject);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow(
+      "This milestone can't be edited because a copy shared with another grant could not be found. Refresh the page and try again."
+    );
+
+    expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(errorManager).not.toHaveBeenCalled();
+  });
+
+  it("proceeds with a merged edit when every sibling is still editable", async () => {
+    vi.mocked(getProjectById).mockResolvedValue({
+      grants: [
+        {
+          uid: "grant-001",
+          milestones: [{ uid: "milestone-001", refUID: "grant-001", edit: mockEdit }],
+        },
+        {
+          uid: "grant-002",
+          milestones: [{ uid: "milestone-002", refUID: "grant-002", edit: mockEdit }],
+        },
+      ],
+    } as any);
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await act(async () => {
+      await result.current.editMilestone(mergedMilestone, { title: "Updated MVP" });
+    });
+
+    expect(mockShowError).not.toHaveBeenCalled();
+    expect(mockSetupChainAndWallet).toHaveBeenCalled();
+    expect(mockEdit).toHaveBeenCalledTimes(2);
+  });
+
+  it("warns without reporting when the milestone is gone from the fetched project", async () => {
+    mockSetupChainAndWallet.mockResolvedValue({
+      gapClient: {
+        fetch: {
+          projectById: vi.fn().mockResolvedValue({
+            grants: [{ uid: "grant-001", milestones: [] }],
+          }),
+        },
+      },
+      walletSigner: mockWalletSigner,
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toBeInstanceOf(MilestoneEditBlockedError);
+
+    expect(mockShowError).not.toHaveBeenCalled();
+    expect(errorManager).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(mockEdit).not.toHaveBeenCalled();
   });
 });
