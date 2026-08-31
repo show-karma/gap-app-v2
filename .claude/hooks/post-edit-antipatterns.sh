@@ -3,10 +3,11 @@
 # Catches patterns that Biome doesn't enforce.
 #
 # NOTE: The syntactic checks (Radix "use client", hardcoded routes, hardcoded
-# colors, raw confirm(), barrel exports, heavy eager imports) have migrated to
-# Taskless ast-grep rules in .taskless/rules/ — enforced at pre-commit and CI.
-# Only the semantic / absence-based checks that ast-grep can't express well
-# remain here.
+# colors, raw confirm(), barrel exports, heavy eager imports) used to live here,
+# then moved to Taskless ast-grep rules. Taskless has since been removed, so
+# nothing enforces them automatically — they survive only as conventions in
+# CLAUDE.md and the pre-PR checklist. Only the semantic / absence-based checks
+# remain implemented below.
 
 set -e
 
@@ -50,8 +51,8 @@ case "$FILE_PATH" in
       fi
     fi
 
-    # (Radix "use client" and hardcoded routes migrated to Taskless rules
-    #  radix-use-client / no-hardcoded-route.)
+    # (Radix "use client" and hardcoded routes are no longer machine-checked;
+    #  see the pre-PR checklist in CLAUDE.md.)
 
     # 5. useRouter/useParams in useEffect deps (single-line and multi-line arrays)
     # Matches both inline deps (useEffect(..., [..., router])) and the closing
@@ -70,8 +71,8 @@ case "$FILE_PATH" in
       ISSUES="${ISSUES}\n- URL_SYNC_EFFECT: Mirroring state to the URL with router.push/replace races and cancels Link navigations. Use nuqs useQueryState (hooks/useProjectFilters.ts)."
     fi
 
-    # (Hardcoded colors and raw confirm() migrated to Taskless rules
-    #  no-hardcoded-color / no-raw-confirm.)
+    # (Hardcoded colors and raw confirm() are no longer machine-checked; see
+    #  the pre-PR checklist in CLAUDE.md.)
 
     # 8. Raw navigator.clipboard instead of useCopyToClipboard
     if grep -q "navigator\.clipboard" "$FILE_PATH" 2>/dev/null; then
@@ -82,8 +83,28 @@ case "$FILE_PATH" in
     ;;
 esac
 
-# (Barrel exports and heavy eager imports migrated to Taskless rules
-#  no-barrel-export / no-heavy-eager-import.)
+# (Barrel exports and heavy eager imports are no longer machine-checked; see
+#  the pre-PR checklist in CLAUDE.md.)
+
+# === Design-system check (DEV-557) ===
+# Same added-lines semantics as CI and pre-commit: only lines this edit added
+# relative to HEAD are considered, so legacy debt in a touched file stays
+# silent. Advisory only — a PostToolUse hook cannot block.
+# `|| true` on every step: `set -e` is on, and a checker that fails closed
+# (exit 2) must not abort the script before the other issues are printed.
+DESIGN_JSON=$(node "$(dirname "$0")/../../scripts/check-design-system.js" \
+  --worktree "$FILE_PATH" --json --report 2>/dev/null || true)
+if [ -n "$DESIGN_JSON" ]; then
+  DESIGN_ISSUES=$(printf '%s' "$DESIGN_JSON" | jq -r '
+    (.findings // [])
+    | map(select(.waived == false and .severity == "error"))
+    | .[]
+    | "\\n- \(.rule) (L:\(.line)): \(.message)" + (if .hint then " → \(.hint)" else "" end)
+  ' 2>/dev/null | tr -d '\r\n' || true)
+  if [ -n "$DESIGN_ISSUES" ]; then
+    ISSUES="${ISSUES}${DESIGN_ISSUES}"
+  fi
+fi
 
 if [ -n "$ISSUES" ]; then
   jq -n --arg fp "$FILE_PATH" --arg issues "$ISSUES" \

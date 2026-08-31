@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
@@ -15,6 +16,24 @@ const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: `${FRAME_SRC}; frame-ancestors 'self';`,
+  },
+];
+
+/**
+ * The token bridge is the one route a tenant's marketing site may frame: it
+ * hands a signed-in visitor's access token to that site over postMessage, so
+ * the chat there can answer as them. See `utilities/token-bridge/origins.ts`
+ * for the allowlist and `src/features/token-bridge/` for the route.
+ *
+ * X-Frame-Options has no allowlist form, so this route drops it and relies on
+ * frame-ancestors, which supersedes it in every browser that supports CSP2.
+ * Browsers old enough to lack that support refuse the frame — the site then
+ * answers as a visitor, not on an unprotected page.
+ */
+const tokenBridgeHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: `${FRAME_SRC}; frame-ancestors 'self' ${allTokenBridgeOrigins().join(" ")};`,
   },
 ];
 
@@ -109,13 +128,18 @@ const nextConfig: NextConfig = {
     qualities: [50, 75, 100],
   },
   async headers() {
-    // No route is framable any more: the landing site ran sign-in in an iframe
-    // on this origin and no longer does, so nothing needs the relaxed
-    // frame-ancestors that carve-out existed for.
+    // The catch-all skips the token bridge rather than layering over it: two
+    // rules setting Content-Security-Policy on one path emit the header twice,
+    // and browsers enforce the intersection — which would keep the stricter
+    // frame-ancestors and silently block the frame.
     const headerRules = [
       {
-        source: "/(.*)",
+        source: `/((?!${TOKEN_BRIDGE_PATH.slice(1)}$).*)`,
         headers: securityHeaders,
+      },
+      {
+        source: TOKEN_BRIDGE_PATH,
+        headers: tokenBridgeHeaders,
       },
     ];
     // Content-hashed build assets are safe to cache forever: a new deploy emits

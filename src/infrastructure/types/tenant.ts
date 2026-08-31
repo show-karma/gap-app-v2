@@ -149,6 +149,16 @@ export interface TenantNavigation {
    * than the label being decided in the navbar for everyone.
    */
   socialLinksLabel?: string;
+  /**
+   * Nav items rendered AFTER the social-links menu rather than before it.
+   *
+   * The social menu is always last among the tenant's own items, which is the
+   * right default. filpgf.io puts Blog to the right of Connect, and its app
+   * header is meant to read as the same header — so the exception is expressed
+   * per tenant here rather than by reordering the navbar for all twelve
+   * tenants that carry social links.
+   */
+  itemsAfterSocialLinks?: NavItem[];
 }
 
 export interface HeroStat {
@@ -206,4 +216,12 @@ export interface TenantConfig {
    * importantly, what it is not — it carries no token and grants nothing.
    */
   identityHintCookieDomain?: string;
+  /**
+   * Origins allowed to frame `/auth/token-bridge` and be handed the signed-in
+   * visitor's access token — the tenant's own marketing site, nothing else.
+   * Omitted or empty, the bridge answers nobody. Sourced from
+   * `utilities/token-bridge/origins.ts`, which `next.config.ts` also reads so
+   * the CSP and the bridge cannot disagree about who is allowed.
+   */
+  tokenBridgeOrigins?: readonly string[];
 }

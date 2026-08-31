@@ -1,0 +1,12 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+export function Negative() {
+  return (
+    <form>
+      <Button variant="ghost" size="icon">Send</Button>
+      <Input />
+      <input type="hidden" name="csrf" value="x" />
+    </form>
+  );
+}

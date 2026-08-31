@@ -191,60 +191,40 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
       {
         label: "Funding",
         items: [
-          { label: "Overview", href: "https://filpgf.io/propgf/", isExternal: true },
-          // Whitelabel-only navbar, so the clean path is safe here and saves the
-          // /community/filecoin/* -> / redirect hop.
-          { label: COMMITMENTS_AND_DISBURSEMENTS, href: "/financials" },
-          { label: "RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
+          /*
+           * Mirrors the landing site's Funding menu — filecoin-grants
+           * `src/data/nav.ts`. The two headers are meant to read as one, so a
+           * change here needs the same change there, and vice versa.
+           *
+           * A funding programme opens its cover page on the landing site, not a
+           * pre-filtered listing here: the programme is read as its own story
+           * first. Browsing every funded project is the separate "Projects
+           * Explorer" entry below (DEV-647).
+           */
           {
-            label: "Grants",
+            label: "Funding Programs",
             items: [
+              { label: "Kernel", href: "https://filpgf.io/kernel/", isExternal: true },
+              { label: "R&D", href: "https://filpgf.io/rnd/", isExternal: true },
               {
-                label: "Batch 1",
-                href: "https://app.filpgf.io/projects?programId=1013",
-                isExternal: true,
-              },
-              {
-                label: "Batch 2",
-                href: "https://app.filpgf.io/projects?programId=992",
-                isExternal: true,
-              },
-              {
-                label: "Batch 3",
-                href: "https://app.filpgf.io/projects?programId=1479",
-                isExternal: true,
-              },
-              {
-                label: "Pods Track",
-                href: "https://app.filpgf.io/projects?programId=1039",
+                label: "Revenue Development",
+                href: "https://filpgf.io/revenue-development/",
                 isExternal: true,
               },
             ],
           },
+          // The ProPGF overview (filpgf.io/propgf/) is deliberately not listed
+          // while no round is open; the page stays reachable by URL. Restore the
+          // "Overview" item here and in the landing site's nav together when a
+          // new RFP opens.
+          // Whitelabel-only navbar, so the clean paths below are safe and save
+          // the /community/filecoin/* -> / redirect hop.
+          { label: "Projects Explorer", href: "/projects" },
+          { label: COMMITMENTS_AND_DISBURSEMENTS, href: "/financials" },
           {
-            label: "Applications",
-            items: [
-              {
-                label: "Batch 1",
-                href: "https://app.filpgf.io/browse-applications?programId=1013",
-                isExternal: true,
-              },
-              {
-                label: "Batch 2",
-                href: "https://app.filpgf.io/browse-applications?programId=992",
-                isExternal: true,
-              },
-              {
-                label: "Batch 3",
-                href: "https://app.filpgf.io/browse-applications?programId=1479",
-                isExternal: true,
-              },
-              {
-                label: "Pods Track",
-                href: "https://app.filpgf.io/browse-applications?programId=1039",
-                isExternal: true,
-              },
-            ],
+            label: "RetroPGF - Paused",
+            href: "https://www.fil-retropgf.io/",
+            isExternal: true,
           },
         ],
       },
@@ -259,7 +239,6 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
           { label: "All reports", href: "/reports" },
         ],
       },
-      { label: "Blog", href: "https://filpgf.io/blog/", isExternal: true },
       {
         label: "About",
         items: [
@@ -270,6 +249,11 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
     ],
     /* This tenant calls the social-links menu "Connect", not "Resources". */
     socialLinksLabel: "Connect",
+    /*
+     * Blog sits to the right of Connect, matching the landing site's header
+     * (filecoin-grants `src/data/nav.ts`). The two are meant to read as one.
+     */
+    itemsAfterSocialLinks: [{ label: "Blog", href: "https://filpgf.io/blog/", isExternal: true }],
     socialLinks: {
       twitter: "https://twitter.com/Filecoin",
       discord: "https://discord.gg/yeQ2hcd2TD",

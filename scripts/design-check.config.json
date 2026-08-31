@@ -1,0 +1,84 @@
+{
+  "scanGlobs": [
+    "app/**/*.{js,jsx,ts,tsx}",
+    "pages/**/*.{js,jsx,ts,tsx}",
+    "components/**/*.{js,jsx,ts,tsx}",
+    "src/**/*.{js,jsx,ts,tsx}",
+    "hooks/**/*.{js,jsx,ts,tsx}",
+    "utilities/**/*.{js,jsx,ts,tsx}",
+    "services/**/*.{js,jsx,ts,tsx}",
+    "store/**/*.{js,jsx,ts,tsx}",
+    "widget/**/*.{js,jsx,ts,tsx}",
+    "**/*.{css,scss}"
+  ],
+  "exclude": [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "coverage/**",
+    ".quality/**",
+    "storybook-static/**",
+    "public/**",
+    "e2e/**",
+    "cypress/**",
+    "__tests__/**",
+    "__mocks__/**",
+    "**/__tests__/**",
+    "**/__mocks__/**",
+    "**/*.stories.*",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "src/stories/**",
+    ".storybook/**",
+    "scripts/**",
+    "**/*.d.ts"
+  ],
+  "tokenDefinitionFiles": [
+    "tailwind.config.js",
+    "src/infrastructure/theme/config.ts",
+    "styles/globals.css",
+    "styles/__theme_colors.scss",
+    "components/Pages/Dashboard/v3/dashboard-soft.css",
+    "utilities/whitelabel-config.ts",
+    "widget/tailwind.config.ts"
+  ],
+  "scaleDefinitionFiles": [
+    "components/Pages/Dashboard/v3/soft-classes.ts",
+    "src/features/donor-research/components/report-brief/table-classes.ts"
+  ],
+  "iconGlobs": ["components/Icons/**"],
+  "inlineStyleExemptGlobs": [
+    "app/**/opengraph-image.tsx",
+    "app/**/twitter-image.tsx",
+    "app/api/og/**"
+  ],
+  "inlineStyleExemptImports": ["next/og", "@vercel/og"],
+  "primitiveExemptGlobs": ["components/ui/**"],
+  "severity": {
+    "DS000": "error",
+    "DS001": "error",
+    "DS002": "error",
+    "DS003": "error",
+    "DS004": "error",
+    "DS005": "error",
+    "DS006": "warn",
+    "DS007": "error"
+  },
+  "hints": {
+    "#2ed1a8": "bg-brand / text-brand",
+    "#004c3f": "bg-brand-darker / text-brand-darker",
+    "#155eef": "bg-primary-600 / text-primary-600",
+    "#101828": "text-zinc-900 dark:text-zinc-100",
+    "#667085": "text-gray-500 dark:text-zinc-400",
+    "#eaecf0": "border-gray-200 dark:border-zinc-700",
+    "#ffffff": "bg-white dark:bg-zinc-900",
+    "#fff": "bg-white dark:bg-zinc-900",
+    "#000000": "text-black dark:text-white",
+    "#000": "text-black dark:text-white",
+    "<button>": "import { Button } from \"@/components/ui/button\" — icon-only controls use variant=\"ghost\" size=\"icon\"",
+    "<input>": "import { Input } from \"@/components/ui/input\" — it already styles file: pseudo-elements",
+    "<select>": "import { Select } from \"@/components/ui/select\"",
+    "<textarea>": "import { Textarea } from \"@/components/ui/textarea\""
+  }
+}
