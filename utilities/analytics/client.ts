@@ -147,6 +147,23 @@ const IDENTITY_SCOPED_KEYS = [
 ] as const satisfies readonly (keyof SuperProperties)[];
 
 /**
+ * Everything `contextToRestore` must NOT replay.
+ *
+ * The identity-scoped keys would attribute the previous user's login method to
+ * the new one. The community keys are here for a different reason: they say
+ * WHERE the visitor is, and only `AnalyticsProvider` knows that. Replaying them
+ * from a module record would re-attach a community the reset had just cleared —
+ * and that record is empty on a fresh document anyway, so it could only ever be
+ * right by accident. The provider rebinds unconditionally on its next settled
+ * run, which is the same run that performed the reset.
+ */
+const NON_RESTORED_KEYS: readonly string[] = [
+  ...IDENTITY_SCOPED_KEYS,
+  COMMUNITY_SLUG_PROPERTY,
+  COMMUNITY_GROUP_KEY,
+];
+
+/**
  * `community_id` is deliberately absent.
  *
  * `set_group` already registers it as a super property, and it registers it as
@@ -249,6 +266,18 @@ const getClient = (): Mixpanel | null => {
     return null;
   }
 
+  // Immediately after a successful init, before anything can be emitted.
+  // Separate from the `init` try above: this failing is not a reason to retry
+  // `init`, which has already succeeded and must not be run twice.
+  try {
+    clearPersistedCommunityContext(client);
+  } catch {
+    // SUPPRESSED: a stale community property is a reporting defect, not a
+    // reason to take analytics down. The provider's first settled run
+    // overwrites it on any community route, and `setCommunityGroup(null)`
+    // clears it on any other.
+  }
+
   ensureContextRegistered(client);
   return client;
 };
@@ -270,6 +299,30 @@ const persistedString = (mixpanel: Mixpanel, key: string): string | null => {
   return typeof value === "string" && value ? value : null;
 };
 
+/**
+ * Drops whatever community the previous document left behind.
+ *
+ * Mixpanel restores its super properties from `localStorage` the instant `init`
+ * runs, so a fresh document starts life holding the community the LAST one
+ * ended on — and every event fired before `AnalyticsProvider` completes its
+ * first settled run carries it. On a non-community route nothing ever cleared
+ * it, so the last community visited rode along indefinitely.
+ *
+ * Both halves go: the readable slug, and the group binding plus the super
+ * property `set_group` registers alongside it. Clearing only the property would
+ * leave the device joined to that community on the profile, which is what group
+ * analytics aggregate on.
+ *
+ * Nothing is lost by being aggressive here — the provider rebinds the route's
+ * real community on its first settled run, and until that lands "no community"
+ * is the only honest answer.
+ */
+const clearPersistedCommunityContext = (mixpanel: Mixpanel): void => {
+  mixpanel.unregister(COMMUNITY_SLUG_PROPERTY);
+  mixpanel.set_group(COMMUNITY_GROUP_KEY, []);
+  mixpanel.unregister(COMMUNITY_GROUP_KEY);
+};
+
 /** The distinct id Mixpanel currently considers identified, if any. */
 const identifiedUserId = (mixpanel: Mixpanel): string | null =>
   persistedString(mixpanel, USER_ID_PROPERTY);
@@ -289,11 +342,11 @@ const persistedCommunityId = (mixpanel: Mixpanel): string | null => {
 
 /** Super properties that survive a reset: the deployment and the tenant. */
 const contextToRestore = (): SuperProperties => {
-  const restored: SuperProperties = { ...baseSuperProperties(), ...currentContext };
-  for (const key of IDENTITY_SCOPED_KEYS) {
+  const restored: Record<string, unknown> = { ...baseSuperProperties(), ...currentContext };
+  for (const key of NON_RESTORED_KEYS) {
     delete restored[key];
   }
-  return restored;
+  return restored as SuperProperties;
 };
 
 /**
@@ -303,23 +356,14 @@ const contextToRestore = (): SuperProperties => {
  * and reporting as the default one.
  */
 const resetAndRestoreContext = (mixpanel: Mixpanel): void => {
-  // Read BEFORE the reset: both are derived from the persisted store that
-  // `reset()` is about to clear.
-  const communityId = persistedCommunityId(mixpanel);
-  const communitySlug = persistedString(mixpanel, COMMUNITY_SLUG_PROPERTY);
-
   mixpanel.reset();
   mixpanel.register(contextToRestore());
-
-  // `reset` clears the community binding too. Without this, logging out on a
-  // community route silently detaches every subsequent event from that
-  // community — and the visitor is still standing on its page.
-  if (communitySlug) {
-    mixpanel.register({ [COMMUNITY_SLUG_PROPERTY]: communitySlug });
-  }
-  if (communityId) {
-    mixpanel.set_group(COMMUNITY_GROUP_KEY, communityId);
-  }
+  // The community is deliberately NOT restored here — see `NON_RESTORED_KEYS`.
+  // `AnalyticsProvider` calls `setCommunitySlug` and `setCommunityGroup`
+  // unconditionally straight after it settles identity, so a visitor still
+  // standing on a community page is rebound in the same effect run that ended
+  // their session. Restoring it here as well would only resurrect a community
+  // they had already left.
 };
 
 const definedEntries = (props: SuperProperties): SuperProperties => {

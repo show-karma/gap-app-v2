@@ -14,6 +14,13 @@ import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
  * actually observe — Mixpanel holds an identified distinct id while signed in,
  * and holds none after signing out.
  *
+ * One harness constraint shapes the sign-out case: `loginAs` installs the
+ * bypass through `page.addInitScript`, which re-runs on every navigation of
+ * that page. Reloading therefore signs the visitor back in, and the sign-out
+ * assertion goes red against a correct product. Init scripts are per-page and
+ * `localStorage` is per-origin, so the signed-out phase runs on a second page
+ * in the same context instead.
+ *
  * What a mock session CANNOT observe is the `logout` EVENT. It needs a
  * continuous `authenticated: true -> false` transition inside one document, and
  * the bypass reads its state from localStorage through a memo that only
@@ -131,18 +138,42 @@ test.describe("Analytics identity", () => {
       .toBe(EXPECTED_MOCK_USER_ID);
 
     await logout(page);
-    // A reload is what makes the bypass re-read its cleared state. The provider
-    // then settles an unauthenticated identity and calls `resetIdentity()`,
-    // which is what has to clear the distinct id — a session that ends must not
-    // leave the previous user's id attached to the next visitor's events.
-    await page.goto("/community/optimism", GOTO_OPTIONS);
-    await waitForPageReady(page);
+
+    // The signed-out phase runs on a NEW PAGE, not a reload.
+    //
+    // `loginAs` installs the bypass with `page.addInitScript`, and init scripts
+    // re-run on every navigation of the page they were added to — so reloading
+    // this one writes `privy:auth_state` straight back and signs the visitor in
+    // again before the provider ever settles. The assertion below then fails
+    // against a product that is behaving correctly.
+    //
+    // Init scripts are per-page while `localStorage` is per-origin, so a second
+    // page in the same context is genuinely signed out and still sees the
+    // Mixpanel store the signed-in page wrote. That is exactly the state a real
+    // signed-out load starts from, and `resetIdentity()` is what has to clear
+    // it — a session that ends must not leave the previous user's distinct id
+    // attached to the next visitor's events.
+    const signedOut = await page.context().newPage();
+    captureTrackedEvents(signedOut);
+    await signedOut.route(
+      "**/v2/communities/optimism",
+      mockJson(createMockCommunity({ slug: "optimism" }))
+    );
+
+    // The identity is still in the shared store at this point — the reset has
+    // to be what removes it, not the new page starting from nothing.
+    expect(await readMixpanelStore(signedOut)).not.toBeNull();
+
+    await signedOut.goto("/community/optimism", GOTO_OPTIONS);
+    await waitForPageReady(signedOut);
 
     await expect
-      .poll(async () => (await readMixpanelStore(page))?.[USER_ID_PROPERTY], {
+      .poll(async () => (await readMixpanelStore(signedOut))?.[USER_ID_PROPERTY], {
         message: "resetIdentity() should have cleared the distinct id",
       })
       .toBeUndefined();
+
+    await signedOut.close();
   });
 
   test("emits a logout event when the session ends in-document", async ({

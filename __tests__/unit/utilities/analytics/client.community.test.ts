@@ -88,6 +88,9 @@ const trackedProps = (call = 0): Record<string, unknown> =>
 const initConfig = (): Record<string, unknown> =>
   mp.init.mock.calls[0][1] as Record<string, unknown>;
 
+/** What Mixpanel currently holds for a super property, in the mock store. */
+const persisted = (key: string): unknown => mp.__store[key];
+
 describe("analytics client — community context", () => {
   const originalEnv = process.env;
 
@@ -130,6 +133,11 @@ describe("analytics client — community context", () => {
 
     it("does not clear a community that was never bound", () => {
       enable();
+      // Initialise first: `init` performs its own one-time community clear
+      // (see "clearing the persisted community at init"), and this case is
+      // about the setter, not that.
+      track("logout", { reason: "user" });
+      vi.clearAllMocks();
 
       setCommunityGroup(null);
 
@@ -137,7 +145,7 @@ describe("analytics client — community context", () => {
       expect(mp.unregister).not.toHaveBeenCalled();
     });
 
-    it("re-binds the community after a logout on a community route", () => {
+    it("leaves the community cleared after a logout, for the provider to rebind", () => {
       enable();
       setCommunityGroup("gitcoin");
       identifyUser("did:privy:alice");
@@ -145,12 +153,16 @@ describe("analytics client — community context", () => {
 
       resetIdentity();
 
-      // `reset` clears the group binding as well as the identity, and the
-      // visitor is still standing on the community's page.
-      expect(mp.set_group).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
+      // The client does NOT restore it. Only `AnalyticsProvider` knows which
+      // community the current route names, and it rebinds unconditionally in
+      // the same effect run that settled this identity — see the provider's
+      // "republishes the same binding on every settled run" test. Restoring it
+      // here as well would resurrect a community the visitor had already left.
+      expect(mp.set_group).not.toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
+      expect(persisted(COMMUNITY_GROUP_KEY)).toBeUndefined();
     });
 
-    it("re-binds the community across a user switch", () => {
+    it("leaves the community cleared across a user switch", () => {
       enable();
       setCommunityGroup("gitcoin");
       identifyUser("did:privy:alice");
@@ -158,7 +170,24 @@ describe("analytics client — community context", () => {
 
       identifyUser("did:privy:bob");
 
-      expect(mp.set_group).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
+      expect(mp.set_group).not.toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
+    });
+
+    it("rebinds when the provider republishes after the reset", () => {
+      // The end-to-end shape: settleIdentity resets, then the provider's
+      // unconditional writes put the route's real community back. This is what
+      // keeps the rebind working without the client second-guessing the route.
+      enable();
+      setCommunityGroup("0xgitcoin");
+      setCommunitySlug("gitcoin");
+      identifyUser("did:privy:alice");
+
+      resetIdentity();
+      setCommunitySlug("gitcoin");
+      setCommunityGroup("0xgitcoin");
+
+      expect(persisted(COMMUNITY_GROUP_KEY)).toEqual(["0xgitcoin"]);
+      expect(persisted("community_slug")).toBe("gitcoin");
     });
 
     it("does not re-bind a community the visitor has already left", () => {
@@ -173,7 +202,7 @@ describe("analytics client — community context", () => {
       expect(mp.set_group).not.toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
     });
 
-    it("re-binds the readable slug after a logout on a community route", () => {
+    it("leaves the readable slug cleared after a logout, for the provider to rebind", () => {
       enable();
       setCommunitySlug("gitcoin");
       identifyUser("did:privy:alice");
@@ -181,7 +210,8 @@ describe("analytics client — community context", () => {
 
       resetIdentity();
 
-      expect(mp.register).toHaveBeenCalledWith({ community_slug: "gitcoin" });
+      expect(mp.register).not.toHaveBeenCalledWith({ community_slug: "gitcoin" });
+      expect(persisted("community_slug")).toBeUndefined();
     });
 
     it("writes nothing when the community is already the one bound", () => {
@@ -198,6 +228,57 @@ describe("analytics client — community context", () => {
       // every navigation.
       expect(mp.set_group).not.toHaveBeenCalled();
       expect(mp.register).not.toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * Addendum J1. G1 stopped the provider from SKIPPING the clear; this stops
+   * the window before the provider has run at all.
+   *
+   * `init` restores super properties from localStorage synchronously, so
+   * between init and the provider's first settled effect the device is holding
+   * whatever community the previous document ended on — and anything emitted in
+   * that window carries it.
+   */
+  describe("clearing the persisted community at init", () => {
+    it("drops both halves of the previous document's community", () => {
+      // A previous document left a community bound; this module is new, the
+      // persisted store is not.
+      enable();
+      setCommunityGroup("0xgitcoin");
+      setCommunitySlug("gitcoin");
+      __resetAnalyticsClientForTests();
+      enable();
+      vi.clearAllMocks();
+
+      // Any entry point initialises the client.
+      track("logout", { reason: "user" });
+
+      expect(mp.unregister).toHaveBeenCalledWith("community_slug");
+      expect(mp.set_group).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, []);
+      expect(mp.unregister).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY);
+      expect(persisted(COMMUNITY_GROUP_KEY)).toBeUndefined();
+      expect(persisted("community_slug")).toBeUndefined();
+    });
+
+    it("clears before the first event is tracked, so nothing carries a stale community", () => {
+      enable();
+      setCommunityGroup("0xgitcoin");
+      setCommunitySlug("gitcoin");
+      __resetAnalyticsClientForTests();
+      enable();
+      vi.clearAllMocks();
+
+      track("logout", { reason: "user" });
+
+      // The mock store IS the super-property bag the SDK merges onto every
+      // event, so ordering is what this asserts: the clear has to land before
+      // the track call, not merely at some point during the document.
+      const clearedAt = mp.unregister.mock.invocationCallOrder[0];
+      const trackedAt = mp.track.mock.invocationCallOrder[0];
+      expect(clearedAt).toBeLessThan(trackedAt);
+      expect(mp.__store).not.toHaveProperty(COMMUNITY_GROUP_KEY);
+      expect(mp.__store).not.toHaveProperty("community_slug");
     });
   });
 
