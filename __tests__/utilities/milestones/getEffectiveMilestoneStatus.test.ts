@@ -3,8 +3,10 @@ import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/typ
 import {
   getEffectiveMilestoneStatus,
   isCancelledMilestoneStatus,
+  isCompletedMilestoneStatus,
   MILESTONE_STATUS_BADGE_CLASS,
   MILESTONE_STATUS_LABEL,
+  normalizeMilestoneStatus,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 
 const NOW = new Date("2026-06-01T00:00:00Z").getTime();
@@ -134,4 +136,77 @@ describe("getEffectiveMilestoneStatus", () => {
       expect(isCancelledMilestoneStatus(undefined)).toBe(false);
     });
   });
+
+  // The indexer emits `status` verbatim in mixed case, so an uppercase
+  // "COMPLETED" reached the Record lookups as an unknown key and rendered a
+  // blank, unstyled badge.
+  describe("mixed-case statuses from the indexer", () => {
+    it.each([
+      ["COMPLETED", MilestoneLifecycleStatus.COMPLETED],
+      ["Completed", MilestoneLifecycleStatus.COMPLETED],
+      ["VERIFIED", MilestoneLifecycleStatus.VERIFIED],
+      ["Verified", MilestoneLifecycleStatus.VERIFIED],
+      ["PENDING", MilestoneLifecycleStatus.PENDING],
+      ["CANCELLED", MilestoneLifecycleStatus.CANCELLED],
+    ])("normalizes %s to the lowercase lifecycle status", (raw, expected) => {
+      expect(getEffectiveMilestoneStatus(raw, FUTURE_ISO, NOW)).toBe(expected);
+    });
+
+    it.each(["COMPLETED", "Verified", "PENDING", "CANCELLED"])(
+      "resolves a label and a badge class for %s",
+      (raw) => {
+        const status = getEffectiveMilestoneStatus(raw, FUTURE_ISO, NOW);
+
+        expect(MILESTONE_STATUS_LABEL[status]).toBeTruthy();
+        expect(MILESTONE_STATUS_BADGE_CLASS[status]).toBeTruthy();
+      }
+    );
+
+    it("keeps CANCELLED terminal for an uppercase past-due milestone", () => {
+      expect(getEffectiveMilestoneStatus("CANCELLED", PAST_ISO, NOW)).toBe(
+        MilestoneLifecycleStatus.CANCELLED
+      );
+    });
+
+    it("still derives PAST_DUE from an uppercase PENDING milestone", () => {
+      expect(getEffectiveMilestoneStatus("PENDING", PAST_ISO, NOW)).toBe(
+        MilestoneLifecycleStatus.PAST_DUE
+      );
+    });
+
+    it("passes an unknown status through lowercased rather than defaulting it", () => {
+      expect(getEffectiveMilestoneStatus("SOMETHING_ELSE", PAST_ISO, NOW)).toBe("something_else");
+    });
+  });
+});
+
+describe("normalizeMilestoneStatus", () => {
+  it.each([
+    ["COMPLETED", "completed"],
+    ["Verified", "verified"],
+    ["cancelled", "cancelled"],
+  ])("lowercases %s", (raw, expected) => {
+    expect(normalizeMilestoneStatus(raw)).toBe(expected);
+  });
+
+  it("is null-safe", () => {
+    expect(normalizeMilestoneStatus(null)).toBeUndefined();
+    expect(normalizeMilestoneStatus(undefined)).toBeUndefined();
+  });
+});
+
+describe("isCompletedMilestoneStatus", () => {
+  it.each(["completed", "COMPLETED", "Completed", "verified", "VERIFIED", "Verified"])(
+    "treats %s as done",
+    (status) => {
+      expect(isCompletedMilestoneStatus(status)).toBe(true);
+    }
+  );
+
+  it.each(["pending", "PENDING", "past_due", "cancelled", "", null, undefined])(
+    "treats %s as not done",
+    (status) => {
+      expect(isCompletedMilestoneStatus(status)).toBe(false);
+    }
+  );
 });

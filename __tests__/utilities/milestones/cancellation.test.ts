@@ -1,4 +1,8 @@
-import { cancellationFromStatusHistory } from "@/utilities/milestones/cancellation";
+import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import {
+  cancellationFromStatusHistory,
+  isMilestoneCancelled,
+} from "@/utilities/milestones/cancellation";
 
 describe("cancellationFromStatusHistory", () => {
   const cancelledEntry = {
@@ -78,5 +82,31 @@ describe("cancellationFromStatusHistory", () => {
       cancelledAt: "2026-07-22T20:54:02.000Z",
       reason: null,
     });
+  });
+});
+
+describe("isMilestoneCancelled", () => {
+  const status = (raw: string) => raw as GrantMilestoneWithCompletion["status"];
+
+  it.each(["cancelled", "CANCELLED", "Cancelled"])(
+    "treats a %s status as cancelled (the indexer emits mixed case)",
+    (raw) => {
+      expect(isMilestoneCancelled({ status: status(raw), cancellation: undefined })).toBe(true);
+    }
+  );
+
+  it("still relies on the overlay when the status has not been re-derived yet", () => {
+    expect(
+      isMilestoneCancelled({
+        status: status("pending"),
+        cancellation: { cancelledBy: "0xa", cancelledAt: null, reason: null },
+      })
+    ).toBe(true);
+  });
+
+  it("returns false for a live milestone", () => {
+    expect(isMilestoneCancelled({ status: status("COMPLETED"), cancellation: undefined })).toBe(
+      false
+    );
   });
 });

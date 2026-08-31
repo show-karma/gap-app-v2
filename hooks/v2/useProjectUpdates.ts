@@ -11,7 +11,10 @@ import type {
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
 import { assignGrantMilestoneOrder } from "@/utilities/milestones/assignGrantMilestoneOrder";
-import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import {
+  isCancelledMilestoneStatus,
+  isCompletedMilestoneStatus,
+} from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import {
   type MilestoneDueDateInput,
   normalizeMilestoneDueDateMs,
@@ -83,7 +86,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   // Convert project milestones to unified format
   data.projectMilestones.forEach((milestone: ProjectMilestone) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
-    const isCompleted = milestone.status === "completed" || milestone.status === "verified";
+    const isCompleted = isCompletedMilestoneStatus(milestone.status);
     const recipient = milestone.recipient || "";
     // Display attribution falls back to recipient when the on-chain attester
     // isn't present (Karma backend-signed milestones expose attester separately).
@@ -133,7 +136,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   // Convert grant milestones to unified format
   data.grantMilestones.forEach((milestone: GrantMilestoneWithDetails) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
-    const isCompleted = milestone.status === "completed" || milestone.status === "verified";
+    const isCompleted = isCompletedMilestoneStatus(milestone.status);
     // Recipient is the on-chain milestone owner (passes Gap.sol's revoke gate).
     // Attester may differ (Karma backend-signed milestones use a service wallet);
     // display attribution falls back to recipient when attester is unavailable.

@@ -100,8 +100,8 @@ describe("isMilestoneEditable", () => {
     },
     {
       // Regression guard for GAP-FRONTEND-202: the indexer emits currentStatus
-      // verbatim, so this row converts with completed=false and verified=[].
-      // completionDetails and the case-normalised status each block it alone.
+      // verbatim in mixed case. `completed`, completionDetails and the
+      // case-normalised status each block this row on their own.
       name: "UPPERCASE completed milestone is blocked via completionDetails",
       milestone: () =>
         convertGrantMilestone({ status: "COMPLETED", completionDetails: COMPLETION_DETAILS }),
@@ -129,10 +129,11 @@ describe("isMilestoneEditable", () => {
   });
 
   it("blocks the UPPERCASE completed row even without completionDetails", () => {
-    // The converter's exact-match `isCompleted` reads this as pending, so the
-    // case-normalised status check is the only thing standing in the way.
+    // The converter now normalises the case, so `completed` is already set;
+    // the case-normalised status check backstops it for rows that arrive
+    // without completionDetails at all.
     const milestone = convertGrantMilestone({ status: "COMPLETED" });
-    expect(milestone.completed).toBe(false);
+    expect(milestone.completed).toBeTruthy();
     expect(milestone.source.grantMilestone?.completionDetails).toBeFalsy();
     expect(isMilestoneEditable(milestone)).toBe(false);
   });
