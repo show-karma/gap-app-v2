@@ -317,11 +317,27 @@ to track them: on a fresh document those started empty, which read as "nothing
 bound", so the clear was skipped and the last community visited stayed attached
 to every later event on every later route.
 
+Persistence also opens a window the provider cannot cover. `init` restores super
+properties synchronously, so between init and the provider's first settled run
+the device is already holding the previous document's community. The client
+therefore clears both halves — slug, group binding, and the super property
+`set_group` registers with it — immediately after a successful `init`.
+`AnalyticsProvider` rebinds the route's real community on its first settled run;
+until that lands, "no community" is the only honest answer.
+
+**A reset does not restore the community.** `resetAndRestoreContext` has no way
+of knowing which community the current route names — only the provider does, and
+it calls `setCommunitySlug` and `setCommunityGroup` unconditionally in the same
+effect run that settled the identity. So a visitor who signs out while standing
+on a community page is rebound in that same run, and a reset can no longer
+resurrect a community they had already left.
+
 `wallet_connected` and `auth_method` are identity-scoped: they are deliberately
 **not** restored after a `reset()`, because carrying them across a user switch
-would attribute the previous user's login method to the new one. Everything else
-is re-registered by `resetAndRestoreContext`, so a signed-out visitor still
-reports their tenant and their community.
+would attribute the previous user's login method to the new one. The community
+keys are excluded for the different reason given above. The deployment and
+tenant keys are re-registered by `resetAndRestoreContext`, so a signed-out
+visitor still reports their tenant.
 
 ### Profile (`people.set`)
 
