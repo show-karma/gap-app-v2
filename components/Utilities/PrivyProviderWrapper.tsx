@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, use, useEffect, useState } from "react";
 import { WagmiProvider } from "wagmi";
 import {
   PRIVY_BRIDGE_DEFAULTS,
@@ -24,9 +24,41 @@ type PrivyModule = {
   default: React.ComponentType<{ tenantConfig?: TenantConfig | null }>;
 };
 
+/** Just the slice of the whitelabel context Privy needs. */
+type TenantSource = {
+  isWhitelabel: boolean;
+  tenantConfig: TenantConfig | null;
+};
+
 interface PrivyProviderWrapperProps {
   children: ReactNode;
-  tenantConfig?: TenantConfig | null;
+  /**
+   * The whitelabel context, as a promise, so the root layout can stay
+   * synchronous. Unwrapped in PrivyTenant below rather than here: that keeps
+   * `children` off this promise entirely.
+   */
+  whitelabel: TenantSource | Promise<TenantSource>;
+}
+
+/**
+ * Unwraps the tenant only where it is actually consumed.
+ *
+ * Privy is a sibling of `children` and only mounts after the dynamic import
+ * resolves in an effect — i.e. never during SSR. So by the time this renders,
+ * the promise has long settled and `use` returns without suspending. Doing it
+ * here rather than in the wrapper is what keeps the page out of the promise's
+ * way: nothing above `children` ever waits on the host.
+ */
+function PrivyTenant({
+  Privy,
+  whitelabel,
+}: {
+  Privy: PrivyModule;
+  whitelabel: TenantSource | Promise<TenantSource>;
+}) {
+  const resolved = whitelabel instanceof Promise ? use(whitelabel) : whitelabel;
+
+  return <Privy.default tenantConfig={resolved.isWhitelabel ? resolved.tenantConfig : null} />;
 }
 
 /**
@@ -36,10 +68,10 @@ interface PrivyProviderWrapperProps {
  */
 function PrivyLoader({
   children,
-  tenantConfig,
+  whitelabel,
 }: {
   children: ReactNode;
-  tenantConfig?: TenantConfig | null;
+  whitelabel: TenantSource | Promise<TenantSource>;
 }) {
   const [Privy, setPrivy] = useState<PrivyModule | null>(null);
   const setBridge = usePrivyBridgeSetter();
@@ -84,7 +116,7 @@ function PrivyLoader({
 
   return (
     <>
-      {Privy && <Privy.default tenantConfig={tenantConfig} />}
+      {Privy && <PrivyTenant Privy={Privy} whitelabel={whitelabel} />}
       {children}
     </>
   );
@@ -103,15 +135,12 @@ function PrivyLoader({
  * ready=true + authenticated=false so auth-gated pages redirect to
  * login instead of showing infinite skeletons.
  */
-export default function PrivyProviderWrapper({
-  children,
-  tenantConfig,
-}: PrivyProviderWrapperProps) {
+export default function PrivyProviderWrapper({ children, whitelabel }: PrivyProviderWrapperProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={minimalWagmiConfig}>
         <PrivyBridgeProvider>
-          <PrivyLoader tenantConfig={tenantConfig}>{children}</PrivyLoader>
+          <PrivyLoader whitelabel={whitelabel}>{children}</PrivyLoader>
         </PrivyBridgeProvider>
       </WagmiProvider>
     </QueryClientProvider>

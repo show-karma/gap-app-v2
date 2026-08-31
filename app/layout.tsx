@@ -40,8 +40,17 @@ import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "next-themes";
-import { Suspense } from "react";
-import { TenantChrome, TenantChromeFallback } from "@/src/components/layout/tenant-chrome";
+import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
+import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
+import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
+import {
+  TenantFooter,
+  TenantJsonLd,
+  TenantNavbar,
+  TenantThemeStyle,
+} from "@/src/components/layout/tenant-chrome";
+import { TenantStoreSync } from "@/src/components/layout/tenant-store-sync";
+import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -94,13 +103,47 @@ export const viewport: Viewport = {
   ],
 };
 
-// Request-independent by design: nothing here awaits headers(), so the App
-// Shell — <html>, the fonts, <body>, the theme provider — is the same for every
-// route and every host. Everything host-dependent lives in TenantChrome, one
-// Suspense boundary down, and streams into the document below.
+const toasterConfig = {
+  position: "top-right" as const,
+  toastOptions: {
+    className: "toast-content",
+    style: {
+      maxWidth: "500px",
+      wordWrap: "break-word" as const,
+      overflowWrap: "anywhere" as const,
+      wordBreak: "break-word" as const,
+    },
+    duration: 4000,
+  },
+  containerStyle: { top: 20, right: 20 },
+};
+
+// Synchronous by design: the layout starts the whitelabel read but never
+// awaits it, so <html>, the fonts, <body> and the theme provider are the same
+// for every route and every host.
+//
+// The promise is created once and handed down two ways: the host-dependent
+// chrome — theme, navbar, footer, JSON-LD — takes it directly, and
+// WhitelabelProvider unwraps it for the ~25 client consumers that expect a
+// plain value.
+//
+// There is deliberately no Suspense boundary anywhere in here. A boundary
+// above the page makes Next stream it as a hidden late chunk that only
+// JavaScript reveals, which is what DEV-612 forbids for sitemap-crawlable
+// routes; one around the navbar and footer costs the page its internal link
+// graph the same way. Without a boundary React holds the shell until the host
+// is known and then emits one complete document — holding, not hiding.
+//
+// So this is the prerequisite, not the finished job: the layout no longer
+// awaits, but WhitelabelProvider still blocks the tree. Making the shell
+// genuinely prerenderable needs that provider to stop blocking, which in turn
+// needs an answer for the crawlable routes — see the PR discussion.
+//
 // generateMetadata above still awaits headers(); metadata resolves off the
 // critical path and does not hold up the shell.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const whitelabel = getWhitelabelContext();
+
   return (
     <html
       lang="en"
@@ -121,9 +164,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem={true}
           disableTransitionOnChange
         >
-          <Suspense fallback={<TenantChromeFallback />}>
-            <TenantChrome>{children}</TenantChrome>
-          </Suspense>
+          <TenantThemeStyle whitelabel={whitelabel} />
+          <PrivyProviderWrapper whitelabel={whitelabel}>
+            <WhitelabelProvider value={whitelabel}>
+              <TenantStoreSync />
+              <PermissionsProvider />
+              <DeferredLayoutComponents toasterConfig={toasterConfig} />
+              <div
+                data-app-content
+                className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
+              >
+                <div className="flex flex-col w-full h-full">
+                  <TenantNavbar whitelabel={whitelabel} />
+                  {children}
+                </div>
+                <TenantFooter whitelabel={whitelabel} />
+              </div>
+            </WhitelabelProvider>
+          </PrivyProviderWrapper>
+          <TenantJsonLd whitelabel={whitelabel} />
         </ThemeProvider>
       </body>
     </html>
