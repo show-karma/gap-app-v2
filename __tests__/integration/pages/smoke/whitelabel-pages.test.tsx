@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type React from "react";
+import { resolveServerElement } from "@/__tests__/helpers/resolveServerElement";
 
 /**
  * Smoke tests for whitelabel application/program routes. These pages are
@@ -340,7 +341,11 @@ describe("Whitelabel programs/[programId] page", () => {
 describe("/(cover)/financials page", () => {
   it("renders PublicControlCenter for enabled community", async () => {
     const { default: Page } = await import("@/app/community/[communityId]/(cover)/financials/page");
-    const result = await Page({ params: Promise.resolve({ communityId: "c1" }) });
+    // The page streams: it returns <Suspense> around the async body, so the
+    // client renderer would only ever see the loading.tsx fallback.
+    const result = await resolveServerElement(
+      await Page({ params: Promise.resolve({ communityId: "c1" }) })
+    );
     renderInQueryClient(result);
     expect(screen.getByTestId("public-control-center")).toBeInTheDocument();
   });

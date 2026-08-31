@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import { PublicControlCenter } from "@/components/Pages/Communities/Financials/PublicControlCenter";
 import { Link } from "@/src/components/navigation/Link";
 import { getCommunityPayoutsPublic } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
@@ -12,6 +12,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import Loading from "./loading";
 
 type Params = Promise<{ communityId: string }>;
 
@@ -84,7 +85,7 @@ async function prefetchFinancialsData(queryClient: QueryClient, communityId: str
   ]);
 }
 
-export default async function FinancialsPage({ params }: { params: Params }) {
+async function FinancialsContent({ params }: { params: Params }) {
   const { communityId } = await params;
 
   // Commitments & Disbursements is a per-community feature flag. For a
@@ -125,5 +126,18 @@ export default async function FinancialsPage({ params }: { params: Params }) {
         <PublicControlCenter />
       </div>
     </HydrationBoundary>
+  );
+}
+
+// The page itself no longer awaits params, so the route's chrome paints from
+// the first byte and the data streams into the loading.tsx fallback instead of
+// the whole navigation blocking on the fetch. Everything params-dependent —
+// including validation and every notFound() — stays inside the boundary, so
+// behaviour for bad input is unchanged.
+export default function FinancialsPage(props: { params: Params }) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <FinancialsContent params={props.params} />
+    </Suspense>
   );
 }

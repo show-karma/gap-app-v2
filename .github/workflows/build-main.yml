@@ -69,6 +69,9 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
+          # This job unpacks .next/standalone below; next.config.ts only
+          # emits it when this is set.
+          NEXT_OUTPUT_STANDALONE: "1"
 
       - name: Assemble standalone bundle
         run: |

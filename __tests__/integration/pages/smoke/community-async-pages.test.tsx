@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import { resolveServerElement } from "@/__tests__/helpers/resolveServerElement";
 
 /**
  * Smoke tests for async server-rendered community pages. Pattern:
@@ -7,7 +8,16 @@ import { render, screen } from "@testing-library/react";
  *     can resolve without the network.
  *  2. Mock the inner page-component import with a sentinel.
  *  3. Invoke the page as `await Page({ params: Promise.resolve({...}) })`.
- *  4. render() the returned element and check the sentinel is mounted.
+ *  4. Resolve the server tree (see resolveServerElement) and render() it, then
+ *     check the sentinel is mounted.
+ *
+ * Two page shapes are in play. The classic one is an async Page that awaits
+ * params at the top. The Cache Components one is a sync Page returning
+ * <Suspense><Body params={props.params}/></Suspense>, where Body is the async
+ * component that awaits params. resolveServerElement (__tests__/helpers)
+ * normalises both to the rendered tree, so a page's assertions are identical
+ * either way — and, for the notFound() tests, the rejection surfaces from
+ * whichever component actually performs the validation.
  */
 
 const mockCommunity = {
@@ -125,12 +135,14 @@ vi.mock("@/components/Pages/Community/PortfolioReports/PublicReportViewPage", ()
 }));
 
 const renderAsyncPage = async (
-  importer: () => Promise<{ default: (props: unknown) => Promise<React.ReactElement> }>,
+  importer: () => Promise<{
+    default: (props: unknown) => React.ReactElement | Promise<React.ReactElement>;
+  }>,
   props: unknown
 ) => {
   const { default: Page } = await importer();
-  const result = await Page(props);
-  return render(result);
+  const resolved = await resolveServerElement(await Page(props));
+  return render(resolved);
 };
 
 beforeEach(() => {
@@ -255,7 +267,7 @@ describe("Community async server pages — happy path", () => {
 });
 
 describe("Community async server pages — runDate route validation", () => {
-  it("/(cover)/reports/[runDate] calls notFound for invalid runDate", async () => {
+  const mockNotFoundThrow = async () => {
     const navigation = await import("next/navigation");
     const notFoundMock = vi.mocked(navigation.notFound);
     notFoundMock.mockImplementationOnce(() => {
@@ -263,12 +275,71 @@ describe("Community async server pages — runDate route validation", () => {
       err.digest = "NEXT_NOT_FOUND";
       throw err;
     });
+    return notFoundMock;
+  };
+
+  it("/(cover)/reports/[runDate] calls notFound for invalid runDate", async () => {
+    const notFoundMock = await mockNotFoundThrow();
     const { default: Page } = await import(
       "@/app/community/[communityId]/(cover)/reports/[runDate]/page"
     );
     await expect(
-      Page({ params: Promise.resolve({ communityId: "c1", runDate: "not-a-date" }) })
+      resolveServerElement(
+        Page({ params: Promise.resolve({ communityId: "c1", runDate: "not-a-date" }) })
+      )
     ).rejects.toThrow(/NEXT_NOT_FOUND/);
     expect(notFoundMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("/(cover)/reports/[runDate]/[configSlug] calls notFound for invalid runDate", async () => {
+    const notFoundMock = await mockNotFoundThrow();
+    const { default: Page } = await import(
+      "@/app/community/[communityId]/(cover)/reports/[runDate]/[configSlug]/page"
+    );
+    await expect(
+      resolveServerElement(
+        Page({
+          params: Promise.resolve({
+            communityId: "c1",
+            runDate: "not-a-date",
+            configSlug: "quarterly",
+          }),
+        })
+      )
+    ).rejects.toThrow(/NEXT_NOT_FOUND/);
+    expect(notFoundMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("/(cover)/reports/[runDate]/[configSlug] calls notFound for invalid configSlug", async () => {
+    const notFoundMock = await mockNotFoundThrow();
+    const { default: Page } = await import(
+      "@/app/community/[communityId]/(cover)/reports/[runDate]/[configSlug]/page"
+    );
+    await expect(
+      resolveServerElement(
+        Page({
+          params: Promise.resolve({
+            communityId: "c1",
+            runDate: "2025-04-01",
+            configSlug: "not a slug!",
+          }),
+        })
+      )
+    ).rejects.toThrow(/NEXT_NOT_FOUND/);
+    expect(notFoundMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("/(cover)/reports/[runDate]/[configSlug] renders for valid segments", async () => {
+    await renderAsyncPage(
+      () => import("@/app/community/[communityId]/(cover)/reports/[runDate]/[configSlug]/page"),
+      {
+        params: Promise.resolve({
+          communityId: "c1",
+          runDate: "2025-04-01",
+          configSlug: "quarterly",
+        }),
+      }
+    );
+    expect(screen.getByTestId("public-report-view-page")).toBeInTheDocument();
   });
 });

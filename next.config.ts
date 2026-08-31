@@ -39,8 +39,16 @@ const tokenBridgeHeaders = [
 
 const removeImports = require("next-remove-imports")();
 
+// Only the CI jobs that unpack .next/standalone ask for it; see `output` below.
+const standaloneOutput = process.env.NEXT_OUTPUT_STANDALONE === "1";
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
+  // When `next dev` detects an AI coding agent and Next's managed block is
+  // absent, 16.3 writes that block into AGENTS.md and CLAUDE.md. This
+  // repository tracks and maintains both itself, so opting out keeps
+  // generated instructions from dirtying the worktree.
+  agentRules: false,
   reactStrictMode: true,
   // Cap per-page static generation at 2 min. The app has no
   // generateStaticParams and builds in ~5 min, so nothing legitimately
@@ -50,8 +58,19 @@ const nextConfig: NextConfig = {
   // Standalone output produces a self-contained server.js bundle in
   // .next/standalone with traced node_modules. Cuts CI artifact size
   // from ~200MB to ~30-50MB and boots in ~2s vs ~25s for `pnpm start`.
-  // Vercel ignores this setting (it uses its own Lambda format).
-  output: "standalone",
+  //
+  // Opt-in rather than always-on, because only the CI jobs that actually
+  // consume .next/standalone want it: build-main.yml and qa-pipeline.yml,
+  // both of which set NEXT_OUTPUT_STANDALONE=1 on their build step.
+  //
+  // Vercel-driven builds must NOT request it. They used to merely ignore it,
+  // which is why this was unconditional, but under Next 16.3 the Vercel build
+  // adapter suppresses node-file-trace manifest emission (it does its own
+  // tracing for the Lambda format), and copyTracedFiles then reads
+  // .next/next-server.js.nft.json unguarded and dies with ENOENT after an
+  // otherwise successful build. That covers both preview deploys and
+  // production.yml, which runs `vercel build --prod` on a GitHub runner.
+  output: standaloneOutput ? "standalone" : undefined,
   turbopack: {
     resolveAlias: {
       // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
