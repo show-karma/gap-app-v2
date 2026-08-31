@@ -1,0 +1,11 @@
+export function Positive() {
+  return (
+    <div>
+      <span className="p-[13px]">spacing</span>
+      <span className="text-[15px]">type</span>
+      <span className="leading-[22px]">leading</span>
+      <span className="rounded-[7px]">radius</span>
+      <span className="tracking-[0.5px]">tracking</span>
+    </div>
+  );
+}

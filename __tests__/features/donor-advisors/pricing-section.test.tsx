@@ -8,9 +8,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+const mockApiGet = vi.fn();
+
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/src/features/home/components/scroll-reveal", () => ({
@@ -18,9 +27,7 @@ vi.mock("@/src/features/home/components/scroll-reveal", () => ({
 }));
 
 import { PricingSection } from "@/src/features/donor-advisors/components/pricing-section";
-import fetchData from "@/utilities/fetchData";
-
-const mockFetchData = vi.mocked(fetchData);
+import { HttpError } from "@/utilities/api/errors";
 
 const plan = (
   p: string,
@@ -96,7 +103,7 @@ describe("PricingSection", () => {
   afterEach(() => qc.clear());
 
   it("renders the four paid tiers including Firm and no standalone free card", async () => {
-    mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
+    mockApiGet.mockResolvedValue(CATALOG);
     renderSection(qc);
 
     await waitFor(() => expect(screen.getByText("Starter")).toBeInTheDocument());
@@ -109,7 +116,7 @@ describe("PricingSection", () => {
   });
 
   it("shows the tier prices and the four metered dimensions", async () => {
-    mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
+    mockApiGet.mockResolvedValue(CATALOG);
     renderSection(qc);
 
     await waitFor(() => expect(screen.getByText("$29")).toBeInTheDocument());
@@ -123,7 +130,7 @@ describe("PricingSection", () => {
   });
 
   it("renders the PAYG / top-up packs", async () => {
-    mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
+    mockApiGet.mockResolvedValue(CATALOG);
     renderSection(qc);
 
     await waitFor(() => expect(screen.getByText("3 reports")).toBeInTheDocument());
@@ -132,7 +139,7 @@ describe("PricingSection", () => {
   });
 
   it("advertises the free signup grant in the section intro", async () => {
-    mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
+    mockApiGet.mockResolvedValue(CATALOG);
     renderSection(qc);
 
     await waitFor(() =>
@@ -143,7 +150,7 @@ describe("PricingSection", () => {
   });
 
   it("keeps Enterprise sales-led — custom price, contact CTA", async () => {
-    mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
+    mockApiGet.mockResolvedValue(CATALOG);
     renderSection(qc);
 
     await waitFor(() => expect(screen.getByText("Custom")).toBeInTheDocument());
@@ -154,7 +161,13 @@ describe("PricingSection", () => {
   it("falls back to shipped prices when the catalog request fails", async () => {
     // An empty pricing block on a marketing page is worse than the shipped
     // defaults, which the live response overwrites as soon as it lands.
-    mockFetchData.mockResolvedValue([null, "upstream down", null, 500]);
+    mockApiGet.mockRejectedValue(
+      new HttpError(500, {
+        endpoint: "/v2/donor-research/billing/plans",
+        method: "GET",
+        body: { message: "upstream down" },
+      })
+    );
     renderSection(qc);
 
     await waitFor(() => expect(screen.getByText("$29")).toBeInTheDocument());
@@ -164,7 +177,7 @@ describe("PricingSection", () => {
   it("routes paid plans into the product rather than straight to Stripe", async () => {
     // Checkout needs an authenticated advisor, so an anonymous visitor
     // onboards first and upgrades from the billing page.
-    mockFetchData.mockResolvedValue([CATALOG, null, null, 200]);
+    mockApiGet.mockResolvedValue(CATALOG);
     renderSection(qc);
 
     await waitFor(() => expect(screen.getByText("Starter")).toBeInTheDocument());
@@ -179,7 +192,7 @@ describe("PricingSection", () => {
   });
 
   it("uses singular copy when the grant is one report", async () => {
-    mockFetchData.mockResolvedValue([{ ...CATALOG, freeSignupReportGrant: 1 }, null, null, 200]);
+    mockApiGet.mockResolvedValue({ ...CATALOG, freeSignupReportGrant: 1 });
     renderSection(qc);
 
     await waitFor(() =>

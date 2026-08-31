@@ -87,6 +87,82 @@ describe("mergeStreamEvents", () => {
   });
 });
 
+describe("mergeStreamEvents with contact_discovery_progress", () => {
+  it("should_dedupe_repeated_progress_events_to_one_entry_holding_the_latest_payload", () => {
+    const existing = [
+      makeEvent("snapshot"),
+      makeEvent("pool_loaded"),
+      makeEvent("contact_discovery_progress", { done: 1, total: 5 }),
+    ];
+    const next = makeEvent("contact_discovery_progress", { done: 3, total: 5 });
+
+    const result = mergeStreamEvents(existing, next);
+
+    // No growth — the progress event is replaced in place, not appended.
+    expect(result).toHaveLength(3);
+    // First-seen position preserved (PIPE-08 / P1-2 AC6).
+    expect(result.map((e) => e.name)).toEqual([
+      "snapshot",
+      "pool_loaded",
+      "contact_discovery_progress",
+    ]);
+    expect(result[2].data.done).toBe(3);
+  });
+});
+
+describe("mergeStreamEvents with granular candidate progress", () => {
+  const candidateStage = (
+    fundingOrganizationId: string,
+    stage: "compliance" | "contacts" | "news" | "social",
+    status: "ok" | "skipped" | "failed" = "ok"
+  ) =>
+    makeEvent("candidate_stage_complete", {
+      fundingOrganizationId,
+      stage,
+      status,
+      detail: `${stage} ${status}`,
+    });
+
+  it("should_retain_distinct_candidates_and_stages_instead_of_deduping_by_event_name", () => {
+    let events: FastReportEvent[] = [];
+    events = mergeStreamEvents(events, candidateStage("org-1", "compliance"));
+    events = mergeStreamEvents(events, candidateStage("org-1", "contacts"));
+    events = mergeStreamEvents(events, candidateStage("org-2", "compliance"));
+
+    expect(events).toHaveLength(3);
+    expect(events.map((event) => [event.data.fundingOrganizationId, event.data.stage])).toEqual([
+      ["org-1", "compliance"],
+      ["org-1", "contacts"],
+      ["org-2", "compliance"],
+    ]);
+  });
+
+  it("should_apply_last_write_wins_for_the_same_candidate_and_stage", () => {
+    const skipped = candidateStage("org-1", "social", "skipped");
+    const completed = candidateStage("org-1", "social", "ok");
+
+    const events = mergeStreamEvents([skipped], completed);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toBe(completed);
+    expect(events[0].data.status).toBe("ok");
+  });
+
+  it("should_stay_bounded_when_the_backend_replays_candidate_history", () => {
+    const history = [
+      candidateStage("org-1", "compliance"),
+      candidateStage("org-1", "contacts"),
+      candidateStage("org-2", "compliance"),
+      candidateStage("org-2", "contacts"),
+    ];
+    let events: FastReportEvent[] = [];
+    for (const event of history) events = mergeStreamEvents(events, event);
+    for (const event of history) events = mergeStreamEvents(events, event);
+
+    expect(events).toHaveLength(history.length);
+  });
+});
+
 describe("MAX_STREAM_RETRIES", () => {
   it("should_be_a_positive_finite_reconnect_cap", () => {
     expect(MAX_STREAM_RETRIES).toBe(5);

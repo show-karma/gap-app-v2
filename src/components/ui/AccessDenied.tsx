@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, LogIn } from "lucide-react";
+import { AlertTriangle, LogIn, type LucideIcon, UserRoundSearch } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAccessDeniedMessages } from "@/hooks/useAccessDeniedMessages";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { isValidRole, ROLE_LABELS, Role } from "@/src/core/rbac/types";
 import {
@@ -15,25 +16,65 @@ import {
   substituteAccessDeniedTemplate,
 } from "@/utilities/accessDeniedTemplate";
 import { envVars } from "@/utilities/enviromentVars";
+import { cn } from "@/utilities/tailwind";
 
 const MarkdownPreview = dynamic(
   () => import("@/components/Utilities/MarkdownPreview").then((m) => m.MarkdownPreview),
   { ssr: false }
 );
 
+/**
+ * `denial` is the default: someone hit a wall (missing role, wrong account) and
+ * the red alert glyph is the honest signal. `signin` is for gates that are not
+ * a failure at all — the visitor simply has not signed in yet — so it drops the
+ * alarm styling for a neutral, inviting mark.
+ */
+type AccessDeniedVariant = "denial" | "signin";
+
+const ACCESS_DENIED_VARIANTS: Record<
+  AccessDeniedVariant,
+  { Icon: LucideIcon; wrapperClassName: string; iconClassName: string }
+> = {
+  denial: {
+    Icon: AlertTriangle,
+    wrapperClassName: "bg-red-50 dark:bg-red-900/20",
+    iconClassName: "text-red-600 dark:text-red-400",
+  },
+  signin: {
+    Icon: UserRoundSearch,
+    wrapperClassName: "bg-brand-lightblue dark:bg-brand-blue/15",
+    iconClassName: "text-brand-blue",
+  },
+};
+
 interface AccessDeniedCta {
   label: string;
   href: string;
 }
 
+/**
+ * A complementary action shown below the primary CTA — e.g. an applicant who
+ * lacks a manage role but can still view their own application. The optional
+ * `message` is rendered as Markdown above the link. Only shown to signed-in
+ * users (it is a destination, not a sign-in prompt).
+ */
+interface AccessDeniedSecondaryAction {
+  label: string;
+  href: string;
+  message?: string;
+}
+
 interface AccessDeniedProps {
   title?: string;
+  compactTitle?: boolean;
+  variant?: AccessDeniedVariant;
   message?: string;
   returnUrl?: string;
   requiredRoles?: ReadonlyArray<Role | string>;
   currentRolesOverride?: ReadonlyArray<Role>;
   isLoading?: boolean;
   cta?: AccessDeniedCta;
+  secondaryAction?: AccessDeniedSecondaryAction;
   /**
    * When provided, fetch the per-community Markdown overrides for the
    * AccessDenied body (public endpoint) and render the matching
@@ -120,12 +161,15 @@ function DenialBody({ authenticated, message, customMessage, communityName }: De
 
 export function AccessDenied({
   title,
+  compactTitle = false,
+  variant = "denial",
   message,
   returnUrl = "/",
   requiredRoles,
   currentRolesOverride,
   isLoading,
   cta,
+  secondaryAction,
   communitySlug,
   communityName,
 }: AccessDeniedProps) {
@@ -152,7 +196,7 @@ export function AccessDenied({
     return substituteAccessDeniedTemplate(raw, {
       communityName: communityName ?? COMMUNITY_FALLBACK,
       communitySlug,
-      appUrl: envVars.VERCEL_URL,
+      appUrl: envVars.APP_ORIGIN,
       requiredRoles: requiredList ?? "",
       currentRoles: authenticated
         ? visibleRoles.length > 0
@@ -201,18 +245,30 @@ export function AccessDenied({
   // render a separate h1 when a caller explicitly passes `title` — e.g.
   // page-specific headings like "Faucet admin access required".
   const resolvedTitle = title ?? null;
+  const { Icon, wrapperClassName, iconClassName } = ACCESS_DENIED_VARIANTS[variant];
 
   return (
     <div className="w-full mx-auto py-16 flex items-center justify-center min-h-[calc(100vh-8rem)]">
       <Card className="max-w-lg">
         <CardContent className="text-center py-12 px-8">
           <div className="mb-6 flex justify-center">
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-10 h-10 text-red-600 dark:text-red-400" />
+            <div
+              className={cn(
+                "w-20 h-20 rounded-full flex items-center justify-center",
+                wrapperClassName
+              )}
+            >
+              <Icon aria-hidden="true" className={cn("w-10 h-10", iconClassName)} />
             </div>
           </div>
 
-          {resolvedTitle ? <h1 className="text-2xl font-bold mb-4">{resolvedTitle}</h1> : null}
+          {resolvedTitle ? (
+            <h1
+              className={compactTitle ? "mb-2 text-base font-semibold" : "mb-4 text-2xl font-bold"}
+            >
+              {resolvedTitle}
+            </h1>
+          ) : null}
           <DenialBody
             authenticated={authenticated}
             message={message}
@@ -224,6 +280,25 @@ export function AccessDenied({
             <LogIn className="w-4 h-4 mr-2" />
             {buttonLabel}
           </Button>
+
+          {authenticated && secondaryAction ? (
+            <div className="mt-8 w-full border-t border-gray-200 dark:border-zinc-700 pt-6">
+              {secondaryAction.message ? (
+                <div className="text-muted-foreground mb-4 text-left">
+                  <MarkdownPreview source={secondaryAction.message} variant="inline" />
+                </div>
+              ) : null}
+              <Button asChild variant="secondary">
+                {secondaryAction.href.startsWith("http") ? (
+                  <a href={secondaryAction.href}>{secondaryAction.label}</a>
+                ) : (
+                  <Link href={secondaryAction.href} useBuilder={false}>
+                    {secondaryAction.label}
+                  </Link>
+                )}
+              </Button>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

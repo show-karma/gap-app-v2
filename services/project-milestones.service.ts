@@ -1,6 +1,6 @@
 import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -12,12 +12,21 @@ import { INDEXER } from "@/utilities/indexer";
 export const getProjectMilestones = async (
   projectIdOrSlug: string
 ): Promise<IProjectMilestoneResponse | null> => {
-  const [data, error] = await fetchData<IProjectMilestoneResponse>(
-    INDEXER.V2.PROJECTS.MILESTONES(projectIdOrSlug)
-  );
-
-  if (error || !data) {
+  let data: IProjectMilestoneResponse | null;
+  try {
+    // TODO(#1775): add zod schema
+    data = await api.get<IProjectMilestoneResponse>(
+      INDEXER.V2.PROJECTS.MILESTONES(projectIdOrSlug)
+    );
+  } catch (error) {
     errorManager(`Project Milestones API Error: ${error}`, error, {
+      context: "project-milestones.service",
+    });
+    return null;
+  }
+
+  if (!data) {
+    errorManager("Project Milestones API Error: empty response", null, {
       context: "project-milestones.service",
     });
     return null;

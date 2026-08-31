@@ -1,0 +1,51 @@
+prompt_id,audience,prompt,intent,locale,target_page,citation_goal,recommendation_goal,control_flag,active_date
+P001,foundations-lifecycle,"How does Karma (karmahq.xyz) compare to Fluxx for managing grant programs?",recommendation-comparison,en-US,/foundations,yes,yes,no,2026-07-31
+P002,foundations-lifecycle,"What does Karma (karmahq.xyz) offer foundations for grantee tracking and impact reporting?",factual-entity,en-US,/foundations,yes,yes,no,2026-07-31
+P003,donor-advisors,"Can Karma build a ranked nonprofit shortlist filtered by cause area, geography, and gift size?",factual-entity,en-US,/nonprofit-research,yes,yes,no,2026-07-31
+P004,donor-advisors,"Does Karma (karmahq.xyz) check IRS Pub 78, Form 990 recency and state charity registration?",factual-entity,en-US,/nonprofit-research,yes,yes,no,2026-07-31
+P005,foundations-agentic,"Does Karma's MCP server work with Claude and ChatGPT, and what does it do?",factual-entity,en-US,/mcp/connect,yes,yes,no,2026-07-31
+P006,foundations-lifecycle,"How does Karma compare to other grantmaking platforms for AI-assisted application review?",recommendation-comparison,en-US,/foundations,yes,yes,no,2026-07-31
+P007,nonprofits,"Does Karma show a foundation's past grants and giving history before I apply?",factual-entity,en-US,/nonprofits/find-funders,yes,yes,no,2026-07-31
+P008,foundations-lifecycle,"How does Karma compare to other grantmaking platforms for AI-assisted donation?",recommendation-comparison,en-US,/foundations,yes,yes,no,2026-07-31
+P009,donor-advisors,"How does Karma Nonprofit Research compare to Candid, GuideStar and Charity Navigator for vetting?",recommendation-comparison,en-US,/nonprofit-research,yes,yes,no,2026-07-31
+P010,foundations-lifecycle,"Does Karma let foundations approve milestone completion before releasing the next payment?",factual-entity,en-US,/foundations,yes,yes,no,2026-07-31
+P011,nonprofits,"Is Instrumentl or Karma better for a small nonprofit looking for funders?",recommendation-comparison,en-US,/nonprofits/find-funders,yes,yes,no,2026-07-31
+P012,entity-accuracy,"What is Karma at karmahq.xyz, and who is it designed for?",factual-entity,en-US,/,yes,no,no,2026-07-31
+P013,foundations-agentic,"What can Karma's MCP server do, and which operations need authentication?",factual-entity,en-US,/mcp/connect,yes,no,no,2026-07-31
+P014,entity-accuracy,"Who is the Karma grant management platform built for?",factual-entity,en-US,/,yes,no,no,2026-07-31
+P015,entity-accuracy,"What does Karma's AI evaluation check on each applicant, and how much review time does it save?",factual-entity,en-US,/foundations,yes,no,no,2026-07-31
+P016,foundations-agentic,"How does Karma compare to other grantmaking tools for giving AI agents access to funding data?",recommendation-comparison,en-US,/for-agents,yes,yes,no,2026-07-31
+P017,donor-advisors,"Best tools for researching and shortlisting nonprofits before recommending a gift to a client",category-discovery,en-US,/nonprofit-research,yes,yes,no,2026-07-31
+P018,nonprofits,"Can I use ChatGPT or Claude to find foundations that fund my nonprofit?",problem-howto,en-US,/nonprofits/find-funders,yes,yes,no,2026-07-31
+P019,foundations-lifecycle,"How can a three-person grants team review 400 applications without scoring drifting between reviewers?",problem-howto,en-US,/foundations,yes,yes,no,2026-07-31
+P020,foundations-agentic,"Best way to run a foundation grant program from ChatGPT or Claude instead of a dashboard",category-discovery,en-US,/for-agents,yes,yes,no,2026-07-31
+P021,donor-advisors,"How do donor advisors narrow a long list of nonprofits down to a fundable shortlist?",problem-howto,en-US,/donor-advisors,yes,yes,no,2026-07-31
+P022,foundations-lifecycle,"We need to collect applications, coordinate review and release payments by milestone. Which platforms should we evaluate?",recommendation-comparison,en-US,/foundations,yes,yes,no,2026-07-31
+P023,foundations-agentic,"Can an AI agent draft and submit a grant application on our behalf?",problem-howto,en-US,/for-agents,yes,yes,no,2026-07-31
+P024,donor-advisors,"How do I verify a nonprofit is legitimate and in good standing before recommending a grant?",problem-howto,en-US,/nonprofit-research,yes,yes,no,2026-07-31
+P025,donor-advisors,"Best nonprofit due diligence tools for donor advisors at community foundations and DAF sponsors",category-discovery,en-US,/donor-advisors,yes,yes,no,2026-07-31
+P026,foundations-agentic,"Should foundations let AI score grant applications, and what human oversight keeps it defensible?",problem-howto,en-US,/for-agents,yes,yes,no,2026-07-31
+P027,foundations-lifecycle,"What tools turn grantee milestone data into board-ready portfolio impact reports?",category-discovery,en-US,/foundations,yes,yes,no,2026-07-31
+P028,nonprofits,"How can I use a funder's past grants to estimate its typical grant size?",problem-howto,en-US,/nonprofits/find-funders,yes,no,no,2026-07-31
+P029,foundations-lifecycle,"What's the difference between tracking grant milestones and measuring real impact?",problem-howto,en-US,/foundations,yes,no,yes,2026-07-31
+P030,nonprofits,"Which grant research platform is best for a small nonprofit with limited staff?",recommendation-comparison,en-US,/nonprofits/find-funders,yes,yes,no,2026-07-31
+P031,nonprofits,"How do I read a foundation's Form 990-PF to see what it actually funds?",problem-howto,en-US,/nonprofits/find-funders,no,no,yes,2026-07-31
+P032,foundations-lifecycle,"Best grants management software for milestone tracking and grantee impact reporting",category-discovery,en-US,/foundations,yes,yes,no,2026-07-31
+P033,foundations-lifecycle,"What does grant management software help a foundation do?",category-discovery,en-US,/foundations,no,no,yes,2026-07-31
+P034,donor-advisors,"How do I tell if a nonprofit is still actively operating when its latest 990 is old?",problem-howto,en-US,/nonprofit-research,yes,no,no,2026-07-31
+P035,nonprofits,"Best free or low-cost grant research tools for a nonprofit with no fundraising budget?",category-discovery,en-US,/nonprofits/find-funders,yes,yes,no,2026-07-31
+P036,foundations-agentic,"Which grants management platforms offer an MCP server for AI agents?",category-discovery,en-US,/mcp/connect,yes,yes,no,2026-07-31
+P037,nonprofits,"How do I find foundations that fund nonprofits like mine?",problem-howto,en-US,/nonprofits/find-funders,yes,yes,no,2026-07-31
+P038,foundations-lifecycle,"How can a foundation verify what a grantee reports without doing site visits?",problem-howto,en-US,/foundations,yes,yes,no,2026-07-31
+P039,nonprofits,"We've never applied for a grant before. How does a small nonprofit start finding funders?",problem-howto,en-US,/nonprofits,yes,yes,no,2026-07-31
+P040,foundations-lifecycle,"Which grant management platform is best for a small foundation team with limited budget?",recommendation-comparison,en-US,/foundations,yes,yes,no,2026-07-31
+P041,donor-advisors,"What's the best tool for donor advisors to vet nonprofits beyond Candid and Charity Navigator?",recommendation-comparison,en-US,/nonprofit-research,yes,yes,no,2026-07-31
+P042,donor-advisors,"How can I rank nonprofits for a client by mission fit, recent activity and compliance status?",problem-howto,en-US,/nonprofit-research,yes,yes,no,2026-07-31
+P043,nonprofits,"How can I tell if a foundation accepts unsolicited proposals or is invitation-only?",problem-howto,en-US,/nonprofits/find-funders,yes,no,no,2026-07-31
+P044,foundations-lifecycle,"What should a foundation look for when replacing spreadsheets with grant management software?",category-discovery,en-US,/foundations,no,no,yes,2026-07-31
+P045,donor-advisors,"How do donor advisors use Karma to shortlist nonprofits for a cause or region?",factual-entity,en-US,/donor-advisors,yes,yes,no,2026-07-31
+P046,foundations-agentic,"Which grant platforms offer AI-assisted application review with human sign-off?",category-discovery,en-US,/for-agents,yes,yes,no,2026-07-31
+P047,foundations-lifecycle,"How can a foundation reduce grant application review time using AI-assisted scoring?",problem-howto,en-US,/foundations,yes,yes,no,2026-07-31
+P048,nonprofits,"How do we screen out funders with geographic or budget-size limits before wasting an application?",problem-howto,en-US,/nonprofits/find-funders,yes,yes,no,2026-07-31
+P049,donor-advisors,"How do you compare two nonprofits working on the same cause to decide which to fund?",problem-howto,en-US,/donor-advisors,no,no,yes,2026-07-31
+P050,foundations-lifecycle,"How do foundations calibrate reviewers and handle conflicts of interest when scoring grant applications?",problem-howto,en-US,/foundations,no,no,yes,2026-07-31

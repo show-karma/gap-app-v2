@@ -31,15 +31,30 @@ vi.mock("@/utilities/queries/v2/getCommunityData", () => ({
 
 vi.mock("@/utilities/pagesOnRoot", () => ({ pagesOnRoot: [] }));
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn().mockResolvedValue([null, null]),
+// The /manage/portfolio-reports/config page now calls the unified API client
+// directly (issue #1775 Phase 3 migration) and rethrows on failure, so it
+// needs api.get to resolve rather than hit the real (absent) indexer.
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn().mockResolvedValue([]),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {
       PROGRAMS: (id: string) => `/communities/${id}/programs`,
+    },
+    V2: {
+      COMMUNITIES: {
+        PROGRAMS: (uidOrSlug: string) => `/v2/communities/${uidOrSlug}/programs`,
+      },
     },
   },
 }));
@@ -216,17 +231,16 @@ describe("Community async server pages — happy path", () => {
     expect(screen.getByTestId("community-grants")).toBeInTheDocument();
   });
 
-  it("/(with-header)/reports renders PublicReportListPage", async () => {
-    await renderAsyncPage(
-      () => import("@/app/community/[communityId]/(with-header)/reports/page"),
-      { params: Promise.resolve({ communityId: "c1" }) }
-    );
+  it("/(cover)/reports renders PublicReportListPage", async () => {
+    await renderAsyncPage(() => import("@/app/community/[communityId]/(cover)/reports/page"), {
+      params: Promise.resolve({ communityId: "c1" }),
+    });
     expect(screen.getByTestId("public-report-list-page")).toBeInTheDocument();
   });
 
-  it("/(with-header)/reports/[runDate] renders PublicReportViewPage", async () => {
+  it("/(cover)/reports/[runDate] renders PublicReportViewPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/(with-header)/reports/[runDate]/page"),
+      () => import("@/app/community/[communityId]/(cover)/reports/[runDate]/page"),
       { params: Promise.resolve({ communityId: "c1", runDate: "2025-04-01" }) }
     );
     expect(screen.getByTestId("public-report-view-page")).toBeInTheDocument();
@@ -241,7 +255,7 @@ describe("Community async server pages — happy path", () => {
 });
 
 describe("Community async server pages — runDate route validation", () => {
-  it("/(with-header)/reports/[runDate] calls notFound for invalid runDate", async () => {
+  it("/(cover)/reports/[runDate] calls notFound for invalid runDate", async () => {
     const navigation = await import("next/navigation");
     const notFoundMock = vi.mocked(navigation.notFound);
     notFoundMock.mockImplementationOnce(() => {
@@ -250,7 +264,7 @@ describe("Community async server pages — runDate route validation", () => {
       throw err;
     });
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(with-header)/reports/[runDate]/page"
+      "@/app/community/[communityId]/(cover)/reports/[runDate]/page"
     );
     await expect(
       Page({ params: Promise.resolve({ communityId: "c1", runDate: "not-a-date" }) })

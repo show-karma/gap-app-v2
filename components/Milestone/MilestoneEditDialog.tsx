@@ -51,15 +51,20 @@ interface MilestoneEditDialogProps {
   excludeStartDate?: boolean;
 }
 
+// Convert in LOCAL time on both legs: the milestone card displays these
+// timestamps via formatDate in local time, so a UTC round-trip here
+// (toISOString / bare "YYYY-MM-DD" parsing) would show a different calendar
+// day than the card and shift the date by one on save in non-UTC timezones.
 function unixToDateInput(unix?: number): string {
   if (!unix) return "";
   const date = new Date(unix * 1000);
-  return date.toISOString().split("T")[0];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function dateInputToUnix(dateStr?: string): number | undefined {
   if (!dateStr) return undefined;
-  const date = new Date(dateStr);
+  const date = new Date(`${dateStr}T00:00:00`);
   if (Number.isNaN(date.getTime())) return undefined;
   return Math.floor(date.getTime() / 1000);
 }

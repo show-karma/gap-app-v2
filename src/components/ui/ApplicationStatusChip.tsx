@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { formatApplicationStatus } from "@/utilities/application-status";
 import { cn } from "@/utilities/tailwind";
 
 interface ApplicationStatusChipProps {
@@ -36,30 +37,6 @@ function getStatusStyle(status: string): string {
   return STATUS_STYLES[normalized] ?? "bg-muted text-muted-foreground";
 }
 
-function formatStatus(status: string): string {
-  const lower = status.toLowerCase();
-  const labels: Record<string, string> = {
-    pending: "Pending",
-    resubmitted: "Resubmitted",
-    approved: "Approved",
-    accepted: "Accepted",
-    rejected: "Rejected",
-    canceled: "Cancelled",
-    cancelled: "Cancelled",
-    submitted: "Submitted",
-    under_review: "Under Review",
-    revision_requested: "Revision Requested",
-    draft: "Draft",
-  };
-  return (
-    labels[lower] ??
-    status
-      .split("_")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ")
-  );
-}
-
 export function ApplicationStatusChip({
   status,
   size = "md",
@@ -89,7 +66,7 @@ export function ApplicationStatusChip({
         className
       )}
     >
-      {formatStatus(status)}
+      {formatApplicationStatus(status)}
     </Badge>
   );
 }

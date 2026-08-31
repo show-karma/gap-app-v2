@@ -38,7 +38,7 @@ const CommunityMilestonesTableRowComponent: FC<CommunityMilestonesTableRowProps>
     ? PAGES.PROJECT.GRANT(projectSlug, milestone.grant.uid)
     : undefined;
 
-  const viewHref = grantHref ?? PAGES.PROJECT.UPDATES(projectSlug);
+  const viewHref = grantHref ?? PAGES.PROJECT.OVERVIEW(projectSlug);
 
   const hasMilestonePosition =
     milestone.grantMilestoneIndex != null && milestone.grantMilestoneTotal != null;

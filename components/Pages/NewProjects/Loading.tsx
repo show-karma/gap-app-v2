@@ -54,22 +54,23 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
   );
 };
 
+const CARD_SKELETON_KEYS = Array.from({ length: 12 }, (_, i) => `project-card-skeleton-${i}`);
+const PROGRAM_SKELETON_KEYS = Array.from({ length: 6 }, (_, i) => `program-filter-skeleton-${i}`);
+
 export const ProjectCardListSkeleton = () => {
-  const cardArray = Array.from({ length: 12 }, (_, index) => index);
   return (
     <div className="grid grid-cols-4 w-full gap-4 max-[1600px]:grid-cols-4 max-[1500px]:grid-cols-3 max-[1100px]:grid-cols-2 max-sm:grid-cols-1">
-      {cardArray.map((_, index) => (
-        <ProjectCardSkeleton key={index} index={index} />
+      {CARD_SKELETON_KEYS.map((key, index) => (
+        <ProjectCardSkeleton key={key} index={index} />
       ))}
     </div>
   );
 };
 export const FilterByProgramsSkeleton = () => {
-  const programsArray = Array.from({ length: 6 }, (_, index) => index);
   return (
     <div className="flex flex-col gap-2 w-full">
-      {programsArray.map((_, index) => (
-        <Skeleton key={index} className={"h-7 w-full"} />
+      {PROGRAM_SKELETON_KEYS.map((key) => (
+        <Skeleton key={key} className={"h-7 w-full"} />
       ))}
     </div>
   );

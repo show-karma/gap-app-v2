@@ -3,15 +3,16 @@ import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import type { APIContact } from "@/types/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 interface Contact {
   id: string;
-  name: string;
-  email: string;
-  telegram: string;
+  name: string | undefined;
+  email: string | undefined;
+  telegram: string | undefined;
 }
 
 /**
@@ -41,19 +42,22 @@ export const useContactInfo = (projectId: string | undefined, isAuthorized?: boo
     queryFn: async (): Promise<Contact[] | null> => {
       if (!projectId || !canFetch) return null;
 
-      const [data, error, , status] = await fetchData(
-        INDEXER.SUBSCRIPTION.GET(projectId),
-        "GET",
-        {},
-        {},
-        {},
-        true
-      );
+      try {
+        // TODO(#1775): add zod schema
+        const data = await api.get<APIContact[]>(INDEXER.SUBSCRIPTION.GET(projectId));
 
-      if (error) {
+        if (!data) return null;
+
+        return data.map((contact: APIContact) => ({
+          id: contact._id.$oid,
+          name: contact.name,
+          email: contact.email,
+          telegram: contact.telegram,
+        }));
+      } catch (error) {
         // 403 is the documented project-admin denial — treat it as data
         // (no contacts) and stay silent. Anything else is unexpected.
-        if (status === 403) {
+        if (isApiError(error) && error instanceof HttpError && error.status === 403) {
           return null;
         }
         errorManager(`Error fetching project contacts info from project ${projectId}`, error, {
@@ -62,15 +66,6 @@ export const useContactInfo = (projectId: string | undefined, isAuthorized?: boo
         });
         return null;
       }
-
-      if (!data) return null;
-
-      return data.map((contact: APIContact) => ({
-        id: contact._id.$oid,
-        name: contact.name,
-        email: contact.email,
-        telegram: contact.telegram,
-      }));
     },
     enabled: !!projectId && canFetch,
     ...defaultQueryOptions,

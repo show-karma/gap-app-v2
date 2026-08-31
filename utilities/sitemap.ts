@@ -37,6 +37,16 @@ export const MAX_SITEMAP_CHUNK = 100_000;
 // instead of an empty one.
 export const SITEMAP_REVALIDATE_SECONDS = 60 * 60 * 24; // 24h
 
+// Next's Data Cache persists across deployments (unlike the CDN edge cache,
+// which is purged on every deploy), so a redeploy alone never forces a fresh
+// fetch of these two indexer URLs — the 24h SWR window is the only thing that
+// ever refreshes them. Embedding this version in the request URL changes the
+// Data Cache key: bump it whenever an indexer-side sitemap contract change
+// (e.g. a project-slug indexability rule) must be visible sooner than the SWR
+// window allows. Does not change SITEMAP_REVALIDATE_SECONDS or the CDN policy
+// below — only which cache entry a deploy starts reading from.
+export const SITEMAP_FETCH_CACHE_VERSION = "v1";
+
 // Crawlers get an instant edge hit for a day, then Vercel's CDN serves the
 // stale copy for up to a week while it revalidates in the background — a slow
 // function or indexer never makes Googlebot wait or time out. max-age=0 keeps
@@ -162,9 +172,12 @@ const INDEXER_BASE_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 // last good counts rather than collapsing the index. Throws only on a true cold
 // miss (e.g. first request after a deploy) when the indexer is also unreachable.
 export async function fetchSitemapCounts(): Promise<SitemapCounts> {
-  const res = await fetch(`${INDEXER_BASE_URL}/v2/sitemap/counts`, {
-    next: { revalidate: SITEMAP_REVALIDATE_SECONDS },
-  });
+  const res = await fetch(
+    `${INDEXER_BASE_URL}/v2/sitemap/counts?v=${SITEMAP_FETCH_CACHE_VERSION}`,
+    {
+      next: { revalidate: SITEMAP_REVALIDATE_SECONDS },
+    }
+  );
   if (!res.ok) {
     throw new Error(`sitemap counts fetch failed: HTTP ${res.status}`);
   }
@@ -179,7 +192,7 @@ export async function fetchSitemapKindPage(
   pageSize: number = SITEMAP_PAGE_SIZE
 ): Promise<string[]> {
   const res = await fetch(
-    `${INDEXER_BASE_URL}/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}`,
+    `${INDEXER_BASE_URL}/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}&v=${SITEMAP_FETCH_CACHE_VERSION}`,
     { next: { revalidate: SITEMAP_REVALIDATE_SECONDS } }
   );
   if (!res.ok) {

@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
 import { usePendingVerificationMilestones } from "@/hooks/usePendingVerificationMilestones";
 import { milestoneReportService } from "@/services/milestone-report.service";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -86,7 +86,7 @@ const programIdsQueryOptions = {
 
 interface UseReportPageDataOptions {
   communityId: string;
-  grantPrograms: GrantProgram[];
+  grantPrograms: CommunityProgram[];
   hasAccess: boolean;
   isAuthorized: boolean;
   reviewerPrograms: Array<{ programId: string }>;

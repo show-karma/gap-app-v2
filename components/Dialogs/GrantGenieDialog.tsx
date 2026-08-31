@@ -6,37 +6,39 @@ import { type FC, Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { Button } from "../Utilities/Button";
 import { Spinner } from "../Utilities/Spinner";
 
+interface GrantGenieRecommendation {
+  name: string;
+  description: string;
+  title: string;
+  score: number;
+  recommendation: string;
+}
+
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [recommendations, setRecommendations] = useState<
-    {
-      name: string;
-      description: string;
-      title: string;
-      score: number;
-      recommendation: string;
-    }[]
-  >([]);
+  const [recommendations, setRecommendations] = useState<GrantGenieRecommendation[]>([]);
 
   useEffect(() => {
     setIsLoading(true);
-    fetchData(INDEXER.PROJECT.GRANTS_GENIE(projectId), "GET", {}, {}, {}, undefined).then(
-      ([res, error]) => {
+    // TODO(#1775): add zod schema
+    api
+      .get<{ grants: GrantGenieRecommendation[] }>(INDEXER.PROJECT.GRANTS_GENIE(projectId))
+      .then((res) => {
         setIsLoading(false);
-        setError(!!error);
-        if (error) {
-          toast.error("Failed to fetch recommendations");
-          return;
-        }
+        setError(false);
         setRecommendations(res?.grants);
-      }
-    );
+      })
+      .catch(() => {
+        setIsLoading(false);
+        setError(true);
+        toast.error("Failed to fetch recommendations");
+      });
   }, [projectId]);
 
   return (

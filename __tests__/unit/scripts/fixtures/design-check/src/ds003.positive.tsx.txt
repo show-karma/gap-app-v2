@@ -1,0 +1,10 @@
+export function Positive() {
+  return (
+    <div>
+      <span style={{ color: "#fff" }}>hex</span>
+      <span style={{ backgroundColor: "rgb(1,2,3)" }}>rgb</span>
+      <span style={{ fontSize: "14px" }}>size</span>
+      <span style={{ boxShadow: "0 0 4px #000000" }}>shadow</span>
+    </div>
+  );
+}

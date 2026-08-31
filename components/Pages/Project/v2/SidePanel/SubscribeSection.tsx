@@ -11,7 +11,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Project } from "@/types/v2/project";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { cn } from "@/utilities/tailwind";
@@ -53,19 +54,13 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
   const onSubmit = async (data: SchemaType) => {
     try {
       setIsLoading(true);
-      const [_res, error] = await fetchData(
-        INDEXER.PROJECT.SUBSCRIBE(project?.uid as `0x${string}`),
-        "POST",
-        data
-      );
-      if (error) throw error;
+      await api.post(INDEXER.PROJECT.SUBSCRIBE(project?.uid as `0x${string}`), data);
       toast.success(
         `You have successfully subscribed to ${project?.details?.title || "this project"}.`
       );
       reset();
     } catch (error: unknown) {
-      const errorString = error instanceof Error ? error.message : String(error);
-      const isAlreadySubscribed = errorString?.includes("422");
+      const isAlreadySubscribed = error instanceof HttpError && error.status === 422;
       if (isAlreadySubscribed) {
         setError("email", {
           type: "manual",

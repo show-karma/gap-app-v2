@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { CANONICAL_ORIGIN, docsOrigin } from "../utilities/domains";
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
@@ -38,7 +39,7 @@ function loadScriptEnv() {
 
 loadScriptEnv();
 
-const SITE_URL = "https://www.karmahq.xyz";
+const SITE_URL = CANONICAL_ORIGIN;
 const SITEMAP_URL = `${SITE_URL}/sitemap.xml`;
 const PROJECT_NAME = "Karma";
 const API_DOCS_URL = "https://gapapi.karmahq.xyz/v2/docs";
@@ -46,11 +47,12 @@ const API_DOCS_URL = "https://gapapi.karmahq.xyz/v2/docs";
 // probe predictable apex paths, so we publish under the marketing
 // domain rather than the API subdomain. Implementation lives in
 // app/openapi.json/route.ts and proxies ${gap-indexer}/v2/docs/json.
-const API_SPEC_URL = "https://www.karmahq.xyz/openapi.json";
+const API_SPEC_URL = `${SITE_URL}/openapi.json`;
 const FIRECRAWL_SCRAPE_URL =
   process.env.FIRECRAWL_SCRAPE_URL || "https://api.firecrawl.dev/v1/scrape";
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
-const DOCS_SITE_URL = "https://docs.gap.karmahq.xyz";
+// Externally hosted docs; not part of the karmahq.org migration.
+const DOCS_SITE_URL = docsOrigin();
 const DOCS_SITEMAP_URL = `${DOCS_SITE_URL}/sitemap-pages.xml`;
 const DOCS_CATEGORY_ORDER = [
   "Overview",
@@ -67,8 +69,20 @@ const OUTPUT_DIR = path.resolve(__dirname, "../public");
 const BUILD_TIMESTAMP = new Date().toISOString();
 
 const DEFAULT_DESCRIPTION =
-  "Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. " +
-  "Ecosystems use Karma to allocate funding, track milestones, and measure impact.";
+  "Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, " +
+  "with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked " +
+  "nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, " +
+  "and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned " +
+  "foundations, grounded in every IRS 990 on record with every answer cited.";
+
+// The document intro adds the onchain lane, whose chain list is derived from
+// SUPPORTED_NETWORKS so it cannot drift from the networks actually supported.
+const buildOverviewParagraph = (networkNames: string) =>
+  `${DEFAULT_DESCRIPTION} Karma also runs onchain funding programs where ecosystems fund builders and impact is attested on-chain, on ${networkNames}.`;
+
+const HOME_SUMMARY =
+  "Foundations use Karma to run grant programs, donor advisors to research nonprofits, " +
+  "and nonprofits to find aligned funders.";
 
 const SITEMAP_LABEL_MAP: Record<string, string> = {
   "/": "Home",
@@ -81,10 +95,11 @@ const SITEMAP_LABEL_MAP: Record<string, string> = {
   "/seeds": "Seeds",
   "/terms-and-conditions": "Terms and Conditions",
   "/knowledge": "Knowledge Base",
+  "/data/foundation-funding": "Foundation Funding Data",
 };
 
 const SITEMAP_DESCRIPTION_MAP: Record<string, string> = {
-  "/": "Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.",
+  "/": HOME_SUMMARY,
   "/communities": "Explore DAOs, protocols, and organizations running funding programs on Karma",
   "/create-project-profile":
     "Create a public project profile to track funding, milestones, and updates",
@@ -96,6 +111,8 @@ const SITEMAP_DESCRIPTION_MAP: Record<string, string> = {
   "/seeds": "Seed funding and early-stage project support",
   "/terms-and-conditions": "Terms and conditions for using the Karma platform",
   "/knowledge": "Articles on grant accountability, reputation, and impact measurement",
+  "/data/foundation-funding":
+    "Methodology and definitions for Karma's index of IRS Form 990 and 990-PF filings",
 };
 
 const SUPPORTED_NETWORKS = [
@@ -128,10 +145,9 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
   {
     path: "/",
     label: "Home",
-    fallbackTitle: "Karma - Where builders get funded and ecosystems grow",
+    fallbackTitle: "Karma - Funding software for foundations, donor advisors, and nonprofits",
     fallbackDescription: DEFAULT_DESCRIPTION,
-    curatedDescription:
-      "Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.",
+    curatedDescription: HOME_SUMMARY,
     minContentChars: 400,
     maxContentChars: 4200,
     sourceFallbackFiles: [
@@ -231,6 +247,7 @@ const CATEGORY_MAP: Record<string, string> = {
   "project-profiles-software-vs-nonsoftware": "Project Profiles",
   "onchain-project-profiles": "Project Profiles",
   "how-funders-use-project-profiles": "Project Profiles",
+  "nonprofit-due-diligence": "Nonprofit Research",
 };
 
 const BOILERPLATE_LINE_PATTERNS = [
@@ -1010,46 +1027,97 @@ function parseTagValue(xmlChunk: string, tagName: string): string {
   return match ? decodeHtmlEntities(normalizeWhitespace(match[1])) : "";
 }
 
-async function fetchSitemapEntries(): Promise<SitemapEntry[]> {
-  try {
-    const response = await fetch(SITEMAP_URL, {
-      headers: { "User-Agent": "Karma-LLMS-Generator/1.0" },
-      signal: AbortSignal.timeout(15_000),
+function parseUrlSetEntries(xml: string): SitemapEntry[] {
+  const entries: SitemapEntry[] = [];
+
+  for (const match of xml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
+    const block = match[1];
+    const url = parseTagValue(block, "loc");
+    if (!url) continue;
+
+    entries.push({
+      url,
+      lastModified: parseTagValue(block, "lastmod"),
+      changeFrequency: parseTagValue(block, "changefreq"),
+      priority: parseTagValue(block, "priority"),
     });
-
-    if (!response.ok) {
-      throw new Error(`Sitemap fetch failed (${response.status})`);
-    }
-
-    const xml = await response.text();
-    const entries: SitemapEntry[] = [];
-
-    for (const match of xml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
-      const block = match[1];
-      const url = parseTagValue(block, "loc");
-      if (!url) continue;
-
-      entries.push({
-        url,
-        lastModified: parseTagValue(block, "lastmod"),
-        changeFrequency: parseTagValue(block, "changefreq"),
-        priority: parseTagValue(block, "priority"),
-      });
-    }
-
-    if (entries.length > 0) {
-      return entries;
-    }
-  } catch (error) {
-    console.warn(`Sitemap fetch failed: ${(error as Error).message}`);
   }
 
-  return STATIC_PAGES.map((page) => ({
-    url: `${SITE_URL}${page.path}`,
-    lastModified: BUILD_TIMESTAMP,
-    changeFrequency: "",
-    priority: "",
-  }));
+  return entries;
+}
+
+function parseSitemapIndexLocs(xml: string): string[] {
+  const locs: string[] = [];
+
+  for (const match of xml.matchAll(/<sitemap>([\s\S]*?)<\/sitemap>/g)) {
+    const loc = parseTagValue(match[1], "loc");
+    if (loc) locs.push(loc);
+  }
+
+  return locs;
+}
+
+// /sitemap.xml is a sitemap INDEX whose children are the real <urlset>
+// documents (utilities/sitemap.ts buildSitemapIndexBody). Only the static
+// child belongs in this curated index: it holds the ~50 top-level site pages
+// plus blog posts, which is what "Site URL Index" means here and what
+// SITEMAP_LABEL_MAP/SITEMAP_DESCRIPTION_MAP are written for. The entity
+// children (communities, projects, funding-programs) hold up to
+// MAX_URLS_PER_SITEMAP (45,000) near-identically-labeled URLs each and would
+// swamp the file, so recursion is allowlisted rather than blanket.
+const SITEMAP_INDEX_CHILD_ALLOWLIST = ["/sitemaps/static/sitemap.xml"];
+
+function isAllowlistedSitemapChild(loc: string): boolean {
+  try {
+    return SITEMAP_INDEX_CHILD_ALLOWLIST.includes(new URL(loc).pathname);
+  } catch {
+    return false;
+  }
+}
+
+async function fetchSitemapXml(url: string): Promise<string> {
+  const response = await fetch(url, {
+    headers: { "User-Agent": "Karma-LLMS-Generator/1.0" },
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Sitemap fetch failed for ${url} (${response.status})`);
+  }
+
+  return response.text();
+}
+
+// Throws rather than falling back to a hardcoded page list: a silent fallback
+// is what let the generated "Site URL Index" ship empty for months.
+async function fetchSitemapEntries(): Promise<SitemapEntry[]> {
+  const xml = await fetchSitemapXml(SITEMAP_URL);
+
+  if (!xml.includes("<sitemapindex")) {
+    const entries = parseUrlSetEntries(xml);
+    if (entries.length === 0) {
+      throw new Error(`Sitemap ${SITEMAP_URL} contained no <url> entries`);
+    }
+    return entries;
+  }
+
+  const childLocs = parseSitemapIndexLocs(xml).filter(isAllowlistedSitemapChild);
+  if (childLocs.length === 0) {
+    throw new Error(
+      `Sitemap index ${SITEMAP_URL} listed no children matching ${SITEMAP_INDEX_CHILD_ALLOWLIST.join(", ")}`
+    );
+  }
+
+  const entries: SitemapEntry[] = [];
+  for (const loc of childLocs) {
+    entries.push(...parseUrlSetEntries(await fetchSitemapXml(loc)));
+  }
+
+  if (entries.length === 0) {
+    throw new Error(`Sitemap index children (${childLocs.join(", ")}) contained no <url> entries`);
+  }
+
+  return entries;
 }
 
 async function extractLandingPages(): Promise<LandingPageContent[]> {
@@ -1358,6 +1426,14 @@ function cleanDocsMarkdown(markdown: string): string {
       // Deprecated v1 API reference (plain text or markdown link form)
       .replace(/^(?:\[)?API DOCS \(v1\).*deprecated.*$/gim, "")
       .replace(/^Last updated\s+\d+\s+\w+\s+ago\s*$/gm, "")
+      // Docs-site chrome: copy-to-clipboard button label and the table-of-contents
+      // heading. Both are navigation affordances with no content value, and they
+      // survive onlyMainContent because they sit inside the article element.
+      .replace(/^Copy\s*$/gm, "")
+      .replace(/^On this page\s*$/gm, "")
+      // Docs-site footer pointing readers at llms.txt. Circular inside a generated
+      // LLM file, and repeated once per page.
+      .replace(/^For the complete documentation index, see llms\.txt\s*\..*$/gm, "")
       // Collapse orphan double spaces left by stripped markdown links (within lines only)
       .replace(/ {2,}/g, " ")
       .replace(/\n{3,}/g, "\n\n")
@@ -1424,7 +1500,7 @@ async function fetchSingleDocsPage(url: string): Promise<DocsPage | null> {
           url,
           formats: ["markdown"],
           onlyMainContent: true,
-          excludeTags: ["nav", "footer", "aside", "img"],
+          excludeTags: ["nav", "footer", "aside", "img", "button"],
           removeBase64Images: true,
         }),
         signal: AbortSignal.timeout(20_000),
@@ -1639,9 +1715,7 @@ function generateLlmsTxt(
   const networkNames = SUPPORTED_NETWORKS.filter((n) => !n.name.includes("testnet"))
     .map((n) => n.name)
     .join(", ");
-  lines.push(
-    `Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports ${networkNames}.`
-  );
+  lines.push(buildOverviewParagraph(networkNames));
   lines.push("");
 
   // Landing Pages: includes Funding Map and Knowledge Base (no separate Product Pages section)
@@ -1731,9 +1805,7 @@ function generateLlmsFullTxt(
   const networkNames = SUPPORTED_NETWORKS.filter((n) => !n.name.includes("testnet"))
     .map((n) => n.name)
     .join(", ");
-  lines.push(
-    `Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports ${networkNames}.`
-  );
+  lines.push(buildOverviewParagraph(networkNames));
   lines.push("");
 
   // --- Table of Contents ---
@@ -1874,6 +1946,44 @@ function generateLlmsFullTxt(
   return lines.join("\n");
 }
 
+// Sections that must never render with zero link bullets. Generation aborts
+// (non-zero exit) instead of committing a document with an empty section, so
+// the monthly workflow goes red rather than silently publishing a hollow file.
+const REQUIRED_SECTIONS: Record<string, string[]> = {
+  "llms.txt": ["## Landing Pages", "## Site URL Index", "## Optional"],
+  "llms-full.txt": ["## Site URL Index"],
+};
+
+function assertRequiredSections(name: string, content: string): void {
+  const requiredSections = REQUIRED_SECTIONS[name];
+  if (!requiredSections) {
+    throw new Error(`No required-section rules defined for ${name}`);
+  }
+
+  const lines = content.split("\n");
+
+  for (const header of requiredSections) {
+    const start = lines.indexOf(header);
+    if (start === -1) {
+      throw new Error(`${name}: required section "${header}" is missing`);
+    }
+
+    let hasBullet = false;
+    for (let index = start + 1; index < lines.length; index++) {
+      const line = lines[index];
+      if (line.startsWith("## ")) break;
+      if (line.startsWith("- [")) {
+        hasBullet = true;
+        break;
+      }
+    }
+
+    if (!hasBullet) {
+      throw new Error(`${name}: required section "${header}" rendered with no entries`);
+    }
+  }
+}
+
 async function main() {
   console.info("Generating llms.txt and llms-full.txt...");
 
@@ -1892,6 +2002,9 @@ async function main() {
 
   const llmsTxt = generateLlmsTxt(articles, landingPages, sitemapEntries, docsPages);
   const llmsFullTxt = generateLlmsFullTxt(articles, landingPages, sitemapEntries, docsPages);
+
+  assertRequiredSections("llms.txt", llmsTxt);
+  assertRequiredSections("llms-full.txt", llmsFullTxt);
 
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   fs.writeFileSync(path.join(OUTPUT_DIR, "llms.txt"), llmsTxt, "utf-8");
@@ -1960,6 +2073,9 @@ function generateMarkdownFiles(
 // --- Exports for testing ---
 export {
   BOILERPLATE_LINE_PATTERNS,
+  DEFAULT_DESCRIPTION,
+  HOME_SUMMARY,
+  buildOverviewParagraph,
   SITEMAP_LABEL_MAP,
   SITEMAP_DESCRIPTION_MAP,
   PROJECT_NAME,
@@ -1989,6 +2105,12 @@ export {
   isNoisyLandingText,
   sentenceOverlap,
   sitemapUrlToLabel,
+  parseUrlSetEntries,
+  parseSitemapIndexLocs,
+  fetchSitemapEntries,
+  assertRequiredSections,
+  REQUIRED_SECTIONS,
+  SITEMAP_INDEX_CHILD_ALLOWLIST,
   generateSitemapSection,
   generateLlmsTxt,
   generateLlmsFullTxt,

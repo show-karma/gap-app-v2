@@ -1,9 +1,20 @@
 import { waitFor } from "@testing-library/react";
 import { renderHookWithProviders } from "@/__tests__/utils/render";
+import { HttpError } from "@/utilities/api/errors";
 
-const mockFetchData = vi.fn();
-vi.mock("@/utilities/fetchData", () => ({
-  default: (...args: unknown[]) => mockFetchData(...args),
+// reviewerInboxService.getReviewerInbox (#1775 Phase 3) now calls api.get
+// instead of the legacy fetchData tuple adapter.
+const mockApiGet = vi.fn();
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 import { useReviewerInbox } from "@/hooks/useReviewerInbox";
@@ -33,7 +44,7 @@ describe("useReviewerInbox", () => {
 
   it("calls the community reviewer-inbox endpoint with the encoded filters", async () => {
     const items = [{ id: "APP-1", kind: "application", bucket: "action" }];
-    mockFetchData.mockResolvedValue([{ items, pagination: PAGINATION, stats: STATS }, null]);
+    mockApiGet.mockResolvedValue({ items, pagination: PAGINATION, stats: STATS });
 
     const { result } = renderHookWithProviders(() =>
       useReviewerInbox("octant", {
@@ -49,8 +60,8 @@ describe("useReviewerInbox", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(mockFetchData).toHaveBeenCalledTimes(1);
-    const url = mockFetchData.mock.calls[0][0] as string;
+    expect(mockApiGet).toHaveBeenCalledTimes(1);
+    const url = mockApiGet.mock.calls[0][0] as string;
     expect(url).toContain("/v2/funding-applications/community/octant/reviewer-inbox?");
     expect(url).toContain("status=pending");
     expect(url).toContain("search=infra");
@@ -68,17 +79,23 @@ describe("useReviewerInbox", () => {
   it("does not fetch when disabled", async () => {
     renderHookWithProviders(() => useReviewerInbox("octant", {}, { enabled: false }));
     await new Promise((r) => setTimeout(r, 0));
-    expect(mockFetchData).not.toHaveBeenCalled();
+    expect(mockApiGet).not.toHaveBeenCalled();
   });
 
   it("does not fetch without a communityId", async () => {
     renderHookWithProviders(() => useReviewerInbox("", {}));
     await new Promise((r) => setTimeout(r, 0));
-    expect(mockFetchData).not.toHaveBeenCalled();
+    expect(mockApiGet).not.toHaveBeenCalled();
   });
 
   it("surfaces a fetch error and yields empty items/stats", async () => {
-    mockFetchData.mockResolvedValue([null, "500 Server Error"]);
+    mockApiGet.mockRejectedValue(
+      new HttpError(500, {
+        endpoint: "/v2/funding-applications/community/octant/reviewer-inbox",
+        method: "GET",
+        body: { message: "500 Server Error" },
+      })
+    );
 
     const { result } = renderHookWithProviders(() => useReviewerInbox("octant", {}));
 
@@ -91,7 +108,7 @@ describe("useReviewerInbox", () => {
   });
 
   it("normalizes a missing items array to an empty list with default stats", async () => {
-    mockFetchData.mockResolvedValue([{ pagination: undefined, stats: undefined }, null]);
+    mockApiGet.mockResolvedValue({ pagination: undefined, stats: undefined });
 
     const { result } = renderHookWithProviders(() => useReviewerInbox("octant", { page: 3 }));
 

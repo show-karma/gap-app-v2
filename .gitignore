@@ -77,3 +77,6 @@ public/knowledge/*.md
 
 # fast-grep index (local search index, not committed)
 .fgr/
+
+# QA / dogfood run artifacts (screenshots, videos, captured auth state)
+dogfood-output/

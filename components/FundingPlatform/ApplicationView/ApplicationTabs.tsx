@@ -4,6 +4,7 @@ import {
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
   FlagIcon,
+  LockClosedIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
@@ -119,6 +120,7 @@ export const TabIcons = {
   AIAnalysis: SparklesIcon,
   Discussion: ChatBubbleLeftRightIcon,
   Milestones: FlagIcon,
+  Notes: LockClosedIcon,
 };
 
 export default ApplicationTabs;

@@ -5,9 +5,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+const mockApiGet = vi.fn();
+const mockApiPost = vi.fn();
+
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: (...args: unknown[]) => mockApiPost(...args),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 import {
@@ -17,22 +27,32 @@ import {
   useOpenBillingPortal,
   useStartCheckout,
 } from "@/hooks/useDonorBilling";
-import fetchData from "@/utilities/fetchData";
+import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
-
-const mockFetchData = vi.mocked(fetchData);
 
 const ENTITLEMENT = {
   advisorId: "advisor-1",
   plan: "starter",
   planLabel: "Nonprofit Research — Starter",
   status: "active",
-  reportsIncluded: 5,
-  reportsUsed: 2,
+  reportsIncluded: 10,
+  reportsUsed: 7,
   freeReportsGranted: 2,
   freeReportsUsed: 2,
   reportsRemaining: 3,
   canCreateReport: true,
+  introsIncluded: 2,
+  introsUsed: 1,
+  introsRemaining: 1,
+  canRequestIntro: true,
+  diligenceIncluded: 5,
+  diligenceUsed: 0,
+  diligenceRemaining: 5,
+  canAskDiligence: true,
+  profilesIncluded: 3,
+  profilesUsed: 1,
+  profilesRemaining: 2,
+  canCreateProfile: true,
   currentPeriodStart: "2026-08-01T00:00:00.000Z",
   currentPeriodEnd: "2026-09-01T00:00:00.000Z",
   cancelAtPeriodEnd: false,
@@ -64,17 +84,23 @@ describe("useDonorEntitlement", () => {
   afterEach(() => qc.clear());
 
   it("loads the advisor's remaining allowance", async () => {
-    mockFetchData.mockResolvedValue([ENTITLEMENT, null, null, 200]);
+    mockApiGet.mockResolvedValue(ENTITLEMENT);
 
     const { result } = renderHook(() => useDonorEntitlement(), { wrapper: wrapper(qc) });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.reportsRemaining).toBe(3);
-    expect(mockFetchData).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_SUBSCRIPTION);
+    expect(mockApiGet).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_SUBSCRIPTION);
   });
 
   it("surfaces an error state rather than empty data", async () => {
-    mockFetchData.mockResolvedValue([null, "Failed", null, 500]);
+    mockApiGet.mockRejectedValue(
+      new HttpError(500, {
+        endpoint: INDEXER.DONOR_RESEARCH.BILLING_SUBSCRIPTION,
+        method: "GET",
+        body: { message: "Failed" },
+      })
+    );
 
     const { result } = renderHook(() => useDonorEntitlement(), { wrapper: wrapper(qc) });
 
@@ -87,7 +113,7 @@ describe("useDonorEntitlement", () => {
     });
 
     expect(result.current.fetchStatus).toBe("idle");
-    expect(mockFetchData).not.toHaveBeenCalled();
+    expect(mockApiGet).not.toHaveBeenCalled();
   });
 });
 
@@ -101,26 +127,21 @@ describe("useDonorPlanCatalog", () => {
   afterEach(() => qc.clear());
 
   it("requests the public catalog unauthenticated", async () => {
-    mockFetchData.mockResolvedValue([
-      { freeSignupReportGrant: 2, billingEnabled: true, plans: [] },
-      null,
-      null,
-      200,
-    ]);
+    mockApiGet.mockResolvedValue({
+      freeSignupReportGrant: 2,
+      billingEnabled: true,
+      plans: [],
+      packs: [],
+    });
 
     const { result } = renderHook(() => useDonorPlanCatalog(), { wrapper: wrapper(qc) });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    // 6th positional arg is `isAuthorized` — false so a logged-out visitor on
-    // the marketing page doesn't trip the Privy token path.
-    expect(mockFetchData).toHaveBeenCalledWith(
-      INDEXER.DONOR_RESEARCH.BILLING_PLANS,
-      "GET",
-      {},
-      {},
-      {},
-      false
-    );
+    // `isAuthorized: false` so a logged-out visitor on the marketing page
+    // doesn't trip the Privy token path.
+    expect(mockApiGet).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_PLANS, {
+      isAuthorized: false,
+    });
   });
 });
 
@@ -146,19 +167,17 @@ describe("useStartCheckout", () => {
   });
 
   it("sends absolute return URLs on this origin and redirects to Stripe", async () => {
-    mockFetchData.mockResolvedValue([
-      { url: "https://checkout.stripe.com/c/pay/cs_1", sessionId: "cs_1" },
-      null,
-      null,
-      201,
-    ]);
+    mockApiPost.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/pay/cs_1",
+      sessionId: "cs_1",
+    });
 
     const { result } = renderHook(() => useStartCheckout(), { wrapper: wrapper(qc) });
     result.current.mutate({ plan: "starter" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetchData).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT, "POST", {
+    expect(mockApiPost).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT, {
       plan: "starter",
       successUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?checkout=success",
       cancelUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?checkout=cancel",
@@ -169,7 +188,7 @@ describe("useStartCheckout", () => {
   it("invalidates the cached entitlement so the return trip re-reads it", async () => {
     qc.setQueryData(donorEntitlementQueryKey, ENTITLEMENT);
     const invalidate = vi.spyOn(qc, "invalidateQueries");
-    mockFetchData.mockResolvedValue([{ url: "https://checkout" }, null, null, 201]);
+    mockApiPost.mockResolvedValue({ url: "https://checkout" });
 
     const { result } = renderHook(() => useStartCheckout(), { wrapper: wrapper(qc) });
     result.current.mutate({ plan: "pro" });
@@ -179,7 +198,13 @@ describe("useStartCheckout", () => {
   });
 
   it("surfaces a checkout failure without navigating", async () => {
-    mockFetchData.mockResolvedValue([null, "Billing not configured", null, 503]);
+    mockApiPost.mockRejectedValue(
+      new HttpError(503, {
+        endpoint: INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT,
+        method: "POST",
+        body: { message: "Billing not configured" },
+      })
+    );
 
     const { result } = renderHook(() => useStartCheckout(), { wrapper: wrapper(qc) });
     result.current.mutate({ plan: "starter" });
@@ -212,18 +237,13 @@ describe("useOpenBillingPortal", () => {
   });
 
   it("opens the Stripe portal with a return URL on this origin", async () => {
-    mockFetchData.mockResolvedValue([
-      { url: "https://billing.stripe.com/session/abc" },
-      null,
-      null,
-      201,
-    ]);
+    mockApiPost.mockResolvedValue({ url: "https://billing.stripe.com/session/abc" });
 
     const { result } = renderHook(() => useOpenBillingPortal(), { wrapper: wrapper(qc) });
     result.current.mutate();
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockFetchData).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_PORTAL, "POST", {
+    expect(mockApiPost).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_PORTAL, {
       returnUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?portal=return",
     });
     expect(window.location.href).toBe("https://billing.stripe.com/session/abc");

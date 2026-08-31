@@ -14,7 +14,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import type { Category, ImpactIndicator, ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 
@@ -69,8 +69,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
   const handleDeleteIndicator = async (id: string) => {
     try {
       setIsDeletingId(id);
-      const [, error] = await fetchData(INDEXER.INDICATORS.V2.DELETE(id), "DELETE");
-      if (error) throw error;
+      await api.delete(INDEXER.INDICATORS.V2.DELETE(id));
 
       // Refresh indicators using the hook's refetch method
       await refetchIndicators();

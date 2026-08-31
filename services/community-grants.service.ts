@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { CommunityGrant } from "@/types/v2/community-grant";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
@@ -14,17 +14,22 @@ import { INDEXER } from "@/utilities/indexer";
  * @returns Promise<CommunityGrant[]> - Array of community grants
  */
 export const getCommunityGrants = async (communitySlug: string): Promise<CommunityGrant[]> => {
-  const [data, error] = await fetchData<CommunityGrant[]>(
-    INDEXER.COMMUNITY.V2.GRANTS(communitySlug)
-  );
-
-  if (error || !data) {
+  try {
+    // TODO(#1775): add zod schema
+    const data = await api.get<CommunityGrant[]>(INDEXER.COMMUNITY.V2.GRANTS(communitySlug));
+    if (!data) {
+      errorManager(`Community Grants API Error: ${null}`, null, {
+        context: "community-grants.service",
+        communitySlug,
+      });
+      return [];
+    }
+    return data;
+  } catch (error) {
     errorManager(`Community Grants API Error: ${error}`, error, {
       context: "community-grants.service",
       communitySlug,
     });
     return [];
   }
-
-  return data;
 };

@@ -1,5 +1,4 @@
 import type { ResearchReportCandidate } from "@/types/donor-research";
-import { briefDisplay } from "./fonts";
 
 interface ComplianceStripProps {
   candidate: ResearchReportCandidate;
@@ -15,13 +14,11 @@ export function ComplianceStrip({ candidate }: ComplianceStripProps) {
   const checks = candidate.complianceChecks ?? [];
   if (checks.length === 0) return null;
   return (
-    <div className="mt-7">
-      <p
-        className={`${briefDisplay.className} text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground`}
-      >
+    <div className="mt-6">
+      <p className="text-[10.5px] font-[650] uppercase tracking-[0.14em] text-sf-muted">
         Compliance
       </p>
-      <ul className={`${briefDisplay.className} mt-3 flex flex-col gap-1.5 text-sm`}>
+      <ul className="mt-2.5 flex flex-col gap-1.5 text-[13px]">
         {checks.map((check) => (
           <li
             key={check.name}
@@ -29,8 +26,8 @@ export function ComplianceStrip({ candidate }: ComplianceStripProps) {
             title={check.detail}
           >
             <StatusDot status={check.status} />
-            <span className="truncate text-foreground/80">{check.label}</span>
-            <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="truncate text-sf-ink">{check.label}</span>
+            <span className="text-[11px] uppercase tracking-[0.1em] text-sf-muted">
               {humanizeStatus(check.status)}
             </span>
           </li>
@@ -51,8 +48,8 @@ function StatusDot({
       : status === "failed"
         ? "bg-amber-600 dark:bg-amber-400"
         : status === "not_applicable"
-          ? "bg-muted-foreground/30"
-          : "bg-muted-foreground/50";
+          ? "bg-sf-muted/30"
+          : "bg-sf-muted/50";
   return (
     <span aria-hidden className={`mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${tone}`} />
   );

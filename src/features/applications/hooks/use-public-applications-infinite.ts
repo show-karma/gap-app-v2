@@ -2,7 +2,25 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { Application, ApplicationFilters } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
+import { HttpError, isApiError } from "@/utilities/api/errors";
+
+/**
+ * Best-effort text extraction from a thrown ApiError, mirroring the
+ * pre-migration `fetchData` error-string shape (backend body message, else
+ * the ApiError's own message) so the "private" substring check below keeps
+ * working the same way it did against the legacy tuple's error slot.
+ */
+function getErrorText(err: unknown): string {
+  if (isApiError(err)) {
+    if (err instanceof HttpError) {
+      const bodyMessage = (err.body as { message?: string } | undefined)?.message;
+      return bodyMessage || err.message;
+    }
+    return err.message;
+  }
+  return err instanceof Error ? err.message : String(err);
+}
 
 interface UsePublicApplicationsInfiniteParams {
   programId: string;
@@ -54,17 +72,49 @@ export function usePublicApplicationsInfinite({
 
         const url = `/v2/funding-applications/program/${programId}?${queryParams.toString()}`;
 
-        const [response, fetchError, pageInfo] = await fetchData<
-          | Application[]
-          | {
-              applications: Application[];
-              pagination?: { total: number; totalPages: number };
-              message?: string;
-            }
-        >(url);
+        try {
+          // TODO(#1775): add zod schema
+          const response = await api.get<
+            | Application[]
+            | {
+                applications: Application[];
+                pagination?: { total: number; totalPages: number };
+                message?: string;
+              }
+          >(url);
 
-        if (fetchError) {
-          if (fetchError.includes("private")) {
+          if (!response) {
+            return { applications: [], isPrivate: false, hasMore: false, total: 0 };
+          }
+
+          if (
+            !Array.isArray(response) &&
+            "message" in response &&
+            typeof response.message === "string" &&
+            response.message.includes("private")
+          ) {
+            return { applications: [], isPrivate: true, hasMore: false, total: 0 };
+          }
+
+          let applications: Application[] = [];
+          let total = 0;
+          let hasMore = false;
+
+          if (!Array.isArray(response) && "applications" in response) {
+            applications = response.applications || [];
+            total = response.pagination?.total || 0;
+            hasMore = response.pagination
+              ? pageParam < response.pagination.totalPages
+              : applications.length === pageSize;
+          } else if (Array.isArray(response)) {
+            applications = response;
+            total = response.length;
+            hasMore = applications.length === pageSize;
+          }
+
+          return { applications, isPrivate: false, hasMore, total };
+        } catch (err) {
+          if (getErrorText(err).includes("private")) {
             return {
               applications: [],
               isPrivate: true,
@@ -72,39 +122,8 @@ export function usePublicApplicationsInfinite({
               total: 0,
             };
           }
-          throw new Error(fetchError);
+          throw err;
         }
-
-        if (!response) {
-          return { applications: [], isPrivate: false, hasMore: false, total: 0 };
-        }
-
-        if (
-          !Array.isArray(response) &&
-          "message" in response &&
-          typeof response.message === "string" &&
-          response.message.includes("private")
-        ) {
-          return { applications: [], isPrivate: true, hasMore: false, total: 0 };
-        }
-
-        let applications: Application[] = [];
-        let total = 0;
-        let hasMore = false;
-
-        if (!Array.isArray(response) && "applications" in response) {
-          applications = response.applications || [];
-          total = response.pagination?.total || 0;
-          hasMore = response.pagination
-            ? pageParam < response.pagination.totalPages
-            : applications.length === pageSize;
-        } else if (Array.isArray(response)) {
-          applications = response;
-          total = response.length;
-          hasMore = applications.length === pageSize;
-        }
-
-        return { applications, isPrivate: false, hasMore, total };
       },
       getNextPageParam: (lastPage, allPages) => {
         if (!lastPage.hasMore) return undefined;

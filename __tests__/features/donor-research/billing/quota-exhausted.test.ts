@@ -4,9 +4,18 @@
  * upgrade prompt instead of a generic failure line.
  */
 
-vi.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: vi.fn(),
+const mockApiPost = vi.fn();
+
+vi.mock("@/utilities/api/client", () => ({
+  api: {
+    get: vi.fn(),
+    post: (...args: unknown[]) => mockApiPost(...args),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+    request: vi.fn(),
+    getPaginated: vi.fn(),
+  },
 }));
 
 import { createResearchReport } from "@/services/donor-research.service";
@@ -15,9 +24,7 @@ import {
   isReportQuotaExhausted,
   REPORT_QUOTA_EXHAUSTED_CODE,
 } from "@/services/donor-research-billing.service";
-import fetchData from "@/utilities/fetchData";
-
-const mockFetchData = vi.mocked(fetchData);
+import { HttpError } from "@/utilities/api/errors";
 
 const REPORT_BODY = {
   donorHandleId: "handle-1",
@@ -29,18 +36,33 @@ const REPORT_BODY = {
   topCount: 5,
 };
 
+function reportsHttpError(status: number, message: string) {
+  return new HttpError(status, {
+    endpoint: "/v2/donor-research/reports",
+    method: "POST",
+    body:
+      status === 402
+        ? {
+            error: REPORT_QUOTA_EXHAUSTED_CODE,
+            message,
+            dimension: "reports",
+            plan: "free",
+            status: "free",
+            remaining: 0,
+          }
+        : { message },
+  });
+}
+
 describe("createResearchReport quota handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("throws the quota-exhausted type on a 402", async () => {
-    mockFetchData.mockResolvedValue([
-      null,
-      "No research reports remaining. Upgrade your plan to run more reports.",
-      null,
-      402,
-    ]);
+    mockApiPost.mockRejectedValue(
+      reportsHttpError(402, "No research reports remaining. Upgrade your plan to run more reports.")
+    );
 
     await expect(createResearchReport(REPORT_BODY)).rejects.toBeInstanceOf(
       DonorReportQuotaExhaustedError
@@ -48,7 +70,7 @@ describe("createResearchReport quota handling", () => {
   });
 
   it("keeps the server's message so the dialog can explain itself", async () => {
-    mockFetchData.mockResolvedValue([null, "No research reports remaining.", null, 402]);
+    mockApiPost.mockRejectedValue(reportsHttpError(402, "No research reports remaining."));
 
     await expect(createResearchReport(REPORT_BODY)).rejects.toThrow(
       "No research reports remaining."
@@ -58,7 +80,7 @@ describe("createResearchReport quota handling", () => {
   it("does not treat other failures as a quota refusal", async () => {
     // A 429 is the fair-use rate limit, a separate gate — it must still render
     // as an error, not an upgrade prompt.
-    mockFetchData.mockResolvedValue([null, "Daily fast limit reached", null, 429]);
+    mockApiPost.mockRejectedValue(reportsHttpError(429, "Daily fast limit reached"));
 
     const error = await createResearchReport(REPORT_BODY).catch((err) => err);
     expect(isReportQuotaExhausted(error)).toBe(false);
@@ -66,12 +88,11 @@ describe("createResearchReport quota handling", () => {
   });
 
   it("returns the report on success", async () => {
-    mockFetchData.mockResolvedValue([
-      { reportId: "report-1", status: "pending", streamUrl: "/stream" },
-      null,
-      null,
-      202,
-    ]);
+    mockApiPost.mockResolvedValue({
+      reportId: "report-1",
+      status: "pending",
+      streamUrl: "/stream",
+    });
 
     await expect(createResearchReport(REPORT_BODY)).resolves.toEqual(
       expect.objectContaining({ reportId: "report-1" })

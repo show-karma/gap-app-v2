@@ -113,6 +113,18 @@ export class OffChainRevokeError extends Error {
 export const INDEXING_TIMEOUT_MESSAGE =
   "Your revocation was submitted but is still being indexed. Please refresh in a moment.";
 
+/**
+ * Completion counterpart of {@link INDEXING_TIMEOUT_MESSAGE}. Deliberately
+ * worded differently: a completion that never lands is NOT always a lagging
+ * indexer. The indexer also drops completion attestations whose signing wallet
+ * fails its authorization check, and that rejection is invisible to the client
+ * — `POST /attestations/index-by-transaction` answers 200 either way. Promising
+ * "it will appear shortly" would be a lie in the case that actually matters, so
+ * this names the likely cause and gives the user something to act on.
+ */
+export const COMPLETION_INDEXING_TIMEOUT_MESSAGE =
+  "Your completion was signed on-chain but hasn't been indexed yet. Refresh in a moment — if the milestone is still not marked complete, the wallet you signed with may not be authorized for this project.";
+
 export class IndexingTimeoutError extends Error {
   readonly name = "IndexingTimeoutError";
   readonly code = "INDEXING_TIMEOUT" as const;

@@ -2,14 +2,23 @@
 
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ChartSectionPicker } from "@/components/Pages/Admin/PortfolioReports/ChartSectionPicker";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import {
+  ModelSelectField,
+  useDefaultModelBackfill,
+} from "@/components/Pages/Admin/PortfolioReports/ModelSelectField";
+import {
+  CalendarBiweekly,
+  CalendarSmall,
+  SlidersIcon,
+} from "@/components/Pages/Admin/PortfolioReports/scheduleIcons";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -19,9 +28,12 @@ import {
   useReportConfigs,
   useUpdateReportConfig,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
+import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
+import type { CommunityProgram } from "@/types/v2/community-program";
 import { PAGES } from "@/utilities/pages";
+import { buildModelOptions } from "@/utilities/portfolio-reports/modelOptions";
 import {
   computeNextRuns,
   defaultScheduleForPreset,
@@ -34,16 +46,8 @@ import { zodResolver } from "@/utilities/zodResolver";
 
 interface Props {
   community: Community;
-  grantPrograms: GrantProgram[];
+  grantPrograms: CommunityProgram[];
 }
-
-const AVAILABLE_MODELS = [
-  { id: "gpt-5.5", label: "GPT-5.5 (OpenAI)" },
-  { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (Anthropic)" },
-  { id: "grok-4-1-fast-reasoning", label: "Grok 4.1 (xAI)" },
-];
-
-const MODEL_IDS = AVAILABLE_MODELS.map((m) => m.id) as [string, ...string[]];
 
 const PROMPT_PLACEHOLDER = `Example: Generate a markdown portfolio report covering the last 30 days of activity (please always specify a date range — the agent defaults to the last 30 days when none is given).
 
@@ -93,7 +97,7 @@ const scheduleZod = z.object({
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(128),
   programIds: z.array(z.string().min(1)).min(1, "Select at least one program"),
-  modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
+  modelId: z.string().trim().min(1, "Pick a model"),
   prompt: z.string().trim().min(1, "A prompt is required"),
   chartIndicatorIds: z.array(z.string().min(1)).max(50).default([]),
   schedule: scheduleZod,
@@ -105,18 +109,22 @@ type FormValues = z.infer<typeof formSchema>;
 const EMPTY_FORM_VALUES: FormValues = {
   name: "",
   programIds: [],
-  modelId: AVAILABLE_MODELS[0].id,
+  modelId: "",
   prompt: "",
   chartIndicatorIds: [],
   schedule: defaultScheduleForPreset("monthly"),
   isActive: true,
 };
 
+function emptyFormValues(defaultModelId: string | undefined): FormValues {
+  return { ...EMPTY_FORM_VALUES, modelId: defaultModelId ?? "" };
+}
+
 function buildFormValues(cfg: ReportConfig): FormValues {
   return {
     name: cfg.name,
     programIds: cfg.programIds,
-    modelId: cfg.modelId as FormValues["modelId"],
+    modelId: cfg.modelId,
     prompt: cfg.prompt,
     chartIndicatorIds: cfg.chartIndicatorIds ?? [],
     schedule: cfg.schedule,
@@ -129,7 +137,7 @@ interface ProgramOption {
   label: string;
 }
 
-function buildProgramOptions(grantPrograms: GrantProgram[]): ProgramOption[] {
+function buildProgramOptions(grantPrograms: CommunityProgram[]): ProgramOption[] {
   const options: ProgramOption[] = [];
   for (const program of grantPrograms) {
     const programId = (program as { programId?: string }).programId;
@@ -181,7 +189,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
 
 interface LoadedProps {
   community: Community;
-  grantPrograms: GrantProgram[];
+  grantPrograms: CommunityProgram[];
   configs: ReportConfig[];
   configsError: boolean;
   refetchConfigs: () => void;
@@ -230,6 +238,8 @@ function ReportConfigPageLoaded({
   const updateMutation = useUpdateReportConfig(slug, editingConfig?.id ?? "");
   const deleteMutation = useDeleteReportConfig(slug);
 
+  const { data: availableModels = [], isLoading: isLoadingModels } = useAvailableAIModels();
+
   const {
     register,
     handleSubmit,
@@ -242,9 +252,17 @@ function ReportConfigPageLoaded({
     defaultValues: editingConfig ? buildFormValues(editingConfig) : EMPTY_FORM_VALUES,
   });
 
+  const modelOptions = useMemo(
+    () => buildModelOptions(availableModels, editingConfig?.modelId),
+    [availableModels, editingConfig]
+  );
+
+  const backfillModel = useCallback((modelId: string) => setValue("modelId", modelId), [setValue]);
+  useDefaultModelBackfill(availableModels, isLoadingModels, watch("modelId"), backfillModel);
+
   const openNewForm = () => {
     setEditingId("new");
-    reset(EMPTY_FORM_VALUES);
+    reset(emptyFormValues(availableModels[0]));
   };
 
   const openEditForm = (configId: string) => {
@@ -345,8 +363,14 @@ function ReportConfigPageLoaded({
       }
       setEditingId(null);
     } catch (error) {
-      toast.error(
-        `Failed to save config: ${error instanceof Error ? error.message : "Unknown error"}`
+      // SUPPRESSED: errorManager reports to Sentry and toasts the user
+      errorManager(
+        "Failed to save report config",
+        error,
+        { community: slug },
+        {
+          error: "Failed to save config.",
+        }
       );
     }
   };
@@ -358,8 +382,14 @@ function ReportConfigPageLoaded({
       toast.success("Config deactivated");
       if (editingId === deletingId) setEditingId(null);
     } catch (error) {
-      toast.error(
-        `Failed to delete config: ${error instanceof Error ? error.message : "Unknown error"}`
+      // SUPPRESSED: errorManager reports to Sentry and toasts the user
+      errorManager(
+        "Failed to delete report config",
+        error,
+        { community: slug },
+        {
+          error: "Failed to delete config.",
+        }
       );
     } finally {
       setDeletingId(null);
@@ -547,25 +577,12 @@ function ReportConfigPageLoaded({
           </div>
 
           {/* Model */}
-          <div>
-            <label
-              htmlFor="modelId"
-              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              LLM Model
-            </label>
-            <select
-              id="modelId"
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-              {...register("modelId")}
-            >
-              {AVAILABLE_MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ModelSelectField
+            modelOptions={modelOptions}
+            isLoadingModels={isLoadingModels}
+            registration={register("modelId")}
+            error={errors.modelId?.message}
+          />
 
           {/* Schedule */}
           <SchedulePicker
@@ -870,38 +887,4 @@ function parseIsoOrToday(iso: string): Date {
   if (!RUN_DATE_REGEX.test(iso)) return new Date();
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d);
-}
-
-function CalendarSmall({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <rect x="2" y="4" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2 8H16" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="6" cy="11" r="1.2" fill="currentColor" />
-    </svg>
-  );
-}
-
-function CalendarBiweekly({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <rect x="2" y="4" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2 8H16" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="5.5" cy="11" r="1.1" fill="currentColor" />
-      <circle cx="12.5" cy="11" r="1.1" fill="currentColor" />
-    </svg>
-  );
-}
-
-function SlidersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 18 18" fill="none">
-      <path d="M3 5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M14 5L15 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="12" cy="5" r="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M3 13L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M9 13H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="7" cy="13" r="2" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
 }

@@ -4,6 +4,12 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { isAttestRetryExhaustedError } from "./utilities/attestWithRetry";
+import {
+  installChunkRecoveryListeners,
+  shouldDropChunkErrorEvent,
+} from "./utilities/chunkRecovery";
+import { isChunkLoadError } from "./utilities/isChunkLoadError";
+import { isBrowserExtensionOnlyError } from "./utilities/sentry/browserExtensionErrors";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 import {
   isTransientHttpError,
@@ -16,6 +22,19 @@ Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   ignoreErrors: sentryIgnoreErrors,
+  // Browser-extension content scripts (wallet extensions and similar) inject
+  // `injectedScript.bundle.js` into every page and throw against it — most
+  // commonly `Cannot read properties of undefined (reading 'sendMessage')`
+  // when their `chrome.runtime` handle is invalidated. We never ship a file by
+  // that name, so drop any event whose crash frame is that injected bundle.
+  // Sibling to the chrome.runtime.sendMessage signature already in
+  // utilities/sentry/ignoreErrors.ts (browserExtensionErrors).
+  // NOTE: `denyUrls` only inspects the crash frame, so it misses extension
+  // noise whose crash frame is `<anonymous>` or a different injected file.
+  // `isBrowserExtensionOnlyError` in `beforeSend` walks the whole stack and
+  // subsumes this entry; kept as defence in depth.
+  // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-257
+  denyUrls: [/injectedScript\.bundle\.js/],
   integrations: [],
   // Defence in depth for transient Axios "Network Error" events that
   // bubble through code paths bypassing `errorManager` (raw React errors,
@@ -30,6 +49,29 @@ Sentry.init({
     // GAP-FRONTEND-1Y2 and ./utilities/attestWithRetry.ts
     if (isAttestRetryExhaustedError(original)) {
       return event;
+    }
+    // Stale-deploy chunk failures: drop while one-time reload recovery is
+    // possible/in flight; report only when recovery is exhausted. See
+    // GAP-FRONTEND-20T / utilities/chunkRecovery.ts. Deliberately NOT in
+    // `sentryIgnoreErrors` — see the note in utilities/sentry/ignoreErrors.ts.
+    if (shouldDropChunkErrorEvent(original)) {
+      return null;
+    }
+    // Duelling wallet extensions wrap each other's injected provider and
+    // recurse until the stack blows, yielding `RangeError: Maximum call stack
+    // size exceeded` with zero first-party frames. Unactionable, and it drags
+    // a session replay up with it (`replaysOnErrorSampleRate` is 1.0).
+    // Matched on frame provenance, never on the message — a genuine runaway
+    // recursion in our own code reads identically and must keep reporting.
+    // See GAP-FRONTEND-26Q / ./utilities/sentry/browserExtensionErrors.ts
+    if (isBrowserExtensionOnlyError(event)) {
+      return null;
+    }
+    if (isChunkLoadError(original)) {
+      // Recovery already ran once this session and the chunk still failed —
+      // tag as exhausted so surviving events are triage-ready (offline
+      // client, blocked chunk, genuine 404 in the new build).
+      event.tags = { ...event.tags, chunk_recovery: "exhausted" };
     }
     if (
       isTransientNetworkError(original) ||
@@ -66,6 +108,11 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 });
+
+// Runs as early as possible on the client (before the app's own chunks
+// evaluate), so it catches a chunk-load rejection even during initial
+// hydration. See GAP-FRONTEND-20T / utilities/chunkRecovery.ts.
+installChunkRecoveryListeners();
 
 // Lazy-load Replay after init — keeps ~400KB out of the shared bundle.
 // The Replay SDK is fetched on-demand and added to the existing Sentry client.

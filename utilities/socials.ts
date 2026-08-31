@@ -1,12 +1,13 @@
+import { CANONICAL_ORIGIN, docsOrigin } from "@/utilities/domains";
+
 export const SOCIALS = {
   DISCORD: "https://discord.gg/X4fwgzPReJ",
   TWITTER: "https://x.com/karmahq_",
   LINKEDIN: "https://www.linkedin.com/company/karmaxyz/",
-  WEBSITE: "https://karmahq.xyz",
+  WEBSITE: CANONICAL_ORIGIN,
   TELEGRAM: "https://t.me/karmahq",
-  PARAGRAPH: "https://paragraph.xyz/@karmahq",
   X_HANDLE: "@karmahq_",
-  DOCS: "https://docs.gap.karmahq.xyz",
+  DOCS: docsOrigin(),
   PARTNER_FORM: "https://tally.so/r/3NKZEl",
   // Donor & advisor "Talk to our team" Tally form. Separate from the
   // foundations PARTNER_FORM so each audience routes to the right intake.

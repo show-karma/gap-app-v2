@@ -1,6 +1,6 @@
 /**
  * @file Tests for useMediaQuery hook
- * @description Tests media query matching hook with resize event handling
+ * @description Tests media query matching hook with MediaQueryList change event handling
  */
 
 import { act, renderHook } from "@testing-library/react";
@@ -65,60 +65,62 @@ describe("useMediaQuery", () => {
     });
   });
 
-  describe("Resize Event Handling", () => {
-    it("should add resize event listener on mount", () => {
+  describe("Change Event Handling", () => {
+    it("should add a change event listener on the MediaQueryList on mount", () => {
       renderHook(() => useMediaQuery("(min-width: 768px)"));
 
-      expect(window.addEventListener).toHaveBeenCalledWith("resize", expect.any(Function));
+      expect(matchMediaResult.addEventListener).toHaveBeenCalledWith(
+        "change",
+        expect.any(Function)
+      );
     });
 
-    it("should remove resize event listener on unmount", () => {
+    it("should remove the change event listener on unmount", () => {
       const { unmount } = renderHook(() => useMediaQuery("(min-width: 768px)"));
 
       unmount();
 
-      expect(window.removeEventListener).toHaveBeenCalledWith("resize", expect.any(Function));
+      expect(matchMediaResult.removeEventListener).toHaveBeenCalledWith(
+        "change",
+        expect.any(Function)
+      );
     });
 
-    it("should update matches state on resize", () => {
+    it("should update matches state when the media query changes", () => {
       matchMediaResult.matches = false;
 
       const { result } = renderHook(() => useMediaQuery("(min-width: 768px)"));
 
       expect(result.current).toBe(false);
 
-      // Simulate resize that changes the match
+      // Simulate a media query change event
       act(() => {
-        matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as vi.Mock).mock.calls[0][1];
-        resizeHandler();
+        const changeHandler = matchMediaResult.addEventListener.mock.calls[0][1];
+        changeHandler({ matches: true });
       });
 
       expect(result.current).toBe(true);
     });
 
-    it("should handle multiple resize events", () => {
+    it("should handle multiple change events", () => {
       matchMediaResult.matches = false;
 
       const { result } = renderHook(() => useMediaQuery("(min-width: 768px)"));
 
-      const resizeHandler = (window.addEventListener as vi.Mock).mock.calls[0][1];
+      const changeHandler = matchMediaResult.addEventListener.mock.calls[0][1];
 
       act(() => {
-        matchMediaResult.matches = true;
-        resizeHandler();
+        changeHandler({ matches: true });
       });
       expect(result.current).toBe(true);
 
       act(() => {
-        matchMediaResult.matches = false;
-        resizeHandler();
+        changeHandler({ matches: false });
       });
       expect(result.current).toBe(false);
 
       act(() => {
-        matchMediaResult.matches = true;
-        resizeHandler();
+        changeHandler({ matches: true });
       });
       expect(result.current).toBe(true);
     });
@@ -227,11 +229,10 @@ describe("useMediaQuery", () => {
 
       expect(result.current).toBe(true);
 
-      // Simulate resize where matches stays the same
+      // Simulate a change event where matches stays the same
       act(() => {
-        matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as vi.Mock).mock.calls[0][1];
-        resizeHandler();
+        const changeHandler = matchMediaResult.addEventListener.mock.calls[0][1];
+        changeHandler({ matches: true });
       });
 
       expect(result.current).toBe(true);
@@ -264,8 +265,10 @@ describe("useMediaQuery", () => {
 
       unmount();
 
-      // Verify that a "resize" listener was removed (other listeners may also be cleaned up)
-      expect(window.removeEventListener).toHaveBeenCalledWith("resize", expect.any(Function));
+      expect(matchMediaResult.removeEventListener).toHaveBeenCalledWith(
+        "change",
+        expect.any(Function)
+      );
     });
 
     it("should cleanup and re-setup on query change", () => {
@@ -273,17 +276,17 @@ describe("useMediaQuery", () => {
         initialProps: { query: "(min-width: 768px)" },
       });
 
-      const initialAddCalls = (window.addEventListener as vi.Mock).mock.calls.length;
+      const initialAddCalls = matchMediaResult.addEventListener.mock.calls.length;
 
       rerender({ query: "(min-width: 1024px)" });
 
       // Should have added new listeners
-      expect((window.addEventListener as vi.Mock).mock.calls.length).toBe(initialAddCalls + 1);
+      expect(matchMediaResult.addEventListener.mock.calls.length).toBe(initialAddCalls + 1);
 
       unmount();
 
       // Should have removed all listeners
-      expect(window.removeEventListener).toHaveBeenCalled();
+      expect(matchMediaResult.removeEventListener).toHaveBeenCalled();
     });
   });
 
@@ -296,9 +299,8 @@ describe("useMediaQuery", () => {
       expect(result.current).toBe(false);
 
       act(() => {
-        matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as vi.Mock).mock.calls[0][1];
-        resizeHandler();
+        const changeHandler = matchMediaResult.addEventListener.mock.calls[0][1];
+        changeHandler({ matches: true });
       });
 
       expect(result.current).toBe(true);

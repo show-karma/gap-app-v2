@@ -175,7 +175,7 @@ export const ProjectOptionsMenu = () => {
   };
 
   const deleteFn = async () => {
-    if (!address || !project) return;
+    if (!project) return;
     setIsDeleting(true);
     try {
       const setup = await setupChainAndWallet({

@@ -68,6 +68,41 @@ jobs:
             echo "quality-baseline.json unchanged."
           fi
 
+  # Mirrors baseline-guard: the files that DEFINE or ENFORCE the gates may only
+  # change on a PR that says so with the `gate-change` label. Whoever can edit
+  # the checker or a workflow unnoticed can switch enforcement off, and `main`
+  # requires no code-owner review.
+  gate-guard:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check gate changes are authorized
+        env:
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          GATE_FILES='^(scripts/check-design-system\.js|scripts/design-check\.config\.json|scripts/quality-gate\.js|\.github/workflows/pr-checklist\.yml|\.github/workflows/quality-gate\.yml|\.husky/pre-commit|\.github/CODEOWNERS|\.github/rulesets/.*)$'
+          TOUCHED=$(git diff --name-only "${BASE}...HEAD" | grep -E "$GATE_FILES" || true)
+          if [ -n "$TOUCHED" ]; then
+            echo "This PR changes gate-defining files:"
+            echo "$TOUCHED"
+            # Exact-match label check via jq — a substring grep would accept
+            # something like "gate-change-experimental".
+            HAS_LABEL=$(printf '%s' "$PR_LABELS" | jq -r 'any(. == "gate-change")')
+            if [ "$HAS_LABEL" != "true" ]; then
+              echo "::error::gate-defining files were modified but PR is missing the 'gate-change' label."
+              exit 1
+            fi
+            echo "PR carries the 'gate-change' label — gate change authorized."
+          else
+            echo "No gate-defining file changed."
+          fi
+
   static-checks:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -79,8 +114,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -119,8 +152,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v5

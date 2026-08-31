@@ -50,13 +50,13 @@ describe("ErrorBoundary", () => {
       );
 
       expect(reloadMock).toHaveBeenCalledTimes(1);
-      expect(window.sessionStorage.getItem(RELOAD_FLAG_KEY)).toBe("true");
+      expect(window.sessionStorage.getItem(RELOAD_FLAG_KEY)).not.toBeNull();
       expect(screen.getByTestId("error-boundary-chunk-recovering")).toBeInTheDocument();
       expect(screen.queryByTestId("error-boundary-fallback")).not.toBeInTheDocument();
     });
 
     it("falls back to the error UI without looping when reload was already attempted", () => {
-      window.sessionStorage.setItem(RELOAD_FLAG_KEY, "true");
+      window.sessionStorage.setItem(RELOAD_FLAG_KEY, String(Date.now()));
 
       render(
         <ErrorBoundary>

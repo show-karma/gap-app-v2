@@ -1,4 +1,4 @@
-import fetchData from "@/utilities/fetchData";
+import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import type {
   CommunityReviewerProgramsResponse,
@@ -8,7 +8,7 @@ import type {
 
 /**
  * Fetch the community-scoped reviewer pool.
- * Uses the existing fetchData helper which attaches Bearer JWT automatically.
+ * Uses the typed `api` client which attaches Bearer JWT automatically.
  */
 export async function fetchCommunityReviewers(
   communityUID: string,
@@ -23,11 +23,8 @@ export async function fetchCommunityReviewers(
   const query = queryParams.toString();
   const endpoint = `${INDEXER.V2.COMMUNITIES.REVIEWERS(communityUID)}${query ? `?${query}` : ""}`;
 
-  const [data, error] = await fetchData<CommunityReviewersResponse>(endpoint);
-
-  if (error) {
-    throw new Error(error || "Failed to fetch community reviewers");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.get<CommunityReviewersResponse>(endpoint);
 
   return data ?? { items: [], nextCursor: null };
 }
@@ -36,9 +33,7 @@ export async function fetchCommunityReviewerPrograms(
   communityUID: string
 ): Promise<CommunityReviewerProgramsResponse> {
   const endpoint = INDEXER.V2.COMMUNITIES.REVIEWER_PROGRAMS(communityUID);
-  const [data, error] = await fetchData<CommunityReviewerProgramsResponse>(endpoint);
-  if (error) {
-    throw new Error(error || "Failed to fetch community reviewers");
-  }
+  // TODO(#1775): add zod schema
+  const data = await api.get<CommunityReviewerProgramsResponse>(endpoint);
   return data ?? { items: [] };
 }
