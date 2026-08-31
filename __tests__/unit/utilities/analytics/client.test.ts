@@ -26,6 +26,7 @@ import {
   registerSuperProperties,
   resetIdentity,
   setCommunityGroup,
+  setCommunitySlug,
   track,
   trackPageView,
   unregisterSuperProperty,
@@ -41,18 +42,30 @@ const mp = vi.hoisted(() => {
   return {
     __store: store,
     init: vi.fn(),
-    register: vi.fn(),
-    unregister: vi.fn(),
+    register: vi.fn((props: Record<string, unknown>) => {
+      Object.assign(store, props);
+    }),
+    unregister: vi.fn((name: string) => {
+      delete store[name];
+    }),
     track: vi.fn(),
     track_pageview: vi.fn(),
     identify: vi.fn((userId: string) => {
       store.$user_id = userId;
     }),
+    // The real `reset` empties the whole persisted store, not just the
+    // identity — which is exactly why the community context has to be read
+    // back before it runs.
     reset: vi.fn(() => {
-      delete store.$user_id;
+      for (const key of Object.keys(store)) delete store[key];
     }),
     get_property: vi.fn((name: string) => store[name]),
-    set_group: vi.fn(),
+    // `set_group` registers the key as a super property, and wraps a scalar
+    // into a one-element array on the way. Modelled because that array is the
+    // shape `community_id` has on every event.
+    set_group: vi.fn((name: string, ids: unknown) => {
+      store[name] = Array.isArray(ids) ? ids : [ids];
+    }),
     remove_group: vi.fn(),
     people: { set: vi.fn(), set_once: vi.fn() },
   };
@@ -168,6 +181,49 @@ describe("analytics client", () => {
         track_pageview: false,
         ignore_dnt: false,
       });
+    });
+
+    it("names the ingestion routes without a trailing slash", () => {
+      enable();
+      track("logout", { reason: "user" });
+
+      // The SDK's defaults are `track/`, `engage/`, `groups/`. Next 308s those
+      // to the unslashed path, so every event paid a redirect before its POST.
+      expect(initConfig().api_routes).toMatchObject({
+        track: "track",
+        engage: "engage",
+        groups: "groups",
+      });
+      for (const route of Object.values(initConfig().api_routes as Record<string, string>)) {
+        expect(route).not.toMatch(/\/$/);
+      }
+    });
+
+    it("blacklists every SDK property that carries a raw URL", () => {
+      enable();
+      track("logout", { reason: "user" });
+
+      // `route-pattern.ts` templates the paths this app reports, but the SDK
+      // attaches its own: `$current_url` and `$referrer` per event, and
+      // `$initial_referrer` persisted for the life of the device. All three
+      // ship `/s/sh_…` verbatim.
+      expect(initConfig().property_blacklist).toEqual(
+        expect.arrayContaining([
+          "$current_url",
+          "$referrer",
+          "$initial_referrer",
+          "current_url_path",
+          "current_url_search",
+        ])
+      );
+    });
+
+    it("keeps the domain-only referrer properties, which cannot carry a token", () => {
+      enable();
+      track("logout", { reason: "user" });
+
+      expect(initConfig().property_blacklist).not.toContain("$referring_domain");
+      expect(initConfig().property_blacklist).not.toContain("$initial_referring_domain");
     });
 
     it("turns debug logging on outside production and off in production", () => {
@@ -332,22 +388,36 @@ describe("analytics client", () => {
   });
 
   describe("trackPageView", () => {
-    it("sends the route family and community through the SDK's pageview channel", () => {
+    it("emits Mixpanel's page-view event with only the properties we set", () => {
       enable();
       storeFirstTouch();
 
-      trackPageView({
-        route_pattern: "/community/:id/grants",
-        page_group: "community",
-        community_id: "gitcoin",
-      });
+      trackPageView({ route_pattern: "/community/:id/grants", page_group: "community" });
 
-      expect(mp.track_pageview).toHaveBeenCalledWith({
+      // Through `track`, not `track_pageview`: the latter merges
+      // `mpPageViewProperties()` in first, which is `current_url_path` and
+      // `current_url_search` — the concrete path `route-pattern.ts` exists to
+      // keep out of Mixpanel.
+      expect(mp.track_pageview).not.toHaveBeenCalled();
+      expect(mp.track).toHaveBeenCalledWith("$mp_web_page_view", {
         ...AI_PROPS,
         route_pattern: "/community/:id/grants",
         page_group: "community",
-        community_id: "gitcoin",
       });
+    });
+
+    it("leaves community_id to the group super property", () => {
+      enable();
+      setCommunityGroup("0xcommunityuid");
+      mp.track.mockClear();
+
+      trackPageView({ route_pattern: "/community/:id", page_group: "community" });
+
+      // `set_group` registers it as `["0xcommunityuid"]`, and an event property
+      // would beat that super property on merge — making `community_id` a
+      // scalar on page views and an array everywhere else.
+      expect(trackedProps()).not.toHaveProperty("community_id");
+      expect(mp.__store[COMMUNITY_GROUP_KEY]).toEqual(["0xcommunityuid"]);
     });
   });
 
@@ -387,12 +457,11 @@ describe("analytics client", () => {
     });
 
     it("guards page views too", () => {
-      trackPageView({ route_pattern: "/project/:id", page_group: "project", community_id: null });
+      trackPageView({ route_pattern: "/project/:id", page_group: "project" });
 
-      expect(mp.track_pageview).toHaveBeenCalledWith({
+      expect(mp.track).toHaveBeenCalledWith("$mp_web_page_view", {
         route_pattern: "/project/:id",
         page_group: "project",
-        community_id: null,
       });
     });
   });
@@ -606,6 +675,7 @@ describe("analytics client", () => {
 
     it("drops both the binding and the super property when leaving community routes", () => {
       enable();
+      setCommunityGroup("gitcoin");
 
       setCommunityGroup(null);
 
@@ -613,6 +683,15 @@ describe("analytics client", () => {
       // it visited, which is what group analytics aggregate on.
       expect(mp.set_group).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, []);
       expect(mp.unregister).toHaveBeenCalledWith(COMMUNITY_GROUP_KEY);
+    });
+
+    it("does not clear a community that was never bound", () => {
+      enable();
+
+      setCommunityGroup(null);
+
+      expect(mp.set_group).not.toHaveBeenCalled();
+      expect(mp.unregister).not.toHaveBeenCalled();
     });
 
     it("re-binds the community after a logout on a community route", () => {
@@ -649,6 +728,88 @@ describe("analytics client", () => {
       resetIdentity();
 
       expect(mp.set_group).not.toHaveBeenCalledWith(COMMUNITY_GROUP_KEY, "gitcoin");
+    });
+
+    it("re-binds the readable slug after a logout on a community route", () => {
+      enable();
+      setCommunitySlug("gitcoin");
+      identifyUser("did:privy:alice");
+      mp.register.mockClear();
+
+      resetIdentity();
+
+      expect(mp.register).toHaveBeenCalledWith({ community_slug: "gitcoin" });
+    });
+
+    it("writes nothing when the community is already the one bound", () => {
+      enable();
+      setCommunityGroup("gitcoin");
+      setCommunitySlug("gitcoin");
+      mp.set_group.mockClear();
+      mp.register.mockClear();
+
+      setCommunityGroup("gitcoin");
+      setCommunitySlug("gitcoin");
+
+      // `set_group` is a network call; the effect that drives this re-runs on
+      // every navigation.
+      expect(mp.set_group).not.toHaveBeenCalled();
+      expect(mp.register).not.toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * The regression Addendum G1 found on the deployed preview.
+   *
+   * `community_id` and `community_slug` are super properties, so Mixpanel keeps
+   * them in `localStorage` — they outlive the module and every React ref that
+   * used to mirror them. A fresh document on a non-community route starts with
+   * an empty mirror, which reads as "nothing bound" and skips the clear, so the
+   * community the visitor left rode along on every later event.
+   */
+  describe("community context across a fresh document", () => {
+    /** A reload: the module is new, Mixpanel's persisted store is not. */
+    const reloadOnto = (communityId: string | null, slug: string | null) => {
+      __resetAnalyticsClientForTests();
+      enable();
+      setCommunityGroup(communityId);
+      setCommunitySlug(slug);
+    };
+
+    it("clears a persisted community when the new document is not on one", () => {
+      enable();
+      setCommunityGroup("0xgitcoin");
+      setCommunitySlug("gitcoin");
+
+      reloadOnto(null, null);
+
+      expect(mp.__store).not.toHaveProperty(COMMUNITY_GROUP_KEY);
+      expect(mp.__store).not.toHaveProperty("community_slug");
+    });
+
+    it("keeps no community on any event fired after that load", () => {
+      enable();
+      setCommunityGroup("0xgitcoin");
+      setCommunitySlug("gitcoin");
+
+      reloadOnto(null, null);
+      track("logout", { reason: "user" });
+
+      // The mock's store IS the super-property bag the SDK merges onto every
+      // event, so an entry left here is an entry on the wire.
+      expect(mp.__store).not.toHaveProperty(COMMUNITY_GROUP_KEY);
+      expect(mp.__store).not.toHaveProperty("community_slug");
+    });
+
+    it("replaces the persisted community when the new document is on another", () => {
+      enable();
+      setCommunityGroup("0xgitcoin");
+      setCommunitySlug("gitcoin");
+
+      reloadOnto("0xoptimism", "optimism");
+
+      expect(mp.__store[COMMUNITY_GROUP_KEY]).toEqual(["0xoptimism"]);
+      expect(mp.__store.community_slug).toBe("optimism");
     });
   });
 });

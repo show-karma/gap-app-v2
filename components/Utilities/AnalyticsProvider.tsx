@@ -10,9 +10,9 @@ import {
   registerSuperProperties,
   resetIdentity,
   setCommunityGroup,
+  setCommunitySlug,
   track,
   trackPageView,
-  unregisterSuperProperty,
 } from "@/utilities/analytics/client";
 import { useBoundCommunity } from "@/utilities/analytics/community-group";
 import { toCommunityId, toPageGroup, toRoutePattern } from "@/utilities/analytics/route-pattern";
@@ -52,8 +52,6 @@ interface SessionMemory {
   lastIdentity: RefObject<string | null>;
   wasAuthenticated: RefObject<boolean | null>;
   lastPageViewKey: RefObject<string | null>;
-  lastGroup: RefObject<string | null>;
-  lastCommunitySlug: RefObject<string | null>;
 }
 
 interface ResolvedIdentity {
@@ -113,24 +111,6 @@ const settleIdentity = (identity: ResolvedIdentity, memory: SessionMemory): void
   resetIdentity();
 };
 
-/**
- * The readable label, alongside the authoritative uid — so a report filtered by
- * hand can say `gitcoin` rather than `0x8dfb…`.
- *
- * The layout's resolved slug, never the URL segment: `/community/[communityId]`
- * accepts a uid too, so reading it off the path would put uids into a property
- * whose whole purpose is to be readable.
- */
-const syncCommunitySlug = (slug: string | null, memory: SessionMemory): void => {
-  if (memory.lastCommunitySlug.current === slug) return;
-  memory.lastCommunitySlug.current = slug;
-  if (slug !== null) {
-    registerSuperProperties({ community_slug: slug });
-  } else {
-    unregisterSuperProperty("community_slug");
-  }
-};
-
 export function AnalyticsProvider() {
   const pathname = usePathname();
   const { isWhitelabel, communitySlug } = useWhitelabel();
@@ -157,9 +137,6 @@ export function AnalyticsProvider() {
   const lastIdentityRef = useRef<string | null>(null);
   const wasAuthenticatedRef = useRef<boolean | null>(null);
   const lastPageViewKeyRef = useRef<string | null>(null);
-  /** What is currently written to the SDK, so an unchanged value is not rewritten. */
-  const lastGroupRef = useRef<string | null>(null);
-  const lastCommunitySlugRef = useRef<string | null>(null);
 
   // Refs are stable for the life of the component, so this bundle is built once.
   const memory = useMemo<SessionMemory>(
@@ -168,8 +145,6 @@ export function AnalyticsProvider() {
       lastIdentity: lastIdentityRef,
       wasAuthenticated: wasAuthenticatedRef,
       lastPageViewKey: lastPageViewKeyRef,
-      lastGroup: lastGroupRef,
-      lastCommunitySlug: lastCommunitySlugRef,
     }),
     []
   );
@@ -212,14 +187,15 @@ export function AnalyticsProvider() {
     // that null left the device still bound to A, so anything emitted in the
     // gap was attributed to a community the visitor had already left.
     //
-    // Only on change: the effect re-runs on every navigation, and `set_group`
-    // is a network call.
-    syncCommunitySlug(boundCommunitySlug, memory);
-
-    if (memory.lastGroup.current !== boundCommunityId) {
-      memory.lastGroup.current = boundCommunityId;
-      setCommunityGroup(boundCommunityId);
-    }
+    // Both calls are unconditional. They used to be guarded by refs holding
+    // "what was last written", which is wrong across documents: the refs start
+    // at null on every fresh load while the super properties they mirror are
+    // restored from localStorage, so a hard load onto a non-community route
+    // looked like "already clear" and left the previous community attached to
+    // everything that followed. The client dedupes instead, against the SDK's
+    // own persisted state, which is the thing that actually survives.
+    setCommunitySlug(boundCommunitySlug);
+    setCommunityGroup(boundCommunityId);
 
     // The page VIEW does wait for the layout to bind the community. A community
     // page view that does not name its community is not a useful row, and
@@ -236,10 +212,12 @@ export function AnalyticsProvider() {
     if (memory.lastPageViewKey.current === pageViewKey) return;
     memory.lastPageViewKey.current = pageViewKey;
 
+    // No `community_id` here: `setCommunityGroup` above registers it as a super
+    // property, in the array shape group analytics join on. Passing it again
+    // would override that array with a scalar on page views alone.
     trackPageView({
       route_pattern: toRoutePattern(pathname),
       page_group: toPageGroup(pathname),
-      community_id: boundCommunityId,
     });
   }, [
     ready,

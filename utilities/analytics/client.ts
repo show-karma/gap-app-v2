@@ -18,8 +18,13 @@
  *     mirrored in a module variable: the module is re-created on every reload
  *     while `localStorage` persistence is not, so a mirror is wrong exactly
  *     when it matters (a reload into a logged-out state).
+ *   - Community context (group + slug) is read back from Mixpanel's store for
+ *     the same reason as identity: it is persisted in `localStorage` and so
+ *     outlives the module, while any mirror of it is re-created empty on every
+ *     fresh document.
  *   - PII (email, wallet) is written to the *profile* via `identifyUser`,
- *     never onto events; `redactSensitiveProps` is the runtime backstop.
+ *     never onto events; `redactSensitiveProps` is the runtime backstop, and
+ *     `property_blacklist` covers the URL properties the SDK adds by itself.
  */
 
 import mp, { type Mixpanel } from "mixpanel-browser";
@@ -34,6 +39,70 @@ export const COMMUNITY_GROUP_KEY = "community_id";
 
 /** Mixpanel's own key for the identified distinct id, in its persisted store. */
 const USER_ID_PROPERTY = "$user_id";
+
+/** Super property holding the readable community slug, in that same store. */
+const COMMUNITY_SLUG_PROPERTY = "community_slug";
+
+/**
+ * Mixpanel's own name for a web page view.
+ *
+ * Emitted through `track` rather than `track_pageview` so the event carries
+ * exactly the properties this module puts on it. `track_pageview` merges
+ * `mpPageViewProperties()` in first — `current_url_path` and
+ * `current_url_search` among them — which is the whole of what
+ * `route-pattern.ts` exists to prevent.
+ */
+const PAGE_VIEW_EVENT = "$mp_web_page_view";
+
+/**
+ * Ingestion routes, named without the SDK's default trailing slash.
+ *
+ * `DEFAULT_API_ROUTES` is `track/`, `engage/`, `groups/`. The app does not set
+ * `trailingSlash`, so Next answers `/api/mp/track/` with a 308 to
+ * `/api/mp/track` — every single event paid a redirect before its POST. Two
+ * round trips per event, and a redirected POST is exactly the shape a flaky
+ * connection turns into a dropped event.
+ *
+ * All five keys are listed because `api_routes` is shallow-merged into the
+ * config: a partial object would leave the omitted ones `undefined` and put
+ * that word in the URL. `record` and `flags` are unreachable anyway — session
+ * replay is off, flags are unused, and the proxy's allowlist is `track`,
+ * `engage`, `groups` — but a 404 on a real path reads better in a log.
+ */
+const MIXPANEL_API_ROUTES = {
+  track: "track",
+  engage: "engage",
+  groups: "groups",
+  record: "record",
+  flags: "flags",
+} as const;
+
+/**
+ * Properties the SDK attaches by itself that carry a raw URL.
+ *
+ * `route-pattern.ts` templates every path this app reports, so a share token in
+ * `/s/sh_…` never reaches Mixpanel — but that only governs the properties this
+ * module sets. The SDK adds its own to every event from `_.info.properties()`
+ * (`$current_url`, `$referrer`) and from the persisted campaign params
+ * (`$initial_referrer`), and those are the concrete URL, token and all.
+ * `$initial_referrer` is the worst of them: it is written once and persists for
+ * the life of the device.
+ *
+ * `property_blacklist` is applied to the fully merged property bag at track
+ * time, so one list covers the per-event defaults, the persisted super
+ * properties, and anything `track_pageview` would add.
+ *
+ * The domain-only companions (`$referring_domain`, `$initial_referring_domain`)
+ * deliberately stay: a hostname cannot carry a token, and acquisition reporting
+ * needs them.
+ */
+const URL_BEARING_PROPERTIES: readonly string[] = [
+  "$current_url",
+  "$referrer",
+  "$initial_referrer",
+  "current_url_path",
+  "current_url_search",
+];
 
 export interface UserProfile {
   email?: string | null;
@@ -55,20 +124,16 @@ export interface SuperProperties {
   app_version?: string;
   wallet_connected?: boolean;
   auth_method?: string;
-  /**
-   * The community's canonical slug, on `/community/[…]` routes.
-   *
-   * Readable, not authoritative: `community_id` is the resolved UID and is what
-   * grouping joins on, but a report filtered by hand is far easier to write
-   * against `gitcoin` than against `0x8dfb…`.
-   *
-   * Taken from the community the layout RESOLVED, never from the URL segment —
-   * that route accepts a uid too, so reading it off the path would put uids
-   * into the one property whose whole purpose is to be readable. Unregistered
-   * on leaving the community.
-   */
-  community_slug?: string;
 }
+
+/**
+ * `community_slug` is deliberately NOT a member of `SuperProperties`.
+ *
+ * It is written and cleared by {@link setCommunitySlug}, which dedupes against
+ * Mixpanel's persisted store. Leaving it on the generic surface would give it a
+ * second writer that dedupes against nothing, and `currentContext` would then
+ * replay a stale slug after every reset.
+ */
 
 /**
  * Super properties that describe the *user* rather than the deployment or the
@@ -81,6 +146,15 @@ const IDENTITY_SCOPED_KEYS = [
   "auth_method",
 ] as const satisfies readonly (keyof SuperProperties)[];
 
+/**
+ * `community_id` is deliberately absent.
+ *
+ * `set_group` already registers it as a super property, and it registers it as
+ * a one-element ARRAY — that is the shape Mixpanel's group analytics join on.
+ * Passing it here as well set a scalar, and an event property beats a super
+ * property on merge, so `community_id` arrived as `"0x8dfb…"` on page views and
+ * as `["0x8dfb…"]` on every other event. No report could filter across both.
+ */
 export interface PageViewProps {
   /**
    * Templated route (`/project/:id/updates`), never the concrete pathname —
@@ -89,7 +163,6 @@ export interface PageViewProps {
   route_pattern: string;
   /** First path segment (`project`, `community`, `funding-map`, …) — a cheap route family. */
   page_group: string;
-  community_id?: string | null;
 }
 
 let client: Mixpanel | null = null;
@@ -100,12 +173,6 @@ let client: Mixpanel | null = null;
 let currentContext: SuperProperties = {};
 /** Whether the deployment/tenant context survived its `register` call. */
 let contextRegistered = false;
-/**
- * The community the device is currently grouped into. Held here because
- * `reset()` drops the group binding along with everything else, and a signed-out
- * visitor still browsing a community must keep reporting as that community.
- */
-let currentCommunityId: string | null = null;
 let strictForTests = false;
 
 const isBrowser = (): boolean => typeof window !== "undefined";
@@ -153,10 +220,16 @@ const getClient = (): Mixpanel | null => {
   try {
     mp.init(token, {
       api_host: `${window.location.origin}${MIXPANEL_PROXY_PATH}`,
+      // Unslashed, so the proxy answers the POST instead of 308-ing it first.
+      api_routes: { ...MIXPANEL_API_ROUTES },
       persistence: "localStorage",
       // Manual page views (see `trackPageView`) so the route family and
       // community group are attached; the SDK's own tracker cannot know them.
       track_pageview: false,
+      // The SDK's own URL properties never leave the browser. See
+      // `URL_BEARING_PROPERTIES`: without this, every event carried the
+      // concrete pathname and undid `route-pattern.ts`.
+      property_blacklist: [...URL_BEARING_PROPERTIES],
       debug: !isProduction(),
       ignore_dnt: false,
       // Session replay records the DOM, which on this app means grant
@@ -191,10 +264,27 @@ const safely = (operation: (mixpanel: Mixpanel) => void): void => {
   }
 };
 
-/** The distinct id Mixpanel currently considers identified, if any. */
-const identifiedUserId = (mixpanel: Mixpanel): string | null => {
-  const value: unknown = mixpanel.get_property(USER_ID_PROPERTY);
+/** A persisted super property, when it holds a non-empty string. */
+const persistedString = (mixpanel: Mixpanel, key: string): string | null => {
+  const value: unknown = mixpanel.get_property(key);
   return typeof value === "string" && value ? value : null;
+};
+
+/** The distinct id Mixpanel currently considers identified, if any. */
+const identifiedUserId = (mixpanel: Mixpanel): string | null =>
+  persistedString(mixpanel, USER_ID_PROPERTY);
+
+/**
+ * The community the device is currently grouped into, read back from Mixpanel's
+ * own store rather than from a module variable.
+ *
+ * `set_group` registers the key as a ONE-ELEMENT ARRAY, so that is the shape to
+ * unwrap; the scalar branch covers a value written by hand.
+ */
+const persistedCommunityId = (mixpanel: Mixpanel): string | null => {
+  const value: unknown = mixpanel.get_property(COMMUNITY_GROUP_KEY);
+  const first: unknown = Array.isArray(value) ? value[0] : value;
+  return typeof first === "string" && first ? first : null;
 };
 
 /** Super properties that survive a reset: the deployment and the tenant. */
@@ -213,13 +303,22 @@ const contextToRestore = (): SuperProperties => {
  * and reporting as the default one.
  */
 const resetAndRestoreContext = (mixpanel: Mixpanel): void => {
+  // Read BEFORE the reset: both are derived from the persisted store that
+  // `reset()` is about to clear.
+  const communityId = persistedCommunityId(mixpanel);
+  const communitySlug = persistedString(mixpanel, COMMUNITY_SLUG_PROPERTY);
+
   mixpanel.reset();
   mixpanel.register(contextToRestore());
-  // `reset` clears the group binding too. Without this, logging out on a
+
+  // `reset` clears the community binding too. Without this, logging out on a
   // community route silently detaches every subsequent event from that
   // community — and the visitor is still standing on its page.
-  if (currentCommunityId) {
-    mixpanel.set_group(COMMUNITY_GROUP_KEY, currentCommunityId);
+  if (communitySlug) {
+    mixpanel.register({ [COMMUNITY_SLUG_PROPERTY]: communitySlug });
+  }
+  if (communityId) {
+    mixpanel.set_group(COMMUNITY_GROUP_KEY, communityId);
   }
 };
 
@@ -270,9 +369,9 @@ export function track<TName extends AnalyticsEventName>(
  * pathname change; product code never calls this directly.
  */
 export function trackPageView(props: PageViewProps): void {
-  const prepared = prepareProps("page_view", props as unknown as Record<string, unknown>);
+  const prepared = prepareProps(PAGE_VIEW_EVENT, props as unknown as Record<string, unknown>);
   safely((mixpanel) => {
-    mixpanel.track_pageview(prepared);
+    mixpanel.track(PAGE_VIEW_EVENT, prepared);
   });
 }
 
@@ -352,18 +451,46 @@ export function unregisterSuperProperty(key: keyof SuperProperties | string): vo
  * profile *and* the super property. Dropping only the super property would
  * leave the device permanently joined to the last community it visited, and
  * that binding is what community group analytics aggregate on.
+ *
+ * Whether a write is needed is decided by reading Mixpanel back, never by a
+ * mirror held here or by a caller's ref. Both of those are re-created empty on
+ * every fresh document while the super property is not — so after any community
+ * visit, a hard load onto a non-community route saw "nothing bound", skipped
+ * the clear, and left `community_id` riding on every later event.
  */
 export function setCommunityGroup(communityId: string | null): void {
-  currentCommunityId = communityId;
-  if (!communityId) {
-    safely((mixpanel) => {
+  safely((mixpanel) => {
+    if (persistedCommunityId(mixpanel) === communityId) return;
+    if (!communityId) {
       mixpanel.set_group(COMMUNITY_GROUP_KEY, []);
       mixpanel.unregister(COMMUNITY_GROUP_KEY);
-    });
-    return;
-  }
-  safely((mixpanel) => {
+      return;
+    }
     mixpanel.set_group(COMMUNITY_GROUP_KEY, communityId);
+  });
+}
+
+/**
+ * Registers the community's readable slug, or clears it off a community route.
+ *
+ * Readable, not authoritative: `community_id` is the resolved uid and is what
+ * grouping joins on, but a report filtered by hand is far easier to write
+ * against `gitcoin` than against `0x8dfb…`. Taken from the community the layout
+ * RESOLVED, never from the URL segment — that route accepts a uid too, so
+ * reading it off the path would put uids into the one property whose whole
+ * purpose is to be readable.
+ *
+ * Deduped against Mixpanel's persisted store, for the same reason
+ * {@link setCommunityGroup} is: see the note on that function.
+ */
+export function setCommunitySlug(slug: string | null): void {
+  safely((mixpanel) => {
+    if (persistedString(mixpanel, COMMUNITY_SLUG_PROPERTY) === slug) return;
+    if (!slug) {
+      mixpanel.unregister(COMMUNITY_SLUG_PROPERTY);
+      return;
+    }
+    mixpanel.register({ [COMMUNITY_SLUG_PROPERTY]: slug });
   });
 }
 
@@ -380,6 +507,5 @@ export const __resetAnalyticsClientForTests = (): void => {
   client = null;
   contextRegistered = false;
   currentContext = {};
-  currentCommunityId = null;
   strictForTests = false;
 };

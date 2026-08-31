@@ -223,13 +223,25 @@ the session, merged by `track()` — see `utilities/aiReferrer.ts`.
 
 ## Page views
 
-`AnalyticsProvider` sends one `page_view` per navigation, with:
+`AnalyticsProvider` sends one `$mp_web_page_view` per navigation — Mixpanel's
+own page-view event name, so it lands in the built-in reports — with exactly:
 
 | Property | Meaning |
 |---|---|
 | `route_pattern` | The templated route: `/project/:projectId/updates`. Never the concrete path. |
 | `page_group` | The first path segment — `project`, `community`, `funding-map` — a cheap route family. |
-| `community_id` | The community UID, on community routes. Null elsewhere. |
+
+It is emitted through `track()`, **not** `mixpanel.track_pageview()`. The SDK
+helper merges `mpPageViewProperties()` in first — `current_url_path` and
+`current_url_search` among them — which is the concrete path this whole section
+exists to keep out of Mixpanel.
+
+`community_id` is deliberately **not** a page-view property. `set_group`
+registers it as a super property already, and registers it as a one-element
+**array**, which is the shape group analytics join on. Sending it here too set a
+scalar, and an event property beats a super property on merge — so
+`community_id` arrived as `"0x8dfb…"` on page views and as `["0x8dfb…"]` on
+every other event, and no report could filter across both.
 
 The raw pathname is deliberately **not** sent. Paths carry identifiers — a
 wallet address on a profile route, a bearer share token on
@@ -283,6 +295,14 @@ come from the community the layout resolved, never from the URL segment —
 `/community/[communityId]` accepts a uid too, so reading either off the path
 would split one community into two groups and put uids into the property whose
 whole purpose is to be readable.
+
+`community_slug` and `community_id` are written by `setCommunitySlug` and
+`setCommunityGroup`, which decide whether a write is needed by reading Mixpanel
+back (`get_property`) — never from a module mirror or a React ref. Both are
+persisted in `localStorage`, so they outlive the module and every ref that used
+to track them: on a fresh document those started empty, which read as "nothing
+bound", so the clear was skipped and the last community visited stayed attached
+to every later event on every later route.
 
 `wallet_connected` and `auth_method` are identity-scoped: they are deliberately
 **not** restored after a `reset()`, because carrying them across a user switch
@@ -404,7 +424,9 @@ Assumptions this plan depends on, and how each was verified.
 | Assumption | Status |
 |---|---|
 | The proxy allowlist matches what `mixpanel-browser` actually calls | Verified against the SDK's request paths: `track`, `engage`, `groups`. |
-| `set_group` also registers `community_id` as a super property | Verified in `mixpanel-browser`; the group clear unregisters it explicitly. |
+| `set_group` also registers `community_id` as a super property | Verified in `mixpanel-browser`; it wraps a scalar into a one-element array, and the group clear unregisters it explicitly. |
+| The SDK adds URL properties of its own | Verified in `mixpanel-browser`: `$current_url` and `$referrer` per event, `$initial_referrer` persisted. All three carry the concrete path, share token included, so `property_blacklist` drops them at init alongside `current_url_path` and `current_url_search`. The domain-only companions stay — a hostname cannot carry a token. |
+| Ingestion routes must not carry the SDK's default trailing slash | Verified: `DEFAULT_API_ROUTES` is `track/`, `engage/`, `groups/`, and the app does not set `trailingSlash`, so Next answered every one with a 308 to the unslashed path. `api_routes` names them without it. |
 | Privy's `user.id` is the same DID the indexer sees | Verified: `PrivyClient.getIdentityFromJWT` returns `user.id`, now threaded into the request session. |
 | The community layout resolves a community before `AnalyticsProvider` runs its effect | Verified: child effects run before parent effects, and the provider is mounted from the root layout. |
 | `NEXT_PUBLIC_APP_VERSION` is set on preview deploys | **UNVERIFIED — reasoned from the build config, not observed.** `next.config.ts` reads the version out of `package.json` rather than from `npm_package_version`, which is unset when the platform invokes the binary directly. A deploy that builds some other way reports `"unknown"`. **Check on the next preview:** open any event and confirm `app_version` is a real semver rather than `unknown`. |

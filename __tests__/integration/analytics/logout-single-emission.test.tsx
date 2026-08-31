@@ -29,6 +29,7 @@ vi.mock("@/utilities/analytics/client", () => ({
   registerSuperProperties: vi.fn(),
   resetIdentity: vi.fn(),
   setCommunityGroup: vi.fn(),
+  setCommunitySlug: vi.fn(),
   track: vi.fn(),
   trackPageView: vi.fn(),
   unregisterSuperProperty: vi.fn(),

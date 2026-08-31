@@ -21,9 +21,9 @@ import {
   registerSuperProperties,
   resetIdentity,
   setCommunityGroup,
+  setCommunitySlug,
   track,
   trackPageView,
-  unregisterSuperProperty,
 } from "@/utilities/analytics/client";
 
 vi.mock("@/utilities/analytics/client", () => ({
@@ -31,9 +31,9 @@ vi.mock("@/utilities/analytics/client", () => ({
   registerSuperProperties: vi.fn(),
   resetIdentity: vi.fn(),
   setCommunityGroup: vi.fn(),
+  setCommunitySlug: vi.fn(),
   track: vi.fn(),
   trackPageView: vi.fn(),
-  unregisterSuperProperty: vi.fn(),
 }));
 
 /**
@@ -246,7 +246,6 @@ describe("AnalyticsProvider", () => {
       expect(trackPageView).toHaveBeenCalledWith({
         route_pattern: "/funding-map",
         page_group: "funding-map",
-        community_id: null,
       });
     });
 
@@ -257,7 +256,6 @@ describe("AnalyticsProvider", () => {
       expect(trackPageView).toHaveBeenCalledWith({
         route_pattern: "/",
         page_group: "home",
-        community_id: null,
       });
     });
 
@@ -270,7 +268,6 @@ describe("AnalyticsProvider", () => {
       expect(trackPageView).toHaveBeenCalledWith({
         route_pattern: "/project/:projectId/updates",
         page_group: "project",
-        community_id: null,
       });
     });
 
@@ -283,8 +280,10 @@ describe("AnalyticsProvider", () => {
       expect(trackPageView).toHaveBeenCalledWith({
         route_pattern: "/community/:communityId/grants",
         page_group: "community",
-        community_id: "0xcommunityuid",
       });
+      // `community_id` rides on the group super property instead — as the
+      // array shape group analytics join on.
+      expect(setCommunityGroup).toHaveBeenCalledWith("0xcommunityuid");
     });
 
     it("waits for the layout to resolve the community before reporting the view", () => {
@@ -300,9 +299,7 @@ describe("AnalyticsProvider", () => {
       rerender(<AnalyticsProvider />);
 
       expect(trackPageView).toHaveBeenCalledTimes(1);
-      expect(trackPageView).toHaveBeenCalledWith(
-        expect.objectContaining({ community_id: "0xcommunityuid" })
-      );
+      expect(setCommunityGroup).toHaveBeenLastCalledWith("0xcommunityuid");
     });
 
     it("does not wait for a community on a route that has none", () => {
@@ -314,7 +311,6 @@ describe("AnalyticsProvider", () => {
       expect(trackPageView).toHaveBeenCalledWith({
         route_pattern: "/project/:projectId",
         page_group: "project",
-        community_id: null,
       });
     });
 
@@ -385,12 +381,10 @@ describe("AnalyticsProvider", () => {
       expect(trackPageView).toHaveBeenNthCalledWith(1, {
         route_pattern: "/project/:projectId",
         page_group: "project",
-        community_id: null,
       });
       expect(trackPageView).toHaveBeenNthCalledWith(2, {
         route_pattern: "/project/:projectId",
         page_group: "project",
-        community_id: null,
       });
     });
 
@@ -417,7 +411,6 @@ describe("AnalyticsProvider", () => {
       expect(trackPageView).toHaveBeenLastCalledWith({
         route_pattern: "/funding-map",
         page_group: "funding-map",
-        community_id: null,
       });
     });
   });
@@ -544,14 +537,23 @@ describe("AnalyticsProvider — write ordering", () => {
     expect(trackPageView).not.toHaveBeenCalled();
   });
 
-  it("does not rewrite an unchanged binding on every navigation", () => {
+  it("republishes the same binding on every settled run, and lets the client dedupe", () => {
+    // The dedupe deliberately does NOT live here. A ref holding "what was last
+    // written" is empty on every fresh document while the super property it
+    // mirrors is restored from localStorage, so it read as "already clear" and
+    // never cleared anything (Addendum G1). `setCommunityGroup` compares
+    // against Mixpanel's own persisted state instead, and skips the network
+    // call itself — see the client's "writes nothing when already bound" test.
     setAuth({ authenticated: true, user: { id: "did:privy:alice" } });
     const { rerender } = render(<AnalyticsProvider />);
 
     usePathnameMock.mockReturnValue("/community/gitcoin/projects");
     rerender(<AnalyticsProvider />);
 
-    expect(setCommunityGroup).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(setCommunityGroup).mock.calls.map(([id]) => id)).toEqual([
+      "0xcommunityuid",
+      "0xcommunityuid",
+    ]);
   });
 });
 
@@ -623,7 +625,7 @@ describe("AnalyticsProvider — community_slug", () => {
 
     render(<AnalyticsProvider />);
 
-    expect(registerSuperProperties).toHaveBeenCalledWith({ community_slug: "gitcoin" });
+    expect(setCommunitySlug).toHaveBeenCalledWith("gitcoin");
   });
 
   it("registers the canonical slug even when the visitor arrived by uid", () => {
@@ -634,7 +636,7 @@ describe("AnalyticsProvider — community_slug", () => {
 
     render(<AnalyticsProvider />);
 
-    expect(registerSuperProperties).toHaveBeenCalledWith({ community_slug: "gitcoin" });
+    expect(setCommunitySlug).toHaveBeenCalledWith("gitcoin");
   });
 
   it("registers nothing when the resolved community has no slug", () => {
@@ -643,12 +645,10 @@ describe("AnalyticsProvider — community_slug", () => {
 
     render(<AnalyticsProvider />);
 
-    expect(registerSuperProperties).not.toHaveBeenCalledWith(
-      expect.objectContaining({ community_slug: expect.anything() })
-    );
+    expect(setCommunitySlug).not.toHaveBeenCalledWith(expect.any(String));
   });
 
-  it("unregisters it on leaving the community", () => {
+  it("clears it on leaving the community", () => {
     usePathnameMock.mockReturnValue("/community/gitcoin");
     const { rerender } = render(<AnalyticsProvider />);
 
@@ -656,18 +656,21 @@ describe("AnalyticsProvider — community_slug", () => {
     bindCommunity(null);
     rerender(<AnalyticsProvider />);
 
-    expect(unregisterSuperProperty).toHaveBeenCalledWith("community_slug");
+    expect(setCommunitySlug).toHaveBeenLastCalledWith(null);
   });
 
-  it("registers nothing off a community route", () => {
+  it("clears it on every settled run off a community route", () => {
+    // Unconditional, not guarded by a ref holding "what was last written": on a
+    // fresh document that ref is null while the super property has been
+    // restored from localStorage, so the guard read as "already clear" and the
+    // community the visitor left stayed on every later event (Addendum G1).
     usePathnameMock.mockReturnValue("/funding-map");
     bindCommunity(null);
 
     render(<AnalyticsProvider />);
 
-    expect(registerSuperProperties).not.toHaveBeenCalledWith(
-      expect.objectContaining({ community_slug: expect.anything() })
-    );
+    expect(setCommunitySlug).toHaveBeenCalledWith(null);
+    expect(setCommunityGroup).toHaveBeenCalledWith(null);
   });
 
   it("waits for the layout before registering anything on a community route", () => {
@@ -678,9 +681,7 @@ describe("AnalyticsProvider — community_slug", () => {
 
     render(<AnalyticsProvider />);
 
-    expect(registerSuperProperties).not.toHaveBeenCalledWith(
-      expect.objectContaining({ community_slug: expect.anything() })
-    );
+    expect(setCommunitySlug).not.toHaveBeenCalledWith(expect.any(String));
   });
 
   it("keeps community_id on the UID, never on the slug", () => {
@@ -688,9 +689,8 @@ describe("AnalyticsProvider — community_slug", () => {
 
     render(<AnalyticsProvider />);
 
-    expect(trackPageView).toHaveBeenCalledWith(
-      expect.objectContaining({ community_id: "0xcommunityuid" })
-    );
+    expect(setCommunityGroup).toHaveBeenCalledWith("0xcommunityuid");
+    expect(setCommunitySlug).not.toHaveBeenCalledWith("0xcommunityuid");
   });
 });
 
