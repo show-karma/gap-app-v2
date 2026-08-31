@@ -19,6 +19,7 @@ import {
   getCommunityDetails,
   getCommunityProjects,
 } from "@/utilities/queries/v2/getCommunityData";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 type Props = {
   params: Promise<{
@@ -95,10 +96,15 @@ export default async function Page(props: Props) {
     ? []
     : (initialProjects?.payload ?? []).filter((project) => Boolean(project.details?.title));
 
+  // On a tenant domain the schema must describe the tenant's own URLs, not the
+  // Karma-branded ones these PAGES helpers build.
+  const whitelabel = await getWhitelabelContext();
+
   return (
     <div className="-my-4 flex flex-col w-full max-w-full py-2">
       <ItemListJsonLd
         name={`${communityDetails.details?.name || communityId} funded projects`}
+        whitelabel={whitelabel}
         items={listedProjects.map((project) => ({
           name: project.details.title,
           url: PAGES.PROJECT.OVERVIEW(project.details.slug || project.uid),

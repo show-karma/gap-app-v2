@@ -9,9 +9,9 @@ import { useMutation } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { type FC, useCallback } from "react";
-import toast from "react-hot-toast";
+import type { FC } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { CancelledMilestoneBanner } from "@/components/Shared/CancelledMilestoneBanner";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -22,7 +22,6 @@ import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { Link } from "@/src/components/navigation/Link";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
-import { getGrantInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -33,7 +32,9 @@ import {
   MILESTONE_STATUS_BADGE_CLASS,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
+import { isMilestoneEditable } from "@/utilities/milestones/isMilestoneEditable";
 import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
+import { openGrantInvoice } from "@/utilities/milestones/openGrantInvoice";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -177,16 +178,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     isAuthorized && type === "grant" ? grantUID : undefined
   );
   const endsAt = milestone.endsAt;
-
-  const handleViewInvoice = useCallback(async () => {
-    if (!grantUID || !milestone.invoiceInfo?.fileKey) return;
-    try {
-      const url = await getGrantInvoiceDownloadUrl(grantUID, milestone.invoiceInfo.fileKey);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      toast.error("Failed to open invoice");
-    }
-  }, [grantUID, milestone.invoiceInfo?.fileKey]);
 
   // completion information
   const completionReason =
@@ -344,7 +335,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
             <button
               type="button"
               className="flex items-center gap-1.5 hover:opacity-75 transition-opacity"
-              onClick={handleViewInvoice}
+              onClick={() => openGrantInvoice(grantUID, milestone.invoiceInfo?.fileKey)}
             >
               <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <span className="text-sm text-emerald-700 dark:text-emerald-300">
@@ -537,6 +528,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         : MilestoneLifecycleStatus.PENDING,
     dueMs
   );
+  const isCancelled = effectiveStatus === MilestoneLifecycleStatus.CANCELLED;
   const showOrderBadge = type === "grant" && Boolean(milestone.grantMilestoneOrder);
   const showAllocationBadge = Boolean(allocationAmount);
   const showDueBadge = dueMs != null;
@@ -589,7 +581,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const milestoneActions =
     isAuthorized && (type === "milestone" || type === "grant") ? (
       <>
-        {!completed && effectiveStatus !== MilestoneLifecycleStatus.CANCELLED && (
+        {!completed && !isCancelled && (
           <Button
             className="flex flex-row gap-1 border border-brand-blue text-brand-blue text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3 rounded-md max-sm:px-2 max-sm:py-1"
             onClick={() => handleCompleting(true)}
@@ -601,7 +593,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         {type === "milestone" && projectMilestone ? (
           <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
         ) : type === "grant" && grantMilestone ? (
-          <GrantMilestoneSimpleOptionsMenu milestone={milestone} canEdit={canEdit} />
+          <GrantMilestoneSimpleOptionsMenu
+            milestone={milestone}
+            canEdit={canEdit && isMilestoneEditable(milestone)}
+          />
         ) : null}
       </>
     ) : null;
@@ -622,6 +617,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         pills={pills}
         title={title}
         description={description}
+        banner={
+          isCancelled ? (
+            <CancelledMilestoneBanner cancellation={milestone.cancellation ?? null} />
+          ) : undefined
+        }
         attributionDate={milestone.createdAt || undefined}
         attributionActions={attributionActions}
       />

@@ -123,6 +123,52 @@ describe("isTransientWalletTimeoutError", () => {
     );
     expect(isTransientWalletTimeoutError(exhausted)).toBe(false);
   });
+
+  // GAP-FRONTEND-23J. ethers emits "could not coalesce error" for ANY provider
+  // error it cannot classify — including a duelling-wallet-extension stack
+  // overflow, which is permanent and loses the user's work. Dropping that as a
+  // "transient timeout" would leave the failure with zero telemetry, since
+  // browserExtensionErrors already filters the extensions' own crashes.
+  it("does NOT match a wallet-provider conflict wearing the same ethers wrapper", () => {
+    const coalesce = Object.assign(
+      new Error(
+        'could not coalesce error (error={ "message": "Unknown connector error" }, payload={ "method": "eth_sendTransaction" })'
+      ),
+      { code: "UNKNOWN_ERROR", error: new RangeError("Maximum call stack size exceeded") }
+    );
+    expect(isTransientWalletTimeoutError(coalesce)).toBe(false);
+  });
+
+  // Regression guard for a trap this filter sets for a FUTURE change. The SDK
+  // wrapper's message is the constant "Error during attestation." today, so it
+  // does not match the fragments by accident. The moment karma-gap-sdk carries
+  // the underlying cause into that message — a change worth making, because the
+  // constant is what makes every attestation failure group together — every
+  // wrapped failure would start matching and be silently dropped. The exclusion
+  // is structural so the SDK's wording can never change our filtering.
+  it("does NOT match a karma-gap-sdk attestation wrapper, whatever its message says", () => {
+    const todaysWrapper = Object.assign(new Error("ATTEST_ERROR: Error during attestation."), {
+      code: 50012,
+      originalError: new Error("could not coalesce error"),
+    });
+    const wrapperCarryingTheCause = Object.assign(
+      new Error("ATTEST_ERROR: Error during attestation: could not coalesce error"),
+      { code: 50012, originalError: new Error("could not coalesce error") }
+    );
+
+    expect(isTransientWalletTimeoutError(todaysWrapper)).toBe(false);
+    expect(isTransientWalletTimeoutError(wrapperCarryingTheCause)).toBe(false);
+  });
+
+  it("still matches the raw unwrapped ethers signature it exists for", () => {
+    // An un-awaited rejection from an abandoned attempt: plain ethers, string
+    // `code`, no `originalError`. Neither exclusion applies.
+    const raw = Object.assign(
+      new Error('could not coalesce error (error={ "message": "Wallet timeout" })'),
+      { code: "UNKNOWN_ERROR" }
+    );
+    expect(isTransientWalletTimeoutError(raw)).toBe(true);
+  });
 });
 
 describe("isTransientSocketError (GAP-FRONTEND-1Y9)", () => {

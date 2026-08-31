@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import {
   Menubar,
   MenubarContent,
@@ -20,8 +19,8 @@ import {
   MenubarMenu,
   MenubarTrigger,
 } from "@/components/ui/menubar";
+import { useAccountIdentity } from "@/hooks/useAccountIdentity";
 import { useAuth } from "@/hooks/useAuth";
-import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
 import { followLinks } from "@/src/components/navbar/follow-links";
@@ -63,7 +62,7 @@ export function NavbarUserMenu() {
   // useAuth only needed for logout / connect-wallet actions
   const { logout, user, connectWallet } = useAuth();
 
-  const { profile } = useContributorProfile(address);
+  const { name: accountName } = useAccountIdentity();
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
   const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
@@ -113,23 +112,16 @@ export function NavbarUserMenu() {
             ) : (
               <CircleUser className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 text-muted-foreground" />
             )}
-            {user?.farcaster ? (
-              <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                {user.farcaster.displayName || user.farcaster.username}
+            {/* One resolution, shared with the identity hint published to a
+                tenant's marketing site — see useAccountIdentity. The chain is
+                unchanged; it just no longer lives in two places. */}
+            {accountName ? (
+              // `inline-block`, not `inline`: max-width and truncation do
+              // nothing on a non-replaced inline box, so a long name wrapped to
+              // a second line and pushed the row's height instead of ellipsing.
+              <span className="text-sm text-muted-foreground hidden xl:inline-block px-2 max-w-[22ch] truncate whitespace-nowrap">
+                {accountName}
               </span>
-            ) : getUserEmail(user) ? (
-              <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                {getUserEmail(user)}
-              </span>
-            ) : profile?.data?.name ? (
-              <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                {profile?.data?.name}
-              </span>
-            ) : address ? (
-              <EthereumAddressToProfileName
-                address={address}
-                className="text-sm text-muted-foreground hidden xl:inline px-2"
-              />
             ) : null}
           </div>
         </MenubarTrigger>

@@ -1,0 +1,7 @@
+diff --git a/components/OnlyRemovals.tsx b/components/OnlyRemovals.tsx
+index 1234567..89abcde 100644
+--- a/components/OnlyRemovals.tsx
++++ b/components/OnlyRemovals.tsx
+@@ -5,2 +4,0 @@
+-gone one
+-gone two

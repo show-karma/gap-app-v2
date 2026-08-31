@@ -1,0 +1,11 @@
+export function MultiRule() {
+  return (
+    <div>
+      <span className="!bg-[#123456]">two defects, two findings</span>
+      {/* design-check-ignore: DS001,DS004 tenant swatch forced over a vendor stylesheet */}
+      <span className="!bg-[#654321]">covered by one multi-rule waiver</span>
+      {/* design-check-ignore: DS001,DS006 only the colour matches on the next line */}
+      <span className="bg-[#abcdef]">partial waiver leaves an orphan</span>
+    </div>
+  );
+}

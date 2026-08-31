@@ -1,6 +1,23 @@
 import robots from "@/app/robots";
+import { CANONICAL_HOST, STAGING_HOST } from "@/utilities/domains";
 import { SITE_URL } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
+
+// robots.txt is host-aware: proxy.ts never rewrites it (its matcher skips root
+// paths containing a dot), so the same route answers on the canonical host,
+// staging, and every whitelabel tenant domain.
+const requestHost = vi.hoisted(() => ({ value: "" }));
+
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers({ host: requestHost.value }),
+}));
+
+async function robotsForHost(host: string) {
+  requestHost.value = host;
+  return robots();
+}
+
+const result = await robotsForHost(CANONICAL_HOST);
 
 const SEARCH_AND_USER_FETCH_BOTS = [
   "Googlebot",
@@ -21,8 +38,6 @@ const AI_CRAWLERS = [
 ];
 
 describe("robots", () => {
-  const result = robots();
-
   it("should return 13 rule sets", () => {
     expect(result.rules).toHaveLength(13);
   });
@@ -219,5 +234,62 @@ describe("robots", () => {
 
   it("should set the host to the site URL", () => {
     expect(result.host).toBe(SITE_URL);
+  });
+});
+
+describe("robots on the staging host", () => {
+  it("blocks every crawler outright", async () => {
+    const staging = await robotsForHost(STAGING_HOST);
+    const rules = Array.isArray(staging.rules) ? staging.rules : [staging.rules];
+
+    expect(rules).toHaveLength(1);
+    expect(rules[0].userAgent).toBe("*");
+    expect(rules[0].disallow).toBe("/");
+  });
+
+  it("advertises neither a sitemap nor a host", async () => {
+    const staging = await robotsForHost(STAGING_HOST);
+
+    expect(staging.sitemap).toBeUndefined();
+    expect(staging.host).toBeUndefined();
+  });
+
+  it("does not depend on a canonical hint to stay out of the index", async () => {
+    // staging.karmahq.org is new with the .org migration, so it carries none of
+    // the "already ignored" history an old host would. A cross-domain canonical
+    // is only a hint to Google; the disallow is the directive.
+    const staging = await robotsForHost(STAGING_HOST);
+    const rules = Array.isArray(staging.rules) ? staging.rules : [staging.rules];
+
+    expect(rules.every((rule) => rule.allow === undefined)).toBe(true);
+  });
+});
+
+describe("robots on a whitelabel tenant domain", () => {
+  const TENANT_HOST = "grantsapp.scroll.io";
+
+  it("never declares the tenant domain a mirror of the canonical host", async () => {
+    // A `Host:` directive here would tell crawlers the tenant's branded domain
+    // is a duplicate of www.karmahq.org.
+    const tenant = await robotsForHost(TENANT_HOST);
+
+    expect(tenant.host).toBeUndefined();
+  });
+
+  it("does not advertise a sitemap that contains none of the tenant's URLs", async () => {
+    // canonicalizeSitemapUrl rewrites every sitemap entry to the canonical
+    // host, so the Karma sitemap is useless to a tenant crawler.
+    const tenant = await robotsForHost(TENANT_HOST);
+
+    expect(tenant.sitemap).toBeUndefined();
+  });
+
+  it("still serves the full crawl policy", async () => {
+    const tenant = await robotsForHost(TENANT_HOST);
+    const rules = Array.isArray(tenant.rules) ? tenant.rules : [tenant.rules];
+
+    expect(rules).toHaveLength(13);
+    expect(rules[0].allow).toContain("/");
+    expect(rules[0].disallow).toContain("/api/");
   });
 });

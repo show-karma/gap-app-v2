@@ -84,6 +84,7 @@ vi.mock("@/utilities/funding-programs", () => ({
 
 vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["c1"],
+  EXPLORER_NAV_OVERRIDES: {},
 }));
 
 vi.mock("@/src/features/payout-disbursement/services/payout-disbursement.service", () => ({
@@ -336,11 +337,9 @@ describe("Whitelabel programs/[programId] page", () => {
   });
 });
 
-describe("/(with-header)/financials page", () => {
+describe("/(cover)/financials page", () => {
   it("renders PublicControlCenter for enabled community", async () => {
-    const { default: Page } = await import(
-      "@/app/community/[communityId]/(with-header)/financials/page"
-    );
+    const { default: Page } = await import("@/app/community/[communityId]/(cover)/financials/page");
     const result = await Page({ params: Promise.resolve({ communityId: "c1" }) });
     renderInQueryClient(result);
     expect(screen.getByTestId("public-control-center")).toBeInTheDocument();

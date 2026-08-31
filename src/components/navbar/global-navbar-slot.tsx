@@ -20,7 +20,7 @@ export function GlobalNavbarSlot() {
   return (
     <>
       <Navbar />
-      <div className="h-[var(--navbar-height)]" />
+      <div data-app-chrome className="h-[var(--navbar-height)]" />
     </>
   );
 }

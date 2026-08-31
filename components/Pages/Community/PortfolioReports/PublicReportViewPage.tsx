@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
-import Link from "next/link";
 import { PortfolioReportDocumentView } from "@/components/Pages/Community/PortfolioReports/PortfolioReportDocumentView";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
@@ -9,7 +8,9 @@ import {
   useAdminReportByRunDate,
   usePublishedReport,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
+import { Link } from "@/src/components/navigation/Link";
 import type { Community } from "@/types/v2/community";
+import { PAGES } from "@/utilities/pages";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
 
 interface Props {
@@ -81,7 +82,7 @@ export function PublicReportViewPage({ community, runDate, configSlug }: Props) 
             Retry
           </button>
           <Link
-            href={`/community/${slug}/reports`}
+            href={PAGES.COMMUNITY.REPORTS(slug)}
             className="inline-flex items-center text-sm text-blue-600 hover:underline"
           >
             <ArrowLeft className="mr-1 h-4 w-4" />
@@ -99,7 +100,7 @@ export function PublicReportViewPage({ community, runDate, configSlug }: Props) 
           No published report found for {formatRunDate(runDate).label}.
         </p>
         <Link
-          href={`/community/${slug}/reports`}
+          href={PAGES.COMMUNITY.REPORTS(slug)}
           className="mt-4 inline-flex items-center text-sm text-blue-600 hover:underline"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
@@ -121,7 +122,7 @@ export function PublicReportViewPage({ community, runDate, configSlug }: Props) 
       community={community}
       runDate={runDate}
       report={report}
-      backHref={`/community/${slug}/reports`}
+      backHref={PAGES.COMMUNITY.REPORTS(slug)}
       backLabel="Reports"
       bannerText={bannerText}
       isAdmin={isDraftPreview}

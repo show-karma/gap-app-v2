@@ -17,6 +17,9 @@
  * client, surface an error UI to the user, and keep Sentry signal clean.
  */
 
+import { isAttestationWrapperError } from "@/utilities/attestation/errorShape";
+import { isProviderConflictError } from "@/utilities/wallet/providerConflict";
+
 const TRANSIENT_MESSAGE_FRAGMENTS = [
   "network error",
   "failed to fetch",
@@ -243,9 +246,34 @@ const TRANSIENT_WALLET_TIMEOUT_FRAGMENTS = ["could not coalesce", "wallet timeou
  * ("could not coalesce error" / "Wallet timeout"). These are retried at the
  * send layer and are unactionable from a Sentry event; the exhausted-retry
  * failure reports separately as a distinct wrapped error.
+ *
+ * TWO STRUCTURAL EXCLUSIONS, both load-bearing — do not collapse this back
+ * into a plain substring match:
+ *
+ * 1. `"could not coalesce"` is ethers' output for ANY provider error it cannot
+ *    classify, not just a timeout. A duelling-wallet-extension stack overflow
+ *    (GAP-FRONTEND-23J) produces the identical string, and it is a permanent,
+ *    user-visible failure that loses the user's work — exactly the thing that
+ *    must keep reporting. Classify it out before the fragments run.
+ *
+ * 2. A karma-gap-sdk `AttestationError` means the attestation FAILED and the
+ *    user was told so. Its message is the constant `"Error during
+ *    attestation."` today, so it does not match the fragments by accident —
+ *    but the moment the SDK carries the underlying cause into its message
+ *    (a change worth making for grouping), every wrapped attestation failure
+ *    would start matching and be silently dropped. Combined with
+ *    `browserExtensionErrors` already filtering the extensions' own crashes,
+ *    that would leave this failure class with zero telemetry. Exclude the
+ *    wrapper structurally so the SDK's message can never change our filtering.
+ *
+ * The raw signature this predicate is FOR — an un-awaited rejection from an
+ * abandoned attempt, a third-party SDK fetch — is unwrapped ethers and is
+ * unaffected by either exclusion. See GAP-FRONTEND-1Y2.
  */
 export function isTransientWalletTimeoutError(error: unknown): boolean {
   if (!error) return false;
+  if (isAttestationWrapperError(error)) return false;
+  if (isProviderConflictError(error)) return false;
   const message = getErrorMessage(error).toLowerCase();
   if (!message) return false;
   return TRANSIENT_WALLET_TIMEOUT_FRAGMENTS.some((fragment) => message.includes(fragment));

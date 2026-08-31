@@ -1,0 +1,17 @@
+diff --git a/components/A.tsx b/components/A.tsx
+index 1234567..89abcde 100644
+--- a/components/A.tsx
++++ b/components/A.tsx
+@@ -3 +3 @@
+-old
++new
+@@ -20,0 +21,3 @@
++one
++two
++three
+diff --git a/styles/b.scss b/styles/b.scss
+index 1234567..89abcde 100644
+--- a/styles/b.scss
++++ b/styles/b.scss
+@@ -7,0 +8 @@
++  color: #123456;

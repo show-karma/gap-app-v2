@@ -1,6 +1,23 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  /*
+   * Every utility is emitted as `.karma-chat .foo`, not `.foo`.
+   *
+   * This bundle's class names are plain Tailwind names — `hidden`, `bg-card`,
+   * `text-muted-foreground` — and host pages are very often Tailwind sites that
+   * emit the same names from their own palette. Unscoped, the two sheets fight
+   * whichever way they are ordered: the widget's `.hidden` wins and hides the
+   * host's own `hidden md:flex` nav, or the host's `.text-muted-foreground`
+   * wins and repaints the widget in the host's colours (which is what put a
+   * grey-on-grey panel on filpgf.io). Scoping ends the fight in both
+   * directions — a widget rule can no longer match anything outside the
+   * widget, and inside it the extra `.karma-chat` outranks the host's.
+   *
+   * `important` is Tailwind's name for this; it adds a scope selector, not
+   * `!important` declarations, and leaves the class names unchanged.
+   */
+  important: ".karma-chat",
   content: [
     "./widget/**/*.tsx",
     "./components/AgentChat/ChatBubbleShell.tsx",

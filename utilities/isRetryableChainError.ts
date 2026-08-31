@@ -1,3 +1,5 @@
+import { isProviderConflictError } from "@/utilities/wallet/providerConflict";
+
 /**
  * Detects signer/attestation failures that are transient chain-switch or
  * bundler-RPC hiccups the user can recover from by simply retrying — as opposed
@@ -22,6 +24,17 @@ const RETRYABLE_ERROR_PATTERNS = [
 ] as const;
 
 export function isRetryableChainError(error: unknown): boolean {
+  // Duelling wallet extensions recursing into each other produce ethers'
+  // "could not coalesce error" too, and that pattern is on the list above —
+  // but the failure is DETERMINISTIC. The user in GAP-FRONTEND-23J retried by
+  // hand 45 seconds later and failed identically in 1.2s. Telling them to "try
+  // again in a moment" is advice that cannot work, and `attestWithRetry` would
+  // burn three attempts before giving up. Classify it out first.
+  // See utilities/wallet/providerConflict.ts.
+  if (isProviderConflictError(error)) {
+    return false;
+  }
+
   const message = (error instanceof Error ? error.message : String(error ?? "")).toLowerCase();
   if (!message) {
     return false;
