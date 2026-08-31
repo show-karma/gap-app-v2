@@ -44,15 +44,45 @@ export function defaultMetricForSource(source: NotebookBarSource) {
   return NOTEBOOK_BAR_METRICS_BY_SOURCE[source][0];
 }
 
+/**
+ * A new section of the requested type, pre-filled so it is valid on creation.
+ *
+ * An exhaustive switch, deliberately: this used to end in a bare `return` of a
+ * bars section, so widening the vocabulary silently turned "add a text block"
+ * into "add a bar chart". The `never` check below makes the compiler refuse
+ * the next widening until this function has an answer for it.
+ */
 export function newSection(type: NotebookSection["type"]): NotebookSection {
-  if (type === "kpis") return { type: "kpis", metrics: ["committed"] };
-  if (type === "applications") return { type: "applications" };
-  return {
-    type: "bars",
-    source: "programs",
-    metric: defaultMetricForSource("programs"),
-    title: "Disbursed against commitment",
-  };
+  switch (type) {
+    case "kpis":
+      return { type: "kpis", metrics: ["committed"] };
+    case "applications":
+      return { type: "applications" };
+    case "text":
+      return { type: "text", body: "" };
+    case "bars":
+      return {
+        type: "bars",
+        source: "programs",
+        metric: defaultMetricForSource("programs"),
+        title: "Disbursed against commitment",
+      };
+    case "timeseries":
+      // Not offered by the composer yet — the renderer cannot draw one. Still
+      // constructed correctly so this stays exhaustive and the day the chart
+      // lands, only the composer's offer list changes.
+      return {
+        type: "timeseries",
+        source: "indicators",
+        indicatorId: "",
+        chartStyle: "line",
+        title: "",
+      };
+    default: {
+      const exhaustive: never = type;
+      return exhaustive;
+    }
+  }
 }
 
 export function canAddSection(spec: NotebookSpec): boolean {

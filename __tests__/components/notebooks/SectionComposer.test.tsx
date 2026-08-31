@@ -183,6 +183,52 @@ describe("SectionComposer", () => {
     );
   });
 
+  describe("text blocks", () => {
+    it("offers a text block as an addable section", async () => {
+      const onChange = renderComposer(spec([{ type: "applications" }]));
+
+      await userEvent.click(screen.getByRole("button", { name: /Text block/i }));
+
+      expect(onChange).toHaveBeenCalledWith(
+        spec([{ type: "applications" }, { type: "text", body: "" }])
+      );
+    });
+
+    it("edits the body", async () => {
+      const onChange = renderComposer(spec([{ type: "text", body: "a" }]));
+
+      await userEvent.type(screen.getByDisplayValue("a"), "b");
+
+      expect(onChange).toHaveBeenCalledWith(spec([{ type: "text", body: "ab" }]));
+    });
+
+    // The schema rejects a blank heading but accepts its absence.
+    it("treats an emptied heading as absent", async () => {
+      const onChange = renderComposer(spec([{ type: "text", title: "H", body: "b" }]));
+
+      await userEvent.clear(screen.getByDisplayValue("H"));
+
+      expect(onChange).toHaveBeenCalledWith(spec([{ type: "text", title: undefined, body: "b" }]));
+    });
+
+    // An author will reasonably assume markdown works. Saying so is cheaper
+    // than them discovering it on a published page.
+    it("tells the author that formatting is not rendered", () => {
+      renderComposer(spec([{ type: "text", body: "b" }]));
+
+      expect(screen.getByText(/Plain text only/i)).toBeInTheDocument();
+    });
+  });
+
+  // Accepted by the schema so the contract and tests can exercise it, but not
+  // offered until the renderer can draw one — a section that renders as
+  // nothing is worse than one the composer does not yet list.
+  it("does not offer a section type the renderer cannot draw", () => {
+    renderComposer(spec([{ type: "applications" }]));
+
+    expect(screen.queryByRole("button", { name: /Time series/i })).not.toBeInTheDocument();
+  });
+
   it("bounds author free text to what the schema accepts", () => {
     renderComposer(
       spec([{ type: "bars", source: "programs", metric: "disbursedVsCommitted", title: "T" }])

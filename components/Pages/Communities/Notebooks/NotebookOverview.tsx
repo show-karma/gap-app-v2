@@ -8,6 +8,7 @@ import type {
   NotebookKpisSection,
   NotebookSection,
   NotebookSpec,
+  NotebookTextSection,
 } from "@/services/notebooks/notebook-spec";
 
 /**
@@ -145,6 +146,26 @@ function ApplicationsSection({ entries }: { entries: { label: string; value: num
 }
 
 /**
+ * A paragraph of author context.
+ *
+ * `title` and `body` are interpolated as TEXT NODES, like every other author
+ * string on this page. There is no markdown rendering and no
+ * dangerouslySetInnerHTML — a body containing `<script>` is that many literal
+ * characters on the page. `whitespace-pre-line` preserves the author's line
+ * breaks without giving them any other markup.
+ */
+function TextSection({ section }: { section: NotebookTextSection }) {
+  return (
+    <section className="flex flex-col gap-2 rounded-2xl border border-border bg-background p-5 md:p-6">
+      {section.title ? (
+        <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
+      ) : null}
+      <p className="max-w-3xl whitespace-pre-line text-sm text-muted-foreground">{section.body}</p>
+    </section>
+  );
+}
+
+/**
  * The KPI tiles a spec section asks for, in the order it asks for them.
  *
  * Selected by `id` rather than by label, and silently skipping an id the
@@ -227,6 +248,17 @@ function SectionView({
       );
     case "applications":
       return <ApplicationsSection entries={overview.applications} />;
+    case "text":
+      return <TextSection section={section} />;
+    default:
+      // A section this build cannot draw is OMITTED, not rendered empty.
+      //
+      // It can only get here by being hand-written or by arriving from a
+      // newer writer, because the composer offers nothing it cannot render
+      // and the boundary schema rejects types it does not know. Drawing a
+      // titled but bodyless block would tell a reader the data was missing,
+      // when the truth is that this build does not know the section.
+      return null;
   }
 }
 

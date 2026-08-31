@@ -22,8 +22,67 @@ import { z } from "zod";
  * text in it: both render as text nodes, never as markup.
  */
 
-/** Schema version of a spec document. Bumped only for a breaking shape change. */
+/**
+ * Schema version of a spec document.
+ *
+ * MIGRATION RULE — the whole of it, in one line:
+ *
+ *   BUMP WHEN A READER OF THE PREVIOUS VERSION WOULD *MISREAD* A DOCUMENT.
+ *   NEVER BUMP WHEN IT WOULD MERELY *REJECT* ONE.
+ *
+ * Rejection is already safe and automatic: the section union is closed and
+ * every section is `.strict()`, so a build predating a new section type
+ * rejects the document rather than half-drawing it. A version must catch the
+ * case the union cannot — an existing field changing meaning or type, where an
+ * old reader parses successfully and draws the WRONG page.
+ *
+ * The v2 builder (kernel/indicator sources, time-series, text) is therefore an
+ * ADDITIVE widening and stays at version 1. Every v1 document renders
+ * unchanged, which is what lets the golden test hold BY CONSTRUCTION.
+ *
+ * Kept verbatim in step with the indexer's copy — see that file's header for
+ * why the two are duplicated rather than shared.
+ */
 export const NOTEBOOK_SPEC_VERSION = 1;
+
+/** Where a section's numbers come from. */
+export const NOTEBOOK_DATA_SOURCES = ["funding", "kernel", "indicators"] as const;
+
+export type NotebookDataSource = (typeof NOTEBOOK_DATA_SOURCES)[number];
+
+/**
+ * Date windows a section may ask for.
+ *
+ * Closed and small on purpose: each preset is a distinct cache entry, so an
+ * open-ended range would make cache cardinality unbounded and turn "a filter
+ * change is a fast cached refetch" into a cold fetch every time.
+ *
+ * `all` is the default, and that is a correctness decision: indicator series
+ * are short and sparse, so a windowed default would render an empty chart for
+ * a healthy metric — which a reader takes to mean the metric is broken.
+ */
+export const NOTEBOOK_DATE_RANGES = ["all", "30d", "90d", "12m"] as const;
+
+export type NotebookDateRange = (typeof NOTEBOOK_DATE_RANGES)[number];
+
+export const NOTEBOOK_DEFAULT_DATE_RANGE: NotebookDateRange = "all";
+
+/**
+ * The window a section asks for, with the default applied.
+ *
+ * One place, so the renderer, the composer and the cache key cannot drift.
+ */
+export function resolveNotebookDateRange(range?: NotebookDateRange): NotebookDateRange {
+  return range ?? NOTEBOOK_DEFAULT_DATE_RANGE;
+}
+
+/** How a time series is drawn. Both are the same data, differently weighted. */
+export const NOTEBOOK_CHART_STYLES = ["line", "area"] as const;
+
+export type NotebookChartStyle = (typeof NOTEBOOK_CHART_STYLES)[number];
+
+/** Bound on a text block's body — a paragraph of context, not a CMS. */
+export const NOTEBOOK_TEXT_BODY_MAX = 2000;
 
 /**
  * KPI tiles an author may place.
@@ -114,10 +173,51 @@ export const NotebookApplicationsSectionSchema = z
   .object({ type: z.literal("applications") })
   .strict();
 
+/**
+ * A paragraph of author context.
+ *
+ * The only section carrying no data at all — it exists so a dashboard can say
+ * what its numbers mean. `body` renders as a TEXT NODE exactly like `title`:
+ * no markdown, no HTML, no links. A deliberate limitation, not an oversight.
+ */
+export const NotebookTextSectionSchema = z
+  .object({
+    type: z.literal("text"),
+    title: sectionTitleSchema.optional(),
+    body: z.string().trim().min(1).max(NOTEBOOK_TEXT_BODY_MAX),
+  })
+  .strict();
+
+/**
+ * A time series drawn from one indicator.
+ *
+ * `indicatorId` is an opaque reference into another system's table: it cannot
+ * be validated for existence, only for shape, and it CAN DANGLE when an
+ * indicator is deleted or renamed after the page is published. The renderer
+ * treats "indicator not found" as an ordinary state to draw.
+ *
+ * `range` is optional rather than defaulted — the indexer's Ajv strict mode
+ * refuses a `default` inside a union branch and would fail its route schema at
+ * boot. Absent means "not chosen"; use resolveNotebookDateRange.
+ */
+export const NotebookTimeseriesSectionSchema = z
+  .object({
+    type: z.literal("timeseries"),
+    source: z.literal("indicators"),
+    indicatorId: z.string().uuid(),
+    chartStyle: z.enum(NOTEBOOK_CHART_STYLES),
+    range: z.enum(NOTEBOOK_DATE_RANGES).optional(),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
+  })
+  .strict();
+
 export const NotebookSectionSchema = z.union([
   NotebookKpisSectionSchema,
   NotebookBarsSectionSchema,
   NotebookApplicationsSectionSchema,
+  NotebookTextSectionSchema,
+  NotebookTimeseriesSectionSchema,
 ]);
 
 /**
@@ -136,6 +236,8 @@ export const NotebookSpecSchema = z
 export type NotebookKpisSection = z.infer<typeof NotebookKpisSectionSchema>;
 export type NotebookBarsSection = z.infer<typeof NotebookBarsSectionSchema>;
 export type NotebookApplicationsSection = z.infer<typeof NotebookApplicationsSectionSchema>;
+export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
+export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;
 export type NotebookSection = z.infer<typeof NotebookSectionSchema>;
 export type NotebookSpec = z.infer<typeof NotebookSpecSchema>;
 
@@ -162,6 +264,18 @@ export const NOTEBOOK_KPI_METRIC_LABELS: Readonly<Record<NotebookKpiMetric, stri
 export const NOTEBOOK_BAR_SOURCE_LABELS: Readonly<Record<NotebookBarSource, string>> = {
   programs: "Funding programs",
   tracks: "Tracks",
+};
+
+export const NOTEBOOK_DATE_RANGE_LABELS: Readonly<Record<NotebookDateRange, string>> = {
+  all: "All time",
+  "30d": "Last 30 days",
+  "90d": "Last 90 days",
+  "12m": "Last 12 months",
+};
+
+export const NOTEBOOK_CHART_STYLE_LABELS: Readonly<Record<NotebookChartStyle, string>> = {
+  line: "Line",
+  area: "Area",
 };
 
 export const NOTEBOOK_BAR_METRIC_LABELS: Readonly<Record<NotebookBarMetric, string>> = {

@@ -38,9 +38,30 @@ describe("emptyNotebookSpec", () => {
 });
 
 describe("newSection", () => {
-  it.each(["kpis", "bars", "applications"] as const)("builds a valid %s section", (type) => {
-    expect(NotebookSpecSchema.safeParse(spec([newSection(type)])).success).toBe(true);
-  });
+  it.each(["kpis", "bars", "applications", "text"] as const)(
+    "builds a valid %s section",
+    (type) => {
+      // `text` is born with an empty body, which the schema rejects until the
+      // author types something — that is the intended "fill this in" state and
+      // validateSpec surfaces it, so it is excluded from the validity check.
+      const section = newSection(type);
+      if (type === "text") {
+        expect(section).toEqual({ type: "text", body: "" });
+        return;
+      }
+      expect(NotebookSpecSchema.safeParse(spec([section])).success).toBe(true);
+    }
+  );
+
+  // This regressed once already: the function ended in a bare `return` of a
+  // bars section, so a widened vocabulary silently turned "add a text block"
+  // into "add a bar chart".
+  it.each(["kpis", "bars", "applications", "text", "timeseries"] as const)(
+    "returns the type it was asked for: %s",
+    (type) => {
+      expect(newSection(type).type).toBe(type);
+    }
+  );
 
   // Each source expresses exactly one series, so a new bar section must not be
   // born with a pairing the server rejects.

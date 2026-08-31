@@ -338,6 +338,79 @@ describe("spec-driven render", () => {
     expect(html).toContain("&lt;script&gt;alert(2)&lt;/script&gt;");
   });
 
+  describe("text blocks", () => {
+    it("renders a heading and body", () => {
+      const html = renderSpec(
+        {
+          version: 1,
+          sections: [{ type: "text", title: "How to read this", body: "Funding is committed." }],
+        },
+        makeOverview()
+      );
+
+      expect(html).toContain("How to read this");
+      expect(html).toContain("Funding is committed.");
+    });
+
+    it("renders a body with no heading", () => {
+      const html = renderSpec(
+        { version: 1, sections: [{ type: "text", body: "Just context." }] },
+        makeOverview()
+      );
+
+      expect(html).toContain("Just context.");
+      expect(html).not.toContain("<h2");
+    });
+
+    // The body is the largest author-controlled string on the page, so this is
+    // where an HTML-rendering mistake would hurt most. It must be a text node.
+    it("renders markup in the body as literal text", () => {
+      const html = renderSpec(
+        {
+          version: 1,
+          sections: [
+            {
+              type: "text",
+              title: "<b>bold</b>",
+              body: '<img src=x onerror="alert(1)"><script>alert(2)</script>',
+            },
+          ],
+        },
+        makeOverview()
+      );
+
+      expect(html).not.toContain("<img");
+      expect(html).not.toContain("<script");
+      expect(html).not.toContain("<b>bold</b>");
+      expect(html).toContain("&lt;img");
+      expect(html).toContain("&lt;script&gt;");
+    });
+  });
+
+  // A section this build cannot draw is omitted rather than rendered as an
+  // empty titled block, which a reader would take for missing data.
+  it("omits a section type it cannot draw", () => {
+    const html = renderSpec(
+      {
+        version: 1,
+        sections: [
+          { type: "kpis", metrics: ["committed"] },
+          {
+            type: "timeseries",
+            source: "indicators",
+            indicatorId: "5fadb30d-558d-45fc-b873-a8fe678cedd4",
+            chartStyle: "line",
+            title: "Pool TVL",
+          },
+        ],
+      },
+      makeOverview()
+    );
+
+    expect(html).toContain("Committed");
+    expect(html).not.toContain("Pool TVL");
+  });
+
   // A spec naming a metric this build no longer computes should cost one
   // tile, not the whole page.
   it("skips a KPI the metrics layer did not produce", () => {

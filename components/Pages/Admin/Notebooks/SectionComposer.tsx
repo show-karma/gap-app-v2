@@ -21,10 +21,12 @@ import {
   NOTEBOOK_SECTION_DESCRIPTION_MAX,
   NOTEBOOK_SECTION_TITLE_MAX,
   NOTEBOOK_SPEC_MAX_SECTIONS,
+  NOTEBOOK_TEXT_BODY_MAX,
   type NotebookBarsSection,
   type NotebookKpisSection,
   type NotebookSection,
   type NotebookSpec,
+  type NotebookTextSection,
 } from "@/services/notebooks/notebook-spec";
 import {
   addSection,
@@ -115,6 +117,7 @@ export function SectionComposer({ spec, onChange }: Props) {
 
               {section.type === "kpis" ? (
                 <KpiFields
+                  fieldId={`section-${index}`}
                   section={section}
                   onToggle={(metric) => onChange(toggleKpiMetric(spec, index, metric))}
                 />
@@ -122,8 +125,17 @@ export function SectionComposer({ spec, onChange }: Props) {
 
               {section.type === "bars" ? (
                 <BarFields
+                  fieldId={`section-${index}`}
                   section={section}
                   onSourceChange={(source) => onChange(setBarSource(spec, index, source))}
+                  onFieldChange={(next) => onChange(updateSection(spec, index, next))}
+                />
+              ) : null}
+
+              {section.type === "text" ? (
+                <TextFields
+                  fieldId={`section-${index}`}
+                  section={section}
                   onFieldChange={(next) => onChange(updateSection(spec, index, next))}
                 />
               ) : null}
@@ -140,7 +152,7 @@ export function SectionComposer({ spec, onChange }: Props) {
 
       <div className="flex flex-row flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Add a section:</span>
-        {(["kpis", "bars", "applications"] as const).map((type) => (
+        {ADDABLE_SECTION_TYPES.map((type) => (
           <Button
             key={type}
             variant="secondary"
@@ -166,7 +178,20 @@ const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
   kpis: "KPI tiles",
   bars: "Bar chart",
   applications: "Applications",
+  text: "Text block",
+  timeseries: "Time series",
 };
+
+/**
+ * The section types an author may ADD.
+ *
+ * Narrower than the vocabulary on purpose. `timeseries` is accepted by the
+ * schema so the wire contract and the tests can exercise it, but it is not
+ * offered here until the renderer can actually draw it — a composer that lets
+ * someone place a section the page renders as nothing is worse than one that
+ * does not offer it yet.
+ */
+const ADDABLE_SECTION_TYPES = ["kpis", "bars", "applications", "text"] as const;
 
 function sectionLabel(section: NotebookSection): string {
   if (section.type === "bars") {
@@ -175,10 +200,64 @@ function sectionLabel(section: NotebookSection): string {
   return SECTION_TYPE_LABELS[section.type];
 }
 
+function TextFields({
+  fieldId,
+  section,
+  onFieldChange,
+}: {
+  /** Unique per section, so repeated forms do not share label targets. */
+  fieldId: string;
+  section: NotebookTextSection;
+  onFieldChange: (next: NotebookTextSection) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-text-title`}>
+        <span className="font-medium text-foreground">
+          Heading <span className="text-muted-foreground">(optional)</span>
+        </span>
+        <Input
+          id={`${fieldId}-text-title`}
+          type="text"
+          value={section.title ?? ""}
+          maxLength={NOTEBOOK_SECTION_TITLE_MAX}
+          onChange={(event) =>
+            onFieldChange({
+              ...section,
+              // An emptied heading means "no heading", not an empty one — the
+              // schema rejects a blank string but accepts its absence.
+              title: event.target.value.trim() === "" ? undefined : event.target.value,
+            })
+          }
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-text-body`}>
+        <span className="font-medium text-foreground">Text</span>
+        <Textarea
+          id={`${fieldId}-text-body`}
+          value={section.body}
+          maxLength={NOTEBOOK_TEXT_BODY_MAX}
+          placeholder="Explain what this page shows and how to read it."
+          onChange={(event) => onFieldChange({ ...section, body: event.target.value })}
+        />
+        {/* Stated plainly because an author will reasonably assume otherwise:
+            this renders as plain text, so markdown or HTML pasted here shows
+            up as the characters typed. */}
+        <span className="text-xs text-muted-foreground">
+          Plain text only — formatting and links are not rendered.
+        </span>
+      </label>
+    </div>
+  );
+}
+
 function KpiFields({
+  fieldId,
   section,
   onToggle,
 }: {
+  fieldId: string;
   section: NotebookKpisSection;
   onToggle: (metric: (typeof NOTEBOOK_KPI_METRICS)[number]) => void;
 }) {
@@ -195,9 +274,11 @@ function KpiFields({
           return (
             <label
               key={metric}
+              htmlFor={`${fieldId}-kpi-${metric}`}
               className="flex flex-row items-center gap-2 text-sm text-foreground"
             >
               <Checkbox
+                id={`${fieldId}-kpi-${metric}`}
                 checked={checked}
                 // The last remaining metric cannot be unticked: an empty KPI
                 // row renders nothing and the server rejects it, so this keeps
@@ -215,23 +296,25 @@ function KpiFields({
 }
 
 function BarFields({
+  fieldId,
   section,
   onSourceChange,
   onFieldChange,
 }: {
+  fieldId: string;
   section: NotebookBarsSection;
   onSourceChange: (source: (typeof NOTEBOOK_BAR_SOURCES)[number]) => void;
   onFieldChange: (next: NotebookBarsSection) => void;
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-bar-source`}>
         <span className="font-medium text-foreground">Data</span>
         <Select
           value={section.source}
           onValueChange={(value) => onSourceChange(value as (typeof NOTEBOOK_BAR_SOURCES)[number])}
         >
-          <SelectTrigger aria-label="Data">
+          <SelectTrigger id={`${fieldId}-bar-source`} aria-label="Data">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -251,9 +334,10 @@ function BarFields({
         </span>
       </label>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-bar-title`}>
         <span className="font-medium text-foreground">Heading</span>
         <Input
+          id={`${fieldId}-bar-title`}
           type="text"
           value={section.title}
           maxLength={NOTEBOOK_SECTION_TITLE_MAX}
@@ -261,11 +345,12 @@ function BarFields({
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-bar-description`}>
         <span className="font-medium text-foreground">
           Description <span className="text-muted-foreground">(optional)</span>
         </span>
         <Textarea
+          id={`${fieldId}-bar-description`}
           value={section.description ?? ""}
           maxLength={NOTEBOOK_SECTION_DESCRIPTION_MAX}
           onChange={(event) =>

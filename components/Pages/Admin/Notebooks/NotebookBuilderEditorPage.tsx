@@ -157,9 +157,10 @@ export function NotebookBuilderEditorPage({ community, slug, overview }: Props) 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-5">
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-sm" htmlFor="notebook-name">
               <span className="font-medium text-foreground">Name</span>
               <Input
+                id="notebook-name"
                 type="text"
                 value={name}
                 maxLength={200}
@@ -168,9 +169,10 @@ export function NotebookBuilderEditorPage({ community, slug, overview }: Props) 
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-sm" htmlFor="notebook-slug">
               <span className="font-medium text-foreground">URL</span>
               <Input
+                id="notebook-slug"
                 type="text"
                 value={pageSlug}
                 maxLength={200}
@@ -189,11 +191,12 @@ export function NotebookBuilderEditorPage({ community, slug, overview }: Props) 
               </span>
             </label>
 
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-sm" htmlFor="notebook-description">
               <span className="font-medium text-foreground">
                 Description <span className="text-muted-foreground">(optional)</span>
               </span>
               <Textarea
+                id="notebook-description"
                 value={description}
                 maxLength={2000}
                 onChange={(event) => setDescription(event.target.value)}
