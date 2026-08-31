@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { NotebooksUnavailable } from "@/components/Pages/Communities/Notebooks/NotebooksUnavailable";
 import { NotebookViewer } from "@/components/Pages/Communities/Notebooks/NotebookViewer";
-import { getNotebookOverview } from "@/services/notebook-overview.service";
 import { getNotebookPageData } from "@/services/notebooks/notebook-page-data";
 import { getPublishedNotebook, type NotebookConfig } from "@/services/notebooks.service";
 import { HttpError } from "@/utilities/api/errors";

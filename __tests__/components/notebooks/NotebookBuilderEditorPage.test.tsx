@@ -199,6 +199,71 @@ describe("NotebookBuilderEditorPage — editing", () => {
   });
 });
 
+/**
+ * F7 — a broken page must be repairable in place.
+ *
+ * The list told admins to fix the page; the editor answered "Could not load
+ * this page" for exactly that row, because it parsed with the public schema
+ * where `spec` cannot be null. Fail-closed was visible but not recoverable.
+ */
+describe("NotebookBuilderEditorPage — recovering a broken page", () => {
+  const brokenConfig = () =>
+    existingConfig({
+      spec: null,
+      specError: "The stored page layout could not be read by this version.",
+    } as unknown as Partial<NotebookConfig>);
+
+  it("opens the page instead of refusing to load it", () => {
+    mockDetail.mockReturnValue({ data: brokenConfig(), isLoading: false, isError: false });
+
+    render(
+      <NotebookBuilderEditorPage community={community} slug="grants-overview" overview={overview} />
+    );
+
+    expect(screen.queryByText(/Could not load this page/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save draft/i })).toBeInTheDocument();
+  });
+
+  // The identity is intact and unchanged — only the layout is rebuilt.
+  it("keeps the page's name, URL and description", () => {
+    mockDetail.mockReturnValue({ data: brokenConfig(), isLoading: false, isError: false });
+
+    render(
+      <NotebookBuilderEditorPage community={community} slug="grants-overview" overview={overview} />
+    );
+
+    expect(screen.getByDisplayValue("Grants overview")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("grants-overview")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Existing description")).toBeInTheDocument();
+  });
+
+  // The layout on screen is NOT the stored one, and saving replaces rather
+  // than edits it. An author who is not told that would think they were
+  // looking at their page.
+  it("says the layout was cleared and what saving will do", () => {
+    mockDetail.mockReturnValue({ data: brokenConfig(), isLoading: false, isError: false });
+
+    render(
+      <NotebookBuilderEditorPage community={community} slug="grants-overview" overview={overview} />
+    );
+
+    expect(screen.getByText(/could not be read, so it has been cleared/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Rebuild notebook page/i })).toBeInTheDocument();
+  });
+
+  it("saves the rebuilt layout through the normal update path", async () => {
+    mockDetail.mockReturnValue({ data: brokenConfig(), isLoading: false, isError: false });
+
+    render(
+      <NotebookBuilderEditorPage community={community} slug="grants-overview" overview={overview} />
+    );
+    await userEvent.click(screen.getByRole("button", { name: /save draft/i }));
+
+    await waitFor(() => expect(updateMutate).toHaveBeenCalled());
+    expect(updateMutate.mock.calls[0][0].body.spec).toBeDefined();
+  });
+});
+
 describe("NotebookBuilderEditorPage — preview", () => {
   // Reusing the public renderer is the point: a bespoke preview would be a
   // second implementation to keep in step, and the first time it drifted an

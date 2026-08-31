@@ -107,13 +107,22 @@ export async function getAdminNotebooks(communitySlug: string): Promise<AdminNot
   return items;
 }
 
-/** One page by slug, draft or published. Throws 404 for a slug that does not exist. */
+/**
+ * One page by slug, draft or published. Throws 404 for a slug that does not
+ * exist.
+ *
+ * Parsed with the ADMIN schema, so a row whose stored layout could not be read
+ * arrives as `spec: null` rather than failing to parse. Using the public
+ * schema here is what made the editor answer "Could not load this page" for
+ * exactly the row an admin opened it to repair — the list told them to fix it
+ * and the editor refused to show it.
+ */
 export async function getAdminNotebook(
   communitySlug: string,
   slug: string
-): Promise<NotebookConfig> {
-  return api.get<NotebookConfig>(INDEXER.V2.NOTEBOOK_CONFIGS.ADMIN_GET(communitySlug, slug), {
-    schema: NotebookConfigSchema,
+): Promise<AdminNotebookConfig> {
+  return api.get<AdminNotebookConfig>(INDEXER.V2.NOTEBOOK_CONFIGS.ADMIN_GET(communitySlug, slug), {
+    schema: AdminNotebookConfigSchema,
     baseURL: notebookConfigApiBaseUrl(),
   });
 }

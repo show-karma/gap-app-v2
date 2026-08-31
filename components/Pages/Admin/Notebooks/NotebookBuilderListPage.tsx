@@ -159,8 +159,8 @@ export function NotebookBuilderListPage({ community }: Props) {
                     the whole builder for the community. */}
                 {notebook.spec === null ? (
                   <span className="text-xs text-destructive">
-                    {notebook.specError ?? "This page could not be read."} Delete it, or republish
-                    it from a working version.
+                    {notebook.specError ?? "This page could not be read."} Rebuild its layout, or
+                    delete it.
                   </span>
                 ) : null}
               </div>
@@ -178,16 +178,19 @@ export function NotebookBuilderListPage({ community }: Props) {
                     would either save a spec the author never saw or publish
                     one nobody can render, so both are withheld. Delete stays,
                     because it is the repair. */}
+                {/* Enabled on a broken row: it opens the recovery composer,
+                    which is the repair the message promises. It used to be
+                    withheld, which left the copy telling an admin to fix a
+                    page through a control that was greyed out. */}
                 <Button
                   variant="secondary"
                   size="sm"
-                  disabled={notebook.spec === null}
                   onClick={() =>
                     router.push(PAGES.ADMIN.NOTEBOOKS_EDIT(communitySlug, notebook.slug))
                   }
                 >
                   <Pencil className="h-4 w-4" />
-                  Edit
+                  {notebook.spec === null ? "Rebuild" : "Edit"}
                 </Button>
                 <Button
                   variant="secondary"

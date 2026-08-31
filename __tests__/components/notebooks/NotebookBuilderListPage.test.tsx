@@ -141,6 +141,9 @@ describe("NotebookBuilderListPage", () => {
           makeNotebook({
             slug: "broken",
             name: "Broken page",
+            // The mapper forces an unrenderable row to draft, so a fixture
+            // that leaves it published is not a state the server can produce.
+            status: "draft",
             spec: null,
             specError: "The stored page layout could not be read by this version.",
           } as Partial<NotebookConfig>),
@@ -179,16 +182,33 @@ describe("NotebookBuilderListPage", () => {
       await waitFor(() => expect(deleteMutate).toHaveBeenCalledWith("broken"));
     });
 
-    // Editing would save a layout the author never saw; publishing would push
-    // one nobody can render. Both are withheld on that row only.
-    it("withholds edit and publish on the broken page but not the healthy one", () => {
+    // F7. The message tells the admin to rebuild the page, so the control that
+    // does it must work. It used to be greyed out, which left the copy
+    // promising a repair through a disabled button.
+    it("offers Rebuild on the broken page, and it is not disabled", () => {
       withBrokenRow();
 
       render(<NotebookBuilderListPage community={community} />);
 
-      const editButtons = screen.getAllByRole("button", { name: /^Edit$/i });
-      expect(editButtons[0]).toBeEnabled();
-      expect(editButtons[1]).toBeDisabled();
+      expect(screen.getByRole("button", { name: /^Rebuild$/i })).toBeEnabled();
+    });
+
+    it("tells the admin to rebuild rather than promising a republish that does not exist", () => {
+      withBrokenRow();
+
+      render(<NotebookBuilderListPage community={community} />);
+
+      expect(screen.getByText(/Rebuild its layout, or delete it/i)).toBeInTheDocument();
+    });
+
+    // Publishing an unreadable page is refused by the server, so offering it
+    // would promise something that cannot happen.
+    it("still withholds publish on the broken page", () => {
+      withBrokenRow();
+
+      render(<NotebookBuilderListPage community={community} />);
+
+      expect(screen.getByRole("button", { name: /^Publish$/i })).toBeDisabled();
     });
   });
 

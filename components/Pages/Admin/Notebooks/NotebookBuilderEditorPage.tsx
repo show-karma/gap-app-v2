@@ -87,8 +87,15 @@ export function NotebookBuilderEditorPage({
     setPageSlug(existing.slug);
     setSlugTouched(true);
     setDescription(existing.description ?? "");
-    setSpec(existing.spec);
+    // A row whose stored layout could not be read opens as a RECOVERY: the
+    // page's identity is intact, so only the layout is rebuilt. Seeding a
+    // blank starter beats showing nothing — the admin was told to repair this
+    // page, and this is where they do it.
+    setSpec(existing.spec ?? emptyNotebookSpec());
   }, [existing]);
+
+  /** The stored layout is unreadable and the author is rebuilding it. */
+  const isRecovering = Boolean(existing && existing.spec === null);
 
   // The slug follows the name until an author edits it themselves; after that
   // it is theirs. Renaming a published page would change its public URL, so on
@@ -169,8 +176,22 @@ export function NotebookBuilderEditorPage({
           All notebook pages
         </Link>
         <h1 className="text-2xl font-bold text-foreground">
-          {isEditing ? "Edit notebook page" : "New notebook page"}
+          {isRecovering
+            ? "Rebuild notebook page"
+            : isEditing
+              ? "Edit notebook page"
+              : "New notebook page"}
         </h1>
+        {/* Says what happened and what saving will do, because the layout on
+            screen is NOT the one stored — it is a fresh start, and saving
+            replaces the unreadable original rather than editing it. */}
+        {isRecovering ? (
+          <output className="max-w-2xl text-sm text-destructive">
+            This page&apos;s saved layout could not be read, so it has been cleared. Rebuild the
+            sections below and save to replace it. The page&apos;s name, URL and description are
+            unchanged.
+          </output>
+        ) : null}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
