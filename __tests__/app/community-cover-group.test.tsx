@@ -24,6 +24,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { resolveServerElement } from "@/__tests__/helpers/resolveServerElement";
 
 const { getCommunityDetailsMock, usePublishedReportsMock } = vi.hoisted(() => ({
   getCommunityDetailsMock: vi.fn(),
@@ -191,12 +192,18 @@ async function withHeaderLayout(children: ReactNode, communityId = "filecoin") {
   } as never);
 }
 
+// A cover page is either an async component that awaits params at the top or a
+// sync one returning <Suspense><Body params={...}/></Suspense>. resolveServerElement
+// normalises both so these assertions read the same for either shape — without
+// it the streaming shape renders only its loading.tsx fallback here.
 async function coverPage(
   importer: () => Promise<{ default: unknown }>,
   params: Record<string, string>
 ) {
   const { default: Page } = await importer();
-  return (Page as unknown as ServerComponent)({ params: Promise.resolve(params) } as never);
+  return resolveServerElement(
+    await (Page as unknown as ServerComponent)({ params: Promise.resolve(params) } as never)
+  );
 }
 
 const h1s = () => screen.queryAllByRole("heading", { level: 1 });

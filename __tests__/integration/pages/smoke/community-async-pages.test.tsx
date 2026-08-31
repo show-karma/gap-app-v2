@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import { isValidElement, Suspense } from "react";
+import { resolveServerElement } from "@/__tests__/helpers/resolveServerElement";
 
 /**
  * Smoke tests for async server-rendered community pages. Pattern:
@@ -14,10 +14,10 @@ import { isValidElement, Suspense } from "react";
  * Two page shapes are in play. The classic one is an async Page that awaits
  * params at the top. The Cache Components one is a sync Page returning
  * <Suspense><Body params={props.params}/></Suspense>, where Body is the async
- * component that awaits params. resolveServerElement below normalises both to
- * the rendered tree, so a page's assertions are identical either way — and, for
- * the notFound() tests, the rejection surfaces from whichever component
- * actually performs the validation.
+ * component that awaits params. resolveServerElement (__tests__/helpers)
+ * normalises both to the rendered tree, so a page's assertions are identical
+ * either way — and, for the notFound() tests, the rejection surfaces from
+ * whichever component actually performs the validation.
  */
 
 const mockCommunity = {
@@ -133,30 +133,6 @@ vi.mock("@/components/Pages/Community/PortfolioReports/PublicReportListPage", ()
 vi.mock("@/components/Pages/Community/PortfolioReports/PublicReportViewPage", () => ({
   PublicReportViewPage: () => <div data-testid="public-report-view-page">PublicReportView</div>,
 }));
-
-const isAsyncComponent = (type: unknown): type is (props: unknown) => Promise<React.ReactNode> =>
-  typeof type === "function" && type.constructor?.name === "AsyncFunction";
-
-/**
- * Walk a server-component tree far enough to render it with the client
- * renderer: unwrap Suspense boundaries and invoke async components (which the
- * client renderer cannot). Sync components are left alone so testing-library
- * renders them normally and the sentinel mocks still mount. Errors thrown by an
- * async component — notFound()'s NEXT_NOT_FOUND digest in particular —
- * propagate as a rejection of this promise.
- */
-const resolveServerElement = async (node: React.ReactNode): Promise<React.ReactNode> => {
-  if (!isValidElement(node)) return node;
-  const element = node as React.ReactElement<{ children?: React.ReactNode }>;
-
-  if (element.type === Suspense) {
-    return resolveServerElement(element.props.children);
-  }
-  if (isAsyncComponent(element.type)) {
-    return resolveServerElement(await element.type(element.props));
-  }
-  return element;
-};
 
 const renderAsyncPage = async (
   importer: () => Promise<{
