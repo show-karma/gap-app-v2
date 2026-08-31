@@ -143,6 +143,7 @@ describe("getNotebookIndicatorCatalog", () => {
           description: second.description,
           unit: second.unitOfMeasure,
           kernelId: second.kernelId,
+          communityUID: second.communityUID,
           syncType: "auto",
         },
         {
@@ -151,6 +152,7 @@ describe("getNotebookIndicatorCatalog", () => {
           description: first.description,
           unit: first.unitOfMeasure,
           kernelId: first.kernelId,
+          communityUID: first.communityUID,
           syncType: "auto",
         },
       ],
@@ -197,6 +199,7 @@ describe("getNotebookIndicatorSeries", () => {
         label: "drand-relay-statuspage",
         description: "Statuspage severity",
         unit: "severity level",
+        communityUID: null,
         kernelId: "randomness-relays",
       },
       preset: "all",

@@ -183,6 +183,83 @@ describe("SectionComposer", () => {
     );
   });
 
+  // F2. A community must not be offered another programme's indicator to
+  // publish under its own name. The picker uses a rule NARROWER than the
+  // server's — kernel and unowned only — because the browser cannot resolve
+  // the community's chain variants and a single-uid compare would wrongly
+  // reject an admin's own indicator from a sibling chain.
+  describe("indicator picker scoping", () => {
+    const timeseriesSpec = (indicatorId = "") =>
+      spec([
+        {
+          type: "timeseries",
+          source: "indicators",
+          indicatorId,
+          chartStyle: "line",
+          title: "T",
+        },
+      ]);
+
+    const catalog = [
+      {
+        id: "a",
+        label: "Kernel metric",
+        description: "",
+        unit: "",
+        kernelId: "k1",
+        communityUID: "0xother",
+        syncType: "auto" as const,
+      },
+      {
+        id: "b",
+        label: "Global metric",
+        description: "",
+        unit: "",
+        kernelId: null,
+        communityUID: null,
+        syncType: "auto" as const,
+      },
+      {
+        id: "c",
+        label: "Someone elses metric",
+        description: "",
+        unit: "",
+        kernelId: null,
+        communityUID: "0xother",
+        syncType: "auto" as const,
+      },
+    ];
+
+    function renderPicker(initial = timeseriesSpec()) {
+      const onChange = vi.fn();
+      render(<SectionComposer spec={initial} onChange={onChange} indicators={catalog} />);
+      return onChange;
+    }
+
+    it("offers kernel and unowned indicators", () => {
+      renderPicker();
+
+      expect(screen.getByRole("option", { name: /Kernel metric/i })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /Global metric/i })).toBeInTheDocument();
+    });
+
+    it("does not offer an indicator owned by another community", () => {
+      renderPicker();
+
+      expect(
+        screen.queryByRole("option", { name: /Someone elses metric/i })
+      ).not.toBeInTheDocument();
+    });
+
+    // Editing an existing page must not silently drop the chart it already
+    // has, so the current value stays visible even when it is not offerable.
+    it("keeps the currently selected indicator visible even if not offerable", () => {
+      renderPicker(timeseriesSpec("c"));
+
+      expect(screen.getByRole("option", { name: /not in this community/i })).toBeInTheDocument();
+    });
+  });
+
   describe("text blocks", () => {
     it("offers a text block as an addable section", async () => {
       const onChange = renderComposer(spec([{ type: "applications" }]));

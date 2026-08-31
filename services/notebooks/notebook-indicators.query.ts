@@ -110,6 +110,7 @@ async function loadIndicatorCatalog(): Promise<NotebookIndicatorCatalog> {
       description: indicator.description,
       unit: indicator.unitOfMeasure,
       kernelId: indicator.kernelId,
+      communityUID: indicator.communityUID,
       syncType: indicator.syncType ?? null,
     }))
     .sort(
@@ -228,6 +229,7 @@ function toSeriesIndicator(indicator: NotebookIndicatorDto): NotebookIndicatorSe
     description: indicator.description,
     unit: indicator.unitOfMeasure,
     kernelId: indicator.kernelId,
+    communityUID: indicator.communityUID,
   };
 }
 

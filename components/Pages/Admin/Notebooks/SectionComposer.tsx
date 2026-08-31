@@ -12,7 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { NotebookIndicatorOption } from "@/services/notebooks/notebook-indicators.types";
+import {
+  isIndicatorOfferableWithoutVariants,
+  type NotebookIndicatorOption,
+} from "@/services/notebooks/notebook-indicators.types";
 import {
   NOTEBOOK_BAR_METRIC_LABELS,
   NOTEBOOK_BAR_SOURCE_LABELS,
@@ -260,10 +263,16 @@ function TimeseriesFields({
   indicators: readonly NotebookIndicatorOption[];
   onFieldChange: (next: NotebookTimeseriesSection) => void;
 }) {
-  // An indicator the catalog no longer lists is still shown as the current
-  // value, so an author editing an old page sees WHICH indicator went missing
-  // rather than a picker that has silently reset itself to something else.
-  const known = indicators.some((indicator) => indicator.id === section.indicatorId);
+  // Only indicators this community may actually publish. The server decides
+  // ownership against every chain variant; the browser has one uid, so the
+  // picker uses the narrower rule it CAN evaluate — kernel and unowned — and
+  // never offers something the boundary would reject.
+  const offerable = indicators.filter(isIndicatorOfferableWithoutVariants);
+
+  // An indicator the catalog no longer offers is still shown as the current
+  // value, so an author editing an old page sees WHICH indicator is set rather
+  // than a picker that has silently reset itself to something else.
+  const known = offerable.some((indicator) => indicator.id === section.indicatorId);
 
   return (
     <div className="flex flex-col gap-3">
@@ -279,10 +288,10 @@ function TimeseriesFields({
           <SelectContent>
             {!known && section.indicatorId ? (
               <SelectItem value={section.indicatorId}>
-                {section.indicatorId} (no longer in the catalog)
+                {section.indicatorId} (not in this community&apos;s catalog)
               </SelectItem>
             ) : null}
-            {indicators.map((indicator) => (
+            {offerable.map((indicator) => (
               <SelectItem key={indicator.id} value={indicator.id}>
                 {indicator.label}
                 {indicator.unit ? ` (${indicator.unit})` : ""}
