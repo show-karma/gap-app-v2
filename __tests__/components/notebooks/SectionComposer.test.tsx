@@ -220,13 +220,12 @@ describe("SectionComposer", () => {
     });
   });
 
-  // Accepted by the schema so the contract and tests can exercise it, but not
-  // offered until the renderer can draw one — a section that renders as
-  // nothing is worse than one the composer does not yet list.
-  it("does not offer a section type the renderer cannot draw", () => {
+  // Now that the renderers exist, both are offered. The rule that gated them
+  // has not changed — a type is offered exactly when it can be drawn.
+  it.each(["Time series", "Table"])("offers %s now that it can be drawn", (label) => {
     renderComposer(spec([{ type: "applications" }]));
 
-    expect(screen.queryByRole("button", { name: /Time series/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: new RegExp(label, "i") })).toBeInTheDocument();
   });
 
   it("bounds author free text to what the schema accepts", () => {

@@ -12,10 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { NotebookIndicatorOption } from "@/services/notebooks/notebook-indicators.types";
 import {
   NOTEBOOK_BAR_METRIC_LABELS,
   NOTEBOOK_BAR_SOURCE_LABELS,
   NOTEBOOK_BAR_SOURCES,
+  NOTEBOOK_CHART_STYLE_LABELS,
+  NOTEBOOK_CHART_STYLES,
+  NOTEBOOK_DATE_RANGE_LABELS,
+  NOTEBOOK_DATE_RANGES_BY_SOURCE,
+  NOTEBOOK_KERNEL_COLUMN_LABELS,
+  NOTEBOOK_KERNEL_RANGE_LABELS,
+  NOTEBOOK_KERNEL_RANGES,
+  NOTEBOOK_KERNEL_TABLE_COLUMNS,
   NOTEBOOK_KPI_METRIC_LABELS,
   NOTEBOOK_KPI_METRICS,
   NOTEBOOK_SECTION_DESCRIPTION_MAX,
@@ -23,10 +32,18 @@ import {
   NOTEBOOK_SPEC_MAX_SECTIONS,
   NOTEBOOK_TEXT_BODY_MAX,
   type NotebookBarsSection,
+  type NotebookChartStyle,
+  type NotebookDateRange,
+  type NotebookKernelRange,
+  type NotebookKernelTableColumn,
   type NotebookKpisSection,
   type NotebookSection,
   type NotebookSpec,
+  type NotebookTableSection,
   type NotebookTextSection,
+  type NotebookTimeseriesSection,
+  resolveNotebookDateRange,
+  resolveNotebookKernelRange,
 } from "@/services/notebooks/notebook-spec";
 import {
   addSection,
@@ -41,6 +58,13 @@ import {
 interface Props {
   spec: NotebookSpec;
   onChange: (next: NotebookSpec) => void;
+  /**
+   * The indicator catalog, fetched server-side and passed in.
+   *
+   * The catalog query is `server-only` — it is the same seam the public page
+   * reads through — so the composer receives it rather than fetching it.
+   */
+  indicators?: readonly NotebookIndicatorOption[];
 }
 
 /**
@@ -55,7 +79,7 @@ interface Props {
  *
  * Order is the render order, so up/down is the whole layout language.
  */
-export function SectionComposer({ spec, onChange }: Props) {
+export function SectionComposer({ spec, onChange, indicators = [] }: Props) {
   const atLimit = !canAddSection(spec);
 
   return (
@@ -132,6 +156,23 @@ export function SectionComposer({ spec, onChange }: Props) {
                 />
               ) : null}
 
+              {section.type === "timeseries" ? (
+                <TimeseriesFields
+                  fieldId={`section-${index}`}
+                  section={section}
+                  indicators={indicators}
+                  onFieldChange={(next) => onChange(updateSection(spec, index, next))}
+                />
+              ) : null}
+
+              {section.type === "table" ? (
+                <TableFields
+                  fieldId={`section-${index}`}
+                  section={section}
+                  onFieldChange={(next) => onChange(updateSection(spec, index, next))}
+                />
+              ) : null}
+
               {section.type === "text" ? (
                 <TextFields
                   fieldId={`section-${index}`}
@@ -180,6 +221,7 @@ const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
   applications: "Applications",
   text: "Text block",
   timeseries: "Time series",
+  table: "Table",
 };
 
 /**
@@ -191,13 +233,209 @@ const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
  * someone place a section the page renders as nothing is worse than one that
  * does not offer it yet.
  */
-const ADDABLE_SECTION_TYPES = ["kpis", "bars", "applications", "text"] as const;
+const ADDABLE_SECTION_TYPES = [
+  "kpis",
+  "bars",
+  "timeseries",
+  "table",
+  "applications",
+  "text",
+] as const;
 
 function sectionLabel(section: NotebookSection): string {
   if (section.type === "bars") {
     return `Bar chart — ${NOTEBOOK_BAR_SOURCE_LABELS[section.source]}`;
   }
   return SECTION_TYPE_LABELS[section.type];
+}
+
+function TimeseriesFields({
+  fieldId,
+  section,
+  indicators,
+  onFieldChange,
+}: {
+  fieldId: string;
+  section: NotebookTimeseriesSection;
+  indicators: readonly NotebookIndicatorOption[];
+  onFieldChange: (next: NotebookTimeseriesSection) => void;
+}) {
+  // An indicator the catalog no longer lists is still shown as the current
+  // value, so an author editing an old page sees WHICH indicator went missing
+  // rather than a picker that has silently reset itself to something else.
+  const known = indicators.some((indicator) => indicator.id === section.indicatorId);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-indicator`}>
+        <span className="font-medium text-foreground">Indicator</span>
+        <Select
+          value={section.indicatorId}
+          onValueChange={(value) => onFieldChange({ ...section, indicatorId: value })}
+        >
+          <SelectTrigger id={`${fieldId}-indicator`} aria-label="Indicator">
+            <SelectValue placeholder="Choose an indicator…" />
+          </SelectTrigger>
+          <SelectContent>
+            {!known && section.indicatorId ? (
+              <SelectItem value={section.indicatorId}>
+                {section.indicatorId} (no longer in the catalog)
+              </SelectItem>
+            ) : null}
+            {indicators.map((indicator) => (
+              <SelectItem key={indicator.id} value={indicator.id}>
+                {indicator.label}
+                {indicator.unit ? ` (${indicator.unit})` : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-chart-style`}>
+        <span className="font-medium text-foreground">Chart</span>
+        <Select
+          value={section.chartStyle}
+          onValueChange={(value) =>
+            onFieldChange({ ...section, chartStyle: value as NotebookChartStyle })
+          }
+        >
+          <SelectTrigger id={`${fieldId}-chart-style`} aria-label="Chart">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {NOTEBOOK_CHART_STYLES.map((style) => (
+              <SelectItem key={style} value={style}>
+                {NOTEBOOK_CHART_STYLE_LABELS[style]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-range`}>
+        <span className="font-medium text-foreground">Window</span>
+        <Select
+          value={resolveNotebookDateRange(section.range)}
+          onValueChange={(value) =>
+            onFieldChange({ ...section, range: value as NotebookDateRange })
+          }
+        >
+          <SelectTrigger id={`${fieldId}-range`} aria-label="Window">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {NOTEBOOK_DATE_RANGES_BY_SOURCE.indicators.map((range) => (
+              <SelectItem key={range} value={range}>
+                {NOTEBOOK_DATE_RANGE_LABELS[range]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {/* Readings are sparse, so the default is deliberately All time — a
+            shorter window can legitimately contain nothing. */}
+        <span className="text-xs text-muted-foreground">
+          Readings are irregular; a short window may contain none.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-ts-title`}>
+        <span className="font-medium text-foreground">Heading</span>
+        <Input
+          id={`${fieldId}-ts-title`}
+          type="text"
+          value={section.title}
+          maxLength={NOTEBOOK_SECTION_TITLE_MAX}
+          onChange={(event) => onFieldChange({ ...section, title: event.target.value })}
+        />
+      </label>
+    </div>
+  );
+}
+
+function TableFields({
+  fieldId,
+  section,
+  onFieldChange,
+}: {
+  fieldId: string;
+  section: NotebookTableSection;
+  onFieldChange: (next: NotebookTableSection) => void;
+}) {
+  const toggleColumn = (column: NotebookKernelTableColumn) => {
+    const selected = section.columns.includes(column);
+    // The last remaining column cannot be removed: a table with no columns
+    // renders nothing and the server rejects it.
+    if (selected && section.columns.length === 1) return;
+    onFieldChange({
+      ...section,
+      columns: selected
+        ? section.columns.filter((c) => c !== column)
+        : [...section.columns, column],
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-sm text-muted-foreground">
+          Columns, in the order you tick them.
+        </legend>
+        <div className="flex flex-row flex-wrap gap-x-4 gap-y-2">
+          {NOTEBOOK_KERNEL_TABLE_COLUMNS.map((column) => {
+            const checked = section.columns.includes(column);
+            return (
+              <label
+                key={column}
+                htmlFor={`${fieldId}-col-${column}`}
+                className="flex flex-row items-center gap-2 text-sm text-foreground"
+              >
+                <Checkbox
+                  id={`${fieldId}-col-${column}`}
+                  checked={checked}
+                  disabled={checked && section.columns.length === 1}
+                  onCheckedChange={() => toggleColumn(column)}
+                />
+                {NOTEBOOK_KERNEL_COLUMN_LABELS[column]}
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-table-range`}>
+        <span className="font-medium text-foreground">Window</span>
+        <Select
+          value={resolveNotebookKernelRange(section.range)}
+          onValueChange={(value) =>
+            onFieldChange({ ...section, range: value as NotebookKernelRange })
+          }
+        >
+          <SelectTrigger id={`${fieldId}-table-range`} aria-label="Window">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {NOTEBOOK_KERNEL_RANGES.map((range) => (
+              <SelectItem key={range} value={range}>
+                {NOTEBOOK_KERNEL_RANGE_LABELS[range]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-table-title`}>
+        <span className="font-medium text-foreground">Heading</span>
+        <Input
+          id={`${fieldId}-table-title`}
+          type="text"
+          value={section.title}
+          maxLength={NOTEBOOK_SECTION_TITLE_MAX}
+          onChange={(event) => onFieldChange({ ...section, title: event.target.value })}
+        />
+      </label>
+    </div>
+  );
 }
 
 function TextFields({

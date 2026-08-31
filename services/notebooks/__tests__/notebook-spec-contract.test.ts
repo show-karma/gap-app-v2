@@ -78,11 +78,22 @@ describe("kernel KPI ids", () => {
     ]);
   });
 
-  it("do not collide with the funding KPI metrics already in the spec", () => {
-    const overlap = (NOTEBOOK_KERNEL_KPI_IDS as readonly string[]).filter((id) =>
-      (NOTEBOOK_KPI_METRICS as readonly string[]).includes(id)
-    );
+  // The KPI enum now CONTAINS them: funding and kernel ids share one list so a
+  // single tile row can mix both, and the `kernel` prefix is what says which
+  // layer computes a figure. This asserts the merge landed on exactly the
+  // query layer's ids — not on names invented at a call site.
+  it("are all present in the spec's KPI metric enum", () => {
+    for (const id of NOTEBOOK_KERNEL_KPI_IDS) {
+      expect(NOTEBOOK_KPI_METRICS as readonly string[]).toContain(id);
+    }
+  });
 
-    expect(overlap).toEqual([]);
+  // The prefix is load-bearing: it is the ONLY thing routing a metric to the
+  // kernel layer, so a kernel id that lost it would silently be looked up in
+  // the funding stats and render nothing.
+  it("are all distinguishable from funding metrics by their prefix", () => {
+    for (const id of NOTEBOOK_KERNEL_KPI_IDS) {
+      expect(id.startsWith("kernel")).toBe(true);
+    }
   });
 });

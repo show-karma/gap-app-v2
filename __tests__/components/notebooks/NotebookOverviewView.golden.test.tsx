@@ -161,7 +161,7 @@ function makeOverview(overrides: Partial<NotebookOverview> = {}): NotebookOvervi
         label: "Milestone completion",
         value: 52,
         format: "percent",
-        hint: "102 of 197; cancelled excluded",
+        hint: "103 of 197; cancelled excluded",
       },
     ],
     funding: [
@@ -219,7 +219,7 @@ describe("notebook seed spec (golden)", () => {
     expect(html).toContain("$9.25M");
     expect(html).toContain("$6.37M");
     expect(html).toContain(">48<");
-    expect(html).toContain("102 of 197; cancelled excluded");
+    expect(html).toContain("103 of 197; cancelled excluded");
   });
 
   // An empty series drops its section in both renderers; the pairing must not
@@ -424,9 +424,13 @@ describe("spec-driven render", () => {
     });
   });
 
-  // A section this build cannot draw is omitted rather than rendered as an
-  // empty titled block, which a reader would take for missing data.
-  it("omits a section type it cannot draw", () => {
+  // Two different failures that must not look alike.
+  //
+  // A section whose DATA is missing says so — it is drawable, we just could
+  // not fetch it, and that is our problem rather than a fact about the
+  // community's programme. A section whose TYPE this build does not implement
+  // is omitted entirely, because there is no honest heading to put on it.
+  it("says so when a drawable section has no data, rather than drawing it empty", () => {
     const html = renderSpec(
       {
         version: 1,
@@ -445,7 +449,9 @@ describe("spec-driven render", () => {
     );
 
     expect(html).toContain("Committed");
-    expect(html).not.toContain("Pool TVL");
+    // The heading survives — the reader is told which section failed.
+    expect(html).toContain("Pool TVL");
+    expect(html).toContain("could not be loaded");
   });
 
   // A spec naming a metric this build no longer computes should cost one

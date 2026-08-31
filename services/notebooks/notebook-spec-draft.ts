@@ -67,6 +67,13 @@ export function newSection(type: NotebookSection["type"]): NotebookSection {
         metric: defaultMetricForSource("programs"),
         title: "Disbursed against commitment",
       };
+    case "table":
+      return {
+        type: "table",
+        source: "kernel",
+        columns: ["function", "tier", "measured", "slaMetPct"],
+        title: "Kernel function inventory",
+      };
     case "timeseries":
       // Not offered by the composer yet — the renderer cannot draw one. Still
       // constructed correctly so this stays exhaustive and the day the chart

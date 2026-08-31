@@ -4,13 +4,24 @@ import type {
   NotebookStat,
 } from "@/services/notebook-overview.service";
 import { NOTEBOOK_ABSENT_VALUE } from "@/services/notebooks/notebook-metrics.types";
+import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.types";
+import { seriesKey } from "@/services/notebooks/notebook-page-data.types";
 import type {
   NotebookBarsSection,
   NotebookKpisSection,
   NotebookSection,
   NotebookSpec,
+  NotebookTableSection,
   NotebookTextSection,
+  NotebookTimeseriesSection,
 } from "@/services/notebooks/notebook-spec";
+import {
+  isKernelKpiMetric,
+  resolveNotebookDateRange,
+  resolveNotebookKernelRange,
+} from "@/services/notebooks/notebook-spec";
+import { NotebookKernelTable } from "./NotebookKernelTable";
+import { NotebookTimeSeries } from "./NotebookTimeSeries";
 
 /**
  * The static-first notebook render (Architecture B), driven by a page spec.
@@ -174,15 +185,110 @@ function TextSection({ section }: { section: NotebookTextSection }) {
 }
 
 /**
+ * A section that needs data this page could not load.
+ *
+ * Said plainly rather than drawn empty. An empty chart or a headed-but-blank
+ * table reads as "this community has no data"; the truth is that we could not
+ * fetch it, which is our problem and not a fact about their programme.
+ */
+function SectionUnavailable({ title }: { title: string }) {
+  return (
+    <section className="flex flex-col gap-2 rounded-2xl border border-border bg-background p-5 md:p-6">
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
+      <p className="text-sm text-muted-foreground">This data could not be loaded right now.</p>
+    </section>
+  );
+}
+
+function TimeseriesSection({
+  section,
+  data,
+}: {
+  section: NotebookTimeseriesSection;
+  data?: NotebookPageData;
+}) {
+  const key = seriesKey(section.indicatorId, resolveNotebookDateRange(section.range));
+  const series = data?.series[key];
+
+  // `undefined` means nothing asked for it (no data loader in this render);
+  // `null` means it was asked for and failed — including the dangling-indicator
+  // case, where the id points at a row that no longer exists.
+  if (series === undefined || series === null) {
+    return <SectionUnavailable title={section.title} />;
+  }
+
+  return (
+    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-5 md:p-6">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
+        {section.description ? (
+          <p className="text-sm text-muted-foreground">{section.description}</p>
+        ) : null}
+      </div>
+      <NotebookTimeSeries series={series} chartStyle={section.chartStyle} />
+    </section>
+  );
+}
+
+function TableSection({
+  section,
+  data,
+}: {
+  section: NotebookTableSection;
+  data?: NotebookPageData;
+}) {
+  const kernel = data?.kernel[resolveNotebookKernelRange(section.range)];
+  if (!kernel) return <SectionUnavailable title={section.title} />;
+
+  return (
+    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-5 md:p-6">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
+        {section.description ? (
+          <p className="text-sm text-muted-foreground">{section.description}</p>
+        ) : null}
+      </div>
+      <NotebookKernelTable
+        columns={section.columns}
+        declared={kernel.inventory.columns}
+        rows={kernel.inventory.rows}
+      />
+    </section>
+  );
+}
+
+/**
  * The KPI tiles a spec section asks for, in the order it asks for them.
  *
  * Selected by `id` rather than by label, and silently skipping an id the
  * metrics layer did not compute: a spec naming a metric this build no longer
  * produces should lose that one tile, not throw away the page.
  */
-function selectStats(section: NotebookKpisSection, overview: NotebookOverview): NotebookStat[] {
+function selectStats(
+  section: NotebookKpisSection,
+  overview: NotebookOverview,
+  data?: NotebookPageData
+): NotebookStat[] {
+  const kernel = data?.kernel[resolveNotebookKernelRange(section.kernelRange)];
+
   return section.metrics
-    .map((metric) => overview.stats.find((stat) => stat.id === metric))
+    .map((metric) => {
+      // The `kernel` prefix on the id is what says which layer computes the
+      // figure — there is no second `source` field to disagree with it.
+      if (isKernelKpiMetric(metric)) {
+        const kpi = kernel?.kpis.find((candidate) => candidate.id === metric);
+        return kpi
+          ? ({
+              id: metric,
+              label: kpi.label,
+              value: kpi.value,
+              format: kpi.format,
+              hint: kpi.hint,
+            } satisfies NotebookStat)
+          : undefined;
+      }
+      return overview.stats.find((stat) => stat.id === metric);
+    })
     .filter((stat): stat is NotebookStat => stat !== undefined);
 }
 
@@ -239,13 +345,15 @@ function groupSections(sections: NotebookSection[]): SectionGroup[] {
 function SectionView({
   section,
   overview,
+  data,
 }: {
   section: NotebookSection;
   overview: NotebookOverview;
+  data?: NotebookPageData;
 }) {
   switch (section.type) {
     case "kpis":
-      return <KpiSection stats={selectStats(section, overview)} />;
+      return <KpiSection stats={selectStats(section, overview, data)} />;
     case "bars":
       return (
         <BarSection
@@ -258,6 +366,10 @@ function SectionView({
       return <ApplicationsSection entries={overview.applications} />;
     case "text":
       return <TextSection section={section} />;
+    case "timeseries":
+      return <TimeseriesSection section={section} data={data} />;
+    case "table":
+      return <TableSection section={section} data={data} />;
     default:
       // A section this build cannot draw is OMITTED, not rendered empty.
       //
@@ -279,9 +391,19 @@ function sectionKey(section: NotebookSection, index: number): string {
 export function NotebookOverviewView({
   overview,
   spec,
+  data,
 }: {
   overview: NotebookOverview;
   spec: NotebookSpec;
+  /**
+   * The v2 datasets — kernel windows and indicator series.
+   *
+   * OPTIONAL on purpose. A v1 spec names none of them, so it renders through
+   * exactly the same path it always did with this prop absent, which is what
+   * lets the golden test stay literally unchanged rather than adjusted to a
+   * new signature. Sections that need it and do not get it say so.
+   */
+  data?: NotebookPageData;
 }) {
   let cursor = 0;
 
@@ -291,7 +413,7 @@ export function NotebookOverviewView({
         if (group.kind === "single") {
           const key = sectionKey(group.section, cursor);
           cursor += 1;
-          return <SectionView key={key} section={group.section} overview={overview} />;
+          return <SectionView key={key} section={group.section} overview={overview} data={data} />;
         }
 
         const key = `row-${sectionKey(group.sections[0], cursor)}`;
@@ -305,6 +427,7 @@ export function NotebookOverviewView({
                 key={sectionKey(section, start + offset)}
                 section={section}
                 overview={overview}
+                data={data}
               />
             ))}
           </div>

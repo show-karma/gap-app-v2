@@ -4,6 +4,7 @@ import { cache } from "react";
 import { NotebooksUnavailable } from "@/components/Pages/Communities/Notebooks/NotebooksUnavailable";
 import { NotebookViewer } from "@/components/Pages/Communities/Notebooks/NotebookViewer";
 import { getNotebookOverview } from "@/services/notebook-overview.service";
+import { getNotebookPageData } from "@/services/notebooks/notebook-page-data";
 import { getPublishedNotebook, type NotebookConfig } from "@/services/notebooks.service";
 import { HttpError } from "@/utilities/api/errors";
 import { NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
@@ -106,7 +107,16 @@ export default async function NotebookPage({ params }: { params: Params }) {
   // Served from the tagged data cache, so the request path costs a cache read
   // rather than an upstream round trip. A refresh that fails keeps the last
   // good payload rather than blanking a page that was working (FR5).
-  const overview = await getNotebookOverview(communityId);
+  // Reads the spec first, so only the datasets this page actually names are
+  // fetched — and each distinct (dataset, window) pair exactly once.
+  const data = await getNotebookPageData(communityId, notebook.spec);
 
-  return <NotebookViewer communityId={communityId} notebook={notebook} overview={overview} />;
+  return (
+    <NotebookViewer
+      communityId={communityId}
+      notebook={notebook}
+      overview={data.overview}
+      data={data}
+    />
+  );
 }

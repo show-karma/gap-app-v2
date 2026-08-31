@@ -120,12 +120,78 @@ export const NOTEBOOK_TEXT_BODY_MAX = 2000;
  * exposes. An author cannot pick the other one — it is not in this set, which
  * is how the page is prevented from becoming a third disagreeing surface.
  */
+/**
+ * Kernel KPI ids, mirrored EXACTLY from the query layer's
+ * NOTEBOOK_KERNEL_KPI_IDS. A contract test pins the two lists together, so a
+ * rename there fails here rather than silently producing a tile that renders
+ * nothing.
+ */
+export const NOTEBOOK_KERNEL_KPI_METRICS = [
+  "kernelFunctionsInScope",
+  "kernelFunctionsMeasured",
+  "kernelSlaMet",
+  "kernelCoverage",
+  "kernelProjectsReporting",
+] as const;
+
+/**
+ * Every KPI tile an author may place.
+ *
+ * Funding and kernel ids share ONE list, and the `kernel` prefix says which
+ * layer computes a figure — so one row can mix funding totals with kernel
+ * health, which is the point of the v2 builder. No separate `source` field: it
+ * would restate what the id already says, and give two things that can disagree.
+ */
 export const NOTEBOOK_KPI_METRICS = [
   "committed",
   "disbursed",
   "fundedProjects",
   "milestoneCompletion",
+  ...NOTEBOOK_KERNEL_KPI_METRICS,
 ] as const;
+
+/** True when a metric is computed by the kernel layer rather than funding. */
+export function isKernelKpiMetric(metric: NotebookKpiMetric): boolean {
+  return (NOTEBOOK_KERNEL_KPI_METRICS as readonly string[]).includes(metric);
+}
+
+/**
+ * Windows the KERNEL can express. No `all` — the kernel API computes over a
+ * windowDays. Default 90d, matching the rolling window filpgf.io/kernel uses.
+ */
+export const NOTEBOOK_KERNEL_RANGES = ["30d", "90d", "12m"] as const;
+
+export type NotebookKernelRange = (typeof NOTEBOOK_KERNEL_RANGES)[number];
+
+export const NOTEBOOK_DEFAULT_KERNEL_RANGE: NotebookKernelRange = "90d";
+
+export function resolveNotebookKernelRange(range?: NotebookKernelRange): NotebookKernelRange {
+  return range ?? NOTEBOOK_DEFAULT_KERNEL_RANGE;
+}
+
+/**
+ * Inventory columns an author may show, mirrored from the query layer.
+ *
+ * Deliberately not "every field on the row": an API that adds a field must not
+ * thereby turn an infrastructure value into a public reporting choice.
+ */
+export const NOTEBOOK_KERNEL_TABLE_COLUMNS = [
+  "function",
+  "tier",
+  "category",
+  "subcategory",
+  "inScope",
+  "maintainers",
+  "measured",
+  "commitments",
+  "projectsReporting",
+  "readings",
+  "lastReadingAt",
+  "slaMetPct",
+  "coveragePct",
+] as const;
+
+export type NotebookKernelTableColumn = (typeof NOTEBOOK_KERNEL_TABLE_COLUMNS)[number];
 
 export type NotebookKpiMetric = (typeof NOTEBOOK_KPI_METRICS)[number];
 
@@ -180,6 +246,32 @@ export const NotebookKpisSectionSchema = z
       .refine((values) => new Set(values).size === values.length, {
         message: "kpis.metrics must not repeat a metric",
       }),
+    // Applies to the KERNEL metrics in this row and nothing else — funding
+    // totals are not windowed.
+    kernelRange: z.enum(NOTEBOOK_KERNEL_RANGES).optional(),
+  })
+  .strict();
+
+/**
+ * The kernel inventory as a table.
+ *
+ * `columns` is ordered, not a set: column order IS a table's reading order,
+ * and an author who puts "Function" last means it.
+ */
+export const NotebookTableSectionSchema = z
+  .object({
+    type: z.literal("table"),
+    source: z.literal("kernel"),
+    columns: z
+      .array(z.enum(NOTEBOOK_KERNEL_TABLE_COLUMNS))
+      .min(1)
+      .max(NOTEBOOK_KERNEL_TABLE_COLUMNS.length)
+      .refine((values) => new Set(values).size === values.length, {
+        message: "table.columns must not repeat a column",
+      }),
+    range: z.enum(NOTEBOOK_KERNEL_RANGES).optional(),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
   })
   .strict();
 
@@ -253,6 +345,7 @@ export const NotebookSectionSchema = z.union([
   NotebookApplicationsSectionSchema,
   NotebookTextSectionSchema,
   NotebookTimeseriesSectionSchema,
+  NotebookTableSectionSchema,
 ]);
 
 /**
@@ -271,6 +364,7 @@ export const NotebookSpecSchema = z
 export type NotebookKpisSection = z.infer<typeof NotebookKpisSectionSchema>;
 export type NotebookBarsSection = z.infer<typeof NotebookBarsSectionSchema>;
 export type NotebookApplicationsSection = z.infer<typeof NotebookApplicationsSectionSchema>;
+export type NotebookTableSection = z.infer<typeof NotebookTableSectionSchema>;
 export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
 export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;
 export type NotebookSection = z.infer<typeof NotebookSectionSchema>;
@@ -294,6 +388,37 @@ export const NOTEBOOK_KPI_METRIC_LABELS: Readonly<Record<NotebookKpiMetric, stri
   disbursed: "Disbursed",
   fundedProjects: "Funded projects",
   milestoneCompletion: "Milestone completion",
+  // Kernel labels for the COMPOSER's picker only. The public page uses the
+  // label the query layer returns with each figure, so a wording change there
+  // does not need a deploy here — these exist because a picker cannot render a
+  // raw enum id at an author.
+  kernelFunctionsInScope: "Kernel functions in scope",
+  kernelFunctionsMeasured: "Kernel functions measured",
+  kernelSlaMet: "Kernel SLA met",
+  kernelCoverage: "Kernel coverage",
+  kernelProjectsReporting: "Kernel projects reporting",
+};
+
+export const NOTEBOOK_KERNEL_COLUMN_LABELS: Readonly<Record<NotebookKernelTableColumn, string>> = {
+  function: "Function",
+  tier: "Tier",
+  category: "Category",
+  subcategory: "Subcategory",
+  inScope: "In scope",
+  maintainers: "Maintainers",
+  measured: "Measured",
+  commitments: "Commitments",
+  projectsReporting: "Projects reporting",
+  readings: "Readings",
+  lastReadingAt: "Last reading",
+  slaMetPct: "SLA met",
+  coveragePct: "Coverage",
+};
+
+export const NOTEBOOK_KERNEL_RANGE_LABELS: Readonly<Record<NotebookKernelRange, string>> = {
+  "30d": "Last 30 days",
+  "90d": "Last 90 days",
+  "12m": "Last 12 months",
 };
 
 export const NOTEBOOK_BAR_SOURCE_LABELS: Readonly<Record<NotebookBarSource, string>> = {

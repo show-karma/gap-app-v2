@@ -16,6 +16,8 @@ import {
   useUpdateNotebook,
 } from "@/hooks/notebooks/useNotebookBuilder";
 import type { NotebookOverview } from "@/services/notebook-overview.service";
+import type { NotebookIndicatorOption } from "@/services/notebooks/notebook-indicators.types";
+import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.types";
 import type { NotebookSpec } from "@/services/notebooks/notebook-spec";
 import { emptyNotebookSpec, validateSpec } from "@/services/notebooks/notebook-spec-draft";
 import { sanitizeSlugInput, slugifyNotebookName } from "@/services/notebooks-admin.service";
@@ -37,9 +39,26 @@ interface Props {
    * something true about my programme".
    */
   overview: NotebookOverview;
+  /** The indicator catalog for the picker; fetched server-side. */
+  indicators?: readonly NotebookIndicatorOption[];
+  /**
+   * Datasets for the preview, loaded for the SAVED spec.
+   *
+   * A chart the author has only just added cannot preview its data: the series
+   * is fetched on the server for the spec that was saved, and this form has
+   * not saved yet. The preview says so rather than showing an error that reads
+   * like the indicator is broken.
+   */
+  previewData?: NotebookPageData;
 }
 
-export function NotebookBuilderEditorPage({ community, slug, overview }: Props) {
+export function NotebookBuilderEditorPage({
+  community,
+  slug,
+  overview,
+  indicators,
+  previewData,
+}: Props) {
   const communitySlug = community.details?.slug || community.uid;
   const router = useRouter();
   const isEditing = Boolean(slug);
@@ -205,7 +224,7 @@ export function NotebookBuilderEditorPage({ community, slug, overview }: Props) 
           </div>
 
           <div className="rounded-2xl border border-border bg-background p-5">
-            <SectionComposer spec={spec} onChange={setSpec} />
+            <SectionComposer spec={spec} onChange={setSpec} indicators={indicators} />
           </div>
 
           {validation.error ? (
@@ -238,7 +257,7 @@ export function NotebookBuilderEditorPage({ community, slug, overview }: Props) 
             <h2 className="text-base font-semibold text-foreground">Preview</h2>
             <p className="text-sm text-muted-foreground">
               Your community&apos;s real numbers, rendered by the same components the public page
-              uses.
+              uses. A chart you just added previews once the page is saved.
             </p>
           </div>
           {/* Reusing the public renderer is the point: a bespoke preview would
@@ -246,7 +265,7 @@ export function NotebookBuilderEditorPage({ community, slug, overview }: Props) 
               drifted an author would publish something they had not seen. */}
           <div className="rounded-2xl border border-border bg-muted/30 p-4">
             {validation.valid ? (
-              <NotebookOverviewView overview={overview} spec={spec} />
+              <NotebookOverviewView overview={overview} spec={spec} data={previewData} />
             ) : (
               <p className="py-12 text-center text-sm text-muted-foreground">
                 Finish the sections to see a preview.
