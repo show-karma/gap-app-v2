@@ -132,6 +132,21 @@ export const INDEXER = {
       LIST: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/notebook-configs`,
       GET: (communityIdOrSlug: string, slug: string) =>
         `/v2/communities/${communityIdOrSlug}/notebook-configs/${slug}`,
+      CREATE: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs`,
+      UPDATE: (communityIdOrSlug: string, slug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/${slug}`,
+      DELETE: (communityIdOrSlug: string, slug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/${slug}`,
+      /**
+       * Builder reads. Separate paths from the public ones, not a flag on
+       * them: these return DRAFTS, and the indexer gates them on community
+       * admin. Calling them anonymously is a 401, never an empty list.
+       */
+      ADMIN_LIST: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/admin/all`,
+      ADMIN_GET: (communityIdOrSlug: string, slug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/admin/${slug}`,
     },
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,

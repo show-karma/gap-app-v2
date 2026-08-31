@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
+import { notebookConfigApiBaseUrl } from "./notebooks/notebook-config-api";
 import { NotebookSpecSchema } from "./notebooks/notebook-spec";
 
 /**
@@ -61,6 +62,7 @@ export async function getPublishedNotebooks(communitySlug: string): Promise<Note
   const data = await api.get<NotebookConfig[]>(INDEXER.V2.NOTEBOOK_CONFIGS.LIST(communitySlug), {
     schema: NotebookConfigListSchema,
     isAuthorized: false,
+    baseURL: notebookConfigApiBaseUrl(),
   });
   return data ?? [];
 }
@@ -77,5 +79,6 @@ export async function getPublishedNotebook(
   return api.get<NotebookConfig>(INDEXER.V2.NOTEBOOK_CONFIGS.GET(communitySlug, slug), {
     schema: NotebookConfigSchema,
     isAuthorized: false,
+    baseURL: notebookConfigApiBaseUrl(),
   });
 }

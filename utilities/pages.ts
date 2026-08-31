@@ -135,6 +135,10 @@ export const PAGES = {
       `/community/${community}/manage/portfolio-reports/${reportId}/preview`,
     PORTFOLIO_REPORTS_CONFIG: (community: string) =>
       `/community/${community}/manage/portfolio-reports/config`,
+    NOTEBOOKS: (community: string) => `/community/${community}/manage/notebooks`,
+    NOTEBOOKS_NEW: (community: string) => `/community/${community}/manage/notebooks/new`,
+    NOTEBOOKS_EDIT: (community: string, slug: string) =>
+      `/community/${community}/manage/notebooks/${encodeURIComponent(slug)}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
