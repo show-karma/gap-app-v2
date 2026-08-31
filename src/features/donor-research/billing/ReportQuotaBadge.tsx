@@ -42,18 +42,18 @@ export function ReportQuotaBadge() {
           className="h-3 w-3 text-brand-emphasis dark:text-brand-subtle"
           aria-hidden="true"
         />
-        <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
+        <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
           {entitlement?.plan ?? "plan"}
         </span>
       </div>
       <div className="flex items-baseline gap-1 px-2.5 py-1.5">
         <span className="font-mono tabular-nums text-foreground">{remaining ?? "—"}</span>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {remaining === null ? "reports left" : `${pluralize("report", remaining)} left`}
         </span>
       </div>
       {isEmpty ? (
-        <div className="flex items-center border-l border-amber-300/60 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-700 dark:border-amber-700/60 dark:text-amber-300">
+        <div className="flex items-center border-l border-amber-300/60 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-700 dark:border-amber-700/60 dark:text-amber-300">
           upgrade
         </div>
       ) : null}

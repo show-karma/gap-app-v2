@@ -3,6 +3,7 @@
 import { Check, Loader2 } from "lucide-react";
 import Link from "next/link";
 import pluralize from "pluralize";
+import type { ReactElement } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDonorPlanCatalog } from "@/hooks/useDonorBilling";
@@ -70,8 +71,8 @@ export function PricingSection() {
               variant="secondary"
               className={cn(
                 "text-secondary-foreground font-medium text-xs",
-                "leading-[150%] tracking-[0.015em]",
-                "rounded-full py-[3px] px-2",
+                "leading-normal tracking-wide",
+                "rounded-full py-1 px-2",
                 "bg-secondary border-0 w-fit"
               )}
             >
@@ -87,7 +88,7 @@ export function PricingSection() {
             <p
               className={cn(
                 "text-muted-foreground font-normal text-left",
-                "text-[18px] md:text-[20px] leading-[30px]",
+                "text-lg md:text-xl leading-relaxed",
                 "w-full"
               )}
             >
@@ -152,20 +153,24 @@ function PackShowcase({ packs }: { packs: readonly DonorPackCatalogEntry[] }) {
 /** The four metered allowances a paid plan grants, from the live catalog. */
 function AllowanceList({ entry }: { entry: DonorPlanCatalogEntry | undefined }) {
   if (!entry) return null;
-  const perMonth: { count: number; noun: string }[] = [
+  // A zero allowance is not advertised at all, so the rows are built in one
+  // pass rather than filtered and then mapped.
+  const perMonth: ReactElement[] = [];
+  for (const item of [
     { count: entry.reportsIncluded, noun: "report" },
     { count: entry.introsIncluded, noun: "warm intro" },
     { count: entry.diligenceIncluded, noun: "diligence round" },
-  ];
+  ]) {
+    if (item.count <= 0) continue;
+    perMonth.push(
+      <li key={item.noun}>
+        {item.count} {pluralize(item.noun, item.count)} / month
+      </li>
+    );
+  }
   return (
     <ul className="flex flex-col gap-1 text-sm font-medium text-foreground">
-      {perMonth
-        .filter((item) => item.count > 0)
-        .map((item) => (
-          <li key={item.noun}>
-            {item.count} {pluralize(item.noun, item.count)} / month
-          </li>
-        ))}
+      {perMonth}
       <li>
         {entry.profilesIncluded} donor {pluralize("profile", entry.profilesIncluded)}
       </li>
@@ -197,16 +202,14 @@ function PricingCard({ plan, entry, freeGrant, isLoading }: PricingCardProps) {
     >
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-[20px] font-semibold leading-[120%] tracking-[-0.02em] text-foreground">
+          <h3 className="text-xl font-semibold leading-tight tracking-tight text-foreground">
             {presentation.name}
           </h3>
           {featured ? (
-            <Badge className="rounded-full text-[10px] uppercase tracking-[0.1em]">
-              Most popular
-            </Badge>
+            <Badge className="rounded-full text-xs uppercase tracking-widest">Most popular</Badge>
           ) : null}
         </div>
-        <p className="text-sm leading-[22px] text-muted-foreground">{presentation.tagline}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{presentation.tagline}</p>
       </div>
 
       <PlanPrice entry={entry} isEnterprise={isEnterprise} isLoading={isLoading} />
@@ -263,9 +266,7 @@ function PlanPrice({
 }) {
   if (isEnterprise) {
     return (
-      <p className="text-[32px] font-semibold leading-none tracking-[-0.02em] text-foreground">
-        Custom
-      </p>
+      <p className="text-3xl font-semibold leading-none tracking-tight text-foreground">Custom</p>
     );
   }
 
@@ -280,16 +281,12 @@ function PlanPrice({
 
   const priceCents = entry?.priceCents ?? 0;
   if (priceCents === 0) {
-    return (
-      <p className="text-[32px] font-semibold leading-none tracking-[-0.02em] text-foreground">
-        $0
-      </p>
-    );
+    return <p className="text-3xl font-semibold leading-none tracking-tight text-foreground">$0</p>;
   }
 
   return (
     <p className="flex items-baseline gap-1">
-      <span className="text-[32px] font-semibold leading-none tracking-[-0.02em] text-foreground">
+      <span className="text-3xl font-semibold leading-none tracking-tight text-foreground">
         {formatPlanPrice(priceCents)}
       </span>
       <span className="text-sm text-muted-foreground">/ month</span>
