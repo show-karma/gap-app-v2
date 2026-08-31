@@ -13,8 +13,14 @@ import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
  * `user` under the bypass, so `AnalyticsProvider` had no id to identify and
  * gated OFF every authenticated emission. `E2E_MOCK_USER_ID` closes that, and
  * these tests pin the two halves of the contract that a mock session can
- * actually observe — Mixpanel holds an identified distinct id while signed in,
- * and holds none after signing out.
+ * actually observe — an identified distinct id reaches the wire while signed
+ * in, and none does after signing out.
+ *
+ * The assertions are on the DECODED WIRE PAYLOAD, with the persisted store as a
+ * secondary check. The store says what Mixpanel is holding; only the wire says
+ * what left the browser, and the wire is what a real project would have
+ * received. A build that cleared the store after already flushing the previous
+ * user's id would satisfy a store-only assertion and still have leaked.
  *
  * One harness constraint shapes the sign-out case: `loginAs` installs the
  * bypass through `page.addInitScript`, which re-runs on every navigation of
@@ -59,15 +65,27 @@ async function readMixpanelStore(page: Page): Promise<Record<string, unknown> | 
   }, MIXPANEL_STORE_KEY.source);
 }
 
+/** One decoded record as it left the browser, in wire order. */
+interface WireEvent {
+  name: string;
+  props: Record<string, unknown>;
+}
+
 /**
- * Event names posted through the same-origin proxy, newest last.
+ * Every event posted through the same-origin proxy, decoded, oldest first.
  *
  * The SDK posts `data=<base64 JSON>` to `/api/mp/track`; the route is fulfilled
  * with a success body rather than forwarded, so a test run never writes into a
  * real Mixpanel project.
+ *
+ * This is the PRIMARY signal for the identity contract. The persisted store
+ * says what Mixpanel is holding; only the wire says what actually left the
+ * browser, and it is the wire that a real project would have received. A build
+ * that cleared the store but had already flushed the previous user's id would
+ * pass a store-only assertion.
  */
-function captureTrackedEvents(page: Page): string[] {
-  const names: string[] = [];
+function captureWireEvents(page: Page): WireEvent[] {
+  const events: WireEvent[] = [];
   void page.route("**/api/mp/track**", async (route) => {
     const body = route.request().postData() ?? "";
     const encoded = new URLSearchParams(body).get("data") ?? "";
@@ -75,18 +93,36 @@ function captureTrackedEvents(page: Page): string[] {
       const decoded = JSON.parse(
         /^[A-Za-z0-9+/=]+$/.test(encoded) ? atob(encoded) : encoded
       ) as unknown;
+      // Batched requests arrive as an array; a single event as one object.
       for (const record of Array.isArray(decoded) ? decoded : [decoded]) {
-        const name = (record as { event?: unknown }).event;
-        if (typeof name === "string") names.push(name);
+        const { event, properties } = record as { event?: unknown; properties?: unknown };
+        if (typeof event !== "string") continue;
+        events.push({
+          name: event,
+          props:
+            typeof properties === "object" && properties !== null
+              ? (properties as Record<string, unknown>)
+              : {},
+        });
       }
     } catch {
-      // A payload this test cannot read is not a failure of the contract it
-      // covers; the store assertions below are the primary signal.
+      // An undecodable payload fails the assertions below rather than passing
+      // silently — it must never be treated as "no identity on the wire".
     }
     await route.fulfill({ status: 200, contentType: "application/json", body: "1" });
   });
-  return names;
+  return events;
 }
+
+/** Distinct ids that actually reached the wire, in order, ignoring absent ones. */
+const wireUserIds = (events: readonly WireEvent[]): unknown[] =>
+  events.map((e) => e.props[USER_ID_PROPERTY]).filter((id) => id !== undefined);
+
+/**
+ * The SDK batches, and `batch_flush_interval_ms` defaults to 10s — so anything
+ * waiting on the wire needs materially longer than Playwright's 5s default.
+ */
+const WIRE_TIMEOUT_MS = 30_000;
 
 /**
  * Whether the app under test has analytics on.
@@ -115,7 +151,7 @@ test.describe("Analytics identity", () => {
   );
 
   test("identifies the signed-in user to Mixpanel", async ({ page, withApiMocks, loginAs }) => {
-    captureTrackedEvents(page);
+    const wire = captureWireEvents(page);
     await loginAs("applicant");
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(createMockCommunity({ slug: "optimism" })),
@@ -124,6 +160,18 @@ test.describe("Analytics identity", () => {
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
 
+    // PRIMARY — what actually left the browser.
+    await expect
+      .poll(() => wireUserIds(wire), {
+        message: "an event should reach the wire carrying the identified distinct id",
+        timeout: WIRE_TIMEOUT_MS,
+      })
+      .toContain(EXPECTED_MOCK_USER_ID);
+
+    // And nothing on the wire claims to be anybody else.
+    expect(new Set(wireUserIds(wire))).toEqual(new Set([EXPECTED_MOCK_USER_ID]));
+
+    // SECONDARY — what Mixpanel is holding.
     await expect
       .poll(async () => (await readMixpanelStore(page))?.[USER_ID_PROPERTY], {
         message: "Mixpanel should hold an identified distinct id while signed in",
@@ -132,7 +180,7 @@ test.describe("Analytics identity", () => {
   });
 
   test("holds no identity for a signed-out visitor", async ({ page, withApiMocks }) => {
-    captureTrackedEvents(page);
+    const wire = captureWireEvents(page);
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(createMockCommunity({ slug: "optimism" })),
     });
@@ -140,12 +188,20 @@ test.describe("Analytics identity", () => {
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
 
+    await expect
+      .poll(() => wire.length, {
+        message: "the page should emit at least one event, or this asserts nothing",
+        timeout: WIRE_TIMEOUT_MS,
+      })
+      .toBeGreaterThan(0);
+    expect(wireUserIds(wire)).toEqual([]);
+
     const store = await readMixpanelStore(page);
     expect(store?.[USER_ID_PROPERTY]).toBeUndefined();
   });
 
   test("drops the identity after signing out", async ({ page, withApiMocks, loginAs }) => {
-    captureTrackedEvents(page);
+    const signedInWire = captureWireEvents(page);
     await loginAs("applicant");
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(createMockCommunity({ slug: "optimism" })),
@@ -154,8 +210,11 @@ test.describe("Analytics identity", () => {
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     await expect
-      .poll(async () => (await readMixpanelStore(page))?.[USER_ID_PROPERTY])
-      .toBe(EXPECTED_MOCK_USER_ID);
+      .poll(() => wireUserIds(signedInWire), {
+        message: "the signed-in phase should put the identity on the wire first",
+        timeout: WIRE_TIMEOUT_MS,
+      })
+      .toContain(EXPECTED_MOCK_USER_ID);
 
     await logout(page);
 
@@ -177,7 +236,7 @@ test.describe("Analytics identity", () => {
     // The first test in this file is what establishes that the id was there to
     // begin with; this one owns the clearing half.
     const signedOut = await page.context().newPage();
-    captureTrackedEvents(signedOut);
+    const signedOutWire = captureWireEvents(signedOut);
     await signedOut.route(
       "**/v2/communities/optimism",
       mockJson(createMockCommunity({ slug: "optimism" }))
@@ -200,6 +259,19 @@ test.describe("Analytics identity", () => {
       })
       .not.toBeNull();
 
+    // PRIMARY — the FIRST event off the signed-out page. Later events proving
+    // clean says little; the first one is what a leak would ride out on, before
+    // the reset had landed.
+    await expect
+      .poll(() => signedOutWire.length, {
+        message: "the signed-out page should emit at least one event, or this asserts nothing",
+        timeout: WIRE_TIMEOUT_MS,
+      })
+      .toBeGreaterThan(0);
+    expect(signedOutWire[0].props).not.toHaveProperty(USER_ID_PROPERTY);
+    expect(wireUserIds(signedOutWire)).toEqual([]);
+
+    // SECONDARY — and Mixpanel is no longer holding it either.
     await expect
       .poll(async () => (await readMixpanelStore(signedOut))?.[USER_ID_PROPERTY], {
         message: "resetIdentity() should have cleared the distinct id",
@@ -219,7 +291,7 @@ test.describe("Analytics identity", () => {
       "Needs a real Privy session: the mock bypass cannot produce a continuous authenticated -> unauthenticated transition, so no logout event is emitted. See the file docblock."
     );
 
-    const events = captureTrackedEvents(page);
+    const wire = captureWireEvents(page);
     await loginAs("applicant");
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(createMockCommunity({ slug: "optimism" })),
@@ -234,8 +306,9 @@ test.describe("Analytics identity", () => {
     });
 
     await expect
-      .poll(() => events, {
+      .poll(() => wire.map((e) => e.name), {
         message: "AnalyticsProvider is the single emitter of `logout`",
+        timeout: WIRE_TIMEOUT_MS,
       })
       .toContain("logout");
   });

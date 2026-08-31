@@ -304,10 +304,17 @@ whole purpose is to be readable.
 community clears the super property outright (`unregister`) rather than setting
 it to a null — a Mixpanel super property has no null state. So a saved report
 that keys on `community_id == null` matches nothing; it must use **`is not
-set`**. Same for `community_slug`. This has been the behaviour since the
-community context started being derived from Mixpanel's own store; before that
-the clear was frequently skipped, so such a report appeared to work by matching
-the rows that never had the property in the first place.
+set`**. Same for `community_slug`.
+
+**This is a change in the data.** The pre-G build passed `community_id: null`
+explicitly on every page view off a community route, so those rows carry a real
+property whose value is null — and a report keyed on `community_id == null` did
+match them. It no longer does: the explicit property is gone (the group super
+property supplies `community_id`, as an array), and off a community route the
+property is absent rather than null. Any saved report, cohort or funnel written
+against the old build and keyed on `== null` will silently start matching
+nothing at the point this ships, and has to be moved to `is not set`. Page views
+from before and after the change are not comparable on that filter.
 
 `community_slug` and `community_id` are written by `setCommunitySlug` and
 `setCommunityGroup`, which decide whether a write is needed by reading Mixpanel
