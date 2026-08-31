@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { BillingPage } from "@/src/features/donor-research/billing/BillingPage";
-import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
 import { customMetadata } from "@/utilities/meta";
+
+interface PageProps {
+  /** `?checkout=success|cancel`, set by Stripe on the return trip. */
+  searchParams: Promise<{ checkout?: string }>;
+}
 
 export const metadata: Metadata = customMetadata({
   title: "Nonprofit Research — Plan and billing",
@@ -12,13 +15,10 @@ export const metadata: Metadata = customMetadata({
   robots: { index: false, follow: false },
 });
 
-export default function Page() {
-  // `BillingPage` reads the Stripe return params via `useSearchParams`, which
-  // opts the subtree into client-side rendering — App Router requires an
-  // explicit Suspense boundary for that or the whole route deopts.
-  return (
-    <Suspense fallback={<DonorResearchLoading label="Loading your plan…" />}>
-      <BillingPage />
-    </Suspense>
-  );
+export default async function Page({ searchParams }: PageProps) {
+  // Read server-side rather than with `useSearchParams` in the client
+  // component: that hook opts the whole route into client-side rendering and
+  // needs its own Suspense boundary. `loading.tsx` covers this route already.
+  const { checkout } = await searchParams;
+  return <BillingPage checkoutParam={checkout ?? null} />;
 }

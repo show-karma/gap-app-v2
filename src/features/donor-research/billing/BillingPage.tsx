@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, CreditCard, Loader2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useDonorEntitlement, useOpenBillingPortal } from "@/hooks/useDonorBilling";
@@ -13,22 +12,28 @@ import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { DonorResearchLoading } from "../components/common/DonorResearchLoading";
 
+interface BillingPageProps {
+  /**
+   * The Stripe Checkout return marker, read SERVER-side from `searchParams` by
+   * the route. Reading it here with `useSearchParams` would opt the whole route
+   * into client-side rendering and require its own Suspense boundary.
+   */
+  checkoutParam?: string | null;
+}
+
 /**
  * Billing page: current plan, remaining reports, upgrade, manage subscription.
  *
  * Also the Stripe Checkout return target. `?checkout=success` only means the
- * browser came back — the plan itself is applied by the
+ * browser came back: the plan itself is applied by the
  * `customer.subscription.created` webhook, which may land a moment later. The
  * banner says "confirming" rather than claiming success, and the entitlement
  * query refetches so the real state replaces it as soon as it exists.
  */
-export function BillingPage() {
-  const searchParams = useSearchParams();
+export function BillingPage({ checkoutParam = null }: BillingPageProps = {}) {
   const entitlementQuery = useDonorEntitlement();
   const portal = useOpenBillingPortal();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-
-  const checkoutParam = searchParams.get("checkout");
 
   if (entitlementQuery.isLoading) {
     return <DonorResearchLoading label="Loading your plan…" />;
@@ -66,7 +71,7 @@ export function BillingPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
       <header className="mb-8 border-b border-border/60 pb-6">
-        <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Karma · Nonprofit Research
         </p>
         <h1 className="text-balance text-3xl font-medium tracking-tight text-foreground">
@@ -119,7 +124,7 @@ export function BillingPage() {
         </dl>
 
         {entitlement.currentPeriodEnd ? (
-          <p className="mt-4 text-xs uppercase tracking-[0.1em] text-muted-foreground">
+          <p className="mt-4 text-xs uppercase tracking-widest text-muted-foreground">
             {entitlement.cancelAtPeriodEnd ? "Cancels" : "Renews"}{" "}
             {formatDate(entitlement.currentPeriodEnd)}
           </p>
@@ -218,7 +223,7 @@ function BillingBanners({
   if (checkoutParam === "success") {
     return (
       <Banner tone="success" icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}>
-        Payment received — confirming your subscription with Stripe. Your new allowance appears here
+        Payment received. Confirming your subscription with Stripe: your new allowance appears here
         within a few seconds.
       </Banner>
     );
@@ -272,7 +277,7 @@ function Counter({
   const isEmpty = remaining <= 0;
   return (
     <div>
-      <dt className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
+      <dt className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
         {label}
       </dt>
       <dd
@@ -282,7 +287,7 @@ function Counter({
       >
         {remaining}
       </dd>
-      <dd className="text-[11px] text-muted-foreground">
+      <dd className="text-xs text-muted-foreground">
         {isCap ? `${used} of ${included} used` : `${used} of ${included} this month`}
       </dd>
     </div>
