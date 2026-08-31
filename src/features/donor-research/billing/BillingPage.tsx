@@ -195,7 +195,7 @@ export function BillingPage() {
         </Link>
       </p>
 
-      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      {upgradeOpen ? <UpgradeDialog open onOpenChange={setUpgradeOpen} /> : null}
     </div>
   );
 }

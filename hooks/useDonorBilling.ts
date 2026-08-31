@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchDonorPlanCatalog,
   fetchMyEntitlement,
+  isBillingPortalUnavailable,
+  isIntroPackRequiresSubscription,
+  isSubscriptionAlreadyActive,
   startBillingCheckout,
   startBillingPortal,
   startPackCheckout,
@@ -82,6 +85,15 @@ export function useStartCheckout() {
         window.location.href = session.url;
       }
     },
+    onError: (error) => {
+      // 409: the advisor is already subscribed, so the cached entitlement that
+      // made us offer a checkout is stale. Re-read it — the billing page then
+      // renders "Change plan" + the portal CTA instead of a plan picker. The
+      // message itself is rendered by the dialog; nothing is left unhandled.
+      if (isSubscriptionAlreadyActive(error)) {
+        queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
+      }
+    },
   });
 }
 
@@ -105,6 +117,14 @@ export function useStartPackCheckout() {
         window.location.href = session.url;
       }
     },
+    onError: (error) => {
+      // 403: intro top-ups are subscriber-only. The dialog hides the offer for
+      // a free/PAYG advisor, so reaching here means the entitlement we gated on
+      // was stale — re-read it so the offer disappears.
+      if (isIntroPackRequiresSubscription(error)) {
+        queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
+      }
+    },
   });
 }
 
@@ -120,6 +140,14 @@ export function useOpenBillingPortal() {
       queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
       if (typeof window !== "undefined" && session.url) {
         window.location.href = session.url;
+      }
+    },
+    onError: (error) => {
+      // 404/409: no Stripe customer yet. The CTA is gated on
+      // `hasBillingAccount`, so getting here means the cached entitlement is
+      // ahead of the webhook — re-read it and let the message stand.
+      if (isBillingPortalUnavailable(error)) {
+        queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
       }
     },
   });

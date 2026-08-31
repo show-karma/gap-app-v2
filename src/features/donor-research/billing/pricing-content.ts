@@ -104,9 +104,12 @@ export const FALLBACK_PLAN_CATALOG: readonly DonorPlanCatalogEntry[] = Object.fr
   Object.freeze({
     plan: "free" as const,
     label: "Free",
+    // Free carries ONLY the never-expiring 2-report signup grant. Every
+    // per-period allowance is 0 — plan buckets are gated to trialing/active —
+    // so the catalog must not advertise what a free advisor can never spend.
     reportsIncluded: 0,
     introsIncluded: 0,
-    diligenceIncluded: 1,
+    diligenceIncluded: 0,
     profilesIncluded: 1,
     priceCents: 0,
     isPurchasable: false,

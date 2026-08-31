@@ -77,6 +77,14 @@ describe("createResearchReport quota handling", () => {
     );
   });
 
+  it("carries the plan and counters the 402 body sent", async () => {
+    mockApiPost.mockRejectedValue(reportsHttpError(402, "No research reports remaining."));
+
+    const error = await createResearchReport(REPORT_BODY).catch((err) => err);
+    expect(error.refusal).toMatchObject({ plan: "free", status: "free", remaining: 0 });
+    expect(error.dimension).toBe("reports");
+  });
+
   it("does not treat other failures as a quota refusal", async () => {
     // A 429 is the fair-use rate limit, a separate gate — it must still render
     // as an error, not an upgrade prompt.

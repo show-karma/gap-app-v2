@@ -35,6 +35,18 @@ function httpErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/** Statuses under which the per-period plan allowance may be spent. */
+const ENTITLING_STATUSES: ReadonlySet<DonorSubscriptionStatus> = new Set(["trialing", "active"]);
+
+/**
+ * Mirrors the indexer's `statusGrantsPlanAllowance`. Drives the subscriber-only
+ * affordances (intro top-ups) so the UI never offers a purchase the backend
+ * will refuse with a 403.
+ */
+export function statusGrantsPlanAllowance(status: DonorSubscriptionStatus): boolean {
+  return ENTITLING_STATUSES.has(status);
+}
+
 /** The four metered dimensions the indexer's 402 bodies name. */
 export const DONOR_QUOTA_DIMENSIONS = ["reports", "intros", "diligence", "profiles"] as const;
 
@@ -204,6 +216,46 @@ export function donorQuotaErrorFrom(
 }
 
 /**
+ * A second subscription checkout for an advisor who already has a live Stripe
+ * subscription (indexer 409). Stripe Checkout does not dedupe, so the backend
+ * refuses rather than letting a parallel subscription bill alongside the first
+ * — the plan change belongs in the billing portal.
+ */
+export class DonorSubscriptionAlreadyActiveError extends Error {
+  constructor(message?: string) {
+    super(message || "You already have an active subscription. Manage it from the billing portal.");
+    this.name = "DonorSubscriptionAlreadyActiveError";
+  }
+}
+
+export function isSubscriptionAlreadyActive(
+  error: unknown
+): error is DonorSubscriptionAlreadyActiveError {
+  return error instanceof DonorSubscriptionAlreadyActiveError;
+}
+
+/**
+ * An intro top-up requested without an active subscription (indexer 403). Warm
+ * intros are a subscriber benefit, so a free/PAYG advisor has to subscribe
+ * first. The UI hides the offer; this covers the race where the entitlement in
+ * hand was stale.
+ */
+export class DonorIntroPackRequiresSubscriptionError extends Error {
+  constructor(message?: string) {
+    super(
+      message || "Warm intros are a subscriber benefit — choose a plan before buying an intro pack."
+    );
+    this.name = "DonorIntroPackRequiresSubscriptionError";
+  }
+}
+
+export function isIntroPackRequiresSubscription(
+  error: unknown
+): error is DonorIntroPackRequiresSubscriptionError {
+  return error instanceof DonorIntroPackRequiresSubscriptionError;
+}
+
+/**
  * Public plan catalog — prices, per-plan allowances across all four metered
  * dimensions, the one-time pack catalog, and the free signup grant.
  * Unauthenticated: the marketing pricing page reads it so the numbers a visitor
@@ -257,6 +309,9 @@ export const startBillingCheckout = async (
     // TODO(#1775): add zod schema
     data = await api.post<DonorBillingSession>(INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT, body);
   } catch (error) {
+    if (error instanceof HttpError && error.status === 409) {
+      throw new DonorSubscriptionAlreadyActiveError(httpErrorMessage(error));
+    }
     throw new Error(httpErrorMessage(error) || "Couldn't start checkout");
   }
   if (!data) throw new Error("Couldn't start checkout");
@@ -285,6 +340,9 @@ export const startPackCheckout = async (
     // TODO(#1775): add zod schema
     data = await api.post<DonorBillingSession>(INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT, body);
   } catch (error) {
+    if (error instanceof HttpError && error.status === 403) {
+      throw new DonorIntroPackRequiresSubscriptionError(httpErrorMessage(error));
+    }
     throw new Error(httpErrorMessage(error) || "Couldn't start checkout");
   }
   if (!data) throw new Error("Couldn't start checkout");
@@ -292,9 +350,32 @@ export const startPackCheckout = async (
 };
 
 /**
+ * The advisor has no Stripe customer yet, so there is no portal to open
+ * (indexer 409 `Billing Portal Unavailable`, or 404 when no subscription row
+ * exists at all). `stripe_customer_id` is written by the webhook, not by the
+ * checkout 201, so this is reachable for a few seconds after a first purchase.
+ */
+export class DonorBillingPortalUnavailableError extends Error {
+  constructor(message?: string) {
+    super(
+      message ||
+        "Your billing account is still being set up. Refresh in a moment, or subscribe to a plan first."
+    );
+    this.name = "DonorBillingPortalUnavailableError";
+  }
+}
+
+export function isBillingPortalUnavailable(
+  error: unknown
+): error is DonorBillingPortalUnavailableError {
+  return error instanceof DonorBillingPortalUnavailableError;
+}
+
+/**
  * Stripe Billing Portal session for plan changes, card updates, cancellation.
  * Only reachable once a Stripe customer exists — gate the CTA on the
- * entitlement's `hasBillingAccount`, which flips on webhook completion.
+ * entitlement's `hasBillingAccount`, which flips on webhook completion. The
+ * 404/409 branch covers the window where a cached entitlement says otherwise.
  */
 export const startBillingPortal = async (returnUrl: string): Promise<DonorBillingSession> => {
   let data: DonorBillingSession | null;
@@ -304,6 +385,9 @@ export const startBillingPortal = async (returnUrl: string): Promise<DonorBillin
       returnUrl,
     });
   } catch (error) {
+    if (error instanceof HttpError && (error.status === 404 || error.status === 409)) {
+      throw new DonorBillingPortalUnavailableError(httpErrorMessage(error));
+    }
     throw new Error(httpErrorMessage(error) || "Couldn't open the billing portal");
   }
   if (!data) throw new Error("Couldn't open the billing portal");

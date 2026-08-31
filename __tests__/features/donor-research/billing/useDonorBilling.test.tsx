@@ -1,5 +1,7 @@
 /**
- * @file Tests for donor-research billing hooks (entitlement, checkout, portal).
+ * @file Tests for donor-research billing hooks (entitlement, checkout, packs,
+ * portal), including the two non-quota checkout refusals the indexer added:
+ * 409 on a second subscription checkout and 403 on a subscriber-only intro pack.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
@@ -26,7 +28,13 @@ import {
   useDonorPlanCatalog,
   useOpenBillingPortal,
   useStartCheckout,
+  useStartPackCheckout,
 } from "@/hooks/useDonorBilling";
+import {
+  DonorBillingPortalUnavailableError,
+  DonorIntroPackRequiresSubscriptionError,
+  DonorSubscriptionAlreadyActiveError,
+} from "@/services/donor-research-billing.service";
 import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -213,6 +221,90 @@ describe("useStartCheckout", () => {
     expect(result.current.error?.message).toBe("Billing not configured");
     expect(window.location.href).toBe("");
   });
+
+  it("turns a 409 into the already-active error and refreshes the entitlement", async () => {
+    // A second checkout for a live subscriber would bill in parallel, so the
+    // indexer refuses it. The advisor is pointed at the billing portal, and the
+    // stale entitlement that made us offer a plan picker is re-read.
+    qc.setQueryData(donorEntitlementQueryKey, ENTITLEMENT);
+    const invalidate = vi.spyOn(qc, "invalidateQueries");
+    mockApiPost.mockRejectedValue(
+      new HttpError(409, {
+        endpoint: INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT,
+        method: "POST",
+        body: {
+          error: "Subscription Already Active",
+          message: "change plans through the billing portal instead of a new checkout",
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useStartCheckout(), { wrapper: wrapper(qc) });
+    result.current.mutate({ plan: "pro" });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeInstanceOf(DonorSubscriptionAlreadyActiveError);
+    expect(result.current.error?.message).toContain("billing portal");
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: donorEntitlementQueryKey });
+    expect(window.location.href).toBe("");
+  });
+});
+
+describe("useStartPackCheckout", () => {
+  let qc: QueryClient;
+  const originalLocation = window.location;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    qc = buildClient();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { origin: "https://gap.karmahq.xyz", href: "" },
+    });
+  });
+
+  afterEach(() => {
+    qc.clear();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: originalLocation,
+    });
+  });
+
+  it("posts to the pack endpoint and redirects to Stripe", async () => {
+    mockApiPost.mockResolvedValue({ url: "https://checkout.stripe.com/c/pay/cs_pack" });
+
+    const { result } = renderHook(() => useStartPackCheckout(), { wrapper: wrapper(qc) });
+    result.current.mutate({ pack: "reports_10" });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApiPost).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT, {
+      pack: "reports_10",
+      successUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?checkout=success",
+      cancelUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?checkout=cancel",
+    });
+    expect(window.location.href).toBe("https://checkout.stripe.com/c/pay/cs_pack");
+  });
+
+  it("turns a 403 intro pack into the subscription-required error", async () => {
+    mockApiPost.mockRejectedValue(
+      new HttpError(403, {
+        endpoint: INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT,
+        method: "POST",
+        body: {
+          error: "Intro Pack Requires Subscription",
+          message: "warm intros are a subscriber benefit",
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useStartPackCheckout(), { wrapper: wrapper(qc) });
+    result.current.mutate({ pack: "intros_5" });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeInstanceOf(DonorIntroPackRequiresSubscriptionError);
+    expect(window.location.href).toBe("");
+  });
 });
 
 describe("useOpenBillingPortal", () => {
@@ -247,5 +339,27 @@ describe("useOpenBillingPortal", () => {
       returnUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?portal=return",
     });
     expect(window.location.href).toBe("https://billing.stripe.com/session/abc");
+  });
+
+  it("turns a 409 with no Stripe customer into the portal-unavailable error", async () => {
+    // `stripe_customer_id` is written by the webhook, not the checkout 201, so
+    // an entitlement cached a second too early can still show the CTA.
+    mockApiPost.mockRejectedValue(
+      new HttpError(409, {
+        endpoint: INDEXER.DONOR_RESEARCH.BILLING_PORTAL,
+        method: "POST",
+        body: {
+          error: "Billing Portal Unavailable",
+          message: "has no Stripe customer yet",
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useOpenBillingPortal(), { wrapper: wrapper(qc) });
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeInstanceOf(DonorBillingPortalUnavailableError);
+    expect(window.location.href).toBe("");
   });
 });

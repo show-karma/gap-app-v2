@@ -52,7 +52,7 @@ const CATALOG = {
   freeSignupReportGrant: 2,
   billingEnabled: true,
   plans: [
-    plan("free", 0, 0, 0, 1, 1, false),
+    plan("free", 0, 0, 0, 0, 1, false),
     plan("starter", 2900, 10, 2, 5, 3, true),
     plan("pro", 9900, 40, 8, 20, 10, true),
     plan("firm", 39_900, 200, 30, 60, 30, true),
