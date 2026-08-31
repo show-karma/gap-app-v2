@@ -22,8 +22,7 @@ export function NotebookList({ communityId, notebooks }: NotebookListProps) {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-foreground">{COMMUNITY_NAV_LABELS.notebooks}</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Interactive data notebooks published by this community. Each one runs in your browser
-          against live grant data.
+          Data pages published by this community, built from live grant data.
         </p>
       </div>
 

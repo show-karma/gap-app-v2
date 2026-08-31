@@ -196,6 +196,10 @@ export function NotebookTimeSeries({ series, chartStyle }: Props) {
         <span>
           {points.length} {points.length === 1 ? "reading" : "readings"}
         </span>
+        {/* Membership is decided by the period's END date, so a 30-day window
+            can legitimately contain a reading whose period began well before
+            it. Unstated, that looks like the window is wrong. */}
+        <span>windows include readings by period end date</span>
         {/* Said out loud rather than hidden: a chart that silently drops
             unusable readings overstates how complete it is. */}
         {discardedPointCount > 0 ? (

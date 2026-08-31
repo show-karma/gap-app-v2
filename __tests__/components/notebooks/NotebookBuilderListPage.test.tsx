@@ -125,6 +125,73 @@ describe("NotebookBuilderListPage", () => {
     expect(screen.getByText(/No notebook pages yet/i)).toBeInTheDocument();
   });
 
+  /**
+   * FC8 — the property that actually broke, asserted as a composition.
+   *
+   * The API tests and the schema tests were all green while one corrupted row
+   * removed the entire builder for a community. What was missing was a test
+   * that put a bad row and a good row in the same list and checked the admin
+   * could still work.
+   */
+  describe("a corrupted row costs one card, not the builder", () => {
+    const withBrokenRow = () =>
+      mockList.mockReturnValue({
+        data: [
+          makeNotebook(),
+          makeNotebook({
+            slug: "broken",
+            name: "Broken page",
+            spec: null,
+            specError: "The stored page layout could not be read by this version.",
+          } as Partial<NotebookConfig>),
+        ],
+        isLoading: false,
+        isError: false,
+        error: null,
+      });
+
+    it("still lists the healthy page", () => {
+      withBrokenRow();
+
+      render(<NotebookBuilderListPage community={community} />);
+
+      expect(screen.getByText("Grants & milestones overview")).toBeInTheDocument();
+      expect(screen.queryByText(/Could not load your notebook pages/i)).not.toBeInTheDocument();
+    });
+
+    it("names the broken page and says what to do about it", () => {
+      withBrokenRow();
+
+      render(<NotebookBuilderListPage community={community} />);
+
+      expect(screen.getByText("Broken page")).toBeInTheDocument();
+      expect(screen.getByText(/could not be read/i)).toBeInTheDocument();
+    });
+
+    // Delete is the repair, so it stays available on the broken row.
+    it("still offers delete on the broken page", async () => {
+      withBrokenRow();
+
+      render(<NotebookBuilderListPage community={community} />);
+      await userEvent.click(screen.getByRole("button", { name: /Delete Broken page/i }));
+      await userEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+      await waitFor(() => expect(deleteMutate).toHaveBeenCalledWith("broken"));
+    });
+
+    // Editing would save a layout the author never saw; publishing would push
+    // one nobody can render. Both are withheld on that row only.
+    it("withholds edit and publish on the broken page but not the healthy one", () => {
+      withBrokenRow();
+
+      render(<NotebookBuilderListPage community={community} />);
+
+      const editButtons = screen.getAllByRole("button", { name: /^Edit$/i });
+      expect(editButtons[0]).toBeEnabled();
+      expect(editButtons[1]).toBeDisabled();
+    });
+  });
+
   describe("publish and unpublish", () => {
     it("unpublishes a published page", async () => {
       render(<NotebookBuilderListPage community={community} />);

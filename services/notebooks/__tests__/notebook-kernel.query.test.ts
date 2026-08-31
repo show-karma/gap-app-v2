@@ -143,6 +143,100 @@ function makeFunctions(): NotebookKernelFunctionsDto {
   };
 }
 
+/**
+ * F3 — the coverage tile must share a population with the tile beside it.
+ *
+ * The API's program rollup sums coverage over EVERY catalogued function,
+ * including out-of-scope ones, while "functions in scope" counts only the
+ * in-scope rows. On the live data both happened to round to 96.0%, so the two
+ * tiles agreed by coincidence and nothing signalled the mismatch — until the
+ * out-of-scope rows drift and two adjacent tiles contradict each other on a
+ * page someone is quoting.
+ *
+ * This fixture makes them disagree on purpose: an out-of-scope function with
+ * five expected periods and none received. In-scope coverage stays 8/10; the
+ * program rollup would say 8/15. The tile must report the former.
+ */
+describe("getNotebookKernelData — coverage population", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function withOutOfScopeFunction() {
+    const overview = makeOverview();
+    // What the API reports across all rows, and what the tile must NOT use.
+    overview.program.coverage = { received: 8, expected: 15, pct: 53.3 };
+    // Update the existing tier rather than appending a second one: the
+    // reconciliation walks every tier entry, so a duplicate would be checked
+    // against a catalogue count it does not own.
+    const important = overview.tiers.find((tier) => tier.tier === "important");
+    if (important) {
+      important.catalogued = 1;
+      important.inScope = 0;
+      important.measured = 0;
+      important.coverage = { received: 0, expected: 5, pct: 0 };
+    }
+
+    const functions = makeFunctions();
+    functions.functions.push({
+      kernelId: "out-of-scope",
+      kernelFunction: "Out of scope function",
+      tier: "important",
+      category: "Other",
+      subCategory: "Other",
+      kernelValue: "Not in scope this window",
+      isInScope: false,
+      maintainers: 0,
+      measured: false,
+      commitments: 0,
+      projectsReporting: 0,
+      readings: 0,
+      lastReadingAt: null,
+      sla: { scored: 0, passed: 0, metPct: null },
+      coverage: { received: 0, expected: 5, pct: 0 },
+      collectingSince: null,
+    });
+
+    return { overview, functions };
+  }
+
+  it("computes coverage over in-scope functions, not the whole catalogue", async () => {
+    const { overview, functions } = withOutOfScopeFunction();
+    mockApiGet.mockResolvedValueOnce(overview).mockResolvedValueOnce(functions);
+
+    const result = await getNotebookKernelData("90d");
+    const coverage = result.kpis.find((kpi) => kpi.id === "kernelCoverage");
+
+    expect(coverage).toMatchObject({ value: 80, numerator: 8, denominator: 10 });
+  });
+
+  // The denominator on the tile is what makes the percentage quotable.
+  it("states the denominator and the population it belongs to", async () => {
+    const { overview, functions } = withOutOfScopeFunction();
+    mockApiGet.mockResolvedValueOnce(overview).mockResolvedValueOnce(functions);
+
+    const result = await getNotebookKernelData("90d");
+    const coverage = result.kpis.find((kpi) => kpi.id === "kernelCoverage");
+
+    expect(coverage?.hint).toBe("8 of 10 expected periods received, across 2 in-scope functions");
+  });
+
+  // Nothing expected is not zero coverage; the absent rule applies.
+  it("reports no expected periods as absent rather than as zero percent", async () => {
+    const overview = makeOverview();
+    overview.program.coverage = { received: 0, expected: 0, pct: null };
+    const functions = makeFunctions();
+    for (const entry of functions.functions) {
+      entry.coverage = { received: 0, expected: 0, pct: null };
+    }
+    mockApiGet.mockResolvedValueOnce(overview).mockResolvedValueOnce(functions);
+
+    const result = await getNotebookKernelData("90d");
+
+    expect(result.kpis.find((kpi) => kpi.id === "kernelCoverage")?.value).toBeNull();
+  });
+});
+
 describe("getNotebookKernelData", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -217,7 +311,7 @@ describe("getNotebookKernelData", () => {
         format: "percent",
         numerator: 8,
         denominator: 10,
-        hint: "8 of 10 expected periods received",
+        hint: "8 of 10 expected periods received, across 2 in-scope functions",
       },
       {
         id: "kernelProjectsReporting",

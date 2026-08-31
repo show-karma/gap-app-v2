@@ -54,6 +54,45 @@ export type NotebookConfig = z.infer<typeof NotebookConfigSchema>;
 export const NotebookConfigListSchema = z.array(NotebookConfigSchema);
 
 /**
+ * One config as the ADMIN surface sees it.
+ *
+ * Differs from the public shape in exactly one way, and the difference is the
+ * point: `spec` may be `null`, paired with a `specError` reason, for a row
+ * whose stored layout this build cannot read. The admin list has to show that
+ * row — it is the only way anyone can repair it — whereas the public endpoints
+ * never serve one, because such a row is forced to `draft` and drafts are
+ * unreadable publicly.
+ *
+ * Keeping the public schema non-nullable is deliberate: the public renderer
+ * genuinely cannot receive a null spec, and widening it "just in case" would
+ * push a `?? throw` into every consumer to describe a state that cannot occur.
+ */
+export const AdminNotebookConfigSchema = NotebookConfigSchema.omit({ spec: true }).extend({
+  spec: NotebookSpecSchema.nullable(),
+  specError: z.string().optional(),
+});
+
+export type AdminNotebookConfig = z.infer<typeof AdminNotebookConfigSchema>;
+
+/**
+ * The least a row must carry for an admin to ACT on it.
+ *
+ * The fallback when a row fails the full parse for a reason we did not
+ * anticipate. A card with a name, a slug and a delete button is enough to
+ * repair the page; refusing to render it because some other field is wrong is
+ * how one bad row took the whole builder down.
+ */
+export const NotebookConfigIdentitySchema = z
+  .object({
+    id: z.string().optional(),
+    communityId: z.string(),
+    slug: z.string(),
+    name: z.string(),
+    status: NotebookStatusSchema,
+  })
+  .passthrough();
+
+/**
  * Published notebook pages for a community, newest first (the API orders by
  * creation date). Returns an empty array when the community has none —
  * an empty list is a state to render, not an error.

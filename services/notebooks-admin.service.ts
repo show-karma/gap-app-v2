@@ -4,8 +4,10 @@ import { INDEXER } from "@/utilities/indexer";
 import { notebookConfigApiBaseUrl } from "./notebooks/notebook-config-api";
 import type { NotebookSpec } from "./notebooks/notebook-spec";
 import {
+  type AdminNotebookConfig,
+  AdminNotebookConfigSchema,
   type NotebookConfig,
-  NotebookConfigListSchema,
+  NotebookConfigIdentitySchema,
   NotebookConfigSchema,
 } from "./notebooks.service";
 
@@ -41,12 +43,68 @@ export type NotebookConfigUpdate = Partial<NotebookConfigInput>;
  * Newest first, matching the indexer's ordering — the builder does not re-sort,
  * so the list an author sees is the list the API returned.
  */
-export async function getAdminNotebooks(communitySlug: string): Promise<NotebookConfig[]> {
-  const data = await api.get<NotebookConfig[]>(
-    INDEXER.V2.NOTEBOOK_CONFIGS.ADMIN_LIST(communitySlug),
-    { schema: NotebookConfigListSchema, baseURL: notebookConfigApiBaseUrl() }
-  );
-  return data ?? [];
+/**
+ * A row the builder can list but not fully understand.
+ *
+ * `spec` is null when the SERVER said so (it could not read the stored
+ * layout), and `unreadable` is true when THIS CLIENT could not parse the row
+ * at all. Both render the same way to an admin — a page that needs repairing —
+ * but they are different failures and the distinction is kept rather than
+ * flattened.
+ */
+export interface AdminNotebookListItem extends AdminNotebookConfig {
+  /** The row did not match the expected shape; only its identity is trusted. */
+  unreadable?: boolean;
+}
+
+/**
+ * Every page for a community, drafts included, parsed PER ITEM.
+ *
+ * Whole-list parsing is what turned one corrupted row into a total lockout:
+ * a single unparseable element rejected the entire response, and the admin
+ * lost the list, the editor, publish, unpublish and delete for every page in
+ * the community — including the healthy ones — with no hint that the cause was
+ * one row.
+ *
+ * So each row is parsed on its own. A row that fails the full shape falls back
+ * to its identity — name, slug, status — which is all an admin needs to open or
+ * delete it. Only a row too malformed to identify is dropped, because there is
+ * nothing to render or act on.
+ */
+export async function getAdminNotebooks(communitySlug: string): Promise<AdminNotebookListItem[]> {
+  // Fetched unvalidated on purpose: the array is validated element by element
+  // below, which a list-level schema cannot do.
+  const data = await api.get<unknown>(INDEXER.V2.NOTEBOOK_CONFIGS.ADMIN_LIST(communitySlug), {
+    baseURL: notebookConfigApiBaseUrl(),
+  });
+
+  if (!Array.isArray(data)) return [];
+
+  const items: AdminNotebookListItem[] = [];
+  for (const row of data) {
+    const parsed = AdminNotebookConfigSchema.safeParse(row);
+    if (parsed.success) {
+      items.push(parsed.data);
+      continue;
+    }
+
+    const identity = NotebookConfigIdentitySchema.safeParse(row);
+    if (identity.success) {
+      items.push({
+        ...identity.data,
+        description: null,
+        spec: null,
+        specError: "This page could not be read by the builder.",
+        createdAt: "",
+        updatedAt: "",
+        unreadable: true,
+      } as AdminNotebookListItem);
+    }
+    // Anything without even a slug and a name is unactionable, so it is
+    // omitted rather than rendered as a card with no controls.
+  }
+
+  return items;
 }
 
 /** One page by slug, draft or published. Throws 404 for a slug that does not exist. */

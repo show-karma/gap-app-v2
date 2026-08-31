@@ -28,6 +28,17 @@ function makeNotebook(overrides: Partial<NotebookConfig> = {}): NotebookConfig {
   } as NotebookConfig;
 }
 
+// F6. The page ships zero client JavaScript — the WASM runtime that copy
+// described was deliberately removed. User-visible text must not describe an
+// architecture that no longer exists.
+describe("architecture copy", () => {
+  it("does not claim notebooks run in the browser", () => {
+    render(<NotebookList communityId="filecoin" notebooks={[]} />);
+
+    expect(screen.queryByText(/runs in your browser/i)).not.toBeInTheDocument();
+  });
+});
+
 describe("NotebookList", () => {
   it("renders one entry per notebook", () => {
     render(

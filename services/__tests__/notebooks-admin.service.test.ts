@@ -199,6 +199,65 @@ describe("slugifyNotebookName", () => {
   });
 });
 
+/**
+ * FC8 — a corrupted row must cost one card, not the builder.
+ *
+ * Whole-list parsing turned one unparseable row into a total lockout: the
+ * admin lost list, edit, publish, unpublish and delete for EVERY page in the
+ * community, including healthy ones, with nothing to indicate the cause was a
+ * single row. These pin the per-item behaviour that replaced it.
+ */
+describe("admin list resilience", () => {
+  it("keeps healthy rows when one row is unrenderable", async () => {
+    mockedApi.get.mockResolvedValue([
+      makeConfig(),
+      makeConfig({
+        slug: "broken",
+        name: "Broken page",
+        spec: null,
+        specError: "The stored page layout could not be read by this version.",
+      }),
+    ]);
+
+    const rows = await getAdminNotebooks("filecoin");
+
+    expect(rows.map((r) => r.slug)).toEqual(["grants-overview", "broken"]);
+    expect(rows[0].spec).not.toBeNull();
+    expect(rows[1].spec).toBeNull();
+  });
+
+  // A shape we did not anticipate must still not cost the list. The row falls
+  // back to its identity, which is all an admin needs to delete it.
+  it("degrades an unparseable row to its identity rather than dropping the list", async () => {
+    mockedApi.get.mockResolvedValue([
+      makeConfig(),
+      { communityId: "0xfilecoin", slug: "weird", name: "Weird page", status: "draft", spec: 42 },
+    ]);
+
+    const rows = await getAdminNotebooks("filecoin");
+
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toMatchObject({ slug: "weird", name: "Weird page", unreadable: true });
+    expect(rows[1].spec).toBeNull();
+  });
+
+  // Only a row with no identity at all is dropped — there would be nothing to
+  // render and no control to act on.
+  it("omits a row too malformed to identify, keeping the rest", async () => {
+    mockedApi.get.mockResolvedValue([makeConfig(), { nonsense: true }]);
+
+    const rows = await getAdminNotebooks("filecoin");
+
+    expect(rows.map((r) => r.slug)).toEqual(["grants-overview"]);
+  });
+
+  it("returns an empty list rather than throwing when the payload is not an array", async () => {
+    mockedApi.get.mockResolvedValue({ unexpected: true });
+
+    await expect(getAdminNotebooks("filecoin")).resolves.toEqual([]);
+  });
+});
+
 describe("per-source date ranges", () => {
   // An indicator series has dated points, so "all time" is a real answer.
   it("accepts an all-time window for an indicator series", () => {

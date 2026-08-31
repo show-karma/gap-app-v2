@@ -13,7 +13,7 @@ import {
   useDeleteNotebook,
   useSetNotebookStatus,
 } from "@/hooks/notebooks/useNotebookBuilder";
-import type { NotebookConfig } from "@/services/notebooks.service";
+import type { AdminNotebookListItem } from "@/services/notebooks-admin.service";
 import { Link } from "@/src/components/navigation/Link";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
@@ -37,9 +37,9 @@ export function NotebookBuilderListPage({ community }: Props) {
   const statusMutation = useSetNotebookStatus(communitySlug);
   const deleteMutation = useDeleteNotebook(communitySlug);
 
-  const [deleteTarget, setDeleteTarget] = useState<NotebookConfig | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminNotebookListItem | null>(null);
 
-  const handleToggleStatus = async (notebook: NotebookConfig) => {
+  const handleToggleStatus = async (notebook: AdminNotebookListItem) => {
     const next = notebook.status === "published" ? "draft" : "published";
     try {
       await statusMutation.mutateAsync({ slug: notebook.slug, status: next });
@@ -142,10 +142,27 @@ export function NotebookBuilderListPage({ community }: Props) {
                   <StatusBadge status={notebook.status} />
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  /{notebook.slug} · {notebook.spec.sections.length}{" "}
-                  {notebook.spec.sections.length === 1 ? "section" : "sections"} · updated{" "}
-                  {notebook.updatedAt.slice(0, 10)}
+                  /{notebook.slug}
+                  {notebook.spec ? (
+                    <>
+                      {" · "}
+                      {notebook.spec.sections.length}{" "}
+                      {notebook.spec.sections.length === 1 ? "section" : "sections"}
+                    </>
+                  ) : null}
+                  {notebook.updatedAt ? ` · updated ${notebook.updatedAt.slice(0, 10)}` : null}
                 </span>
+                {/* A page whose layout cannot be read is still listed, and
+                    still deletable — being able to see and remove it is the
+                    only way anyone repairs it. Saying which page is broken
+                    beats the previous behaviour, where one such row removed
+                    the whole builder for the community. */}
+                {notebook.spec === null ? (
+                  <span className="text-xs text-destructive">
+                    {notebook.specError ?? "This page could not be read."} Delete it, or republish
+                    it from a working version.
+                  </span>
+                ) : null}
               </div>
 
               <div className="flex shrink-0 flex-row items-center gap-2">
@@ -157,9 +174,14 @@ export function NotebookBuilderListPage({ community }: Props) {
                     View
                   </Link>
                 ) : null}
+                {/* Editing or publishing a page whose layout we cannot read
+                    would either save a spec the author never saw or publish
+                    one nobody can render, so both are withheld. Delete stays,
+                    because it is the repair. */}
                 <Button
                   variant="secondary"
                   size="sm"
+                  disabled={notebook.spec === null}
                   onClick={() =>
                     router.push(PAGES.ADMIN.NOTEBOOKS_EDIT(communitySlug, notebook.slug))
                   }
@@ -170,7 +192,7 @@ export function NotebookBuilderListPage({ community }: Props) {
                 <Button
                   variant="secondary"
                   size="sm"
-                  disabled={statusMutation.isPending}
+                  disabled={statusMutation.isPending || notebook.spec === null}
                   onClick={() => handleToggleStatus(notebook)}
                 >
                   {notebook.status === "published" ? (
@@ -202,7 +224,7 @@ export function NotebookBuilderListPage({ community }: Props) {
   );
 }
 
-function StatusBadge({ status }: { status: NotebookConfig["status"] }) {
+function StatusBadge({ status }: { status: AdminNotebookListItem["status"] }) {
   const published = status === "published";
   return (
     <span

@@ -98,6 +98,38 @@ function reconcileSlaAndCoverage(overview: NotebookKernelOverviewDto): void {
   }
 }
 
+/**
+ * Collection coverage over the IN-SCOPE functions only.
+ *
+ * The API's program rollup sums coverage across every catalogued row,
+ * including the ones that are `isInScope: false`. That put two adjacent tiles
+ * on different populations: "29 functions in scope" beside "679 of 707
+ * expected periods", where 15 of those periods belong to functions not among
+ * the 29. Both happened to round to 96.0%, so the tiles agreed by coincidence
+ * — which is worse than disagreeing, because nothing signals the mismatch
+ * until the out-of-scope rows drift and two tiles contradict each other on a
+ * page someone is quoting.
+ *
+ * Aligning the population is the fix; stating the denominator on the tile is
+ * what makes it checkable. A rolling percentage without its denominator is not
+ * quotable.
+ */
+function inScopeCoverage(functions: NotebookKernelFunctionDto[]): {
+  received: number;
+  expected: number;
+  pct: number | null;
+} {
+  const inScope = functions.filter((entry) => entry.isInScope);
+  const received = inScope.reduce((sum, entry) => sum + entry.coverage.received, 0);
+  const expected = inScope.reduce((sum, entry) => sum + entry.coverage.expected, 0);
+
+  // No expected periods is not 0% coverage — it is nothing to measure. The
+  // absent rule applies: a null renders as an em-dash, never as a zero.
+  const pct = expected === 0 ? null : Math.round((received / expected) * 1000) / 10;
+
+  return { received, expected, pct };
+}
+
 function reconcileInventory(
   overview: NotebookKernelOverviewDto,
   functions: NotebookKernelFunctionDto[]
@@ -129,8 +161,12 @@ function reconcileInventory(
   }
 }
 
-function toKpis(overview: NotebookKernelOverviewDto): NotebookKernelKpi[] {
+function toKpis(
+  overview: NotebookKernelOverviewDto,
+  functions: NotebookKernelFunctionDto[]
+): NotebookKernelKpi[] {
   const { program } = overview;
+  const coverage = inScopeCoverage(functions);
   const slaHint =
     program.healthMet.scored === 0
       ? "No readings have a published SLA threshold"
@@ -170,14 +206,19 @@ function toKpis(overview: NotebookKernelOverviewDto): NotebookKernelKpi[] {
     {
       id: "kernelCoverage",
       label: "Collection coverage",
-      value: program.coverage.pct,
+      // In-scope only, so this tile shares a population with "functions in
+      // scope" beside it rather than agreeing with it by rounding luck.
+      value: coverage.pct,
       format: "percent",
-      numerator: program.coverage.received,
-      denominator: program.coverage.expected,
-      hint: `${program.coverage.received} of ${program.coverage.expected} expected ${pluralize(
+      numerator: coverage.received,
+      denominator: coverage.expected,
+      hint: `${coverage.received} of ${coverage.expected} expected ${pluralize(
         "period",
-        program.coverage.expected
-      )} received`,
+        coverage.expected
+      )} received, across ${program.functionsInScope} in-scope ${pluralize(
+        "function",
+        program.functionsInScope
+      )}`,
     },
     {
       id: "kernelProjectsReporting",
@@ -252,7 +293,7 @@ async function loadKernelData(
   return {
     preset,
     windowDays,
-    kpis: toKpis(overview),
+    kpis: toKpis(overview, functionsResponse.functions),
     tiers: overview.tiers.map(toTier),
     inventory: {
       columns: NOTEBOOK_KERNEL_INVENTORY_COLUMNS,
