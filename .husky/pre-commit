@@ -1,1 +1,1 @@
-pnpm tsc --noEmit && pnpm lint-staged
+pnpm tsc --noEmit && pnpm lint-staged && pnpm design:check --staged

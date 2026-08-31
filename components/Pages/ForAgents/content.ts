@@ -2,13 +2,6 @@
  * Content for /for-agents — surfaced both as visible UI and as JSON-LD
  * structured data (FAQPage). Co-located with the page sections so the
  * schema and the page never drift apart.
- *
- * The tool catalog is fetched live from gap-indexer's `/mcp/tools` endpoint at
- * request time (1h ISR); `STATIC_FALLBACK_TOOLS` in ./fallbackTools is what the
- * page renders when that upstream is down. It deliberately lives in a separate
- * module: importing this one validates NEXT_PUBLIC_GAP_INDEXER_URL and throws
- * when it is missing, and a fallback that is unreachable precisely when the
- * indexer is misconfigured would be no fallback at all.
  */
 
 import { CANONICAL_ORIGIN } from "@/utilities/domains";

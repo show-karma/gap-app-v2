@@ -1,0 +1,10 @@
+diff --git a/components/Old.tsx b/components/Renamed.tsx
+similarity index 82%
+rename from components/Old.tsx
+rename to components/Renamed.tsx
+index 1234567..89abcde 100644
+--- a/components/Old.tsx
++++ b/components/Renamed.tsx
+@@ -4,0 +5,2 @@ export const Renamed = () => (
++  <span className="bg-[#123456]">added</span>
++  <span className="text-brand">clean</span>

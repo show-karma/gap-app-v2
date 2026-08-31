@@ -1,0 +1,6 @@
+/* palette lives in __theme_colors.scss — #2ed1a8 here is only a comment */
+.card {
+  color: var(--brand-fg);
+  background: rgb(var(--brand-bg-rgb));
+  border-color: hsl(var(--brand-h) 40% 60%);
+}

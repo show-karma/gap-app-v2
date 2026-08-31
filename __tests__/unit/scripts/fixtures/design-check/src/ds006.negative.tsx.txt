@@ -1,0 +1,11 @@
+export function Negative() {
+  return (
+    <div>
+      <span className="w-[calc(100%-2rem)]">calc</span>
+      <span className="h-[var(--row-h)]">token</span>
+      <span className="z-[60]">z index</span>
+      <span className="grid-cols-[1fr_2fr]">grid</span>
+      <span className="w-[50%] max-w-[80%]">layout percent</span>
+    </div>
+  );
+}

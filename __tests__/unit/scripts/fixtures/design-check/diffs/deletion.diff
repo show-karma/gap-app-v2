@@ -1,0 +1,9 @@
+diff --git a/components/Gone.tsx b/components/Gone.tsx
+deleted file mode 100644
+index 1234567..0000000
+--- a/components/Gone.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-export const Gone = () => (
+-  <span className="bg-[#123456]">gone</span>
+-);
