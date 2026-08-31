@@ -171,15 +171,17 @@ describe("getNotebookMetrics", () => {
     const result = await getNotebookMetrics("filecoin");
 
     expect(result.stats).toEqual([
-      { label: "Committed", value: 5_000, format: "currency" },
+      { id: "committed", label: "Committed", value: 5_000, format: "currency" },
       {
+        id: "disbursed",
         label: "Disbursed",
         value: 1_500,
         format: "currency",
         hint: "$4K still to pay out",
       },
-      { label: "Funded projects", value: 48, format: "count" },
+      { id: "fundedProjects", label: "Funded projects", value: 48, format: "count" },
       {
+        id: "milestoneCompletion",
         label: "Milestone completion",
         value: 52,
         format: "percent",

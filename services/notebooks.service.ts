@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
+import { NotebookSpecSchema } from "./notebooks/notebook-spec";
 
 /**
  * Notebook pages — the read half of the wire contract in gap-indexer PR #2411.
@@ -26,9 +27,12 @@ export type NotebookStatus = z.infer<typeof NotebookStatusSchema>;
  * `passthrough()` keeps the client forward-compatible: a field added by the
  * API must not fail an existing page. Every field the UI reads is declared.
  *
- * `artifactUrl` is validated as an absolute https URL here as well as
- * server-side — this value ends up as an iframe `src`, so a non-https or
- * `javascript:` value must never reach a component even if the API regressed.
+ * `spec` is re-validated here against the same closed vocabulary the indexer
+ * enforces on write. That is not redundant: this page renders whatever the
+ * spec names, so a config arriving with a section type this build does not
+ * implement must fail at the boundary rather than reach a renderer that would
+ * have to decide what to do with it. The indexer's copy is authoritative —
+ * this one keeps a bad payload from becoming a broken page.
  */
 export const NotebookConfigSchema = z
   .object({
@@ -37,17 +41,7 @@ export const NotebookConfigSchema = z
     slug: z.string(),
     name: z.string(),
     description: z.string().nullable(),
-    artifactUrl: z.string().refine(
-      (value) => {
-        try {
-          return new URL(value).protocol === "https:";
-        } catch {
-          return false;
-        }
-      },
-      { message: "artifactUrl must be an absolute https:// URL" }
-    ),
-    artifactVersion: z.string(),
+    spec: NotebookSpecSchema,
     status: NotebookStatusSchema,
     createdAt: z.string(),
     updatedAt: z.string(),

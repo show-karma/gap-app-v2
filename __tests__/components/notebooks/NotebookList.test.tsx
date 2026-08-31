@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NotebookList } from "@/components/Pages/Communities/Notebooks/NotebookList";
 import { NotebooksUnavailable } from "@/components/Pages/Communities/Notebooks/NotebooksUnavailable";
+import { NOTEBOOK_SEED_SPEC } from "@/services/notebooks/notebook-seed-spec";
 import type { NotebookConfig } from "@/services/notebooks.service";
 
 vi.mock("@/src/components/navigation/Link", () => ({
@@ -19,8 +20,7 @@ function makeNotebook(overrides: Partial<NotebookConfig> = {}): NotebookConfig {
     slug: "grants-overview",
     name: "Grants & milestones overview",
     description: "Grants and milestones.",
-    artifactUrl: "https://app.karmahq.org/notebooks/filecoin/grants-overview/index.html",
-    artifactVersion: "2026.08.28-1",
+    spec: NOTEBOOK_SEED_SPEC,
     status: "published",
     createdAt: "2026-08-01T00:00:00.000Z",
     updatedAt: "2026-08-02T00:00:00.000Z",

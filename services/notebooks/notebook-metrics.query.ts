@@ -60,15 +60,19 @@ function toNotebookMetrics(
   const currency = requireSingleCurrency(totals.currencies);
   const milestoneCompletion = canonicalMilestoneCompletion(communityStats);
 
+  // Every KPI the vocabulary can name, always computed. The page spec selects
+  // from this list by `id`; it does not get to change what any of them means.
   const stats: NotebookStat[] = [
-    { label: "Committed", value: totals.allocated, format: "currency" },
+    { id: "committed", label: "Committed", value: totals.allocated, format: "currency" },
     {
+      id: "disbursed",
       label: "Disbursed",
       value: totals.disbursed,
       format: "currency",
       hint: `${formatCompact(totals.remaining)} still to pay out`,
     },
     {
+      id: "fundedProjects",
       label: "Funded projects",
       // Match the canonical community header. funding.distinctProjects only
       // counts projects represented in Program Financials and is 47 for
@@ -77,6 +81,7 @@ function toNotebookMetrics(
       format: "count",
     },
     {
+      id: "milestoneCompletion",
       label: "Milestone completion",
       value: milestoneCompletion.percentage,
       format: "percent",

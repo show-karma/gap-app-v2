@@ -1,3 +1,4 @@
+import { NOTEBOOK_SEED_SPEC } from "@/services/notebooks/notebook-seed-spec";
 import type { NotebookConfig } from "@/services/notebooks.service";
 
 /**
@@ -9,11 +10,12 @@ import type { NotebookConfig } from "@/services/notebooks.service";
  * correctly renders not-found. That blocks *seeing* the native dashboard, even
  * though the dashboard itself is finished and its data is real.
  *
- * This module stands in for that one missing row, on preview only, so the
- * render is visible while the backend lands. It fabricates NOTHING a reader
- * sees as data: the KPI values, the bars and the applications breakdown are all
- * still fetched live from the GAP API server-side. What is stubbed is only the
- * page's registry entry — its slug, title and description.
+ * This module stands in for that one missing row — on a preview deployment, or
+ * on a developer's own dev server — so the render is visible while the backend
+ * lands. It fabricates NOTHING a reader sees as data: the KPI values, the bars
+ * and the applications breakdown are all still fetched live from the GAP API
+ * server-side. What is stubbed is only the page's registry entry — its slug,
+ * title and description.
  *
  * REMOVAL: delete this file, delete `notebookDemoConfig` from both notebook
  * routes, delete its test. Nothing else references it. The real path is
@@ -23,13 +25,21 @@ import type { NotebookConfig } from "@/services/notebooks.service";
  *
  * Four independent conditions, all required:
  *
- *  1. `VERCEL_ENV === "preview"`. Vercel sets this itself and it is
- *     `"production"` on a production deployment, so no flag, no branch and no
- *     mistake in the code below can switch this on in production.
- *  2. An explicit opt-in: either `NOTEBOOK_DEMO_STUB=true`, or the deployment
- *     is building this feature branch. The branch clause is what makes the
- *     demo work today without provisioning a dashboard variable; it is also
- *     impossible on a production deployment, which builds `main`.
+ *  1. The stub may only open in one of exactly two places: a Vercel PREVIEW
+ *     deployment (`VERCEL_ENV === "preview"`), or a developer's own machine
+ *     running `next dev` (`NODE_ENV === "development"`). A production
+ *     deployment is neither, and is additionally vetoed outright by
+ *     `VERCEL_ENV === "production"` before anything else is considered — a
+ *     value Vercel sets itself, that no flag and no branch can talk past.
+ *     `next build` / `next start` set `NODE_ENV=production`, so a deployed
+ *     build never satisfies the local clause either.
+ *  2. An explicit opt-in. On a preview: `NOTEBOOK_DEMO_STUB=true`, or the
+ *     deployment is building this feature branch — the branch clause is what
+ *     makes the demo work without provisioning a dashboard variable, and is
+ *     impossible on a production deployment, which builds `main`. Locally the
+ *     env var is the ONLY way in: there is no branch clause, because
+ *     `VERCEL_GIT_COMMIT_REF` does not exist off Vercel, so a branch check
+ *     there would be dead code pretending to be a guard.
  *  3. The community and slug match the one demo page exactly.
  *  4. The real registry actually 404'd. A deployed config always wins — this
  *     is a fallback, never an override.
@@ -77,16 +87,28 @@ const DEMO_SLUG = "grants-overview";
  * Whether the stub may be consulted at all.
  *
  * Exported so a test can assert it stays false for every environment that is
- * not a preview — that assertion is the guard, not this comment.
+ * neither a preview nor a local dev server — that assertion is the guard, not
+ * this comment.
  */
 export function isNotebookDemoStubEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  // Gate 1: Vercel's own environment marker. Never "preview" in production.
-  if (env.VERCEL_ENV !== "preview") return false;
+  // Veto, checked before anything else: Vercel's own environment marker. It is
+  // "production" on a production deployment and Vercel sets it, not us, so no
+  // flag and no NODE_ENV can reach past this line there.
+  if (env.VERCEL_ENV === "production") return false;
 
-  // Gate 2: explicit opt-in, or this feature branch.
   const flagged = env.NOTEBOOK_DEMO_STUB === "true";
-  const onDemoBranch = env.VERCEL_GIT_COMMIT_REF === DEMO_BRANCH;
-  return flagged || onDemoBranch;
+
+  // Preview: explicit opt-in, or this feature branch.
+  if (env.VERCEL_ENV === "preview") {
+    return flagged || env.VERCEL_GIT_COMMIT_REF === DEMO_BRANCH;
+  }
+
+  // A developer's own `next dev`. The flag is the only way in — no branch
+  // clause, because VERCEL_GIT_COMMIT_REF is absent off Vercel. `next build`
+  // and `next start` set NODE_ENV=production, so no deployed build lands here.
+  if (env.NODE_ENV === "development") return flagged;
+
+  return false;
 }
 
 /**
@@ -118,10 +140,11 @@ function demoConfig(): NotebookConfig {
     name: "Grants & milestones overview",
     description:
       "Committed and disbursed funding, milestone progress by track, and the application funnel — read live from the GAP API.",
-    // Vestigial under the native render; the model still requires them and the
-    // page never uses either for anything a reader sees.
-    artifactUrl: "https://gapapi.karmahq.xyz/v2/communities/filecoin/metrics",
-    artifactVersion: "preview-demo",
+    // The same spec the indexer seeds for this page, so the stubbed render and
+    // the seeded one are the same render. Imported rather than restated: a
+    // second copy here could drift from the seed and quietly make this demo a
+    // preview of a page that does not exist.
+    spec: NOTEBOOK_SEED_SPEC,
     status: "published",
     createdAt: "2026-08-29T00:00:00.000Z",
     updatedAt: "2026-08-29T00:00:00.000Z",

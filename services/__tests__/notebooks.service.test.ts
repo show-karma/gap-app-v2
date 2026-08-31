@@ -8,6 +8,7 @@ vi.mock("@/utilities/api/client", () => ({
   },
 }));
 
+import { NOTEBOOK_SEED_SPEC } from "@/services/notebooks/notebook-seed-spec";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import {
@@ -26,8 +27,7 @@ function makeConfig(overrides: Partial<NotebookConfig> = {}): NotebookConfig {
     slug: "grants-overview",
     name: "Grants & milestones overview",
     description: "Grants and milestones",
-    artifactUrl: "https://app.karmahq.org/notebooks/filecoin/grants-overview/index.html",
-    artifactVersion: "2026.08.28-1",
+    spec: NOTEBOOK_SEED_SPEC,
     status: "published",
     createdAt: "2026-08-01T00:00:00.000Z",
     updatedAt: "2026-08-02T00:00:00.000Z",
@@ -139,17 +139,32 @@ describe("notebooks.service", () => {
       expect(NotebookConfigSchema.safeParse(makeConfig({ description: null })).success).toBe(true);
     });
 
-    // The value becomes an iframe src. A non-https or scheme-abusing URL must
-    // fail at the boundary even if the API regressed.
+    // This page renders whatever the spec names, so a config carrying a
+    // section this build does not implement has to fail HERE. The indexer
+    // rejects the same documents on write; this is the second door, for a
+    // payload that reached the client some other way.
     it.each([
-      ["plain http", "http://example.com/notebook/"],
-      ["a javascript url", "javascript:alert(1)"],
-      ["a data url", "data:text/html,<script>alert(1)</script>"],
-      ["a relative path", "/notebooks/filecoin/grants-overview/"],
-      ["not a url", "grants-overview"],
-    ])("rejects an artifactUrl that is %s", (_label, artifactUrl) => {
+      ["an unknown section type", { version: 1, sections: [{ type: "iframe" }] }],
+      ["an unknown kpi metric", { version: 1, sections: [{ type: "kpis", metrics: ["roi"] }] }],
+      [
+        "a source/metric pairing that names no series",
+        {
+          version: 1,
+          sections: [
+            { type: "bars", source: "tracks", metric: "disbursedVsCommitted", title: "T" },
+          ],
+        },
+      ],
+      [
+        "an extra property smuggled onto a section",
+        { version: 1, sections: [{ type: "applications", html: "<img src=x>" }] },
+      ],
+      ["a future schema version", { version: 2, sections: [{ type: "applications" }] }],
+      ["no sections", { version: 1, sections: [] }],
+      ["a spec that is not an object", "kpis"],
+    ])("rejects a spec with %s", (_label, spec) => {
       const result = NotebookConfigSchema.safeParse(
-        makeConfig({ artifactUrl } as Partial<NotebookConfig>)
+        makeConfig({ spec } as unknown as Partial<NotebookConfig>)
       );
 
       expect(result.success).toBe(false);
@@ -174,14 +189,11 @@ describe("notebooks.service", () => {
       expect(result.success).toBe(true);
     });
 
-    it.each(["communityId", "slug", "name", "artifactUrl", "artifactVersion", "status"] as const)(
-      "requires %s",
-      (field) => {
-        const config: Record<string, unknown> = { ...makeConfig() };
-        delete config[field];
+    it.each(["communityId", "slug", "name", "spec", "status"] as const)("requires %s", (field) => {
+      const config: Record<string, unknown> = { ...makeConfig() };
+      delete config[field];
 
-        expect(NotebookConfigSchema.safeParse(config).success).toBe(false);
-      }
-    );
+      expect(NotebookConfigSchema.safeParse(config).success).toBe(false);
+    });
   });
 });

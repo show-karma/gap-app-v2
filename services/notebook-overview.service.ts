@@ -28,6 +28,20 @@ import type { NotebookMetrics } from "./notebooks/notebook-metrics.types";
 /** One hour. Grants data moves slowly; on-demand revalidation covers the rest. */
 export const NOTEBOOK_REVALIDATE_SECONDS = 3600;
 
+/**
+ * Shape version of the cached payload. BUMP IT whenever {@link NotebookOverview}
+ * or anything it embeds changes shape.
+ *
+ * It is part of the cache key, so a deploy that changes the payload's shape
+ * misses every entry written by the previous one instead of reading it back
+ * and rendering against a shape that no longer exists. Without this, adding
+ * `id` to a stat made the KPI tiles silently render EMPTY for a full
+ * revalidation window — the page looked healthy, and the numbers were simply
+ * gone. A tag revalidation would eventually have fixed it, which is precisely
+ * what makes the failure easy to miss.
+ */
+const OVERVIEW_SHAPE_VERSION = "v2-stat-ids";
+
 /** Cache tag for one community's notebook data. */
 export function notebookOverviewTag(communityId: string): string {
   return `notebook-overview:${communityId.toLowerCase()}`;
@@ -127,7 +141,7 @@ function reportOverviewRefreshFailure(communityId: string, error: unknown): void
 export function getNotebookOverview(communityId: string): Promise<NotebookOverview> {
   return unstable_cache(
     () => loadOverview(communityId),
-    ["notebook-overview", communityId.toLowerCase()],
+    ["notebook-overview", OVERVIEW_SHAPE_VERSION, communityId.toLowerCase()],
     { revalidate: NOTEBOOK_REVALIDATE_SECONDS, tags: [notebookOverviewTag(communityId)] }
   )();
 }

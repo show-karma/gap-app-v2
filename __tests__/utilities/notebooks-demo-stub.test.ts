@@ -28,11 +28,43 @@ describe("notebook demo stub gating", () => {
       "production, even on the demo branch",
       { VERCEL_ENV: "production", VERCEL_GIT_COMMIT_REF: "feat/notebook-pages" },
     ],
+    [
+      "production, even with a real production build's NODE_ENV",
+      { VERCEL_ENV: "production", NODE_ENV: "production", NOTEBOOK_DEMO_STUB: "true" },
+    ],
+    // The local clause must not become a way into production. VERCEL_ENV is
+    // vetoed first precisely so a stray NODE_ENV cannot open it there.
+    [
+      "production, even if NODE_ENV somehow says development",
+      { VERCEL_ENV: "production", NODE_ENV: "development", NOTEBOOK_DEMO_STUB: "true" },
+    ],
     ["development", { VERCEL_ENV: "development", NOTEBOOK_DEMO_STUB: "true" }],
     ["an unset environment", {}],
     ["an unrecognised environment", { VERCEL_ENV: "staging", NOTEBOOK_DEMO_STUB: "true" }],
+    // `pnpm build && pnpm start` on a laptop: local, but NODE_ENV=production.
+    [
+      "a local production build, even with the flag on",
+      { NODE_ENV: "production", NOTEBOOK_DEMO_STUB: "true" },
+    ],
   ])("stays off in %s", (_label, env) => {
     expect(isNotebookDemoStubEnabled(env as unknown as NodeJS.ProcessEnv)).toBe(false);
+  });
+
+  // The local clause requires the env var and nothing else grants it: a dev
+  // server that has not opted in is a dev server that sees the real 404.
+  it("stays off on a local dev server without the flag", () => {
+    expect(
+      isNotebookDemoStubEnabled({ NODE_ENV: "development" } as unknown as NodeJS.ProcessEnv)
+    ).toBe(false);
+  });
+
+  it("turns on for a local dev server with the flag", () => {
+    expect(
+      isNotebookDemoStubEnabled({
+        NODE_ENV: "development",
+        NOTEBOOK_DEMO_STUB: "true",
+      } as unknown as NodeJS.ProcessEnv)
+    ).toBe(true);
   });
 
   // Second gate: a preview of some other branch must not serve the demo either.

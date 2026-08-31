@@ -39,10 +39,10 @@ export function NotebookViewer({ communityId, notebook, overview }: NotebookView
         {notebook.description ? (
           <p className="max-w-2xl text-sm text-muted-foreground">{notebook.description}</p>
         ) : null}
-        <NotebookProvenance notebook={notebook} overview={overview} />
+        <NotebookProvenance overview={overview} />
       </div>
 
-      <NotebookOverviewView overview={overview} />
+      <NotebookOverviewView overview={overview} spec={notebook.spec} />
 
       {/*
         WS-B4 seam. When the lazy-live layer lands this is where an opt-in
@@ -64,14 +64,14 @@ export function NotebookViewer({ communityId, notebook, overview }: NotebookView
  * trigger, so the page has to be honest about that: someone comparing these
  * figures against the live API needs to know which window they are looking at,
  * and a stale page should be recognisable as stale rather than as wrong.
+ *
+ * Source and timestamp are the whole of it. This line used to end with the
+ * artifact version, which identified a WASM bundle that no longer exists;
+ * `spec.version` is a schema number and would only read to a viewer as noise.
+ * Page-revision provenance, if it is ever wanted, belongs on the admin surface
+ * as the config's `updatedAt`, not here.
  */
-function NotebookProvenance({
-  notebook,
-  overview,
-}: {
-  notebook: NotebookConfig;
-  overview: NotebookOverview;
-}) {
+function NotebookProvenance({ overview }: { overview: NotebookOverview }) {
   const label = overview.source === "snapshot" ? "Snapshot" : "Live GAP data";
 
   return (
@@ -79,8 +79,7 @@ function NotebookProvenance({
       {label} · updated{" "}
       <time dateTime={overview.generatedAt}>
         {overview.generatedAt.replace("T", " ").slice(0, 16)} UTC
-      </time>{" "}
-      · version {notebook.artifactVersion}
+      </time>
     </p>
   );
 }

@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { NotebookOverview } from "@/services/notebook-overview.service";
+import { NOTEBOOK_SEED_SPEC } from "@/services/notebooks/notebook-seed-spec";
 import type { NotebookConfig } from "@/services/notebooks.service";
 
 vi.mock("@/src/components/navigation/Link", () => ({
@@ -17,8 +18,7 @@ const notebook: NotebookConfig = {
   slug: "grants-overview",
   name: "Grants & milestones overview",
   description: "Grants and milestones across Filecoin programs.",
-  artifactUrl: "https://example.org/unused",
-  artifactVersion: "2026.08.28-1",
+  spec: NOTEBOOK_SEED_SPEC,
   status: "published",
   createdAt: "2026-08-01T00:00:00.000Z",
   updatedAt: "2026-08-02T00:00:00.000Z",
@@ -31,10 +31,16 @@ function makeOverview(overrides: Partial<NotebookOverview> = {}): NotebookOvervi
     generatedAt: "2026-08-29T01:00:00.000Z",
     currency: "USDC",
     stats: [
-      { label: "Committed", value: 9246697, format: "currency" },
-      { label: "Disbursed", value: 6369766, format: "currency", hint: "$2.9M still to pay out" },
-      { label: "Funded projects", value: 47, format: "count" },
-      { label: "Milestone completion", value: 52.7, format: "percent" },
+      { id: "committed", label: "Committed", value: 9246697, format: "currency" },
+      {
+        id: "disbursed",
+        label: "Disbursed",
+        value: 6369766,
+        format: "currency",
+        hint: "$2.9M still to pay out",
+      },
+      { id: "fundedProjects", label: "Funded projects", value: 47, format: "count" },
+      { id: "milestoneCompletion", label: "Milestone completion", value: 52.7, format: "percent" },
     ],
     funding: [
       {
