@@ -25,7 +25,7 @@ vi.mock("@/utilities/api/client", () => ({
 
 import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import type { DonorEntitlement } from "@/types/donor-research-billing";
-import { INDEXER } from "@/utilities/indexer";
+import { DONOR_BILLING_ENDPOINTS } from "@/utilities/donorBillingEndpoints";
 
 const CATALOG = {
   freeSignupReportGrant: 2,
@@ -90,9 +90,7 @@ function entitlement(overrides: Partial<DonorEntitlement> = {}): DonorEntitlemen
 /** Routes the two GETs the dialog makes by path. */
 function serve(ent: DonorEntitlement) {
   mockApiGet.mockImplementation((path: string) =>
-    path === INDEXER.DONOR_RESEARCH.BILLING_SUBSCRIPTION
-      ? Promise.resolve(ent)
-      : Promise.resolve(CATALOG)
+    path === DONOR_BILLING_ENDPOINTS.SUBSCRIPTION ? Promise.resolve(ent) : Promise.resolve(CATALOG)
   );
 }
 

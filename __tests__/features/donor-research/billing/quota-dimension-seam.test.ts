@@ -43,7 +43,7 @@ import {
   startPackCheckout,
 } from "@/services/donor-research-billing.service";
 import { HttpError } from "@/utilities/api/errors";
-import { INDEXER } from "@/utilities/indexer";
+import { DONOR_BILLING_ENDPOINTS } from "@/utilities/donorBillingEndpoints";
 
 /**
  * The exact 402 the consumable quota gate sends
@@ -186,7 +186,7 @@ describe("donor-research quota dimension seam", () => {
     it("maps a 409 subscription checkout to the already-active error", async () => {
       mockApiPost.mockRejectedValue(
         new HttpError(409, {
-          endpoint: INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT,
+          endpoint: DONOR_BILLING_ENDPOINTS.CHECKOUT,
           method: "POST",
           body: {
             error: "Subscription Already Active",
@@ -208,7 +208,7 @@ describe("donor-research quota dimension seam", () => {
     it("maps a 403 intro-pack purchase to the subscription-required error", async () => {
       mockApiPost.mockRejectedValue(
         new HttpError(403, {
-          endpoint: INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT,
+          endpoint: DONOR_BILLING_ENDPOINTS.PACK_CHECKOUT,
           method: "POST",
           body: {
             error: "Intro Pack Requires Subscription",
@@ -231,15 +231,13 @@ describe("donor-research quota dimension seam", () => {
     // Verified against gap-indexer
     // `app/modules/v2/api/routes/donor-research/donor-research.routes.ts`.
     it("pins every billing path", () => {
-      expect(INDEXER.DONOR_RESEARCH.BILLING_PLANS).toBe("/v2/donor-research/billing/plans");
-      expect(INDEXER.DONOR_RESEARCH.BILLING_SUBSCRIPTION).toBe(
-        "/v2/donor-research/billing/subscription"
-      );
-      expect(INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT).toBe("/v2/donor-research/billing/checkout");
-      expect(INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT).toBe(
+      expect(DONOR_BILLING_ENDPOINTS.PLANS).toBe("/v2/donor-research/billing/plans");
+      expect(DONOR_BILLING_ENDPOINTS.SUBSCRIPTION).toBe("/v2/donor-research/billing/subscription");
+      expect(DONOR_BILLING_ENDPOINTS.CHECKOUT).toBe("/v2/donor-research/billing/checkout");
+      expect(DONOR_BILLING_ENDPOINTS.PACK_CHECKOUT).toBe(
         "/v2/donor-research/billing/packs/checkout"
       );
-      expect(INDEXER.DONOR_RESEARCH.BILLING_PORTAL).toBe("/v2/donor-research/billing/portal");
+      expect(DONOR_BILLING_ENDPOINTS.PORTAL).toBe("/v2/donor-research/billing/portal");
     });
   });
 });

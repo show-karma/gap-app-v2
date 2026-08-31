@@ -42,7 +42,7 @@ import { cn } from "@/utilities/tailwind";
 const PURCHASABLE_PLANS: readonly PurchasableDonorPlan[] = ["starter", "pro", "firm"];
 
 /** Which metered dimension the dialog is being opened for. */
-export type UpgradeDimension = "reports" | "intros" | "diligence" | "profiles";
+type UpgradeDimension = "reports" | "intros" | "diligence" | "profiles";
 
 interface UpgradeDialogProps {
   open: boolean;
@@ -310,7 +310,7 @@ function TopUpSection({
     if (!subscriberOnly) return null;
     return (
       <p className="mt-1 text-xs text-muted-foreground">
-        Warm intros are a subscriber benefit — pick a plan above and you can top up with an intro
+        Warm intros are a subscriber benefit. Pick a plan above and you can top up with an intro
         pack any time after that.
       </p>
     );
@@ -375,9 +375,7 @@ function AlreadySubscribedNotice({
       className="mt-3 flex flex-col items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300"
     >
       <p>{message ?? "You already have an active subscription."}</p>
-      <p>
-        Change or cancel your plan from the billing portal — a second checkout would bill twice.
-      </p>
+      <p>Change or cancel your plan from the billing portal; a second checkout would bill twice.</p>
       {hasBillingAccount ? (
         <Button
           type="button"

@@ -20,7 +20,7 @@ import type {
 } from "@/types/donor-research-billing";
 import { PAGES } from "@/utilities/pages";
 
-export const donorPlanCatalogQueryKey = ["donor-research", "billing", "plans"] as const;
+const donorPlanCatalogQueryKey = ["donor-research", "billing", "plans"] as const;
 export const donorEntitlementQueryKey = ["donor-research", "billing", "subscription"] as const;
 
 /**

@@ -2,7 +2,6 @@ import type {
   DonorPackCatalogEntry,
   DonorPlanCatalogEntry,
   DonorResearchPlan,
-  PurchasableDonorPlan,
 } from "@/types/donor-research-billing";
 
 /**
@@ -20,7 +19,7 @@ import type {
  * refreshed from the server the moment the request lands.
  */
 
-export interface PlanPresentation {
+interface PlanPresentation {
   plan: DonorResearchPlan;
   /** Short name on the card — distinct from the Stripe line-item label. */
   name: string;
@@ -190,10 +189,6 @@ export const PRICING_CARD_ORDER: readonly DonorResearchPlan[] = Object.freeze([
   "firm",
   "enterprise",
 ]);
-
-export function isPurchasablePlan(plan: DonorResearchPlan): plan is PurchasableDonorPlan {
-  return plan === "starter" || plan === "pro" || plan === "firm";
-}
 
 /**
  * Formats a cents price as a whole-dollar string. Every published plan is a

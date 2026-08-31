@@ -36,7 +36,7 @@ import {
   DonorSubscriptionAlreadyActiveError,
 } from "@/services/donor-research-billing.service";
 import { HttpError } from "@/utilities/api/errors";
-import { INDEXER } from "@/utilities/indexer";
+import { DONOR_BILLING_ENDPOINTS } from "@/utilities/donorBillingEndpoints";
 
 const ENTITLEMENT = {
   advisorId: "advisor-1",
@@ -98,13 +98,13 @@ describe("useDonorEntitlement", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.reportsRemaining).toBe(3);
-    expect(mockApiGet).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_SUBSCRIPTION);
+    expect(mockApiGet).toHaveBeenCalledWith(DONOR_BILLING_ENDPOINTS.SUBSCRIPTION);
   });
 
   it("surfaces an error state rather than empty data", async () => {
     mockApiGet.mockRejectedValue(
       new HttpError(500, {
-        endpoint: INDEXER.DONOR_RESEARCH.BILLING_SUBSCRIPTION,
+        endpoint: DONOR_BILLING_ENDPOINTS.SUBSCRIPTION,
         method: "GET",
         body: { message: "Failed" },
       })
@@ -147,7 +147,7 @@ describe("useDonorPlanCatalog", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     // `isAuthorized: false` so a logged-out visitor on the marketing page
     // doesn't trip the Privy token path.
-    expect(mockApiGet).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_PLANS, {
+    expect(mockApiGet).toHaveBeenCalledWith(DONOR_BILLING_ENDPOINTS.PLANS, {
       isAuthorized: false,
     });
   });
@@ -185,7 +185,7 @@ describe("useStartCheckout", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockApiPost).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT, {
+    expect(mockApiPost).toHaveBeenCalledWith(DONOR_BILLING_ENDPOINTS.CHECKOUT, {
       plan: "starter",
       successUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?checkout=success",
       cancelUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?checkout=cancel",
@@ -208,7 +208,7 @@ describe("useStartCheckout", () => {
   it("surfaces a checkout failure without navigating", async () => {
     mockApiPost.mockRejectedValue(
       new HttpError(503, {
-        endpoint: INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT,
+        endpoint: DONOR_BILLING_ENDPOINTS.CHECKOUT,
         method: "POST",
         body: { message: "Billing not configured" },
       })
@@ -230,7 +230,7 @@ describe("useStartCheckout", () => {
     const invalidate = vi.spyOn(qc, "invalidateQueries");
     mockApiPost.mockRejectedValue(
       new HttpError(409, {
-        endpoint: INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT,
+        endpoint: DONOR_BILLING_ENDPOINTS.CHECKOUT,
         method: "POST",
         body: {
           error: "Subscription Already Active",
@@ -278,7 +278,7 @@ describe("useStartPackCheckout", () => {
     result.current.mutate({ pack: "reports_10" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockApiPost).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT, {
+    expect(mockApiPost).toHaveBeenCalledWith(DONOR_BILLING_ENDPOINTS.PACK_CHECKOUT, {
       pack: "reports_10",
       successUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?checkout=success",
       cancelUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?checkout=cancel",
@@ -289,7 +289,7 @@ describe("useStartPackCheckout", () => {
   it("turns a 403 intro pack into the subscription-required error", async () => {
     mockApiPost.mockRejectedValue(
       new HttpError(403, {
-        endpoint: INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT,
+        endpoint: DONOR_BILLING_ENDPOINTS.PACK_CHECKOUT,
         method: "POST",
         body: {
           error: "Intro Pack Requires Subscription",
@@ -335,7 +335,7 @@ describe("useOpenBillingPortal", () => {
     result.current.mutate();
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockApiPost).toHaveBeenCalledWith(INDEXER.DONOR_RESEARCH.BILLING_PORTAL, {
+    expect(mockApiPost).toHaveBeenCalledWith(DONOR_BILLING_ENDPOINTS.PORTAL, {
       returnUrl: "https://gap.karmahq.xyz/nonprofit-research/billing?portal=return",
     });
     expect(window.location.href).toBe("https://billing.stripe.com/session/abc");
@@ -346,7 +346,7 @@ describe("useOpenBillingPortal", () => {
     // an entitlement cached a second too early can still show the CTA.
     mockApiPost.mockRejectedValue(
       new HttpError(409, {
-        endpoint: INDEXER.DONOR_RESEARCH.BILLING_PORTAL,
+        endpoint: DONOR_BILLING_ENDPOINTS.PORTAL,
         method: "POST",
         body: {
           error: "Billing Portal Unavailable",

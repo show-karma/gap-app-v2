@@ -9,7 +9,7 @@ import type {
 } from "@/types/donor-research-billing";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
-import { INDEXER } from "@/utilities/indexer";
+import { DONOR_BILLING_ENDPOINTS } from "@/utilities/donorBillingEndpoints";
 
 /**
  * Donor-research billing API client.
@@ -48,9 +48,9 @@ export function statusGrantsPlanAllowance(status: DonorSubscriptionStatus): bool
 }
 
 /** The four metered dimensions the indexer's 402 bodies name. */
-export const DONOR_QUOTA_DIMENSIONS = ["reports", "intros", "diligence", "profiles"] as const;
+const DONOR_QUOTA_DIMENSIONS = ["reports", "intros", "diligence", "profiles"] as const;
 
-export type DonorQuotaDimension = (typeof DONOR_QUOTA_DIMENSIONS)[number];
+type DonorQuotaDimension = (typeof DONOR_QUOTA_DIMENSIONS)[number];
 
 function isDonorQuotaDimension(value: unknown): value is DonorQuotaDimension {
   return typeof value === "string" && (DONOR_QUOTA_DIMENSIONS as readonly string[]).includes(value);
@@ -80,7 +80,7 @@ const DEFAULT_EXHAUSTED_MESSAGE: Record<DonorQuotaDimension, string> = {
  * 402 raised by an older indexer (or an intermediary) may carry none of them —
  * the entitlement query is the authoritative copy either way.
  */
-export interface DonorQuotaRefusal {
+interface DonorQuotaRefusal {
   plan: DonorResearchPlan | null;
   status: DonorSubscriptionStatus | null;
   remaining: number | null;
@@ -101,7 +101,7 @@ const EMPTY_REFUSAL: DonorQuotaRefusal = {
  * Connect / Ask questions / New donor) keys its upgrade prompt off the concrete
  * subclass, so the TYPE — not a string code — is the seam.
  */
-export class DonorQuotaExhaustedError extends Error {
+class DonorQuotaExhaustedError extends Error {
   readonly dimension: DonorQuotaDimension;
   readonly code: string;
   readonly refusal: DonorQuotaRefusal;
@@ -141,10 +141,6 @@ export class DonorProfileQuotaExhaustedError extends DonorQuotaExhaustedError {
     super("profiles", message, refusal);
     this.name = "DonorProfileQuotaExhaustedError";
   }
-}
-
-export function isQuotaExhausted(error: unknown): error is DonorQuotaExhaustedError {
-  return error instanceof DonorQuotaExhaustedError;
 }
 
 export function isReportQuotaExhausted(error: unknown): error is DonorReportQuotaExhaustedError {
@@ -266,7 +262,7 @@ export function isIntroPackRequiresSubscription(
  */
 export const fetchDonorPlanCatalog = async (): Promise<DonorPlanCatalog> => {
   // TODO(#1775): add zod schema
-  const data = await api.get<DonorPlanCatalog>(INDEXER.DONOR_RESEARCH.BILLING_PLANS, {
+  const data = await api.get<DonorPlanCatalog>(DONOR_BILLING_ENDPOINTS.PLANS, {
     isAuthorized: false,
   });
   if (!data) throw new Error("Failed to load pricing plans");
@@ -280,12 +276,12 @@ export const fetchDonorPlanCatalog = async (): Promise<DonorPlanCatalog> => {
  */
 export const fetchMyEntitlement = async (): Promise<DonorEntitlement> => {
   // TODO(#1775): add zod schema
-  const data = await api.get<DonorEntitlement>(INDEXER.DONOR_RESEARCH.BILLING_SUBSCRIPTION);
+  const data = await api.get<DonorEntitlement>(DONOR_BILLING_ENDPOINTS.SUBSCRIPTION);
   if (!data) throw new Error("Failed to load your subscription");
   return data;
 };
 
-export interface StartCheckoutRequest {
+interface StartCheckoutRequest {
   plan: PurchasableDonorPlan;
   successUrl: string;
   cancelUrl: string;
@@ -307,7 +303,7 @@ export const startBillingCheckout = async (
   let data: DonorBillingSession | null;
   try {
     // TODO(#1775): add zod schema
-    data = await api.post<DonorBillingSession>(INDEXER.DONOR_RESEARCH.BILLING_CHECKOUT, body);
+    data = await api.post<DonorBillingSession>(DONOR_BILLING_ENDPOINTS.CHECKOUT, body);
   } catch (error) {
     if (error instanceof HttpError && error.status === 409) {
       throw new DonorSubscriptionAlreadyActiveError(httpErrorMessage(error));
@@ -318,7 +314,7 @@ export const startBillingCheckout = async (
   return data;
 };
 
-export interface StartPackCheckoutRequest {
+interface StartPackCheckoutRequest {
   pack: DonorResearchPack;
   successUrl: string;
   cancelUrl: string;
@@ -338,7 +334,7 @@ export const startPackCheckout = async (
   let data: DonorBillingSession | null;
   try {
     // TODO(#1775): add zod schema
-    data = await api.post<DonorBillingSession>(INDEXER.DONOR_RESEARCH.BILLING_PACK_CHECKOUT, body);
+    data = await api.post<DonorBillingSession>(DONOR_BILLING_ENDPOINTS.PACK_CHECKOUT, body);
   } catch (error) {
     if (error instanceof HttpError && error.status === 403) {
       throw new DonorIntroPackRequiresSubscriptionError(httpErrorMessage(error));
@@ -381,7 +377,7 @@ export const startBillingPortal = async (returnUrl: string): Promise<DonorBillin
   let data: DonorBillingSession | null;
   try {
     // TODO(#1775): add zod schema
-    data = await api.post<DonorBillingSession>(INDEXER.DONOR_RESEARCH.BILLING_PORTAL, {
+    data = await api.post<DonorBillingSession>(DONOR_BILLING_ENDPOINTS.PORTAL, {
       returnUrl,
     });
   } catch (error) {

@@ -813,13 +813,6 @@ export const INDEXER = {
     REPORT_STREAM: (reportId: string) => `/v2/donor-research/reports/${reportId}/stream`,
     SHARE_TOKEN: (reportId: string) => `/v2/donor-research/reports/${reportId}/share-token`,
     SHARED: (token: string) => `/v2/donor-research/shared/${token}`,
-    // Billing / report quota. PLANS is public (the marketing pricing page
-    // reads it); the rest require the advisor's Privy session.
-    BILLING_PLANS: "/v2/donor-research/billing/plans",
-    BILLING_SUBSCRIPTION: "/v2/donor-research/billing/subscription",
-    BILLING_CHECKOUT: "/v2/donor-research/billing/checkout",
-    BILLING_PACK_CHECKOUT: "/v2/donor-research/billing/packs/checkout",
-    BILLING_PORTAL: "/v2/donor-research/billing/portal",
     // Staff-only admin overview. Report reads use REPORT_BY_ID — the
     // endpoint grants staff an unscoped read.
     ADMIN_ADVISORS: "/v2/admin/donor-research/advisors",
