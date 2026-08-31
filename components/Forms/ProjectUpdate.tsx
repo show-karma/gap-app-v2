@@ -32,8 +32,7 @@ import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { track } from "@/utilities/analytics/client";
-import { toErrorCode } from "@/utilities/analytics/error-code";
+import * as projectEvents from "@/utilities/analytics/emitters/project";
 import { api } from "@/utilities/api/client";
 import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { formatDate } from "@/utilities/formatDate";
@@ -75,14 +74,6 @@ interface CommunityIndicator {
   communityId: string;
   communityName?: string;
 }
-
-/**
- * How long the update is, without sending the update itself. Length is the
- * signal the grantee-health report needs (are updates substantive or one-liners);
- * the prose is the project's own content and never leaves the app.
- */
-const countWords = (text: string | undefined): number =>
-  text ? text.trim().split(/\s+/).filter(Boolean).length : 0;
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -685,11 +676,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
             if (alreadyExists) {
               retries = 0;
-              track("project_update_posted", {
-                project_id: projectUid,
-                has_deliverables: (data.deliverables?.length ?? 0) > 0,
-                word_count: countWords(data.text),
-              });
+              projectEvents.emitProjectUpdatePosted(projectUid, data.deliverables, data.text);
               showSuccess(
                 isEditMode ? "Activity updated successfully!" : MESSAGES.PROJECT_UPDATE_FORM.SUCCESS
               );
@@ -728,10 +715,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
       })();
     } catch (error) {
-      track("project_update_failed", {
-        project_id: project?.uid ?? "",
-        error_code: toErrorCode(error),
-      });
+      projectEvents.emitProjectUpdateFailed(project?.uid, error);
       // A wallet-provider conflict is not "try again shortly" — the browser is
       // broken, not the network, and retrying is what this user already did
       // twice before giving up. Name the conflicting extensions and point at a

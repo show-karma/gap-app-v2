@@ -25,7 +25,7 @@ import { useEffect, useSyncExternalStore } from "react";
  * after it has settled identity.
  */
 
-export interface BoundCommunity {
+interface BoundCommunity {
   /** The community's UID. What grouping joins on. */
   uid: string;
   /**

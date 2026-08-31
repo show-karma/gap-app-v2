@@ -23,7 +23,7 @@ import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Grant } from "@/types/v2/grant";
-import { track } from "@/utilities/analytics/client";
+import * as milestoneEvents from "@/utilities/analytics/emitters/milestone";
 import { api } from "@/utilities/api/client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { INDEXER } from "@/utilities/indexer";
@@ -146,13 +146,7 @@ export const UnifiedMilestoneScreen = () => {
           // Poll until milestone is indexed
           const indexed = await pollForRoadmapMilestone(newObjective.uid);
 
-          // A roadmap milestone belongs to the project, not to any grant.
-          track("milestone_created", {
-            grant_id: null,
-            project_id: project.uid,
-            has_due_date: Boolean(data.dates?.endsAt),
-          });
-
+          milestoneEvents.emitRoadmapMilestoneCreated(project.uid, data.dates?.endsAt);
           if (indexed) {
             changeStepperStep("indexed");
             showSuccess("Roadmap milestone created!");
@@ -398,19 +392,7 @@ export const UnifiedMilestoneScreen = () => {
         );
       }
 
-      // One event per grant the milestone was attested to: the same form
-      // submission produces N milestones, and a single event would understate
-      // how much milestone activity a multi-grant project actually creates.
-      for (const grants of Object.values(grantsByChain)) {
-        for (const { grant } of grants) {
-          track("milestone_created", {
-            grant_id: grant.uid,
-            project_id: project.uid,
-            has_due_date: Boolean(data.dates?.endsAt),
-          });
-        }
-      }
-
+      milestoneEvents.emitGrantMilestonesCreated(project.uid, data.dates?.endsAt, grantsByChain);
       if (indexed) {
         changeStepperStep("indexed");
         showSuccess("Milestones created!");

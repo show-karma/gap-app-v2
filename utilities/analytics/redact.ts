@@ -21,7 +21,7 @@ const EMAIL_VALUE = /[^\s@]+@[^\s@]+\.[a-z]{2,}/i;
 
 const EVM_ADDRESS_VALUE = /^0x[0-9a-fA-F]{40}$/;
 
-export interface RedactionResult {
+interface RedactionResult {
   safe: Record<string, unknown>;
   /** Names of the properties that were withheld, for the strict-mode error. */
   dropped: string[];

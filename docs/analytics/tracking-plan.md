@@ -231,6 +231,10 @@ own page-view event name, so it lands in the built-in reports — with exactly:
 | `route_pattern` | The templated route: `/project/:projectId/updates`. Never the concrete path. |
 | `page_group` | The first path segment — `project`, `community`, `funding-map` — a cheap route family. |
 
+On a non-community route the page view carries no `community_id` at all — the
+super property is unregistered rather than nulled, so filter on **`is not
+set`**, never on `== null`.
+
 It is emitted through `track()`, **not** `mixpanel.track_pageview()`. The SDK
 helper merges `mpPageViewProperties()` in first — `current_url_path` and
 `current_url_search` among them — which is the concrete path this whole section
@@ -295,6 +299,15 @@ come from the community the layout resolved, never from the URL segment —
 `/community/[communityId]` accepts a uid too, so reading either off the path
 would split one community into two groups and put uids into the property whose
 whole purpose is to be readable.
+
+**`community_id` is UNREGISTERED, not null, off a community route.** Leaving a
+community clears the super property outright (`unregister`) rather than setting
+it to a null — a Mixpanel super property has no null state. So a saved report
+that keys on `community_id == null` matches nothing; it must use **`is not
+set`**. Same for `community_slug`. This has been the behaviour since the
+community context started being derived from Mixpanel's own store; before that
+the clear was frequently skipped, so such a report appeared to work by matching
+the rows that never had the property in the first place.
 
 `community_slug` and `community_id` are written by `setCommunitySlug` and
 `setCommunityGroup`, which decide whether a write is needed by reading Mixpanel

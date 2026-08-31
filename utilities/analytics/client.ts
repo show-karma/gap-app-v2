@@ -104,7 +104,7 @@ const URL_BEARING_PROPERTIES: readonly string[] = [
   "current_url_search",
 ];
 
-export interface UserProfile {
+interface UserProfile {
   email?: string | null;
   primaryWallet?: string | null;
   authMethods?: readonly string[];
@@ -117,7 +117,7 @@ export interface UserProfile {
  * second, silently-empty property alongside the real one and split every report
  * that groups by it.
  */
-export interface SuperProperties {
+interface SuperProperties {
   tenant?: string;
   is_whitelabel?: boolean;
   env?: string;
@@ -155,7 +155,7 @@ const IDENTITY_SCOPED_KEYS = [
  * property on merge, so `community_id` arrived as `"0x8dfb…"` on page views and
  * as `["0x8dfb…"]` on every other event. No report could filter across both.
  */
-export interface PageViewProps {
+interface PageViewProps {
   /**
    * Templated route (`/project/:id/updates`), never the concrete pathname —
    * see `route-pattern.ts` for why.

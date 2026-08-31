@@ -29,7 +29,7 @@ import { submitGranteeInvoice } from "@/src/features/payout-disbursement/service
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
-import { track } from "@/utilities/analytics/client";
+import * as milestoneEvents from "@/utilities/analytics/emitters/milestone";
 import { api } from "@/utilities/api/client";
 import { hasAnyDirtyField } from "@/utilities/hasAnyDirtyField";
 import {
@@ -65,19 +65,6 @@ interface MilestoneUpdateFormProps {
   afterSubmit?: () => void;
   setIsUpdating?: (value: boolean) => void;
 }
-
-/**
- * Whole days between the due date and now — negative when the grantee finished
- * early. `null` when the milestone has no due date, which is a distinct state
- * from "on time" and must not be reported as zero.
- *
- * `endsAt` is the SDK's unix-seconds field.
- */
-const daysVsDueDate = (endsAtSeconds: number | undefined | null): number | null => {
-  if (!endsAtSeconds) return null;
-  const msPerDay = 24 * 60 * 60 * 1000;
-  return Math.round((Date.now() - endsAtSeconds * 1000) / msPerDay);
-};
 
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
@@ -364,12 +351,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               if (isCompleted) {
                 retries = 0;
                 changeStepperStep("indexed");
-                track("milestone_completed", {
-                  milestone_id: milestone.uid,
-                  grant_id: milestone.refUID ?? null,
-                  days_vs_due_date: daysVsDueDate(milestone.endsAt),
-                  has_proof: data.deliverables.length > 0,
-                });
+                milestoneEvents.emitMilestoneCompleted(milestone, data.deliverables.length);
                 showSuccess(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
 
                 // Send outputs and deliverables data

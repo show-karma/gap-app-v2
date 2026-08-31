@@ -56,12 +56,7 @@ import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { track } from "@/utilities/analytics/client";
-import { toErrorCode } from "@/utilities/analytics/error-code";
-import {
-  changedProjectFields,
-  currentProjectEditValues,
-} from "@/utilities/analytics/project-edit-diff";
+import * as projectEvents from "@/utilities/analytics/emitters/project";
 import { api } from "@/utilities/api/client";
 import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
@@ -86,9 +81,6 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { ProjectSubmitControls, useSignerErrorHandler } from "./SignerGate";
-
-/** Stable surface id: the dialog is the app's only project-creation entry. */
-const PROJECT_CREATE_ENTRY_POINT = "project_dialog";
 
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
@@ -482,9 +474,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const createProject = async (data: SchemaType): Promise<void> => {
     try {
       setIsLoading(true);
-      // Opens the funnel before the wallet is involved, so the drop-off between
-      // "started a project" and "signed the attestation" is measurable.
-      track("project_create_started", { entry_point: PROJECT_CREATE_ENTRY_POINT });
+      projectEvents.emitProjectCreateStarted();
       startAttestation("Creating project...");
       if (!isAuth) {
         login?.();
@@ -714,11 +704,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           showError("Something went wrong with contact info save. Please try again later.");
         }
 
-        track("project_create_completed", {
-          project_id: fetchedProject.uid,
-          chain_id: chainSelected,
-          has_grants_prefilled: false,
-        });
+        projectEvents.emitProjectCreateCompleted(fetchedProject.uid, chainSelected);
         showSuccess(MESSAGES.PROJECT.CREATE.SUCCESS);
         setTimeout(() => {
           dismiss();
@@ -734,10 +720,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setCustomLinks([]);
     } catch (error: any) {
       if (handleSignerError(error)) return;
-      track("project_create_failed", {
-        chain_id: data.chainID ?? null,
-        error_code: toErrorCode(error),
-      });
+      projectEvents.emitProjectCreateFailed(data.chainID, error);
       // A transient chain-switch / bundler-RPC hiccup (GAP-FRONTEND-23C) is
       // recoverable by retrying — tell the user that instead of a dead-end
       // generic error. The form data is preserved either way.
@@ -846,13 +829,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         customLinks,
       };
 
-      // Taken BEFORE the update: `updateProject` calls `details.setValues(...)`
-      // on this very object, so a diff computed afterwards is always empty.
-      const fieldsChanged = changedProjectFields(currentProjectEditValues(fetchedProject), {
-        ...newProjectInfo,
-        ...socialData,
-      });
-
+      const editSnapshot = projectEvents.projectEditSnapshot(fetchedProject);
       await updateProject(
         fetchedProject,
         newProjectInfo,
@@ -865,14 +842,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         startAttestation,
         showSuccess
       ).then(async (res) => {
-        // Field NAMES only — the values are the project's own content and have
-        // no place on an event. An edit that changed nothing is not an edit.
-        if (fieldsChanged.length > 0) {
-          track("project_edited", {
-            project_id: fetchedProject.uid,
-            fields_changed: fieldsChanged,
-          });
-        }
+        projectEvents.emitProjectEdited(
+          fetchedProject.uid,
+          editSnapshot,
+          newProjectInfo,
+          socialData
+        );
         // updateProject calls showSuccess internally
         setStep(0);
         // Brief delay to show success, then redirect

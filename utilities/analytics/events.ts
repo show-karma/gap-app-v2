@@ -79,14 +79,14 @@ export type LogoutReason =
   /** The session was torn down so wagmi could re-attach the external wallet. */
   | "wallet_reconnect";
 
-export type ApplicationCommentTargetType = "application" | "grant" | "report";
+type ApplicationCommentTargetType = "application" | "grant" | "report";
 
-export type ScannerScorecardVariant = "public" | "detail";
+type ScannerScorecardVariant = "public" | "detail";
 
-export type OnboardingStep = "welcome" | "project" | "grants" | "updates-milestones" | "structure";
+type OnboardingStep = "welcome" | "project" | "grants" | "updates-milestones" | "structure";
 
 /** Shared shape for the `_failed` leg of every triad. */
-export interface FailureProps {
+interface FailureProps {
   /** Stable machine code (HTTP status, SDK error name, or domain error code). Never the message. */
   error_code: string;
 }
