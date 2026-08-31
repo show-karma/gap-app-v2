@@ -14,6 +14,7 @@ import { submitGranteeInvoice } from "@/src/features/payout-disbursement/service
 import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
+import { isCompletedMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isAbortError, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
@@ -185,10 +186,7 @@ export function useSubmitMilestoneCompletion() {
                 (m) => m.milestoneUID === params.milestoneUID
               );
               return (
-                !!entry &&
-                (entry.currentStatus === "completed" ||
-                  entry.currentStatus === "verified" ||
-                  !!entry.completed)
+                !!entry && (isCompletedMilestoneStatus(entry.currentStatus) || !!entry.completed)
               );
             },
             undefined,

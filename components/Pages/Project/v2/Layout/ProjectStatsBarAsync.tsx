@@ -1,4 +1,5 @@
 import { calculateProfileStats } from "@/services/project-profile.service";
+import { isCompletedMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import {
   getProjectGrantsCached,
@@ -49,7 +50,7 @@ export async function ProjectStatsBarAsync({ projectId }: ProjectStatsBarAsyncPr
       title: m.title,
       description: m.description,
       createdAt: m.createdAt || new Date().toISOString(),
-      completed: m.status === "completed",
+      completed: isCompletedMilestoneStatus(m.status),
       chainID: 0,
       refUID: "",
       source: { type: "milestone" as const },
@@ -60,7 +61,7 @@ export async function ProjectStatsBarAsync({ projectId }: ProjectStatsBarAsyncPr
       title: m.title,
       description: m.description,
       createdAt: m.createdAt || new Date().toISOString(),
-      completed: m.status === "completed",
+      completed: isCompletedMilestoneStatus(m.status),
       chainID: parseInt(m.chainId, 10) || 0,
       refUID: "",
       source: { type: "grant" as const },
