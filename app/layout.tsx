@@ -40,17 +40,8 @@ import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "next-themes";
-import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
-import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
-import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
-import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
-import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
-import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
-import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
-import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
-import type { TenantConfig } from "@/src/infrastructure/types/tenant";
-import { toHslToken, type WhitelabelDomain } from "@/utilities/whitelabel-config";
-import { WhitelabelProvider } from "@/utilities/whitelabel-context";
+import { Suspense } from "react";
+import { TenantChrome, TenantChromeFallback } from "@/src/components/layout/tenant-chrome";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -103,58 +94,18 @@ export const viewport: Viewport = {
   ],
 };
 
-const toasterConfig = {
-  position: "top-right" as const,
-  toastOptions: {
-    className: "toast-content",
-    style: {
-      maxWidth: "500px",
-      wordWrap: "break-word" as const,
-      overflowWrap: "anywhere" as const,
-      wordBreak: "break-word" as const,
-    },
-    duration: 4000,
-  },
-  containerStyle: { top: 20, right: 20 },
-};
-
-function getWhitelabelThemeStyle(
-  config: WhitelabelDomain | null,
-  tenantConfig: TenantConfig | null
-): React.CSSProperties | undefined {
-  const tenantPrimaryToken = tenantConfig?.theme?.colors?.primary
-    ? (toHslToken(tenantConfig.theme.colors.primary) ?? tenantConfig.theme.colors.primary)
-    : null;
-  const configPrimaryToken = config?.theme?.primaryColor
-    ? toHslToken(config.theme.primaryColor)
-    : null;
-  const primaryToken = configPrimaryToken ?? tenantPrimaryToken;
-  const tenantPrimaryForegroundToken = tenantConfig?.theme?.colors?.buttontext
-    ? toHslToken(tenantConfig.theme.colors.buttontext)
-    : null;
-  const configPrimaryForegroundToken = config?.theme?.buttonTextColor
-    ? toHslToken(config.theme.buttonTextColor)
-    : null;
-  const primaryForegroundToken = configPrimaryForegroundToken ?? tenantPrimaryForegroundToken;
-
-  if (!primaryToken && !primaryForegroundToken) return undefined;
-
-  return {
-    ...(primaryToken ? { "--primary": primaryToken } : {}),
-    ...(primaryForegroundToken ? { "--primary-foreground": primaryForegroundToken } : {}),
-  } as React.CSSProperties;
-}
-
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isWhitelabel, communitySlug, config, tenantConfig } = await getWhitelabelContext();
-  const themeStyle = isWhitelabel ? getWhitelabelThemeStyle(config, tenantConfig) : undefined;
-
+// Request-independent by design: nothing here awaits headers(), so the App
+// Shell — <html>, the fonts, <body>, the theme provider — is the same for every
+// route and every host. Everything host-dependent lives in TenantChrome, one
+// Suspense boundary down, and streams into the document below.
+// generateMetadata above still awaits headers(); metadata resolves off the
+// critical path and does not hold up the shell.
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`h-full ${inter.variable} ${displayFont.variable} ${monoFont.variable}`}
       suppressHydrationWarning
-      style={themeStyle}
     >
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "production" && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string} />
@@ -170,32 +121,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           enableSystem={true}
           disableTransitionOnChange
         >
-          <PrivyProviderWrapper tenantConfig={isWhitelabel ? tenantConfig : null}>
-            <WhitelabelProvider
-              isWhitelabel={isWhitelabel}
-              communitySlug={communitySlug}
-              config={config}
-              tenantConfig={tenantConfig ?? null}
-            >
-              {isWhitelabel && tenantConfig && (
-                <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
-              )}
-              <PermissionsProvider />
-              <DeferredLayoutComponents toasterConfig={toasterConfig} />
-              <div
-                data-app-content
-                className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
-              >
-                <div className="flex flex-col w-full h-full">
-                  {isWhitelabel ? <WhitelabelNavbar /> : <GlobalNavbarSlot />}
-                  {children}
-                </div>
-                <FooterSwitcher isWhitelabel={isWhitelabel} />
-              </div>
-            </WhitelabelProvider>
-          </PrivyProviderWrapper>
+          <Suspense fallback={<TenantChromeFallback />}>
+            <TenantChrome>{children}</TenantChrome>
+          </Suspense>
         </ThemeProvider>
-        {!isWhitelabel && <OrganizationJsonLd />}
       </body>
     </html>
   );
