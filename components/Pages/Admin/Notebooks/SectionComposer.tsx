@@ -337,6 +337,11 @@ function TimeseriesFields({
         <span className="text-xs text-muted-foreground">
           Readings are irregular; a short window may contain none.
         </span>
+        {/* Series are fetched on the server for the SAVED spec, so a chart
+            added in this session has nothing to draw yet. Naming the action
+            beats reporting the absence — an author who is told only that the
+            preview is empty has no idea it is one click away. */}
+        <span className="text-xs text-muted-foreground">Save as draft to preview this chart.</span>
       </label>
 
       <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-ts-title`}>

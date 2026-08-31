@@ -257,7 +257,7 @@ export function NotebookBuilderEditorPage({
             <h2 className="text-base font-semibold text-foreground">Preview</h2>
             <p className="text-sm text-muted-foreground">
               Your community&apos;s real numbers, rendered by the same components the public page
-              uses. A chart you just added previews once the page is saved.
+              uses. Save as draft to preview a chart you just added.
             </p>
           </div>
           {/* Reusing the public renderer is the point: a bespoke preview would

@@ -220,6 +220,24 @@ describe("SectionComposer", () => {
     });
   });
 
+  // An author who is told only that the preview is empty has no idea it is one
+  // click away. The copy names the action.
+  it("tells the author how to preview a chart they just added", () => {
+    renderComposer(
+      spec([
+        {
+          type: "timeseries",
+          source: "indicators",
+          indicatorId: "5fadb30d-558d-45fc-b873-a8fe678cedd4",
+          chartStyle: "line",
+          title: "T",
+        },
+      ])
+    );
+
+    expect(screen.getByText(/Save as draft to preview this chart/i)).toBeInTheDocument();
+  });
+
   // Now that the renderers exist, both are offered. The rule that gated them
   // has not changed — a type is offered exactly when it can be drawn.
   it.each(["Time series", "Table"])("offers %s now that it can be drawn", (label) => {
