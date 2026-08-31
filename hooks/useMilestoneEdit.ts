@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import type { IMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -25,6 +26,69 @@ import { useProjectGrants } from "./v2/useProjectGrants";
 export type MilestoneEditData = Partial<
   Pick<IMilestone, "title" | "description" | "startsAt" | "endsAt" | "priority">
 >;
+
+/**
+ * Progress of a single SDK `milestone.edit()` call. The SDK revokes the old
+ * attestation first and re-attests second, so a failure between those two
+ * transactions can leave the milestone destroyed on-chain. Once `edit()` has
+ * resolved both transactions landed and later failures are not data loss.
+ *
+ * `revokeSubmitted` is submission-level knowledge only: the SDK's callback
+ * emits "confirmed" when the revoke transaction is broadcast (it does not
+ * await the receipt), so a dropped or reverted revoke is indistinguishable
+ * from a mined one here. Failure handling must therefore report the
+ * milestone's state as uncertain, never as definitely removed.
+ */
+interface EditProgress {
+  step: number;
+  revokeSubmitted: boolean;
+  sdkEditCompleted: boolean;
+  revokedMilestoneUID?: string;
+  grantUID?: string;
+  chainID?: number;
+}
+
+const newEditProgress = (): EditProgress => ({
+  step: 0,
+  revokeSubmitted: false,
+  sdkEditCompleted: false,
+});
+
+const MILESTONE_GONE_MESSAGE =
+  "This milestone no longer exists. Refresh the page to see the latest data.";
+const EDIT_HALF_APPLIED_MESSAGE =
+  "The milestone edit did not complete: the updated version may not have been saved, and the original may have been removed. Refresh the page to check whether the milestone still exists before re-creating it.";
+/**
+ * Captured instead of the raw failure. The trigger is almost always a wallet
+ * rejection, and `sentryIgnoreErrors` drops any event whose message contains
+ * "rejected the request" — including manual `captureException` calls — so
+ * reporting the original error would silently lose the event. This sentinel
+ * matches no entry in that list; the original error is preserved in `extra`.
+ */
+const EDIT_HALF_APPLIED_SENTINEL =
+  "Milestone edit may be half-applied: revoke submitted, re-attest failed";
+const MERGED_NOT_EDITABLE_MESSAGE =
+  "This milestone can't be edited because a copy shared with another grant has already been completed, approved, verified or cancelled. Refresh the page to see the latest milestone status.";
+const MERGED_MILESTONE_NOT_FOUND_MESSAGE =
+  "This milestone can't be edited because a copy shared with another grant could not be found. Refresh the page and try again.";
+
+export class MilestoneEditBlockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MilestoneEditBlockedError";
+  }
+}
+
+export class MilestoneEditHalfAppliedError extends Error {
+  readonly originalErrorMessage: string;
+
+  constructor(originalError: unknown) {
+    super(EDIT_HALF_APPLIED_MESSAGE);
+    this.name = "MilestoneEditHalfAppliedError";
+    this.originalErrorMessage =
+      originalError instanceof Error ? originalError.message : String(originalError);
+  }
+}
 
 /** The fields the editor actually supplied — field *names* only, never values. */
 const changedFields = (data: MilestoneEditData): string[] =>
@@ -62,10 +126,14 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
   const invalidateAllProjectQueries = async () => {
     const invalidations: Promise<void>[] = [];
 
-    if (projectSlug) {
+    // Project caches are keyed by slug in some places and by UID in others
+    // (`useProjectGrants` uses the UID), so both identifiers have to be swept
+    // or the revoked milestone stays actionable until a hard reload.
+    const projectIdentifiers = Array.from(new Set([projectSlug, projectUid].filter(Boolean)));
+    for (const identifier of projectIdentifiers) {
       invalidations.push(
         queryClient.invalidateQueries({
-          predicate: createProjectQueryPredicate(projectSlug),
+          predicate: createProjectQueryPredicate(identifier),
         })
       );
     }
@@ -90,27 +158,30 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
 
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const editStepCallbackRef = { current: 0 };
-
-  const createEditStepCallback = () => {
-    editStepCallbackRef.current = 0;
+  const createEditStepCallback = (progress: EditProgress) => {
+    progress.step = 0;
+    progress.revokeSubmitted = false;
+    progress.sdkEditCompleted = false;
     return (status: string) => {
       if (status === "preparing") {
-        editStepCallbackRef.current++;
-        const step = editStepCallbackRef.current;
-        if (step === 1) {
-          changeStepperStep("Step 1/2: Creating updated milestone...");
-        } else if (step === 2) {
-          changeStepperStep("Step 2/2: Revoking old milestone...");
+        progress.step++;
+        if (progress.step === 1) {
+          changeStepperStep("Step 1/2: Revoking old milestone...");
+        } else if (progress.step === 2) {
+          // The SDK only starts the re-attestation once the revoke call
+          // resolved — which proves submission, not that the tx was mined.
+          progress.revokeSubmitted = true;
+          changeStepperStep("Step 2/2: Saving updated milestone...");
         }
         return;
       }
-      if (status === "confirmed" && editStepCallbackRef.current === 1) {
-        changeStepperStep("Step 1/2: Milestone created, awaiting confirmation...");
+      if (status === "confirmed" && progress.step === 1) {
+        progress.revokeSubmitted = true;
+        changeStepperStep("Step 1/2: Old milestone revocation submitted...");
         return;
       }
-      if (status === "confirmed" && editStepCallbackRef.current === 2) {
-        changeStepperStep("Step 2/2: Revoking old milestone...");
+      if (status === "confirmed" && progress.step === 2) {
+        changeStepperStep("Step 2/2: Updated milestone saved, awaiting confirmation...");
         return;
       }
       changeStepperStep(status);
@@ -205,7 +276,9 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     }
 
     setIsEditing(true);
-    startAttestation("Step 1/2: Creating updated milestone...");
+    startAttestation("Step 1/2: Revoking old milestone...");
+
+    const editProgress = newEditProgress();
 
     try {
       const isMultiGrant = milestone.mergedGrants && milestone.mergedGrants.length > 1;
@@ -230,6 +303,47 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             if (b === chain?.id) return 1;
             return a - b;
           });
+
+        if (!projectUid) {
+          throw new Error("Missing project UID for milestone edit");
+        }
+
+        // Milestones are merged on content alone, so siblings can sit in
+        // different lifecycle states. The SDK refuses to edit a completed,
+        // approved, verified or cancelled milestone, and it would do so only
+        // once the earlier siblings had already spent their revoke+re-attest
+        // pair — leaving a half-applied edit. Abort before the first
+        // transaction.
+        const preflightProject = await getProjectById(projectUid);
+        if (!preflightProject) {
+          throw new Error("Failed to fetch project data");
+        }
+        const mergedUIDs = milestone.mergedGrants!.map((g) => g.milestoneUID.toLowerCase());
+        const mergedUIDSet = new Set(mergedUIDs);
+        const allMilestones = preflightProject.grants.flatMap((grant) => grant.milestones);
+        const matchedMilestones: typeof allMilestones = [];
+        const matchedUIDs = new Set<string>();
+        for (const sibling of allMilestones) {
+          const normalizedUID = sibling.uid.toLowerCase();
+          if (mergedUIDSet.has(normalizedUID)) {
+            matchedMilestones.push(sibling);
+            matchedUIDs.add(normalizedUID);
+          }
+        }
+
+        if (matchedUIDs.size < mergedUIDs.length) {
+          await invalidateAllProjectQueries();
+          throw new MilestoneEditBlockedError(MERGED_MILESTONE_NOT_FOUND_MESSAGE);
+        }
+
+        const nonEditable = matchedMilestones.filter(
+          (m) => m.completed || m.approved || m.verified?.length || m.cancelled
+        );
+
+        if (nonEditable.length) {
+          await invalidateAllProjectQueries();
+          throw new MilestoneEditBlockedError(MERGED_NOT_EDITABLE_MESSAGE);
+        }
 
         for (let i = 0; i < arrayOfMilestonesByChains.length; i++) {
           const chainId = arrayOfMilestonesByChains[i];
@@ -271,7 +385,11 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           const milestoneInstances = fetchedProject.grants
             .filter((grant) => grant.milestones.length > 0)
             .flatMap((grant) => grant.milestones)
-            .filter((m) => milestoneUIDs.includes((m as any)?._uid || m?.uid));
+            .filter((m) => {
+              const legacyUID = (m as unknown as { _uid?: unknown })._uid;
+              const uid = typeof legacyUID === "string" ? legacyUID : m.uid;
+              return milestoneUIDs.includes(uid);
+            });
 
           if (!milestoneInstances?.length) {
             throw new Error("Milestone instances couldn't be found for this chain");
@@ -284,8 +402,12 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
             if (!("edit" in milestoneInstance) || typeof milestoneInstance.edit !== "function") {
               throw new Error("Milestone instance does not support editing");
             }
-            const editCallback = createEditStepCallback();
+            const editCallback = createEditStepCallback(editProgress);
+            editProgress.revokedMilestoneUID = milestoneInstance.uid;
+            editProgress.grantUID = milestoneInstance.refUID;
+            editProgress.chainID = chainId;
             const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
+            editProgress.sdkEditCompleted = true;
 
             if (result?.uids?.length) {
               editedUIDs.push(...result.uids);
@@ -318,7 +440,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         await invalidateAllProjectQueries();
         showSuccess("Milestone edited successfully!");
       } else {
-        showLoading("Step 1/2: Creating updated milestone...");
+        showLoading("Step 1/2: Revoking old milestone...");
 
         const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
@@ -349,8 +471,12 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
         );
 
+        // The milestone is gone from the freshly fetched project — usually a
+        // stale row left behind by an earlier edit that revoked but never
+        // re-attested. Not an engineering error, so it never reaches Sentry.
         if (!milestoneInstance) {
-          throw new Error("Milestone not found");
+          await invalidateAllProjectQueries();
+          throw new MilestoneEditBlockedError(MILESTONE_GONE_MESSAGE);
         }
 
         const sanitizedData = sanitizeObject(newData);
@@ -359,8 +485,12 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           throw new Error("Milestone instance does not support editing");
         }
 
-        const editCallback = createEditStepCallback();
+        const editCallback = createEditStepCallback(editProgress);
+        editProgress.revokedMilestoneUID = milestoneInstance.uid;
+        editProgress.grantUID = milestoneInstance.refUID;
+        editProgress.chainID = milestone.chainID;
         const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
+        editProgress.sdkEditCompleted = true;
 
         const editedUIDs: string[] = result?.uids?.length ? [...result.uids] : [];
 
@@ -393,11 +523,46 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         showSuccess("Milestone edited successfully!");
       }
     } catch (error) {
-      showError("There was an error editing the milestone");
-      errorManager("Error editing milestone", error, {
-        milestoneData: milestone,
-      });
-      throw error;
+      // Only a failure *between* the revoke and the re-attest can destroy the
+      // milestone. Once `edit()` resolved both transactions landed, so a later
+      // indexing or cache failure must not tell the user to re-create it.
+      // The revoke signal is submission-level (the SDK never awaits the
+      // receipt), so the copy and the Sentry event both report the original
+      // milestone's state as uncertain rather than definitely removed.
+      if (error instanceof MilestoneEditBlockedError) {
+        throw error;
+      }
+
+      let errorToThrow = error;
+      if (editProgress.revokeSubmitted && !editProgress.sdkEditCompleted) {
+        // Reported straight to Sentry because errorManager drops anything that
+        // looks like a wallet rejection, which is the common trigger here.
+        showError(EDIT_HALF_APPLIED_MESSAGE);
+        const originalError = error instanceof Error ? error : undefined;
+        Sentry.captureException(new Error(EDIT_HALF_APPLIED_SENTINEL), {
+          extra: {
+            errorMessage:
+              "Milestone edit failed after the revoke was submitted; re-attest did not complete. Revoke receipt was not verified, so the original milestone may or may not still exist on-chain.",
+            originalErrorName: originalError?.name,
+            originalErrorMessage: originalError?.message,
+            originalErrorString: String(error),
+            originalErrorStack: originalError?.stack,
+            revokedMilestoneUID: editProgress.revokedMilestoneUID || milestone.uid,
+            newMilestoneData: newData,
+            grantUID: editProgress.grantUID || milestone.refUID,
+            projectUID: projectUid,
+            chainID: editProgress.chainID ?? milestone.chainID,
+          },
+        });
+        errorToThrow = new MilestoneEditHalfAppliedError(error);
+      } else {
+        showError("There was an error editing the milestone");
+        errorManager("Error editing milestone", error, {
+          milestoneData: milestone,
+        });
+      }
+      await invalidateAllProjectQueries();
+      throw errorToThrow;
     } finally {
       setIsEditing(false);
       dismiss();

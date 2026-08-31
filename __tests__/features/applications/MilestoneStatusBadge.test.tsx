@@ -118,4 +118,15 @@ describe("MilestoneStatusBadge", () => {
     render(<MilestoneStatusBadge entry={makeEntry({ dueDate: "2099-01-01" })} />);
     expect(screen.getByText("Pending")).toBeInTheDocument();
   });
+
+  // The indexer emits `currentStatus` verbatim in mixed case.
+  it.each([
+    ["VERIFIED", "Verified"],
+    ["COMPLETED", "Pending Verification"],
+    ["CANCELLED", "Cancelled"],
+  ])("should_render_%s_as_%s", (currentStatus, label) => {
+    render(<MilestoneStatusBadge entry={makeEntry({ currentStatus, dueDate: "2020-01-01" })} />);
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
+  });
 });

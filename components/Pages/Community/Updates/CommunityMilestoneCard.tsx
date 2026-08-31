@@ -8,6 +8,7 @@ import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 import { formatDate } from "@/utilities/formatDate";
 import {
   getEffectiveMilestoneStatus,
+  isCompletedMilestoneStatus,
   MILESTONE_STATUS_LABEL,
 } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
@@ -32,7 +33,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
   milestone,
   allocationAmount,
 }) => {
-  const isCompleted = milestone.status === "completed";
+  const isCompleted = isCompletedMilestoneStatus(milestone.status);
   const projectSlug = milestone.project.details?.data?.slug || milestone.project.uid;
   const projectTitle = milestone.project.details?.data?.title;
   const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
