@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/utilities/meta";
 import {
@@ -6,9 +7,6 @@ import {
   WELL_KNOWN_CORS_HEADERS,
   WELL_KNOWN_PREFLIGHT_HEADERS,
 } from "@/utilities/wellKnown";
-
-export const dynamic = "force-static";
-export const revalidate = 3600;
 
 /**
  * MCP server-card discovery document at the Ora-preferred nested path
@@ -31,7 +29,10 @@ export const revalidate = 3600;
  * exist to satisfy two different crawler conventions, not to duplicate.
  */
 
-export function GET() {
+async function buildBody() {
+  "use cache";
+  cacheLife("hours");
+
   const apiUrl = getIndexerBaseUrl();
 
   const body = {
@@ -60,7 +61,11 @@ export function GET() {
     },
   };
 
-  return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });
+  return body;
+}
+
+export async function GET() {
+  return NextResponse.json(await buildBody(), { headers: WELL_KNOWN_CORS_HEADERS });
 }
 
 export async function OPTIONS() {
