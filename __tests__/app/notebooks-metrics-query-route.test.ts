@@ -109,6 +109,13 @@ describe("POST /api/notebooks/metrics/query", () => {
         "a program the community does not list",
         { ...VALID, filters: { programIds: ["prog-elsewhere"] } },
       ],
+      // Not accepted at all while the catalogue publishes no project list to
+      // check membership against: a filter bounded only by a count cap is the
+      // unbounded key space this guard exists to close.
+      [
+        "projectUIDs, which nothing can validate",
+        { ...VALID, filters: { projectUIDs: ["0xproject"] } },
+      ],
     ])("should_refuse_%s", async (_label, body) => {
       const result = await post(body);
 

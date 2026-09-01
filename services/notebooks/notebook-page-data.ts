@@ -5,11 +5,14 @@ import { getNotebookOverview } from "@/services/notebook-overview.service";
 import { getNotebookIndicatorSeries } from "./notebook-indicators.query";
 import { getNotebookKernelData, getNotebookKernelTierRollup } from "./notebook-kernel.query";
 import type { NotebookKernelData, NotebookKernelTierRollup } from "./notebook-kernel.types";
+import { queryNotebookMetric } from "./notebook-metric-registry.query";
+import type { NotebookMetricQueryResult } from "./notebook-metric-registry.types";
 import type { NotebookPageData } from "./notebook-page-data.types";
-import { seriesKey as buildSeriesKey } from "./notebook-page-data.types";
+import { seriesKey as buildSeriesKey, querySectionKey } from "./notebook-page-data.types";
 import {
   isKernelKpiMetric,
   type NotebookKernelRange,
+  type NotebookQuerySection,
   type NotebookSpec,
   resolveNotebookDateRange,
   resolveNotebookKernelRange,
@@ -43,16 +46,22 @@ function planRequests(spec: NotebookSpec): {
   kernelRanges: Set<NotebookKernelRange>;
   needsTierRollup: boolean;
   series: Map<string, { indicatorId: string; preset: string }>;
+  queries: Map<string, NotebookQuerySection>;
 } {
   const kernelRanges = new Set<NotebookKernelRange>();
   // The rollup is one fixed 90-day object, so this is a flag rather than a
   // set: two tier sections on a page are still one fetch.
   let needsTierRollup = false;
   const series = new Map<string, { indicatorId: string; preset: string }>();
+  // Keyed canonically, so two sections asking the same question are one fetch.
+  const queries = new Map<string, NotebookQuerySection>();
 
   for (const section of spec.sections) {
     if (section.type === "kpis" && section.metrics.some(isKernelKpiMetric)) {
       kernelRanges.add(resolveNotebookKernelRange(section.kernelRange));
+    }
+    if (section.type === "query") {
+      queries.set(querySectionKey(section), section);
     }
     if (section.type === "tiers") {
       needsTierRollup = true;
@@ -69,7 +78,7 @@ function planRequests(spec: NotebookSpec): {
     }
   }
 
-  return { kernelRanges, needsTierRollup, series };
+  return { kernelRanges, needsTierRollup, series, queries };
 }
 
 /**
@@ -103,11 +112,11 @@ export async function getNotebookPageData(
   communityId: string,
   spec: NotebookSpec
 ): Promise<NotebookPageData> {
-  const { kernelRanges, needsTierRollup, series } = planRequests(spec);
+  const { kernelRanges, needsTierRollup, series, queries } = planRequests(spec);
 
   // One round of parallel work: the funding overview, each distinct kernel
   // window, and each distinct indicator/window pair.
-  const [overview, tierRollup, kernelEntries, seriesEntries] = await Promise.all([
+  const [overview, tierRollup, kernelEntries, seriesEntries, queryEntries] = await Promise.all([
     getNotebookOverview(communityId),
     needsTierRollup
       ? loadOrNull<NotebookKernelTierRollup>(getNotebookKernelTierRollup, { communityId })
@@ -134,6 +143,22 @@ export async function getNotebookPageData(
         return [buildSeriesKey(indicatorId, preset), data] as const;
       })
     ),
+    Promise.all(
+      [...queries.entries()].map(async ([key, section]) => {
+        const data = await loadOrNull<NotebookMetricQueryResult>(
+          () =>
+            queryNotebookMetric({
+              communityId,
+              metricId: section.metricId,
+              groupBy: section.groupBy,
+              window: section.window,
+              ...(section.filters ? { filters: section.filters } : {}),
+            }),
+          { communityId, metricId: section.metricId }
+        );
+        return [key, data] as const;
+      })
+    ),
   ]);
 
   const kernel: Partial<Record<NotebookKernelRange, NotebookKernelData>> = {};
@@ -151,5 +176,6 @@ export async function getNotebookPageData(
     ...(tierRollup ? { tierRollup } : {}),
     kernel,
     series: Object.fromEntries(seriesEntries),
+    queries: Object.fromEntries(queryEntries),
   };
 }

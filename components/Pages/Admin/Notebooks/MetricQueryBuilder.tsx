@@ -100,6 +100,10 @@ function filterOptions(
       // `projects` has no published list, and neither does an undeclared
       // source. Rather than invent one, the filter is simply not offered —
       // a picker with nothing in it teaches an author the wrong thing.
+      //
+      // The route refuses `projectUIDs` outright for the same reason, so this
+      // is not merely a cosmetic omission: offering it here would build a
+      // request the server is guaranteed to reject.
       return null;
   }
 }

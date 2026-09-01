@@ -50,6 +50,7 @@ export function sectionTitle(section: NotebookSection): string | undefined {
     case "timeseries":
     case "table":
     case "tiers":
+    case "query":
       return section.title;
     case "text":
     case "narrative":

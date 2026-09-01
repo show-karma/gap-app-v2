@@ -16,6 +16,7 @@ import {
   isIndicatorOfferableWithoutVariants,
   type NotebookIndicatorOption,
 } from "@/services/notebooks/notebook-indicators.types";
+import type { NotebookMetricCatalog } from "@/services/notebooks/notebook-metric-registry.types";
 import {
   NOTEBOOK_BAR_METRIC_LABELS,
   NOTEBOOK_BAR_SOURCE_LABELS,
@@ -40,6 +41,7 @@ import {
   type NotebookKernelRange,
   type NotebookKernelTableColumn,
   type NotebookKpisSection,
+  type NotebookQuerySection,
   type NotebookSection,
   type NotebookSpec,
   type NotebookTableSection,
@@ -59,6 +61,7 @@ import {
   updateSection,
 } from "@/services/notebooks/notebook-spec-draft";
 import { HeaderFields, HeroFields, NarrativeFields } from "./EditorialFields";
+import { QueryFields } from "./QueryFields";
 
 interface Props {
   spec: NotebookSpec;
@@ -70,6 +73,15 @@ interface Props {
    * reads through — so the composer receives it rather than fetching it.
    */
   indicators?: readonly NotebookIndicatorOption[];
+  /**
+   * The community's metric catalogue, for composing a query section.
+   *
+   * Absent when it could not be loaded. "Query" is then not offered at all,
+   * because every choice a query section stores has to come from this — a
+   * picker with nothing in it would let an author store a question the server
+   * will refuse.
+   */
+  metricCatalog?: NotebookMetricCatalog;
 }
 
 /**
@@ -84,7 +96,7 @@ interface Props {
  *
  * Order is the render order, so up/down is the whole layout language.
  */
-export function SectionComposer({ spec, onChange, indicators = [] }: Props) {
+export function SectionComposer({ spec, onChange, indicators = [], metricCatalog }: Props) {
   const atLimit = !canAddSection(spec);
 
   return (
@@ -149,6 +161,7 @@ export function SectionComposer({ spec, onChange, indicators = [] }: Props) {
                 index={index}
                 spec={spec}
                 indicators={indicators}
+                metricCatalog={metricCatalog}
                 onChange={onChange}
               />
             </li>
@@ -158,13 +171,16 @@ export function SectionComposer({ spec, onChange, indicators = [] }: Props) {
 
       <div className="flex flex-row flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Add a section:</span>
-        {ADDABLE_SECTION_TYPES.map((type) => (
+        {ADDABLE_SECTION_TYPES.filter(
+          // See the prop's note: no catalogue, no query section.
+          (type) => type !== "query" || Boolean(metricCatalog)
+        ).map((type) => (
           <Button
             key={type}
             variant="secondary"
             size="sm"
             disabled={atLimit}
-            onClick={() => onChange(addSection(spec, type))}
+            onClick={() => onChange(addSection(spec, type, metricCatalog?.items[0]?.id))}
           >
             <Plus className="h-4 w-4" />
             {SECTION_TYPE_LABELS[type]}
@@ -194,12 +210,14 @@ function SectionFields({
   index,
   spec,
   indicators,
+  metricCatalog,
   onChange,
 }: {
   section: NotebookSection;
   index: number;
   spec: NotebookSpec;
   indicators: readonly NotebookIndicatorOption[];
+  metricCatalog?: NotebookMetricCatalog;
   onChange: (next: NotebookSpec) => void;
 }) {
   const fieldId = `section-${index}`;
@@ -231,6 +249,23 @@ function SectionFields({
           indicators={indicators}
           onFieldChange={update}
         />
+      );
+    case "query":
+      // Unreachable without a catalogue: the add button is not offered without
+      // one, and an existing query section on a page whose catalogue will not
+      // load says so rather than showing a picker with nothing in it.
+      return metricCatalog ? (
+        <QueryFields
+          fieldId={fieldId}
+          section={section}
+          catalog={metricCatalog}
+          onFieldChange={update}
+        />
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          The metric catalogue could not be loaded, so this query cannot be edited right now. It
+          still renders on the page.
+        </p>
       );
     case "tiers":
       // Title and description only — the rollup's columns are declared by the
@@ -273,6 +308,7 @@ const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
   timeseries: "Time series",
   table: "Table",
   tiers: "Tier rollup",
+  query: "Query",
   header: "Page header",
   hero: "Headline",
   nav: "Section nav",
@@ -298,6 +334,7 @@ const ADDABLE_SECTION_TYPES = [
   "timeseries",
   "table",
   "tiers",
+  "query",
   "applications",
   "text",
 ] as const;

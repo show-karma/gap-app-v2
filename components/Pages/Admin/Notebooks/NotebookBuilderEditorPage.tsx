@@ -256,7 +256,12 @@ export function NotebookBuilderEditorPage({
           </div>
 
           <div className="rounded-2xl border border-border bg-background p-5">
-            <SectionComposer spec={spec} onChange={setSpec} indicators={indicators} />
+            <SectionComposer
+              spec={spec}
+              onChange={setSpec}
+              indicators={indicators}
+              metricCatalog={metricCatalog}
+            />
           </div>
 
           {metricCatalog ? (

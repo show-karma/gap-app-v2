@@ -313,6 +313,70 @@ export const NotebookTableSectionSchema = z
   .strict();
 
 /**
+ * A catalogue-driven query, composed onto a page.
+ *
+ * THE VOCABULARY IS DECLARED HERE, NOT IMPORTED FROM THE REGISTRY. This module
+ * describes what may be PERSISTED, and a stored document's validity must not
+ * change because a service constant was refactored — a dimension dropped
+ * upstream would otherwise retroactively invalidate every page that used it,
+ * with no decision taken by anybody. The contract test asserts the two lists
+ * still agree, so drift is caught and reconciled deliberately.
+ *
+ * That is the opposite of how the RESULT is treated, and deliberately so: the
+ * result's columns, labels and formatted values travel with the data and are
+ * never stored, because there the single source of truth costs nothing and
+ * gains everything. Store the question; never store the answer's presentation.
+ *
+ * NO `projectUIDs`. The catalogue publishes no project list, so nothing can
+ * check that one is real, and an unvalidated id is an unbounded cache key. The
+ * preview route refuses it for the same reason; see issue #2092.
+ */
+export const NOTEBOOK_QUERY_DIMENSIONS = [
+  "none",
+  "program",
+  "project",
+  "date",
+  "tier",
+  "function",
+] as const;
+export const NOTEBOOK_QUERY_WINDOWS = ["30d", "90d", "12m", "all"] as const;
+export const NOTEBOOK_QUERY_AGGREGATIONS = ["sum", "last", "first", "avg", "max", "min"] as const;
+
+export type NotebookQueryDimension = (typeof NOTEBOOK_QUERY_DIMENSIONS)[number];
+export type NotebookQueryWindow = (typeof NOTEBOOK_QUERY_WINDOWS)[number];
+
+const queryFilterValues = (max: number) =>
+  z.array(z.string().trim().min(1).max(200)).max(max).optional();
+
+export const NotebookQuerySectionSchema = z
+  .object({
+    type: z.literal("query"),
+    // Shaped like the catalogue's ids rather than free text: a metric id is an
+    // identifier, and anything that is not shaped like one cannot be one.
+    metricId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .regex(/^[a-z0-9][a-z0-9.-]*$/),
+    groupBy: z.enum(NOTEBOOK_QUERY_DIMENSIONS),
+    window: z.enum(NOTEBOOK_QUERY_WINDOWS),
+    filters: z
+      .object({
+        programIds: queryFilterValues(100),
+        aggregation: z.enum(NOTEBOOK_QUERY_AGGREGATIONS).optional(),
+        tier: queryFilterValues(10),
+        category: queryFilterValues(50),
+        inScope: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
+  })
+  .strict();
+
+/**
  * The kernel tier rollup.
  *
  * FOUR ROWS, one per OSO tier — a different object from the `table` section's
@@ -472,6 +536,7 @@ export const NotebookSectionSchema = z.union([
   NotebookTimeseriesSectionSchema,
   NotebookTableSectionSchema,
   NotebookTiersSectionSchema,
+  NotebookQuerySectionSchema,
   NotebookHeaderSectionSchema,
   NotebookHeroSectionSchema,
   NotebookNavSectionSchema,
@@ -500,6 +565,7 @@ export type NotebookNavSection = z.infer<typeof NotebookNavSectionSchema>;
 export type NotebookNarrativeSection = z.infer<typeof NotebookNarrativeSectionSchema>;
 export type NotebookTableSection = z.infer<typeof NotebookTableSectionSchema>;
 export type NotebookTiersSection = z.infer<typeof NotebookTiersSectionSchema>;
+export type NotebookQuerySection = z.infer<typeof NotebookQuerySectionSchema>;
 export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
 export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;
 export type NotebookSection = z.infer<typeof NotebookSectionSchema>;

@@ -38,9 +38,13 @@ import { NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
  * picker would never offer, the server refuses. That is the same rule the
  * indicator picker follows, applied from the other side.
  *
- * The residual is `projectUIDs`: the catalog publishes no project list, so the
- * only bound available is the count cap in the query schema. Worth knowing
- * about; not worth inventing a list the contract does not have.
+ * `projectUIDs` is therefore NOT ACCEPTED HERE AT ALL. The catalog publishes
+ * no project list, so there is nothing to validate membership against, and a
+ * filter bounded only by a count cap is exactly the unbounded key space this
+ * route exists to prevent. The strict schema turns it into an unknown field
+ * and refuses the request. Re-enable it — validated — when the catalog
+ * publishes projects; until then, half a guard is worse than none, because it
+ * reads like a guard.
  */
 
 export const dynamic = "force-dynamic";
@@ -54,7 +58,8 @@ const RequestSchema = z
     filters: z
       .object({
         programIds: z.array(z.string().trim().min(1).max(200)).max(100).optional(),
-        projectUIDs: z.array(z.string().trim().min(1).max(200)).max(100).optional(),
+        // No projectUIDs — see the note above. Its absence from this schema is
+        // what refuses it, since the object is strict.
         aggregation: z.enum(NOTEBOOK_METRIC_AGGREGATIONS).optional(),
         tier: z.array(z.string().trim().min(1).max(100)).max(10).optional(),
         category: z.array(z.string().trim().min(1).max(200)).max(50).optional(),

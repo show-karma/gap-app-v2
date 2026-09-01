@@ -5,10 +5,11 @@ import type {
 } from "@/services/notebook-overview.service";
 import { NOTEBOOK_ABSENT_VALUE } from "@/services/notebooks/notebook-metrics.types";
 import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.types";
-import { seriesKey } from "@/services/notebooks/notebook-page-data.types";
+import { querySectionKey, seriesKey } from "@/services/notebooks/notebook-page-data.types";
 import type {
   NotebookBarsSection,
   NotebookKpisSection,
+  NotebookQuerySection,
   NotebookSection,
   NotebookSpec,
   NotebookTableSection,
@@ -32,6 +33,7 @@ import {
   sectionAnchorId,
 } from "./NotebookEditorial";
 import { NotebookKernelTable } from "./NotebookKernelTable";
+import { NotebookQueryTable } from "./NotebookQueryTable";
 import { NotebookTierTable } from "./NotebookTierTable";
 import { NotebookTimeSeries } from "./NotebookTimeSeries";
 
@@ -238,6 +240,37 @@ function TimeseriesSection({
         ) : null}
       </div>
       <NotebookTimeSeries series={series} chartStyle={section.chartStyle} />
+    </section>
+  );
+}
+
+/**
+ * A composed catalogue query.
+ *
+ * The spec stored the QUESTION; the loader asked it; this renders the answer
+ * exactly as the query layer formatted it. A query whose fetch failed renders
+ * the unavailable state rather than an empty table, because an empty table
+ * reads as "the answer is nothing" and that is a different claim.
+ */
+function QuerySection({
+  section,
+  data,
+}: {
+  section: NotebookQuerySection;
+  data?: NotebookPageData;
+}) {
+  const result = data?.queries?.[querySectionKey(section)];
+  if (!result) return <SectionUnavailable title={section.title} />;
+
+  return (
+    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-5 md:p-6">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
+        {section.description ? (
+          <p className="text-sm text-muted-foreground">{section.description}</p>
+        ) : null}
+      </div>
+      <NotebookQueryTable result={result} />
     </section>
   );
 }
@@ -494,6 +527,8 @@ function SectionView({
       return <TableSection section={section} data={data} />;
     case "tiers":
       return <TiersSection section={section} data={data} />;
+    case "query":
+      return <QuerySection section={section} data={data} />;
     default:
       // A section this build cannot draw is OMITTED, not rendered empty.
       //

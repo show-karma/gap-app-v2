@@ -1,5 +1,6 @@
 import type { NotebookIndicatorSeries } from "./notebook-indicators.types";
 import type { NotebookKernelData, NotebookKernelTierRollup } from "./notebook-kernel.types";
+import type { NotebookMetricQueryResult } from "./notebook-metric-registry.types";
 import type { NotebookKernelRange } from "./notebook-spec";
 
 /**
@@ -37,6 +38,40 @@ export interface NotebookPageData {
    * it, null means a section asked and we could not answer.
    */
   series: Record<string, NotebookIndicatorSeries | null>;
+  /**
+   * Catalogue query results by canonical key.
+   *
+   * Present-with-null carries the same meaning it does for `series`: the
+   * section asked and we could not answer, which is a different thing from no
+   * section having asked.
+   */
+  queries?: Record<string, NotebookMetricQueryResult | null>;
+}
+
+/**
+ * Lookup key for one composed query.
+ *
+ * CANONICAL, so two sections asking the same question share one fetch and one
+ * cache entry: filter arrays are de-duplicated and sorted, and absent filters
+ * are omitted rather than serialised as undefined. Without that, `[a,b]` and
+ * `[b,a]` would be two keys for one question.
+ */
+export function querySectionKey(section: {
+  metricId: string;
+  groupBy: string;
+  window: string;
+  filters?: Record<string, unknown>;
+}): string {
+  const filters = section.filters ?? {};
+  const canonical = Object.keys(filters)
+    .sort()
+    .reduce<Record<string, unknown>>((accumulator, key) => {
+      const value = filters[key];
+      if (value === undefined) return accumulator;
+      accumulator[key] = Array.isArray(value) ? [...new Set(value)].sort() : value;
+      return accumulator;
+    }, {});
+  return `${section.metricId}|${section.groupBy}|${section.window}|${JSON.stringify(canonical)}`;
 }
 
 /** Lookup key for one indicator at one window. */

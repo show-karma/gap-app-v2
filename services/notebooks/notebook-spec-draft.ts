@@ -52,7 +52,19 @@ export function defaultMetricForSource(source: NotebookBarSource) {
  * into "add a bar chart". The `never` check below makes the compiler refuse
  * the next widening until this function has an answer for it.
  */
-export function newSection(type: NotebookSection["type"]): NotebookSection {
+export function newSection(
+  type: NotebookSection["type"],
+  /**
+   * The metric a new query section starts on.
+   *
+   * Passed in rather than guessed: the metric vocabulary is the COMMUNITY'S
+   * catalogue, which this module has no access to and no business hard-coding.
+   * The composer only offers "query" when it has a catalogue to draw one from,
+   * so the fallback below is unreachable through the UI — it exists so the
+   * function stays total rather than throwing at an author.
+   */
+  defaultMetricId?: string
+): NotebookSection {
   switch (type) {
     case "kpis":
       return { type: "kpis", metrics: ["committed"] };
@@ -76,6 +88,14 @@ export function newSection(type: NotebookSection["type"]): NotebookSection {
       };
     case "tiers":
       return { type: "tiers", source: "kernel", title: "Kernel tiers" };
+    case "query":
+      return {
+        type: "query",
+        metricId: defaultMetricId ?? "",
+        groupBy: "none",
+        window: "90d",
+        title: "",
+      };
     case "header":
       return { type: "header", eyebrow: "" };
     case "hero":
@@ -106,9 +126,13 @@ export function canAddSection(spec: NotebookSpec): boolean {
   return spec.sections.length < NOTEBOOK_SPEC_MAX_SECTIONS;
 }
 
-export function addSection(spec: NotebookSpec, type: NotebookSection["type"]): NotebookSpec {
+export function addSection(
+  spec: NotebookSpec,
+  type: NotebookSection["type"],
+  defaultMetricId?: string
+): NotebookSpec {
   if (!canAddSection(spec)) return spec;
-  return { ...spec, sections: [...spec.sections, newSection(type)] };
+  return { ...spec, sections: [...spec.sections, newSection(type, defaultMetricId)] };
 }
 
 export function removeSection(spec: NotebookSpec, index: number): NotebookSpec {

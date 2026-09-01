@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { SectionComposer } from "@/components/Pages/Admin/Notebooks/SectionComposer";
+import type { NotebookMetricCatalog } from "@/services/notebooks/notebook-metric-registry.types";
 import { NOTEBOOK_KPI_METRICS, type NotebookSpec } from "@/services/notebooks/notebook-spec";
 
 // The repo's convention for Radix Select under jsdom: render the items as a
@@ -33,11 +34,115 @@ function spec(sections: NotebookSpec["sections"]): NotebookSpec {
   return { version: 1, sections };
 }
 
-function renderComposer(initial: NotebookSpec) {
+function renderComposer(initial: NotebookSpec, metricCatalog?: NotebookMetricCatalog) {
   const onChange = vi.fn();
-  render(<SectionComposer spec={initial} onChange={onChange} />);
+  render(<SectionComposer spec={initial} onChange={onChange} metricCatalog={metricCatalog} />);
   return onChange;
 }
+
+function metricCatalog(): NotebookMetricCatalog {
+  return {
+    community: { requested: "filecoin", slug: "filecoin", variantUIDs: ["0xf11ec01a"] },
+    items: [
+      {
+        id: "funding.disbursed",
+        label: "Disbursed",
+        description: "Funds paid out.",
+        entity: "funding",
+        measure: "disbursed",
+        valueKind: "currency",
+        unit: "USDC",
+        dimensions: ["none", "program"],
+        filters: [
+          {
+            id: "programIds",
+            label: "Programs",
+            kind: "multi-select",
+            required: false,
+            optionsSource: "programs",
+          },
+        ],
+        windows: { allowed: ["90d", "all"], default: "90d" },
+        source: { tool: "gap", endpoints: ["/v2/x"], methodology: "Sum of payouts." },
+      },
+    ],
+    options: {
+      programs: [{ id: "prog-1", label: "Program One", type: null, chainID: null }],
+      aggregations: ["sum"],
+      kernelTiers: [],
+    },
+    freshness: { stale: false },
+  };
+}
+
+const QUERY_SECTION = {
+  type: "query",
+  metricId: "funding.disbursed",
+  groupBy: "none",
+  window: "90d",
+  title: "Disbursed",
+} as const;
+
+/**
+ * A query section is only composable against a catalogue.
+ *
+ * Every choice it stores — metric, grouping, window, filters — comes from the
+ * community's own catalogue, so without one there is nothing to offer and an
+ * author could only store a question the server would refuse.
+ */
+describe("query sections", () => {
+  it("should_not_offer_a_query_section_without_a_catalogue", () => {
+    renderComposer(spec([{ type: "applications" }]));
+
+    expect(screen.queryByRole("button", { name: /^query$/i })).not.toBeInTheDocument();
+  });
+
+  it("should_offer_a_query_section_when_a_catalogue_is_present", () => {
+    renderComposer(spec([{ type: "applications" }]), metricCatalog());
+
+    expect(screen.getByRole("button", { name: /^query$/i })).toBeInTheDocument();
+  });
+
+  // The mock renders every Select alike, so the assertion is on the OPTION
+  // SETS — which is the closed vocabulary, and the thing actually worth
+  // asserting. A component offering a dimension the metric never declared
+  // would fail here.
+  it("should_offer_only_the_groupings_and_windows_the_metric_declares", () => {
+    renderComposer(spec([QUERY_SECTION]), metricCatalog());
+
+    const selects = screen.getAllByRole("combobox");
+    const optionSets = selects.map((select) =>
+      Array.from(select.querySelectorAll("option")).map((option) => option.getAttribute("value"))
+    );
+
+    expect(optionSets).toContainEqual(["none", "program"]);
+    expect(optionSets).toContainEqual(["90d", "all"]);
+    // 12m and 30d exist in the vocabulary and are NOT offered, because this
+    // metric does not allow them.
+    expect(optionSets.flat()).not.toContain("12m");
+  });
+
+  it("should_offer_the_filters_options_the_catalogue_publishes", () => {
+    renderComposer(spec([QUERY_SECTION]), metricCatalog());
+
+    expect(screen.getByRole("checkbox", { name: "Program One" })).toBeInTheDocument();
+  });
+
+  // Silently resetting a stored choice changes what a page says without
+  // anybody deciding to change it.
+  it("should_keep_a_retired_metric_visible_rather_than_resetting_it", () => {
+    renderComposer(spec([{ ...QUERY_SECTION, metricId: "funding.retired" }]), metricCatalog());
+
+    expect(screen.getByRole("option", { name: /not in this community/i })).toBeInTheDocument();
+  });
+
+  it("should_say_so_rather_than_offering_an_empty_picker_when_the_catalogue_is_missing", () => {
+    renderComposer(spec([QUERY_SECTION]));
+
+    expect(screen.getByText(/catalogue could not be loaded/i)).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+});
 
 describe("SectionComposer", () => {
   // The form offers the vocabulary and nothing else. An author cannot reach a
