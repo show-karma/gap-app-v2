@@ -1,7 +1,7 @@
 /**
  * Executable definition of a "cover page".
  *
- * `app/community/[communityId]/(cover)/` is a sibling route group to
+ * `app/t/[tenant]/community/[communityId]/(cover)/` is a sibling route group to
  * `(with-header)/`. Same URLs, deliberately different chrome: financials and
  * portfolio reports are standalone documents that own their own hero, so the
  * group renders NO CommunityHeader and NO CommunityPageNavigator, and it
@@ -174,7 +174,9 @@ const renderWithClient = (ui: ReactNode) => {
 };
 
 async function coverLayout(children: ReactNode, communityId = "filecoin") {
-  const { default: CoverLayout } = await import("@/app/community/[communityId]/(cover)/layout");
+  const { default: CoverLayout } = await import(
+    "@/app/t/[tenant]/community/[communityId]/(cover)/layout"
+  );
   return (CoverLayout as unknown as ServerComponent)({
     children,
     params: Promise.resolve({ communityId }),
@@ -183,7 +185,7 @@ async function coverLayout(children: ReactNode, communityId = "filecoin") {
 
 async function withHeaderLayout(children: ReactNode, communityId = "filecoin") {
   const { default: WithHeaderLayout } = await import(
-    "@/app/community/[communityId]/(with-header)/layout"
+    "@/app/t/[tenant]/community/[communityId]/(with-header)/layout"
   );
   return (WithHeaderLayout as unknown as ServerComponent)({
     children,
@@ -247,7 +249,7 @@ describe("(cover) layout renders no explorer chrome", () => {
     // Comments are stripped: the layout's own doc comment explains which chrome
     // it deliberately omits, and naming them there must stay allowed.
     const source = readFileSync(
-      path.join(REPO_ROOT, "app/community/[communityId]/(cover)/layout.tsx"),
+      path.join(REPO_ROOT, "app/t/[tenant]/community/[communityId]/(cover)/layout.tsx"),
       "utf8"
     )
       .replace(/\/\*[\s\S]*?\*\//g, "")
@@ -277,7 +279,7 @@ describe("(cover) layout renders no explorer chrome", () => {
 describe("cover pages own exactly one <h1>", () => {
   it("financials renders a single hero heading under the cover layout", async () => {
     const page = await coverPage(
-      () => import("@/app/community/[communityId]/(cover)/financials/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/(cover)/financials/page"),
       { communityId: "filecoin" }
     );
     renderWithClient(await coverLayout(page));
@@ -288,7 +290,7 @@ describe("cover pages own exactly one <h1>", () => {
 
   it("reports renders a single hero heading under the cover layout", async () => {
     const page = await coverPage(
-      () => import("@/app/community/[communityId]/(cover)/reports/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/(cover)/reports/page"),
       { communityId: "filecoin" }
     );
     renderWithClient(await coverLayout(page));
@@ -306,7 +308,7 @@ describe("cover pages own exactly one <h1>", () => {
     });
 
     const page = await coverPage(
-      () => import("@/app/community/[communityId]/(cover)/reports/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/(cover)/reports/page"),
       { communityId: "filecoin" }
     );
     renderWithClient(await coverLayout(page));
@@ -317,7 +319,7 @@ describe("cover pages own exactly one <h1>", () => {
 
   it("an unflagged community's financials fallback is still a single <h1>", async () => {
     const page = await coverPage(
-      () => import("@/app/community/[communityId]/(cover)/financials/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/(cover)/financials/page"),
       { communityId: "celo" }
     );
     renderWithClient(await coverLayout(page, "celo"));

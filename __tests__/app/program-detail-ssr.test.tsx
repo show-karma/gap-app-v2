@@ -95,7 +95,7 @@ function createMockProgram(overrides: Partial<FundingProgram> = {}): FundingProg
 
 async function renderPageToHtml(): Promise<string> {
   const { default: Page } = await import(
-    "@/app/community/[communityId]/(whitelabel)/programs/[programId]/page"
+    "@/app/t/[tenant]/community/[communityId]/(whitelabel)/programs/[programId]/page"
   );
   const ui = await Page({ params: Promise.resolve({ communityId: "c1", programId: "prog-1" }) });
   // A fresh client per render, mirroring the per-request client the app

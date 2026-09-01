@@ -36,7 +36,7 @@ function collectSourceFiles(dir: string, collected: string[] = []): string[] {
 
 describe("no global Speakable JSON-LD", () => {
   it("root layout does not mount a Speakable schema", () => {
-    const layout = readFileSync(path.join(REPO_ROOT, "app/layout.tsx"), "utf-8");
+    const layout = readFileSync(path.join(REPO_ROOT, "app/t/[tenant]/layout.tsx"), "utf-8");
     expect(layout).not.toMatch(/speakable/i);
   });
 

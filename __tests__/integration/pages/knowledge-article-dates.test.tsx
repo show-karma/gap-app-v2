@@ -6,10 +6,10 @@ import {
   getKnowledgeArticleDate,
   KNOWLEDGE_ARTICLE_DATES,
   KNOWLEDGE_ARTICLE_UPDATED_DATES,
-} from "@/app/knowledge/articleDates";
-import GrantKycPage from "@/app/knowledge/grant-kyc/page";
-import GrantLifecyclePage from "@/app/knowledge/grant-lifecycle/page";
-import ProjectProfilesPage from "@/app/knowledge/project-profiles/page";
+} from "@/app/t/[tenant]/knowledge/articleDates";
+import GrantKycPage from "@/app/t/[tenant]/knowledge/grant-kyc/page";
+import GrantLifecyclePage from "@/app/t/[tenant]/knowledge/grant-lifecycle/page";
+import ProjectProfilesPage from "@/app/t/[tenant]/knowledge/project-profiles/page";
 import "@testing-library/jest-dom";
 
 /**
@@ -18,7 +18,7 @@ import "@testing-library/jest-dom";
  * visible on the page itself.
  */
 
-const KNOWLEDGE_DIR = path.resolve(__dirname, "../../../app/knowledge");
+const KNOWLEDGE_DIR = path.resolve(__dirname, "../../../app/t/[tenant]/knowledge");
 
 // The literals that were hardcoded on all 25 pages before the provenance map.
 const FABRICATED_DATES = ["2025-01-15", "2026-03-24"];

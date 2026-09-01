@@ -88,7 +88,7 @@ function createPrograms(): FundingProgram[] {
 
 async function buildPageUi(): Promise<React.ReactElement> {
   const { default: Page } = await import(
-    "@/app/community/[communityId]/(with-header)/funding-opportunities/page"
+    "@/app/t/[tenant]/community/[communityId]/(with-header)/funding-opportunities/page"
   );
   const ui = await Page({ params: Promise.resolve({ communityId: "celo" }) });
   // A fresh client per render, mirroring the per-request client the app

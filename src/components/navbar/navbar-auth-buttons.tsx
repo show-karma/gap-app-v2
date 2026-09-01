@@ -1,12 +1,12 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { NavbarAuthButtonsSkeleton } from "./navbar-user-skeleton";
 
-export function NavbarAuthButtons() {
+function NavbarAuthButtonsInner() {
   const { authenticate: login, ready, authenticated } = useAuth();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -34,5 +34,21 @@ export function NavbarAuthButtons() {
         Sign in
       </Button>
     </div>
+  );
+}
+
+/**
+ * The `useSearchParams()` above opts this component out of static rendering
+ * unless a Suspense boundary sits over it, and the navbar is mounted by the
+ * root layout on every route — so without this the whole app is forced
+ * dynamic. The boundary costs nothing here: Privy's `ready` is always false on
+ * the server, so the server already renders exactly this fallback. The server
+ * HTML is unchanged, which keeps the no-JS output identical (DEV-612).
+ */
+export function NavbarAuthButtons() {
+  return (
+    <Suspense fallback={<NavbarAuthButtonsSkeleton />}>
+      <NavbarAuthButtonsInner />
+    </Suspense>
   );
 }

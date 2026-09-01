@@ -79,7 +79,7 @@ describe("Project Layout - Server Prefetch + HydrationBoundary", () => {
   });
 
   async function renderLayout(projectId = "test-project") {
-    const { default: RootLayout } = await import("@/app/project/[projectId]/layout");
+    const { default: RootLayout } = await import("@/app/t/[tenant]/project/[projectId]/layout");
     const element = await RootLayout({
       children: <div data-testid="children">Children</div>,
       params: Promise.resolve({ projectId }),

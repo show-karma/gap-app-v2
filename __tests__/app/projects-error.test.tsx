@@ -6,7 +6,7 @@
  */
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ProjectsError from "@/app/projects/error";
+import ProjectsError from "@/app/t/[tenant]/projects/error";
 import { renderWithProviders } from "../utils/render";
 
 vi.mock("lucide-react", () => ({

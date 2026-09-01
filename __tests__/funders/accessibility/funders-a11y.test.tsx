@@ -9,7 +9,7 @@
  */
 
 import { axe, toHaveNoViolations } from "jest-axe";
-import FundersPage from "@/app/funders/page";
+import FundersPage from "@/app/t/[tenant]/funders/page";
 import { CaseStudiesSection } from "@/src/features/funders/components/case-studies-section";
 import { FAQSection } from "@/src/features/funders/components/faq-section";
 import { HandleTheVisionSection } from "@/src/features/funders/components/handle-the-vision-section";
