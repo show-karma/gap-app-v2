@@ -121,7 +121,7 @@ async function renderRoute(
 }
 
 describe("knowledge article template — no-JS rendering", () => {
-  const importArticle = () => import("@/app/knowledge/grant-accountability/page");
+  const importArticle = () => import("@/app/t/[tenant]/knowledge/grant-accountability/page");
 
   it("server-renders a heading and substantive prose", async () => {
     const html = await renderRoute(importArticle);
@@ -147,7 +147,7 @@ describe("knowledge article template — no-JS rendering", () => {
 });
 
 describe("knowledge index template — no-JS rendering", () => {
-  const importIndex = () => import("@/app/knowledge/page");
+  const importIndex = () => import("@/app/t/[tenant]/knowledge/page");
 
   it("server-renders the article links a crawler follows", async () => {
     const html = await renderRoute(importIndex);
@@ -173,7 +173,7 @@ describe("knowledge index template — no-JS rendering", () => {
 
 describe("collection templates — no-JS rendering", () => {
   it("/projects server-renders its hero and CollectionPage structured data", async () => {
-    const { default: Page, metadata } = await import("@/app/projects/page");
+    const { default: Page, metadata } = await import("@/app/t/[tenant]/projects/page");
     const ui = await Page({ searchParams: Promise.resolve({}) });
     // A fresh client per render, mirroring the per-request client the app
     // provider creates — the root layout supplies one in production.
@@ -201,7 +201,7 @@ describe("collection templates — no-JS rendering", () => {
    * metadata the page advertises, and it points its canonical at itself.
    */
   it("/communities server-renders a shell whose CollectionPage facts match its metadata", async () => {
-    const { default: Page, metadata } = await import("@/app/communities/page");
+    const { default: Page, metadata } = await import("@/app/t/[tenant]/communities/page");
     const html = renderToString(<>{await Page()}</>);
 
     expect(html).toMatch(/<main\b/);
@@ -215,9 +215,9 @@ describe("collection templates — no-JS rendering", () => {
 
   it("keeps every collection canonical free of query strings", async () => {
     const modules = await Promise.all([
-      import("@/app/projects/page"),
-      import("@/app/communities/page"),
-      import("@/app/knowledge/page"),
+      import("@/app/t/[tenant]/projects/page"),
+      import("@/app/t/[tenant]/communities/page"),
+      import("@/app/t/[tenant]/knowledge/page"),
     ]);
 
     for (const mod of modules) {

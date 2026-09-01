@@ -64,7 +64,7 @@ const DOCS_CATEGORY_ORDER = [
   "FAQs",
   "Partners",
 ];
-const KNOWLEDGE_DIR = path.resolve(__dirname, "../app/knowledge");
+const KNOWLEDGE_DIR = path.resolve(__dirname, "../app/t/[tenant]/knowledge");
 const OUTPUT_DIR = path.resolve(__dirname, "../public");
 const BUILD_TIMESTAMP = new Date().toISOString();
 
@@ -151,7 +151,7 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
     minContentChars: 400,
     maxContentChars: 4200,
     sourceFallbackFiles: [
-      "app/page.tsx",
+      "app/t/[tenant]/page.tsx",
       "src/features/homepage/components/hero.tsx",
       "src/features/homepage/components/platform-features.tsx",
       "src/features/homepage/components/how-it-works.tsx",
@@ -170,7 +170,7 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
     minContentChars: 500,
     maxContentChars: 5200,
     sourceFallbackFiles: [
-      "app/funders/page.tsx",
+      "app/t/[tenant]/funders/page.tsx",
       "src/features/funders/components/hero.tsx",
       "src/features/funders/components/numbers-section.tsx",
       "src/features/funders/components/platform-section.tsx",
@@ -192,7 +192,10 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
     minContentChars: 260,
     maxContentChars: 2400,
     preferSourceFallback: true,
-    sourceFallbackFiles: ["app/projects/page.tsx", "components/Pages/Projects/HeroSection.tsx"],
+    sourceFallbackFiles: [
+      "app/t/[tenant]/projects/page.tsx",
+      "components/Pages/Projects/HeroSection.tsx",
+    ],
   },
   {
     path: "/communities",
@@ -206,7 +209,7 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
     maxContentChars: 2600,
     preferSourceFallback: true,
     sourceFallbackFiles: [
-      "app/communities/page.tsx",
+      "app/t/[tenant]/communities/page.tsx",
       "components/Pages/Communities/CommunitiesPage.tsx",
     ],
   },

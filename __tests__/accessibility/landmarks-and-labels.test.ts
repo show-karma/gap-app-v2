@@ -44,18 +44,18 @@ function countMainLandmarks(source: string): number {
 
 describe("landmark regions (#1309)", () => {
   const routesWithOwnMain = [
-    "app/projects/page.tsx",
+    "app/t/[tenant]/projects/page.tsx",
     // The dashboard's <main> lives in the layout so it wraps both the overview
     // (/dashboard) and each drill-in segment (/dashboard/[module]).
-    "app/dashboard/layout.tsx",
-    "app/donations/layout.tsx",
-    "app/community/[communityId]/(with-header)/layout.tsx",
+    "app/t/[tenant]/dashboard/layout.tsx",
+    "app/t/[tenant]/donations/layout.tsx",
+    "app/t/[tenant]/community/[communityId]/(with-header)/layout.tsx",
     // The chrome-free "cover" group (financials, portfolio reports) renders no
     // community header or tab navigator, so it has to supply the <main>
     // landmark its (with-header) sibling used to provide.
-    "app/community/[communityId]/(cover)/layout.tsx",
-    "app/community/[communityId]/donate/page.tsx",
-    "app/community/[communityId]/donate/[programId]/page.tsx",
+    "app/t/[tenant]/community/[communityId]/(cover)/layout.tsx",
+    "app/t/[tenant]/community/[communityId]/donate/page.tsx",
+    "app/t/[tenant]/community/[communityId]/donate/[programId]/page.tsx",
   ];
 
   it.each(routesWithOwnMain)("%s renders exactly one <main> landmark", (route) => {

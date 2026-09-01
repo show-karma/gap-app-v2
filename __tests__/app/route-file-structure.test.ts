@@ -25,14 +25,20 @@ import { describe, expect, it } from "vitest";
  * matching allowlist. Never add new entries — fix the route instead.
  */
 
-const APP_DIR = path.join(process.cwd(), "app");
+// The route tree lives under the `[tenant]` root param, an internal prefix the
+// proxy writes on every page request (browser URLs are unchanged). Route paths
+// below are therefore relative to the ROOT LAYOUT directory, not to `app/`,
+// which keeps every entry in the sets below reading as the public URL it maps
+// to. `ROUTES_ROOT` is also the correct ceiling for the DEV-612 chain walk: a
+// `loading.tsx` at the root-layout level would wrap every route.
+const ROUTES_ROOT = path.join(process.cwd(), "app", "t", "[tenant]");
+const APP_DIR = ROUTES_ROOT;
 
 // Sitemap-crawlable routes where loading.tsx is FORBIDDEN along the whole
 // segment chain (DEV-612). Any loading.tsx above a page puts the page segment
-// behind a Suspense boundary; because every route renders dynamically (the
-// root layout awaits headers() for whitelabel detection), Next then streams
-// the page HTML as a hidden late chunk (`<div hidden id="S:n">`) with the
-// loading fallback as the visible document. A reader that does not execute
+// behind a Suspense boundary; when the route renders dynamically Next then
+// streams the page HTML as a hidden late chunk (`<div hidden id="S:n">`) with
+// the loading fallback as the visible document. A reader that does not execute
 // JavaScript (most AI crawlers/fetchers) sees only the fallback. These routes
 // are submitted in the sitemap, so their content must be in the initially
 // visible HTML: no loading.tsx in their directory OR any ancestor directory.
@@ -214,10 +220,38 @@ function hasSibling(routeDir: string, file: "loading.tsx" | "error.tsx"): boolea
   return fs.existsSync(path.join(APP_DIR, routeDir, file));
 }
 
+/** Page routes that escaped the root-layout directory, app-relative. */
+function collectPageDirsOutsideRoutesRoot(): string[] {
+  const appDir = path.join(process.cwd(), "app");
+  const dirs: string[] = [];
+  const walk = (dir: string) => {
+    if (dir === ROUTES_ROOT) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (entry.name === "page.tsx") {
+        dirs.push(path.relative(appDir, dir).split(path.sep).join("/"));
+      }
+    }
+  };
+  walk(appDir);
+  return dirs.sort();
+}
+
 describe("App Router route-file structure ratchet", () => {
-  it("discovers page.tsx routes under app/", () => {
+  it("discovers page.tsx routes under the root layout", () => {
     // Sanity check: if this is empty the walk is broken and the ratchet is a no-op.
     expect(pageDirs.length).toBeGreaterThan(0);
+  });
+
+  it("has no page route outside the [tenant] root layout", () => {
+    // A page.tsx outside `app/t/[tenant]/` has no root layout and no tenant, so
+    // it would render without the app shell — and, being reachable at its own
+    // public URL, duplicate indexable content. Route handlers and metadata
+    // routes (api, sitemaps, .well-known, robots, openapi.json) stay outside on
+    // purpose: root params are not available to them and they need no chrome.
+    expect(collectPageDirsOutsideRoutesRoot()).toEqual([]);
   });
 
   it("every route has loading.tsx (except frozen legacy offenders and crawlable routes)", () => {

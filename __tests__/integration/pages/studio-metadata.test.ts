@@ -7,13 +7,13 @@
 
 describe("/admin/studio layout metadata", () => {
   it("is noindex and nofollow", async () => {
-    const { metadata } = await import("@/app/admin/studio/[[...tool]]/layout");
+    const { metadata } = await import("@/app/t/[tenant]/admin/studio/[[...tool]]/layout");
 
     expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 
   it("uses the canonical /admin/studio path", async () => {
-    const { metadata } = await import("@/app/admin/studio/[[...tool]]/layout");
+    const { metadata } = await import("@/app/t/[tenant]/admin/studio/[[...tool]]/layout");
 
     expect(metadata.alternates).toEqual({ canonical: "/admin/studio" });
   });

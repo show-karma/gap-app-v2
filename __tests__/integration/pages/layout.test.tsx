@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import RootLayout from "@/app/layout";
+import { notFound } from "next/navigation";
+import { tenant } from "next/root-params";
+import RootLayout, { generateStaticParams } from "@/app/t/[tenant]/layout";
 import "@testing-library/jest-dom";
 
 // next/font/local and next/font/google are mocked globally in
@@ -8,6 +10,13 @@ import "@testing-library/jest-dom";
 
 const { getWhitelabelContextMock } = vi.hoisted(() => ({
   getWhitelabelContextMock: vi.fn(),
+}));
+
+// The layout reads the `[tenant]` root param instead of the request host. The
+// global mock in __tests__/setup-mocks.ts resolves it to the main tenant; the
+// unknown-value case overrides it per test.
+vi.mock("next/root-params", () => ({
+  tenant: vi.fn(async () => "karma"),
 }));
 
 vi.mock("@next/third-parties/google", () => ({
@@ -69,6 +78,7 @@ vi.mock("@/utilities/whitelabel-server", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(tenant).mockResolvedValue("karma");
   getWhitelabelContextMock.mockResolvedValue({
     isWhitelabel: false,
     communitySlug: null,
@@ -79,22 +89,52 @@ beforeEach(() => {
 
 describe("RootLayout - the request-independent App Shell", () => {
   // The whole point of the refactor: a root layout that awaits request data
-  // blocks the prerendered shell for every route under cacheComponents. It
-  // still *starts* the read — it just never waits for it.
-  it("returns its tree synchronously rather than awaiting the request", () => {
-    const tree = RootLayout({ children: <>Test Content</> });
+  // blocks the prerendered shell for every route under cacheComponents. The
+  // only thing it awaits now is the `[tenant]` root param, which comes from the
+  // matched route — the value the prerender is keyed on, not request state.
+  it("renders without waiting for the whitelabel read to resolve", async () => {
+    getWhitelabelContextMock.mockReturnValue(new Promise(() => {}));
 
-    expect(tree).not.toBeInstanceOf(Promise);
+    render(await RootLayout({ children: <>Test Content</> }));
+
+    expect(screen.getByText("Test Content")).toBeInTheDocument();
   });
 
-  it("starts the whitelabel read exactly once and passes it down", () => {
-    render(RootLayout({ children: <>Test Content</> }));
+  it("starts the whitelabel read exactly once and passes it down", async () => {
+    render(await RootLayout({ children: <>Test Content</> }));
 
     expect(getWhitelabelContextMock).toHaveBeenCalledTimes(1);
   });
 
-  it("renders the document scaffold and the theme provider", () => {
-    render(RootLayout({ children: <>Test Content</> }));
+  // The `/t/<tenant>` prefix is written by the proxy and never seen by a
+  // browser, so a value the proxy would not have produced is a hand-crafted
+  // URL, not a tenant.
+  it("404s on a tenant param this deployment does not serve", async () => {
+    vi.mocked(tenant).mockResolvedValue("not-a-tenant.example");
+
+    await RootLayout({ children: <>Test Content</> });
+
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  it("serves the main tenant without calling notFound", async () => {
+    await RootLayout({ children: <>Test Content</> });
+
+    expect(notFound).not.toHaveBeenCalled();
+  });
+
+  // cacheComponents fails the build unless every root param has at least one
+  // value, and each listed value gets its own prerendered shell.
+  it("lists the main tenant and every whitelabel domain as a static param", () => {
+    const params = generateStaticParams();
+
+    expect(params).toContainEqual({ tenant: "karma" });
+    expect(params).toContainEqual({ tenant: "app.opgrants.io" });
+    expect(new Set(params.map((p) => p.tenant)).size).toBe(params.length);
+  });
+
+  it("renders the document scaffold and the theme provider", async () => {
+    render(await RootLayout({ children: <>Test Content</> }));
 
     expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
     expect(screen.getByTestId("theme-provider").closest("body")).toBeInTheDocument();
@@ -103,16 +143,16 @@ describe("RootLayout - the request-independent App Shell", () => {
   // DEV-612: a boundary above the page makes Next stream it as a hidden late
   // chunk that only JavaScript reveals, so sitemap-crawlable routes lose their
   // content for no-JS readers. Nothing in this layout may introduce one.
-  it("renders children in the primary tree, with no Suspense boundary above them", () => {
-    const tree = RootLayout({ children: <>Test Content</> });
+  it("renders children in the primary tree, with no Suspense boundary above them", async () => {
+    const tree = await RootLayout({ children: <>Test Content</> });
     render(tree);
 
     expect(screen.getByText("Test Content")).toBeInTheDocument();
     expect(JSON.stringify(tree, replaceSuspense)).not.toContain("__SUSPENSE__");
   });
 
-  it("keeps the providers and the deferred chrome around the page", () => {
-    render(RootLayout({ children: <>Test Content</> }));
+  it("keeps the providers and the deferred chrome around the page", async () => {
+    render(await RootLayout({ children: <>Test Content</> }));
 
     expect(screen.getByTestId("privy-provider")).toBeInTheDocument();
     expect(screen.getByTestId("whitelabel-provider")).toBeInTheDocument();
@@ -121,8 +161,8 @@ describe("RootLayout - the request-independent App Shell", () => {
     expect(screen.getByTestId("tenant-store-sync")).toBeInTheDocument();
   });
 
-  it("mounts the host-dependent chrome around the page", () => {
-    const { container } = render(RootLayout({ children: <>Test Content</> }));
+  it("mounts the tenant-dependent chrome around the page", async () => {
+    const { container } = render(await RootLayout({ children: <>Test Content</> }));
 
     expect(screen.getByTestId("tenant-theme-style")).toBeInTheDocument();
     expect(screen.getByTestId("tenant-navbar")).toBeInTheDocument();
