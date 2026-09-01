@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { NotebookQueryTable } from "@/components/Pages/Communities/Notebooks/NotebookQueryTable";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -35,10 +36,11 @@ import type {
  * this component, so there is no filtering to do here and no opportunity to
  * forget it — the same reason the indicator picker narrows server-side.
  *
- * IT RE-FORMATS NOTHING. Every cell renders the row's own `displayValue`, which
- * the query layer produced and reconciled — including the em-dash for an absent
- * figure. A second formatting opinion here is exactly how a preview comes to
- * disagree with the page it is previewing.
+ * IT RE-FORMATS NOTHING, and it does not even own a table: the result renders
+ * through `NotebookQueryTable`, the very component the published page uses. An
+ * author approving figures here is looking at the page's own renderer, so the
+ * preview cannot disagree with what gets published — not by convention, but
+ * because there is only one table.
  */
 
 interface Props {
@@ -142,57 +144,6 @@ function MultiSelectFilter({
         ))}
       </div>
     </fieldset>
-  );
-}
-
-function ResultTable({ result }: { result: NotebookMetricQueryResult }) {
-  if (result.rows.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        This query returned no rows. That is an answer, not an error — nothing matched the filters.
-      </p>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            {result.columns.map((column) => (
-              <th
-                key={column.id}
-                scope="col"
-                className={`whitespace-nowrap px-3 py-2 font-medium text-muted-foreground ${
-                  column.valueKind === "text" ? "text-left" : "text-right"
-                }`}
-              >
-                {column.label}
-                {column.unit ? ` (${column.unit})` : ""}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {result.rows.map((row) => (
-            <tr key={row.key} className="border-b border-border/60 last:border-0">
-              {result.columns.map((column) => (
-                <td
-                  key={column.id}
-                  className={`px-3 py-2 text-foreground ${
-                    column.valueKind === "text" ? "text-left" : "text-right tabular-nums"
-                  }`}
-                >
-                  {/* The label column is the row's identity; every other column
-                      is the measure, already formatted by the query layer. */}
-                  {column.valueKind === "text" ? row.label : row.displayValue}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   );
 }
 
@@ -439,13 +390,15 @@ export function MetricQueryBuilder({ communityId, catalog }: Props) {
             </output>
           ))}
 
-          <ResultTable result={status.result} />
+          <NotebookQueryTable result={status.result} />
 
           {/* Provenance travels with the preview, because an author about to
               publish a figure is exactly who needs to know how it was
               computed and from where. */}
+          {/* The shared table already states the methodology and window, so
+              this adds only the provenance a preview specifically wants: where
+              the figures came from. */}
           <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-            <p>{status.result.meta.source.methodology}</p>
             <p>
               {status.result.meta.source.tool} · {status.result.meta.source.endpoints.join(", ")}
             </p>

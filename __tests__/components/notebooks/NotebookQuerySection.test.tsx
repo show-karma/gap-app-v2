@@ -166,6 +166,58 @@ describe("querySectionKey", () => {
   });
 });
 
+/**
+ * THE REAL PAYLOAD SHAPE, taken from the live rig.
+ *
+ * A grouped query returns THREE columns — `label`, the grouping dimension,
+ * and the measure — not the two a hand-written fixture naturally assumes.
+ * The single-text-column fixture above is what let this renderer print
+ * `row.label` in both text columns undetected: the mock was more cooperative
+ * than the wire. These cases pin the shape the server actually sends.
+ */
+describe("a grouped result, shaped as the server actually sends it", () => {
+  const grouped = () =>
+    result({
+      query: { ...result().query, groupBy: "program" },
+      columns: [
+        { id: "label", label: "Program", valueKind: "text", unit: null },
+        { id: "program", label: "Program id", valueKind: "text", unit: null },
+        { id: "value", label: "Disbursed", valueKind: "currency", unit: "USDC" },
+      ],
+      rows: [
+        {
+          key: "prog-1",
+          label: "Program One",
+          dimensions: { program: "prog-1" },
+          value: 1250,
+          displayValue: "$1,250",
+        },
+      ],
+    });
+
+  it("should_render_the_dimension_column_from_the_row_dimensions_not_the_label", () => {
+    render(<NotebookQueryTable result={grouped()} />);
+
+    const cells = screen.getAllByRole("cell").map((cell) => cell.textContent);
+    expect(cells).toEqual(["Program One", "prog-1", "$1,250"]);
+  });
+
+  it("should_render_an_em_dash_for_a_dimension_the_row_does_not_carry", () => {
+    const missing = grouped();
+    missing.rows[0].dimensions = {};
+
+    render(<NotebookQueryTable result={missing} />);
+
+    // Not a blank cell: a blank reads as a rendering fault, the em dash
+    // reads as absent data.
+    expect(screen.getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
+      "Program One",
+      "—",
+      "$1,250",
+    ]);
+  });
+});
+
 describe("NotebookQueryTable", () => {
   it("should_render_the_declared_columns_and_the_query_layers_display_values", () => {
     render(<NotebookQueryTable result={result()} />);

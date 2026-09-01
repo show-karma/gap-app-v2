@@ -209,13 +209,16 @@ describe("MetricQueryBuilder", () => {
       expect(screen.queryByText("$0")).not.toBeInTheDocument();
     });
 
+    // The methodology comes from the SHARED table — the same component the
+    // published page uses — and the endpoints from the preview's own
+    // provenance block, which is the part a page does not show.
     it("should_show_the_methodology_and_endpoints_beside_the_result", async () => {
       mockFetch({ ok: true, result: result() });
       renderBuilder();
 
       await userEvent.click(screen.getByRole("button", { name: /run query/i }));
 
-      expect(await screen.findByText("Sum of payouts.")).toBeInTheDocument();
+      expect(await screen.findByText(/Sum of payouts\./)).toBeInTheDocument();
       expect(screen.getByText(/\/v2\/x/)).toBeInTheDocument();
     });
 
@@ -225,7 +228,7 @@ describe("MetricQueryBuilder", () => {
 
       await userEvent.click(screen.getByRole("button", { name: /run query/i }));
 
-      expect(await screen.findByText(/returned no rows/i)).toBeInTheDocument();
+      expect(await screen.findByText(/no rows matched/i)).toBeInTheDocument();
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
