@@ -225,6 +225,10 @@ const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
   text: "Text block",
   timeseries: "Time series",
   table: "Table",
+  header: "Page header",
+  hero: "Headline",
+  nav: "Section nav",
+  narrative: "Narrative",
 };
 
 /**

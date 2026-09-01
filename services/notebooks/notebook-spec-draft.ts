@@ -74,6 +74,14 @@ export function newSection(type: NotebookSection["type"]): NotebookSection {
         columns: ["function", "tier", "measured", "slaMetPct"],
         title: "Kernel function inventory",
       };
+    case "header":
+      return { type: "header", eyebrow: "" };
+    case "hero":
+      return { type: "hero", headline: "" };
+    case "nav":
+      return { type: "nav" };
+    case "narrative":
+      return { type: "narrative", body: "" };
     case "timeseries":
       // Not offered by the composer yet — the renderer cannot draw one. Still
       // constructed correctly so this stays exhaustive and the day the chart

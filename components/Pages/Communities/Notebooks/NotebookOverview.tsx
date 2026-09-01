@@ -16,10 +16,20 @@ import type {
   NotebookTimeseriesSection,
 } from "@/services/notebooks/notebook-spec";
 import {
+  extractNarrativeTokens,
   isKernelKpiMetric,
+  NOTEBOOK_KPI_METRICS,
+  type NotebookKpiMetric,
   resolveNotebookDateRange,
   resolveNotebookKernelRange,
 } from "@/services/notebooks/notebook-spec";
+import {
+  HeaderSection,
+  HeroSection,
+  NarrativeSection,
+  NavSection,
+  sectionAnchorId,
+} from "./NotebookEditorial";
 import { NotebookKernelTable } from "./NotebookKernelTable";
 import { NotebookTimeSeries } from "./NotebookTimeSeries";
 
@@ -342,14 +352,69 @@ function groupSections(sections: NotebookSection[]): SectionGroup[] {
   return groups;
 }
 
+/**
+ * Wraps a section in its anchor target so the auto nav can reach it.
+ *
+ * ONLY on a page that HAS a nav, and that condition is load-bearing rather
+ * than an optimisation. Anchors exist to be jumped to; a page with nothing to
+ * jump from does not need them, and emitting them anyway would add a wrapper
+ * element to every section of every page ever published — changing the markup
+ * of pages composed long before this feature existed. The golden test caught
+ * exactly that, which is what it is for.
+ *
+ * Applied at this level rather than inside each section so every type is
+ * anchorable without each one remembering to be: the nav lists what it can
+ * see, and a section that quietly lacked an id would produce a dead link.
+ * `scroll-mt` keeps a jumped-to heading clear of a sticky header.
+ */
+function SectionAnchor({
+  section,
+  index,
+  enabled,
+  children,
+}: {
+  section: NotebookSection;
+  index: number;
+  enabled: boolean;
+  children: React.ReactNode;
+}) {
+  if (!enabled) return <>{children}</>;
+
+  return (
+    <div id={sectionAnchorId(section, index)} className="scroll-mt-24">
+      {children}
+    </div>
+  );
+}
+
+/**
+ * The KPI metrics a narrative body references.
+ *
+ * The schema already refused unknown tokens on write, so anything here is a
+ * real metric id; the filter guards the case of a document written by a newer
+ * vocabulary reaching an older renderer, where an unrecognised token resolves
+ * to absent rather than throwing.
+ */
+function narrativeMetrics(body: string): NotebookKpiMetric[] {
+  const known = new Set<string>(NOTEBOOK_KPI_METRICS);
+  return extractNarrativeTokens(body).filter((token): token is NotebookKpiMetric =>
+    known.has(token)
+  );
+}
+
 function SectionView({
   section,
   overview,
   data,
+  sections,
+  index,
 }: {
   section: NotebookSection;
   overview: NotebookOverview;
   data?: NotebookPageData;
+  /** The whole page, so an auto-derived nav can index it. */
+  sections: NotebookSection[];
+  index: number;
 }) {
   switch (section.type) {
     case "kpis":
@@ -366,6 +431,31 @@ function SectionView({
       return <ApplicationsSection entries={overview.applications} />;
     case "text":
       return <TextSection section={section} />;
+    case "header":
+      return <HeaderSection section={section} />;
+    case "hero":
+      return <HeroSection section={section} />;
+    case "nav":
+      return <NavSection section={section} sections={sections} />;
+    case "narrative":
+      return (
+        <NarrativeSection
+          section={section}
+          // Resolve exactly the tokens this body names, through the SAME
+          // selector the KPI tiles use — so a figure quoted in prose and the
+          // same figure in a tile cannot come from different places.
+          stats={selectStats(
+            {
+              type: "kpis",
+              metrics: narrativeMetrics(section.body),
+              kernelRange: section.kernelRange,
+            },
+            overview,
+            data
+          )}
+          anchorId={sectionAnchorId(section, index)}
+        />
+      );
     case "timeseries":
       return <TimeseriesSection section={section} data={data} />;
     case "table":
@@ -406,14 +496,27 @@ export function NotebookOverviewView({
   data?: NotebookPageData;
 }) {
   let cursor = 0;
+  // Anchors are emitted only when something links to them; see SectionAnchor.
+  const hasNav = spec.sections.some((section) => section.type === "nav");
 
   return (
     <div className="flex flex-col gap-6">
       {groupSections(spec.sections).map((group) => {
         if (group.kind === "single") {
           const key = sectionKey(group.section, cursor);
+          const at = cursor;
           cursor += 1;
-          return <SectionView key={key} section={group.section} overview={overview} data={data} />;
+          return (
+            <SectionAnchor key={key} section={group.section} index={at} enabled={hasNav}>
+              <SectionView
+                section={group.section}
+                overview={overview}
+                data={data}
+                sections={spec.sections}
+                index={at}
+              />
+            </SectionAnchor>
+          );
         }
 
         const key = `row-${sectionKey(group.sections[0], cursor)}`;
@@ -423,12 +526,20 @@ export function NotebookOverviewView({
         return (
           <div key={key} className="grid gap-6 lg:grid-cols-2">
             {group.sections.map((section, offset) => (
-              <SectionView
+              <SectionAnchor
                 key={sectionKey(section, start + offset)}
                 section={section}
-                overview={overview}
-                data={data}
-              />
+                index={start + offset}
+                enabled={hasNav}
+              >
+                <SectionView
+                  section={section}
+                  overview={overview}
+                  data={data}
+                  sections={spec.sections}
+                  index={start + offset}
+                />
+              </SectionAnchor>
             ))}
           </div>
         );

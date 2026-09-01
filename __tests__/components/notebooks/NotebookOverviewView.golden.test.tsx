@@ -237,6 +237,189 @@ describe("notebook seed spec (golden)", () => {
   });
 });
 
+/**
+ * V3-1 editorial layer.
+ *
+ * The v1 golden equivalence above is untouched and must stay that way: these
+ * sections are additive, and a page that names none of them renders exactly as
+ * it always did.
+ */
+describe("editorial sections", () => {
+  it("renders an eyebrow and breadcrumb trail", () => {
+    const html = renderSpec(
+      {
+        version: 1,
+        sections: [
+          {
+            type: "header",
+            eyebrow: "KERNEL - INDEPENDENT MONITORING",
+            breadcrumbs: ["filpgf.io", "Kernel", "Monitoring"],
+          },
+        ],
+      },
+      makeOverview()
+    );
+
+    expect(html).toContain("KERNEL - INDEPENDENT MONITORING");
+    expect(html).toContain("filpgf.io");
+    expect(html).toContain("Monitoring");
+  });
+
+  // Crumbs are labels. A page that could emit author-supplied hrefs would be a
+  // redirector wearing a community's name.
+  it("renders breadcrumbs as text, never as links", () => {
+    const { container } = render(
+      <NotebookOverviewView
+        overview={makeOverview()}
+        spec={{
+          version: 1,
+          sections: [{ type: "header", breadcrumbs: ["filpgf.io", "Kernel"] }],
+        }}
+      />
+    );
+
+    expect(container.querySelectorAll("a")).toHaveLength(0);
+  });
+
+  it("renders a hero headline and standfirst", () => {
+    const html = renderSpec(
+      {
+        version: 1,
+        sections: [
+          {
+            type: "hero",
+            headline: "What is being watched.",
+            subheadline: "Independent monitoring.",
+          },
+        ],
+      },
+      makeOverview()
+    );
+
+    expect(html).toContain("What is being watched.");
+    expect(html).toContain("Independent monitoring.");
+  });
+
+  describe("auto section nav", () => {
+    const navSpec: NotebookSpec = {
+      version: 1,
+      sections: [
+        { type: "nav", title: "On this page" },
+        { type: "bars", source: "programs", metric: "disbursedVsCommitted", title: "Funding" },
+        { type: "applications" },
+      ],
+    };
+
+    it("lists the page's own titled sections", () => {
+      const html = renderSpec(navSpec, makeOverview());
+
+      expect(html).toContain("On this page");
+      expect(html).toContain("Funding");
+    });
+
+    // An index that could disagree with the page is worse than no index.
+    it("links to anchors that exist on the page", () => {
+      const { container } = render(
+        <NotebookOverviewView overview={makeOverview()} spec={navSpec} />
+      );
+
+      const hrefs = Array.from(container.querySelectorAll("a[href^='#']")).map((a) =>
+        (a.getAttribute("href") ?? "").slice(1)
+      );
+      expect(hrefs.length).toBeGreaterThan(0);
+      for (const id of hrefs) {
+        expect(container.querySelector(`#${id}`)).not.toBeNull();
+      }
+    });
+
+    it("does not list itself", () => {
+      const { container } = render(
+        <NotebookOverviewView overview={makeOverview()} spec={navSpec} />
+      );
+
+      const labels = Array.from(container.querySelectorAll("nav a")).map((a) => a.textContent);
+      expect(labels).not.toContain("On this page");
+    });
+
+    // Anchors serve the nav. A page without one must render exactly as it did
+    // before this feature existed — which the v1 golden test above enforces.
+    it("emits no anchor wrappers on a page with no nav", () => {
+      const { container } = render(
+        <NotebookOverviewView
+          overview={makeOverview()}
+          spec={{ version: 1, sections: [{ type: "applications" }] }}
+        />
+      );
+
+      expect(container.querySelectorAll("[id^='section-']")).toHaveLength(0);
+    });
+  });
+
+  describe("narrative", () => {
+    const narrative = (body: string): NotebookSpec => ({
+      version: 1,
+      sections: [{ type: "narrative", body }],
+    });
+
+    it("substitutes a token with the figure the KPI tile shows", () => {
+      const html = renderSpec(narrative("Committed {{committed}} to date."), makeOverview());
+
+      expect(html).toContain("$9.25M");
+      expect(html).not.toContain("{{committed}}");
+    });
+
+    it("substitutes several tokens in one body", () => {
+      const html = renderSpec(
+        narrative("{{committed}} across {{fundedProjects}} projects."),
+        makeOverview()
+      );
+
+      expect(html).toContain("$9.25M");
+      expect(html).toContain("48");
+    });
+
+    // Prose saying "0%" for something nobody measured is the same fabrication
+    // as a tile saying it.
+    it("renders an absent figure as an em-dash, never zero", () => {
+      const html = renderSpec(
+        narrative("SLA is {{milestoneCompletion}}."),
+        makeOverview({
+          stats: [
+            {
+              id: "milestoneCompletion",
+              label: "Milestone completion",
+              value: null,
+              format: "percent",
+            },
+          ],
+        })
+      );
+
+      expect(html).toContain("—");
+      expect(html).not.toContain("0.0%");
+    });
+
+    // The body is the largest author-controlled string on the page.
+    it("renders markup in the prose as literal text", () => {
+      const html = renderSpec(
+        narrative('<img src=x onerror="alert(1)"> and {{committed}}.'),
+        makeOverview()
+      );
+
+      expect(html).not.toContain("<img");
+      expect(html).toContain("&lt;img");
+      expect(html).toContain("$9.25M");
+    });
+
+    it("keeps the surrounding prose intact around a token", () => {
+      const html = renderSpec(narrative("Before {{committed}} after."), makeOverview());
+
+      expect(html).toContain("Before");
+      expect(html).toContain("after.");
+    });
+  });
+});
+
 describe("spec-driven render", () => {
   it("renders sections in the order the spec lists them", () => {
     const html = renderSpec(

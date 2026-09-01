@@ -109,6 +109,35 @@ export const NOTEBOOK_CHART_STYLES = ["line", "area"] as const;
 
 export type NotebookChartStyle = (typeof NOTEBOOK_CHART_STYLES)[number];
 
+/** Bounds on the editorial sections. Kept in step with the indexer by test. */
+export const NOTEBOOK_EYEBROW_MAX = 80;
+export const NOTEBOOK_HEADLINE_MAX = 200;
+export const NOTEBOOK_BREADCRUMB_MAX = 60;
+export const NOTEBOOK_BREADCRUMB_COUNT_MAX = 5;
+export const NOTEBOOK_NARRATIVE_BODY_MAX = 4000;
+
+/**
+ * Any `{{...}}` placeholder, capturing its contents.
+ *
+ * Permissive on purpose so validation can refuse an unrecognised one: a
+ * narrower pattern would not match `{{a.b.c}}` at all, and those braces would
+ * publish verbatim.
+ */
+export const NOTEBOOK_NARRATIVE_TOKEN_PATTERN = /\{\{([^{}]*)\}\}/g;
+
+export function extractNarrativeTokens(body: string): string[] {
+  const found: string[] = [];
+  // Fresh regex per call — a shared /g regex carries lastIndex and would skip
+  // every other match.
+  const pattern = new RegExp(NOTEBOOK_NARRATIVE_TOKEN_PATTERN.source, "g");
+  let match = pattern.exec(body);
+  while (match !== null) {
+    found.push(match[1].trim());
+    match = pattern.exec(body);
+  }
+  return found;
+}
+
 /** Bound on a text block's body — a paragraph of context, not a CMS. */
 export const NOTEBOOK_TEXT_BODY_MAX = 2000;
 
@@ -151,6 +180,14 @@ export const NOTEBOOK_KPI_METRICS = [
 ] as const;
 
 /** True when a metric is computed by the kernel layer rather than funding. */
+/**
+ * Placeholders a narrative may interpolate — the same ids the KPI tiles use,
+ * so prose and tiles on one page cannot quote different numbers.
+ */
+export const NOTEBOOK_NARRATIVE_TOKENS = NOTEBOOK_KPI_METRICS;
+
+export type NotebookNarrativeToken = (typeof NOTEBOOK_NARRATIVE_TOKENS)[number];
+
 export function isKernelKpiMetric(metric: NotebookKpiMetric): boolean {
   return (NOTEBOOK_KERNEL_KPI_METRICS as readonly string[]).includes(metric);
 }
@@ -339,6 +376,71 @@ export const NotebookTimeseriesSectionSchema = z
     }
   );
 
+/**
+ * Branded page header. Breadcrumb crumbs are LABELS, not links — a page must
+ * not become a way to point readers at arbitrary URLs.
+ */
+export const NotebookHeaderSectionSchema = z
+  .object({
+    type: z.literal("header"),
+    eyebrow: z.string().trim().min(1).max(NOTEBOOK_EYEBROW_MAX).optional(),
+    breadcrumbs: z
+      .array(z.string().trim().min(1).max(NOTEBOOK_BREADCRUMB_MAX))
+      .min(1)
+      .max(NOTEBOOK_BREADCRUMB_COUNT_MAX)
+      .optional(),
+  })
+  .strict();
+
+export const NotebookHeroSectionSchema = z
+  .object({
+    type: z.literal("hero"),
+    headline: z.string().trim().min(1).max(NOTEBOOK_HEADLINE_MAX),
+    subheadline: z.string().trim().min(1).max(NOTEBOOK_SECTION_DESCRIPTION_MAX).optional(),
+  })
+  .strict();
+
+/**
+ * In-page anchor nav, derived from the page's own titled sections.
+ *
+ * Carries no item list: an index that stores its own copy of the page falls
+ * out of step with it. Placing one is a decision; writing one is not.
+ */
+export const NotebookNavSectionSchema = z
+  .object({
+    type: z.literal("nav"),
+    title: sectionTitleSchema.optional(),
+  })
+  .strict();
+
+/**
+ * Prose with data-bound `{{token}}` placeholders.
+ *
+ * Prose renders as a text node; tokens come from a closed set and resolve to
+ * the same figures the KPI tiles show. An unknown token is refused here rather
+ * than published as literal braces.
+ */
+export const NotebookNarrativeSectionSchema = z
+  .object({
+    type: z.literal("narrative"),
+    title: sectionTitleSchema.optional(),
+    body: z.string().trim().min(1).max(NOTEBOOK_NARRATIVE_BODY_MAX),
+    kernelRange: z.enum(NOTEBOOK_KERNEL_RANGES).optional(),
+  })
+  .strict()
+  .superRefine((section, ctx) => {
+    const known = new Set<string>(NOTEBOOK_NARRATIVE_TOKENS);
+    for (const token of extractNarrativeTokens(section.body)) {
+      if (!known.has(token)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["body"],
+          message: `Unknown narrative token '${token}'`,
+        });
+      }
+    }
+  });
+
 export const NotebookSectionSchema = z.union([
   NotebookKpisSectionSchema,
   NotebookBarsSectionSchema,
@@ -346,6 +448,10 @@ export const NotebookSectionSchema = z.union([
   NotebookTextSectionSchema,
   NotebookTimeseriesSectionSchema,
   NotebookTableSectionSchema,
+  NotebookHeaderSectionSchema,
+  NotebookHeroSectionSchema,
+  NotebookNavSectionSchema,
+  NotebookNarrativeSectionSchema,
 ]);
 
 /**
@@ -364,6 +470,10 @@ export const NotebookSpecSchema = z
 export type NotebookKpisSection = z.infer<typeof NotebookKpisSectionSchema>;
 export type NotebookBarsSection = z.infer<typeof NotebookBarsSectionSchema>;
 export type NotebookApplicationsSection = z.infer<typeof NotebookApplicationsSectionSchema>;
+export type NotebookHeaderSection = z.infer<typeof NotebookHeaderSectionSchema>;
+export type NotebookHeroSection = z.infer<typeof NotebookHeroSectionSchema>;
+export type NotebookNavSection = z.infer<typeof NotebookNavSectionSchema>;
+export type NotebookNarrativeSection = z.infer<typeof NotebookNarrativeSectionSchema>;
 export type NotebookTableSection = z.infer<typeof NotebookTableSectionSchema>;
 export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
 export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;
