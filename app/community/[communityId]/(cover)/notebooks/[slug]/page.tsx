@@ -113,13 +113,19 @@ export default async function NotebookPage({ params }: { params: Params }) {
   // here rather than inside the viewer means the two paths do not share a
   // component that could be handed the wrong kind of spec.
   if (isCustomHtmlNotebookSpec(notebook.spec)) {
+    const sandboxOrigin = notebookSandboxOrigin();
     return (
       <NotebookCustomViewer
         communityId={communityId}
         name={notebook.name}
         description={notebook.description}
-        spec={notebook.spec}
-        sandboxOrigin={notebookSandboxOrigin()}
+        title={notebook.spec.title}
+        // Withheld when the tier is unconfigured. The document would only have
+        // been an inert escaped string in the payload, but a page that will
+        // not render it has no reason to ship it — defence in depth costs
+        // nothing here.
+        html={sandboxOrigin ? notebook.spec.html : undefined}
+        sandboxOrigin={sandboxOrigin}
       />
     );
   }
