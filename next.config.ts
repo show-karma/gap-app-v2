@@ -73,6 +73,7 @@ const nextConfig: NextConfig = {
     // match. The flag still exists in 16.3.3 and defaults to false; without it
     // the file is ignored and Next serves its own unbranded 404.
     globalNotFound: true,
+    useCache: true,
     optimizePackageImports: [
       "@tremor/react",
       "lucide-react",
