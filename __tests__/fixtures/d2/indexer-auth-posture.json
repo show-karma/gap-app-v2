@@ -1,0 +1,71 @@
+{
+  "$schema": "D2 — the gap-indexer auth posture of every endpoint the public loaders read",
+  "recordedFrom": "gap-indexer @ feat/analytics-server-events, app/modules/v2/api/routes/**",
+  "recordedAt": "2026-09-01",
+  "howToRerecord": "python .phase2/scan-indexer-auth.py <path-to-gap-indexer>",
+  "why": "A route with no auth preHandler never reads the Authorization header, so dropping the token on the server provably cannot change the payload. optionalAuthentication is the only posture where it can — those are enumerated below with the exact fields a session adds.",
+  "endpoints": [
+    {
+      "loader": "services/projects-explorer.service.ts",
+      "path": "/v2/projects",
+      "posture": "PUBLIC",
+      "source": "app/modules/v2/api/routes/project/project.routes.ts"
+    },
+    {
+      "loader": "services/project.service.ts",
+      "path": "/v2/projects/:identifier",
+      "posture": "PUBLIC",
+      "source": "app/modules/v2/api/routes/project/project.routes.ts"
+    },
+    {
+      "loader": "utilities/queries/v2/getCommunityData.ts",
+      "path": "/v2/communities/:uidOrSlug",
+      "posture": "PUBLIC",
+      "source": "app/modules/v2/api/routes/community/community.routes.ts"
+    },
+    {
+      "loader": "utilities/queries/v2/getCommunityData.ts",
+      "path": "/v2/communities/:slug/stats",
+      "posture": "PUBLIC",
+      "source": "app/modules/v2/api/routes/community/community.routes.ts"
+    },
+    {
+      "loader": "utilities/queries/v2/getCommunityData.ts",
+      "path": "/v2/communities/:slug/projects",
+      "posture": "PUBLIC",
+      "source": "app/modules/v2/api/routes/community/community.routes.ts"
+    },
+    {
+      "loader": "src/features/funding-map/services/funding-programs.service.ts",
+      "path": "/v2/program-registry/search",
+      "posture": "optionalAuthentication",
+      "source": "app/modules/v2/api/routes/program-registry/program-registry.routes.ts",
+      "sessionAddsFields": ["metadata.ingestionSource", "metadata.ingestionRunId", "metadata.rawData"],
+      "gatedOn": "authorizationService.isStaff(session.publicAddress) — a non-staff session changes nothing",
+      "mapper": "app/modules/v2/api/controllers/program-registry/read/mapper/program-registry.api.mapper.ts (includeAdminFields)"
+    },
+    {
+      "loader": "src/features/funding-map/services/funding-programs.service.ts",
+      "path": "/v2/program-registry/:programId",
+      "posture": "optionalAuthentication",
+      "source": "app/modules/v2/api/routes/program-registry/program-registry.routes.ts",
+      "sessionAddsFields": ["metadata.ingestionSource", "metadata.ingestionRunId", "metadata.rawData"],
+      "gatedOn": "authorizationService.isStaff(session.publicAddress) — a non-staff session changes nothing",
+      "mapper": "app/modules/v2/api/controllers/program-registry/read/mapper/program-registry.api.mapper.ts (includeAdminFields)"
+    }
+  ],
+  "staffOnlyFieldConsumers": [
+    {
+      "component": "components/Pages/ProgramRegistry/ProgramDetailsDialog.tsx",
+      "rendersOn": "/funding-map/manage-programs",
+      "dataPath": "client — ManagePrograms useQuery, never the server prefetch",
+      "verdict": "keeps its token, unaffected"
+    },
+    {
+      "component": "src/features/funding-map/components/funding-program-details-dialog.tsx",
+      "rendersOn": "/funding-map",
+      "dataPath": "client — use-funding-programs getById",
+      "verdict": "does not read the staff-only fields at all"
+    }
+  ]
+}
