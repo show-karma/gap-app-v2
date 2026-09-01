@@ -44,6 +44,13 @@ export interface CommentTimelineProps {
   /** @deprecated No longer used - ownership is determined internally via useAuth + compareAllWallets */
   currentUserAddress?: string | null;
   communityId: string;
+  /**
+   * Heading for the card. Defaults to "Activity", which reads correctly on the
+   * application page where the thread IS the application's activity. On the
+   * project grant page it sits above a milestone list, where "Activity" is
+   * ambiguous — pass a label that says whose comments these are.
+   */
+  title?: string;
 }
 
 export interface CommentItemProps {

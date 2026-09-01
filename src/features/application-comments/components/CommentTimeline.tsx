@@ -24,7 +24,11 @@ import { CommentInput } from "./CommentInput";
 import { CommentItem } from "./CommentItem";
 import { StatusChangeItem } from "./StatusChangeItem";
 
-export function CommentTimeline({ applicationId, statusHistory }: CommentTimelineProps) {
+export function CommentTimeline({
+  applicationId,
+  statusHistory,
+  title = "Activity",
+}: CommentTimelineProps) {
   const { user } = useAuth();
   const {
     comments,
@@ -125,7 +129,7 @@ export function CommentTimeline({ applicationId, statusHistory }: CommentTimelin
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-muted-foreground" />
           <div>
-            <h2 className="text-base font-semibold text-foreground">Activity</h2>
+            <h2 className="text-base font-semibold text-foreground">{title}</h2>
             <p className="text-[13px] text-muted-foreground">
               {pluralize("status update", statusCount, true)} ·{" "}
               {pluralize("comment", commentCount, true)}

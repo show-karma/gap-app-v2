@@ -17,6 +17,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
+import { GrantCommentsPanel } from "./GrantCommentsPanel";
 
 const EmptyMilestone = ({ grant }: { grant?: Grant; project?: ProjectResponse }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -241,6 +242,16 @@ export default function MilestonesAndUpdates() {
   return (
     <div className="w-full">
       <div className="space-y-5">
+        {/*
+         * Sits outside the milestones ternary on purpose. A reviewer commenting
+         * on an approved application does not presuppose milestones exist — the
+         * "please add your milestones before we can disburse" case has zero
+         * milestones and would otherwise hit `EmptyMilestone` and never see the
+         * comment, which is the exact failure this surface exists to fix.
+         * Renders nothing when the grant has no linked application, so the
+         * empty state is visually unchanged.
+         */}
+        {grant && <GrantCommentsPanel grant={grant} />}
         {hasMilestonesOrUpdates ? (
           <div className="flex flex-1 flex-col gap-4">
             {grant && (
