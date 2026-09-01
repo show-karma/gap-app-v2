@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { CANONICAL_HOST, STAGING_HOST } from "@/utilities/domains";
 import {
   isKnownTenantParam,
@@ -7,6 +9,8 @@ import {
   listTenantParams,
   resolveTenantParam,
   resolveWhitelabelFromTenantParam,
+  TENANT_NOT_FOUND_SEGMENT,
+  tenantNotFoundPathname,
   tenantRewritePathname,
 } from "@/utilities/tenant-param";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
@@ -240,6 +244,46 @@ describe("tenantRewritePathname", () => {
   it("leaves the dots and hyphens of a domain param unescaped", () => {
     expect(tenantRewritePathname("founders.polygon.technology", "/about")).toBe(
       "/t/founders.polygon.technology/about"
+    );
+  });
+});
+
+describe("tenantNotFoundPathname", () => {
+  it("builds a path under the requested tenant", () => {
+    expect(tenantNotFoundPathname(KARMA_TENANT_PARAM)).toBe(
+      `/t/${KARMA_TENANT_PARAM}/${TENANT_NOT_FOUND_SEGMENT}`
+    );
+    expect(tenantNotFoundPathname("app.opgrants.io")).toBe(
+      `/t/app.opgrants.io/${TENANT_NOT_FOUND_SEGMENT}`
+    );
+  });
+
+  it("is itself inside the blocked prefix, so it can never be requested directly", () => {
+    expect(isTenantRoutePath(tenantNotFoundPathname(KARMA_TENANT_PARAM))).toBe(true);
+  });
+
+  it("points at a real route that throws notFound()", () => {
+    // Load-bearing: an UNMATCHED path is answered by the ROOT not-found
+    // boundary, and there is no root-level app/not-found.tsx now that the page
+    // tree lives under app/t/[tenant]/ — Next would serve its own built-in 404
+    // with none of our chrome. Only a real route under this layout renders
+    // app/t/[tenant]/not-found.tsx.
+    const page = path.join(
+      process.cwd(),
+      "app",
+      "t",
+      "[tenant]",
+      TENANT_NOT_FOUND_SEGMENT,
+      "page.tsx"
+    );
+
+    expect(fs.existsSync(page)).toBe(true);
+    expect(fs.readFileSync(page, "utf-8")).toContain("notFound()");
+  });
+
+  it("keeps a not-found boundary at the root of the tenant tree to render into", () => {
+    expect(fs.existsSync(path.join(process.cwd(), "app", "t", "[tenant]", "not-found.tsx"))).toBe(
+      true
     );
   });
 });

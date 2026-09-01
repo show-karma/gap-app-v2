@@ -45,7 +45,11 @@ vi.mock("@/utilities/project-indexability-client", () => ({
 
 import { proxy } from "@/proxy";
 import { CANONICAL_HOST, CANONICAL_ORIGIN } from "@/utilities/domains";
-import { KARMA_TENANT_PARAM, TENANT_ROUTE_PREFIX } from "@/utilities/tenant-param";
+import {
+  KARMA_TENANT_PARAM,
+  TENANT_ROUTE_PREFIX,
+  tenantNotFoundPathname,
+} from "@/utilities/tenant-param";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
 const whitelabel = WHITELABEL_DOMAINS[0];
@@ -182,37 +186,50 @@ describe("tenant rewrite on a whitelabel host", () => {
 });
 
 describe("the tenant prefix is not publicly addressable", () => {
+  // The proxy answers with a rewrite to an unmatchable segment; Next turns that
+  // into the branded not-found page with a 404 status. These assert the routing
+  // decision — that the response really carries status 404 and the not-found
+  // body is covered end to end against a production server.
   it.each([
     `${TENANT_ROUTE_PREFIX}`,
     `${TENANT_ROUTE_PREFIX}/`,
     `${TENANT_ROUTE_PREFIX}/${KARMA_TENANT_PARAM}/about`,
     `${TENANT_ROUTE_PREFIX}/${whitelabel.domain}/programs/123`,
     "/T/karma/about",
-  ])("404s %s on the canonical host", async (path) => {
+  ])("serves %s from the not-found route on the canonical host", async (path) => {
     const response = await proxy(createRequest(CANONICAL_HOST, path));
 
-    expect(response.status).toBe(404);
+    expect(rewriteOf(response)).toBe(
+      `https://${CANONICAL_HOST}${tenantNotFoundPathname(KARMA_TENANT_PARAM)}`
+    );
     expect(response.headers.get("X-Robots-Tag")).toBe("noindex, follow");
-    expect(rewriteOf(response)).toBeNull();
+    // Never a redirect: a Location header would advertise the internal URL.
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("404s the prefix on a whitelabel host too", async () => {
+  it("uses the requesting host's own tenant for the not-found shell", async () => {
     const response = await proxy(
       createRequest(whitelabel.domain, `${TENANT_ROUTE_PREFIX}/${whitelabel.domain}/`)
     );
 
-    expect(response.status).toBe(404);
+    // The tenant comes from the HOST, not from the path the caller supplied —
+    // so the 404 page keeps the tenant's own chrome and an attacker cannot
+    // pick which shell renders.
+    expect(rewriteOf(response)).toBe(
+      `https://${whitelabel.domain}${tenantNotFoundPathname(whitelabel.domain)}`
+    );
   });
 
-  it("404s the prefix on an alias host instead of 308ing it to www", async () => {
-    // The 404 runs first on purpose: hopping to www would advertise the
+  it("blocks the prefix on an alias host instead of 308ing it to www", async () => {
+    // The block runs first on purpose: hopping to www would advertise the
     // internal URL in a Location header.
     const response = await proxy(
       createRequest("karmahq.org", `${TENANT_ROUTE_PREFIX}/${KARMA_TENANT_PARAM}/about`)
     );
 
-    expect(response.status).toBe(404);
+    expect(rewriteOf(response)).toBe(
+      `https://karmahq.org${tenantNotFoundPathname(KARMA_TENANT_PARAM)}`
+    );
     expect(response.headers.get("location")).toBeNull();
   });
 

@@ -1,4 +1,5 @@
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
+import { COPYRIGHT_YEAR } from "@/src/components/footer/copyright-year";
 import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
 import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
@@ -101,7 +102,10 @@ export async function TenantNavbar({ whitelabel }: { whitelabel: Whitelabel }) {
 export async function TenantFooter({ whitelabel }: { whitelabel: Whitelabel }) {
   const { isWhitelabel } = await whitelabel;
 
-  return <FooterSwitcher isWhitelabel={isWhitelabel} />;
+  // COPYRIGHT_YEAR is a build-time constant, read here on the server and
+  // handed down as a prop — see copyright-year.ts for why the client component
+  // that displays it must not compute it itself.
+  return <FooterSwitcher isWhitelabel={isWhitelabel} copyrightYear={COPYRIGHT_YEAR} />;
 }
 
 /** Describes Karma, so it is for the main domain only. */

@@ -16,6 +16,7 @@ import {
   isTenantExemptPath,
   isTenantRoutePath,
   resolveTenantParam,
+  tenantNotFoundPathname,
   tenantRewritePathname,
 } from "./utilities/tenant-param";
 import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
@@ -74,9 +75,14 @@ export async function proxy(request: NextRequest) {
   // Every page request is rewritten to /t/<tenant>/... below. A request that
   // arrives already carrying the prefix would serve the same page at a second
   // URL (www.karmahq.org/t/karma/about) — duplicate indexable content — so it
-  // 404s before any other rule can rewrite or redirect it.
+  // is answered with the branded 404 before any other rule can rewrite or
+  // redirect it. Rewriting to an unmatchable segment (rather than returning a
+  // bodyless 404) gets the real not-found page with a real 404 status; the
+  // browser URL is untouched either way.
   if (isTenantRoutePath(path)) {
-    return withRobots(new NextResponse(null, { status: 404 }), NOINDEX_FOLLOW);
+    const url = request.nextUrl.clone();
+    url.pathname = tenantNotFoundPathname(resolveTenantParam(request.headers.get("host") || ""));
+    return withRobots(NextResponse.rewrite(url), NOINDEX_FOLLOW);
   }
 
   // --- Whitelabel domain handling (must run before all other logic) ---

@@ -83,6 +83,26 @@ export function isKnownTenantParam(value: string): boolean {
   return value === KARMA_TENANT_PARAM || resolveWhitelabelFromTenantParam(value) !== null;
 }
 
+/**
+ * The path a blocked `/t/*` request is served from.
+ *
+ * A bodyless 404 is a dead end for whoever lands on one, so the request is
+ * rewritten to a real route that throws `notFound()`
+ * (`app/t/[tenant]/blocked-internal-path/page.tsx`). Because that route sits
+ * under the tenant layout, Next renders `app/t/[tenant]/not-found.tsx` inside
+ * the normal shell and answers 404 — the branded page with the right status.
+ *
+ * It must be a real route, not an unmatchable path: an unmatched URL is handled
+ * by the *root* not-found boundary, and with the page tree under
+ * `app/t/[tenant]/` there is no root-level `app/not-found.tsx`, so Next serves
+ * its own built-in 404 with none of our chrome.
+ */
+export const TENANT_NOT_FOUND_SEGMENT = "blocked-internal-path";
+
+export function tenantNotFoundPathname(tenantParam: string): string {
+  return `${TENANT_ROUTE_PREFIX}/${encodeURIComponent(tenantParam)}/${TENANT_NOT_FOUND_SEGMENT}`;
+}
+
 /** Whether a request is addressing the internal prefix directly. Lower-cased so
  *  a `/T/...` probe is blocked by the same rule rather than falling through. */
 export function isTenantRoutePath(pathname: string): boolean {
