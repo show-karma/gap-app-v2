@@ -114,7 +114,7 @@ vi.mock("@/hooks/donation/useDonationHistory", () => ({
   useDonationHistory: () => mockDonationState.current,
 }));
 
-import DonationsPage from "@/app/donations/page";
+import DonationsPage from "@/app/t/[tenant]/donations/page";
 
 // Fresh QueryClient per render — no afterEach cleanup required
 function createTestQueryClient() {

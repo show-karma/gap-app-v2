@@ -77,7 +77,7 @@ beforeEach(() => {
 
 describe("/ask-karma (root) page", () => {
   it("renders AskKarmaPage with the default config when not on a whitelabel", async () => {
-    await renderAsyncPage(() => import("@/app/ask-karma/page"), {});
+    await renderAsyncPage(() => import("@/app/t/[tenant]/ask-karma/page"), {});
     expect(screen.getByTestId("ask-karma-page")).toBeInTheDocument();
     expect(screen.getByTestId("ask-karma-page")).toHaveAttribute("data-heading", "Ask Karma");
     expect(askKarmaPageSpy).toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe("/ask-karma (root) page", () => {
       config: { domain: "app.filpgf.io", communitySlug: "filecoin", tenantId: "filecoin" },
       tenantConfig: { id: "filecoin", name: "Filecoin" },
     });
-    await renderAsyncPage(() => import("@/app/ask-karma/page"), {});
+    await renderAsyncPage(() => import("@/app/t/[tenant]/ask-karma/page"), {});
     const props = askKarmaPageSpy.mock.calls[0][0];
     expect(props.communityId).toBe("filecoin");
     // Filecoin gets the bespoke config — the heading reads "Ask Karma"
@@ -110,7 +110,7 @@ describe("/ask-karma (root) page", () => {
     // Tenant-agnostic by design: the agent is Karma regardless of
     // which whitelabel the user arrived on. The on-page chrome still
     // uses the community's branding — only the page metadata is fixed.
-    const { metadata } = await import("@/app/ask-karma/page");
+    const { metadata } = await import("@/app/t/[tenant]/ask-karma/page");
     expect(metadata.title).toBe("Ask Karma");
     expect(metadata.alternates?.canonical).toBe("/ask-karma");
     // Rule: no tenant-name interpolation in the description. "Karma" is
@@ -122,7 +122,7 @@ describe("/ask-karma (root) page", () => {
 
 describe("/community/[communityId]/ask-karma (community) page", () => {
   it("renders AskKarmaPage with the community id from params", async () => {
-    await renderAsyncPage(() => import("@/app/community/[communityId]/ask-karma/page"), {
+    await renderAsyncPage(() => import("@/app/t/[tenant]/community/[communityId]/ask-karma/page"), {
       params: Promise.resolve({ communityId: "filecoin" }),
     });
     expect(screen.getByTestId("ask-karma-page")).toBeInTheDocument();
@@ -151,7 +151,7 @@ describe("/community/[communityId]/ask-karma (community) page", () => {
     }));
 
     await expect(
-      renderAsyncPage(() => import("@/app/community/[communityId]/ask-karma/page"), {
+      renderAsyncPage(() => import("@/app/t/[tenant]/community/[communityId]/ask-karma/page"), {
         params: Promise.resolve({ communityId: "unknown" }),
       })
     ).rejects.toThrow();
@@ -171,7 +171,9 @@ describe("/community/[communityId]/ask-karma (community) page", () => {
         .fn()
         .mockResolvedValue({ uid: "0x123", details: { name: "Filecoin", slug: "filecoin" } }),
     }));
-    const { generateMetadata } = await import("@/app/community/[communityId]/ask-karma/page");
+    const { generateMetadata } = await import(
+      "@/app/t/[tenant]/community/[communityId]/ask-karma/page"
+    );
     const meta = await generateMetadata({
       params: Promise.resolve({ communityId: "filecoin" }),
     });

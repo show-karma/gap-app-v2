@@ -139,7 +139,7 @@ beforeEach(() => {
 
 describe("Community async server pages — happy path", () => {
   it("/manage renders DashboardOverview", async () => {
-    await renderAsyncPage(() => import("@/app/community/[communityId]/manage/page"), {
+    await renderAsyncPage(() => import("@/app/t/[tenant]/community/[communityId]/manage/page"), {
       params: Promise.resolve({ communityId: "c1" }),
     });
     expect(screen.getByTestId("dashboard-overview")).toBeInTheDocument();
@@ -147,29 +147,35 @@ describe("Community async server pages — happy path", () => {
 
   it("/manage/knowledge-base renders KnowledgeBasePage", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/manage/knowledge-base/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/knowledge-base/page"),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("knowledge-base-page")).toBeInTheDocument();
   });
 
   it("/manage/kyc-settings renders KycSettingsPage", async () => {
-    await renderAsyncPage(() => import("@/app/community/[communityId]/manage/kyc-settings/page"), {
-      params: Promise.resolve({ communityId: "c1" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/kyc-settings/page"),
+      {
+        params: Promise.resolve({ communityId: "c1" }),
+      }
+    );
     expect(screen.getByTestId("kyc-settings-page")).toBeInTheDocument();
   });
 
   it("/admin/kyc-settings renders KycSettingsPage", async () => {
-    await renderAsyncPage(() => import("@/app/community/[communityId]/admin/kyc-settings/page"), {
-      params: Promise.resolve({ communityId: "c1" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/admin/kyc-settings/page"),
+      {
+        params: Promise.resolve({ communityId: "c1" }),
+      }
+    );
     expect(screen.getByTestId("kyc-settings-page")).toBeInTheDocument();
   });
 
   it("/manage/notification-settings renders NotificationSettingsPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/manage/notification-settings/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/notification-settings/page"),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("notification-settings-page")).toBeInTheDocument();
@@ -177,7 +183,7 @@ describe("Community async server pages — happy path", () => {
 
   it("/manage/portfolio-reports renders PortfolioReportListPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/manage/portfolio-reports/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/portfolio-reports/page"),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("portfolio-report-list-page")).toBeInTheDocument();
@@ -185,7 +191,7 @@ describe("Community async server pages — happy path", () => {
 
   it("/manage/portfolio-reports/config renders ReportConfigPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/manage/portfolio-reports/config/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/portfolio-reports/config/page"),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("report-config-page")).toBeInTheDocument();
@@ -193,7 +199,8 @@ describe("Community async server pages — happy path", () => {
 
   it("/manage/portfolio-reports/[reportId] renders editor", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/manage/portfolio-reports/[reportId]/page"),
+      () =>
+        import("@/app/t/[tenant]/community/[communityId]/manage/portfolio-reports/[reportId]/page"),
       { params: Promise.resolve({ communityId: "c1", reportId: "r1" }) }
     );
     expect(screen.getByTestId("portfolio-report-editor-page")).toBeInTheDocument();
@@ -202,22 +209,27 @@ describe("Community async server pages — happy path", () => {
   it("/manage/portfolio-reports/[reportId]/preview renders preview", async () => {
     await renderAsyncPage(
       () =>
-        import("@/app/community/[communityId]/manage/portfolio-reports/[reportId]/preview/page"),
+        import(
+          "@/app/t/[tenant]/community/[communityId]/manage/portfolio-reports/[reportId]/preview/page"
+        ),
       { params: Promise.resolve({ communityId: "c1", reportId: "r1" }) }
     );
     expect(screen.getByTestId("portfolio-report-preview-page")).toBeInTheDocument();
   });
 
   it("/manage/tracks renders TracksAdminPage", async () => {
-    await renderAsyncPage(() => import("@/app/community/[communityId]/manage/tracks/page"), {
-      params: Promise.resolve({ communityId: "c1" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/tracks/page"),
+      {
+        params: Promise.resolve({ communityId: "c1" }),
+      }
+    );
     expect(screen.getByTestId("tracks-admin-page")).toBeInTheDocument();
   });
 
   it("/manage/milestones-report renders ReportMilestonePage", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/manage/milestones-report/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/milestones-report/page"),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("report-milestone-page")).toBeInTheDocument();
@@ -225,31 +237,37 @@ describe("Community async server pages — happy path", () => {
 
   it("/(with-header)/projects renders CommunityGrants", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/(with-header)/projects/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/(with-header)/projects/page"),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("community-grants")).toBeInTheDocument();
   });
 
   it("/(cover)/reports renders PublicReportListPage", async () => {
-    await renderAsyncPage(() => import("@/app/community/[communityId]/(cover)/reports/page"), {
-      params: Promise.resolve({ communityId: "c1" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/(cover)/reports/page"),
+      {
+        params: Promise.resolve({ communityId: "c1" }),
+      }
+    );
     expect(screen.getByTestId("public-report-list-page")).toBeInTheDocument();
   });
 
   it("/(cover)/reports/[runDate] renders PublicReportViewPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/(cover)/reports/[runDate]/page"),
+      () => import("@/app/t/[tenant]/community/[communityId]/(cover)/reports/[runDate]/page"),
       { params: Promise.resolve({ communityId: "c1", runDate: "2025-04-01" }) }
     );
     expect(screen.getByTestId("public-report-view-page")).toBeInTheDocument();
   });
 
   it("/donate/[programId] renders CommunityGrantsDonate", async () => {
-    await renderAsyncPage(() => import("@/app/community/[communityId]/donate/[programId]/page"), {
-      params: Promise.resolve({ communityId: "c1", programId: "p1" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/donate/[programId]/page"),
+      {
+        params: Promise.resolve({ communityId: "c1", programId: "p1" }),
+      }
+    );
     expect(screen.getByTestId("community-grants-donate")).toBeInTheDocument();
   });
 });
@@ -264,7 +282,7 @@ describe("Community async server pages — runDate route validation", () => {
       throw err;
     });
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(cover)/reports/[runDate]/page"
+      "@/app/t/[tenant]/community/[communityId]/(cover)/reports/[runDate]/page"
     );
     await expect(
       Page({ params: Promise.resolve({ communityId: "c1", runDate: "not-a-date" }) })

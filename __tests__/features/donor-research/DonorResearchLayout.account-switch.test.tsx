@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-quer
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import DonorResearchLayout from "@/app/nonprofit-research/layout";
+import DonorResearchLayout from "@/app/t/[tenant]/nonprofit-research/layout";
 
 const authState = {
   ready: true,

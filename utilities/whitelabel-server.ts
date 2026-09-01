@@ -1,8 +1,9 @@
-import { headers } from "next/headers";
+import { tenant } from "next/root-params";
 import { getTenantConfig } from "@/src/infrastructure/config/tenant-config";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { isKnownTenant } from "@/src/infrastructure/types/tenant";
-import { getWhitelabelByDomain, type WhitelabelDomain } from "./whitelabel-config";
+import { resolveWhitelabelFromTenantParam } from "./tenant-param";
+import type { WhitelabelDomain } from "./whitelabel-config";
 
 export interface WhitelabelContext {
   isWhitelabel: boolean;
@@ -25,10 +26,17 @@ export function buildWhitelabelRedirectPath(path: string, ctx: WhitelabelContext
   return stripped;
 }
 
+/**
+ * Resolve the whitelabel context from the `[tenant]` root param.
+ *
+ * The param is set by the proxy, which rewrites every page request to
+ * `/t/<tenant>/<path>`, so this is URL-derived rather than host-derived. That
+ * is the whole point: a host read (`headers()`) makes every route dynamic and
+ * keeps the app shell out of the prerender, a root param does not.
+ */
 export async function getWhitelabelContext(): Promise<WhitelabelContext> {
-  const headersList = await headers();
-  const host = headersList.get("host") ?? "";
-  const config = getWhitelabelByDomain(host);
+  const tenantParam = await tenant();
+  const config = resolveWhitelabelFromTenantParam(tenantParam);
   const isWhitelabel = config !== null;
 
   const communitySlug = config?.communitySlug ?? null;

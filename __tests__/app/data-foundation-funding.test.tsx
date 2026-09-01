@@ -8,8 +8,8 @@ import {
   DATA_PAGE_STATS,
   DATA_PAGE_TITLE,
   DATASET_DESCRIPTION,
-} from "@/app/data/foundation-funding/content";
-import FoundationFundingDataPage, { metadata } from "@/app/data/foundation-funding/page";
+} from "@/app/t/[tenant]/data/foundation-funding/content";
+import FoundationFundingDataPage, { metadata } from "@/app/t/[tenant]/data/foundation-funding/page";
 import { FILINGS_STATS } from "@/src/features/non-profits/lib/stats";
 
 // The static sitemap pulls blog slugs from Sanity, whose gateway validates the
@@ -65,7 +65,7 @@ describe("/data/foundation-funding content", () => {
     // (src/features/non-profits/lib/stats.ts), the single source the
     // find-funders surfaces share. A literal here would silently go stale
     // the day that source changes.
-    const routeDir = path.resolve(__dirname, "../../app/data/foundation-funding");
+    const routeDir = path.resolve(__dirname, "../../app/t/[tenant]/data/foundation-funding");
     for (const file of ["page.tsx", "content.ts"]) {
       const source = fs.readFileSync(path.join(routeDir, file), "utf8");
       for (const literal of ["2 million", "2M", "1.2T", "$1.2", "seven years"]) {

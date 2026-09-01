@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import Page from "@/app/my-projects/page";
+import Page from "@/app/t/[tenant]/my-projects/page";
 
 vi.mock("@/components/Pages/MyProjects", () => ({
   __esModule: true,
