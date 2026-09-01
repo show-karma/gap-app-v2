@@ -54,7 +54,7 @@ describe("Community Page", () => {
 
   it("renders the community page with correct components", async () => {
     const { default: PageComponent } = await import(
-      "@/app/community/[communityId]/(with-header)/page"
+      "@/app/t/[tenant]/community/[communityId]/(with-header)/page"
     );
     const result = await PageComponent({
       params: Promise.resolve({ communityId: "test-community" }),
@@ -71,7 +71,7 @@ describe("Community Page", () => {
     pagesOnRoot.push("dashboard");
 
     const { default: PageComponent } = await import(
-      "@/app/community/[communityId]/(with-header)/page"
+      "@/app/t/[tenant]/community/[communityId]/(with-header)/page"
     );
     const result = await PageComponent({
       params: Promise.resolve({ communityId: "dashboard" }),

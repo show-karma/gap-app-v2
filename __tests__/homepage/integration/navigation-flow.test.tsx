@@ -4,7 +4,7 @@
  * two-row "Why Karma" section CTAs.
  */
 
-import HomePage from "@/app/page";
+import HomePage from "@/app/t/[tenant]/page";
 import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 

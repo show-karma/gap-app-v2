@@ -11,7 +11,7 @@
 
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ClaimFundsError from "@/app/community/[communityId]/(whitelabel)/claim-funds/error";
+import ClaimFundsError from "@/app/t/[tenant]/community/[communityId]/(whitelabel)/claim-funds/error";
 import { renderWithProviders } from "../../utils/render";
 
 // Mock lucide-react icons

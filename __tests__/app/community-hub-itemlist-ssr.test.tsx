@@ -136,7 +136,9 @@ const makeServerPage = (count = 3): CommunityProjects => ({
 async function renderPageToHtml(
   searchParams: Record<string, string | string[] | undefined> = {}
 ): Promise<string> {
-  const { default: Page } = await import("@/app/community/[communityId]/(with-header)/page");
+  const { default: Page } = await import(
+    "@/app/t/[tenant]/community/[communityId]/(with-header)/page"
+  );
   const ui = await Page({
     params: Promise.resolve({ communityId: COMMUNITY_ID }),
     searchParams: Promise.resolve(searchParams),

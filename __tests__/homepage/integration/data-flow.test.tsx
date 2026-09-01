@@ -8,7 +8,7 @@
  * - Data Display (5)
  */
 
-import HomePage from "@/app/page";
+import HomePage from "@/app/t/[tenant]/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 

@@ -102,6 +102,19 @@ vi.mock("next/headers", () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// next/root-params
+// The shipped module is a compiler placeholder that throws on import — the
+// real getters are generated during `next build`/`next dev`, which never runs
+// under vitest. The tenant root param is what `getWhitelabelContext()` reads,
+// so default it to the main tenant, matching the non-whitelabel host the
+// `next/headers` mock above assumes. Tests exercising tenant behavior override
+// this with their own vi.mock().
+// ---------------------------------------------------------------------------
+vi.mock("next/root-params", () => ({
+  tenant: async () => "karma",
+}));
+
+// ---------------------------------------------------------------------------
 // @/utilities/enviromentVars
 // Most tests only need NEXT_PUBLIC_GAP_INDEXER_URL. Tests that need RPC
 // values or other env vars should provide their own vi.mock() override.
