@@ -16,6 +16,7 @@ import {
   useUpdateNotebook,
 } from "@/hooks/notebooks/useNotebookBuilder";
 import type { NotebookOverview } from "@/services/notebook-overview.service";
+import type { NotebookProvenanceEntry } from "@/services/notebooks/notebook-generation.types";
 import type { NotebookIndicatorOption } from "@/services/notebooks/notebook-indicators.types";
 import type { NotebookMetricCatalog } from "@/services/notebooks/notebook-metric-registry.types";
 import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.types";
@@ -25,8 +26,10 @@ import { sanitizeSlugInput, slugifyNotebookName } from "@/services/notebooks-adm
 import { Link } from "@/src/components/navigation/Link";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
+import { DescribePagePanel } from "./DescribePagePanel";
 import { MetricQueryBuilder } from "./MetricQueryBuilder";
 import { SectionComposer } from "./SectionComposer";
+import { UnverifiedDraftNotice } from "./SectionProvenance";
 
 interface Props {
   community: Community;
@@ -88,6 +91,16 @@ export function NotebookBuilderEditorPage({
   const [slugTouched, setSlugTouched] = useState(false);
   const [description, setDescription] = useState("");
   const [spec, setSpec] = useState<NotebookSpec>(emptyNotebookSpec);
+  /**
+   * Evidence for a generated draft, and whether one is awaiting review.
+   *
+   * Both live in the BROWSER and neither is ever sent to the server: the spec
+   * is what gets saved, and provenance is scaffolding for the person checking
+   * it. `proposed` clears the moment the admin saves or publishes, because
+   * that is when a person takes responsibility for the page.
+   */
+  const [provenance, setProvenance] = useState<(NotebookProvenanceEntry | undefined)[]>([]);
+  const [proposed, setProposed] = useState<{ warnings: string[] } | null>(null);
 
   // Load the existing page into the form once it arrives. Keyed on the config
   // itself rather than running on every render, so an author's in-progress
@@ -122,6 +135,10 @@ export function NotebookBuilderEditorPage({
 
   const handleSave = async (publish?: boolean) => {
     if (!canSave) return;
+
+    // A person has taken responsibility for this page, so it is no longer a
+    // proposal awaiting review.
+    setProposed(null);
 
     const body = {
       slug: pageSlug,
@@ -255,12 +272,28 @@ export function NotebookBuilderEditorPage({
             </label>
           </div>
 
+          {/* Above the composer: the description box is the primary way in,
+              and the composer is where the proposal gets checked. */}
+          <DescribePagePanel
+            communitySlug={communitySlug}
+            hasExistingSections={spec.sections.length > 0}
+            onGenerated={(result) => {
+              setSpec(result.spec);
+              setProvenance(result.provenance);
+              setProposed({ warnings: result.warnings });
+            }}
+          />
+
+          {proposed ? <UnverifiedDraftNotice warnings={proposed.warnings} /> : null}
+
           <div className="rounded-2xl border border-border bg-background p-5">
             <SectionComposer
               spec={spec}
               onChange={setSpec}
               indicators={indicators}
               metricCatalog={metricCatalog}
+              provenance={provenance}
+              onProvenanceChange={setProvenance}
             />
           </div>
 

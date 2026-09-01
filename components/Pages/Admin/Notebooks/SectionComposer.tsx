@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { NotebookProvenanceEntry } from "@/services/notebooks/notebook-generation.types";
 import {
   isIndicatorOfferableWithoutVariants,
   type NotebookIndicatorOption,
@@ -62,6 +63,7 @@ import {
 } from "@/services/notebooks/notebook-spec-draft";
 import { HeaderFields, HeroFields, NarrativeFields } from "./EditorialFields";
 import { QueryFields } from "./QueryFields";
+import { SectionProvenance } from "./SectionProvenance";
 
 interface Props {
   spec: NotebookSpec;
@@ -82,6 +84,17 @@ interface Props {
    * will refuse.
    */
   metricCatalog?: NotebookMetricCatalog;
+  /**
+   * Where each generated section's content came from, parallel to `sections`.
+   *
+   * Held here rather than in the spec because it is REVIEW-TIME scaffolding:
+   * it has no meaning once the page is published and no business being stored
+   * on every page forever. It has to be kept in step with the sections through
+   * the reordering a reviewer does, which is why the structural controls below
+   * move it too.
+   */
+  provenance?: readonly (NotebookProvenanceEntry | undefined)[];
+  onProvenanceChange?: (next: (NotebookProvenanceEntry | undefined)[]) => void;
 }
 
 /**
@@ -96,7 +109,35 @@ interface Props {
  *
  * Order is the render order, so up/down is the whole layout language.
  */
-export function SectionComposer({ spec, onChange, indicators = [], metricCatalog }: Props) {
+export function SectionComposer({
+  spec,
+  onChange,
+  indicators = [],
+  metricCatalog,
+  provenance,
+  onProvenanceChange,
+}: Props) {
+  // Every structural edit applies the SAME operation to the evidence, so a
+  // reordered section keeps its own sources. Stale provenance is worse than
+  // none: it attributes one section's data to another.
+  const reorderProvenance = (from: number, to: number) => {
+    if (!provenance || !onProvenanceChange) return;
+    if (to < 0 || to >= provenance.length) return;
+    const next = [...provenance];
+    [next[from], next[to]] = [next[to], next[from]];
+    onProvenanceChange(next);
+  };
+  const dropProvenance = (index: number) => {
+    if (!provenance || !onProvenanceChange) return;
+    onProvenanceChange(provenance.filter((_, i) => i !== index));
+  };
+  const appendProvenance = () => {
+    if (!provenance || !onProvenanceChange) return;
+    // A section the author added themselves has no AI provenance, and saying
+    // nothing is the honest answer.
+    onProvenanceChange([...provenance, undefined]);
+  };
+
   const atLimit = !canAddSection(spec);
 
   return (
@@ -132,7 +173,10 @@ export function SectionComposer({ spec, onChange, indicators = [], metricCatalog
                     size="sm"
                     aria-label={`Move section ${index + 1} up`}
                     disabled={index === 0}
-                    onClick={() => onChange(moveSection(spec, index, -1))}
+                    onClick={() => {
+                      onChange(moveSection(spec, index, -1));
+                      reorderProvenance(index, index - 1);
+                    }}
                   >
                     <ArrowUp className="h-4 w-4" />
                   </Button>
@@ -141,7 +185,10 @@ export function SectionComposer({ spec, onChange, indicators = [], metricCatalog
                     size="sm"
                     aria-label={`Move section ${index + 1} down`}
                     disabled={index === spec.sections.length - 1}
-                    onClick={() => onChange(moveSection(spec, index, 1))}
+                    onClick={() => {
+                      onChange(moveSection(spec, index, 1));
+                      reorderProvenance(index, index + 1);
+                    }}
                   >
                     <ArrowDown className="h-4 w-4" />
                   </Button>
@@ -149,13 +196,17 @@ export function SectionComposer({ spec, onChange, indicators = [], metricCatalog
                     variant="secondary"
                     size="sm"
                     aria-label={`Remove section ${index + 1}`}
-                    onClick={() => onChange(removeSection(spec, index))}
+                    onClick={() => {
+                      onChange(removeSection(spec, index));
+                      dropProvenance(index);
+                    }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
 
+              <SectionProvenance entry={provenance?.[index]} />
               <SectionFields
                 section={section}
                 index={index}
@@ -180,7 +231,10 @@ export function SectionComposer({ spec, onChange, indicators = [], metricCatalog
             variant="secondary"
             size="sm"
             disabled={atLimit}
-            onClick={() => onChange(addSection(spec, type, metricCatalog?.items[0]?.id))}
+            onClick={() => {
+              onChange(addSection(spec, type, metricCatalog?.items[0]?.id));
+              appendProvenance();
+            }}
           >
             <Plus className="h-4 w-4" />
             {SECTION_TYPE_LABELS[type]}

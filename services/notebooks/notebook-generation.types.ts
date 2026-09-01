@@ -1,0 +1,100 @@
+import { z } from "zod";
+import { NotebookSpecSchema } from "./notebook-spec";
+
+/**
+ * The NL → spec generator's contract, and the reviewer's evidence.
+ *
+ * THE MODEL PROPOSES; THE VALIDATED PIPELINE DISPOSES. What comes back is a
+ * spec — never code, SQL or HTML — so it flows through exactly the path a
+ * human's clicks would, and a hallucinated metric id is rejected at the same
+ * boundary a typo would be. The model chooses WHAT to show; every figure is
+ * still computed by our own query layer, so it cannot fabricate a number.
+ *
+ * WHAT IT CAN STILL GET WRONG is the part this file exists to surface. The
+ * model writes PROSE — a headline, a narrative sentence — and prose under a
+ * tenant's name is a different risk class from a figure we computed. Hence
+ * `authored` as its own source kind: a reviewer must be able to see at a
+ * glance which words are the model's own and which numbers are ours, because
+ * the em-dash discipline protects the second and does nothing for the first.
+ */
+
+export const NOTEBOOK_PROVENANCE_KINDS = ["metric", "kernel", "funding", "authored"] as const;
+export type NotebookProvenanceKind = (typeof NOTEBOOK_PROVENANCE_KINDS)[number];
+
+export const NotebookProvenanceSourceSchema = z.object({
+  kind: z.enum(NOTEBOOK_PROVENANCE_KINDS),
+  /** The catalogue id behind this element, absent when the source is authored. */
+  id: z.string().trim().max(200).optional(),
+  label: z.string().trim().min(1).max(200),
+});
+
+export const NotebookProvenanceEntrySchema = z.object({
+  /**
+   * Positional key into the generated spec.
+   *
+   * `sectionId` is preferred and survives the reordering a reviewer does while
+   * checking the page; `sectionIndex` is the fallback for a generator that
+   * does not echo ids. Both are accepted because the review surface has to
+   * work either way — see `attachProvenance`.
+   */
+  sectionId: z.string().trim().min(1).max(100).optional(),
+  sectionIndex: z.number().int().min(0).optional(),
+  summary: z.string().trim().min(1).max(500),
+  sources: z.array(NotebookProvenanceSourceSchema).max(20),
+});
+
+export const NotebookGenerationResultSchema = z.object({
+  // Spec-valid or the call fails. A generator that could hand back half a spec
+  // would make the builder the place hallucinations get repaired, which is
+  // exactly backwards.
+  spec: NotebookSpecSchema,
+  provenance: z.array(NotebookProvenanceEntrySchema).max(60),
+  /** Things the generator could not honour, said plainly rather than dropped. */
+  warnings: z.array(z.string().trim().min(1).max(500)).max(20).default([]),
+});
+
+export type NotebookProvenanceSource = z.infer<typeof NotebookProvenanceSourceSchema>;
+export type NotebookProvenanceEntry = z.infer<typeof NotebookProvenanceEntrySchema>;
+export type NotebookGenerationResult = z.infer<typeof NotebookGenerationResultSchema>;
+
+/** The longest description the generator will accept. */
+export const NOTEBOOK_GENERATION_PROMPT_MAX = 2000;
+
+/**
+ * Provenance bound to sections in a way that survives review.
+ *
+ * A reviewer reorders and deletes sections while checking a generated page, so
+ * a bare index goes stale the moment they do — and stale provenance is worse
+ * than none, because it attributes one section's sources to another. Resolving
+ * ONCE into a parallel array, at arrival, means every later edit moves the
+ * evidence with the section it belongs to.
+ *
+ * Deliberately NOT stored in the spec. This is review-time scaffolding, not
+ * page content: it has no meaning at render time and no business being
+ * persisted into every page forever. The draft lives in the browser until a
+ * human saves it, so the browser is exactly where this belongs.
+ */
+export function attachProvenance(
+  sectionCount: number,
+  entries: readonly NotebookProvenanceEntry[]
+): Array<NotebookProvenanceEntry | undefined> {
+  const byIndex = new Map<number, NotebookProvenanceEntry>();
+  const unkeyed: NotebookProvenanceEntry[] = [];
+
+  for (const entry of entries) {
+    if (entry.sectionIndex !== undefined && entry.sectionIndex < sectionCount) {
+      byIndex.set(entry.sectionIndex, entry);
+    } else {
+      unkeyed.push(entry);
+    }
+  }
+
+  // An entry with no usable index falls into the first free slot rather than
+  // being dropped: evidence the reviewer cannot see is evidence that does not
+  // exist, and losing it silently is the failure mode worth avoiding.
+  return Array.from({ length: sectionCount }, (_, index) => {
+    const keyed = byIndex.get(index);
+    if (keyed) return keyed;
+    return unkeyed.shift();
+  });
+}

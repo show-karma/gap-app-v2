@@ -153,6 +153,12 @@ export const INDEXER = {
        * them: these return DRAFTS, and the indexer gates them on community
        * admin. Calling them anonymously is a 401, never an empty list.
        */
+      /**
+       * NL -> spec generation. Admin-gated like the writes, because it spends
+       * tokens and it composes a page that will carry a tenant's name.
+       */
+      GENERATE: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/generate`,
       ADMIN_LIST: (communityIdOrSlug: string) =>
         `/v2/communities/${communityIdOrSlug}/notebook-configs/admin/all`,
       ADMIN_GET: (communityIdOrSlug: string, slug: string) =>

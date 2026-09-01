@@ -2,6 +2,10 @@ import { z } from "zod";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { notebookIndexerBaseUrl } from "./notebooks/notebook-config-api";
+import {
+  type NotebookGenerationResult,
+  NotebookGenerationResultSchema,
+} from "./notebooks/notebook-generation.types";
 import type { NotebookSpec } from "./notebooks/notebook-spec";
 import {
   type AdminNotebookConfig,
@@ -224,5 +228,31 @@ export function slugifyNotebookName(name: string): string {
       .slice(0, 200)
       // A trailing hyphen can reappear after the length clamp.
       .replace(/-+$/, "")
+  );
+}
+
+/**
+ * Ask the generator to compose a page from a description.
+ *
+ * A PURE FUNCTION as far as this application is concerned: it returns a
+ * proposal and persists nothing. Nothing the model produced reaches storage
+ * until a human has looked at it and pressed Save draft — which is also why
+ * there is no variant of this that publishes. The absence is structural, not
+ * a promise: this module exports no path from a generated spec to the publish
+ * mutation.
+ *
+ * The response is validated on arrival even though the indexer validated it on
+ * the way out. Same two-door rule the rest of the feature follows, and it
+ * matters more here than anywhere: this is the one payload whose shape an
+ * LLM had a hand in.
+ */
+export async function generateNotebookSpec(
+  communitySlug: string,
+  prompt: string
+): Promise<NotebookGenerationResult> {
+  return api.post<NotebookGenerationResult>(
+    INDEXER.V2.NOTEBOOK_CONFIGS.GENERATE(communitySlug),
+    { prompt },
+    { schema: NotebookGenerationResultSchema, baseURL: notebookIndexerBaseUrl() }
   );
 }
