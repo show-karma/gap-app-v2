@@ -3,10 +3,7 @@
 import { MessageSquare } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
-import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
-import type { Grant } from "@/types/v2/grant";
-import { normalizeProgramId } from "@/utilities/normalizeProgramId";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -15,6 +12,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
+import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
+import type { Grant } from "@/types/v2/grant";
+import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { GrantCommentsSkeleton } from "./GrantCommentsSkeleton";
 
 /**
@@ -75,14 +76,16 @@ export function GrantCommentsPanel({ grant }: GrantCommentsPanelProps) {
     <div className="flex justify-end">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             data-testid="grant-comments-trigger"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:border-foreground/30"
+            className="rounded-full text-muted-foreground hover:text-foreground"
           >
             <MessageSquare className="h-4 w-4" aria-hidden="true" />
             Reviewer comments
-          </button>
+          </Button>
         </SheetTrigger>
         <SheetContent
           side="right"
@@ -90,7 +93,7 @@ export function GrantCommentsPanel({ grant }: GrantCommentsPanelProps) {
         >
           <SheetHeader className="border-b border-border px-5 py-4 text-left">
             <SheetTitle className="text-base">Reviewer comments</SheetTitle>
-            <SheetDescription className="text-[13px]">
+            <SheetDescription className="text-xs">
               Conversation on this grant&apos;s funding application
             </SheetDescription>
           </SheetHeader>
