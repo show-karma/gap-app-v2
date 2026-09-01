@@ -88,6 +88,20 @@ vi.mock("next/navigation", () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// next/headers
+// Server components that read the request host (whitelabel detection, robots)
+// call headers(), which throws "called outside a request scope" when a test
+// renders the component directly instead of through a Next request. Default to
+// the canonical host — the non-whitelabel case every such test already assumes.
+// Tests exercising tenant behavior override this with their own vi.mock().
+// ---------------------------------------------------------------------------
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers({ host: "www.karmahq.org" }),
+  cookies: async () => new Map(),
+  draftMode: async () => ({ isEnabled: false }),
+}));
+
+// ---------------------------------------------------------------------------
 // @/utilities/enviromentVars
 // Most tests only need NEXT_PUBLIC_GAP_INDEXER_URL. Tests that need RPC
 // values or other env vars should provide their own vi.mock() override.
@@ -102,7 +116,7 @@ vi.mock("@/utilities/enviromentVars", () => ({
     ENV: "development",
     RPC: {},
     PROJECT_ID: "",
-    VERCEL_URL: "https://staging.karmahq.xyz",
+    APP_ORIGIN: "https://staging.karmahq.org",
     OSO_API_KEY: "",
     PRIVY_APP_ID: "",
     ZERODEV_PROJECT_ID: "",

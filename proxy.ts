@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDomainInfo } from "./src/infrastructure/config/domain-constants";
 import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
+import { CANONICAL_ORIGIN, canonicalUrl, isAliasHost, STAGING_ORIGIN } from "./utilities/domains";
 import { COMMUNITY_SUB_ROUTE_SEGMENTS, PAGES } from "./utilities/pages";
 import {
   classifyProjectQuery,
@@ -14,20 +15,11 @@ import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
 
 // --- Canonical host policy (ADR 0001) ---
-// www.karmahq.xyz is the single canonical serving host. The production apex
-// (karmahq.xyz) and the legacy GAP subdomain (gap.karmahq.xyz) are duplicate
-// hosts; every request on them collapses to www in a single 308 so Google
-// consolidates ranking signals onto one host instead of indexing three.
-const CANONICAL_ORIGIN = "https://www.karmahq.xyz";
-const ALIAS_HOSTS = new Set(["karmahq.xyz", "gap.karmahq.xyz"]);
+// One host serves 200s; every duplicate host (the apex, the legacy GAP
+// subdomain, and the whole legacy .xyz tier) collapses to it in a single 308 so
+// Google consolidates ranking signals onto one host instead of indexing several.
+// The host list and the loop guard live in utilities/domains.ts.
 const NOINDEX_FOLLOW = "noindex, follow";
-
-function bareHostname(hostname: string): string {
-  // Strip the port and lower-case, then drop a single trailing DNS dot:
-  // `karmahq.xyz.` is the fully-qualified form of the same host and must still
-  // match ALIAS_HOSTS, otherwise it would bypass the canonical redirect.
-  return hostname.split(":")[0].toLowerCase().replace(/\.$/, "");
-}
 
 function withRobots(response: Response, value: string): Response {
   response.headers.set("X-Robots-Tag", value);
@@ -69,12 +61,13 @@ export async function proxy(request: NextRequest) {
       // are absent from DOMAIN_CONFIGS, so getDomainInfo() returns undefined for
       // them — falling back to the deployment environment keeps their /blog
       // redirect on the right tier instead of always dropping to staging.
+      // Target the tier's canonical origin, not its apex: an apex target would
+      // 301 here and then 308 again at the alias collapse below.
       const isProductionHost =
         getDomainInfo(hostname)?.isProduction ?? process.env.NEXT_PUBLIC_ENV === "production";
-      const mainDomain = isProductionHost ? "karmahq.xyz" : "staging.karmahq.xyz";
-      const protocol = request.nextUrl.protocol;
+      const mainOrigin = isProductionHost ? CANONICAL_ORIGIN : STAGING_ORIGIN;
       const search = request.nextUrl.search;
-      return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}${search}`), 301);
+      return NextResponse.redirect(new URL(`${mainOrigin}${path}${search}`), 301);
     }
 
     // In whitelabel mode, URLs should never show /community/<slug> in the browser.
@@ -149,12 +142,19 @@ export async function proxy(request: NextRequest) {
     const segments = path.split("/").filter(Boolean);
     const slug = segments[0];
 
-    const mainDomain = domainInfo.isProduction ? "karmahq.xyz" : "staging.karmahq.xyz";
+    // The tier's canonical origin, not its apex: an apex target would 301 here
+    // and then 308 again at the alias collapse below.
+    const mainOrigin = domainInfo.isProduction ? CANONICAL_ORIGIN : STAGING_ORIGIN;
     const protocol = request.nextUrl.protocol;
+    // Every hop out of the umbrella host is cross-origin, so it is built from a
+    // string rather than nextUrl.clone() and has to carry the query explicitly.
+    // Dropping it here silently destroys UTM attribution and invite/referral
+    // tokens on the one host whose whole job is forwarding inbound links.
+    const search = request.nextUrl.search;
 
     // Path already starts with /community/ — redirect as-is to the main domain
     if (slug === "community") {
-      return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}`), 301);
+      return NextResponse.redirect(new URL(`${mainOrigin}${path}${search}`), 301);
     }
 
     if (slug && isKnownTenant(slug)) {
@@ -163,12 +163,15 @@ export async function proxy(request: NextRequest) {
 
       if (whitelabelDomain) {
         // Tenant has a whitelabel domain — redirect there
-        return NextResponse.redirect(new URL(`${protocol}//${whitelabelDomain}${restPath}`), 301);
+        return NextResponse.redirect(
+          new URL(`${protocol}//${whitelabelDomain}${restPath}${search}`),
+          301
+        );
       }
 
       // No whitelabel domain — redirect to main site at /community/<slug>/path
       return NextResponse.redirect(
-        new URL(`${protocol}//${mainDomain}/community/${slug}${restPath}`),
+        new URL(`${mainOrigin}/community/${slug}${restPath}${search}`),
         301
       );
     }
@@ -177,30 +180,27 @@ export async function proxy(request: NextRequest) {
       // Unknown slug — treat as community slug and redirect to /community/<slug>/path
       const restPath = `/${segments.slice(1).join("/")}` || "/";
       return NextResponse.redirect(
-        new URL(`${protocol}//${mainDomain}/community/${slug}${restPath}`),
+        new URL(`${mainOrigin}/community/${slug}${restPath}${search}`),
         301
       );
     }
 
     // No slug (root path) — redirect to main site homepage
-    return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}`), 301);
+    return NextResponse.redirect(new URL(`${mainOrigin}${path}${search}`), 301);
   }
 
   // --- Canonical host policy: collapse alias hosts to www (ADR 0001) ---
-  const isAliasHost = ALIAS_HOSTS.has(bareHostname(hostname));
+  const isAlias = isAliasHost(hostname);
 
   // Non-project alias requests take one permanent hop to the canonical host,
   // preserving the exact path and query — no indexer round-trip needed. Project
   // requests fall through to the shared handler below so the alias-host switch
   // and any legacy/identifier normalization collapse into a single 308.
-  if (isAliasHost && !path.startsWith("/project/")) {
-    return NextResponse.redirect(
-      new URL(`${CANONICAL_ORIGIN}${path}${request.nextUrl.search}`),
-      308
-    );
+  if (isAlias && !path.startsWith("/project/")) {
+    return NextResponse.redirect(new URL(canonicalUrl(path, request.nextUrl.search)), 308);
   }
 
-  // --- Standard karmahq.xyz logic below ---
+  // --- Standard canonical-host logic below ---
 
   // Redirect frontend-nextjs routes to gov.karmahq.xyz
   if (shouldRedirectToGov(path)) {
@@ -209,11 +209,16 @@ export async function proxy(request: NextRequest) {
 
   // Dashboard redirects — the drill-ins are real nested routes now
   // (/dashboard/[module]), not a #hash on the overview.
+  // nextUrl.clone() keeps the query; `new URL(path, request.url)` would drop it.
   if (path === "/my-projects") {
-    return NextResponse.redirect(new URL("/dashboard/projects", request.url), 301);
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard/projects";
+    return NextResponse.redirect(url, 301);
   }
   if (path === "/my-reviews") {
-    return NextResponse.redirect(new URL("/dashboard/reviews", request.url), 301);
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard/reviews";
+    return NextResponse.redirect(url, 301);
   }
 
   // Handle community slugs with forbidden characters
@@ -224,13 +229,19 @@ export async function proxy(request: NextRequest) {
 
     if (hasForbiddenChars(communitySlug)) {
       const cleanSlug = sanitizeCommunitySlug(communitySlug);
-      const newPath = `/community/${cleanSlug}${restOfPath}`;
-      return NextResponse.redirect(new URL(newPath, request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = `/community/${cleanSlug}${restOfPath}`;
+      return NextResponse.redirect(url);
     }
   }
 
   // --- Redirect /<slug> to whitelabel domain if one exists ---
-  // e.g. karmahq.xyz/optimism → app.opgrants.io
+  // Gated on domainInfo?.isShared, which only DOMAIN_CONFIGS entries satisfy.
+  // CANONICAL_HOST is deliberately absent from that table, so this branch does
+  // NOT run on www — adding a www row would activate a tenant redirect that has
+  // never executed in production. In practice it fires for the staging host and
+  // the apex tiers; on www, /<slug> falls through to the rewrite below and
+  // serves the Karma-branded community page.
   const communityMatch = path.match(/^\/([^/]+)(\/.*)?$/);
 
   if (communityMatch) {
@@ -243,7 +254,9 @@ export async function proxy(request: NextRequest) {
       if (whitelabelDomain) {
         const protocol = request.nextUrl.protocol;
         return NextResponse.redirect(
-          new URL(`${protocol}//${whitelabelDomain}${restOfCommunityPath}`),
+          new URL(
+            `${protocol}//${whitelabelDomain}${restOfCommunityPath}${request.nextUrl.search}`
+          ),
           301
         );
       }
@@ -256,8 +269,9 @@ export async function proxy(request: NextRequest) {
         community.slug === communityId || community.uid.toLowerCase() === communityId.toLowerCase()
     );
     if (isChosenCommunity && !path.startsWith("/community/")) {
-      const newPath = path.replace(/^\/([^/]+)/, "/community/$1");
-      return NextResponse.redirect(new URL(newPath, request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = path.replace(/^\/([^/]+)/, "/community/$1");
+      return NextResponse.redirect(url);
     }
   }
 
@@ -273,7 +287,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (path.startsWith("/project/")) {
-    return handleProjectIndexability(request, path, isAliasHost);
+    return handleProjectIndexability(request, path, isAlias);
   }
 
   return NextResponse.next();
@@ -293,7 +307,7 @@ export async function proxy(request: NextRequest) {
 async function handleProjectIndexability(
   request: NextRequest,
   path: string,
-  isAliasHost: boolean
+  isAlias: boolean
 ): Promise<Response> {
   const parsed = parseProjectIndexabilityRequest(path);
 
@@ -302,11 +316,8 @@ async function handleProjectIndexability(
   // caller the canonical-host hop (one 308 to www, preserving path + query); on
   // the canonical host we fail closed to noindex,follow.
   if (!parsed) {
-    if (isAliasHost) {
-      return NextResponse.redirect(
-        new URL(`${CANONICAL_ORIGIN}${path}${request.nextUrl.search}`),
-        308
-      );
+    if (isAlias) {
+      return NextResponse.redirect(new URL(canonicalUrl(path, request.nextUrl.search)), 308);
     }
     return withRobots(NextResponse.next(), NOINDEX_FOLLOW);
   }
@@ -324,17 +335,14 @@ async function handleProjectIndexability(
   // canonical host answers the 404/410.
   const finalPath = decision.outcome === "redirect" ? decision.to : parsed.normalizedPath;
 
-  // Alias hosts (karmahq.xyz / gap.karmahq.xyz) owe exactly ONE 308 to the
-  // canonical www host for EVERY request — including gone routes. Answering the
-  // 404/410 directly here would strand the response on a duplicate host, so we
-  // always hop to www first (folding any normalization/relocation into the same
-  // hop, preserving the query) and let the canonical host re-evaluate and return
-  // the 404/410. This must run before the gone short-circuit below.
-  if (isAliasHost) {
-    return NextResponse.redirect(
-      new URL(`${CANONICAL_ORIGIN}${finalPath}${request.nextUrl.search}`),
-      308
-    );
+  // Alias hosts owe exactly ONE 308 to the canonical host for EVERY request —
+  // including gone routes. Answering the 404/410 directly here would strand the
+  // response on a duplicate host, so we always hop to the canonical host first
+  // (folding any normalization/relocation into the same hop, preserving the
+  // query) and let it re-evaluate and return the 404/410. This must run before
+  // the gone short-circuit below.
+  if (isAlias) {
+    return NextResponse.redirect(new URL(canonicalUrl(finalPath, request.nextUrl.search)), 308);
   }
 
   // Canonical / non-alias host (Vercel preview, staging, localhost, www) below.

@@ -1,0 +1,5 @@
+export const CHART_THEME = {
+  axis: "bg-[#101010]",
+  grid: "border-[#202020]",
+  label: "text-brand",
+};

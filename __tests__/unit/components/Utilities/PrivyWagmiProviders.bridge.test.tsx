@@ -55,7 +55,7 @@ vi.mock("@/utilities/auth/select-primary-wallet", () => ({
 }));
 
 vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: { PRIVY_APP_ID: "test-app-id", PROJECT_ID: "test-project-id", VERCEL_URL: "" },
+  envVars: { PRIVY_APP_ID: "test-app-id", PROJECT_ID: "test-project-id", APP_ORIGIN: "" },
 }));
 
 vi.mock("@/utilities/network", () => ({

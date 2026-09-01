@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
+import { CANONICAL_HOST } from "@/utilities/domains";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 
@@ -28,7 +29,7 @@ export default function TermsAndConditions() {
           Welcome to {PROJECT_NAME} (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), a product
           operated by Karma. By accessing or using{" "}
           <a className={styles.a} href={PAGES.HOME}>
-            karmahq.xyz
+            {CANONICAL_HOST}
           </a>{" "}
           or any related services (collectively, the &ldquo;Platform&rdquo;), you agree to be bound
           by these Terms of Use. If you do not agree to these terms, please do not use the Platform.

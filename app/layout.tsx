@@ -182,7 +182,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               )}
               <PermissionsProvider />
               <DeferredLayoutComponents toasterConfig={toasterConfig} />
-              <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
+              <div
+                data-app-content
+                className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
+              >
                 <div className="flex flex-col w-full h-full">
                   {isWhitelabel ? <WhitelabelNavbar /> : <GlobalNavbarSlot />}
                   {children}

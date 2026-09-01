@@ -1,0 +1,9 @@
+import { ImageResponse } from "next/og";
+
+export function OgImage() {
+  return new ImageResponse(
+    <div style={{ backgroundColor: "#0F172A", color: "#94A3B8", fontSize: 48 }}>
+      <span className="bg-[#123456]">still checked</span>
+    </div>
+  );
+}

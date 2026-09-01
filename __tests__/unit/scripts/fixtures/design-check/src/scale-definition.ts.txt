@@ -1,0 +1,6 @@
+export const SOFT = {
+  pad: "p-[13px]",
+  lead: "leading-[22px]",
+  tint: "bg-[#123456]",
+  force: "!text-white",
+};

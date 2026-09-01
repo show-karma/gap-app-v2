@@ -4,6 +4,7 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
+import { SITE_URL } from "@/utilities/meta";
 import { getCommunityDetails, getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 // App router includes @vercel/og.
 // No need to install it.
@@ -58,12 +59,12 @@ export async function GET(
         {
           title: pluralize("Grant", grants),
           value: grants,
-          icon: "https://karmahq.xyz/icons/funding-lg.png",
+          icon: `${SITE_URL}/icons/funding-lg.png`,
         },
         {
           title: pluralize("Project", projects),
           value: projects,
-          icon: "https://karmahq.xyz/icons/projects.png",
+          icon: `${SITE_URL}/icons/projects.png`,
         },
       ]
     : [];
@@ -83,7 +84,7 @@ export async function GET(
       <div
         tw="bg-white w-full h-full flex flex-row justify-between items-center pr-[42px] pl-[68px]"
         style={{
-          backgroundImage: `url(https://karmahq.xyz/assets/previews/background.png)`,
+          backgroundImage: `url(${SITE_URL}/assets/previews/background.png)`,
         }}
       >
         <div tw="flex flex-col items-start justify-start w-[520px] pb-[40px]">
@@ -108,7 +109,7 @@ export async function GET(
           <div tw="flex flex-row items-center justify-end w-full pr-[80px]">
             <img
               alt={`${PROJECT_NAME} Logo`}
-              src="https://karmahq.xyz/logo/karma-logo-dark.svg"
+              src={`${SITE_URL}/logo/karma-logo-dark.svg`}
               style={{
                 width: 158,
                 height: 40,

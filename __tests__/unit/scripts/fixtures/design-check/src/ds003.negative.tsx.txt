@@ -1,0 +1,12 @@
+export function Negative({ tone, width }: { tone: string; width: number }) {
+  return (
+    <div>
+      <span style={{ color: "var(--c-primary-500)" }}>token</span>
+      <span style={{ width: "50%", height: 24, zIndex: 3 }}>layout</span>
+      <span style={{ color: tone }}>expression</span>
+      <span style={{ ["--brand" as string]: tone, transform: `translateX(${width}px)` }}>
+        custom prop
+      </span>
+    </div>
+  );
+}

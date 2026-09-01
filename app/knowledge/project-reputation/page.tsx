@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 
 const title = "How Projects Build Reputation Through Funding";
@@ -120,7 +120,7 @@ export default function ProjectReputationPage() {
           <h2 className="text-xl font-semibold">Karma's role</h2>
           <p className="text-gray-700 dark:text-gray-300">
             <a
-              href="https://www.karmahq.xyz"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"

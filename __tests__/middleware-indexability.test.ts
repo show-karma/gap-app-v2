@@ -45,6 +45,7 @@ vi.mock("@/utilities/chosenCommunities", () => ({
 }));
 
 import { proxy } from "@/proxy";
+import { ALIAS_HOSTS, CANONICAL_HOST, isAliasHost } from "@/utilities/domains";
 import {
   clearProjectIndexabilityLkgCache,
   PROJECT_INDEXABILITY_LKG_TTL_MS,
@@ -98,7 +99,7 @@ describe("middleware indexability", () => {
     const response = await proxy(createRequest("karmahq.xyz", "/about", "utm_source=x"));
 
     expect(response?.status).toBe(308);
-    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/about?utm_source=x");
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/about?utm_source=x");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -106,7 +107,7 @@ describe("middleware indexability", () => {
     const response = await proxy(createRequest("gap.karmahq.xyz", "/funding-map"));
 
     expect(response?.status).toBe(308);
-    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/funding-map");
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/funding-map");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -114,7 +115,7 @@ describe("middleware indexability", () => {
     const response = await proxy(createRequest("karmahq.xyz.", "/about", "utm_source=x"));
 
     expect(response?.status).toBe(308);
-    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/about?utm_source=x");
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/about?utm_source=x");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -122,8 +123,57 @@ describe("middleware indexability", () => {
     const response = await proxy(createRequest("gap.karmahq.xyz.", "/funding-map"));
 
     expect(response?.status).toBe(308);
-    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/funding-map");
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/funding-map");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("308s the legacy www host to the new canonical www, preserving path and query", async () => {
+    // www.karmahq.xyz was the canonical host before the .org migration, so it was
+    // deliberately absent from the alias set. It now owes the same single hop as
+    // any other duplicate host — otherwise it keeps serving 200s and splits the
+    // ranking signal across two TLDs.
+    const response = await proxy(createRequest("www.karmahq.xyz", "/about", "utm_source=x"));
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/about?utm_source=x");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("308s the new apex to www, preserving path and query", async () => {
+    const response = await proxy(createRequest("karmahq.org", "/about", "utm_source=x"));
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/about?utm_source=x");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("308s the legacy gap subdomain to www", async () => {
+    const response = await proxy(createRequest("gap.karmahq.xyz", "/funding-map"));
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/funding-map");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("never redirects the canonical host to itself (redirect-loop regression)", async () => {
+    // Nothing in the proxy compares the redirect target host to the request host,
+    // so a canonical host that leaked into ALIAS_HOSTS would 308 forever with no
+    // circuit breaker. Guard it at the set and at the request path.
+    expect(ALIAS_HOSTS.has(CANONICAL_HOST)).toBe(false);
+
+    const response = await proxy(createRequest(CANONICAL_HOST, "/about", "utm_source=x"));
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("location")).toBeNull();
+  });
+
+  it("308s the legacy apex to a canonical host that is not itself an alias", async () => {
+    // The one hop must land somewhere terminal; if the 308 target were an alias
+    // the browser would follow it straight back into the redirect tier.
+    const response = await proxy(createRequest("karmahq.xyz", "/about"));
+
+    const location = new URL(response?.headers.get("location") ?? "");
+    expect(isAliasHost(location.host)).toBe(false);
   });
 
   it("passes a www canonical-indexable project through without an X-Robots-Tag", async () => {
@@ -131,7 +181,7 @@ describe("middleware indexability", () => {
       decisionResponse({ outcome: "canonical-indexable", url: "/project/paraswap" })
     );
 
-    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap"));
+    const response = await proxy(createRequest("www.karmahq.org", "/project/paraswap"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -153,7 +203,7 @@ describe("middleware indexability", () => {
       decisionResponse({ outcome: "noindex-follow", url: "/project/paraswap/team" })
     );
 
-    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap/team"));
+    const response = await proxy(createRequest("www.karmahq.org", "/project/paraswap/team"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -165,7 +215,7 @@ describe("middleware indexability", () => {
     );
 
     const response = await proxy(
-      createRequest("www.karmahq.xyz", "/project/paraswap", "programId=531")
+      createRequest("www.karmahq.org", "/project/paraswap", "programId=531")
     );
 
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -177,7 +227,7 @@ describe("middleware indexability", () => {
     );
 
     const response = await proxy(
-      createRequest("www.karmahq.xyz", "/project/paraswap", "utm_source=x")
+      createRequest("www.karmahq.org", "/project/paraswap", "utm_source=x")
     );
 
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -188,7 +238,7 @@ describe("middleware indexability", () => {
     async (status) => {
       fetchMock.mockResolvedValue(new Response("gone", { status }));
 
-      const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap"));
+      const response = await proxy(createRequest("www.karmahq.org", "/project/paraswap"));
 
       expect(response?.status).toBe(status);
       expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -207,7 +257,7 @@ describe("middleware indexability", () => {
       const response = await proxy(createRequest("karmahq.xyz", "/project/paraswap"));
 
       expect(response?.status).toBe(308);
-      expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/paraswap");
+      expect(response?.headers.get("location")).toBe("https://www.karmahq.org/project/paraswap");
     }
   );
 
@@ -220,7 +270,7 @@ describe("middleware indexability", () => {
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe(
-      "https://www.karmahq.xyz/project/paraswap/team?utm_source=x"
+      "https://www.karmahq.org/project/paraswap/team?utm_source=x"
     );
   });
 
@@ -234,12 +284,12 @@ describe("middleware indexability", () => {
     );
 
     const response = await proxy(
-      createRequest("www.karmahq.xyz", "/project/old-paraswap", "utm_source=x")
+      createRequest("www.karmahq.org", "/project/old-paraswap", "utm_source=x")
     );
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe(
-      "https://www.karmahq.xyz/project/paraswap?utm_source=x"
+      "https://www.karmahq.org/project/paraswap?utm_source=x"
     );
   });
 
@@ -255,7 +305,7 @@ describe("middleware indexability", () => {
     const response = await proxy(createRequest("karmahq.xyz", "/project/old-paraswap/roadmap"));
 
     expect(response?.status).toBe(308);
-    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/paraswap");
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/project/paraswap");
   });
 
   it("collapses a gap old-identifier legacy grants request into one 308 to the final www canonical funding path", async () => {
@@ -271,7 +321,7 @@ describe("middleware indexability", () => {
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe(
-      "https://www.karmahq.xyz/project/paraswap/funding"
+      "https://www.karmahq.org/project/paraswap/funding"
     );
   });
 
@@ -284,12 +334,12 @@ describe("middleware indexability", () => {
     );
 
     const response = await proxy(
-      createRequest("www.karmahq.xyz", "/project/paraswap/funding/create-grant")
+      createRequest("www.karmahq.org", "/project/paraswap/funding/create-grant")
     );
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe(
-      "https://www.karmahq.xyz/project/paraswap/funding/new"
+      "https://www.karmahq.org/project/paraswap/funding/new"
     );
   });
 
@@ -302,7 +352,7 @@ describe("middleware indexability", () => {
       })
     );
 
-    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap/about"));
+    const response = await proxy(createRequest("www.karmahq.org", "/project/paraswap/about"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -313,7 +363,7 @@ describe("middleware indexability", () => {
       decisionResponse({ outcome: "canonical-indexable", url: "/project/grants" })
     );
 
-    const response = await proxy(createRequest("www.karmahq.xyz", "/project/grants"));
+    const response = await proxy(createRequest("www.karmahq.org", "/project/grants"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("location")).toBeNull();
@@ -328,14 +378,14 @@ describe("middleware indexability", () => {
   it("fails closed with a noindex header when the indexer returns 5xx", async () => {
     fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
 
-    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap/team"));
+    const response = await proxy(createRequest("www.karmahq.org", "/project/paraswap/team"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
   });
 
   it("marks the canonical /projects listing noindex, follow for a stateful query without fetching", async () => {
-    const response = await proxy(createRequest("www.karmahq.xyz", "/projects", "page=2"));
+    const response = await proxy(createRequest("www.karmahq.org", "/projects", "page=2"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -343,7 +393,7 @@ describe("middleware indexability", () => {
   });
 
   it("keeps the canonical /projects listing indexable for a tracking-only query without fetching", async () => {
-    const response = await proxy(createRequest("www.karmahq.xyz", "/projects", "utm_source=x"));
+    const response = await proxy(createRequest("www.karmahq.org", "/projects", "utm_source=x"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -351,7 +401,7 @@ describe("middleware indexability", () => {
   });
 
   it("leaves the clean canonical /projects listing indexable without fetching", async () => {
-    const response = await proxy(createRequest("www.karmahq.xyz", "/projects"));
+    const response = await proxy(createRequest("www.karmahq.org", "/projects"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -359,7 +409,7 @@ describe("middleware indexability", () => {
   });
 
   it("fails closed without fetching for an unknown project route", async () => {
-    const response = await proxy(createRequest("www.karmahq.xyz", "/project/paraswap/unknown-tab"));
+    const response = await proxy(createRequest("www.karmahq.org", "/project/paraswap/unknown-tab"));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -373,7 +423,7 @@ describe("middleware indexability", () => {
 
     expect(response?.status).toBe(308);
     expect(response?.headers.get("location")).toBe(
-      "https://www.karmahq.xyz/project/paraswap/unknown-tab?utm_source=x"
+      "https://www.karmahq.org/project/paraswap/unknown-tab?utm_source=x"
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -382,11 +432,12 @@ describe("middleware indexability", () => {
 /**
  * Canonical-host origin policy (ADR 0001). A normalized/relocated project path
  * must be redirected on the *right* origin: only the real production alias hosts
- * (karmahq.xyz / gap.karmahq.xyz) collapse onto https://www.karmahq.xyz; every
- * other host — Vercel preview, staging, localhost, and the canonical www itself
- * — keeps the redirect on its own origin so a preview normalization never leaks
- * a link to production. The roadmap tab is a valid route, so its collapse to the
- * canonical root comes from an indexer `redirect` decision.
+ * (the .org apex/gap pair and the whole legacy .xyz tier) collapse onto
+ * https://www.karmahq.org; every other host — Vercel preview, staging,
+ * localhost, and the canonical www itself — keeps the redirect on its own origin
+ * so a preview normalization never leaks a link to production. The roadmap tab is
+ * a valid route, so its collapse to the canonical root comes from an indexer
+ * `redirect` decision.
  */
 describe("middleware canonical-host origin policy", () => {
   const roadmapCollapse = {
@@ -412,6 +463,23 @@ describe("middleware canonical-host origin policy", () => {
     fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
 
     const response = await proxy(
+      createRequest("staging.karmahq.org", "/project/abc123-1/roadmap", "utm_source=x")
+    );
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get("location")).toBe(
+      "https://staging.karmahq.org/project/abc123-1?utm_source=x"
+    );
+  });
+
+  it("keeps a legacy staging.karmahq.xyz normalization on its own origin, never production www", async () => {
+    // Legacy staging is deliberately NOT an alias host: every ALIAS_HOSTS member
+    // collapses onto the *production* canonical origin, so listing a staging host
+    // there would route staging traffic into production. The legacy staging
+    // host's own .xyz → .org hop is a platform-level domain redirect, not ours.
+    fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
+
+    const response = await proxy(
       createRequest("staging.karmahq.xyz", "/project/abc123-1/roadmap", "utm_source=x")
     );
 
@@ -427,16 +495,16 @@ describe("middleware canonical-host origin policy", () => {
     const response = await proxy(createRequest("karmahq.xyz", "/project/abc123-1/roadmap"));
 
     expect(response?.status).toBe(308);
-    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/abc123-1");
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/project/abc123-1");
   });
 
   it("keeps a canonical-www roadmap normalization on www", async () => {
     fetchMock.mockResolvedValue(decisionResponse(roadmapCollapse));
 
-    const response = await proxy(createRequest("www.karmahq.xyz", "/project/abc123-1/roadmap"));
+    const response = await proxy(createRequest("www.karmahq.org", "/project/abc123-1/roadmap"));
 
     expect(response?.status).toBe(308);
-    expect(response?.headers.get("location")).toBe("https://www.karmahq.xyz/project/abc123-1");
+    expect(response?.headers.get("location")).toBe("https://www.karmahq.org/project/abc123-1");
   });
 
   it("normalizes a localhost:port roadmap collapse on its own origin, preserving scheme, host, and port", async () => {
@@ -479,7 +547,7 @@ describe("middleware indexability last-known-good fallback", () => {
       decisionResponse({ outcome: "canonical-indexable", url: PROJECT_PATH })
     );
 
-    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    const response = await proxy(createRequest("www.karmahq.org", PROJECT_PATH));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -494,7 +562,7 @@ describe("middleware indexability last-known-good fallback", () => {
     await primeIndexableProject();
 
     fetchMock.mockImplementation(hangUntilAborted);
-    const pending = proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    const pending = proxy(createRequest("www.karmahq.org", PROJECT_PATH));
     await vi.advanceTimersByTimeAsync(INDEXER_TIMEOUT_MS);
     const response = await pending;
 
@@ -506,7 +574,7 @@ describe("middleware indexability last-known-good fallback", () => {
     await primeIndexableProject();
 
     fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
-    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    const response = await proxy(createRequest("www.karmahq.org", PROJECT_PATH));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBeNull();
@@ -516,7 +584,7 @@ describe("middleware indexability last-known-good fallback", () => {
     vi.useFakeTimers();
     fetchMock.mockImplementation(hangUntilAborted);
 
-    const pending = proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    const pending = proxy(createRequest("www.karmahq.org", PROJECT_PATH));
     await vi.advanceTimersByTimeAsync(INDEXER_TIMEOUT_MS);
     const response = await pending;
 
@@ -530,7 +598,7 @@ describe("middleware indexability last-known-good fallback", () => {
     await vi.advanceTimersByTimeAsync(PROJECT_INDEXABILITY_LKG_TTL_MS);
 
     fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
-    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    const response = await proxy(createRequest("www.karmahq.org", PROJECT_PATH));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -540,7 +608,7 @@ describe("middleware indexability last-known-good fallback", () => {
     await primeIndexableProject();
 
     fetchMock.mockResolvedValue(new Response("gone", { status: 410 }));
-    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    const response = await proxy(createRequest("www.karmahq.org", PROJECT_PATH));
 
     expect(response?.status).toBe(410);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");
@@ -550,12 +618,12 @@ describe("middleware indexability last-known-good fallback", () => {
     await primeIndexableProject();
 
     fetchMock.mockResolvedValue(new Response("gone", { status: 410 }));
-    await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    await proxy(createRequest("www.karmahq.org", PROJECT_PATH));
 
     // The blip lands after the removal: the deleted project must not come back
     // as an indexable 200 just because this instance once saw it healthy.
     fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
-    const response = await proxy(createRequest("www.karmahq.xyz", PROJECT_PATH));
+    const response = await proxy(createRequest("www.karmahq.org", PROJECT_PATH));
 
     expect(response?.status).toBe(200);
     expect(response?.headers.get("X-Robots-Tag")).toBe("noindex, follow");

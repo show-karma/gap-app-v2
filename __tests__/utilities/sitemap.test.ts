@@ -15,7 +15,7 @@ import {
   type SitemapCounts,
 } from "@/utilities/sitemap";
 
-const SITE = "https://www.karmahq.xyz";
+const SITE = "https://www.karmahq.org";
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -71,9 +71,16 @@ describe("chunkCountFromTotal", () => {
 
 describe("canonicalizeSitemapUrl", () => {
   it("rewrites the origin to the canonical production host", () => {
-    expect(canonicalizeSitemapUrl("https://staging.karmahq.xyz/project/x")).toBe(
+    expect(canonicalizeSitemapUrl("https://staging.karmahq.org/project/x")).toBe(
       `${SITE}/project/x`
     );
+  });
+
+  it("rewrites a legacy .xyz origin onto the canonical .org host", () => {
+    expect(canonicalizeSitemapUrl("https://staging.karmahq.org/project/x")).toBe(
+      `${SITE}/project/x`
+    );
+    expect(canonicalizeSitemapUrl("https://www.karmahq.org/project/x")).toBe(`${SITE}/project/x`);
   });
 
   it("preserves path, query, and hash", () => {
@@ -87,21 +94,21 @@ describe("canonicalizeSitemapUrl", () => {
 
 describe("buildUrlsetXml", () => {
   it("emits a urlset entry per URL and canonicalizes the host", () => {
-    const xml = buildUrlsetXml(["https://staging.karmahq.xyz/a"], 0.8, "daily");
+    const xml = buildUrlsetXml(["https://staging.karmahq.org/a"], 0.8, "daily");
     expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     expect(xml).toContain(`<loc>${SITE}/a</loc>`);
     expect(xml).toContain("<changefreq>daily</changefreq>");
     expect(xml).toContain("<priority>0.8</priority>");
-    expect(xml).not.toContain("staging.karmahq.xyz");
+    expect(xml).not.toContain("staging.karmahq.org");
   });
 
   it("omits lastmod (no accurate per-URL modified date to emit)", () => {
-    const xml = buildUrlsetXml(["https://www.karmahq.xyz/a"], 0.8, "daily");
+    const xml = buildUrlsetXml(["https://www.karmahq.org/a"], 0.8, "daily");
     expect(xml).not.toContain("<lastmod>");
   });
 
   it("escapes XML-significant characters in URLs", () => {
-    const xml = buildUrlsetXml(["https://www.karmahq.xyz/a?x=1&y=2"], 0.5, "weekly");
+    const xml = buildUrlsetXml(["https://www.karmahq.org/a?x=1&y=2"], 0.5, "weekly");
     expect(xml).toContain("x=1&amp;y=2");
   });
 
@@ -142,7 +149,7 @@ describe("countForKind", () => {
 describe("fetchSitemapKindPage", () => {
   it("requests the right kind/page/version and canonicalizes the returned URLs", async () => {
     const fetchMock = vi.fn(async () =>
-      jsonResponse({ urls: ["https://staging.karmahq.xyz/project/a"] })
+      jsonResponse({ urls: ["https://staging.karmahq.org/project/a"] })
     );
     vi.stubGlobal("fetch", fetchMock);
 
@@ -299,7 +306,7 @@ describe("buildSitemapIndexBody", () => {
 
 describe("fetchAllSitemapKindUrls", () => {
   const pageOf = (count: number, prefix: string): string[] =>
-    Array.from({ length: count }, (_, i) => `https://staging.karmahq.xyz/${prefix}/${i}`);
+    Array.from({ length: count }, (_, i) => `https://staging.karmahq.org/${prefix}/${i}`);
 
   it("pages until a short page and merges the results in order", async () => {
     const fetchMock = vi.fn(async (url: string) => {

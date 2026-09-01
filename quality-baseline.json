@@ -1,7 +1,7 @@
 {
   "$schema": "./scripts/quality-baseline.schema.json",
-  "generatedAt": "2026-07-23T17:47:04.458Z",
-  "generatedFromCommit": "654148eab4d68afed868f30afafc31e1ee436f34",
+  "generatedAt": "2026-08-26T14:36:55.036Z",
+  "generatedFromCommit": "6f74e1504f2e3c192f8dd8d3ccd70b4a8910db18",
   "coverage": {
     "lines": 0,
     "statements": 0,
@@ -9,16 +9,28 @@
     "branches": 0
   },
   "duplication": {
-    "percent": 1.18,
-    "fragments": 75
+    "percent": 1.06,
+    "fragments": 68
   },
   "violations": {
-    "biome": 1186,
-    "knipUnusedFiles": 209,
-    "knipUnusedExports": 414,
-    "knipUnusedTypes": 362,
+    "biome": 1151,
+    "knipUnusedFiles": 208,
+    "knipUnusedExports": 413,
+    "knipUnusedTypes": 365,
     "knipUnusedDeps": 19,
-    "knipDuplicates": 33
+    "knipDuplicates": 33,
+    "design": {
+      "total": 2789,
+      "byRule": {
+        "DS005": 1056,
+        "DS006": 1164,
+        "DS001": 173,
+        "DS002": 185,
+        "DS004": 104,
+        "DS003": 20,
+        "DS007": 87
+      }
+    }
   },
   "oversizedFiles": {
     "__tests__/components/Admin/NotificationSettingsPage.test.tsx": {
@@ -82,8 +94,8 @@
       "maxBytes": 60000
     },
     "__tests__/integration/journeys/multi-step-flows.test.tsx": {
-      "lines": 952,
-      "bytes": 31038,
+      "lines": 935,
+      "bytes": 30632,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -131,7 +143,7 @@
     },
     "__tests__/unit/scripts/generate-llms-txt.test.ts": {
       "lines": 1514,
-      "bytes": 53825,
+      "bytes": 53815,
       "maxLines": 800,
       "maxBytes": 60000
     },
@@ -147,21 +159,9 @@
       "maxLines": 800,
       "maxBytes": 60000
     },
-    "app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient.tsx": {
-      "lines": 635,
-      "bytes": 24239,
-      "maxLines": 600,
-      "maxBytes": 40000
-    },
     "app/community/[communityId]/manage/funding-platform/page.tsx": {
       "lines": 717,
       "bytes": 30185,
-      "maxLines": 600,
-      "maxBytes": 40000
-    },
-    "app/knowledge/page.tsx": {
-      "lines": 644,
-      "bytes": 25740,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -172,8 +172,8 @@
       "maxBytes": 40000
     },
     "components/Dialogs/ProjectDialog/index.tsx": {
-      "lines": 1708,
-      "bytes": 64662,
+      "lines": 1705,
+      "bytes": 64549,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -190,8 +190,8 @@
       "maxBytes": 40000
     },
     "components/Forms/ProjectUpdate.tsx": {
-      "lines": 987,
-      "bytes": 36212,
+      "lines": 1051,
+      "bytes": 39500,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -202,8 +202,8 @@
       "maxBytes": 40000
     },
     "components/FundingPlatform/ApplicationView/StatusChangeModal.tsx": {
-      "lines": 689,
-      "bytes": 31036,
+      "lines": 688,
+      "bytes": 31054,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -213,27 +213,21 @@
       "maxLines": 600,
       "maxBytes": 40000
     },
-    "components/Pages/Admin/ControlCenter/ControlCenterPage.tsx": {
-      "lines": 661,
-      "bytes": 24741,
-      "maxLines": 600,
-      "maxBytes": 40000
-    },
     "components/Pages/Admin/ControlCenter/ProjectDetailsSidebar.tsx": {
       "lines": 834,
-      "bytes": 31420,
+      "bytes": 31575,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Pages/Admin/MilestonesReview/MilestoneCard.tsx": {
-      "lines": 994,
-      "bytes": 41269,
+      "lines": 985,
+      "bytes": 41039,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Pages/Admin/MilestonesReview/index.tsx": {
-      "lines": 1111,
-      "bytes": 44178,
+      "lines": 1109,
+      "bytes": 44086,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -244,14 +238,14 @@
       "maxBytes": 40000
     },
     "components/Pages/Admin/PayoutsAdminPage.tsx": {
-      "lines": 1292,
-      "bytes": 49313,
+      "lines": 1283,
+      "bytes": 49005,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Pages/Admin/PortfolioReports/ReportConfigPage.tsx": {
-      "lines": 907,
-      "bytes": 33292,
+      "lines": 890,
+      "bytes": 32319,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -310,8 +304,8 @@
       "maxBytes": 40000
     },
     "components/Shared/ActivityCard/MilestoneCard.tsx": {
-      "lines": 654,
-      "bytes": 25606,
+      "lines": 663,
+      "bytes": 26045,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -329,19 +323,19 @@
     },
     "hooks/useFundingPlatform.ts": {
       "lines": 1066,
-      "bytes": 35370,
+      "bytes": 35522,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "hooks/useMilestone.ts": {
-      "lines": 1176,
-      "bytes": 42936,
+      "lines": 1173,
+      "bytes": 42713,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "hooks/useMilestoneCompletionVerification.ts": {
-      "lines": 666,
-      "bytes": 20448,
+      "lines": 662,
+      "bytes": 22158,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -376,8 +370,8 @@
       "maxBytes": 40000
     },
     "src/features/non-profits/components/landing-page-client.tsx": {
-      "lines": 1059,
-      "bytes": 41028,
+      "lines": 769,
+      "bytes": 30890,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -413,19 +407,19 @@
     },
     "src/features/payout-disbursement/hooks/use-payout-disbursement.ts": {
       "lines": 781,
-      "bytes": 24627,
+      "bytes": 24836,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "src/features/payout-disbursement/services/payout-disbursement.service.ts": {
       "lines": 754,
-      "bytes": 22150,
+      "bytes": 22129,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "utilities/indexer.ts": {
-      "lines": 824,
-      "bytes": 40457,
+      "lines": 820,
+      "bytes": 40079,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -439,17 +433,17 @@
   "reactDoctor": {
     "score": 0,
     "errors": 64,
-    "warnings": 3278,
+    "warnings": 3213,
     "byCategory": {
       "Accessibility": 284,
-      "Architecture": 1159,
-      "Correctness": 383,
-      "Performance": 622,
-      "TanStack Query": 40,
+      "Architecture": 1117,
+      "Correctness": 376,
+      "Performance": 611,
+      "Server": 11,
+      "Next.js": 128,
+      "TanStack Query": 41,
       "State & Effects": 698,
-      "Next.js": 134,
-      "Server": 10,
-      "Bundle Size": 9,
+      "Bundle Size": 8,
       "Security": 3
     }
   }

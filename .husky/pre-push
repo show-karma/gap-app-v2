@@ -5,3 +5,17 @@
 # Use --no-verify to skip in emergencies.
 
 pnpm typecheck
+
+# Design system: the same added-lines check CI will run, so a push that would
+# fail the blocking gate is caught here instead. Warnings never block.
+#
+# The base must be current or the diff is wrong, so refresh origin/main first.
+# If it cannot be resolved — offline, a fork without that remote, a detached
+# checkout — warn and skip. A push must never be bricked by an unreachable
+# remote; CI still runs the same check with an authoritative base.
+git fetch --quiet origin main 2>/dev/null || true
+if git rev-parse --verify --quiet origin/main >/dev/null; then
+  pnpm design:check --changed --base origin/main || exit 1
+else
+  echo "[design] origin/main not resolvable — skipping the design check for this push."
+fi
