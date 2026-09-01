@@ -155,6 +155,37 @@ describe("NotebookSandboxFrame delivery", () => {
   });
 
   /**
+   * The nonce has to CROSS THE BOUNDARY, not merely exist.
+   *
+   * The first version generated a nonce, put it in the URL and checked it on
+   * the way in — then omitted it from the bootstrap, so the shell (which
+   * validates it) could never connect. The test asserted the message type and
+   * the target and stopped there, which is precisely the gap that let it ship:
+   * a shape assertion that never looked at the payload the other side reads.
+   */
+  it("should_send_the_nonce_on_the_bootstrap_so_the_shell_can_accept_it", async () => {
+    const { iframe, nonce } = renderFrame();
+
+    announce(iframe, nonce);
+
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+    expect(windowSends()[0].data.nonce).toBe(nonce);
+  });
+
+  // It is a correlation token, not a secret, and it is scoped to one frame:
+  // two mounted frames must not be interchangeable.
+  it("should_bootstrap_each_frame_with_its_own_nonce", async () => {
+    const first = renderFrame();
+    const second = renderFrame();
+
+    announce(second.iframe, second.nonce);
+
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+    expect(windowSends()[0].data.nonce).toBe(second.nonce);
+    expect(windowSends()[0].data.nonce).not.toBe(first.nonce);
+  });
+
+  /**
    * THE INVARIANT, stated positively and negatively.
    *
    * The wildcard is permitted exactly once and only because an opaque origin

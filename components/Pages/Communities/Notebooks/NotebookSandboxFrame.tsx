@@ -107,11 +107,18 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
 
       const channel = new MessageChannel();
       port.current = channel.port1;
-      // THE ONE PERMITTED WILDCARD, and it carries no content: the payload is
-      // a type tag and a transferred port. An opaque origin cannot be named,
-      // so "*" is the only way to hand the port over at all — which is exactly
-      // why the thing handed over is a port and not the document.
-      frame.current?.contentWindow?.postMessage({ type: NOTEBOOK_SANDBOX_BOOTSTRAP }, "*", [
+      // THE ONE PERMITTED WILDCARD, and it carries no content: a type tag, the
+      // correlation nonce, and a transferred port. An opaque origin cannot be
+      // named, so "*" is the only way to hand the port over at all — which is
+      // exactly why the thing handed over is a port and not the document.
+      //
+      // THE NONCE TRAVELS BOTH WAYS, and it is not redundant with the checks
+      // above. Those tell US the announcement came from our frame; this one
+      // tells the SHELL the bootstrap was meant for it, so a shell cannot
+      // accept a port intended for a different frame instance on the same
+      // page, and a replayed bootstrap does not connect. The wildcard makes
+      // that the shell's only way to know.
+      frame.current?.contentWindow?.postMessage({ type: NOTEBOOK_SANDBOX_BOOTSTRAP, nonce }, "*", [
         channel.port2,
       ]);
       setConnected(true);
