@@ -20,11 +20,6 @@ import { track } from "@/utilities/analytics/client";
 /** Donations whose terminal outcome has already been reported this session. */
 const reported = new Set<string>();
 
-/** The subset of a donation response these emitters read. */
-interface DonationOutcome {
-  status?: string | null;
-}
-
 /**
  * Reports a donation that has reached a terminal state, once per uid.
  *
@@ -63,5 +58,3 @@ export function emitDonationOutcomeOnce(input: {
 export const __resetDonationOutcomesForTests = (): void => {
   reported.clear();
 };
-
-export type { DonationOutcome };
