@@ -420,10 +420,32 @@ indexer catalog, keyed by the donation's own uid.
 
 `NEXT_PUBLIC_MIXPANEL_KEY` enables analytics in **any** environment, not just
 production. This is deliberate: gating on `NODE_ENV === "production"` made the
-pipeline unverifiable on staging, which is how it stayed broken. Point staging
-and preview deploys at their own Mixpanel project token so the data can be
-checked before release, and leave the variable unset locally to disable
-analytics entirely.
+pipeline unverifiable on staging, which is how it stayed broken. Leave the
+variable unset locally to disable analytics entirely.
+
+**The project is `Backend Analytics`, id `2723981`, in the Karma org, and
+`aab81159bff1e8ca4b64baf6bfd92d41` is that project's token** — read off the
+dashboard, not inferred. The name is historical; it is the one project both
+halves of this plan report into, browser and indexer alike. The token is public
+by construction — it ships in every page's bundle, and the `/api/mp` proxy
+validates payloads against it — so writing it here leaks nothing and lets a
+reader confirm which project their key points at.
+
+**There is no separate staging project.** Preview and staging deploys land in
+the same one, separated only by the `env` super property: `staging` on those
+deploys, `production` in production, `development` when `NEXT_PUBLIC_ENV` is
+unset. Two consequences, the second being the sharper one:
+
+- **Every board must filter `env = production`.** An unfiltered board counts
+  preview traffic — including whatever a release check clicks through — as
+  production usage.
+- **Server events carry no `env` property at all** (see the note in the server
+  catalog), so that filter cannot separate indexer traffic. A staging indexer
+  pointed at this token is indistinguishable from production.
+
+The fix is a second Mixpanel project for staging and preview with its own
+token, and creating one is the standing recommendation. Until it exists, the
+`env` filter is the whole defence, and it only covers half the events.
 
 `debug` logging turns on automatically outside production.
 
@@ -467,7 +489,9 @@ Assumptions this plan depends on, and how each was verified.
 | The community layout resolves a community before `AnalyticsProvider` runs its effect | Verified: child effects run before parent effects, and the provider is mounted from the root layout. |
 | `NEXT_PUBLIC_APP_VERSION` is set on preview deploys | **UNVERIFIED — reasoned from the build config, not observed.** `next.config.ts` reads the version out of `package.json` rather than from `npm_package_version`, which is unset when the platform invokes the binary directly. A deploy that builds some other way reports `"unknown"`. **Check on the next preview:** open any event and confirm `app_version` is a real semver rather than `unknown`. |
 | The proxy allowlist is not missing a path the SDK needs | **UNVERIFIED — reasoned from the client config, not observed.** `/decide` is only called when feature flags are on (they are not) and the session-replay `/record` paths only when `record_sessions_percent` is above zero (it is `0`, explicitly). **Check on the next preview:** watch the network tab for any `/api/mp/` request other than `track`, `engage` or `groups`; there should be none. Turning either feature on means widening the allowlist in the same change, or the requests fail silently. |
-| **Mixpanel project ID Merge mode** | **UNVERIFIED — no dashboard access.** Implemented for **Simplified** ID Merge: `resetIdentity()` on logout, `identify()` on sign-in. **Check Project Settings → Identity Merge before relying on cross-device user counts.** Under Original ID Merge the `reset()` on logout would fragment a user across devices instead of merging them, and the fix is to stop resetting and rely on `identify()` alone. |
+| **The project this token reports into** | **Verified in the dashboard.** `Backend Analytics`, id `2723981`, Karma org; `aab81159bff1e8ca4b64baf6bfd92d41` is that project's token. There is **no** separate staging project — preview and staging land in the same one carrying `env=staging` — so every board must filter `env = production` until one is created. See [Tokens](#tokens). |
+| **Geo resolution survives the proxy** | **Verified end to end.** A marker event sent through `/api/mp` resolved to the sender's city in the dashboard, which is the only way to tell that the `X-REAL-IP` + `?ip=1` forwarding actually reaches Mixpanel's geo lookup. Without it every event would carry the proxy's location, not the visitor's, and the failure is silent — the properties are populated either way. |
+| **Mixpanel project ID Merge mode** | **Verified in the dashboard: the project uses the Original ID Merge API, not Simplified.** Identity still works — the SDK stores `$user_id` and `$device_id` under either mode, and `identify()` on sign-in binds them. What differs is logout: under Original, `reset()` starts a **new anonymous cluster** for each subsequent login on a shared device rather than reusing the first. That is Mixpanel's own documented recommendation for the mode, so **no code change**: `resetIdentity()` on logout and `identify()` on sign-in stay exactly as implemented. The known cost is the **500-id-per-cluster limit**; see [Known limitations](#known-limitations). |
 
 ## Review waivers
 
@@ -490,6 +514,14 @@ Findings accepted with a documented reason rather than a fix, each marked with a
   submitting an application reports null rather than a wrong duration.
 - **Wallet-keyed server events do not merge automatically** with DID-keyed
   browser profiles. See the reconciliation note in the server catalog.
+- **Original ID Merge caps an identity cluster at 500 ids.** Every logout mints
+  a fresh anonymous id and every sign-in merges one more id into the person's
+  cluster, so a browser signs the same person in 500 times and then stops
+  merging — the 501st session reports as a separate user. Ordinary usage never
+  approaches that; a shared kiosk or a long-lived QA machine can. The symptom
+  is an inflated user count, not an error, so nothing surfaces it: if
+  cross-session counts on a known-shared device start looking wrong, this is
+  the first thing to check.
 - **Two windows can misattribute a single `logout` reason,** and both are
   accepted rather than closed. A second, unrelated sign-out landing inside the
   250 ms grace that `useAuth` allows a resolved `logout()` to take effect could

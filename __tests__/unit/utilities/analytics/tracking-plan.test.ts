@@ -134,12 +134,19 @@ describe("tracking plan", () => {
     expect(plan).toContain("gap-indexer/docs/analytics/server-events.md");
   });
 
-  it("records the identity-merge check as unverified", () => {
-    // R1: the project's ID Merge mode could not be checked without dashboard
-    // access, and the reset-on-logout behaviour is only correct under
-    // Simplified. If someone verifies it, this assertion is the reminder to
-    // update the plan rather than leave a stale UNVERIFIED sitting in it.
-    expect(plan).toContain("UNVERIFIED");
-    expect(plan).toContain("Identity Merge");
+  it("records the identity-merge check as verified against Original ID Merge", () => {
+    // R1: the project's ID Merge mode is now known from the dashboard — it is
+    // the Original API, not Simplified. reset-on-logout stays, because that is
+    // Mixpanel's own recommendation for Original; what it costs is a new
+    // anonymous cluster per login on a shared device, bounded by the 500-id
+    // cluster limit. Scoped to the row rather than the whole file so an
+    // UNVERIFIED elsewhere in the table cannot satisfy it, and so a future
+    // change of mode has to come back through this assertion.
+    const row = lines.find((line) => line.includes("ID Merge mode"));
+    if (!row) throw new Error("the plan no longer has an ID Merge row");
+
+    expect(row).not.toContain("UNVERIFIED");
+    expect(row).toContain("Original ID Merge");
+    expect(row).toContain("500");
   });
 });
