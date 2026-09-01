@@ -81,9 +81,12 @@ export function GrantCommentsPanel({ grant }: GrantCommentsPanelProps) {
             variant="outline"
             size="sm"
             data-testid="grant-comments-trigger"
-            className="rounded-full text-muted-foreground hover:text-foreground"
+            className="group rounded-full text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground data-[state=open]:border-primary/40 data-[state=open]:bg-primary/5 data-[state=open]:text-foreground"
           >
-            <MessageSquare className="h-4 w-4" aria-hidden="true" />
+            <MessageSquare
+              className="h-4 w-4 text-primary transition-transform duration-200 ease-out group-hover:scale-110"
+              aria-hidden="true"
+            />
             Reviewer comments
           </Button>
         </SheetTrigger>
@@ -91,13 +94,15 @@ export function GrantCommentsPanel({ grant }: GrantCommentsPanelProps) {
           side="right"
           className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-lg"
         >
-          <SheetHeader className="border-b border-border px-5 py-4 text-left">
-            <SheetTitle className="text-base">Reviewer comments</SheetTitle>
-            <SheetDescription className="text-xs">
+          <SheetHeader className="space-y-1 border-b border-border px-6 pb-4 pt-5 text-left">
+            <SheetTitle className="text-base font-semibold tracking-tight">
+              Reviewer comments
+            </SheetTitle>
+            <SheetDescription className="text-xs text-muted-foreground">
               Conversation on this grant&apos;s funding application
             </SheetDescription>
           </SheetHeader>
-          <div className="flex-1 px-5 py-4">
+          <div className="flex-1 bg-muted/20 px-6 py-5">
             {/* Authorization is tri-state and the branch inside depends on it;
                 show the skeleton rather than a branch that may be wrong for
                 one paint. Only ever reached with the sheet open. */}

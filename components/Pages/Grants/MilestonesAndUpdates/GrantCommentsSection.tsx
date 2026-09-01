@@ -96,8 +96,16 @@ export function GrantCommentsSection({
     );
   }
 
-  // Deliberate "no comments surface" branch: the viewer cannot comment and the
-  // program has not opted into a public stream. Rendering nothing is the
-  // correct terminal state — this is not an unhandled data state.
-  return null;
+  // Deliberate terminal branch: the viewer cannot comment and the program has
+  // not opted into a public stream. This now renders inside an opened sheet,
+  // so an honest quiet message beats an empty panel.
+  return (
+    <p
+      data-testid="grant-comments-private"
+      className="text-sm leading-relaxed text-muted-foreground"
+    >
+      Comments on this application aren&apos;t public. Reviewers and the grantee can see the
+      conversation once they sign in.
+    </p>
+  );
 }

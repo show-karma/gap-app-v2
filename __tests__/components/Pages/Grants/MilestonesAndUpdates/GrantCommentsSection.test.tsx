@@ -188,13 +188,15 @@ describe("GrantCommentsSection", () => {
   });
 
   describe("no-surface branch (flow 4)", () => {
-    it("renders nothing when the viewer cannot comment and public comments are off", () => {
-      const { container } = render(<GrantCommentsSection {...DEFAULT_PROPS} />);
+    it("renders the quiet private-conversation note when the viewer cannot comment and public comments are off", () => {
+      render(<GrantCommentsSection {...DEFAULT_PROPS} />);
 
-      expect(container).toBeEmptyDOMElement();
+      expect(screen.getByTestId("grant-comments-private")).toBeInTheDocument();
+      expect(screen.queryByTestId("comment-timeline")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("public-comments")).not.toBeInTheDocument();
     });
 
-    it("renders nothing when the program cannot be resolved", () => {
+    it("renders the note when the program cannot be resolved", () => {
       mockUseProgram.mockReturnValue({
         program: null,
         loading: false,
@@ -202,9 +204,9 @@ describe("GrantCommentsSection", () => {
         refetch: vi.fn(),
       });
 
-      const { container } = render(<GrantCommentsSection {...DEFAULT_PROPS} />);
+      render(<GrantCommentsSection {...DEFAULT_PROPS} />);
 
-      expect(container).toBeEmptyDOMElement();
+      expect(screen.getByTestId("grant-comments-private")).toBeInTheDocument();
     });
   });
 
