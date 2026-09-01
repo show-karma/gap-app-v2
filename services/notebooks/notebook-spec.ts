@@ -312,6 +312,29 @@ export const NotebookTableSectionSchema = z
   })
   .strict();
 
+/**
+ * The kernel tier rollup.
+ *
+ * FOUR ROWS, one per OSO tier — a different object from the `table` section's
+ * 31-row function inventory, which is why it is its own section type rather
+ * than a `source` on that one. Conflating them would make "which population is
+ * this?" a question the reader has to work out from the row count.
+ *
+ * It carries NO column list. The rollup's columns, their labels, their enum
+ * display copy and the accent mapping are all DECLARED BY THE QUERY LAYER and
+ * arrive with the data, so there is exactly one place that decides what the
+ * rollup looks like. Letting an author reorder them here would put a second
+ * copy of that decision in every stored spec, to drift from the first.
+ */
+export const NotebookTiersSectionSchema = z
+  .object({
+    type: z.literal("tiers"),
+    source: z.literal("kernel"),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
+  })
+  .strict();
+
 export const NotebookBarsSectionSchema = z
   .object({
     type: z.literal("bars"),
@@ -448,6 +471,7 @@ export const NotebookSectionSchema = z.union([
   NotebookTextSectionSchema,
   NotebookTimeseriesSectionSchema,
   NotebookTableSectionSchema,
+  NotebookTiersSectionSchema,
   NotebookHeaderSectionSchema,
   NotebookHeroSectionSchema,
   NotebookNavSectionSchema,
@@ -475,6 +499,7 @@ export type NotebookHeroSection = z.infer<typeof NotebookHeroSectionSchema>;
 export type NotebookNavSection = z.infer<typeof NotebookNavSectionSchema>;
 export type NotebookNarrativeSection = z.infer<typeof NotebookNarrativeSectionSchema>;
 export type NotebookTableSection = z.infer<typeof NotebookTableSectionSchema>;
+export type NotebookTiersSection = z.infer<typeof NotebookTiersSectionSchema>;
 export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
 export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;
 export type NotebookSection = z.infer<typeof NotebookSectionSchema>;

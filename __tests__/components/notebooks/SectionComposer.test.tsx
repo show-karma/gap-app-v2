@@ -260,6 +260,39 @@ describe("SectionComposer", () => {
     });
   });
 
+  describe("tier rollup section", () => {
+    it("offers a Tier rollup section to add", () => {
+      renderComposer(spec([{ type: "applications" }]));
+
+      expect(screen.getByRole("button", { name: /tier rollup/i })).toBeInTheDocument();
+    });
+
+    // The rollup's columns are declared by the query layer and travel with the
+    // data. Offering a picker here would be a second copy of that decision,
+    // and the section schema has nowhere to put the answer.
+    it("offers no column picker, because the query layer declares the columns", () => {
+      renderComposer(spec([{ type: "tiers", source: "kernel", title: "Kernel tiers" }]));
+
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: /heading/i })).toHaveValue("Kernel tiers");
+    });
+
+    it("edits the heading", () => {
+      const onChange = renderComposer(
+        spec([{ type: "tiers", source: "kernel", title: "Kernel tiers" }])
+      );
+
+      fireEvent.change(screen.getByRole("textbox", { name: /heading/i }), {
+        target: { value: "Tiers of the kernel" },
+      });
+
+      expect(onChange).toHaveBeenCalledWith({
+        version: 1,
+        sections: [{ type: "tiers", source: "kernel", title: "Tiers of the kernel" }],
+      });
+    });
+  });
+
   describe("editorial sections", () => {
     it.each(["Page header", "Headline", "Section nav", "Narrative"])("offers %s", (label) => {
       renderComposer(spec([{ type: "applications" }]));

@@ -44,6 +44,7 @@ import {
   type NotebookSpec,
   type NotebookTableSection,
   type NotebookTextSection,
+  type NotebookTiersSection,
   type NotebookTimeseriesSection,
   resolveNotebookDateRange,
   resolveNotebookKernelRange,
@@ -231,6 +232,10 @@ function SectionFields({
           onFieldChange={update}
         />
       );
+    case "tiers":
+      // Title and description only — the rollup's columns are declared by the
+      // query layer, so there is nothing else here for an author to decide.
+      return <TiersFields fieldId={fieldId} section={section} onFieldChange={update} />;
     case "table":
       return <TableFields fieldId={fieldId} section={section} onFieldChange={update} />;
     case "text":
@@ -267,6 +272,7 @@ const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
   text: "Text block",
   timeseries: "Time series",
   table: "Table",
+  tiers: "Tier rollup",
   header: "Page header",
   hero: "Headline",
   nav: "Section nav",
@@ -291,6 +297,7 @@ const ADDABLE_SECTION_TYPES = [
   "bars",
   "timeseries",
   "table",
+  "tiers",
   "applications",
   "text",
 ] as const;
@@ -498,6 +505,61 @@ function TableFields({
           onChange={(event) => onFieldChange({ ...section, title: event.target.value })}
         />
       </label>
+    </div>
+  );
+}
+
+/**
+ * The tier rollup's only author decisions.
+ *
+ * There is no column picker here on purpose: the rollup's columns, labels and
+ * accent mapping are declared by the query layer and travel with the data, so
+ * the only thing left for an author is what to call the block and what to say
+ * about it. A picker would put a second copy of that decision in every spec.
+ */
+function TiersFields({
+  fieldId,
+  section,
+  onFieldChange,
+}: {
+  fieldId: string;
+  section: NotebookTiersSection;
+  onFieldChange: (next: NotebookTiersSection) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-tiers-title`}>
+        <span className="font-medium text-foreground">Heading</span>
+        <Input
+          id={`${fieldId}-tiers-title`}
+          type="text"
+          value={section.title}
+          maxLength={NOTEBOOK_SECTION_TITLE_MAX}
+          onChange={(event) => onFieldChange({ ...section, title: event.target.value })}
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-tiers-description`}>
+        <span className="font-medium text-foreground">
+          Standfirst <span className="text-muted-foreground">(optional)</span>
+        </span>
+        <Textarea
+          id={`${fieldId}-tiers-description`}
+          value={section.description ?? ""}
+          maxLength={NOTEBOOK_SECTION_DESCRIPTION_MAX}
+          onChange={(event) =>
+            onFieldChange({
+              ...section,
+              description: event.target.value.trim() === "" ? undefined : event.target.value,
+            })
+          }
+        />
+      </label>
+
+      <p className="text-xs text-muted-foreground">
+        Four rows, one per kernel tier, over a fixed 90-day window. Columns and their labels come
+        from the kernel data itself.
+      </p>
     </div>
   );
 }

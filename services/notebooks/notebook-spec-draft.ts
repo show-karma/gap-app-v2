@@ -74,6 +74,8 @@ export function newSection(type: NotebookSection["type"]): NotebookSection {
         columns: ["function", "tier", "measured", "slaMetPct"],
         title: "Kernel function inventory",
       };
+    case "tiers":
+      return { type: "tiers", source: "kernel", title: "Kernel tiers" };
     case "header":
       return { type: "header", eyebrow: "" };
     case "hero":

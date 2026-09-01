@@ -3,8 +3,8 @@ import "server-only";
 import * as Sentry from "@sentry/nextjs";
 import { getNotebookOverview } from "@/services/notebook-overview.service";
 import { getNotebookIndicatorSeries } from "./notebook-indicators.query";
-import { getNotebookKernelData } from "./notebook-kernel.query";
-import type { NotebookKernelData } from "./notebook-kernel.types";
+import { getNotebookKernelData, getNotebookKernelTierRollup } from "./notebook-kernel.query";
+import type { NotebookKernelData, NotebookKernelTierRollup } from "./notebook-kernel.types";
 import type { NotebookPageData } from "./notebook-page-data.types";
 import { seriesKey as buildSeriesKey } from "./notebook-page-data.types";
 import {
@@ -41,14 +41,21 @@ export { seriesKey } from "./notebook-page-data.types";
 /** The distinct datasets a spec needs, so nothing is fetched twice. */
 function planRequests(spec: NotebookSpec): {
   kernelRanges: Set<NotebookKernelRange>;
+  needsTierRollup: boolean;
   series: Map<string, { indicatorId: string; preset: string }>;
 } {
   const kernelRanges = new Set<NotebookKernelRange>();
+  // The rollup is one fixed 90-day object, so this is a flag rather than a
+  // set: two tier sections on a page are still one fetch.
+  let needsTierRollup = false;
   const series = new Map<string, { indicatorId: string; preset: string }>();
 
   for (const section of spec.sections) {
     if (section.type === "kpis" && section.metrics.some(isKernelKpiMetric)) {
       kernelRanges.add(resolveNotebookKernelRange(section.kernelRange));
+    }
+    if (section.type === "tiers") {
+      needsTierRollup = true;
     }
     if (section.type === "table") {
       kernelRanges.add(resolveNotebookKernelRange(section.range));
@@ -62,7 +69,7 @@ function planRequests(spec: NotebookSpec): {
     }
   }
 
-  return { kernelRanges, series };
+  return { kernelRanges, needsTierRollup, series };
 }
 
 /**
@@ -96,12 +103,15 @@ export async function getNotebookPageData(
   communityId: string,
   spec: NotebookSpec
 ): Promise<NotebookPageData> {
-  const { kernelRanges, series } = planRequests(spec);
+  const { kernelRanges, needsTierRollup, series } = planRequests(spec);
 
   // One round of parallel work: the funding overview, each distinct kernel
   // window, and each distinct indicator/window pair.
-  const [overview, kernelEntries, seriesEntries] = await Promise.all([
+  const [overview, tierRollup, kernelEntries, seriesEntries] = await Promise.all([
     getNotebookOverview(communityId),
+    needsTierRollup
+      ? loadOrNull<NotebookKernelTierRollup>(getNotebookKernelTierRollup, { communityId })
+      : Promise.resolve(null),
     Promise.all(
       [...kernelRanges].map(async (range) => {
         const data = await loadOrNull(() => getNotebookKernelData(range), {
@@ -135,6 +145,10 @@ export async function getNotebookPageData(
 
   return {
     overview,
+    // Absent rather than null: the shape says "no rollup on this page", and a
+    // failed fetch is the same story for the renderer as a page that never
+    // asked — the section says so and the rest of the page still renders.
+    ...(tierRollup ? { tierRollup } : {}),
     kernel,
     series: Object.fromEntries(seriesEntries),
   };

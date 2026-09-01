@@ -13,6 +13,7 @@ import type {
   NotebookSpec,
   NotebookTableSection,
   NotebookTextSection,
+  NotebookTiersSection,
   NotebookTimeseriesSection,
 } from "@/services/notebooks/notebook-spec";
 import {
@@ -31,6 +32,7 @@ import {
   sectionAnchorId,
 } from "./NotebookEditorial";
 import { NotebookKernelTable } from "./NotebookKernelTable";
+import { NotebookTierTable } from "./NotebookTierTable";
 import { NotebookTimeSeries } from "./NotebookTimeSeries";
 
 /**
@@ -236,6 +238,36 @@ function TimeseriesSection({
         ) : null}
       </div>
       <NotebookTimeSeries series={series} chartStyle={section.chartStyle} />
+    </section>
+  );
+}
+
+/**
+ * The tier rollup section.
+ *
+ * Carries no column choice of its own — see the section schema. It renders the
+ * rollup exactly as the query layer declared it, so this component and the
+ * composer cannot disagree about what a tier table is.
+ */
+function TiersSection({
+  section,
+  data,
+}: {
+  section: NotebookTiersSection;
+  data?: NotebookPageData;
+}) {
+  const rollup = data?.tierRollup;
+  if (!rollup) return <SectionUnavailable title={section.title} />;
+
+  return (
+    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-5 md:p-6">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
+        {section.description ? (
+          <p className="text-sm text-muted-foreground">{section.description}</p>
+        ) : null}
+      </div>
+      <NotebookTierTable rollup={rollup} />
     </section>
   );
 }
@@ -460,6 +492,8 @@ function SectionView({
       return <TimeseriesSection section={section} data={data} />;
     case "table":
       return <TableSection section={section} data={data} />;
+    case "tiers":
+      return <TiersSection section={section} data={data} />;
     default:
       // A section this build cannot draw is OMITTED, not rendered empty.
       //

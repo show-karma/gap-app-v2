@@ -1,5 +1,5 @@
 import type { NotebookIndicatorSeries } from "./notebook-indicators.types";
-import type { NotebookKernelData } from "./notebook-kernel.types";
+import type { NotebookKernelData, NotebookKernelTierRollup } from "./notebook-kernel.types";
 import type { NotebookKernelRange } from "./notebook-spec";
 
 /**
@@ -22,6 +22,13 @@ export interface NotebookPageData {
   overview: import("@/services/notebook-overview.service").NotebookOverview;
   /** Kernel data by window preset, for the windows this spec actually names. */
   kernel: Partial<Record<NotebookKernelRange, NotebookKernelData>>;
+  /**
+   * The four-row tier rollup, present only when a section asks for it.
+   *
+   * Fixed at 90 days by the contract, so unlike `kernel` it is not keyed by
+   * window — there is one rollup or there is none.
+   */
+  tierRollup?: NotebookKernelTierRollup;
   /**
    * Indicator series by `indicatorId:preset`.
    *
