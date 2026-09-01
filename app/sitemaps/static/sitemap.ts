@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import type { MetadataRoute } from "next";
+import { cacheLife } from "next/cache";
 import { getPublishedSlugs } from "@/sanity/lib/gateway";
 import { SITE_URL } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
@@ -73,7 +74,8 @@ const lowPriorityPages = ["/privacy-policy", "/terms-and-conditions"];
 //      revalidation during an outage caches a post-less sitemap indefinitely.
 // An hour is well inside search engines' recrawl cadence and costs one extra
 // CMS query per hour.
-export const revalidate = 3600;
+// Replaced `export const revalidate = 3600`; cacheLife("hours") is
+// revalidate: 3600, so the cadence above is unchanged.
 
 // `lastModified` is intentionally omitted for the static pages below — we
 // have no accurate per-page modified date, and a fabricated "now" makes
@@ -81,6 +83,9 @@ export const revalidate = 3600;
 // Blog posts are the one legitimate exception: `publishedAt` from Sanity is
 // a real, accurate modified date, so those entries do carry `lastModified`.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  "use cache";
+  cacheLife("hours");
+
   const staticEntries: MetadataRoute.Sitemap = staticPages.map((path) => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes(path) ? "yearly" : "weekly",
