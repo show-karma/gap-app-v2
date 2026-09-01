@@ -32,7 +32,12 @@ import { describe, expect, it } from "vitest";
 // to. `ROUTES_ROOT` is also the correct ceiling for the DEV-612 chain walk: a
 // `loading.tsx` at the root-layout level would wrap every route.
 const ROUTES_ROOT = path.join(process.cwd(), "app", "t", "[tenant]");
-const APP_DIR = ROUTES_ROOT;
+
+// Whether a route gets the app navbar and footer is answered by which of these
+// two groups it sits in, not by a `usePathname()` test in a client component.
+// Route groups are invisible in URLs, so the sets below stay keyed on the
+// public path and a route moving between groups changes nothing here.
+const CHROME_GROUPS = ["(chrome)", "(bare)"] as const;
 
 // Sitemap-crawlable routes where loading.tsx is FORBIDDEN along the whole
 // segment chain (DEV-612). Any loading.tsx above a page puts the page segment
@@ -197,35 +202,66 @@ const ERROR_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
   "terms-and-conditions",
 ]);
 
-/** All directories under app/ that contain a page.tsx, keyed by app-relative POSIX path. */
+/**
+ * Every directory holding a page.tsx, keyed by its path relative to the group
+ * it lives in — i.e. the public route, with the `(chrome)`/`(bare)` segment
+ * dropped.
+ */
 function collectPageDirs(): string[] {
   const dirs: string[] = [];
-  const walk = (dir: string) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(full);
-      } else if (entry.name === "page.tsx") {
-        dirs.push(path.relative(APP_DIR, dir).split(path.sep).join("/"));
+  for (const group of CHROME_GROUPS) {
+    const groupRoot = path.join(ROUTES_ROOT, group);
+    if (!fs.existsSync(groupRoot)) continue;
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (entry.name === "page.tsx") {
+          dirs.push(path.relative(groupRoot, dir).split(path.sep).join("/"));
+        }
       }
-    }
-  };
-  walk(APP_DIR);
+    };
+    walk(groupRoot);
+  }
   return dirs.sort();
 }
 
 const pageDirs = collectPageDirs();
 
-function hasSibling(routeDir: string, file: "loading.tsx" | "error.tsx"): boolean {
-  return fs.existsSync(path.join(APP_DIR, routeDir, file));
+/** The group directory holding a route key, or null if no group does. */
+function groupRootFor(routeDir: string): string | null {
+  for (const group of CHROME_GROUPS) {
+    if (fs.existsSync(path.join(ROUTES_ROOT, group, routeDir))) {
+      return path.join(ROUTES_ROOT, group);
+    }
+  }
+  return null;
 }
 
-/** Page routes that escaped the root-layout directory, app-relative. */
+/** The on-disk directory backing a route key, whichever group holds it. */
+function routeDirOnDisk(routeDir: string): string | null {
+  const groupRoot = groupRootFor(routeDir);
+  return groupRoot === null ? null : path.join(groupRoot, routeDir);
+}
+
+function hasSibling(routeDir: string, file: "loading.tsx" | "error.tsx"): boolean {
+  const dir = routeDirOnDisk(routeDir);
+  return dir !== null && fs.existsSync(path.join(dir, file));
+}
+
+/**
+ * Page routes that escaped the two chrome groups, app-relative — both those
+ * outside the root-layout directory entirely and those inside it but in
+ * neither group. The second case is the one this file would otherwise go
+ * blind to: `collectPageDirs` only walks the groups.
+ */
 function collectPageDirsOutsideRoutesRoot(): string[] {
   const appDir = path.join(process.cwd(), "app");
+  const groupRoots = CHROME_GROUPS.map((group) => path.join(ROUTES_ROOT, group));
   const dirs: string[] = [];
   const walk = (dir: string) => {
-    if (dir === ROUTES_ROOT) return;
+    if (groupRoots.includes(dir)) return;
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
@@ -245,12 +281,17 @@ describe("App Router route-file structure ratchet", () => {
     expect(pageDirs.length).toBeGreaterThan(0);
   });
 
-  it("has no page route outside the [tenant] root layout", () => {
+  it("has no page route outside the (chrome) and (bare) groups", () => {
     // A page.tsx outside `app/t/[tenant]/` has no root layout and no tenant, so
     // it would render without the app shell — and, being reachable at its own
     // public URL, duplicate indexable content. Route handlers and metadata
     // routes (api, sitemaps, .well-known, robots, openapi.json) stay outside on
     // purpose: root params are not available to them and they need no chrome.
+    //
+    // Inside the root layout, every page belongs to exactly one chrome group:
+    // `(chrome)` gets the app navbar and footer, `(bare)` is for the sections
+    // that bring their own. A page in neither would render with no chrome at
+    // all, and `collectPageDirs` above would not see it.
     expect(collectPageDirsOutsideRoutesRoot()).toEqual([]);
   });
 
@@ -270,19 +311,28 @@ describe("App Router route-file structure ratchet", () => {
   it("sitemap-crawlable routes have NO loading.tsx anywhere on their segment chain (DEV-612)", () => {
     const violations: string[] = [];
     for (const dir of SITEMAP_NO_LOADING) {
-      if (!fs.existsSync(path.join(APP_DIR, dir, "page.tsx"))) {
+      const routeDir = routeDirOnDisk(dir);
+      if (routeDir === null || !fs.existsSync(path.join(routeDir, "page.tsx"))) {
         violations.push(`${dir || "(root)"}: page.tsx missing — update SITEMAP_NO_LOADING`);
         continue;
       }
-      // Walk from the page directory up to app/: a loading.tsx at ANY level
-      // wraps this page in a Suspense boundary and hides its HTML from no-JS
-      // readers, so the whole chain must be clean.
+      // Walk from the page directory up to the root layout, through the group
+      // the route lives in: a loading.tsx at ANY level wraps this page in a
+      // Suspense boundary and hides its HTML from no-JS readers, so the whole
+      // chain must be clean. The group directory and the root-layout directory
+      // are both on that chain — a loading.tsx in either would wrap every route
+      // under it.
+      const groupRoot = groupRootFor(dir) as string;
       const segments = dir === "" ? [] : dir.split("/");
-      for (let depth = segments.length; depth >= 0; depth -= 1) {
-        const ancestor = segments.slice(0, depth).join("/");
-        if (fs.existsSync(path.join(APP_DIR, ancestor, "loading.tsx"))) {
+      const chain = [ROUTES_ROOT, groupRoot];
+      for (let depth = 1; depth <= segments.length; depth += 1) {
+        chain.push(path.join(groupRoot, ...segments.slice(0, depth)));
+      }
+      for (const ancestor of chain) {
+        if (fs.existsSync(path.join(ancestor, "loading.tsx"))) {
+          const rel = path.relative(process.cwd(), ancestor).split(path.sep).join("/");
           violations.push(
-            `${dir || "(root)"}: loading.tsx at app/${ancestor ? `${ancestor}/` : ""}loading.tsx hides this sitemap route's HTML from no-JS readers — remove it (DEV-612)`
+            `${dir || "(root)"}: loading.tsx at ${rel}/loading.tsx hides this sitemap route's HTML from no-JS readers — remove it (DEV-612)`
           );
         }
       }

@@ -67,7 +67,7 @@ function createPrograms(): FundingProgram[] {
 
 async function renderHydratedPage() {
   const { default: Page } = await import(
-    "@/app/t/[tenant]/community/[communityId]/(with-header)/funding-opportunities/page"
+    "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/funding-opportunities/page"
   );
   const ui = await Page({ params: Promise.resolve({ communityId: "celo" }) });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

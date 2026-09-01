@@ -45,12 +45,7 @@ import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
-import {
-  TenantFooter,
-  TenantJsonLd,
-  TenantNavbar,
-  TenantThemeStyle,
-} from "@/src/components/layout/tenant-chrome";
+import { TenantJsonLd, TenantThemeStyle } from "@/src/components/layout/tenant-chrome";
 import { TenantStoreSync } from "@/src/components/layout/tenant-store-sync";
 import { isKnownTenantParam, listTenantParams } from "@/utilities/tenant-param";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
@@ -142,7 +137,14 @@ const toasterConfig = {
   containerStyle: { top: 20, right: 20 },
 };
 
-// THE root layout: <html>, the fonts, <body> and the theme provider. It lives
+// THE root layout: <html>, the fonts, <body>, the theme provider and the
+// providers every route needs. It renders NO navbar and NO footer — which
+// section gets chrome is answered by the route tree, not by a `usePathname()`
+// test in a client component, because a layout cannot read the pathname on the
+// server and a client that can is a hole in the prerender. See the two group
+// layouts: `(chrome)/layout.tsx` and `(bare)/layout.tsx`.
+//
+// It lives
 // under `app/t/[tenant]/` so that `tenant` is a root param, which is what makes
 // the whitelabel identity URL-derived instead of host-derived. The proxy writes
 // the `/t/<tenant>` prefix on every page request; browser URLs never change.
@@ -201,15 +203,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <TenantStoreSync />
               <PermissionsProvider />
               <DeferredLayoutComponents toasterConfig={toasterConfig} />
+              {/* The page column. Navbar and footer are supplied by the
+                  `(chrome)` group's layout, which renders inside here; the
+                  `(bare)` group's layout renders the same column without
+                  them. This wrapper stays at the root because the embed
+                  stylesheet targets `[data-app-content]` on every route,
+                  chrome or not. */}
               <div
                 data-app-content
                 className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
               >
-                <div className="flex flex-col w-full h-full">
-                  <TenantNavbar whitelabel={whitelabel} />
-                  {children}
-                </div>
-                <TenantFooter whitelabel={whitelabel} />
+                {children}
               </div>
             </WhitelabelProvider>
           </PrivyProviderWrapper>

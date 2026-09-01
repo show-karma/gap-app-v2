@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useLoadPrivy, usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
-import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
-import { DonorResearchShell } from "@/src/features/donor-research/components/common/DonorResearchShell";
-import { DonorResearchSignInGate } from "@/src/features/donor-research/components/common/DonorResearchSignInGate";
+import { DonorResearchLoading } from "./DonorResearchLoading";
+import { DonorResearchShell } from "./DonorResearchShell";
+import { DonorResearchSignInGate } from "./DonorResearchSignInGate";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { isDonorResearchTokenRoute, PAGES } from "@/utilities/pages";
 
@@ -134,6 +134,12 @@ function DonorResearchSessionBoundary({
 /**
  * Donor-research section layout (U12).
  *
+ * Lives here rather than in the route tree because it has to be mounted from
+ * two places: the section's advisor routes sit in the `(chrome)` group and its
+ * two anonymous token routes sit in `(bare)`, which is what keeps the app
+ * navbar and footer off them. Both route layouts are thin wrappers around
+ * this component, so the behaviour below is defined once.
+ *
  * Wraps the section in the global `PermissionProvider` (same posture as
  * `/dashboard`) so any nested permission hooks resolve cleanly. The
  * donor-research feature does not use community-scoped RBAC — every
@@ -158,7 +164,7 @@ function DonorResearchSessionBoundary({
  * gate its advisor query threw a 401 straight into the error boundary, which
  * showed a second, differently-worded sign-in screen for the same user state.
  */
-export default function DonorResearchLayout({ children }: { children: React.ReactNode }) {
+export function DonorResearchSectionLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isTokenRoute = isDonorResearchTokenRoute(pathname);
   // The section index carries public, server-rendered answer content (E4,

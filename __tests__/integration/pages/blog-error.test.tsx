@@ -22,7 +22,7 @@ beforeEach(() => {
 
 describe("app/blog/error.tsx (BlogError)", () => {
   it("renders the error heading and copy, reports via errorManager, and links back home", async () => {
-    const { default: BlogError } = await import("@/app/t/[tenant]/blog/error");
+    const { default: BlogError } = await import("@/app/t/[tenant]/(chrome)/blog/error");
     const error = Object.assign(new Error("boom"), { digest: "DIGEST_1" });
     const reset = vi.fn();
 
@@ -40,7 +40,7 @@ describe("app/blog/error.tsx (BlogError)", () => {
   });
 
   it("invokes reset when Try again is clicked", async () => {
-    const { default: BlogError } = await import("@/app/t/[tenant]/blog/error");
+    const { default: BlogError } = await import("@/app/t/[tenant]/(chrome)/blog/error");
     const error = Object.assign(new Error("boom"), { digest: undefined });
     const reset = vi.fn();
     const user = userEvent.setup();
@@ -55,7 +55,7 @@ describe("app/blog/error.tsx (BlogError)", () => {
 
 describe("app/blog/[slug]/error.tsx (BlogPostError)", () => {
   it("renders the error heading and copy, reports via errorManager, and links back to the blog index", async () => {
-    const { default: BlogPostError } = await import("@/app/t/[tenant]/blog/[slug]/error");
+    const { default: BlogPostError } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/error");
     const error = Object.assign(new Error("boom"), { digest: "DIGEST_2" });
     const reset = vi.fn();
 
@@ -73,7 +73,7 @@ describe("app/blog/[slug]/error.tsx (BlogPostError)", () => {
   });
 
   it("invokes reset when Try again is clicked", async () => {
-    const { default: BlogPostError } = await import("@/app/t/[tenant]/blog/[slug]/error");
+    const { default: BlogPostError } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/error");
     const error = Object.assign(new Error("boom"), { digest: undefined });
     const reset = vi.fn();
     const user = userEvent.setup();

@@ -13,7 +13,7 @@
 
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import DonationCheckoutError from "@/app/t/[tenant]/community/[communityId]/donate/[programId]/checkout/error";
+import DonationCheckoutError from "@/app/t/[tenant]/(chrome)/community/[communityId]/donate/[programId]/checkout/error";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 import { renderWithProviders } from "../../utils/render";

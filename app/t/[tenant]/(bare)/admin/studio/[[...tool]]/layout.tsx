@@ -17,10 +17,9 @@ export const metadata: Metadata = customMetadata({
 export { viewport } from "next-sanity/studio";
 
 // Full-screen container — `NextStudioLayout` renders the fixed-height,
-// overscroll-locked `<div id="sanity">` the Studio UI expects. Site chrome
-// (navbar/footer) is suppressed globally for this route in
-// `src/components/navbar/global-navbar-slot.tsx` and
-// `src/components/footer/footer-switcher.tsx`.
+// overscroll-locked `<div id="sanity">` the Studio UI expects. It gets no site
+// navbar or footer because the route lives in the `(bare)` group, which is
+// what replaced the pathname checks the navbar and footer used to run.
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   return <NextStudioLayout>{children}</NextStudioLayout>;
 }
