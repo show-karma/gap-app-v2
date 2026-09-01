@@ -15,7 +15,7 @@ describe("/.well-known/api-catalog route handler", () => {
 
   it("returns an RFC 9727-shaped linkset rooted at the apex domain", async () => {
     const { GET } = await import("@/app/.well-known/api-catalog/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(Array.isArray(body.linkset)).toBe(true);
     expect(body.linkset).toHaveLength(1);
@@ -24,7 +24,7 @@ describe("/.well-known/api-catalog route handler", () => {
 
   it("links the OpenAPI service description at the apex /openapi.json", async () => {
     const { GET } = await import("@/app/.well-known/api-catalog/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.linkset[0]["service-desc"]).toEqual([
       { href: `${SITE_URL}/openapi.json`, type: "application/json" },
@@ -33,7 +33,7 @@ describe("/.well-known/api-catalog route handler", () => {
 
   it("links the human-readable Swagger UI on the indexer", async () => {
     const { GET } = await import("@/app/.well-known/api-catalog/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.linkset[0]["service-doc"]).toEqual([
       { href: `${INDEXER_URL}/v2/docs`, type: "text/html" },
@@ -42,7 +42,7 @@ describe("/.well-known/api-catalog route handler", () => {
 
   it("links the AI plugin manifest as additional service metadata", async () => {
     const { GET } = await import("@/app/.well-known/api-catalog/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.linkset[0]["service-meta"]).toEqual([
       { href: `${SITE_URL}/.well-known/ai-plugin.json`, type: "application/json" },
@@ -51,7 +51,7 @@ describe("/.well-known/api-catalog route handler", () => {
 
   it("exposes an 'item' array per RFC 9727 with at least 4 entries", async () => {
     const { GET } = await import("@/app/.well-known/api-catalog/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     const item = body.linkset[0].item;
     expect(Array.isArray(item)).toBe(true);
@@ -64,7 +64,7 @@ describe("/.well-known/api-catalog route handler", () => {
 
   it("includes the apex OpenAPI, indexer docs, mcp.json, and mcp/server-card.json in 'item'", async () => {
     const { GET } = await import("@/app/.well-known/api-catalog/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     const hrefs = body.linkset[0].item.map((entry: { href: string }) => entry.href);
     expect(hrefs).toContain(`${SITE_URL}/openapi.json`);
@@ -75,7 +75,7 @@ describe("/.well-known/api-catalog route handler", () => {
 
   it("sets wide-open CORS headers", async () => {
     const { GET } = await import("@/app/.well-known/api-catalog/route");
-    const res = GET();
+    const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
