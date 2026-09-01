@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /**
  * The only place author-written HTML is ever rendered.
@@ -70,6 +70,9 @@ export const NOTEBOOK_SANDBOX_DOCUMENT = "karma:notebook-sandbox:document" as co
  */
 const OPAQUE_ORIGIN = "null";
 
+/** Shared by every message in the protocol, so we can spot ours before judging it. */
+const NOTEBOOK_SANDBOX_PREFIX = "karma:notebook-sandbox:";
+
 function mintNonce(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -90,9 +93,21 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
   const port = useRef<MessagePort | null>(null);
   const [connected, setConnected] = useState(false);
 
-  // One per mounted frame, so an announcement meant for a different instance
-  // cannot open this one's channel.
-  const nonce = useMemo(mintNonce, []);
+  /**
+   * Minted AFTER MOUNT, on the client only. Never during render.
+   *
+   * A nonce generated while rendering is variable input, so the server writes
+   * one value into the iframe `src` and the client computes another — a
+   * hydration mismatch React reports and explicitly declines to patch up. The
+   * symptom is vicious: the markup looks perfect, the attributes are all
+   * there, and nothing works, because the subtree never comes alive.
+   *
+   * Deferring it also DISSOLVES THE RACE this component previously worked
+   * around. The frame is not rendered until the nonce exists, and the nonce
+   * only exists after the listener is attached, so the shell cannot possibly
+   * announce itself before we are listening.
+   */
+  const [nonce, setNonce] = useState<string | null>(null);
 
   // The listener must send the CURRENT document without being torn down and
   // rebuilt on every keystroke in the editor — re-attaching mid-handshake is
@@ -123,6 +138,17 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
   const [bootstrapCount, setBootstrapCount] = useState(0);
   const [rejected, setRejected] = useState<string | null>(null);
   const [lastType, setLastType] = useState<string | null>(null);
+  /**
+   * Messages that CLAIM to be ours, counted regardless of which window sent
+   * them, plus whether the last one came from the window we created.
+   *
+   * `seen` climbing while `ready` stays at zero says the shell is talking and
+   * something after this point is refusing it; both at zero says nothing is
+   * arriving at all. Without the pair those two are indistinguishable, which
+   * is precisely how a blank frame stays unexplained.
+   */
+  const [seenCount, setSeenCount] = useState(0);
+  const [sourceMatch, setSourceMatch] = useState<string | null>(null);
 
   // useLayoutEffect, not useEffect: this runs synchronously at commit, before
   // paint, which is the earliest React lets us listen. The shell announces
@@ -134,12 +160,22 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
       // we created; the opaque origin proves that window is genuinely
       // sandboxed; the nonce proves it is this instance's shell rather than
       // another sandboxed frame on the same page.
-      if (event.source !== frame.current?.contentWindow) return;
-
       const data = event.data as { type?: string; nonce?: string } | null;
-      // Anything from OUR frame is worth recording, whatever it calls itself:
-      // a type we do not recognise is precisely the failure the counters miss.
-      setLastType(typeof data?.type === "string" ? data.type : typeof data);
+      // Recorded BEFORE the source check, and that ordering is the whole point.
+      //
+      // An earlier version filtered on `source` first and returned silently,
+      // so a shell announcing itself perfectly well while the source
+      // comparison failed looked exactly like a shell that never spoke: every
+      // counter zero, no rejection, nothing to tell the two apart. The check
+      // itself is right — it is the diagnosis that must not depend on passing
+      // it.
+      if (typeof data?.type === "string" && data.type.startsWith(NOTEBOOK_SANDBOX_PREFIX)) {
+        setSeenCount((count) => count + 1);
+        setLastType(data.type);
+        setSourceMatch(event.source === frame.current?.contentWindow ? "yes" : "no");
+      }
+
+      if (event.source !== frame.current?.contentWindow) return;
 
       if (event.origin !== OPAQUE_ORIGIN) {
         setRejected("origin");
@@ -189,6 +225,9 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
     };
 
     window.addEventListener("message", onMessage);
+    // Only now is it safe for the frame to exist: minting the nonce is what
+    // renders it, and the listener is already in place.
+    if (!nonce) setNonce(mintNonce());
     return () => {
       window.removeEventListener("message", onMessage);
       port.current?.close();
@@ -212,6 +251,17 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
     sentHtml.current = html;
   }, [connected, html]);
 
+  // Server-rendered and pre-mount: a placeholder that keeps the layout stable
+  // and, more importantly, is IDENTICAL on both sides so hydration is clean.
+  if (!nonce) {
+    return (
+      <div
+        data-sandbox-state="mounting"
+        className={className ?? "h-[60vh] w-full rounded-2xl border border-border bg-background"}
+      />
+    );
+  }
+
   return (
     <iframe
       ref={frame}
@@ -220,6 +270,8 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
       data-sandbox-ready-count={readyCount}
       data-sandbox-bootstrap-count={bootstrapCount}
       data-sandbox-last-type={lastType ?? undefined}
+      data-sandbox-seen-count={seenCount}
+      data-sandbox-source-match={sourceMatch ?? undefined}
       data-sandbox-rejected={rejected ?? undefined}
       // The nonce rides in the fragment: the shell reads it to announce itself,
       // and a fragment is never sent to the server.
