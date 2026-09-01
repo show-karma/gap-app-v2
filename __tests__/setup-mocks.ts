@@ -191,3 +191,15 @@ vi.mock("next/server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/server")>()),
   connection: vi.fn(async () => {}),
 }));
+
+// next/cache — `cacheLife()` and `cacheTag()` only work inside a Next cache
+// work-unit store, which a unit test importing a `"use cache"` module directly
+// does not have; without this they throw before the function body runs. They
+// configure caching and return nothing, so a no-op is a faithful stand-in: the
+// cached function still computes and returns its real value.
+// Partial mock — revalidateTag/revalidatePath and friends stay real.
+vi.mock("next/cache", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/cache")>()),
+  cacheLife: vi.fn(),
+  cacheTag: vi.fn(),
+}));
