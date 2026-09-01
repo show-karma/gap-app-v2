@@ -5,7 +5,13 @@ import { isDonorResearchTokenRoute, NON_PROFITS_PAGES, PAGES } from "@/utilities
 import { Footer } from "./footer";
 import { WhitelabelFooter } from "./whitelabel-footer";
 
-export function FooterSwitcher({ isWhitelabel }: { isWhitelabel: boolean }) {
+export function FooterSwitcher({
+  isWhitelabel,
+  copyrightYear,
+}: {
+  isWhitelabel: boolean;
+  copyrightYear: number;
+}) {
   const pathname = usePathname();
 
   // The embedded Sanity Studio is a full-screen authoring tool with its own
@@ -18,5 +24,5 @@ export function FooterSwitcher({ isWhitelabel }: { isWhitelabel: boolean }) {
   // In-app sidebar layouts (community manage, nonprofit research) also get the
   // platform footer: their rails are shell-scoped (SIDEBAR_BELOW_NAVBAR_CLASSES),
   // not viewport-fixed, so the footer renders full-width below them.
-  return <Footer />;
+  return <Footer copyrightYear={copyrightYear} />;
 }
