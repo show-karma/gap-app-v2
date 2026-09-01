@@ -206,19 +206,23 @@ describe("NotebookSandboxFrame delivery", () => {
     }
   });
 
+  // Sent as the port is created, so a connection never sits open with nothing
+  // on it while an author waits for their page to appear.
   it("should_send_the_document_over_the_private_port_instead", async () => {
     const { iframe, nonce } = renderFrame("<p>secret</p>");
+    const received: unknown[] = [];
 
     announce(iframe, nonce);
 
     await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
     const port = framePost.mock.calls[0][2][0] as MessagePort;
-    const received: unknown[] = [];
     port.onmessage = (event) => received.push(event.data);
     port.start();
 
-    await vi.waitFor(() => expect(received).toHaveLength(1));
+    await vi.waitFor(() => expect(received.length).toBeGreaterThan(0));
     expect(received[0]).toEqual({ type: NOTEBOOK_SANDBOX_DOCUMENT, html: "<p>secret</p>" });
+    // Exactly once: a reconnect must not re-push an unchanged document.
+    expect(received).toHaveLength(1);
   });
 
   describe("announcements it must refuse", () => {
@@ -260,27 +264,35 @@ describe("NotebookSandboxFrame handshake robustness", () => {
     framePost = stubFrameWindow();
   });
 
-  it("should_bootstrap_once_however_many_times_the_shell_announces_itself", async () => {
+  /**
+   * ANSWER EVERY ANNOUNCEMENT. This replaces an earlier "bootstrap exactly
+   * once" rule that was wrong for a reason worth recording.
+   *
+   * A window.postMessage is not queued the way a MessagePort is. If our
+   * bootstrap reaches the frame before the shell has attached its listener it
+   * is simply gone — and a parent that latches after one send then ignores a
+   * shell retrying forever. Both sides behave reasonably and nothing happens.
+   * Replying every time converges, because the shell stops announcing once a
+   * bootstrap lands.
+   */
+  it("should_answer_every_announcement_so_a_lost_bootstrap_recovers", async () => {
     const { iframe, nonce } = renderFrame();
 
     announce(iframe, nonce);
     announce(iframe, nonce);
     announce(iframe, nonce);
 
-    await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
-    expect(framePost).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalledTimes(3));
   });
 
-  // A genuine reload is a different thing from a retry, and must reconnect.
-  it("should_bootstrap_again_after_the_frame_reloads", async () => {
+  it("should_hand_over_a_fresh_port_on_each_answer", async () => {
     const { iframe, nonce } = renderFrame();
-    announce(iframe, nonce);
-    await vi.waitFor(() => expect(framePost).toHaveBeenCalledTimes(1));
 
-    iframe.dispatchEvent(new Event("load"));
+    announce(iframe, nonce);
     announce(iframe, nonce);
 
     await vi.waitFor(() => expect(framePost).toHaveBeenCalledTimes(2));
+    expect(framePost.mock.calls[0][2][0]).not.toBe(framePost.mock.calls[1][2][0]);
   });
 
   describe("the handshake reports itself in the DOM", () => {
@@ -288,6 +300,41 @@ describe("NotebookSandboxFrame handshake robustness", () => {
       const { iframe } = renderFrame();
 
       expect(iframe).toHaveAttribute("data-sandbox-state", "waiting");
+      expect(iframe).toHaveAttribute("data-sandbox-ready-count", "0");
+      expect(iframe).toHaveAttribute("data-sandbox-bootstrap-count", "0");
+    });
+
+    /**
+     * The counters separate "the shell never reached us" from "we answered and
+     * it did not land" — two causes of a blank frame that look identical from
+     * outside the sandbox.
+     */
+    it("should_count_announcements_and_answers", async () => {
+      const { iframe, nonce } = renderFrame();
+
+      announce(iframe, nonce);
+      announce(iframe, nonce);
+
+      await vi.waitFor(() => expect(iframe).toHaveAttribute("data-sandbox-ready-count", "2"));
+      expect(iframe).toHaveAttribute("data-sandbox-bootstrap-count", "2");
+    });
+
+    // The case both counters miss: a shell announcing itself under a type we
+    // do not recognise is refused silently, because refusing quietly is right.
+    it("should_record_the_last_message_type_its_own_frame_sent", async () => {
+      const { iframe } = renderFrame();
+      const event = new MessageEvent("message", {
+        origin: "null",
+        data: { type: "karma:notebook-sandbox:hello" },
+      });
+      Object.defineProperty(event, "source", { value: iframe.contentWindow });
+
+      window.dispatchEvent(event);
+
+      await vi.waitFor(() =>
+        expect(iframe).toHaveAttribute("data-sandbox-last-type", "karma:notebook-sandbox:hello")
+      );
+      expect(iframe).toHaveAttribute("data-sandbox-ready-count", "0");
     });
 
     it("should_report_connected_once_the_port_is_handed_over", async () => {
@@ -313,7 +360,9 @@ describe("NotebookSandboxFrame handshake robustness", () => {
       expect(framePost).not.toHaveBeenCalled();
     });
 
-    it("should_not_record_a_rejection_for_unrelated_page_chatter", async () => {
+    // Chatter from OTHER windows is not ours to diagnose, and recording it
+    // would bury the one refusal anybody cares about.
+    it("should_ignore_messages_from_windows_that_are_not_our_frame", async () => {
       const { iframe } = renderFrame();
 
       window.dispatchEvent(
@@ -322,6 +371,7 @@ describe("NotebookSandboxFrame handshake robustness", () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10));
       expect(iframe).not.toHaveAttribute("data-sandbox-rejected");
+      expect(iframe).not.toHaveAttribute("data-sandbox-last-type");
     });
   });
 });

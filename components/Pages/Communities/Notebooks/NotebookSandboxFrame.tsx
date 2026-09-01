@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 /**
  * The only place author-written HTML is ever rendered.
@@ -94,28 +94,35 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
   // cannot open this one's channel.
   const nonce = useMemo(mintNonce, []);
 
+  // The listener must send the CURRENT document without being torn down and
+  // rebuilt on every keystroke in the editor — re-attaching mid-handshake is
+  // how a listener comes to miss the announcement it was waiting for.
+  const htmlRef = useRef(html);
+  htmlRef.current = html;
+  /** What the shell already has, so an edit sends and a reconnect does not. */
+  /** What the shell already has, so an edit sends and a reconnect does not. */
+  const sentHtml = useRef<string | null>(null);
+
   /**
    * How far the handshake has got, readable from the DOM.
    *
-   * Deliberately a data attribute rather than logging: this file may not use
+   * Deliberately data attributes rather than logging: this file may not use
    * console, a log line is gone the moment someone reloads, and "the frame is
    * blank and nothing is in the console" is exactly the failure that needs a
-   * durable answer. Inspecting the element now says which step stalled — and
-   * `rejected` names WHY a message was refused, which is the thing that is
-   * otherwise invisible because refusing quietly is the correct behaviour.
+   * durable answer. These sit on the iframe ELEMENT, which lives in OUR
+   * document, so they are readable from the top frame — unlike anything inside
+   * the sandboxed shell, which is cross-origin and opaque by design.
+   *
+   * `readyCount` and `bootstrapCount` are what distinguish "the shell never
+   * reached us" from "we answered and it did not land": the first stays 0 in
+   * one case and climbs in the other. `lastType` catches the case both counts
+   * miss — a shell announcing itself under a type string we do not recognise,
+   * which the checks below refuse silently because refusing quietly is right.
    */
-  const [state, setState] = useState<"waiting" | "connected">("waiting");
+  const [readyCount, setReadyCount] = useState(0);
+  const [bootstrapCount, setBootstrapCount] = useState(0);
   const [rejected, setRejected] = useState<string | null>(null);
-  // One bootstrap per LOAD. A shell that retries its announcement — the
-  // natural fix for a lost first one — would otherwise open a fresh channel
-  // each time, and the document would go over a port the shell had already
-  // discarded. Reset on load, so a genuine reload still reconnects.
-  const bootstrapped = useRef(false);
-
-  const handleLoad = useCallback(() => {
-    bootstrapped.current = false;
-    setState("waiting");
-  }, []);
+  const [lastType, setLastType] = useState<string | null>(null);
 
   // useLayoutEffect, not useEffect: this runs synchronously at commit, before
   // paint, which is the earliest React lets us listen. The shell announces
@@ -127,30 +134,36 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
       // we created; the opaque origin proves that window is genuinely
       // sandboxed; the nonce proves it is this instance's shell rather than
       // another sandboxed frame on the same page.
-      const data = event.data as { type?: string; nonce?: string } | null;
-      // Only diagnose messages that CLAIM to be ours. Every page receives
-      // unrelated chatter, and recording that as a rejection would bury the
-      // one refusal anybody cares about.
-      const claimsToBeOurs = data?.type === NOTEBOOK_SANDBOX_READY;
+      if (event.source !== frame.current?.contentWindow) return;
 
-      if (event.source !== frame.current?.contentWindow) {
-        if (claimsToBeOurs) setRejected("source");
-        return;
-      }
+      const data = event.data as { type?: string; nonce?: string } | null;
+      // Anything from OUR frame is worth recording, whatever it calls itself:
+      // a type we do not recognise is precisely the failure the counters miss.
+      setLastType(typeof data?.type === "string" ? data.type : typeof data);
+
       if (event.origin !== OPAQUE_ORIGIN) {
-        if (claimsToBeOurs) setRejected("origin");
+        setRejected("origin");
         return;
       }
-      if (!claimsToBeOurs) return;
-      if (data?.nonce !== nonce) {
+      if (data?.type !== NOTEBOOK_SANDBOX_READY) return;
+      if (data.nonce !== nonce) {
         setRejected("nonce");
         return;
       }
-      if (bootstrapped.current) return;
 
-      bootstrapped.current = true;
       setRejected(null);
+      setReadyCount((count) => count + 1);
 
+      // ANSWER EVERY ANNOUNCEMENT, not just the first.
+      //
+      // A window.postMessage is not queued the way a MessagePort is: if our
+      // bootstrap arrives before the shell has attached its own listener, it
+      // is gone. Answering once and latching meant the shell then retried
+      // forever against a parent that had decided it was already done — a
+      // deadlock in which both sides are behaving reasonably and nothing
+      // happens. The shell stops announcing when a bootstrap lands, so
+      // replying every time converges instead of looping.
+      port.current?.close();
       const channel = new MessageChannel();
       port.current = channel.port1;
       // THE ONE PERMITTED WILDCARD, and it carries no content: a type tag, the
@@ -162,13 +175,17 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
       // above. Those tell US the announcement came from our frame; this one
       // tells the SHELL the bootstrap was meant for it, so a shell cannot
       // accept a port intended for a different frame instance on the same
-      // page, and a replayed bootstrap does not connect. The wildcard makes
-      // that the shell's only way to know.
+      // page, and a replayed bootstrap does not connect.
       frame.current?.contentWindow?.postMessage({ type: NOTEBOOK_SANDBOX_BOOTSTRAP, nonce }, "*", [
         channel.port2,
       ]);
+      setBootstrapCount((count) => count + 1);
+      // The document goes over the NEW port immediately: a port replaced
+      // mid-handshake would otherwise leave the shell connected to a channel
+      // nothing was ever sent on.
+      port.current.postMessage({ type: NOTEBOOK_SANDBOX_DOCUMENT, html: htmlRef.current });
+      sentHtml.current = htmlRef.current;
       setConnected(true);
-      setState("connected");
     };
 
     window.addEventListener("message", onMessage);
@@ -182,17 +199,27 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
   // Author HTML travels ONLY here, over the private channel. A port has no
   // target-origin argument to get wrong, which is the property that makes this
   // safer than any window.postMessage could be under an opaque origin.
+  //
+  // This handles EDITS. The first send happens as the port is created, so a
+  // connection never sits open with nothing on it while an author waits.
   useEffect(() => {
     if (!connected) return;
+    // Already sent as the port was created. Re-sending an unchanged document on
+    // every reconnect would push the whole thing over the wire for nothing,
+    // and would make "how many documents were sent" useless as a diagnostic.
+    if (sentHtml.current === html) return;
     port.current?.postMessage({ type: NOTEBOOK_SANDBOX_DOCUMENT, html });
+    sentHtml.current = html;
   }, [connected, html]);
 
   return (
     <iframe
       ref={frame}
       title={title}
-      onLoad={handleLoad}
-      data-sandbox-state={state}
+      data-sandbox-state={connected ? "connected" : "waiting"}
+      data-sandbox-ready-count={readyCount}
+      data-sandbox-bootstrap-count={bootstrapCount}
+      data-sandbox-last-type={lastType ?? undefined}
       data-sandbox-rejected={rejected ?? undefined}
       // The nonce rides in the fragment: the shell reads it to announce itself,
       // and a fragment is never sent to the server.
