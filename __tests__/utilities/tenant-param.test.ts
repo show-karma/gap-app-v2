@@ -262,28 +262,34 @@ describe("tenantNotFoundPathname", () => {
     expect(isTenantRoutePath(tenantNotFoundPathname(KARMA_TENANT_PARAM))).toBe(true);
   });
 
-  it("points at a real route that throws notFound()", () => {
-    // Load-bearing: an UNMATCHED path is answered by the ROOT not-found
-    // boundary, and there is no root-level app/not-found.tsx now that the page
-    // tree lives under app/t/[tenant]/ — Next would serve its own built-in 404
-    // with none of our chrome. Only a real route under this layout renders
-    // app/t/[tenant]/not-found.tsx.
-    const page = path.join(
-      process.cwd(),
-      "app",
-      "t",
-      "[tenant]",
-      TENANT_NOT_FOUND_SEGMENT,
-      "page.tsx"
-    );
+  it("points at a path no route can match", () => {
+    // The 404 comes from app/global-not-found.tsx, which only runs when the
+    // router matches nothing. A real route here would render instead of 404ing.
+    const tenantRoot = path.join(process.cwd(), "app", "t", "[tenant]");
+    const children = fs.readdirSync(tenantRoot, { withFileTypes: true });
 
-    expect(fs.existsSync(page)).toBe(true);
-    expect(fs.readFileSync(page, "utf-8")).toContain("notFound()");
+    expect(children.map((entry) => entry.name)).not.toContain(TENANT_NOT_FOUND_SEGMENT);
+    // A dynamic segment at this depth would swallow it and serve a page.
+    expect(
+      children.filter((e) => e.isDirectory() && e.name.startsWith("[")).map((e) => e.name)
+    ).toEqual([]);
   });
 
-  it("keeps a not-found boundary at the root of the tenant tree to render into", () => {
-    expect(fs.existsSync(path.join(process.cwd(), "app", "t", "[tenant]", "not-found.tsx"))).toBe(
-      true
-    );
+  it("keeps app/global-not-found.tsx, which is what actually answers", () => {
+    // Covers three cases that otherwise fall through to Next's unbranded 404:
+    // any unmatched public URL, the unknown-tenant guard thrown by the root
+    // layout, and this blocked-prefix rewrite. It renders instead of the root
+    // layout, so it must own its <html>/<body>.
+    const page = path.join(process.cwd(), "app", "global-not-found.tsx");
+    expect(fs.existsSync(page)).toBe(true);
+
+    const source = fs.readFileSync(page, "utf-8");
+    expect(source).toContain("<html");
+    expect(source).toContain("<body");
+
+    // The file is inert unless the flag is on — Next 16.3.3 still defaults
+    // experimental.globalNotFound to false.
+    const nextConfig = fs.readFileSync(path.join(process.cwd(), "next.config.ts"), "utf-8");
+    expect(nextConfig).toMatch(/globalNotFound:\s*true/);
   });
 });

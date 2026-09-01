@@ -87,15 +87,13 @@ export function isKnownTenantParam(value: string): boolean {
  * The path a blocked `/t/*` request is served from.
  *
  * A bodyless 404 is a dead end for whoever lands on one, so the request is
- * rewritten to a real route that throws `notFound()`
- * (`app/t/[tenant]/blocked-internal-path/page.tsx`). Because that route sits
- * under the tenant layout, Next renders `app/t/[tenant]/not-found.tsx` inside
- * the normal shell and answers 404 — the branded page with the right status.
+ * rewritten to a path nothing can match. `app/global-not-found.tsx` answers it
+ * with the branded page and a real 404 — the same answer any other unmatched
+ * URL gets, which is the point: one 404 for the whole app rather than a
+ * special case for this prefix.
  *
- * It must be a real route, not an unmatchable path: an unmatched URL is handled
- * by the *root* not-found boundary, and with the page tree under
- * `app/t/[tenant]/` there is no root-level `app/not-found.tsx`, so Next serves
- * its own built-in 404 with none of our chrome.
+ * The segment is deliberately not a route. It carries the reason in its own
+ * name so it is self-explanatory in a log line.
  */
 export const TENANT_NOT_FOUND_SEGMENT = "blocked-internal-path";
 
