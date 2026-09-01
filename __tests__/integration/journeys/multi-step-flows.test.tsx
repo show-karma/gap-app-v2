@@ -662,7 +662,7 @@ describe("Multi-Step Navigation Journey Tests", () => {
     // program list; this journey exercises the client-side flow directly.
     async function importPage() {
       const mod = await import(
-        "@/app/t/[tenant]/community/[communityId]/(with-header)/funding-opportunities/FundingOpportunitiesClient"
+        "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/funding-opportunities/FundingOpportunitiesClient"
       );
       return mod.default;
     }

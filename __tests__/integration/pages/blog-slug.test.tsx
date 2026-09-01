@@ -48,7 +48,7 @@ describe("/blog/[slug] page", () => {
     const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
     getPostBySlugMock.mockResolvedValue(post);
 
-    const { default: BlogPostPage } = await import("@/app/t/[tenant]/blog/[slug]/page");
+    const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
     const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
     render(result);
 
@@ -61,7 +61,7 @@ describe("/blog/[slug] page", () => {
     const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
     getPostBySlugMock.mockResolvedValue(post);
 
-    const { default: BlogPostPage } = await import("@/app/t/[tenant]/blog/[slug]/page");
+    const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
     const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
     const { container } = render(result);
 
@@ -78,7 +78,7 @@ describe("/blog/[slug] page", () => {
   it("calls notFound() for an unknown slug", async () => {
     getPostBySlugMock.mockResolvedValue(null);
 
-    const { default: BlogPostPage } = await import("@/app/t/[tenant]/blog/[slug]/page");
+    const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
 
     await expect(
       BlogPostPage({ params: Promise.resolve({ slug: "does-not-exist" }) })
@@ -90,7 +90,7 @@ describe("/blog/[slug] page", () => {
     const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
     getPostBySlugMock.mockResolvedValue(post);
 
-    const { generateMetadata } = await import("@/app/t/[tenant]/blog/[slug]/page");
+    const { generateMetadata } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
     const metadata = await generateMetadata({ params: Promise.resolve({ slug: "hello-world" }) });
 
     expect(metadata.title).toBe("Hello World");
@@ -100,7 +100,7 @@ describe("/blog/[slug] page", () => {
   it("generateMetadata falls back to a noindex title for an unknown slug", async () => {
     getPostBySlugMock.mockResolvedValue(null);
 
-    const { generateMetadata } = await import("@/app/t/[tenant]/blog/[slug]/page");
+    const { generateMetadata } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
     const metadata = await generateMetadata({
       params: Promise.resolve({ slug: "does-not-exist" }),
     });
@@ -114,7 +114,7 @@ describe("/blog/[slug] page", () => {
       const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
       getPostBySlugMock.mockResolvedValue(post);
 
-      const { default: BlogPostPage } = await import("@/app/t/[tenant]/blog/[slug]/page");
+      const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
       const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
       render(result);
 
@@ -130,7 +130,7 @@ describe("/blog/[slug] page", () => {
       const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
       getPostBySlugMock.mockResolvedValue(post);
 
-      const { default: BlogPostPage } = await import("@/app/t/[tenant]/blog/[slug]/page");
+      const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
       const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
       render(result);
 
@@ -143,7 +143,7 @@ describe("/blog/[slug] page", () => {
       const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
       getPostBySlugMock.mockResolvedValue(post);
 
-      const { generateMetadata } = await import("@/app/t/[tenant]/blog/[slug]/page");
+      const { generateMetadata } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
       const metadata = await generateMetadata({
         params: Promise.resolve({ slug: "hello-world" }),
       });

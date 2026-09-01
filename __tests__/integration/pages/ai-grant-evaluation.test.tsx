@@ -1,10 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { AI_GRANT_EVALUATION_FAQS } from "@/app/t/[tenant]/knowledge/ai-grant-evaluation/content";
-import AiGrantEvaluationPage from "@/app/t/[tenant]/knowledge/ai-grant-evaluation/page";
+import { AI_GRANT_EVALUATION_FAQS } from "@/app/t/[tenant]/(chrome)/knowledge/ai-grant-evaluation/content";
+import AiGrantEvaluationPage from "@/app/t/[tenant]/(chrome)/knowledge/ai-grant-evaluation/page";
 import {
   KNOWLEDGE_ARTICLE_DATES,
   KNOWLEDGE_ARTICLE_UPDATED_DATES,
-} from "@/app/t/[tenant]/knowledge/articleDates";
+} from "@/app/t/[tenant]/(chrome)/knowledge/articleDates";
 import "@testing-library/jest-dom";
 
 /**

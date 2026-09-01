@@ -355,7 +355,7 @@ vi.mock("@/src/features/applications/components/MilestonesTab", () => ({
 
 import toast from "react-hot-toast";
 // Import the page component after mocks (now uses unified manage route)
-import ReviewerApplicationDetailPage from "@/app/t/[tenant]/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
+import ReviewerApplicationDetailPage from "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
 // Import mocked modules for vi.mocked() usage
 import { useApplication } from "@/hooks/useFundingPlatform";
 import { usePermissions } from "@/hooks/usePermissions";
