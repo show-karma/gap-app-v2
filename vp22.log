@@ -1,0 +1,1461 @@
+
+[1m[46m RUN [49m[22m [36mv4.1.0 [39m[90mC:/Users/Amaury/AppData/Local/Temp/sg-next163[39m
+
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/public/gsc-site-verification.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 24[2mms[22m[39m
+[31m     [31m×[31m has the exact GSC verification body (UTF-8)[39m[32m 10[2mms[22m[39m
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Clean.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Dirty.tsx', LF will be replaced by CRLF the next time Git touches it
+Not implemented: navigation to another Document
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Dirty.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Unrelated.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+[design] failed closed: base commit `0000000000000000000000000000000000000000` does not resolve — fetch it before running
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+[design] failed closed: --changed requires --base <sha>
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+[design] failed closed: no merge base between `f609cde57f386752dbe8675f175737fa13a82a7a` and HEAD — history is incomplete
+Not implemented: navigation to another Document
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Staged.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'styles/staged.scss', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Drift.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Clean2.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Shift.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Fresh.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/ManyWaivers.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/OneWaiver.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Many.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+Not implemented: navigation to another Document
+warning: in the working copy of 'components/Many.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Many.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+Not implemented: navigation to another Document
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+warning: in the working copy of 'components/Big.tsx', LF will be replaced by CRLF the next time Git touches it
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Piped.tsx', LF will be replaced by CRLF the next time Git touches it
+[design] failed closed: --changed requires --base <sha>
+warning: in the working copy of 'components/Legacy.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Huge.tsx', LF will be replaced by CRLF the next time Git touches it
+[design] failed closed: components/Huge.tsx is larger than 2097152 bytes — refusing to scan it rather than stall the run
+warning: in the working copy of 'components/Palette.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'styles/theme.scss', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Idx.tsx', LF will be replaced by CRLF the next time Git touches it
+Warning: A vi.mock("@/src/features/programs/components/ProgramCardSkeleton") call in "C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/integration/journeys/multi-step-flows.test.tsx" is not at the top level of the module. Although it appears nested, it will be hoisted and executed before any tests run. Move it to the top level to reflect its actual execution order. This will become an error in a future version.
+See: https://vitest.dev/guide/mocking/modules#how-it-works
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/aeo-crawl-eligibility.test.tsx [2m([22m[2m19 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 5012[2mms[22m[39m
+[31m     [31m×[31m is submitted in the static sitemap, which is what obliges it to self-canonical[39m[32m 299[2mms[22m[39m
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: Window's open() method
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts [2m([22m[2m11 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[33m 626[2mms[22m[39m
+[31m     [31m×[31m returns 200 with a static RFC 9728 metadata document[39m[33m 523[2mms[22m[39m
+[31m     [31m×[31m sets resource to the indexer's MCP endpoint[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m advertises NEXT_PUBLIC_GAP_OAUTH_URL as the authorization server[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m advertises the mcp scope[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m advertises header-based bearer auth[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m advertises RS256 signing algorithm[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m points resource_documentation at the authorization-server metadata path[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m sets wide-open CORS headers so agent crawlers can read it[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m sets long-lived Cache-Control on success[39m[32m 13[2mms[22m[39m
+[31m     [31m×[31m throws and tags the Sentry capture when NEXT_PUBLIC_GAP_OAUTH_URL is unset[39m[32m 43[2mms[22m[39m
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts [2m([22m[2m19 tests[22m[2m | [22m[31m19 failed[39m[2m)[22m[32m 170[2mms[22m[39m
+[31m     [31m×[31m returns a urlset of canonicalized URLs for a valid kind/chunk[39m[32m 11[2mms[22m[39m
+[31m     [31m×[31m 404s an unknown kind[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m 404s a malformed chunk filename[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m 404s an out-of-range chunk number without calling the indexer[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m serves a sitemap index with one consolidated child per kind[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m falls back to chunked children when a kind exceeds the per-file limit[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m serves the identical index at the fresh /sitemap_index.xml URL[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m serves the kind's complete urlset[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m still serves 200 for the de-advertised legacy kind impacts[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m still serves 200 for the de-advertised legacy kind grants[39m[32m 16[2mms[22m[39m
+[31m     [31m×[31m still serves 200 for the de-advertised legacy kind milestones[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m 404s an unknown kind without calling the indexer[39m[32m 9[2mms[22m[39m
+[31m     [31m×[31m 404s a kind past the per-file limit (index lists chunks instead)[39m[32m 24[2mms[22m[39m
+[31m     [31m×[31m 404s instead of serving a possibly-truncated list at the per-file cap[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m fetches pages at the indexer page size, not the legacy chunk size[39m[32m 9[2mms[22m[39m
+[31m     [31m×[31m rejects requests without the cron secret when one is configured[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m warms the index and every child it lists[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m reports failure when the index itself cannot be fetched[39m[32m 26[2mms[22m[39m
+[31m     [31m×[31m reports failure when the index returns 200 but parses to zero children[39m[32m 30[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts [2m([22m[2m46 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[33m 1690[2mms[22m[39m
+[31m     [31m×[31m returns the ChatGPT plugin manifest with name_for_human=Karma[39m[33m 545[2mms[22m[39m
+[31m     [31m×[31m points api.url at the apex openapi.json proxy[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m points auth.authorization_url at the indexer's OAuth endpoint[39m[32m 19[2mms[22m[39m
+[31m     [31m×[31m uses the public Karma logo and contact email[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m sets wide-open CORS headers so AI crawlers can read it[39m[32m 24[2mms[22m[39m
+[31m     [31m×[31m declares a single 'karma' MCP server with http transport[39m[32m 206[2mms[22m[39m
+[31m     [31m×[31m advertises oauth2 auth with the indexer's protected-resource metadata[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m links the human-facing documentation page[39m[32m 17[2mms[22m[39m
+[31m     [31m×[31m sets wide-open CORS headers[39m[32m 9[2mms[22m[39m
+[31m     [31m×[31m normalizes NEXT_PUBLIC_GAP_INDEXER_URL to a single slash before /mcp[39m[32m 9[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/data-foundation-funding.test.tsx [2m([22m[2m13 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 818[2mms[22m[39m
+[31m     [31m×[31m is submitted in the static sitemap[39m[33m 382[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/utilities/tenant-param.test.ts [2m([22m[2m31 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 126[2mms[22m[39m
+[31m     [31m×[31m builds a path under the requested tenant[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m is itself inside the blocked prefix, so it can never be requested directly[39m[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts [2m([22m[2m10 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[33m 610[2mms[22m[39m
+[31m     [31m×[31m includes the MCP connect and For AI Agents pages[39m[33m 514[2mms[22m[39m
+[31m     [31m×[31m includes the find-funders landing and connect setup pages[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m sets homepage priority to 1 and changeFrequency to daily[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m downgrades privacy/terms to yearly low-priority entries[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m includes the static /blog index page[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m appends published blog posts with lastModified set to publishedAt[39m[32m 61[2mms[22m[39m
+[31m     [31m×[31m returns just the static pages when there are no published posts[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m excludes drafts because the gateway only returns published slugs[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m revalidates hourly as a backstop for missed blog webhooks[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m falls back to just the static pages when the gateway errors[39m[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts [2m([22m[2m10 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[32m 46[2mms[22m[39m
+[31m     [31m×[31m returns an empty 200 urlset for a known kind with a numeric chunk[39m[32m 11[2mms[22m[39m
+[31m     [31m×[31m serves the projects kind[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m serves the impacts kind[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m serves the grants kind[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m serves the milestones kind[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m serves the funding-programs kind[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m returns 404 for an unknown kind[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m returns 404 for a non-numeric chunk filename[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m returns 404 for the non-positive chunk id 0.xml[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m returns 404 for the non-positive chunk id 01.xml[39m[32m 12[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 64 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/aeo-crawl-eligibility.test.tsx[2m > [22m/seeds — canonical[2m > [22mis submitted in the static sitemap, which is what obliges it to self-canonical
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/aeo-crawl-eligibility.test.tsx:[2m112:25[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/data-foundation-funding.test.tsx[2m > [22m/data/foundation-funding registration[2m > [22mis submitted in the static sitemap
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/data-foundation-funding.test.tsx:[2m167:25[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mchild sitemap route[2m > [22mreturns a urlset of canonicalized URLs for a valid kind/chunk
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m26:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mchild sitemap route[2m > [22m404s an unknown kind
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m41:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mchild sitemap route[2m > [22m404s a malformed chunk filename
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m51:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mchild sitemap route[2m > [22m404s an out-of-range chunk number without calling the indexer
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m64:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22msitemap index route[2m > [22mserves a sitemap index with one consolidated child per kind
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemap-index.xml/route.ts:[2m18:9[22m[39m
+    [90m 14|[39m [35mexport[39m [35masync[39m [35mfunction[39m [33mGET[39m()[33m:[39m [33mPromise[39m[33m<[39m[33mNextResponse[39m[33m>[39m {
+    [90m 15|[39m   [35mreturn[39m [34msitemapIndexResponse[39m()[33m;[39m
+    [90m 16|[39m }
+    [90m   |[39m   [31m^[39m
+    [90m 17|[39m
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m94:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22msitemap index route[2m > [22mfalls back to chunked children when a kind exceeds the per-file limit
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemap-index.xml/route.ts:[2m18:9[22m[39m
+    [90m 14|[39m [35mexport[39m [35masync[39m [35mfunction[39m [33mGET[39m()[33m:[39m [33mPromise[39m[33m<[39m[33mNextResponse[39m[33m>[39m {
+    [90m 15|[39m   [35mreturn[39m [34msitemapIndexResponse[39m()[33m;[39m
+    [90m 16|[39m }
+    [90m   |[39m   [31m^[39m
+    [90m 17|[39m
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m123:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22msitemap index route[2m > [22mserves the identical index at the fresh /sitemap_index.xml URL
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemap-index.xml/route.ts:[2m18:9[22m[39m
+    [90m 14|[39m [35mexport[39m [35masync[39m [35mfunction[39m [33mGET[39m()[33m:[39m [33mPromise[39m[33m<[39m[33mNextResponse[39m[33m>[39m {
+    [90m 15|[39m   [35mreturn[39m [34msitemapIndexResponse[39m()[33m;[39m
+    [90m 16|[39m }
+    [90m   |[39m   [31m^[39m
+    [90m 17|[39m
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m143:37[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mconsolidated per-kind sitemap route[2m > [22mserves the kind's complete urlset
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap.xml/route.ts:[2m37:9[22m[39m
+    [90m 35|[39m
+    [90m 36|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 37|[39m   [35mif[39m ([33m![39mmeta) {
+    [90m   |[39m         [31m^[39m
+    [90m 38|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 39|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m178:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mconsolidated per-kind sitemap route[2m > [22mstill serves 200 for the de-advertised legacy kind impacts
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mconsolidated per-kind sitemap route[2m > [22mstill serves 200 for the de-advertised legacy kind grants
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mconsolidated per-kind sitemap route[2m > [22mstill serves 200 for the de-advertised legacy kind milestones
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap.xml/route.ts:[2m37:9[22m[39m
+    [90m 35|[39m
+    [90m 36|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 37|[39m   [35mif[39m ([33m![39mmeta) {
+    [90m   |[39m         [31m^[39m
+    [90m 38|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 39|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m197:25[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mconsolidated per-kind sitemap route[2m > [22m404s an unknown kind without calling the indexer
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap.xml/route.ts:[2m37:9[22m[39m
+    [90m 35|[39m
+    [90m 36|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 37|[39m   [35mif[39m ([33m![39mmeta) {
+    [90m   |[39m         [31m^[39m
+    [90m 38|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 39|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m212:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mconsolidated per-kind sitemap route[2m > [22m404s a kind past the per-file limit (index lists chunks instead)
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap.xml/route.ts:[2m37:9[22m[39m
+    [90m 35|[39m
+    [90m 36|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 37|[39m   [35mif[39m ([33m![39mmeta) {
+    [90m   |[39m         [31m^[39m
+    [90m 38|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 39|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m226:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mconsolidated per-kind sitemap route[2m > [22m404s instead of serving a possibly-truncated list at the per-file cap
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap.xml/route.ts:[2m37:9[22m[39m
+    [90m 35|[39m
+    [90m 36|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 37|[39m   [35mif[39m ([33m![39mmeta) {
+    [90m   |[39m         [31m^[39m
+    [90m 38|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 39|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m242:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mconsolidated per-kind sitemap route[2m > [22mfetches pages at the indexer page size, not the legacy chunk size
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap.xml/route.ts:[2m37:9[22m[39m
+    [90m 35|[39m
+    [90m 36|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 37|[39m   [35mif[39m ([33m![39mmeta) {
+    [90m   |[39m         [31m^[39m
+    [90m 38|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 39|[39m   }
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m252:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mwarm-sitemaps cron route[2m > [22mrejects requests without the cron secret when one is configured
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/api/cron/warm-sitemaps/route.ts:[2m22:9[22m[39m
+    [90m 22|[39m   }
+    [90m 23|[39m
+    [90m 24|[39m   [35mconst[39m warmed[33m:[39m [33mRecord[39m[33m<[39mstring[33m,[39m number[33m>[39m [33m=[39m {}[33m;[39m
+    [90m   |[39m  [31m^[39m
+    [90m 25|[39m
+    [90m 26|[39m   [35mconst[39m indexUrl [33m=[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m/sitemap_index.xml`[39m[33m;[39m
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m279:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mwarm-sitemaps cron route[2m > [22mwarms the index and every child it lists
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/api/cron/warm-sitemaps/route.ts:[2m22:9[22m[39m
+    [90m 22|[39m   }
+    [90m 23|[39m
+    [90m 24|[39m   [35mconst[39m warmed[33m:[39m [33mRecord[39m[33m<[39mstring[33m,[39m number[33m>[39m [33m=[39m {}[33m;[39m
+    [90m   |[39m  [31m^[39m
+    [90m 25|[39m
+    [90m 26|[39m   [35mconst[39m indexUrl [33m=[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m/sitemap_index.xml`[39m[33m;[39m
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m293:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mwarm-sitemaps cron route[2m > [22mreports failure when the index itself cannot be fetched
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/api/cron/warm-sitemaps/route.ts:[2m22:9[22m[39m
+    [90m 22|[39m   }
+    [90m 23|[39m
+    [90m 24|[39m   [35mconst[39m warmed[33m:[39m [33mRecord[39m[33m<[39mstring[33m,[39m number[33m>[39m [33m=[39m {}[33m;[39m
+    [90m   |[39m  [31m^[39m
+    [90m 25|[39m
+    [90m 26|[39m   [35mconst[39m indexUrl [33m=[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m/sitemap_index.xml`[39m[33m;[39m
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m313:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemap-routes.test.ts[2m > [22mwarm-sitemaps cron route[2m > [22mreports failure when the index returns 200 but parses to zero children
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/api/cron/warm-sitemaps/route.ts:[2m22:9[22m[39m
+    [90m 22|[39m   }
+    [90m 23|[39m
+    [90m 24|[39m   [35mconst[39m warmed[33m:[39m [33mRecord[39m[33m<[39mstring[33m,[39m number[33m>[39m [33m=[39m {}[33m;[39m
+    [90m   |[39m  [31m^[39m
+    [90m 25|[39m
+    [90m 26|[39m   [35mconst[39m indexUrl [33m=[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m/sitemap_index.xml`[39m[33m;[39m
+[90m [2m❯[22m __tests__/app/sitemap-routes.test.ts:[2m325:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22mreturns the ChatGPT plugin manifest with name_for_human=Karma
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m20:28[22m[39m
+    [90m 18|[39m     const { GET } = await import("@/app/.well-known/ai-plugin.json/rou…
+    [90m 19|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 20|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 21|[39m     [34mexpect[39m(body[33m.[39mschema_version)[33m.[39m[34mtoBe[39m([32m"v1"[39m)[33m;[39m
+    [90m 22|[39m     [34mexpect[39m(body[33m.[39mname_for_human)[33m.[39m[34mtoBe[39m([32m"Karma"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22mreturns the ChatGPT plugin manifest with name_for_human=Karma
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:42:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:19:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/ai-plugin.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/ai-plugin.json/route.ts:[2m42:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m19:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22mpoints api.url at the apex openapi.json proxy
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m29:28[22m[39m
+    [90m 27|[39m     const { GET } = await import("@/app/.well-known/ai-plugin.json/rou…
+    [90m 28|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 29|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 30|[39m     [34mexpect[39m(body[33m.[39mapi[33m.[39murl)[33m.[39m[34mtoBe[39m([32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m/openapi.json`[39m)[33m;[39m
+    [90m 31|[39m     [34mexpect[39m(body[33m.[39mapi[33m.[39mtype)[33m.[39m[34mtoBe[39m([32m"openapi"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22mpoints api.url at the apex openapi.json proxy
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:42:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:28:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/ai-plugin.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/ai-plugin.json/route.ts:[2m42:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m28:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22mpoints auth.authorization_url at the indexer's OAuth endpoint
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m37:28[22m[39m
+    [90m 35|[39m     const { GET } = await import("@/app/.well-known/ai-plugin.json/rou…
+    [90m 36|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 37|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 38|[39m     [34mexpect[39m(body[33m.[39mauth[33m.[39mtype)[33m.[39m[34mtoBe[39m([32m"oauth"[39m)[33m;[39m
+    [90m 39|[39m     expect(body.auth.authorization_url).toBe(`${INDEXER_URL}/v2/oauth/…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22mpoints auth.authorization_url at the indexer's OAuth endpoint
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:42:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:36:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/ai-plugin.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/ai-plugin.json/route.ts:[2m42:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m36:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22muses the public Karma logo and contact email
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m45:28[22m[39m
+    [90m 43|[39m     const { GET } = await import("@/app/.well-known/ai-plugin.json/rou…
+    [90m 44|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 45|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 46|[39m     [34mexpect[39m(body[33m.[39mlogo_url)[33m.[39m[34mtoBe[39m([32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m/logo/karma-logo.svg`[39m)[33m;[39m
+    [90m 47|[39m     [34mexpect[39m(body[33m.[39mcontact_email)[33m.[39m[34mtoBe[39m([32m"info@karmahq.xyz"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22muses the public Karma logo and contact email
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:42:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:44:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/ai-plugin.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/ai-plugin.json/route.ts:[2m42:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m44:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22msets wide-open CORS headers so AI crawlers can read it
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'get')[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m54:24[22m[39m
+    [90m 52|[39m     const { GET } = await import("@/app/.well-known/ai-plugin.json/rou…
+    [90m 53|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 54|[39m     [34mexpect[39m(res[33m.[39mheaders[33m.[39m[35mget[39m([32m"Access-Control-Allow-Origin"[39m))[33m.[39m[34mtoBe[39m([32m"*"[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m 55|[39m     expect(res.headers.get("Access-Control-Allow-Methods")).toContain(…
+    [90m 56|[39m     [34mexpect[39m(res[33m.[39mheaders[33m.[39m[35mget[39m([32m"Access-Control-Max-Age"[39m))[33m.[39m[34mtoBe[39m([32m"86400"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/ai-plugin.json route handler[2m > [22msets wide-open CORS headers so AI crawlers can read it
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/ai-plugin.json/route.ts:42:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:53:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/ai-plugin.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/ai-plugin.json/route.ts:[2m42:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m53:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler[2m > [22mdeclares a single 'karma' MCP server with http transport
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m83:28[22m[39m
+    [90m 81|[39m     [35mconst[39m { [33mGET[39m } [33m=[39m [35mawait[39m [35mimport[39m([32m"@/app/.well-known/mcp.json/route"[39m)[33m;[39m
+    [90m 82|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 83|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 84|[39m     [34mexpect[39m(body[33m.[39mmcpServers[33m.[39mkarma[33m.[39mtransport)[33m.[39m[34mtoBe[39m([32m"http"[39m)[33m;[39m
+    [90m 85|[39m     [34mexpect[39m(body[33m.[39mmcpServers[33m.[39mkarma[33m.[39murl)[33m.[39m[34mtoBe[39m([32m`[39m[36m${[39m[33mINDEXER_URL[39m[36m}[39m[32m/mcp`[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler[2m > [22mdeclares a single 'karma' MCP server with http transport
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:35:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:82:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/mcp.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/mcp.json/route.ts:[2m35:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m82:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler[2m > [22madvertises oauth2 auth with the indexer's protected-resource metadata
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m91:28[22m[39m
+    [90m 89|[39m     [35mconst[39m { [33mGET[39m } [33m=[39m [35mawait[39m [35mimport[39m([32m"@/app/.well-known/mcp.json/route"[39m)[33m;[39m
+    [90m 90|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 91|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 92|[39m     [34mexpect[39m(body[33m.[39mmcpServers[33m.[39mkarma[33m.[39mauth[33m.[39mtype)[33m.[39m[34mtoBe[39m([32m"oauth2"[39m)[33m;[39m
+    [90m 93|[39m     [34mexpect[39m(body[33m.[39mmcpServers[33m.[39mkarma[33m.[39mauth[33m.[39mmetadata)[33m.[39m[34mtoBe[39m(
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler[2m > [22madvertises oauth2 auth with the indexer's protected-resource metadata
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:35:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:90:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/mcp.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/mcp.json/route.ts:[2m35:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m90:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler[2m > [22mlinks the human-facing documentation page
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m101:28[22m[39m
+    [90m 99|[39m     [35mconst[39m { [33mGET[39m } [33m=[39m [35mawait[39m [35mimport[39m([32m"@/app/.well-known/mcp.json/route"[39m)[33m;[39m
+    [90m100|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m101|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m102|[39m     expect(body.mcpServers.karma.documentation).toBe(`${SITE_URL}/mcp/…
+    [90m103|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler[2m > [22mlinks the human-facing documentation page
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:35:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:100:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/mcp.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/mcp.json/route.ts:[2m35:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m100:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler[2m > [22msets wide-open CORS headers
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'get')[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m108:24[22m[39m
+    [90m106|[39m     [35mconst[39m { [33mGET[39m } [33m=[39m [35mawait[39m [35mimport[39m([32m"@/app/.well-known/mcp.json/route"[39m)[33m;[39m
+    [90m107|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m108|[39m     [34mexpect[39m(res[33m.[39mheaders[33m.[39m[35mget[39m([32m"Access-Control-Allow-Origin"[39m))[33m.[39m[34mtoBe[39m([32m"*"[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m109|[39m     [34mexpect[39m(res[33m.[39mheaders[33m.[39m[35mget[39m([32m"Access-Control-Max-Age"[39m))[33m.[39m[34mtoBe[39m([32m"86400"[39m)[33m;[39m
+    [90m110|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler[2m > [22msets wide-open CORS headers
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:35:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:107:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/mcp.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/mcp.json/route.ts:[2m35:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m107:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler with a trailing slash in the env var[2m > [22mnormalizes NEXT_PUBLIC_GAP_INDEXER_URL to a single slash before /mcp
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known.test.ts:[2m350:28[22m[39m
+    [90m348|[39m     [35mconst[39m { [33mGET[39m } [33m=[39m [35mawait[39m [35mimport[39m([32m"@/app/.well-known/mcp.json/route"[39m)[33m;[39m
+    [90m349|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m350|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m351|[39m     expect(body.mcpServers.karma.url).toBe("https://gapapi.karmahq.xyz…
+    [90m352|[39m     [34mexpect[39m(body[33m.[39mmcpServers[33m.[39mkarma[33m.[39murl)[33m.[39mnot[33m.[39m[34mtoContain[39m([32m"//mcp"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known.test.ts[2m > [22m/.well-known/mcp.json route handler with a trailing slash in the env var[2m > [22mnormalizes NEXT_PUBLIC_GAP_INDEXER_URL to a single slash before /mcp
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:12:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/mcp.json/route.ts:35:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known.test.ts:349:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/mcp.json/route.ts:[2m12:3[22m[39m
+    [90m 10|[39m [35mexport[39m [35mconst[39m revalidate [33m=[39m [34m3600[39m[33m;[39m
+    [90m 11|[39m
+    [90m 12|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 13|[39m   [35mconst[39m apiUrl [33m=[39m [34mgetIndexerBaseUrl[39m()[33m;[39m
+    [90m 14|[39m
+[90m [2m❯[22m GET app/.well-known/mcp.json/route.ts:[2m35:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known.test.ts:[2m349:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/public/gsc-site-verification.test.ts[2m > [22mpublic/googleb231020e03517669.html (GSC www verification)[2m > [22mhas the exact GSC verification body (UTF-8)
+[31m[1mAssertionError[22m: expected 'google-site-verification: googleb2310…' to be 'google-site-verification: googleb2310…' // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- google-site-verification: googleb231020e03517669.html[39m
+[31m+ google-site-verification: googleb231020e03517669.html[7m[27m[39m
+
+
+[36m [2m❯[22m __tests__/public/gsc-site-verification.test.ts:[2m60:22[22m[39m
+    [90m 58|[39m   [34mit[39m([32m"has the exact GSC verification body (UTF-8)"[39m[33m,[39m () [33m=>[39m {
+    [90m 59|[39m     [35mconst[39m contents [33m=[39m fs[33m.[39m[34mreadFileSync[39m([33mVERIFICATION_PATH[39m[33m,[39m [32m"utf-8"[39m)[33m;[39m
+    [90m 60|[39m     [34mexpect[39m(contents)[33m.[39m[34mtoBe[39m([33mEXPECTED_BODY[39m)[33m;[39m
+    [90m   |[39m                      [31m^[39m
+    [90m 61|[39m   })[33m;[39m
+    [90m 62|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/utilities/tenant-param.test.ts[2m > [22mtenantNotFoundPathname[2m > [22mbuilds a path under the requested tenant
+[31m[1mTypeError[22m: tenantNotFoundPathname is not a function[39m
+[36m [2m❯[22m __tests__/utilities/tenant-param.test.ts:[2m253:12[22m[39m
+    [90m251|[39m [34mdescribe[39m([32m"tenantNotFoundPathname"[39m[33m,[39m () [33m=>[39m {
+    [90m252|[39m   [34mit[39m([32m"builds a path under the requested tenant"[39m[33m,[39m () [33m=>[39m {
+    [90m253|[39m     [34mexpect[39m([34mtenantNotFoundPathname[39m([33mKARMA_TENANT_PARAM[39m))[33m.[39m[34mtoBe[39m(
+    [90m   |[39m            [31m^[39m
+    [90m254|[39m       [32m`/t/[39m[36m${[39m[33mKARMA_TENANT_PARAM[39m[36m}[39m[32m/[39m[36m${[39m[33mTENANT_NOT_FOUND_SEGMENT[39m[36m}[39m[32m`[39m
+    [90m255|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/utilities/tenant-param.test.ts[2m > [22mtenantNotFoundPathname[2m > [22mis itself inside the blocked prefix, so it can never be requested directly
+[31m[1mTypeError[22m: tenantNotFoundPathname is not a function[39m
+[36m [2m❯[22m __tests__/utilities/tenant-param.test.ts:[2m262:30[22m[39m
+    [90m260|[39m
+    [90m261|[39m   it("is itself inside the blocked prefix, so it can never be requeste…
+    [90m262|[39m     expect(isTenantRoutePath(tenantNotFoundPathname(KARMA_TENANT_PARAM…
+    [90m   |[39m                              [31m^[39m
+    [90m263|[39m   })[33m;[39m
+    [90m264|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mreturns an empty 200 urlset for a known kind with a numeric chunk
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m call __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m5:10[22m[39m
+[90m [2m❯[22m __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m30:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mserves the projects kind
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mserves the impacts kind
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mserves the grants kind
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mserves the milestones kind
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mserves the funding-programs kind
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m call __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m5:10[22m[39m
+[90m [2m❯[22m __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m42:25[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mreturns 404 for an unknown kind
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m call __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m5:10[22m[39m
+[90m [2m❯[22m __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m48:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mreturns 404 for a non-numeric chunk filename
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m call __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m5:10[22m[39m
+[90m [2m❯[22m __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m53:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mreturns 404 for the non-positive chunk id 0.xml
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/orphaned-chunk-route.test.ts[2m > [22mapp/sitemaps/[kind]/sitemap/[chunk] orphaned-chunk fallback[2m > [22mreturns 404 for the non-positive chunk id 01.xml
+[31m[1mError[22m: `connection` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context[39m
+[90m [2m❯[22m throwForMissingRequestStore node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:[2m447:8[22m[39m
+[90m [2m❯[22m callingExpression node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/request/connection.ts:[2m143:30[22m[39m
+[36m [2m❯[22m GET app/sitemaps/[kind]/sitemap/[chunk]/route.ts:[2m35:9[22m[39m
+    [90m 33|[39m
+    [90m 34|[39m   [35mconst[39m meta [33m=[39m [33mKIND_META[39m[33m.[39m[35mget[39m(kind [35mas[39m [33mSitemapKind[39m)[33m;[39m
+    [90m 35|[39m   [35mif[39m ([33m![39mmeta [33m||[39m [33m![39m[33mCHUNK_FILENAME[39m[33m.[39m[34mtest[39m(chunk)) {
+    [90m   |[39m         [31m^[39m
+    [90m 36|[39m     [35mreturn[39m [35mnew[39m [33mNextResponse[39m([32m"Not Found"[39m[33m,[39m { status[33m:[39m [34m404[39m })[33m;[39m
+    [90m 37|[39m   }
+[90m [2m❯[22m call __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m5:10[22m[39m
+[90m [2m❯[22m __tests__/app/sitemaps/orphaned-chunk-route.test.ts:[2m58:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22mreturns 200 with a static RFC 9728 metadata document
+[31m[1mAssertionError[22m: expected undefined to be 200 // Object.is equality[39m
+
+[32m- Expected:[39m
+200
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m14:24[22m[39m
+    [90m 12|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 13|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 14|[39m     [34mexpect[39m(res[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m200[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m 15|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m 16|[39m     [34mexpect[39m(body)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22mreturns 200 with a static RFC 9728 metadata document
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:13:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m13:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22msets resource to the indexer's MCP endpoint
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m22:28[22m[39m
+    [90m 20|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 21|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 22|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 23|[39m     [34mexpect[39m(body[33m.[39mresource)[33m.[39m[34mtoBe[39m([32m`[39m[36m${[39m[33mINDEXER_URL[39m[36m}[39m[32m/mcp`[39m)[33m;[39m
+    [90m 24|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22msets resource to the indexer's MCP endpoint
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:21:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m21:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22madvertises NEXT_PUBLIC_GAP_OAUTH_URL as the authorization server
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m29:28[22m[39m
+    [90m 27|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 28|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 29|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 30|[39m     [34mexpect[39m(body[33m.[39mauthorization_servers)[33m.[39m[34mtoEqual[39m([[33mOAUTH_ISSUER[39m])[33m;[39m
+    [90m 31|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22madvertises NEXT_PUBLIC_GAP_OAUTH_URL as the authorization server
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:28:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m28:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22madvertises the mcp scope
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m36:28[22m[39m
+    [90m 34|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 35|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 36|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 37|[39m     [34mexpect[39m(body[33m.[39mscopes_supported)[33m.[39m[34mtoEqual[39m([[32m"mcp"[39m])[33m;[39m
+    [90m 38|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22madvertises the mcp scope
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:35:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m35:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22madvertises header-based bearer auth
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m43:28[22m[39m
+    [90m 41|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 42|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 43|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 44|[39m     [34mexpect[39m(body[33m.[39mbearer_methods_supported)[33m.[39m[34mtoEqual[39m([[32m"header"[39m])[33m;[39m
+    [90m 45|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22madvertises header-based bearer auth
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:42:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m42:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22madvertises RS256 signing algorithm
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m50:28[22m[39m
+    [90m 48|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 49|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 50|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 51|[39m     expect(body.resource_signing_alg_values_supported).toEqual(["RS256…
+    [90m 52|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22madvertises RS256 signing algorithm
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:49:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m49:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22mpoints resource_documentation at the authorization-server metadata path
+[31m[1mTypeError[22m: res.json is not a function[39m
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m57:28[22m[39m
+    [90m 55|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 56|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 57|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 58|[39m     [34mexpect[39m(body[33m.[39mresource_documentation)[33m.[39m[34mtoBe[39m(
+    [90m 59|[39m       [32m`[39m[36m${[39m[33mOAUTH_ISSUER[39m[36m}[39m[32m/.well-known/oauth-authorization-server`[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22mpoints resource_documentation at the authorization-server metadata path
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:56:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m56:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22msets wide-open CORS headers so agent crawlers can read it
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'get')[39m
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m66:24[22m[39m
+    [90m 64|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 65|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 66|[39m     [34mexpect[39m(res[33m.[39mheaders[33m.[39m[35mget[39m([32m"Access-Control-Allow-Origin"[39m))[33m.[39m[34mtoBe[39m([32m"*"[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m 67|[39m     expect(res.headers.get("Access-Control-Allow-Methods")).toContain(…
+    [90m 68|[39m     [34mexpect[39m(res[33m.[39mheaders[33m.[39m[35mget[39m([32m"Access-Control-Max-Age"[39m))[33m.[39m[34mtoBe[39m([32m"86400"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22msets wide-open CORS headers so agent crawlers can read it
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:65:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m65:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22msets long-lived Cache-Control on success
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'get')[39m
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m74:24[22m[39m
+    [90m 72|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m 73|[39m     [35mconst[39m res [33m=[39m [33mGET[39m()[33m;[39m
+    [90m 74|[39m     expect(res.headers.get("Cache-Control")).toBe("public, max-age=360…
+    [90m   |[39m                        [31m^[39m
+    [90m 75|[39m   })[33m;[39m
+    [90m 76|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler[2m > [22msets long-lived Cache-Control on success
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:73:17
+    at file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+runner@4.1.0/node_modules/@vitest/runner/dist/index.js:1258:20[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m73:17[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler — missing env[2m > [22mthrows and tags the Sentry capture when NEXT_PUBLIC_GAP_OAUTH_URL is unset
+[31m[1mAssertionError[22m: expected [Function] to throw an error[39m
+
+[32m- Expected:[39m
+null
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m113:25[22m[39m
+    [90m111|[39m     const { GET } = await import("@/app/.well-known/oauth-protected-re…
+    [90m112|[39m
+    [90m113|[39m     expect(() => GET()).toThrow(/NEXT_PUBLIC_GAP_OAUTH_URL is not set/…
+    [90m   |[39m                         [31m^[39m
+    [90m114|[39m     [34mexpect[39m(captureSpy)[33m.[39m[34mtoHaveBeenCalledWith[39m(
+    [90m115|[39m       expect[33m.[39m[34many[39m([33mError[39m)[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/well-known/oauth-protected-resource.test.ts[2m > [22m/.well-known/oauth-protected-resource route handler — missing env[2m > [22mthrows and tags the Sentry capture when NEXT_PUBLIC_GAP_OAUTH_URL is unset
+[31m[1mError[22m: Unhandled promise rejection(s) during test (1):
+
+Error: `cacheLife()` is only available with the `cacheComponents` config.
+    at cacheLife (C:\Users\Amaury\AppData\Local\Temp\sg-next163\node_modules\.pnpm\next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e\node_modules\next\dist\server\use-cache\cache-life.js:16:37)
+    at buildBody (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:28:3)
+    at GET (C:/Users/Amaury/AppData/Local/Temp/sg-next163/app/.well-known/oauth-protected-resource/route.ts:60:34)
+    at C:/Users/Amaury/AppData/Local/Temp/sg-next163/__tests__/app/well-known/oauth-protected-resource.test.ts:113:18
+    at Proxy.assertThrows (file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:2798:5)
+    at Proxy.methodWrapper (file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
+    at Proxy.<anonymous> (file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1211:12)
+    at Proxy.overwritingMethodWrapper (file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1750:33)
+    at Proxy.<anonymous> (file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1547:16)
+    at Proxy.<anonymous> (file:///C:/Users/Amaury/AppData/Local/Temp/sg-next163/node_modules/.pnpm/@vitest+expect@4.1.0/node_modules/@vitest/expect/dist/index.js:1151:15)[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m buildBody app/.well-known/oauth-protected-resource/route.ts:[2m28:3[22m[39m
+    [90m 26|[39m  */[39m
+    [90m 27|[39m
+    [90m 28|[39m [35mexport[39m [35mfunction[39m [33mGET[39m() {
+    [90m   |[39m   [31m^[39m
+    [90m 29|[39m   [35mconst[39m issuer [33m=[39m envVars[33m.[39m[33mNEXT_PUBLIC_GAP_OAUTH_URL[39m[33m;[39m
+    [90m 30|[39m   [35mif[39m ([33m![39missuer [33m||[39m issuer[33m.[39m[34mtrim[39m() [33m===[39m [32m""[39m) {
+[90m [2m❯[22m GET app/.well-known/oauth-protected-resource/route.ts:[2m60:34[22m[39m
+[90m [2m❯[22m __tests__/app/well-known/oauth-protected-resource.test.ts:[2m113:18[22m[39m
+[90m [2m❯[22m __tests__/setup.ts:[2m245:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mincludes the MCP connect and For AI Agents pages
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m21:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mincludes the find-funders landing and connect setup pages
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m30:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22msets homepage priority to 1 and changeFrequency to daily
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m41:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mdowngrades privacy/terms to yearly low-priority entries
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m50:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mincludes the static /blog index page
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m62:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mappends published blog posts with lastModified set to publishedAt
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m73:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mreturns just the static pages when there are no published posts
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m87:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mexcludes drafts because the gateway only returns published slugs
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m104:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mrevalidates hourly as a backstop for missed blog webhooks
+[31m[1mAssertionError[22m: expected undefined to be 3600 // Object.is equality[39m
+
+[32m- Expected:[39m
+3600
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m117:38[22m[39m
+    [90m115|[39m     [90m// list would all silently keep posts out of the sitemap.[39m
+    [90m116|[39m     const sitemapModule = await import("@/app/sitemaps/static/sitemap"…
+    [90m117|[39m     [34mexpect[39m(sitemapModule[33m.[39mrevalidate)[33m.[39m[34mtoBe[39m([34m3600[39m)[33m;[39m
+    [90m   |[39m                                      [31m^[39m
+    [90m118|[39m   })[33m;[39m
+    [90m119|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/84]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/app/sitemaps/static/sitemap.test.ts[2m > [22mapp/sitemaps/static/sitemap.ts[2m > [22mfalls back to just the static pages when the gateway errors
+[31m[1mError[22m: `cacheLife()` is only available with the `cacheComponents` config.[39m
+[90m [2m❯[22m cacheLife node_modules/.pnpm/next@16.3.3_@babel+core@7.2_2705c7a5899c3c5687fd093b7b18ed5e/node_modules/next/src/server/use-cache/cache-life.ts:[2m28:10[22m[39m
+[36m [2m❯[22m sitemap app/sitemaps/static/sitemap.ts:[2m87:3[22m[39m
+    [90m 85|[39m     url[33m:[39m [32m`[39m[36m${[39m[33mSITE_URL[39m[36m}[39m[32m[39m[36m${[39mpath[36m}[39m[32m`[39m[33m,[39m
+    [90m 86|[39m     changeFrequency: path === "" ? "daily" : lowPriorityPages.includes…
+    [90m 87|[39m     priority[33m:[39m
+    [90m   |[39m   [31m^[39m
+    [90m 88|[39m       path [33m===[39m [32m""[39m
+    [90m 89|[39m         [33m?[39m [34m1[39m
+[90m [2m❯[22m __tests__/app/sitemaps/static/sitemap.test.ts:[2m128:27[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/84]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m9 failed[39m[22m[2m | [22m[1m[32m1091 passed[39m[22m[90m (1100)[39m
+[2m      Tests [22m [1m[31m64 failed[39m[22m[2m | [22m[1m[32m15901 passed[39m[22m[90m (15965)[39m
+[2m   Start at [22m 22:14:52
+[2m   Duration [22m 428.56s[2m (transform 250.97s, setup 369.71s, import 1461.60s, tests 1199.87s, environment 2741.45s)[22m
+
+EXIT=1

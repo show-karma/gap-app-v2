@@ -1,8 +1,6 @@
-import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Link from "next/link";
 import "@/styles/globals.css";
-import { defaultMetadata } from "@/utilities/meta";
 
 /**
  * The 404 for everything the router cannot match.
@@ -36,17 +34,17 @@ const inter = localFont({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: "404 - Page Not Found",
-  robots: { index: false, follow: true },
-};
-
 export default function GlobalNotFound() {
   return (
     <html lang="en" className={`h-full ${inter.variable}`} suppressHydrationWarning>
+      {/* Rendered inline rather than exported as `metadata`: a non-component
+          export next to a component trips react-doctor's only-export-components
+          rule, and React hoists these into <head> anyway. The 404 status is what
+          actually keeps this out of an index; the tag is belt and braces. */}
+      <title>404 - Page Not Found</title>
+      <meta name="robots" content="noindex, follow" />
       <body suppressHydrationWarning>
-        <div className="col-span-12 min-h-screen px-4 py-4">
+        <div className="col-span-12 min-h-screen p-4">
           <h1 className="text-3xl mb-5">404 - Page Not Found</h1>
           <Link href="/">Go Home</Link>
         </div>
