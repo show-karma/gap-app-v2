@@ -1,6 +1,7 @@
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { COPYRIGHT_YEAR } from "@/src/components/footer/copyright-year";
-import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
+import { Footer } from "@/src/components/footer/footer";
+import { WhitelabelFooter } from "@/src/components/footer/whitelabel-footer";
 import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
@@ -102,10 +103,14 @@ export async function TenantNavbar({ whitelabel }: { whitelabel: Whitelabel }) {
 export async function TenantFooter({ whitelabel }: { whitelabel: Whitelabel }) {
   const { isWhitelabel } = await whitelabel;
 
-  // COPYRIGHT_YEAR is a build-time constant, read here on the server and
-  // handed down as a prop — see copyright-year.ts for why the client component
-  // that displays it must not compute it itself.
-  return <FooterSwitcher isWhitelabel={isWhitelabel} copyrightYear={COPYRIGHT_YEAR} />;
+  // Which routes get a footer at all is answered by the route tree, not by a
+  // pathname test — the sections that supply their own chrome live outside the
+  // chrome group (PR #2096). That is what retired FooterSwitcher.
+  //
+  // COPYRIGHT_YEAR is a build-time constant, read here on the server and handed
+  // down as a prop — see copyright-year.ts for why the client component that
+  // displays it must not compute it itself.
+  return isWhitelabel ? <WhitelabelFooter /> : <Footer copyrightYear={COPYRIGHT_YEAR} />;
 }
 
 /** Describes Karma, so it is for the main domain only. */
