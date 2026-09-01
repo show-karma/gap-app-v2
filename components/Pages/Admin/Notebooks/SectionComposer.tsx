@@ -57,6 +57,7 @@ import {
   toggleKpiMetric,
   updateSection,
 } from "@/services/notebooks/notebook-spec-draft";
+import { HeaderFields, HeroFields, NarrativeFields } from "./EditorialFields";
 
 interface Props {
   spec: NotebookSpec;
@@ -142,53 +143,13 @@ export function SectionComposer({ spec, onChange, indicators = [] }: Props) {
                 </div>
               </div>
 
-              {section.type === "kpis" ? (
-                <KpiFields
-                  fieldId={`section-${index}`}
-                  section={section}
-                  onToggle={(metric) => onChange(toggleKpiMetric(spec, index, metric))}
-                />
-              ) : null}
-
-              {section.type === "bars" ? (
-                <BarFields
-                  fieldId={`section-${index}`}
-                  section={section}
-                  onSourceChange={(source) => onChange(setBarSource(spec, index, source))}
-                  onFieldChange={(next) => onChange(updateSection(spec, index, next))}
-                />
-              ) : null}
-
-              {section.type === "timeseries" ? (
-                <TimeseriesFields
-                  fieldId={`section-${index}`}
-                  section={section}
-                  indicators={indicators}
-                  onFieldChange={(next) => onChange(updateSection(spec, index, next))}
-                />
-              ) : null}
-
-              {section.type === "table" ? (
-                <TableFields
-                  fieldId={`section-${index}`}
-                  section={section}
-                  onFieldChange={(next) => onChange(updateSection(spec, index, next))}
-                />
-              ) : null}
-
-              {section.type === "text" ? (
-                <TextFields
-                  fieldId={`section-${index}`}
-                  section={section}
-                  onFieldChange={(next) => onChange(updateSection(spec, index, next))}
-                />
-              ) : null}
-
-              {section.type === "applications" ? (
-                <p className="text-sm text-muted-foreground">
-                  Approved, under review and not approved counts. Nothing to configure.
-                </p>
-              ) : null}
+              <SectionFields
+                section={section}
+                index={index}
+                spec={spec}
+                indicators={indicators}
+                onChange={onChange}
+              />
             </li>
           ))}
         </ul>
@@ -218,6 +179,87 @@ export function SectionComposer({ spec, onChange, indicators = [] }: Props) {
   );
 }
 
+/**
+ * The form for whichever section this is.
+ *
+ * Extracted from the list callback, which had grown a conditional per section
+ * type and was doing three jobs at once: ordering controls, identity, and
+ * every field group in the vocabulary. A switch in its own component says
+ * "pick the form" in one place, and the compiler now checks the mapping is
+ * complete rather than leaving a type to silently render nothing.
+ */
+function SectionFields({
+  section,
+  index,
+  spec,
+  indicators,
+  onChange,
+}: {
+  section: NotebookSection;
+  index: number;
+  spec: NotebookSpec;
+  indicators: readonly NotebookIndicatorOption[];
+  onChange: (next: NotebookSpec) => void;
+}) {
+  const fieldId = `section-${index}`;
+  const update = (next: NotebookSection) => onChange(updateSection(spec, index, next));
+
+  switch (section.type) {
+    case "kpis":
+      return (
+        <KpiFields
+          fieldId={fieldId}
+          section={section}
+          onToggle={(metric) => onChange(toggleKpiMetric(spec, index, metric))}
+        />
+      );
+    case "bars":
+      return (
+        <BarFields
+          fieldId={fieldId}
+          section={section}
+          onSourceChange={(source) => onChange(setBarSource(spec, index, source))}
+          onFieldChange={update}
+        />
+      );
+    case "timeseries":
+      return (
+        <TimeseriesFields
+          fieldId={fieldId}
+          section={section}
+          indicators={indicators}
+          onFieldChange={update}
+        />
+      );
+    case "table":
+      return <TableFields fieldId={fieldId} section={section} onFieldChange={update} />;
+    case "text":
+      return <TextFields fieldId={fieldId} section={section} onFieldChange={update} />;
+    case "header":
+      return <HeaderFields fieldId={fieldId} section={section} onFieldChange={update} />;
+    case "hero":
+      return <HeroFields fieldId={fieldId} section={section} onFieldChange={update} />;
+    case "narrative":
+      return <NarrativeFields fieldId={fieldId} section={section} onFieldChange={update} />;
+    case "nav":
+      return (
+        <p className="text-sm text-muted-foreground">
+          Links to every titled section on this page, generated automatically. Nothing to configure.
+        </p>
+      );
+    case "applications":
+      return (
+        <p className="text-sm text-muted-foreground">
+          Approved, under review and not approved counts. Nothing to configure.
+        </p>
+      );
+    default: {
+      const exhaustive: never = section;
+      return exhaustive;
+    }
+  }
+}
+
 const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
   kpis: "KPI tiles",
   bars: "Bar chart",
@@ -241,6 +283,10 @@ const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
  * does not offer it yet.
  */
 const ADDABLE_SECTION_TYPES = [
+  "header",
+  "hero",
+  "nav",
+  "narrative",
   "kpis",
   "bars",
   "timeseries",

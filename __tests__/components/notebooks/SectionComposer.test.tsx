@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { SectionComposer } from "@/components/Pages/Admin/Notebooks/SectionComposer";
@@ -257,6 +257,80 @@ describe("SectionComposer", () => {
       renderPicker(timeseriesSpec("c"));
 
       expect(screen.getByRole("option", { name: /not in this community/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("editorial sections", () => {
+    it.each(["Page header", "Headline", "Section nav", "Narrative"])("offers %s", (label) => {
+      renderComposer(spec([{ type: "applications" }]));
+
+      expect(screen.getByRole("button", { name: new RegExp(label, "i") })).toBeInTheDocument();
+    });
+
+    // One change event with the whole string — what a paste produces. Typing
+    // character by character cannot work here: the field is controlled by the
+    // spec, and the spec does not advance behind a mocked onChange.
+    it("parses a slash-separated breadcrumb trail into crumbs", () => {
+      const onChange = renderComposer(spec([{ type: "header" }]));
+
+      fireEvent.change(screen.getByRole("textbox", { name: /breadcrumbs/i }), {
+        target: { value: "filpgf.io / Kernel / Monitoring" },
+      });
+
+      expect(onChange).toHaveBeenCalledWith(
+        spec([{ type: "header", breadcrumbs: ["filpgf.io", "Kernel", "Monitoring"] }])
+      );
+    });
+
+    it("drops empty crumbs rather than saving a blank one", () => {
+      const onChange = renderComposer(spec([{ type: "header" }]));
+
+      fireEvent.change(screen.getByRole("textbox", { name: /breadcrumbs/i }), {
+        target: { value: "filpgf.io //  / Kernel" },
+      });
+
+      expect(onChange).toHaveBeenCalledWith(
+        spec([{ type: "header", breadcrumbs: ["filpgf.io", "Kernel"] }])
+      );
+    });
+
+    // A breadcrumb usually IS a link, so the exception has to be stated.
+    it("tells the author that breadcrumbs are not links", () => {
+      renderComposer(spec([{ type: "header" }]));
+
+      expect(screen.getByText(/labels, not links/i)).toBeInTheDocument();
+    });
+
+    it("needs no configuration for the nav", () => {
+      renderComposer(spec([{ type: "nav" }]));
+
+      expect(screen.getByText(/generated automatically/i)).toBeInTheDocument();
+    });
+
+    describe("narrative", () => {
+      it("inserts a token when a figure is picked", async () => {
+        const onChange = renderComposer(spec([{ type: "narrative", body: "Total " }]));
+
+        await userEvent.click(screen.getByRole("button", { name: /^Committed$/i }));
+
+        expect(onChange).toHaveBeenCalledWith(
+          spec([{ type: "narrative", body: "Total {{committed}}" }])
+        );
+      });
+
+      // The server refuses an unknown token; the author should find out here,
+      // not from a failed save.
+      it("warns about an unknown token as it is typed", () => {
+        renderComposer(spec([{ type: "narrative", body: "Total {{revenue}}." }]));
+
+        expect(screen.getByRole("alert")).toHaveTextContent(/revenue/i);
+      });
+
+      it("does not warn when every token is known", () => {
+        renderComposer(spec([{ type: "narrative", body: "Total {{committed}}." }]));
+
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      });
     });
   });
 
