@@ -3,7 +3,7 @@
   "recordedAgainst": "https://gapstagapi.karmahq.xyz",
   "recordedAt": "2026-09-01T22:22:08.659Z",
   "tokenPresent": false,
-  "howToRerecord": "INDEXER_TOKEN=<staging privy jwt> node .phase2/record-parity.mjs https://gapstagapi.karmahq.xyz",
+  "howToRerecord": "INDEXER_TOKEN=<staging privy jwt> node scripts/record-d2-parity.mjs",
   "endpoints": [
     {
       "loader": "projects-explorer",

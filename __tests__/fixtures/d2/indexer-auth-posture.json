@@ -2,7 +2,7 @@
   "$schema": "D2 — the gap-indexer auth posture of every endpoint the public loaders read",
   "recordedFrom": "gap-indexer @ feat/analytics-server-events, app/modules/v2/api/routes/**",
   "recordedAt": "2026-09-01",
-  "howToRerecord": "python .phase2/scan-indexer-auth.py <path-to-gap-indexer>",
+  "howToRerecord": "node scripts/record-d2-parity.mjs re-records the payload half; this posture half is read from the gap-indexer route definitions by hand — see the `source` on each entry",
   "why": "A route with no auth preHandler never reads the Authorization header, so dropping the token on the server provably cannot change the payload. optionalAuthentication is the only posture where it can — those are enumerated below with the exact fields a session adds.",
   "endpoints": [
     {
