@@ -12,6 +12,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { DonationStatus } from "@/hooks/donation/types";
 import { track } from "@/utilities/analytics/client";
+import { __resetDonationOutcomesForTests } from "@/utilities/analytics/emitters/donation";
 
 vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
@@ -51,6 +52,10 @@ const eventNames = () => vi.mocked(track).mock.calls.map(([name]) => name);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The emitter dedupes terminal outcomes by donation uid in module state, so
+  // it outlives a test. Without this, the second case to poll `don-1` finds it
+  // already reported and silently emits nothing.
+  __resetDonationOutcomesForTests();
 });
 
 describe("useOnramp", () => {

@@ -86,20 +86,24 @@ const canonical = (value: unknown): string => {
   if (value === undefined || value === null) return "";
 
   if (Array.isArray(value)) {
-    const items = value
-      .map((item) => canonical(item))
-      .filter((item) => item !== "")
-      .sort();
+    const items: string[] = [];
+    for (const item of value) {
+      const reduced = canonical(item);
+      if (reduced !== "") items.push(reduced);
+    }
+    items.sort();
     // An empty container reduces to the same nothing as a missing one — the
     // form always submits an array where the stored entity may simply omit it.
     return items.length === 0 ? "" : JSON.stringify(items);
   }
 
   if (typeof value === "object") {
-    const entries = Object.entries(value as Record<string, unknown>)
-      .map(([key, entry]) => [key, canonical(entry)] as const)
-      .filter(([, entry]) => entry !== "")
-      .sort(([a], [b]) => a.localeCompare(b));
+    const entries: (readonly [string, string])[] = [];
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      const reduced = canonical(entry);
+      if (reduced !== "") entries.push([key, reduced] as const);
+    }
+    entries.sort(([a], [b]) => a.localeCompare(b));
     // Likewise an object whose every member is blank: an empty custom-link row
     // the form left behind is not a link, and must not read as one.
     return entries.length === 0 ? "" : JSON.stringify(entries);
@@ -139,9 +143,12 @@ export const currentProjectEditValues = (project: Project): ProjectEditValues =>
     pathToTake: details?.pathToTake,
     imageURL: details?.imageURL,
     ...socials,
-    customLinks: links
-      .filter((link) => link.type === "custom")
-      .map((link) => ({ name: (link as { name?: string }).name ?? "", url: link.url ?? "" })),
+    customLinks: links.reduce<{ name: string; url: string }[]>((custom, link) => {
+      if (link.type === "custom") {
+        custom.push({ name: (link as { name?: string }).name ?? "", url: link.url ?? "" });
+      }
+      return custom;
+    }, []),
   };
 };
 

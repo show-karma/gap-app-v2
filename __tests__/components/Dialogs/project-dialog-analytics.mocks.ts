@@ -8,6 +8,41 @@
  * it would drift the moment either suite needed a new mock.
  */
 
+import { createElement, Fragment, type ReactNode } from "react";
+
+type StubProps = Record<string, unknown> & { children?: ReactNode };
+
+/**
+ * Every element mock in this file is one of two shapes, so they are built by
+ * these two factories rather than declared 20-odd times over.
+ *
+ * `createElement` rather than JSX, which is what lets this be a `.ts` module.
+ * A `.tsx` that declares this many stub components is a React component module
+ * as far as tooling is concerned, and gets held to rules meant for real ones —
+ * one component per file, components must be exported. Neither is a statement
+ * about mocks, and the pair is unsatisfiable together: exporting nothing trips
+ * the second, exporting the handles trips the first. Building the stubs from
+ * factories means no components are declared here at all.
+ */
+const stub =
+  (tag: string, testId: string) =>
+  ({ children, ...rest }: StubProps = {}) =>
+    createElement(tag, { "data-testid": testId, ...rest }, children);
+
+/** Renders its children and nothing else — the wrapper mocks. */
+const passthrough = ({ children }: StubProps = {}) => createElement(Fragment, null, children);
+
+/** `as`-polymorphic stub: renders whatever tag the caller asked for. */
+const polymorphic =
+  (fallbackTag: string, omit: readonly string[] = []) =>
+  ({ children, as, ...rest }: StubProps & { as?: string } = {}) => {
+    const props: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(rest)) {
+      if (!omit.includes(key)) props[key] = value;
+    }
+    return createElement((as as string) || fallbackTag, props, children);
+  };
+
 import {
   getNetworkMockState,
   mockEnsureCorrectChain,
@@ -40,50 +75,16 @@ vi.mock("@headlessui/react", () => {
     "afterLeave",
   ];
 
-  const MockDialog = ({ children, ...props }: any) => (
-    <div data-testid="dialog" {...props}>
-      {children}
-    </div>
+  const MockDialog = Object.assign(stub("div", "dialog"), {
+    Panel: stub("div", "dialog-panel"),
+    Title: polymorphic("h3"),
+  });
+
+  const MockTransitionRoot = Object.assign(
+    ({ show, ...rest }: StubProps & { show?: boolean; as?: string } = {}) =>
+      show ? polymorphic("div", TRANSITION_PROPS)(rest) : null,
+    { displayName: "Transition", Child: polymorphic("div", TRANSITION_PROPS) }
   );
-  MockDialog.Panel = ({ children, ...props }: any) => (
-    <div data-testid="dialog-panel" {...props}>
-      {children}
-    </div>
-  );
-  MockDialog.Title = ({ children, as, ...props }: any) => {
-    const Component = as || "h3";
-    return <Component {...props}>{children}</Component>;
-  };
-
-  const MockTransitionRoot = ({ show, children, as, ...props }: any) => {
-    if (!show) return null;
-
-    const filteredProps = Object.keys(props).reduce((acc, key) => {
-      if (!TRANSITION_PROPS.includes(key)) {
-        acc[key] = props[key];
-      }
-      return acc;
-    }, {} as any);
-
-    const Component = as || "div";
-    return <Component {...filteredProps}>{children}</Component>;
-  };
-  MockTransitionRoot.displayName = "Transition";
-
-  const MockTransitionChild = ({ children, as, ...props }: any) => {
-    const filteredProps = Object.keys(props).reduce((acc, key) => {
-      if (!TRANSITION_PROPS.includes(key)) {
-        acc[key] = props[key];
-      }
-      return acc;
-    }, {} as any);
-
-    const Component = as || "div";
-    return <Component {...filteredProps}>{children}</Component>;
-  };
-  MockTransitionChild.displayName = "Transition.Child";
-
-  MockTransitionRoot.Child = MockTransitionChild;
 
   return {
     Dialog: MockDialog,
@@ -93,7 +94,7 @@ vi.mock("@headlessui/react", () => {
 });
 
 vi.mock("@radix-ui/react-tooltip", () => {
-  const Wrapper = ({ children }: any) => <>{children}</>;
+  const Wrapper = passthrough;
   return {
     Provider: Wrapper,
     Root: Wrapper,
@@ -105,9 +106,9 @@ vi.mock("@radix-ui/react-tooltip", () => {
 });
 
 vi.mock("@heroicons/react/24/solid", () => ({
-  PlusIcon: (props: any) => <svg data-testid="plus-icon" {...props} />,
-  ChevronRightIcon: (props: any) => <svg data-testid="chevron-icon" {...props} />,
-  XMarkIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
+  PlusIcon: stub("svg", "plus-icon"),
+  ChevronRightIcon: stub("svg", "chevron-icon"),
+  XMarkIcon: stub("svg", "x-icon"),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -425,31 +426,28 @@ vi.mock("@/utilities/sdk/projects/editProject", () => ({
 }));
 
 vi.mock("@/components/Icons", () => ({
-  DiscordIcon: (props: any) => <svg data-testid="discord-icon" {...props} />,
-  GithubIcon: (props: any) => <svg data-testid="github-icon" {...props} />,
-  LinkedInIcon: (props: any) => <svg data-testid="linkedin-icon" {...props} />,
-  TwitterIcon: (props: any) => <svg data-testid="twitter-icon" {...props} />,
-  WebsiteIcon: (props: any) => <svg data-testid="website-icon" {...props} />,
+  DiscordIcon: stub("svg", "discord-icon"),
+  GithubIcon: stub("svg", "github-icon"),
+  LinkedInIcon: stub("svg", "linkedin-icon"),
+  TwitterIcon: stub("svg", "twitter-icon"),
+  WebsiteIcon: stub("svg", "website-icon"),
 }));
 
 vi.mock("@/components/Icons/Deck", () => ({
-  DeckIcon: (props: any) => <svg data-testid="deck-icon" {...props} />,
+  DeckIcon: stub("svg", "deck-icon"),
 }));
 
 vi.mock("@/components/Icons/Farcaster", () => ({
-  FarcasterIcon: (props: any) => <svg data-testid="farcaster-icon" {...props} />,
+  FarcasterIcon: stub("svg", "farcaster-icon"),
 }));
 
 vi.mock("@/components/Icons/Video", () => ({
-  VideoIcon: (props: any) => <svg data-testid="video-icon" {...props} />,
+  VideoIcon: stub("svg", "video-icon"),
 }));
 
 vi.mock("@/components/Utilities/ExternalLink", () => ({
-  ExternalLink: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
+  ExternalLink: ({ children, href, ...rest }: StubProps & { href?: string } = {}) =>
+    createElement("a", { href, ...rest }, children),
 }));
 
 vi.mock("@/components/Utilities/errorManager", () => ({
@@ -457,50 +455,66 @@ vi.mock("@/components/Utilities/errorManager", () => ({
 }));
 
 vi.mock("@/components/Utilities/FileUpload", () => ({
-  FileUpload: () => <div data-testid="file-upload" />,
+  FileUpload: stub("div", "file-upload"),
 }));
 
 vi.mock("@/components/Utilities/MarkdownEditor", () => ({
-  MarkdownEditor: ({ value, onChange, placeholderText }: any) => (
-    <textarea
-      data-testid="markdown-editor"
-      value={value || ""}
-      placeholder={placeholderText || ""}
-      onChange={(e: any) => onChange(e.target.value)}
-    />
-  ),
+  MarkdownEditor: ({
+    value,
+    onChange,
+    placeholderText,
+  }: {
+    value?: string;
+    onChange: (next: string) => void;
+    placeholderText?: string;
+  }) =>
+    createElement("textarea", {
+      "data-testid": "markdown-editor",
+      "aria-label": "Markdown editor",
+      value: value || "",
+      placeholder: placeholderText || "",
+      onChange: (e: { target: { value: string } }) => onChange(e.target.value),
+    }),
 }));
 
 vi.mock("@/components/Utilities/Skeleton", () => ({
-  Skeleton: () => <div data-testid="skeleton" />,
+  Skeleton: stub("div", "skeleton"),
 }));
 
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, isLoading, disabled, ...props }: any) => (
-    <button
-      type={props.type || "button"}
-      onClick={onClick}
-      disabled={disabled || isLoading}
-      {...props}
-    >
-      {children}
-    </button>
-  ),
+  Button: ({
+    children,
+    onClick,
+    isLoading,
+    disabled,
+    ...rest
+  }: StubProps & { onClick?: () => void; isLoading?: boolean; disabled?: boolean } = {}) =>
+    createElement(
+      "button",
+      {
+        ...rest,
+        type: (rest.type as string) || "button",
+        onClick,
+        disabled: disabled || isLoading,
+      },
+      children
+    ),
 }));
 
 vi.mock("@/components/Dialogs/SimilarProjectsDialog", () => ({
-  SimilarProjectsDialog: () => <div data-testid="similar-projects-dialog" />,
+  SimilarProjectsDialog: stub("div", "similar-projects-dialog"),
 }));
 
 vi.mock("@/components/Dialogs/ProjectDialog/ContactInfoSection", () => ({
-  ContactInfoSection: ({ addContact }: any) => (
-    <button
-      type="button"
-      onClick={() => addContact({ id: "contact-1", type: "email", value: "test@example.com" })}
-    >
-      Add Contact
-    </button>
-  ),
+  ContactInfoSection: ({ addContact }: { addContact: (contact: unknown) => void }) =>
+    createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => addContact({ id: "contact-1", type: "email", value: "test@example.com" }),
+      },
+      "Add Contact"
+    ),
 }));
 
 class mockProjectClass {
