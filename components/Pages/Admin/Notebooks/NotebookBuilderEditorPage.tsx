@@ -159,9 +159,15 @@ export function NotebookBuilderEditorPage({
   const handleSave = async (publish?: boolean) => {
     if (!canSave) return;
 
-    // Saving clears the UNSAVED half only. The unverified half is the row's
-    // persisted origin, which the indexer clears on publish — because saving
-    // a draft is not vouching for it.
+    // CAPTURED BEFORE CLEARING, because clearing is what destroys the answer.
+    // `setProposed(null)` below drops the in-browser half of "this came from a
+    // model", so reading it afterwards would report `manual` for a draft that
+    // was in fact AI-written — and the row would carry that lie forever.
+    const isAiDraft = unverified;
+
+    // Saving clears the UNSAVED half only. The unverified half travels with
+    // the row as `source`, and the indexer clears THAT to `manual` on publish —
+    // because saving a draft is not vouching for it.
     setProposed(null);
 
     const body = {
@@ -169,6 +175,15 @@ export function NotebookBuilderEditorPage({
       name: name.trim(),
       description: description.trim() === "" ? undefined : description.trim(),
       spec,
+      // WITHOUT THIS the write silently downgrades every AI draft to `manual`,
+      // and the warning the reviewer is supposed to meet on reopening is gone.
+      // The read side asks the row where it came from, so the write side has to
+      // tell it — a promise kept only in the reader is not kept at all.
+      //
+      // No publish special case: the indexer clears `source` on publish, so
+      // sending `ai` alongside a publish is both harmless and honest about what
+      // the draft was.
+      source: isAiDraft ? ("ai" as const) : (existing?.source ?? ("manual" as const)),
       ...(publish === undefined
         ? {}
         : { status: publish ? ("published" as const) : ("draft" as const) }),

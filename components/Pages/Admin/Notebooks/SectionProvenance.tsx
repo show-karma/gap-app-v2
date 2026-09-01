@@ -93,10 +93,13 @@ export function AiDraftNotice({
   return (
     <div className="flex flex-col gap-2 rounded-2xl border border-warning-500 bg-warning-50 p-4">
       <p className="text-sm font-medium text-warning-900">
-        {customHtml ? "Written by AI" : "Proposed by AI"}
-        {unsaved
-          ? " — not saved, not published, figures not yet verified."
-          : " — figures not yet verified."}
+        {/* One string, not two nodes: a headline split across elements is
+            harder to read with a screen reader and harder to assert on. */}
+        {`${customHtml ? "Written by AI" : "Proposed by AI"} — ${
+          unsaved
+            ? "not saved, not published, figures not yet verified."
+            : "figures not yet verified."
+        }`}
       </p>
       <p className="text-sm text-warning-900">
         {customHtml

@@ -26,6 +26,19 @@ vi.mock("@/hooks/communities/useCommunityAdminAccess", () => ({
   useCommunityAdminAccess: () => ({ hasAccess: true, isLoading: false }),
 }));
 
+/**
+ * Partial mock: only the network call is replaced.
+ *
+ * `sanitizeSlugInput` and `slugifyNotebookName` are pure helpers the editor
+ * relies on, and stubbing them would test a different component than the one
+ * that ships.
+ */
+const generateNotebookSpec = vi.fn();
+vi.mock("@/services/notebooks-admin.service", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/notebooks-admin.service")>()),
+  generateNotebookSpec: (slug: string, prompt: string) => generateNotebookSpec(slug, prompt),
+}));
+
 const mockDetail = vi.fn();
 const createMutate = vi.fn();
 const updateMutate = vi.fn();
@@ -77,6 +90,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockDetail.mockReturnValue({ data: undefined, isLoading: false, isError: false });
   createMutate.mockResolvedValue(existingConfig());
+  generateNotebookSpec.mockResolvedValue({
+    spec: { version: 1, sections: [{ type: "applications" }] },
+    provenance: [],
+    warnings: [],
+  });
   updateMutate.mockResolvedValue(existingConfig());
 });
 
@@ -305,5 +323,121 @@ describe("NotebookBuilderEditorPage — preview", () => {
 
     expect(container.querySelectorAll("img")).toHaveLength(0);
     expect(screen.getAllByText('<img src=x onerror="alert(1)">').length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The AI origin has to SURVIVE THE WRITE, and only the write can prove it.
+ *
+ * The earlier version of this guarantee was tested by seeding
+ * `existing.source = "ai"` and checking the notice appeared. That test passed
+ * for months while the write path never sent `source` at all — so an AI draft
+ * saved and reopened came back as `manual` and the warning silently vanished,
+ * which is precisely what the notice exists to prevent.
+ *
+ * The lesson is the one this project keeps relearning: ASSERT WHAT CROSSED THE
+ * BOUNDARY, not what the mock handed back. A mock that answers `source: "ai"`
+ * regardless is more cooperative than the server, and a suite built on it is
+ * green while the wire is broken. So every assertion below reads the BODY the
+ * mutation was called with.
+ */
+describe("NotebookBuilderEditorPage — the AI origin crosses the write boundary", () => {
+  const savedBody = (mutate: typeof createMutate) => mutate.mock.calls[0][0];
+
+  async function generateThenSave() {
+    render(<NotebookBuilderEditorPage community={community} overview={overview} />);
+    await userEvent.type(screen.getByRole("textbox", { name: /name/i }), "AI page");
+
+    // Drive the real entry rather than poking state: the bug lived in the
+    // handoff between generating and saving, so the test has to cross it.
+    await userEvent.type(
+      screen.getByRole("textbox", { name: /describe the page/i }),
+      "a kernel page"
+    );
+    await userEvent.click(screen.getByRole("button", { name: /compose a draft/i }));
+    // A brand-new page is seeded with one KPI section, so the replace-confirm
+    // appears even here. Going through it is what an author actually does.
+    await userEvent.click(screen.getByRole("button", { name: /replace my sections/i }));
+    // Wait on the CALL, not on copy: the notice's wording is not what this
+    // test is about, and coupling to it makes a copy edit look like a bug.
+    await waitFor(() => expect(generateNotebookSpec).toHaveBeenCalled());
+
+    await userEvent.click(screen.getByRole("button", { name: /save draft/i }));
+    await waitFor(() => expect(createMutate).toHaveBeenCalled());
+  }
+
+  it("should_send_source_ai_when_saving_a_generated_draft", async () => {
+    await generateThenSave();
+
+    expect(savedBody(createMutate).source).toBe("ai");
+  });
+
+  // The bug in miniature: setProposed(null) runs before the body is built, so
+  // reading the flag afterwards reports `manual` for a draft that was AI-made.
+  it("should_capture_the_origin_before_clearing_the_unsaved_flag", async () => {
+    await generateThenSave();
+
+    expect(savedBody(createMutate)).toMatchObject({ source: "ai", name: "AI page" });
+  });
+
+  it("should_send_source_manual_for_a_page_the_author_composed_themselves", async () => {
+    render(<NotebookBuilderEditorPage community={community} overview={overview} />);
+    await userEvent.type(screen.getByRole("textbox", { name: /name/i }), "Hand made");
+
+    await userEvent.click(screen.getByRole("button", { name: /save draft/i }));
+
+    await waitFor(() => expect(createMutate).toHaveBeenCalled());
+    expect(savedBody(createMutate).source).toBe("manual");
+  });
+
+  describe("editing a stored AI draft", () => {
+    beforeEach(() => {
+      mockDetail.mockReturnValue({
+        data: existingConfig({ source: "ai" } as Partial<NotebookConfig>),
+        isLoading: false,
+        isError: false,
+      });
+    });
+
+    // An author tweaking an AI draft has still not vouched for it. The origin
+    // must survive an ordinary edit, or the warning disappears on the second
+    // save rather than the first.
+    it("should_preserve_source_ai_across_an_ordinary_draft_edit", async () => {
+      render(
+        <NotebookBuilderEditorPage
+          community={community}
+          slug="grants-overview"
+          overview={overview}
+        />
+      );
+      await waitFor(() => expect(screen.getByDisplayValue("Grants overview")).toBeInTheDocument());
+
+      await userEvent.click(screen.getByRole("button", { name: /save draft/i }));
+
+      await waitFor(() => expect(updateMutate).toHaveBeenCalled());
+      expect(updateMutate.mock.calls[0][0].body.source).toBe("ai");
+    });
+
+    // No publish special case in the body: the indexer clears source on
+    // publish, so sending "ai" alongside a publish is honest about what the
+    // draft was and harmless to what the row becomes.
+    it("should_still_report_the_origin_when_publishing_and_let_the_server_clear_it", async () => {
+      render(
+        <NotebookBuilderEditorPage
+          community={community}
+          slug="grants-overview"
+          overview={overview}
+        />
+      );
+      await waitFor(() => expect(screen.getByDisplayValue("Grants overview")).toBeInTheDocument());
+
+      await userEvent.click(screen.getByRole("button", { name: /publish/i }));
+
+      await waitFor(() => expect(updateMutate).toHaveBeenCalled());
+      expect(updateMutate.mock.calls[0][0].body).toMatchObject({
+        source: "ai",
+        status: "published",
+      });
+    });
   });
 });

@@ -15,6 +15,7 @@ import {
   type NotebookConfig,
   NotebookConfigIdentitySchema,
   NotebookConfigSchema,
+  type NotebookSource,
 } from "./notebooks.service";
 
 /**
@@ -38,6 +39,17 @@ export interface NotebookConfigInput {
   description?: string;
   spec: NotebookSpec;
   status?: "draft" | "published";
+  /**
+   * Where this draft came from.
+   *
+   * Declared here because it is part of the WRITE contract, not an incidental
+   * extra: the builder's "proposed by AI, figures not yet verified" notice is
+   * read back off the stored row, so a write that omits this silently
+   * downgrades an AI draft to `manual` and the warning vanishes on reopen. The
+   * indexer clears it to `manual` on publish, which is what makes publishing
+   * the act of vouching.
+   */
+  source?: NotebookSource;
 }
 
 /** A partial edit. `status` alone publishes or unpublishes; `slug` renames. */
