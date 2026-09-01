@@ -289,3 +289,34 @@ describe("AiDraftNotice", () => {
     expect(screen.getByText(/no indicator matched 'adoption'/i)).toBeInTheDocument();
   });
 });
+
+/**
+ * The custom-page notice carries a heavier claim than the composed one.
+ *
+ * On a composed page the figures are OURS and the reviewer checks that the
+ * right ones were chosen. On a custom page there is no data layer at all:
+ * every number is the model's own with nothing behind it. Reusing the composed
+ * wording would understate the risk by exactly the amount that matters.
+ */
+describe("AiDraftNotice for a custom page", () => {
+  it("should_say_the_figures_are_the_models_own_not_that_they_are_real", () => {
+    render(<AiDraftNotice unsaved warnings={[]} customHtml />);
+
+    expect(screen.getByText(/written by the model/i)).toBeInTheDocument();
+    expect(screen.queryByText(/come from your community's data\./i)).not.toBeInTheDocument();
+  });
+
+  it("should_name_it_as_written_by_ai_rather_than_merely_proposed", () => {
+    render(<AiDraftNotice unsaved warnings={[]} customHtml />);
+
+    expect(screen.getByText(/written by ai/i)).toBeInTheDocument();
+  });
+
+  // The composed page must keep its own, gentler and still accurate wording.
+  it("should_keep_saying_the_composed_pages_numbers_are_real", () => {
+    render(<AiDraftNotice unsaved warnings={[]} />);
+
+    expect(screen.getByText(/come from your community/i)).toBeInTheDocument();
+    expect(screen.queryByText(/written by the model/i)).not.toBeInTheDocument();
+  });
+});

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NotebookComposedSpecSchema } from "./notebook-spec";
+import { NOTEBOOK_CUSTOM_HTML_MAX, NotebookComposedSpecSchema } from "./notebook-spec";
 
 /**
  * The NL → spec generator's contract, and the reviewer's evidence.
@@ -103,3 +103,20 @@ export function attachProvenance(
     return unkeyed.shift();
   });
 }
+
+/**
+ * The custom-HTML generator's contract.
+ *
+ * NO PROVENANCE, AND THAT IS THE POINT. A composed page can name the metric
+ * behind every figure because our query layer computed them. Here there is no
+ * query layer at all: any number in this document is one the MODEL WROTE, with
+ * nothing behind it to check against. There is no honest source to cite, so
+ * this returns none — and the review surface has to say so in the strongest
+ * terms rather than implying a rigour that does not exist.
+ */
+export const NotebookCustomGenerationResultSchema = z.object({
+  html: z.string().min(1).max(NOTEBOOK_CUSTOM_HTML_MAX),
+  warnings: z.array(z.string().trim().min(1).max(500)).max(20).default([]),
+});
+
+export type NotebookCustomGenerationResult = z.infer<typeof NotebookCustomGenerationResultSchema>;

@@ -159,6 +159,14 @@ export const INDEXER = {
        */
       GENERATE: (communityIdOrSlug: string) =>
         `/v2/communities/${communityIdOrSlug}/notebook-configs/generate`,
+      /**
+       * NL -> custom HTML. A SECOND endpoint on purpose: the composed
+       * generator refuses to return custom-html, so model-written markup can
+       * never be smuggled back through the entry that populates the trusted
+       * builder. Reaching this one is a deliberate act.
+       */
+      GENERATE_CUSTOM: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/generate-custom`,
       ADMIN_LIST: (communityIdOrSlug: string) =>
         `/v2/communities/${communityIdOrSlug}/notebook-configs/admin/all`,
       ADMIN_GET: (communityIdOrSlug: string, slug: string) =>

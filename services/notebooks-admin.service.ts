@@ -3,6 +3,8 @@ import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { notebookIndexerBaseUrl } from "./notebooks/notebook-config-api";
 import {
+  type NotebookCustomGenerationResult,
+  NotebookCustomGenerationResultSchema,
   type NotebookGenerationResult,
   NotebookGenerationResultSchema,
 } from "./notebooks/notebook-generation.types";
@@ -254,5 +256,28 @@ export async function generateNotebookSpec(
     INDEXER.V2.NOTEBOOK_CONFIGS.GENERATE(communitySlug),
     { prompt },
     { schema: NotebookGenerationResultSchema, baseURL: notebookIndexerBaseUrl() }
+  );
+}
+
+/**
+ * Ask the generator to write a fully-custom page.
+ *
+ * A SEPARATE CALL from `generateNotebookSpec`, reached only from the advanced
+ * tier. The composed generator's schema refuses custom-html precisely so that
+ * model-written markup cannot arrive through the entry that populates the
+ * trusted builder; this is the deliberate door, and everything it returns is
+ * untrusted by construction.
+ *
+ * Like its sibling it persists nothing and cannot publish. What comes back is
+ * a document for a human to read before anything else happens to it.
+ */
+export async function generateCustomNotebookHtml(
+  communitySlug: string,
+  prompt: string
+): Promise<NotebookCustomGenerationResult> {
+  return api.post<NotebookCustomGenerationResult>(
+    INDEXER.V2.NOTEBOOK_CONFIGS.GENERATE_CUSTOM(communitySlug),
+    { prompt },
+    { schema: NotebookCustomGenerationResultSchema, baseURL: notebookIndexerBaseUrl() }
   );
 }

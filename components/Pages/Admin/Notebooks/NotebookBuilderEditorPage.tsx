@@ -37,6 +37,7 @@ import { Link } from "@/src/components/navigation/Link";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { CustomHtmlComposer } from "./CustomHtmlComposer";
+import { DescribeCustomPagePanel } from "./DescribeCustomPagePanel";
 import { DescribePagePanel } from "./DescribePagePanel";
 import { MetricQueryBuilder } from "./MetricQueryBuilder";
 import { SectionComposer } from "./SectionComposer";
@@ -296,14 +297,28 @@ export function NotebookBuilderEditorPage({
           </div>
 
           {isCustomHtmlNotebookSpec(spec) ? (
-            <div className="rounded-2xl border border-border bg-background p-5">
-              <CustomHtmlComposer
-                spec={spec}
-                onChange={setSpec}
-                sandboxOrigin={sandboxOrigin}
-                onSwitchToComposed={() => setSpec(emptyNotebookSpec())}
+            <>
+              <DescribeCustomPagePanel
+                communitySlug={communitySlug}
+                hasExistingHtml={spec.html.trim().length > 0}
+                onGenerated={(result) => {
+                  setSpec({ ...spec, html: result.html });
+                  setProposed({ warnings: result.warnings });
+                }}
               />
-            </div>
+
+              <div className="rounded-2xl border border-border bg-background p-5">
+                <CustomHtmlComposer
+                  spec={spec}
+                  onChange={setSpec}
+                  sandboxOrigin={sandboxOrigin}
+                  onSwitchToComposed={() => {
+                    setSpec(emptyNotebookSpec());
+                    setProposed(null);
+                  }}
+                />
+              </div>
+            </>
           ) : (
             <>
               {/* Above the composer: the description box is the primary way in,
@@ -319,7 +334,11 @@ export function NotebookBuilderEditorPage({
               />
 
               {unverified ? (
-                <AiDraftNotice unsaved={Boolean(proposed)} warnings={proposed?.warnings ?? []} />
+                <AiDraftNotice
+                  unsaved={Boolean(proposed)}
+                  warnings={proposed?.warnings ?? []}
+                  customHtml={isCustomHtmlNotebookSpec(spec)}
+                />
               ) : null}
 
               <div className="rounded-2xl border border-border bg-background p-5">

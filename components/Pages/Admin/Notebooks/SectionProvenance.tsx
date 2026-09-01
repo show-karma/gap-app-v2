@@ -73,21 +73,35 @@ export function SectionProvenance({ entry }: { entry?: NotebookProvenanceEntry }
 export function AiDraftNotice({
   unsaved,
   warnings,
+  customHtml = false,
 }: {
   /** True only for a proposal the admin has not saved yet. */
   unsaved: boolean;
   warnings: readonly string[];
+  /**
+   * Whether this is a model-written CUSTOM page.
+   *
+   * A different and heavier claim, so it gets different words. On a composed
+   * page the figures are ours and the reviewer is checking that the right ones
+   * were chosen. On a custom page there is no data layer at all: every number
+   * is the model's own, with nothing behind it to check against. Reusing the
+   * composed wording here would understate the risk by exactly the amount that
+   * matters.
+   */
+  customHtml?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-2xl border border-warning-500 bg-warning-50 p-4">
       <p className="text-sm font-medium text-warning-900">
+        {customHtml ? "Written by AI" : "Proposed by AI"}
         {unsaved
-          ? "Proposed by AI — not saved, not published, figures not yet verified."
-          : "Proposed by AI — figures not yet verified."}
+          ? " — not saved, not published, figures not yet verified."
+          : " — figures not yet verified."}
       </p>
       <p className="text-sm text-warning-900">
-        The numbers below are real and come from your community&apos;s data. Check that each section
-        shows what you meant, then publish — publishing is how you vouch for this page.
+        {customHtml
+          ? "Nothing on this page comes from your community's data: every figure in it was written by the model and has not been checked against anything. Verify each one before you publish — publishing is how you vouch for this page."
+          : "The numbers below are real and come from your community's data. Check that each section shows what you meant, then publish — publishing is how you vouch for this page."}
       </p>
       {warnings.length > 0 ? (
         <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-warning-900">
