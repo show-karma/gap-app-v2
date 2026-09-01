@@ -109,8 +109,9 @@ describe("POST /api/notebooks/revalidate", () => {
     it("invalidates only the target community's tag", async () => {
       await POST(request({ token: `Bearer ${SECRET}`, body: { communityId: "filecoin" } }));
 
-      expect(mockRevalidateTag).toHaveBeenCalledTimes(1);
+      expect(mockRevalidateTag).toHaveBeenCalledTimes(2);
       expect(mockRevalidateTag).toHaveBeenCalledWith("notebook-overview:filecoin", "max");
+      expect(mockRevalidateTag).toHaveBeenCalledWith("notebook-metrics:filecoin", "max");
     });
 
     it("reports which tag it invalidated", async () => {
@@ -118,7 +119,7 @@ describe("POST /api/notebooks/revalidate", () => {
 
       await expect(response.json()).resolves.toEqual({
         ok: true,
-        revalidated: ["notebook-overview:filecoin"],
+        revalidated: ["notebook-overview:filecoin", "notebook-metrics:filecoin"],
       });
     });
 

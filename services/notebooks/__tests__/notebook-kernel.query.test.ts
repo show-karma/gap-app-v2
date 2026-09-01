@@ -16,7 +16,7 @@ import {
   type NotebookKernelOverviewDto,
   NotebookKernelOverviewDtoSchema,
 } from "../notebook-kernel.dto";
-import { getNotebookKernelData } from "../notebook-kernel.query";
+import { getNotebookKernelData, getNotebookKernelTierRollup } from "../notebook-kernel.query";
 import { NOTEBOOK_KERNEL_INVENTORY_COLUMNS } from "../notebook-kernel.types";
 
 const mockApiGet = api.get as unknown as ReturnType<typeof vi.fn>;
@@ -416,5 +416,68 @@ describe("kernel wire schemas", () => {
     const duplicateFunctions = makeFunctions();
     duplicateFunctions.functions[1] = { ...duplicateFunctions.functions[0] };
     expect(NotebookKernelFunctionsDtoSchema.safeParse(duplicateFunctions).success).toBe(false);
+  });
+});
+
+describe("getNotebookKernelTierRollup", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns four declared rows with pooled coverage and structured denominators", async () => {
+    mockApiGet.mockResolvedValueOnce(makeOverview());
+
+    const result = await getNotebookKernelTierRollup();
+
+    expect(mockApiGet).toHaveBeenCalledWith(INDEXER.V2.KERNEL.OVERVIEW(90), {
+      schema: NotebookKernelOverviewDtoSchema,
+      isAuthorized: false,
+    });
+    expect(result.rows).toHaveLength(4);
+    expect(result.rows[0]).toEqual({
+      tier: "irreplaceable",
+      description: "Only provider",
+      functionsCount: 1,
+      coverage90d: { value: 80, numerator: 8, denominator: 10 },
+      reporting: { value: 1, numerator: 1, denominator: 1 },
+      fundingPosture: "irreplaceable",
+    });
+    expect(result.source.methodology).toContain("received/expected");
+  });
+
+  it("declares enum labels and generic semantic accent tokens in the data contract", async () => {
+    mockApiGet.mockResolvedValueOnce(makeOverview());
+
+    const result = await getNotebookKernelTierRollup();
+    const postureColumn = result.columns.find((column) => column.id === "fundingPosture");
+
+    expect(postureColumn).toMatchObject({
+      format: "enum",
+      labels: {
+        irreplaceable: "Must fund",
+        essential: "Fund redundancy",
+        important: "Fund maintenance",
+        "nice-to-have": "Optional",
+      },
+    });
+    expect(result.accentBy).toEqual({
+      column: "tier",
+      tokens: {
+        irreplaceable: "critical",
+        essential: "high",
+        important: "medium",
+        "nice-to-have": "low",
+      },
+    });
+  });
+
+  it("uses null rather than zero when a tier has no coverage or reporting denominator", async () => {
+    mockApiGet.mockResolvedValueOnce(makeOverview());
+
+    const result = await getNotebookKernelTierRollup();
+    const important = result.rows.find((row) => row.tier === "important");
+
+    expect(important?.coverage90d).toEqual({ value: null, numerator: null, denominator: null });
+    expect(important?.reporting).toEqual({ value: null, numerator: null, denominator: null });
   });
 });

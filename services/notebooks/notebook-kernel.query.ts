@@ -20,6 +20,9 @@ import {
   type NotebookKernelKpi,
   type NotebookKernelTier,
   type NotebookKernelTierId,
+  type NotebookKernelTierRollup,
+  type NotebookKernelTierRollupColumn,
+  type NotebookKernelTierRollupRow,
   type NotebookKernelWindowPreset,
 } from "./notebook-kernel.types";
 
@@ -31,12 +34,20 @@ const KERNEL_WINDOW_DAYS: Readonly<Record<NotebookKernelWindowPreset, number>> =
 };
 const KERNEL_QUERY_SHAPE_VERSION = "v1";
 const KERNEL_REVALIDATE_SECONDS = 3600;
+const KERNEL_TIER_ROLLUP_WINDOW_DAYS = 90 as const;
 
 const TIER_LABELS: Readonly<Record<NotebookKernelTierId, string>> = {
   irreplaceable: "Irreplaceable",
   essential: "Essential",
   important: "Important",
   "nice-to-have": "Nice to have",
+};
+
+const TIER_ACCENT_TOKENS: NotebookKernelTierRollup["accentBy"]["tokens"] = {
+  irreplaceable: "critical",
+  essential: "high",
+  important: "medium",
+  "nice-to-have": "low",
 };
 
 function assertEqual(actual: number, expected: number, subject: string): void {
@@ -247,6 +258,72 @@ function toTier(tier: NotebookKernelTierDto): NotebookKernelTier {
   };
 }
 
+function toTierRollupRow(tier: NotebookKernelTierDto): NotebookKernelTierRollupRow {
+  return {
+    tier: tier.tier,
+    description: tier.description,
+    functionsCount: tier.catalogued,
+    coverage90d: {
+      value: tier.coverage.pct,
+      numerator: tier.coverage.expected === 0 ? null : tier.coverage.received,
+      denominator: tier.coverage.expected === 0 ? null : tier.coverage.expected,
+    },
+    reporting: {
+      value: tier.catalogued === 0 ? null : tier.measured,
+      numerator: tier.catalogued === 0 ? null : tier.measured,
+      denominator: tier.catalogued === 0 ? null : tier.catalogued,
+    },
+    fundingPosture: tier.tier,
+  };
+}
+
+function tierRollupColumns(tiers: NotebookKernelTierDto[]): NotebookKernelTierRollupColumn[] {
+  const fundingPostureLabels = Object.fromEntries(
+    tiers.map((tier) => [tier.tier, tier.fundingPosture])
+  ) as Record<NotebookKernelTierId, string>;
+  return [
+    { id: "tier", label: "Tier", format: "enum", labels: TIER_LABELS, subline: "description" },
+    { id: "functionsCount", label: "Functions", format: "count" },
+    { id: "coverage90d", label: "Coverage (90d)", format: "ratio", valueKind: "percent" },
+    { id: "reporting", label: "Reporting", format: "ratio", valueKind: "count" },
+    {
+      id: "fundingPosture",
+      label: "Funding posture",
+      format: "enum",
+      labels: fundingPostureLabels,
+    },
+  ];
+}
+
+async function loadKernelTierRollup(): Promise<NotebookKernelTierRollup> {
+  const overview = await api.get<NotebookKernelOverviewDto>(
+    INDEXER.V2.KERNEL.OVERVIEW(KERNEL_TIER_ROLLUP_WINDOW_DAYS),
+    { schema: NotebookKernelOverviewDtoSchema, isAuthorized: false }
+  );
+  if (overview.windowDays !== KERNEL_TIER_ROLLUP_WINDOW_DAYS) {
+    throw new Error(
+      `Kernel tier-rollup reconciliation failed: expected 90d, received ${overview.windowDays}d`
+    );
+  }
+  reconcileSlaAndCoverage(overview);
+  return {
+    windowDays: KERNEL_TIER_ROLLUP_WINDOW_DAYS,
+    columns: tierRollupColumns(overview.tiers),
+    rows: overview.tiers.map(toTierRollupRow),
+    accentBy: { column: "tier", tokens: TIER_ACCENT_TOKENS },
+    source: {
+      endpoint: "/v2/kernel/overview?windowDays=90",
+      methodology:
+        "One row per OSO tier. Functions count catalogued rows; reporting is measured/catalogued; coverage pools received/expected periods within the tier.",
+      canonicalNotes: [
+        "The live Kernel API is authoritative over historical report prose and declared-versus-listed counts.",
+        "Coverage is pooled received/expected and is never a mean of function percentages.",
+        "A missing denominator stays null and renders as an em dash, never zero.",
+      ],
+    },
+  };
+}
+
 function toInventoryRow(entry: NotebookKernelFunctionDto): NotebookKernelInventoryRow {
   return {
     id: entry.kernelId,
@@ -315,6 +392,15 @@ export async function getNotebookKernelData(
   return unstable_cache(
     () => loadKernelData(validatedPreset, windowDays),
     ["notebook-kernel", KERNEL_QUERY_SHAPE_VERSION, validatedPreset],
+    { revalidate: KERNEL_REVALIDATE_SECONDS, tags: ["notebook-kernel"] }
+  )();
+}
+
+/** Fixed 90-day four-row programme rollup, distinct from the 31-row inventory. */
+export async function getNotebookKernelTierRollup(): Promise<NotebookKernelTierRollup> {
+  return unstable_cache(
+    loadKernelTierRollup,
+    ["notebook-kernel-tier-rollup", KERNEL_QUERY_SHAPE_VERSION, "90d"],
     { revalidate: KERNEL_REVALIDATE_SECONDS, tags: ["notebook-kernel"] }
   )();
 }

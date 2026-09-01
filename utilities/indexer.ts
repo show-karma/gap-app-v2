@@ -127,6 +127,12 @@ export const INDEXER = {
       OVERVIEW: (windowDays: number) => `/v2/kernel/overview?windowDays=${windowDays}`,
       FUNCTIONS: (windowDays: number) => `/v2/kernel/functions?windowDays=${windowDays}`,
     },
+    NOTEBOOK_METRICS: {
+      CATALOG: (communityIdOrSlug: string) =>
+        `/v2/communities/${encodeURIComponent(communityIdOrSlug)}/notebook-metrics/catalog`,
+      QUERY: (communityIdOrSlug: string, query: string) =>
+        `/v2/communities/${encodeURIComponent(communityIdOrSlug)}/notebook-metrics/query?${query}`,
+    },
     /**
      * Notebook pages. Both reads are public and return `published` configs
      * only — a draft answers 404 exactly as an unknown slug does, so the

@@ -99,3 +99,53 @@ export interface NotebookKernelData {
     rows: NotebookKernelInventoryRow[];
   };
 }
+
+export interface NotebookStructuredRatio {
+  /** Canonical scalar used by sorting and accessibility output. */
+  value: number | null;
+  numerator: number | null;
+  denominator: number | null;
+}
+
+export interface NotebookKernelTierRollupRow {
+  tier: NotebookKernelTierId;
+  description: string;
+  functionsCount: number;
+  coverage90d: NotebookStructuredRatio;
+  reporting: NotebookStructuredRatio;
+  /** Enum key; display copy is declared on the column, not guessed by the renderer. */
+  fundingPosture: NotebookKernelTierId;
+}
+
+export type NotebookKernelTierRollupColumn =
+  | {
+      id: "tier" | "fundingPosture";
+      label: string;
+      format: "enum";
+      labels: Readonly<Record<NotebookKernelTierId, string>>;
+      subline?: "description";
+    }
+  | { id: "functionsCount"; label: string; format: "count" }
+  | {
+      id: "coverage90d" | "reporting";
+      label: string;
+      format: "ratio";
+      valueKind: "percent" | "count";
+    };
+
+export type NotebookTableAccentToken = "critical" | "high" | "medium" | "low";
+
+export interface NotebookKernelTierRollup {
+  windowDays: 90;
+  columns: NotebookKernelTierRollupColumn[];
+  rows: NotebookKernelTierRollupRow[];
+  accentBy: {
+    column: "tier";
+    tokens: Readonly<Record<NotebookKernelTierId, NotebookTableAccentToken>>;
+  };
+  source: {
+    endpoint: string;
+    methodology: string;
+    canonicalNotes: string[];
+  };
+}

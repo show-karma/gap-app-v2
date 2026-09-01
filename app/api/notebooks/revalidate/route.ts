@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { notebookOverviewTag } from "@/services/notebook-overview.service";
+import { notebookMetricTag } from "@/services/notebooks/notebook-metric-registry.query";
 import { NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { getServerEnv } from "@/utilities/env";
 
@@ -96,11 +97,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Revalidation is server-side work: a throw here is a genuine server fault
   // and must surface as 5xx rather than masquerading as a bad request.
   try {
-    const tag = notebookOverviewTag(communityId);
+    const tags = [notebookOverviewTag(communityId), notebookMetricTag(communityId)];
     // "max" is the profile Next 16 expects from a route handler; `updateTag`
     // is Server-Action-only and throws here.
-    revalidateTag(tag, "max");
-    return NextResponse.json({ ok: true, revalidated: [tag] }, { status: 200 });
+    for (const tag of tags) revalidateTag(tag, "max");
+    return NextResponse.json({ ok: true, revalidated: tags }, { status: 200 });
   } catch (error) {
     Sentry.captureException(error, { tags: { route: "/api/notebooks/revalidate" } });
     return NextResponse.json({ ok: false, error: "Revalidation failed" }, { status: 500 });
