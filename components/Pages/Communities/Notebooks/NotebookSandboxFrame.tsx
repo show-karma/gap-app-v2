@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 /**
  * The only place author-written HTML is ever rendered.
@@ -73,10 +73,34 @@ const OPAQUE_ORIGIN = "null";
 /** Shared by every message in the protocol, so we can spot ours before judging it. */
 const NOTEBOOK_SANDBOX_PREFIX = "karma:notebook-sandbox:";
 
-function mintNonce(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+/**
+ * A per-instance nonce that is IDENTICAL on the server and the client.
+ *
+ * `crypto.randomUUID()` was the obvious choice and the wrong one: a value
+ * minted during render differs between the two, which React reports as a
+ * hydration mismatch it "will not patch up" — and the subtree then never comes
+ * alive, so the listener never attaches and the frame sits inert with every
+ * attribute looking correct. Deferring the mint to an effect fixed the
+ * mismatch and broke something else: nothing rendered on the first pass.
+ *
+ * `useId` is React's answer to exactly this. It is unique per component
+ * instance, stable across re-renders, and the SAME string on both sides of
+ * hydration — which is the property that matters here.
+ *
+ * NOT SECRECY, CORRELATION. The nonce exists so one sandboxed frame cannot
+ * accept a bootstrap meant for a different frame on the same page. Uniqueness
+ * per instance is the whole requirement; the port transfer, the opaque-origin
+ * check and the shell's own parent-origin allowlist are what make the channel
+ * private.
+ *
+ * The shape is dictated by the shell, which validates `[A-Za-z0-9_-]{22,128}`:
+ * React's ids contain characters outside that set and are far shorter, so they
+ * are sanitised and padded deterministically. Deterministically, because any
+ * randomness here would put us straight back into the hydration mismatch.
+ */
+function nonceFromId(id: string): string {
+  const cleaned = id.replace(/[^A-Za-z0-9_-]/g, "") || "0";
+  return `karma-notebook-sandbox-${cleaned}`;
 }
 
 interface Props {
@@ -107,7 +131,7 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
    * only exists after the listener is attached, so the shell cannot possibly
    * announce itself before we are listening.
    */
-  const [nonce, setNonce] = useState<string | null>(null);
+  const nonce = nonceFromId(useId());
 
   // The listener must send the CURRENT document without being torn down and
   // rebuilt on every keystroke in the editor — re-attaching mid-handshake is
@@ -225,9 +249,6 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
     };
 
     window.addEventListener("message", onMessage);
-    // Only now is it safe for the frame to exist: minting the nonce is what
-    // renders it, and the listener is already in place.
-    if (!nonce) setNonce(mintNonce());
     return () => {
       window.removeEventListener("message", onMessage);
       port.current?.close();
@@ -250,17 +271,6 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
     port.current?.postMessage({ type: NOTEBOOK_SANDBOX_DOCUMENT, html });
     sentHtml.current = html;
   }, [connected, html]);
-
-  // Server-rendered and pre-mount: a placeholder that keeps the layout stable
-  // and, more importantly, is IDENTICAL on both sides so hydration is clean.
-  if (!nonce) {
-    return (
-      <div
-        data-sandbox-state="mounting"
-        className={className ?? "h-[60vh] w-full rounded-2xl border border-border bg-background"}
-      />
-    );
-  }
 
   return (
     <iframe
