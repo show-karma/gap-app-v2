@@ -41,6 +41,41 @@ interface Props {
   }) => void;
 }
 
+/**
+ * What to tell an admin when generation fails.
+ *
+ * NOT `error.message`. The api client's HttpError formats itself as
+ * "HTTP 502 POST /v2/communities/0xf11e…/notebook-configs/generate" — an
+ * internal path in the reviewer's face, saying nothing they can act on. The
+ * server's own explanation lives in `body.message`, and it is written for a
+ * person, so that is what gets shown.
+ *
+ * Found by calling the live endpoint. The unit tests mocked a friendly
+ * `new Error("...")` whose `message` was already presentable — a shape the
+ * real client never produces. The mock was, once again, more cooperative than
+ * the wire.
+ *
+ * The status split matters because the remedies differ: a 403 means ask
+ * someone for access, a 5xx means try again or tell us.
+ */
+function generationErrorMessage(error: unknown): string {
+  const status = isRecord(error) && typeof error.status === "number" ? error.status : undefined;
+
+  if (status === 401 || status === 403) {
+    return "You do not have permission to generate pages for this community.";
+  }
+
+  const body = isRecord(error) ? error.body : undefined;
+  const serverMessage = isRecord(body) && typeof body.message === "string" ? body.message : "";
+  if (serverMessage.trim()) return serverMessage.trim();
+
+  return "The page could not be generated. Try describing it again, or a little differently.";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 type Status =
   | { state: "idle" }
   | { state: "confirming" }
@@ -62,13 +97,7 @@ export function DescribePagePanel({ communitySlug, hasExistingSections, onGenera
       });
       setStatus({ state: "idle" });
     } catch (error) {
-      setStatus({
-        state: "failed",
-        message:
-          error instanceof Error && error.message
-            ? error.message
-            : "The page could not be generated.",
-      });
+      setStatus({ state: "failed", message: generationErrorMessage(error) });
     }
   };
 

@@ -118,15 +118,72 @@ describe("DescribePagePanel", () => {
     });
   });
 
-  it("should_report_a_failure_without_handing_the_composer_anything", async () => {
-    generateNotebookSpec.mockRejectedValue(new Error("The description was not understood."));
-    const onGenerated = renderPanel();
-    await describePage();
+  /**
+   * FAILURES, SHAPED AS THE API CLIENT ACTUALLY THROWS THEM.
+   *
+   * The client throws an HttpError whose `message` is
+   * "HTTP 502 POST /v2/communities/0xf11e…/notebook-configs/generate" and
+   * whose `body` holds the sentence written for a person. An earlier version
+   * of these tests rejected with a friendly `new Error(...)`, which no real
+   * call produces — and the panel duly rendered the internal path to admins.
+   * These fixtures are copied from the live endpoint.
+   */
+  describe("failures", () => {
+    const httpError = (status: number, message?: string) =>
+      Object.assign(
+        new Error(`HTTP ${status} POST /v2/communities/0xf11ec01a/notebook-configs/generate`),
+        { status, body: message ? { error: "Bad Gateway", message } : undefined }
+      );
 
-    await userEvent.click(screen.getByRole("button", { name: /compose a draft/i }));
+    it("should_show_the_servers_explanation_not_the_raw_http_error", async () => {
+      generateNotebookSpec.mockRejectedValue(
+        httpError(502, "Notebook generation did not produce a valid specification after 2 attempts")
+      );
+      renderPanel();
+      await describePage();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/not understood/i);
-    expect(onGenerated).not.toHaveBeenCalled();
+      await userEvent.click(screen.getByRole("button", { name: /compose a draft/i }));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent(/did not produce a valid specification/i);
+      // The internal path must never reach a reviewer's screen.
+      expect(alert).not.toHaveTextContent(/HTTP 502/);
+      expect(alert).not.toHaveTextContent(/v2\/communities/);
+    });
+
+    // Different remedy, different message: ask for access, not try again.
+    it.each([401, 403])("should_say_it_is_a_permission_problem_on_%s", async (status) => {
+      generateNotebookSpec.mockRejectedValue(httpError(status, "Forbidden"));
+      renderPanel();
+      await describePage();
+
+      await userEvent.click(screen.getByRole("button", { name: /compose a draft/i }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(/do not have permission/i);
+    });
+
+    it("should_fall_back_to_a_plain_sentence_when_the_server_explains_nothing", async () => {
+      generateNotebookSpec.mockRejectedValue(httpError(500));
+      renderPanel();
+      await describePage();
+
+      await userEvent.click(screen.getByRole("button", { name: /compose a draft/i }));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent(/could not be generated/i);
+      expect(alert).not.toHaveTextContent(/HTTP 500/);
+    });
+
+    it("should_hand_the_composer_nothing_when_generation_fails", async () => {
+      generateNotebookSpec.mockRejectedValue(httpError(502, "nope"));
+      const onGenerated = renderPanel();
+      await describePage();
+
+      await userEvent.click(screen.getByRole("button", { name: /compose a draft/i }));
+
+      await screen.findByRole("alert");
+      expect(onGenerated).not.toHaveBeenCalled();
+    });
   });
 
   /**
