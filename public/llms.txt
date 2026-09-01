@@ -60,10 +60,12 @@ Karma is funding infrastructure for philanthropy. Foundations run grant programs
 - [Blog](https://www.karmahq.org/blog)
 - [Contact](https://www.karmahq.org/contact)
 - [Create Project Profile](https://www.karmahq.org/create-project-profile): Create a public project profile to track funding, milestones, and updates
+- [Foundation Funding Data](https://www.karmahq.org/data/foundation-funding): Methodology and definitions for Karma's index of IRS Form 990 and 990-PF filings
 - [Donor Advisors](https://www.karmahq.org/donor-advisors)
 - [For Agents](https://www.karmahq.org/for-agents)
 - [Foundations](https://www.karmahq.org/foundations)
 - [Connect](https://www.karmahq.org/mcp/connect)
+- [Nonprofit Research](https://www.karmahq.org/nonprofit-research)
 - [Nonprofits](https://www.karmahq.org/nonprofits)
 - [Find Funders](https://www.karmahq.org/nonprofits/find-funders)
 - [Connect](https://www.karmahq.org/nonprofits/find-funders/connect)
@@ -84,6 +86,7 @@ Karma is funding infrastructure for philanthropy. Foundations run grant programs
 - [Karma Ships April Edition](https://www.karmahq.org/blog/karma-ships-april-edition)
 - [Karma Ships February 2026](https://www.karmahq.org/blog/karma-ships-february-2026)
 - [Karma Ships January 2026](https://www.karmahq.org/blog/karma-ships-january-2026)
+- [Karma Ships July Edition](https://www.karmahq.org/blog/karma-ships-july-edition)
 - [Karma Ships June Edition](https://www.karmahq.org/blog/karma-ships-june-edition)
 - [Karma Ships May Edition](https://www.karmahq.org/blog/karma-ships-may-edition)
 - [Karma Skills Making The Entire Karma Platform Agent Friendly](https://www.karmahq.org/blog/karma-skills-making-the-entire-karma-platform-agent-friendly)
@@ -107,7 +110,6 @@ Karma is funding infrastructure for philanthropy. Foundations run grant programs
 - [The Grant Lifecycle: From Proposal to Verified Impact](https://www.karmahq.org/knowledge/grant-lifecycle): Core Concepts — Follow the complete grant process from proposal submission to verified impact. Learn the 10 stages every funding program needs to track and coordinate.
 - [What Is Grant Accountability in Open Funding?](https://www.karmahq.org/knowledge/grant-accountability): Core Concepts — Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time.
 - [Why Most Grant Programs Fail After Funding](https://www.karmahq.org/knowledge/why-grant-programs-fail): Core Concepts — Grant programs fail at post-funding follow-through, not project selection. Learn the structural reasons and how to build systems that learn from outcomes.
-- [AI-Assisted Grant Evaluation at Scale](https://www.karmahq.org/knowledge/ai-grant-evaluation): Capabilities — Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling.
 - [Document Signing in Grant Programs](https://www.karmahq.org/knowledge/grant-document-signing): Capabilities — Understand why grant agreements must be tracked as part of the funding workflow. Learn how integrated document signing prevents operational chaos and payment delays.
 - [Grant Fund Disbursement Coordination](https://www.karmahq.org/knowledge/grant-fund-disbursement): Capabilities — Learn how grant payments are safely triggered once KYC, signing, and approvals are complete. Explore best practices for coordinating fund disbursement at scale.
 - [Impact Measurement for Funded Projects](https://www.karmahq.org/knowledge/impact-measurement): Capabilities — Discover how funded work connects to verifiable outputs and outcomes. Learn practical approaches to measuring impact and improving capital allocation decisions.
