@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DescribePagePanel } from "@/components/Pages/Admin/Notebooks/DescribePagePanel";
+import { AiDraftNotice } from "@/components/Pages/Admin/Notebooks/SectionProvenance";
 import { attachProvenance } from "@/services/notebooks/notebook-generation.types";
 
 const generateNotebookSpec = vi.fn();
@@ -246,5 +247,45 @@ describe("attachProvenance", () => {
 
   it("should_return_one_slot_per_section_even_with_no_provenance_at_all", () => {
     expect(attachProvenance(3, [])).toEqual([undefined, undefined, undefined]);
+  });
+});
+
+/**
+ * The two claims in the AI notice, and why they cannot share a lifetime.
+ *
+ * The bundled version cleared everything on save, which quietly asserted that
+ * saving a draft means somebody checked the figures. It does not. Publishing
+ * is the moment a human puts their community's name to the numbers, and the
+ * indexer encodes that by clearing `source` to `manual` on publish.
+ */
+describe("AiDraftNotice", () => {
+  it("should_say_nothing_is_saved_while_the_proposal_is_still_in_the_browser", () => {
+    render(<AiDraftNotice unsaved warnings={[]} />);
+
+    expect(
+      screen.getByText(/not saved, not published, figures not yet verified/i)
+    ).toBeInTheDocument();
+  });
+
+  // The case the bundled notice got wrong: saved yesterday, reopened today,
+  // still nobody has vouched for it.
+  it("should_still_flag_an_unverified_page_once_it_has_been_saved", () => {
+    render(<AiDraftNotice unsaved={false} warnings={[]} />);
+
+    const notice = screen.getByText(/proposed by ai/i);
+    expect(notice).toHaveTextContent(/figures not yet verified/i);
+    expect(notice).not.toHaveTextContent(/not saved/i);
+  });
+
+  it("should_name_publishing_as_the_act_of_vouching", () => {
+    render(<AiDraftNotice unsaved={false} warnings={[]} />);
+
+    expect(screen.getByText(/publishing is how you vouch/i)).toBeInTheDocument();
+  });
+
+  it("should_list_the_generators_warnings_rather_than_swallowing_them", () => {
+    render(<AiDraftNotice unsaved warnings={["No indicator matched 'adoption'."]} />);
+
+    expect(screen.getByText(/no indicator matched 'adoption'/i)).toBeInTheDocument();
   });
 });

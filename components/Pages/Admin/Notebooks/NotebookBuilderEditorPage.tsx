@@ -29,7 +29,7 @@ import { PAGES } from "@/utilities/pages";
 import { DescribePagePanel } from "./DescribePagePanel";
 import { MetricQueryBuilder } from "./MetricQueryBuilder";
 import { SectionComposer } from "./SectionComposer";
-import { UnverifiedDraftNotice } from "./SectionProvenance";
+import { AiDraftNotice } from "./SectionProvenance";
 
 interface Props {
   community: Community;
@@ -101,6 +101,16 @@ export function NotebookBuilderEditorPage({
    */
   const [provenance, setProvenance] = useState<(NotebookProvenanceEntry | undefined)[]>([]);
   const [proposed, setProposed] = useState<{ warnings: string[] } | null>(null);
+  /**
+   * Whether this page still needs a human to vouch for its figures.
+   *
+   * Two sources, one question. An in-browser proposal has not been saved, so
+   * nobody has looked; a SAVED row whose persisted origin is still `ai` has
+   * been saved but never published, so nobody has vouched. The indexer clears
+   * `source` to `manual` on publish, which is why publishing is the thing that
+   * makes this notice go away.
+   */
+  const unverified = Boolean(proposed) || existing?.source === "ai";
 
   // Load the existing page into the form once it arrives. Keyed on the config
   // itself rather than running on every render, so an author's in-progress
@@ -136,8 +146,9 @@ export function NotebookBuilderEditorPage({
   const handleSave = async (publish?: boolean) => {
     if (!canSave) return;
 
-    // A person has taken responsibility for this page, so it is no longer a
-    // proposal awaiting review.
+    // Saving clears the UNSAVED half only. The unverified half is the row's
+    // persisted origin, which the indexer clears on publish — because saving
+    // a draft is not vouching for it.
     setProposed(null);
 
     const body = {
@@ -284,7 +295,9 @@ export function NotebookBuilderEditorPage({
             }}
           />
 
-          {proposed ? <UnverifiedDraftNotice warnings={proposed.warnings} /> : null}
+          {unverified ? (
+            <AiDraftNotice unsaved={Boolean(proposed)} warnings={proposed?.warnings ?? []} />
+          ) : null}
 
           <div className="rounded-2xl border border-border bg-background p-5">
             <SectionComposer

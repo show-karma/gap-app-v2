@@ -56,22 +56,38 @@ export function SectionProvenance({ entry }: { entry?: NotebookProvenanceEntry }
 }
 
 /**
- * The banner over a page the model proposed and nobody has approved yet.
+ * What is true about a page the model proposed, said in two parts.
  *
- * It says what has NOT happened — nothing saved, nothing published, figures
- * unverified — because that is the state a reviewer needs to hold in mind.
- * It disappears when they publish, which is the moment a person takes
- * responsibility for the page carrying their community's name.
+ * THE TWO CLAIMS HAVE DIFFERENT LIFETIMES, and bundling them made the weaker
+ * one expire the stronger. "Not saved" stops being true the moment an admin
+ * saves — but SAVING IS NOT VERIFYING. The point at which a human vouches for
+ * figures going live under their community's name is PUBLISH, and until then
+ * "nobody has checked these numbers" is still the truth about the page.
+ *
+ * So the unsaved half lives in the browser and clears on save, while the
+ * unverified half is keyed off the row's persisted `source: "ai"` — which the
+ * indexer clears to `manual` on publish. That means an AI draft saved today
+ * and reopened next week still says so, which is exactly the case the bundled
+ * version got wrong.
  */
-export function UnverifiedDraftNotice({ warnings }: { warnings: readonly string[] }) {
+export function AiDraftNotice({
+  unsaved,
+  warnings,
+}: {
+  /** True only for a proposal the admin has not saved yet. */
+  unsaved: boolean;
+  warnings: readonly string[];
+}) {
   return (
     <div className="flex flex-col gap-2 rounded-2xl border border-warning-500 bg-warning-50 p-4">
       <p className="text-sm font-medium text-warning-900">
-        Proposed by AI — not saved, not published, figures not yet verified.
+        {unsaved
+          ? "Proposed by AI — not saved, not published, figures not yet verified."
+          : "Proposed by AI — figures not yet verified."}
       </p>
       <p className="text-sm text-warning-900">
         The numbers below are real and come from your community&apos;s data. Check that each section
-        shows what you meant before you save or publish it.
+        shows what you meant, then publish — publishing is how you vouch for this page.
       </p>
       {warnings.length > 0 ? (
         <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-warning-900">

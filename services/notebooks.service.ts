@@ -35,6 +35,10 @@ export type NotebookStatus = z.infer<typeof NotebookStatusSchema>;
  * have to decide what to do with it. The indexer's copy is authoritative —
  * this one keeps a bad payload from becoming a broken page.
  */
+export const NOTEBOOK_SOURCES = ["ai", "manual"] as const;
+export const NotebookSourceSchema = z.enum(NOTEBOOK_SOURCES);
+export type NotebookSource = z.infer<typeof NotebookSourceSchema>;
+
 export const NotebookConfigSchema = z
   .object({
     id: z.string().optional(),
@@ -44,6 +48,20 @@ export const NotebookConfigSchema = z
     description: z.string().nullable(),
     spec: NotebookSpecSchema,
     status: NotebookStatusSchema,
+    /**
+     * How the CURRENT DRAFT came to be.
+     *
+     * An origin fact about the stored row, not per-section provenance — which
+     * is why it can be persisted without contradicting the rule that keeps
+     * review scaffolding out of storage. The indexer clears it to `manual` on
+     * publish, so `ai` means exactly "a model proposed this and no human has
+     * put their community's name to it yet".
+     *
+     * Optional with a manual default: rows written before the field existed
+     * were all hand-composed, and treating an absent value as "AI" would flag
+     * every historical page.
+     */
+    source: NotebookSourceSchema.default("manual"),
     createdAt: z.string(),
     updatedAt: z.string(),
   })
