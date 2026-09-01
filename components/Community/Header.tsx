@@ -2,7 +2,7 @@
 import { ChevronLeftIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CHAT_COMPOSER_SELECTOR } from "@/components/AgentChat/panel-dom";
 import { HeaderStatsCards } from "@/components/Community/HeaderStatsCards";
@@ -17,37 +17,6 @@ import { communityColors } from "@/utilities/communityColors";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
-
-const AdminCommunityHeader = ({ community }: { community: Community }) => {
-  return (
-    <div
-      className={cn(
-        layoutTheme.padding,
-        "flex flex-col gap-4 justify-between items-start sm:px-3 md:px-4 px-6 py-2 border-b border-gray-200 dark:border-gray-800"
-      )}
-    >
-      <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
-        <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
-          <div className="flex justify-center bg-black rounded-full p-2">
-            <Image
-              alt={(community as Community)?.details?.name || "Community"}
-              src={(community as Community)?.details?.logoUrl || "/placeholder.png"}
-              width={24}
-              height={24}
-              className={"h-6 w-6 min-w-6 min-h-6 rounded-full"}
-            />
-          </div>
-          <div className="flex flex-col gap-0">
-            <p className="text-3xl font-body font-semibold text-black dark:text-white max-2xl:text-2xl max-lg:text-xl">
-              {community ? (community as Community)?.details?.name : ""}
-            </p>
-          </div>
-        </div>
-      </div>
-      <CommunityPageNavigator />
-    </div>
-  );
-};
 
 const ACCENT_PALETTE = [
   "#0090FF",
@@ -305,21 +274,16 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
     </div>
   );
 };
+/**
+ * Only the `(with-header)` route group renders this, and `manage/`, `donate/`
+ * and `admin/` are siblings of that group rather than routes inside it — so the
+ * three `pathname.includes(...)` branches that used to sit here could never be
+ * true. Removing them takes the last URL read out of a component the whole
+ * community hub mounts, and fixes a latent bug on the way: `includes("/donate")`
+ * matched any community whose slug merely started with "donate", which silently
+ * dropped the header for it. Which routes get this header is a question the
+ * route tree already answers.
+ */
 export default function CommunityHeader({ community }: { community: Community }) {
-  const pathname = usePathname();
-  const isAdminPage = pathname.includes("/manage");
-  const isReviewerPage = pathname.includes("/reviewer");
-  const isDonatePage = pathname.includes("/donate");
-  if (isAdminPage) {
-    return <AdminCommunityHeader community={community} />;
-  }
-  if (isReviewerPage) {
-    return null;
-  }
-  if (isDonatePage) {
-    return null;
-  }
-  // The (with-header) route group layout renders this component — if we're here, show it.
-  // Pages that don't need the header belong in other route groups (e.g., (whitelabel)).
   return <NormalCommunityHeader community={community} />;
 }
