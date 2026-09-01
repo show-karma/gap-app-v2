@@ -30,4 +30,4 @@ All API endpoints under https://gapapi.karmahq.xyz/v2/* and the MCP server at ht
 
 ## Last updated
 
-This pricing reflects the current state of Karma as of the file's last commit. For the latest, see https://www.karmahq.xyz.
+This pricing reflects the current state of Karma as of the file's last commit. For the latest, see https://www.karmahq.org.

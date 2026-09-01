@@ -5,6 +5,7 @@ import { SeedsFAQ } from "@/src/features/seeds/components/faq-section";
 import { SeedsHero } from "@/src/features/seeds/components/hero";
 import { SeedsHowItWorks } from "@/src/features/seeds/components/how-it-works";
 import { SeedsProjectsSection } from "@/src/features/seeds/components/projects-section";
+import { SITE_URL } from "@/utilities/meta";
 
 export const metadata: Metadata = {
   title: "Fund Projects with Karma Seeds",
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Karma Seeds - Plant Seeds. Grow Projects.",
     description: "Support projects at $1 per seed. 97% goes to builders.",
-    url: "https://www.karmahq.xyz/seeds/fund",
+    url: `${SITE_URL}/seeds/fund`,
     images: [{ url: "/og/seeds.png", width: 1200, height: 630 }],
   },
   twitter: {

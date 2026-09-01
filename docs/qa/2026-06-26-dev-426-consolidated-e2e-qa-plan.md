@@ -18,7 +18,7 @@
 | Redis | `localhost:6379` |
 | Advisor auth | Privy Bearer JWT in header `Authorization: Bearer <jwt>`; read from browser `localStorage` key **`privy:pat`** |
 | Email safety | **Non-prod redirects ALL recipients + BCC → `arthur@karmahq.xyz`.** No real nonprofit is ever emailed. |
-| Secure-link base | config = `staging.karmahq.xyz`, so the **emailed** link is NOT localhost. Testers must build the local URL manually: `http://localhost:3000/nonprofit-research/diligence/<token>`. |
+| Secure-link base | config = `APP_ORIGIN` (`https://staging.karmahq.org` outside production — was `staging.karmahq.xyz` before the Aug 2026 TLD migration), so the **emailed** link is NOT localhost. Testers must build the local URL manually: `http://localhost:3000/nonprofit-research/diligence/<token>`. |
 | Token sourcing | Plaintext response token lives **only** in the email/outbox; DB stores the **SHA-256 hash**. Read the plaintext from the BE outbox row / email payload. |
 
 ### Test accounts (email / OTP — OTPs may be stale; logins may reissue fresh codes)

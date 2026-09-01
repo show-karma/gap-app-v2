@@ -7,9 +7,10 @@ import { useCallback, useEffect } from "react";
 import { normalizeNullInputEventData } from "@/components/Utilities/utils/normalize-null-input-event-data";
 
 // The ONLY place in the app allowed to value-import `md-editor-rt`. Every
-// consumer must render <SafeMdEditor> instead of importing MdEditor
-// directly (enforced by .taskless/rules/no-direct-md-editor-import.yml) so
-// the null-InputEvent shim below can never be bypassed. Keeping the dynamic
+// consumer must render <SafeMdEditor> instead of importing MdEditor directly,
+// so the null-InputEvent shim below can never be bypassed. This was enforced
+// by a Taskless rule until Taskless was removed; it is a convention now, so
+// check new md-editor-rt imports by hand in review. Keeping the dynamic
 // import here also means md-editor-rt is never statically bundled anywhere
 // else (see __tests__/performance/lazy-imports.perf.test.ts).
 const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor), {

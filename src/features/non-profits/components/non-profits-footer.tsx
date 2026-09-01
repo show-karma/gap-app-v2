@@ -11,6 +11,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { CANONICAL_ORIGIN } from "@/utilities/domains";
 import { NON_PROFITS_PAGES } from "@/utilities/pages";
 
 const COPY_YEAR = new Date().getFullYear();
@@ -87,10 +88,10 @@ export function NonProfitsFooter() {
           <div>
             <div className="lp-footer-col-title">{"// COMPANY"}</div>
             <div className="lp-footer-links">
-              <ExternalLink href="https://www.karmahq.xyz">About Karma</ExternalLink>
+              <ExternalLink href={CANONICAL_ORIGIN}>About Karma</ExternalLink>
               <ExternalLink href="mailto:hello@karmahq.xyz">Contact</ExternalLink>
-              <ExternalLink href="https://www.karmahq.xyz/privacy">Privacy</ExternalLink>
-              <ExternalLink href="https://www.karmahq.xyz/terms">Terms</ExternalLink>
+              <ExternalLink href={`${CANONICAL_ORIGIN}/privacy`}>Privacy</ExternalLink>
+              <ExternalLink href={`${CANONICAL_ORIGIN}/terms`}>Terms</ExternalLink>
             </div>
           </div>
         </div>

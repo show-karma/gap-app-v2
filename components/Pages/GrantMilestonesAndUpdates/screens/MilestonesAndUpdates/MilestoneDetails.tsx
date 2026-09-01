@@ -6,6 +6,7 @@ import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { cancellationFromStatusHistory } from "@/utilities/milestones/cancellation";
 
 /**
  * Helper to get the completion object from a milestone.
@@ -85,6 +86,9 @@ function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): Uni
     // and can't represent cancellation, and this grant-store data path (unlike
     // useProjectUpdates) is the only place currentStatus gets set.
     currentStatus: milestone.currentStatus,
+    // This data path has no cancellation overlay, only statusHistory — derive
+    // the who/when/why the banner shows from the latest cancelled entry.
+    cancellation: cancellationFromStatusHistory(milestone),
     createdAt: (milestone as any).createdAt || "",
     startsAt: milestone.startsAt,
     endsAt: milestone.endsAt,

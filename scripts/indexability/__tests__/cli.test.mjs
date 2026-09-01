@@ -90,11 +90,11 @@ describe("main configuration", () => {
 
     assert.equal(code, 0);
     const options = verify.calls[0];
-    assert.equal(options.canonicalOrigin, "https://www.karmahq.xyz");
-    assert.equal(options.apexOrigin, "https://karmahq.xyz");
+    assert.equal(options.canonicalOrigin, "https://www.karmahq.org");
+    assert.equal(options.apexOrigin, "https://karmahq.org");
     assert.equal(options.gapOrigin, "https://gap.karmahq.xyz");
     assert.equal(options.indexerBaseUrl, "https://gapapi.karmahq.xyz");
-    assert.equal(options.rootSitemapUrl, "https://www.karmahq.xyz/sitemap_index.xml");
+    assert.equal(options.rootSitemapUrl, "https://www.karmahq.org/sitemap_index.xml");
     assert.equal(options.minLeafCount, 3800);
     assert.equal(options.timeoutMs, 15000);
   });

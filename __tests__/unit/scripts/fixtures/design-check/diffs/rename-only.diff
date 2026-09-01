@@ -1,0 +1,4 @@
+diff --git a/components/Old.tsx b/components/Renamed.tsx
+similarity index 100%
+rename from components/Old.tsx
+rename to components/Renamed.tsx

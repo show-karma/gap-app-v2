@@ -2,14 +2,31 @@
  * Content for /for-agents — surfaced both as visible UI and as JSON-LD
  * structured data (FAQPage). Co-located with the page sections so the
  * schema and the page never drift apart.
- *
- * The tool catalog is fetched live from gap-indexer's `/mcp/tools`
- * endpoint at request time (1h ISR). `STATIC_FALLBACK_TOOLS` below is the
- * fallback the page renders only when that upstream is down at build or
- * revalidation time.
  */
 
-import type { PublicToolMetadata } from "./types";
+import { CANONICAL_ORIGIN } from "@/utilities/domains";
+import { getIndexerBaseUrl } from "@/utilities/wellKnown";
+
+/**
+ * Derived, never hardcoded. These strings are the setup instructions users
+ * copy into their MCP client and are also emitted as FAQPage JSON-LD, so a
+ * stale literal here contradicts /mcp/connect and gets ingested by crawlers
+ * as the official endpoint.
+ *
+ * getIndexerBaseUrl() rather than a bare envVars read: envVars casts
+ * NEXT_PUBLIC_GAP_INDEXER_URL without validating it, so an unset or malformed
+ * value would publish something like "undefined/mcp" as the official endpoint.
+ * This accessor rejects that at module load — both importers are server-side,
+ * so a misconfiguration fails the build instead of shipping a dead URL.
+ */
+const MCP_SERVER_URL = `${getIndexerBaseUrl()}/mcp`;
+
+/**
+ * Absolute, not a bare hostname: this is pasted into setup instructions and
+ * emitted as structured data, and it points at the canonical origin because
+ * the apex owes a 308.
+ */
+const MCP_CONNECT_URL = `${CANONICAL_ORIGIN}/mcp/connect`;
 
 interface AgentFaqEntry {
   question: string;
@@ -25,13 +42,11 @@ interface UseCaseCard {
 export const AGENT_FAQS: AgentFaqEntry[] = [
   {
     question: "Which AI apps does Karma's MCP server work with?",
-    answer:
-      "Karma provides a public MCP (Model Context Protocol) server over Streamable HTTP at gapapi.karmahq.xyz/mcp. It works with Claude (claude.ai and the desktop app, via custom connectors), Cursor, Codex, and any MCP client supporting protocol version 2025-11-25 or later.",
+    answer: `Karma provides a public MCP (Model Context Protocol) server over Streamable HTTP at ${MCP_SERVER_URL}. It works with Claude (claude.ai and the desktop app, via custom connectors), Cursor, Codex, and any MCP client supporting protocol version 2025-11-25 or later.`,
   },
   {
     question: "How do I connect Karma to Claude?",
-    answer:
-      "In Claude, open Settings, choose Connectors, click Add custom connector, paste gapapi.karmahq.xyz/mcp as the remote MCP server URL, and sign in to Karma when prompted. Other MCP clients such as Cursor and Codex take the same URL as a remote server. The step-by-step guide with troubleshooting lives at karmahq.xyz/mcp/connect.",
+    answer: `In Claude, open Settings, choose Connectors, click Add custom connector, paste ${MCP_SERVER_URL} as the remote MCP server URL, and sign in to Karma when prompted. Other MCP clients such as Cursor and Codex take the same URL as a remote server. The step-by-step guide with troubleshooting lives at ${MCP_CONNECT_URL}.`,
   },
   {
     question: "Which MCP operations require authentication?",
@@ -91,55 +106,5 @@ export const USE_CASES: UseCaseCard[] = [
       "Let an agent crawl Karma's Funding Map for matching programs, then draft application copy tuned to each one's evaluation criteria.",
     example:
       '"Find every active open-source funding program with a budget over $50k. Sort by application deadline and draft an opening paragraph that matches each program\'s criteria."',
-  },
-];
-
-/**
- * Fallback only — rendered when the live `/mcp/tools` fetch fails at
- * build or revalidation time. Keep small and representative across the
- * main categories. The full live list comes from the indexer.
- */
-export const STATIC_FALLBACK_TOOLS: PublicToolMetadata[] = [
-  {
-    name: "get_project_details",
-    alias: "karma_project_get_details",
-    description: "Fetch full metadata, team, links, and grant history for a single project.",
-    category: "project",
-    requiresAuth: false,
-  },
-  {
-    name: "list_funding_programs",
-    alias: "karma_program_list",
-    description: "Browse open and historical funding programs across Karma's communities.",
-    category: "program",
-    requiresAuth: false,
-  },
-  {
-    name: "list_program_applications",
-    alias: "karma_application_list",
-    description: "Read the applications submitted to a given program.",
-    category: "application",
-    requiresAuth: false,
-  },
-  {
-    name: "list_project_milestones",
-    alias: "karma_milestone_list",
-    description: "List milestones for a project, with completion status and evidence links.",
-    category: "milestone",
-    requiresAuth: false,
-  },
-  {
-    name: "list_grant_payouts",
-    alias: "karma_payout_list",
-    description: "Track payouts and on-chain disbursements tied to a grant.",
-    category: "payout",
-    requiresAuth: false,
-  },
-  {
-    name: "search_knowledge_base",
-    alias: undefined,
-    description: "Search Karma's documentation and grantee guides.",
-    category: "knowledge",
-    requiresAuth: false,
   },
 ];

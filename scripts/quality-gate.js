@@ -26,10 +26,14 @@ Usage: node scripts/quality-gate.js [options]
 
 Options:
   --update-baseline   write current metrics to quality-baseline.json and exit 0
+  --update-baseline=design
+                      refresh ONLY violations.design (skips every other
+                      collector); land it on a PR labelled quality-baseline
   --report-only       generate the markdown report but never exit non-zero
   --ci                also append the report to GITHUB_STEP_SUMMARY (auto on CI)
   --skip-biome        skip Biome lint diagnostics collection
   --skip-coverage     skip vitest coverage collection
+  --skip-design       skip the design-system scan
   --skip-jscpd        skip jscpd duplication scan
   --skip-knip         skip knip dead-code / unused-deps scan
   --skip-react-doctor skip react-doctor health-score scan
@@ -48,18 +52,55 @@ Exit codes:
   process.exit(0);
 }
 
+// `--update-baseline` refreshes every metric; `--update-baseline=design`
+// refreshes only violations.design, which is the only supported way to move
+// the design snapshot (never hand-edit quality-baseline.json).
+const UPDATE_BASELINE_SCOPES = new Set(["all", "design"]);
+
+/**
+ * Reads `--update-baseline[=<scope>]` out of argv. The bare flag (what
+ * `pnpm quality:baseline` passes) means a full refresh; `=design` refreshes
+ * only `violations.design`. Throws on an unknown scope rather than silently
+ * refreshing everything.
+ */
+function parseUpdateBaselineScope(argvList) {
+  const arg = argvList.find((a) => a === "--update-baseline" || a.startsWith("--update-baseline="));
+  if (!arg) return null;
+  const scope = arg.includes("=") ? arg.slice(arg.indexOf("=") + 1) : "all";
+  if (!UPDATE_BASELINE_SCOPES.has(scope)) {
+    throw new Error(
+      `unknown --update-baseline scope "${scope}" (expected --update-baseline or --update-baseline=design)`
+    );
+  }
+  return scope;
+}
+
+let updateBaselineScope = null;
+try {
+  updateBaselineScope = parseUpdateBaselineScope([...argv]);
+} catch (err) {
+  console.error(`[quality] ${err.message}`);
+  process.exit(2);
+}
+
+// A scoped refresh only writes violations.design, so running the other
+// collectors would cost ~10 minutes for numbers nobody reads.
+const designOnly = updateBaselineScope === "design";
+
 const FLAGS = {
-  updateBaseline: argv.has("--update-baseline"),
+  updateBaseline: updateBaselineScope !== null,
+  updateBaselineScope,
   reportOnly: argv.has("--report-only"),
   ci: argv.has("--ci") || process.env.CI === "true",
   skip: {
-    biome: argv.has("--skip-biome"),
-    typecheck: argv.has("--skip-typecheck"),
-    coverage: argv.has("--skip-coverage"),
-    jscpd: argv.has("--skip-jscpd"),
-    knip: argv.has("--skip-knip"),
-    reactDoctor: argv.has("--skip-react-doctor"),
-    sizes: argv.has("--skip-sizes"),
+    biome: designOnly || argv.has("--skip-biome"),
+    typecheck: designOnly || argv.has("--skip-typecheck"),
+    coverage: designOnly || argv.has("--skip-coverage"),
+    design: argv.has("--skip-design"),
+    jscpd: designOnly || argv.has("--skip-jscpd"),
+    knip: designOnly || argv.has("--skip-knip"),
+    reactDoctor: designOnly || argv.has("--skip-react-doctor"),
+    sizes: designOnly || argv.has("--skip-sizes"),
   },
 };
 
@@ -276,6 +317,124 @@ function collectReactDoctor() {
   return { score, errors, warnings, byCategory };
 }
 
+// Repo-wide design-system snapshot (DEV-557). Per-PR enforcement lives in
+// pr-checklist.yml and only looks at added lines; this counter gives the same
+// regression-vs-snapshot guarantee as the biome/knip counters, no more.
+function collectDesign() {
+  if (FLAGS.skip.design) return null;
+  log("design system…");
+  const res = runCapture("node", [
+    path.join("scripts", "check-design-system.js"),
+    "--report",
+    "--json",
+  ]);
+  // `--report` never exits non-zero on findings, so anything but 0 means the
+  // checker itself failed. Reporting zeros here would silently erase the
+  // whole metric, so fail loudly instead.
+  if (res.status !== 0) {
+    warn(`design checker exited ${res.status}; recording a collector failure.`);
+    return { failed: true };
+  }
+  let parsed = null;
+  try {
+    parsed = JSON.parse(res.stdout);
+  } catch {
+    /* noop */
+  }
+  if (!parsed?.summary?.byRule) {
+    warn("could not parse design checker JSON; recording a collector failure.");
+    return { failed: true };
+  }
+  const byRule = parsed.summary.byRule;
+  const total = Object.values(byRule).reduce((a, b) => a + b, 0);
+  return { total, byRule };
+}
+
+/**
+ * Returns a copy of `baseline` with only `violations.design` replaced. Used by
+ * `--update-baseline=design` so a scoped refresh cannot silently move
+ * coverage, duplication or the oversized-file list.
+ */
+function mergeDesignBaseline(baseline, design) {
+  if (!design || design.failed) {
+    throw new Error("refusing to write a failed design collector into the baseline");
+  }
+  return {
+    ...baseline,
+    violations: { ...(baseline.violations ?? {}), design },
+  };
+}
+
+// A scoped update rewrites the whole file from the object it merged into, so
+// an incomplete baseline would be silently promoted to the real one. `{}` is
+// syntactically valid JSON and must not qualify (Rival R5, round 4).
+const REQUIRED_BASELINE_SECTIONS = [
+  "coverage",
+  "duplication",
+  "violations",
+  "oversizedFiles",
+  "reactDoctor",
+];
+
+function assertUsableBaseline(baseline, label) {
+  if (baseline === null || typeof baseline !== "object" || Array.isArray(baseline)) {
+    throw new Error(`${label} is not a baseline object — refusing a scoped update.`);
+  }
+  const missing = REQUIRED_BASELINE_SECTIONS.filter(
+    (k) => baseline[k] === undefined || baseline[k] === null || typeof baseline[k] !== "object"
+  );
+  if (missing.length) {
+    throw new Error(
+      `${label} is missing required section(s): ${missing.join(", ")} — refusing a scoped update that would discard them. Fix the file, or run the full \`pnpm quality:baseline\`.`
+    );
+  }
+  return baseline;
+}
+
+/**
+ * Writes JSON through a temp file in the same directory and renames it into
+ * place, so an interrupted or failing write can never leave a half-written
+ * baseline behind. `deps.fs` is injectable so a real write failure is testable.
+ */
+function writeJsonAtomic(targetPath, contents, deps = {}) {
+  const io = deps.fs ?? fs;
+  const tmp = path.join(
+    path.dirname(targetPath),
+    `.${path.basename(targetPath)}.${process.pid}.tmp`
+  );
+  io.writeFileSync(tmp, contents);
+  try {
+    io.renameSync(tmp, targetPath);
+  } catch (err) {
+    try {
+      io.unlinkSync(tmp);
+    } catch {
+      /* the temp file is already gone or unreachable */
+    }
+    throw err;
+  }
+}
+
+/**
+ * The whole scoped-update operation, with its filesystem and target path
+ * injected so tests never touch the tracked baseline.
+ */
+function updateDesignBaseline({ baselinePath, design, fs: io = fs, label } = {}) {
+  const name = label ?? path.relative(ROOT, baselinePath) ?? baselinePath;
+  let parsed;
+  try {
+    parsed = JSON.parse(io.readFileSync(baselinePath, "utf8"));
+  } catch {
+    throw new Error(
+      `${name} is missing or not valid JSON — refusing a scoped update that would discard every other metric. Fix the file, or run the full \`pnpm quality:baseline\`.`
+    );
+  }
+  assertUsableBaseline(parsed, name);
+  const next = mergeDesignBaseline(parsed, design);
+  writeJsonAtomic(baselinePath, `${JSON.stringify(next, null, 2)}\n`, { fs: io });
+  return next;
+}
+
 function collectFileSizes(limits) {
   if (FLAGS.skip.sizes) return null;
   log("scanning file sizes…");
@@ -353,6 +512,7 @@ function matchGlob(p, glob) {
 function compare(current, baseline) {
   const regressions = [];
   const improvements = [];
+  const notes = [];
 
   // Coverage — lower is worse.
   if (current.coverage && baseline.coverage) {
@@ -393,6 +553,36 @@ function compare(current, baseline) {
     }
   }
 
+  // Design-system violations — one counter per rule, same semantics as biome.
+  const currentDesign = current.violations?.design;
+  if (currentDesign) {
+    if (currentDesign.failed) {
+      regressions.push(
+        "design collector failed — no repo-wide design snapshot was produced (see the log)"
+      );
+    } else if (!baseline.violations?.design) {
+      // An absent key means "never measured", not zero. Comparing against 0
+      // would report every pre-existing violation as a brand-new regression
+      // and fail the very PR that introduces the checker.
+      notes.push(
+        "design: no baseline yet — run pnpm quality --update-baseline=design on a PR labelled quality-baseline"
+      );
+    } else {
+      const baseDesign = baseline.violations.design;
+      const rules = new Set([
+        ...Object.keys(baseDesign.byRule ?? {}),
+        ...Object.keys(currentDesign.byRule ?? {}),
+      ]);
+      for (const k of [...rules].sort()) {
+        const b = baseDesign.byRule?.[k] ?? 0;
+        const c = currentDesign.byRule?.[k] ?? 0;
+        const delta = c - b;
+        if (delta > 0) regressions.push(`design.${k} ${b} → ${c} (+${delta})`);
+        else if (delta < 0) improvements.push(`design.${k} ${delta}`);
+      }
+    }
+  }
+
   // Oversized files — file already over limit must not grow.
   // Only line growth is enforced: byte counts flap with whitespace/formatting
   // changes (e.g. an unrelated reformat commit) and would generate noise.
@@ -426,10 +616,14 @@ function compare(current, baseline) {
     }
   }
 
-  return { regressions, improvements };
+  return { regressions, improvements, notes };
 }
 
 // ── render ──────────────────────────────────────────────────────────────────
+
+// Printed wherever a metric has never been captured. Never `0`, which would
+// read as "measured, and it was zero".
+const NOT_MEASURED = "not measured";
 
 function pad(s, n) {
   s = String(s);
@@ -448,7 +642,7 @@ function table(rows) {
   return [header, sep, body].join("\n");
 }
 
-function render({ status, current, baseline, regressions, improvements }) {
+function render({ status, current, baseline, regressions, improvements, notes = [] }) {
   const lines = [];
   lines.push("# Quality Gate");
   lines.push("");
@@ -517,8 +711,48 @@ function render({ status, current, baseline, regressions, improvements }) {
           Object.keys(baseline.oversizedFiles ?? {}).length
       ),
     ]);
+    const cd = c.design;
+    // An absent baseline stays absent through rendering. Synthesising
+    // `{ total: 0 }` here made the report contradict compare(), printing
+    // thousands of "new" violations under a passing gate (Rival R4).
+    const bd = b.design;
+    if (cd) {
+      rows.push([
+        "Design system",
+        bd ? (bd.total ?? 0) : NOT_MEASURED,
+        cd.failed ? "collector failed" : (cd.total ?? 0),
+        cd.failed || !bd ? "—" : fmtDelta((cd.total ?? 0) - (bd.total ?? 0)),
+      ]);
+    }
     lines.push(table(rows));
     lines.push("");
+
+    if (cd && !cd.failed) {
+      const rules = [
+        ...new Set([...Object.keys(bd?.byRule ?? {}), ...Object.keys(cd.byRule ?? {})]),
+      ].sort();
+      if (rules.length) {
+        lines.push("<details><summary>Design system by rule</summary>\n");
+        const ruleRows = [["Rule", "Baseline", "Current", "Δ"]];
+        for (const k of rules) {
+          const cv = cd.byRule?.[k] ?? 0;
+          if (!bd) {
+            ruleRows.push([k, NOT_MEASURED, cv, "—"]);
+            continue;
+          }
+          ruleRows.push([k, bd.byRule?.[k] ?? 0, cv, fmtDelta(cv - (bd.byRule?.[k] ?? 0))]);
+        }
+        lines.push(table(ruleRows));
+        lines.push("\n</details>");
+        lines.push("");
+        if (!bd) {
+          lines.push(
+            "_No design baseline yet — run `pnpm quality --update-baseline=design` on a PR labelled `quality-baseline`._"
+          );
+          lines.push("");
+        }
+      }
+    }
   }
 
   if (current.reactDoctor) {
@@ -556,6 +790,13 @@ function render({ status, current, baseline, regressions, improvements }) {
     lines.push("");
   }
 
+  if (notes.length) {
+    lines.push("## Notes");
+    lines.push("");
+    for (const r of notes) lines.push(`- ${r}`);
+    lines.push("");
+  }
+
   lines.push("---");
   lines.push(`_Generated by \`scripts/quality-gate.js\` on ${new Date().toISOString()}._`);
   return lines.join("\n");
@@ -589,7 +830,13 @@ function fmtDelta(n, suffix = "") {
 function main() {
   ensureDir(REPORT_DIR);
   const limits = tryReadJson(LIMITS_PATH, { fileLimits: [] });
-  const baseline = tryReadJson(BASELINE_PATH, {});
+  // A scoped refresh MERGES into the existing baseline, so it must start from
+  // a real one. Falling back to `{}` here would let a malformed or missing
+  // file be replaced by a baseline holding nothing but violations.design
+  // (Rival R5).
+  // Read for comparison only; the scoped update re-reads and validates it.
+  const baselineRaw = tryReadJson(BASELINE_PATH, null);
+  const baseline = baselineRaw ?? {};
 
   const current = {
     generatedAt: new Date().toISOString(),
@@ -603,6 +850,7 @@ function main() {
       knipUnusedTypes: 0,
       knipUnusedDeps: 0,
       knipDuplicates: 0,
+      design: collectDesign(),
     },
     oversizedFiles: collectFileSizes(limits) ?? {},
     reactDoctor: collectReactDoctor(),
@@ -619,6 +867,20 @@ function main() {
 
   writeFileSafe(ARTIFACT_PATH, JSON.stringify(current, null, 2));
 
+  if (FLAGS.updateBaselineScope === "design") {
+    // Validation, merge and the atomic write all live in updateDesignBaseline,
+    // so the tests exercise exactly the path this takes.
+    try {
+      updateDesignBaseline({ baselinePath: BASELINE_PATH, design: current.violations.design });
+    } catch (err) {
+      console.error(`[quality] ${err.message}`);
+      process.exit(2);
+    }
+    log(`design baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
+    log("land this on a PR labelled `quality-baseline` — quality-gate.yml guards the file.");
+    process.exit(0);
+  }
+
   if (FLAGS.updateBaseline) {
     const next = {
       $schema: baseline.$schema ?? "./scripts/quality-baseline.schema.json",
@@ -632,14 +894,22 @@ function main() {
       reactDoctor: current.reactDoctor ??
         baseline.reactDoctor ?? { score: 0, errors: 0, warnings: 0, byCategory: {} },
     };
-    writeFileSafe(BASELINE_PATH, JSON.stringify(next, null, 2) + "\n");
+    try {
+      writeJsonAtomic(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
+    } catch (err) {
+      console.error(
+        `[quality] could not write ${path.relative(ROOT, BASELINE_PATH)} (${err.message}) — the baseline is unchanged.`
+      );
+      process.exit(2);
+    }
     log(`baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
     process.exit(0);
   }
 
-  const { regressions, improvements } = compare(current, baseline);
+  const { regressions, improvements, notes } = compare(current, baseline);
+  for (const n of notes) log(n);
   const status = regressions.length ? "fail" : "pass";
-  const report = render({ status, current, baseline, regressions, improvements });
+  const report = render({ status, current, baseline, regressions, improvements, notes });
 
   writeFileSafe(REPORT_PATH, report);
   process.stdout.write(report + "\n");
@@ -661,4 +931,14 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { compare, matchGlob, countLines };
+module.exports = {
+  compare,
+  matchGlob,
+  countLines,
+  mergeDesignBaseline,
+  assertUsableBaseline,
+  updateDesignBaseline,
+  writeJsonAtomic,
+  render,
+  parseUpdateBaselineScope,
+};

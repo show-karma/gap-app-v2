@@ -3,6 +3,9 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
+import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
+import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
+import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 
 // --- Mocks ---
 
@@ -150,14 +153,13 @@ function createWrapper() {
   };
 }
 
-// The program selector is a custom listbox: a button (aria-haspopup="listbox")
-// that opens a popup with role="option" entries — not a native <select>.
+// The program selector is the shared SearchWithValueDropdown: a Radix Popover
+// trigger opening a portalled cmdk list whose entries are plain buttons.
 async function selectProgram(user: ReturnType<typeof userEvent.setup>, name: string) {
-  const trigger = screen.getByRole("button", {
-    name: /choose a program|test grant program|another program/i,
-  });
-  await user.click(trigger);
-  const option = within(screen.getByRole("listbox")).getByRole("option", { name });
+  // The <label> makes "Choose Program" the trigger's accessible name, whatever
+  // program is currently selected.
+  await user.click(screen.getByLabelText("Choose Program"));
+  const option = await screen.findByRole("button", { name });
   await user.click(option);
 }
 
@@ -263,6 +265,95 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
       const url = currentUrl();
       expect(url).toContain("programId=program-abc");
       expect(url).not.toContain("status=");
+    });
+  });
+});
+
+// The filecoin explorer renames this tab to "Browse Projects" on its own host;
+// the decision was that the page heading follows the tab so the two agree. Both
+// sides read the same EXPLORER_NAV_OVERRIDES entry and the same default out of
+// COMMUNITY_NAV_LABELS (neither is mocked here — the real maps are what is
+// under test), so a rename in one place cannot drift from the other.
+describe("BrowseApplicationsClient - page heading tracks the explorer tab label", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    urlStore.clear();
+  });
+
+  /** Renders as the tenant host would, where the override applies. */
+  const renderWhitelabel = (communityId: string) =>
+    render(
+      <WhitelabelProvider
+        isWhitelabel
+        communitySlug={communityId}
+        config={null}
+        tenantConfig={null}
+      >
+        <BrowseApplicationsClient communityId={communityId} />
+      </WhitelabelProvider>,
+      { wrapper: createWrapper() }
+    );
+
+  it("uses the overridden tab label as the <h1> for filecoin on its own host", () => {
+    renderWhitelabel("filecoin");
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Browse Projects");
+    expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
+  });
+
+  // Same reason the tab bar keeps its default labels on karmahq.org: the
+  // rename belongs to the tenant's own navbar-carrying host.
+  it("keeps the default heading for filecoin on karmahq.org", () => {
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Browse applications");
+    expect(screen.queryByText("Browse Projects")).not.toBeInTheDocument();
+  });
+
+  it("falls back to the default heading for a community without an override", () => {
+    renderWhitelabel("test-community");
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Browse applications");
+    expect(screen.queryByText("Browse Projects")).not.toBeInTheDocument();
+  });
+
+  it("reads the label from EXPLORER_NAV_OVERRIDES rather than hardcoding it", () => {
+    expect(EXPLORER_NAV_OVERRIDES.filecoin?.tabLabels?.["browse-applications"]).toBe(
+      "Browse Projects"
+    );
+  });
+
+  it("reads its default from the same map the tab bar defaults to", () => {
+    expect(COMMUNITY_NAV_LABELS["browse-applications"]).toBe("Browse applications");
+  });
+
+  // "Browse Projects" over a count of "applications" is the drift this guards.
+  it("counts the noun the heading names, not always 'applications'", async () => {
+    const user = userEvent.setup();
+    renderWhitelabel("filecoin");
+
+    expect(screen.getByText("Choose a program to browse public projects.")).toBeInTheDocument();
+
+    await selectProgram(user, "Test Grant Program");
+
+    await waitFor(() => {
+      expect(screen.getByText(/project(s)? · Test Grant Program/)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/application(s)? · Test Grant Program/)).not.toBeInTheDocument();
+  });
+
+  it("keeps counting applications where the heading is the default", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    expect(screen.getByText("Choose a program to browse public applications.")).toBeInTheDocument();
+
+    await selectProgram(user, "Test Grant Program");
+
+    await waitFor(() => {
+      expect(screen.getByText(/application(s)? · Test Grant Program/)).toBeInTheDocument();
     });
   });
 });

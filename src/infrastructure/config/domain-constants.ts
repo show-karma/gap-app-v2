@@ -1,3 +1,4 @@
+import { bareHostname, ROOT_DOMAIN } from "@/utilities/domains";
 import type { TenantId } from "../types/tenant";
 
 export interface DomainInfo {
@@ -27,6 +28,10 @@ export const DOMAIN_CONFIGS: DomainInfo[] = [
   },
   { domain: "app.opgrants.io", isProduction: true, isShared: false, tenantId: "optimism" },
   { domain: "testapp.opgrants.io", isProduction: false, isShared: false, tenantId: "optimism" },
+  { domain: "karmahq.org", isProduction: true, isShared: true },
+  { domain: "staging.karmahq.org", isProduction: false, isShared: true },
+  // Legacy .xyz hosts stay listed permanently: isSharedDomain() fails open to
+  // true for anything absent here, so dropping them degrades silently.
   { domain: "karmahq.xyz", isProduction: true, isShared: true },
   { domain: "staging.karmahq.xyz", isProduction: false, isShared: true },
   { domain: "app.karmahq.xyz", isProduction: true, isShared: true, isLegacyUmbrella: true },
@@ -34,15 +39,13 @@ export const DOMAIN_CONFIGS: DomainInfo[] = [
 ];
 
 export function getDomainInfo(hostname: string): DomainInfo | undefined {
-  const cleanHost = hostname.replace(/^https?:\/\//, "").split("/")[0];
-  const exactMatch = DOMAIN_CONFIGS.find((config) => config.domain === cleanHost);
-  if (exactMatch) return exactMatch;
-  const hostWithoutPort = cleanHost.split(":")[0];
-  return DOMAIN_CONFIGS.find((config) => config.domain === hostWithoutPort);
+  const authority = hostname.replace(/^https?:\/\//, "").split("/")[0];
+  const host = bareHostname(authority);
+  return DOMAIN_CONFIGS.find((config) => config.domain === host);
 }
 
 export function getDefaultSharedDomain(): string {
-  return "karmahq.xyz";
+  return ROOT_DOMAIN;
 }
 
 export function isSharedDomain(hostname: string): boolean {

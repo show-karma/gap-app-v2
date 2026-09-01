@@ -1,4 +1,7 @@
-import { getDefaultSharedDomain } from "@/src/infrastructure/config/domain-constants";
+import {
+  getDefaultSharedDomain,
+  getDomainInfo,
+} from "@/src/infrastructure/config/domain-constants";
 import {
   getCommunityDomain,
   getDomainMappingByCommunity,
@@ -7,8 +10,8 @@ import {
 } from "@/src/infrastructure/config/domain-mapping";
 
 describe("getDefaultSharedDomain", () => {
-  it("returns karmahq.xyz as the shared domain", () => {
-    expect(getDefaultSharedDomain()).toBe("karmahq.xyz");
+  it("returns karmahq.org as the shared domain", () => {
+    expect(getDefaultSharedDomain()).toBe("karmahq.org");
   });
 });
 
@@ -21,29 +24,29 @@ describe("getCommunityDomain", () => {
 
   it("returns shared domain path for a community without custom domain (arbitrum)", () => {
     const domain = getCommunityDomain("arbitrum");
-    expect(domain).toBe("karmahq.xyz/arbitrum");
+    expect(domain).toBe("karmahq.org/arbitrum");
   });
 
   it("returns shared domain path for karma community", () => {
     const domain = getCommunityDomain("karma");
-    expect(domain).toBe("karmahq.xyz/karma");
+    expect(domain).toBe("karmahq.org/karma");
   });
 
   it("returns base domain when communityId has no mapping", () => {
     // "default" is a valid TenantId but has no mapping entry
     const domain = getCommunityDomain("default" as never);
-    expect(domain).toBe("karmahq.xyz");
+    expect(domain).toBe("karmahq.org");
   });
 
   it("forceSharedSubdomain=true returns shared domain path even for communities with exclusive domain", () => {
     const domain = getCommunityDomain("optimism", true);
-    expect(domain).toBe("karmahq.xyz/optimism");
+    expect(domain).toBe("karmahq.org/optimism");
   });
 
   it("path uses slug matching the community id", () => {
     const domain = getCommunityDomain("scroll");
     // scroll has no whitelabelDomain set
-    expect(domain).toBe("karmahq.xyz/scroll");
+    expect(domain).toBe("karmahq.org/scroll");
   });
 });
 
@@ -75,9 +78,19 @@ describe("getDomainMappingByCommunity", () => {
 
 describe("isSharedSubdomain", () => {
   it("returns true for shared domains", () => {
-    expect(isSharedSubdomain("karmahq.xyz")).toBe(true);
+    expect(isSharedSubdomain("karmahq.org")).toBe(true);
+    expect(isSharedSubdomain("staging.karmahq.org")).toBe(true);
     expect(isSharedSubdomain("app.karmahq.xyz")).toBe(true);
     expect(isSharedSubdomain("staging.karmahq.xyz")).toBe(true);
+  });
+
+  it("still recognizes the legacy .xyz shared hosts", () => {
+    // These rows must never be dropped from DOMAIN_CONFIGS: isSharedDomain fails
+    // open to true, so an omission would look identical to a correct answer here
+    // while silently mis-classifying every exclusive-tenant check.
+    expect(isSharedSubdomain("karmahq.xyz")).toBe(true);
+    expect(getDomainInfo("karmahq.xyz")?.isShared).toBe(true);
+    expect(getDomainInfo("staging.karmahq.xyz")?.isShared).toBe(true);
   });
 
   it("returns false for exclusive tenant domains", () => {

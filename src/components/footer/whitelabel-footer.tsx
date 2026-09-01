@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { CANONICAL_ORIGIN } from "@/utilities/domains";
 
 export function WhitelabelFooter() {
   const [, copy] = useCopyToClipboard();
@@ -10,7 +11,7 @@ export function WhitelabelFooter() {
     <footer className="w-full flex-col gap-4 flex items-center justify-center py-3 mb-8">
       <a
         className="flex items-center gap-3 text-current"
-        href="https://karmahq.xyz"
+        href={CANONICAL_ORIGIN}
         target="_blank"
         rel="noopener noreferrer"
       >

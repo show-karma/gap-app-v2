@@ -92,7 +92,7 @@ This plan implements the **first three rows**. The "clean up URL" rows are a sep
 
 ## User flows (the unit of "done")
 
-A flow is done only when walked end-to-end against a deployed preview, on **app.filpgf.io** and karmahq.xyz.
+A flow is done only when walked end-to-end against a deployed preview, on **app.filpgf.io** and the Karma canonical host (`www.karmahq.org` since the Aug 2026 TLD migration; `karmahq.xyz` at the time this plan was written).
 
 1. **Grantee → own application** — opens `/applications/:ref`. Unchanged: full owner view.
 2. **Reviewer → manage** — opens `/manage/funding-platform/:programId/applications/:ref`. Unchanged: review workspace.

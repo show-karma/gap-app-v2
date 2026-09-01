@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/sitemaps/[kind]/sitemap/[chunk]/route";
 
 function call(kind: string, chunk: string) {
-  return GET(new Request("https://www.karmahq.xyz/sitemaps/test"), {
+  return GET(new Request("https://www.karmahq.org/sitemaps/test"), {
     params: Promise.resolve({ kind, chunk }),
   });
 }

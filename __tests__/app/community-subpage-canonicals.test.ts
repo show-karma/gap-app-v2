@@ -44,6 +44,7 @@ vi.mock("@/utilities/chosenCommunities", () => ({
 
 vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
+  EXPLORER_NAV_OVERRIDES: {},
 }));
 
 vi.mock("@/utilities/whitelabel-server", () => ({
@@ -112,8 +113,8 @@ const SUBPAGE_METADATA_MODULES: Record<string, () => Promise<MetadataModule>> = 
   projects: () => import("@/app/community/[communityId]/(with-header)/projects/page"),
   updates: () => import("@/app/community/[communityId]/(with-header)/updates/layout"),
   impact: () => import("@/app/community/[communityId]/(with-header)/impact/layout"),
-  financials: () => import("@/app/community/[communityId]/(with-header)/financials/page"),
-  reports: () => import("@/app/community/[communityId]/(with-header)/reports/page"),
+  financials: () => import("@/app/community/[communityId]/(cover)/financials/page"),
+  reports: () => import("@/app/community/[communityId]/(cover)/reports/page"),
 };
 
 /**
@@ -133,8 +134,15 @@ const SHELL_SUBPAGES = ["projects", "updates", "impact", "financials"];
  */
 const SELF_CANONICAL_SUBPAGES = ["funding-opportunities"];
 
-/** Sub-pages that always return a title (financials returns {} when unflagged). */
-const TITLED_SUBPAGES = ["funding-opportunities", "projects", "updates", "impact"];
+/**
+ * Sub-pages that always return a title (financials returns {} when unflagged).
+ *
+ * `reports` joined this list when it moved into the chrome-free (cover) group:
+ * it no longer inherits a title from the community layout, so it names itself.
+ * Membership here is orthogonal to canonicals — it says nothing about whether a
+ * route is a shell.
+ */
+const TITLED_SUBPAGES = ["funding-opportunities", "projects", "updates", "impact", "reports"];
 
 async function sitemapUrls(): Promise<string[]> {
   const { default: communitiesSitemap } = await import("@/app/sitemaps/communities/sitemap");
@@ -241,6 +249,21 @@ describe("community sitemap membership and canonicals", () => {
         expect(metadata.alternates?.canonical).toBe(`/${subPage}`);
       }
     );
+
+    // `reports` declares its own canonical but stays out of the sitemap (see
+    // above), so it is deliberately not in SELF_CANONICAL_SUBPAGES. Pinned
+    // explicitly because the (cover) route-group move rewrote its
+    // generateMetadata — the canonical had to survive that rewrite.
+    it("reports keeps its self-referential canonical after the (cover) move", async () => {
+      const metadata = await metadataFor("reports", "celo");
+      expect(metadata.alternates?.canonical).toBe("/community/celo/reports");
+    });
+
+    it("reports keeps the bare sub-path canonical on a whitelabel domain", async () => {
+      getWhitelabelContextMock.mockResolvedValue({ isWhitelabel: true, config: {} });
+      const metadata = await metadataFor("reports", "celo");
+      expect(metadata.alternates?.canonical).toBe("/reports");
+    });
   });
 
   describe("shell sub-pages consolidate onto the community root", () => {
@@ -253,7 +276,9 @@ describe("community sitemap membership and canonicals", () => {
       const metadata = await metadataFor("financials", "filecoin");
       expect(metadata.alternates?.canonical).toBeUndefined();
     });
+  });
 
+  describe("titled sub-pages", () => {
     it.each(TITLED_SUBPAGES)(
       "%s still sets a distinct title, so the copy is ready when it earns a canonical",
       async (subPage) => {

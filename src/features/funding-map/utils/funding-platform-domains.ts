@@ -1,3 +1,5 @@
+import { LEGACY_UMBRELLA_HOSTS } from "@/utilities/domains";
+
 export const FUNDING_PLATFORM_DOMAINS = {
   optimism: {
     dev: "https://testapp.opgrants.io",
@@ -8,7 +10,7 @@ export const FUNDING_PLATFORM_DOMAINS = {
     prod: "https://app.filpgf.io",
   },
   polygon: {
-    dev: "https://testapp.karmahq.xyz/polygon",
+    dev: `https://${LEGACY_UMBRELLA_HOSTS.staging}/polygon`,
     prod: "https://founders.polygon.technology",
   },
   scroll: {
@@ -16,8 +18,8 @@ export const FUNDING_PLATFORM_DOMAINS = {
     prod: "https://grantsapp.scroll.io",
   },
   shared: {
-    dev: "https://testapp.karmahq.xyz",
-    prod: "https://app.karmahq.xyz",
+    dev: `https://${LEGACY_UMBRELLA_HOSTS.staging}`,
+    prod: `https://${LEGACY_UMBRELLA_HOSTS.prod}`,
   },
 };
 

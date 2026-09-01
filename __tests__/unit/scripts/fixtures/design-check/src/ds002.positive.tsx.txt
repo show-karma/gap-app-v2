@@ -1,0 +1,6 @@
+const PALETTE = "#2ed1a8";
+const STROKE = "rgb(10, 20, 30)";
+const TINT = `hsl(210, 40%, 60%)`;
+export function Positive() {
+  return <Chart color="#ff0000" palette={PALETTE} stroke={STROKE} tint={TINT} />;
+}

@@ -87,9 +87,15 @@ export function projectHandlers(options?: { list?: MockProject[]; detail?: Parti
       return HttpResponse.json(list);
     }),
 
-    http.get(`${BASE}/v2/projects/slug/check/:slug`, ({ params }) =>
-      HttpResponse.json({ available: params.slug !== detail.slug })
-    ),
+    http.get(`${BASE}/v2/projects/slug/check/:slug`, ({ params }) => {
+      const available = params.slug !== detail.slug;
+      // Mirror the indexer payload exactly — it returns `title`, not `slug`.
+      return HttpResponse.json(
+        available
+          ? { available }
+          : { available, existingProject: { uid: detail.uid, title: detail.title } }
+      );
+    }),
 
     http.get(`${BASE}/v2/projects/:projectIdOrSlug`, ({ params }) => {
       const id = params.projectIdOrSlug as string;

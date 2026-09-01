@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "Create Your Project Profile",
@@ -99,7 +99,7 @@ export default function CreateProjectProfilePage() {
 
         <section className="pt-4">
           <a
-            href="https://www.karmahq.xyz"
+            href={SITE_URL}
             className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-lg font-semibold text-white hover:bg-blue-700"
           >
             Create your project profile

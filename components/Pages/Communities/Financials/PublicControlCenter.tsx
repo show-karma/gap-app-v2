@@ -24,6 +24,7 @@ import type {
   PayoutGrantConfig,
   TokenTotal,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PublicProjectDetailsModal } from "./PublicProjectDetailsModal";
@@ -340,7 +341,7 @@ export function PublicControlCenter() {
         <PageHero
           compact
           eyebrow="Treasury"
-          title="Financials"
+          title={COMMITMENTS_AND_DISBURSEMENTS}
           description="Overview of grants, agreements, milestones, and disbursements made through programs in this community."
           kpis={[
             {

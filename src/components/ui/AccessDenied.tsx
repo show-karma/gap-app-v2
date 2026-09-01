@@ -196,7 +196,7 @@ export function AccessDenied({
     return substituteAccessDeniedTemplate(raw, {
       communityName: communityName ?? COMMUNITY_FALLBACK,
       communitySlug,
-      appUrl: envVars.VERCEL_URL,
+      appUrl: envVars.APP_ORIGIN,
       requiredRoles: requiredList ?? "",
       currentRoles: authenticated
         ? visibleRoles.length > 0

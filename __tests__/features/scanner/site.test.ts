@@ -23,7 +23,7 @@ describe("isScanIdParam", () => {
   });
 
   it("rejects a bare domain", () => {
-    expect(isScanIdParam("karmahq.xyz")).toBe(false);
+    expect(isScanIdParam("karmahq.org")).toBe(false);
   });
 
   it("rejects a domain that merely contains hex groups", () => {
@@ -33,7 +33,7 @@ describe("isScanIdParam", () => {
 
 describe("isDomainParam", () => {
   it("treats a dotted non-UUID value as a domain", () => {
-    expect(isDomainParam("karmahq.xyz")).toBe(true);
+    expect(isDomainParam("karmahq.org")).toBe(true);
   });
 
   it("does not treat a UUID as a domain", () => {
@@ -47,15 +47,15 @@ describe("isDomainParam", () => {
 
 describe("domainToScanUrl", () => {
   it("builds an https URL from a bare domain", () => {
-    expect(domainToScanUrl("karmahq.xyz")).toBe("https://karmahq.xyz");
+    expect(domainToScanUrl("karmahq.org")).toBe("https://karmahq.org");
   });
 
   it("strips a www. prefix so the lookup key is canonical", () => {
-    expect(domainToScanUrl("www.karmahq.xyz")).toBe("https://karmahq.xyz");
+    expect(domainToScanUrl("www.karmahq.org")).toBe("https://karmahq.org");
   });
 
   it("normalizes an already-qualified URL down to its host", () => {
-    expect(domainToScanUrl("http://karmahq.xyz/path?q=1")).toBe("https://karmahq.xyz");
+    expect(domainToScanUrl("http://karmahq.org/path?q=1")).toBe("https://karmahq.org");
   });
 
   it("returns null for an unparseable value", () => {
@@ -65,8 +65,8 @@ describe("domainToScanUrl", () => {
 
 describe("hostnameOf", () => {
   it("round-trips a domainToScanUrl result back to the bare host", () => {
-    const url = domainToScanUrl("www.karmahq.xyz");
-    expect(hostnameOf(url)).toBe("karmahq.xyz");
+    const url = domainToScanUrl("www.karmahq.org");
+    expect(hostnameOf(url)).toBe("karmahq.org");
   });
 });
 
@@ -85,12 +85,12 @@ describe("buildScanShareUrl", () => {
 
 describe("PAGES.SCANNER.SITE", () => {
   it("builds the clean website-keyed route (no /scans/ segment)", () => {
-    expect(PAGES.SCANNER.SITE("karmahq.xyz")).toBe("/nonprofits/is-ai-ready/karmahq.xyz");
+    expect(PAGES.SCANNER.SITE("karmahq.org")).toBe("/nonprofits/is-ai-ready/karmahq.org");
   });
 
   it("is the host portion of what hostnameOf yields, so share/submit round-trip", () => {
-    const host = hostnameOf(domainToScanUrl("www.karmahq.xyz"));
-    expect(host).toBe("karmahq.xyz");
-    expect(PAGES.SCANNER.SITE(host ?? "")).toBe("/nonprofits/is-ai-ready/karmahq.xyz");
+    const host = hostnameOf(domainToScanUrl("www.karmahq.org"));
+    expect(host).toBe("karmahq.org");
+    expect(PAGES.SCANNER.SITE(host ?? "")).toBe("/nonprofits/is-ai-ready/karmahq.org");
   });
 });

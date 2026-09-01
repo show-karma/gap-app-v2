@@ -35,6 +35,6 @@ describe("public/pricing.md", () => {
   it("includes a Last updated section pointing back to the apex marketing URL", () => {
     const contents = fs.readFileSync(PRICING_MD_PATH, "utf-8");
     expect(contents).toContain("## Last updated");
-    expect(contents).toContain("https://www.karmahq.xyz");
+    expect(contents).toContain("https://www.karmahq.org");
   });
 });

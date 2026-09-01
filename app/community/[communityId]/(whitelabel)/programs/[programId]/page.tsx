@@ -76,7 +76,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     ) || DEFAULT_DESCRIPTION;
 
   const siteUrl = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : SITE_URL;
-  const ogImageBase = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : envVars.VERCEL_URL;
+  const ogImageBase = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : envVars.APP_ORIGIN;
   const ogImage = `${ogImageBase}/api/metadata/communities/${communityId}`;
 
   return {

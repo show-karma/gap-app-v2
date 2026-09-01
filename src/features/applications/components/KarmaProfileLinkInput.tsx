@@ -12,11 +12,11 @@ import { SEARCH_CONSTANTS } from "@/constants/search";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
-import { envVars } from "@/utilities/enviromentVars";
+import { appOrigin } from "@/utilities/domains";
 import type { ApplicationFormData } from "../types";
 
 function AddProjectLink() {
-  const href = `${envVars.VERCEL_URL || "https://www.karmahq.xyz"}?action=create-project`;
+  const href = `${appOrigin()}?action=create-project`;
 
   return (
     <a

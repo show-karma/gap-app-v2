@@ -68,10 +68,10 @@ describe("WidgetMarkdown", () => {
 
   describe("links", () => {
     it("renders https links with safe attributes", () => {
-      const el = renderMarkdown("[Karma](https://karmahq.xyz)");
+      const el = renderMarkdown("[Karma](https://www.karmahq.org)");
       const link = el.querySelector("a");
       expect(link?.textContent).toBe("Karma");
-      expect(link?.getAttribute("href")).toBe("https://karmahq.xyz");
+      expect(link?.getAttribute("href")).toBe("https://www.karmahq.org");
       expect(link?.getAttribute("target")).toBe("_blank");
       expect(link?.getAttribute("rel")).toBe("noopener noreferrer");
     });

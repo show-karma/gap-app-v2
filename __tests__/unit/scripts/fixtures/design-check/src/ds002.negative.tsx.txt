@@ -1,0 +1,11 @@
+// Closes #1312 and refs #abcdef in a comment, never scanned.
+export function Negative() {
+  return (
+    <svg>
+      <a href="#top" id="section-1">anchor</a>
+      <g clipPath="url(#clip0)" />
+      <rect fill="var(--brand, #ffffff)" />
+      <rect fill="rgb(var(--brand-rgb))" />
+    </svg>
+  );
+}

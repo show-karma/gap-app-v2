@@ -14,6 +14,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { Safari } from "@/components/ui/safari";
+import { ROOT_DOMAIN } from "@/utilities/domains";
 import { BAND_BG, BAND_FG, BAR_TRACK } from "../utils/labels";
 import { ScoreGauge } from "./score-gauge";
 
@@ -98,7 +99,7 @@ export function ScannerHeroPreview() {
       `}</style>
       <div className="relative w-full rounded-xl shadow-2xl" style={{ aspectRatio: "1203 / 753" }}>
         <Safari
-          url="karmahq.xyz/s/waterkeeper-alliance"
+          url={`${ROOT_DOMAIN}/s/waterkeeper-alliance`}
           className="absolute inset-0 h-full w-full"
         />
         {/* the finished scorecard, filling the Safari screen area like a real page.

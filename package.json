@@ -17,6 +17,7 @@
     "quality": "node scripts/quality-gate.js",
     "quality:baseline": "node scripts/quality-gate.js --update-baseline",
     "quality:report": "node scripts/quality-gate.js --report-only",
+    "design:check": "node scripts/check-design-system.js",
     "react-doctor": "npx -y react-doctor@latest .",
     "generate-llms": "ts-node -P tsconfig.scripts.json scripts/generate-llms-txt.ts",
     "build-stats": "cross-env ANALYZE=true npm run build",

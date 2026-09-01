@@ -83,7 +83,7 @@ Add your organization
 ## Developer Docs
 
 - [API Documentation](https://gapapi.karmahq.xyz/v2/docs): REST API docs for projects, communities, grants, and attestations
-- [OpenAPI JSON](https://www.karmahq.xyz/openapi.json)
+- [OpenAPI JSON](https://www.karmahq.org/openapi.json)
 - Authentication: use Privy JWT in `Authorization: Bearer <token>` for protected endpoints
 - Public reads are available for key listing endpoints (projects, communities, grants)
 
@@ -439,9 +439,9 @@ Milestone Reviewers
 Application reviewers are responsible for evaluating incoming grant applications and making approve/reject decisions. This guide walks you through the review process step by step.
 Getting Started
 Step 1: Log In
-Go to www.karmahq.xyz and click the Login button in the top right corner.
+Go to www.karmahq.org and click the Login button in the top right corner.
 Step 2: Access Your Reviews
-Click [ Review]( https://www.karmahq.xyz/my-reviews ) in the header navigation. This displays all applications in the program for review.
+Click [ Review]( https://www.karmahq.org/my-reviews ) in the header navigation. This displays all applications in the program for review.
 Note: If you don't see the My Reviews link, contact your grant program administrator to ensure you've been added as a reviewer.
 Reviewing Applications
 Step 3: Open an Application
@@ -636,10 +636,10 @@ Filecoin ProPGF Grantee Guide
 Welcome to Karma! Filecoin has partnered with Karma to manage ProPGF grants going forward. If you're a grantee from ProPGF Batch 1, this guide will walk you through everything you need to know to access your project, submit milestone updates, and stay on track with your grant.
 What's Changed?
 We've migrated all 14 projects and milestones from Questbook into Karma's platform. Your project information, milestones, and deliverables are already set up and waiting for you, no need to re-enter anything.
-You can view all Batch 1 projects here: https://www.karmahq.xyz/community/filecoin
+You can view all Batch 1 projects here: https://www.karmahq.org/community/filecoin
 Getting Started
 Step 1: Find Your Project
-Go to https://www.karmahq.xyz/community/filecoin
+Go to https://www.karmahq.org/community/filecoin
 Browse the list to locate your project
 Click on your project name to open your project page
 Step 2: Verify Your Admin Wallet
@@ -801,47 +801,47 @@ Step 4: Final project submission
 At the end of the funding cycle, mark the grant as complete and submit a link to all assets (such as logos, screenshots, and other deliverables).
 
 ## Site URL Index
-- [About](https://www.karmahq.xyz/about)
-- [Blog](https://www.karmahq.xyz/blog)
-- [Contact](https://www.karmahq.xyz/contact)
-- [Create Project Profile](https://www.karmahq.xyz/create-project-profile): Create a public project profile to track funding, milestones, and updates
-- [Donor Advisors](https://www.karmahq.xyz/donor-advisors)
-- [For Agents](https://www.karmahq.xyz/for-agents)
-- [Foundations](https://www.karmahq.xyz/foundations)
-- [Connect](https://www.karmahq.xyz/mcp/connect)
-- [Nonprofits](https://www.karmahq.xyz/nonprofits)
-- [Find Funders](https://www.karmahq.xyz/nonprofits/find-funders)
-- [Connect](https://www.karmahq.xyz/nonprofits/find-funders/connect)
-- [Chatgpt](https://www.karmahq.xyz/nonprofits/find-funders/connect/chatgpt)
-- [Claude](https://www.karmahq.xyz/nonprofits/find-funders/connect/claude)
-- [Seeds](https://www.karmahq.xyz/seeds): Seed funding and early-stage project support
-- [August 2025](https://www.karmahq.xyz/blog/august-2025)
-- [Building Sustainable Web3 Funding Solutions A Kokonut Network Case Study](https://www.karmahq.xyz/blog/building-sustainable-web3-funding-solutions-a-kokonut-network-case-study)
-- [Expanding Celos Proof Of Ship Program](https://www.karmahq.xyz/blog/expanding-celos-proof-of-ship-program)
-- [Giveth Is Now Integrated With Karma Gap](https://www.karmahq.xyz/blog/giveth-is-now-integrated-with-karma-gap)
-- [Gooddollar Partners With Karma Gap](https://www.karmahq.xyz/blog/gooddollar-partners-with-karma-gap)
-- [Introducing Karma V2](https://www.karmahq.xyz/blog/introducing-karma-v2)
-- [Karma Activity Report November 2025](https://www.karmahq.xyz/blog/karma-activity-report-november-2025)
-- [Karma Ai Is The Future](https://www.karmahq.xyz/blog/karma-ai-is-the-future)
-- [Karma For Philanthropic Funding](https://www.karmahq.xyz/blog/karma-for-philanthropic-funding)
-- [Karma October 2025 Activity Report](https://www.karmahq.xyz/blog/karma-october-2025-activity-report)
-- [Karma September Activity Report](https://www.karmahq.xyz/blog/karma-september-activity-report)
-- [Karma Ships April Edition](https://www.karmahq.xyz/blog/karma-ships-april-edition)
-- [Karma Ships February 2026](https://www.karmahq.xyz/blog/karma-ships-february-2026)
-- [Karma Ships January 2026](https://www.karmahq.xyz/blog/karma-ships-january-2026)
-- [Karma Ships June Edition](https://www.karmahq.xyz/blog/karma-ships-june-edition)
-- [Karma Ships May Edition](https://www.karmahq.xyz/blog/karma-ships-may-edition)
-- [Karma Skills Making The Entire Karma Platform Agent Friendly](https://www.karmahq.xyz/blog/karma-skills-making-the-entire-karma-platform-agent-friendly)
-- [Launching Nonprofit Research For Donor Advisors](https://www.karmahq.xyz/blog/launching-nonprofit-research-for-donor-advisors)
-- [Livepeer Partners With Karma Gap](https://www.karmahq.xyz/blog/livepeer-partners-with-karma-gap)
-- [Optimism Grants Partners With Karma For Season 8](https://www.karmahq.xyz/blog/optimism-grants-partners-with-karma-for-season-8)
-- [Pl Filecoin Impact Fund Partners With Karma](https://www.karmahq.xyz/blog/pl-filecoin-impact-fund-partners-with-karma)
-- [Polygon Partners With Karma](https://www.karmahq.xyz/blog/polygon-partners-with-karma)
-- [Revolutionizing Impact Measurement](https://www.karmahq.xyz/blog/revolutionizing-impact-measurement)
-- [Scaling Ecosystem Success Celo Case Study](https://www.karmahq.xyz/blog/scaling-ecosystem-success-celo-case-study)
-- [Welcome To The Karma Newsletter](https://www.karmahq.xyz/blog/welcome-to-the-karma-newsletter)
-- [Privacy Policy](https://www.karmahq.xyz/privacy-policy): Privacy policy for the Karma platform
-- [Terms and Conditions](https://www.karmahq.xyz/terms-and-conditions): Terms and conditions for using the Karma platform
+- [About](https://www.karmahq.org/about)
+- [Blog](https://www.karmahq.org/blog)
+- [Contact](https://www.karmahq.org/contact)
+- [Create Project Profile](https://www.karmahq.org/create-project-profile): Create a public project profile to track funding, milestones, and updates
+- [Donor Advisors](https://www.karmahq.org/donor-advisors)
+- [For Agents](https://www.karmahq.org/for-agents)
+- [Foundations](https://www.karmahq.org/foundations)
+- [Connect](https://www.karmahq.org/mcp/connect)
+- [Nonprofits](https://www.karmahq.org/nonprofits)
+- [Find Funders](https://www.karmahq.org/nonprofits/find-funders)
+- [Connect](https://www.karmahq.org/nonprofits/find-funders/connect)
+- [Chatgpt](https://www.karmahq.org/nonprofits/find-funders/connect/chatgpt)
+- [Claude](https://www.karmahq.org/nonprofits/find-funders/connect/claude)
+- [Seeds](https://www.karmahq.org/seeds): Seed funding and early-stage project support
+- [August 2025](https://www.karmahq.org/blog/august-2025)
+- [Building Sustainable Web3 Funding Solutions A Kokonut Network Case Study](https://www.karmahq.org/blog/building-sustainable-web3-funding-solutions-a-kokonut-network-case-study)
+- [Expanding Celos Proof Of Ship Program](https://www.karmahq.org/blog/expanding-celos-proof-of-ship-program)
+- [Giveth Is Now Integrated With Karma Gap](https://www.karmahq.org/blog/giveth-is-now-integrated-with-karma-gap)
+- [Gooddollar Partners With Karma Gap](https://www.karmahq.org/blog/gooddollar-partners-with-karma-gap)
+- [Introducing Karma V2](https://www.karmahq.org/blog/introducing-karma-v2)
+- [Karma Activity Report November 2025](https://www.karmahq.org/blog/karma-activity-report-november-2025)
+- [Karma Ai Is The Future](https://www.karmahq.org/blog/karma-ai-is-the-future)
+- [Karma For Philanthropic Funding](https://www.karmahq.org/blog/karma-for-philanthropic-funding)
+- [Karma October 2025 Activity Report](https://www.karmahq.org/blog/karma-october-2025-activity-report)
+- [Karma September Activity Report](https://www.karmahq.org/blog/karma-september-activity-report)
+- [Karma Ships April Edition](https://www.karmahq.org/blog/karma-ships-april-edition)
+- [Karma Ships February 2026](https://www.karmahq.org/blog/karma-ships-february-2026)
+- [Karma Ships January 2026](https://www.karmahq.org/blog/karma-ships-january-2026)
+- [Karma Ships June Edition](https://www.karmahq.org/blog/karma-ships-june-edition)
+- [Karma Ships May Edition](https://www.karmahq.org/blog/karma-ships-may-edition)
+- [Karma Skills Making The Entire Karma Platform Agent Friendly](https://www.karmahq.org/blog/karma-skills-making-the-entire-karma-platform-agent-friendly)
+- [Launching Nonprofit Research For Donor Advisors](https://www.karmahq.org/blog/launching-nonprofit-research-for-donor-advisors)
+- [Livepeer Partners With Karma Gap](https://www.karmahq.org/blog/livepeer-partners-with-karma-gap)
+- [Optimism Grants Partners With Karma For Season 8](https://www.karmahq.org/blog/optimism-grants-partners-with-karma-for-season-8)
+- [Pl Filecoin Impact Fund Partners With Karma](https://www.karmahq.org/blog/pl-filecoin-impact-fund-partners-with-karma)
+- [Polygon Partners With Karma](https://www.karmahq.org/blog/polygon-partners-with-karma)
+- [Revolutionizing Impact Measurement](https://www.karmahq.org/blog/revolutionizing-impact-measurement)
+- [Scaling Ecosystem Success Celo Case Study](https://www.karmahq.org/blog/scaling-ecosystem-success-celo-case-study)
+- [Welcome To The Karma Newsletter](https://www.karmahq.org/blog/welcome-to-the-karma-newsletter)
+- [Privacy Policy](https://www.karmahq.org/privacy-policy): Privacy policy for the Karma platform
+- [Terms and Conditions](https://www.karmahq.org/terms-and-conditions): Terms and conditions for using the Karma platform
 
 ## Knowledge Base - Core Concepts
 
@@ -867,7 +867,7 @@ A project can meet milestones without impact, or create impact while missing mil
 Treating them as the same obscures performance.
 #### Related articles
 #### Karma's model
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 separates milestone tracking from impact documentation so evaluation remains clear and
 honest.
 
@@ -904,7 +904,7 @@ learning.
 - Better future funding decisions
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 provides milestone tracking as shared infrastructure rather than ad-hoc reporting
 artifacts.
 
@@ -929,7 +929,7 @@ public evidence rather than centralized audits alone.
 - Historical consistency
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 supports impact as a living record rather than a one-time report.
 
 ### Manual vs Platform-Based Grant Tracking
@@ -952,7 +952,7 @@ platforms trade flexibility for structure and memory.
 - Cross-round learning
 #### Related articles
 #### When Karma is used
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 is used when ecosystems need repeatable funding decisions and durable execution history.
 
 ### The Grant Lifecycle: From Proposal to Verified Impact
@@ -1057,7 +1057,7 @@ Execution and impact data feed forward:
 Without this step, every funding round starts from zero.
 #### Related articles
 #### How Karma fits
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 supports the entire grant lifecycle, integrating evaluation, compliance, execution
 tracking, payments, impact measurement, and reputation into a single system.
 
@@ -1093,7 +1093,7 @@ Grant accountability is not reporting. It requires:
 - Accountability ≠ centralized audits only
 #### Related articles
 #### How Karma fits
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 provides modular infrastructure for ecosystems to define milestones, collect structured
 updates, attach reviews, and preserve execution history so accountability compounds
 instead of disappearing.
@@ -1127,7 +1127,7 @@ When execution data is missing, future funding decisions are made with no memory
 Ecosystems repeat the same risks without realizing it.
 #### Related articles
 #### How Karma addresses this
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 shifts the center of gravity from **funding events** to
 **execution histories**, enabling grant programs to learn which teams
 actually deliver.
@@ -1161,7 +1161,7 @@ AI does not replace human judgment. Final decisions, nuanced evaluation, and
 context-sensitive assessments remain with reviewers.
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 integrates AI-assisted evaluation into the grant workflow, helping programs scale review
 without losing accountability.
 
@@ -1188,7 +1188,7 @@ chaos.
 - No audit trail for agreements
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 integrates document signing into the grant workflow so signature status is always
 visible and tied to disbursement readiness.
 
@@ -1216,7 +1216,7 @@ Each dependency introduces delays if tracked manually.
 - Create auditability
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 coordinates KYC, signing, and grant status so program managers can confidently trigger
 payments without operational chaos.
 
@@ -1245,7 +1245,7 @@ ecosystems cannot learn which types of funding produce the best outcomes.
 - Qualitative outcomes are hard to capture
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 aggregates impact data from multiple sources, allowing ecosystems to assess what funding
 actually produced.
 
@@ -1273,6 +1273,6 @@ KYC coordination often involves:
 - Privacy-preserving verification
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.xyz)
+[Karma](https://www.karmahq.org)
 integrates KYC into the grant workflow so verification happens seamlessly without
 delaying other operations.

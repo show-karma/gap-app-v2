@@ -57,7 +57,7 @@ function makeLandingPage(overrides: Partial<LandingPageContent> = {}): LandingPa
   return {
     path: "/",
     label: "Home",
-    url: "https://karmahq.xyz/",
+    url: "https://karmahq.org/",
     title: "Karma - Where builders get funded",
     description: "Ecosystems use Karma to fund projects transparently.",
     snippet: "Ecosystems use Karma to fund projects.",
@@ -73,7 +73,7 @@ function makeArticle(overrides: Partial<KnowledgeArticle> = {}): KnowledgeArticl
     slug: "grant-accountability",
     title: "What Is Grant Accountability in Web3?",
     description: "Grant accountability turns funding promises into persistent execution history.",
-    url: "https://karmahq.xyz/knowledge/grant-accountability",
+    url: "https://karmahq.org/knowledge/grant-accountability",
     category: "Core Concepts",
     body: "Grant accountability is the practice of tracking funded work.",
     sourcePath: "app/knowledge/grant-accountability/page.tsx",
@@ -84,7 +84,7 @@ function makeArticle(overrides: Partial<KnowledgeArticle> = {}): KnowledgeArticl
 
 function makeSitemapEntry(overrides: Partial<SitemapEntry> = {}): SitemapEntry {
   return {
-    url: "https://karmahq.xyz",
+    url: "https://karmahq.org",
     lastModified: "2024-01-01",
     changeFrequency: "weekly",
     priority: "1.0",
@@ -788,18 +788,18 @@ describe("sentenceOverlap", () => {
 
 describe("sitemapUrlToLabel", () => {
   it("maps known URLs to labels", () => {
-    expect(sitemapUrlToLabel("https://karmahq.xyz/")).toBe("Home");
-    expect(sitemapUrlToLabel("https://karmahq.xyz/funders")).toBe("For Funders");
-    expect(sitemapUrlToLabel("https://karmahq.xyz/projects")).toBe("Projects");
+    expect(sitemapUrlToLabel("https://karmahq.org/")).toBe("Home");
+    expect(sitemapUrlToLabel("https://karmahq.org/funders")).toBe("For Funders");
+    expect(sitemapUrlToLabel("https://karmahq.org/projects")).toBe("Projects");
   });
 
   it("derives label from knowledge article slug", () => {
-    const result = sitemapUrlToLabel("https://karmahq.xyz/knowledge/grant-accountability");
+    const result = sitemapUrlToLabel("https://karmahq.org/knowledge/grant-accountability");
     expect(result).toBe("Grant Accountability");
   });
 
   it("handles unknown paths by capitalizing slug", () => {
-    const result = sitemapUrlToLabel("https://karmahq.xyz/some-new-page");
+    const result = sitemapUrlToLabel("https://karmahq.org/some-new-page");
     expect(result).toBe("Some New Page");
   });
 });
@@ -875,7 +875,7 @@ describe("generateSitemapSection", () => {
 
   it("includes descriptions from SITEMAP_DESCRIPTION_MAP", () => {
     const lines: string[] = [];
-    const entries = [makeSitemapEntry({ url: "https://karmahq.xyz/projects", priority: "0.8" })];
+    const entries = [makeSitemapEntry({ url: "https://karmahq.org/projects", priority: "0.8" })];
     generateSitemapSection(lines, entries);
     const projectLine = lines.find((l) => l.includes("/projects"));
     expect(projectLine).toContain("Discover projects with verified milestones");
@@ -884,9 +884,9 @@ describe("generateSitemapSection", () => {
   it("excludes knowledge articles when option is set", () => {
     const lines: string[] = [];
     const entries = [
-      makeSitemapEntry({ url: "https://karmahq.xyz/projects" }),
-      makeSitemapEntry({ url: "https://karmahq.xyz/knowledge" }),
-      makeSitemapEntry({ url: "https://karmahq.xyz/knowledge/grant-accountability" }),
+      makeSitemapEntry({ url: "https://karmahq.org/projects" }),
+      makeSitemapEntry({ url: "https://karmahq.org/knowledge" }),
+      makeSitemapEntry({ url: "https://karmahq.org/knowledge/grant-accountability" }),
     ];
     generateSitemapSection(lines, entries, { excludeKnowledgeArticles: true });
     const content = lines.join("\n");
@@ -897,7 +897,7 @@ describe("generateSitemapSection", () => {
   it("includes knowledge articles by default", () => {
     const lines: string[] = [];
     const entries = [
-      makeSitemapEntry({ url: "https://karmahq.xyz/knowledge/grant-accountability" }),
+      makeSitemapEntry({ url: "https://karmahq.org/knowledge/grant-accountability" }),
     ];
     generateSitemapSection(lines, entries);
     expect(lines.join("\n")).toContain("/knowledge/grant-accountability");
@@ -906,8 +906,8 @@ describe("generateSitemapSection", () => {
   it("sorts by priority descending then alphabetically", () => {
     const lines: string[] = [];
     const entries = [
-      makeSitemapEntry({ url: "https://karmahq.xyz/b-page", priority: "0.5" }),
-      makeSitemapEntry({ url: "https://karmahq.xyz/a-page", priority: "1.0" }),
+      makeSitemapEntry({ url: "https://karmahq.org/b-page", priority: "0.5" }),
+      makeSitemapEntry({ url: "https://karmahq.org/a-page", priority: "1.0" }),
     ];
     generateSitemapSection(lines, entries);
     const urlLines = lines.filter((l) => l.startsWith("- ["));
@@ -935,14 +935,14 @@ describe("generateLlmsTxt", () => {
     makeLandingPage({
       path: "/funders",
       label: "For Funders",
-      url: "https://karmahq.xyz/funders",
+      url: "https://karmahq.org/funders",
       description: "Funder tools.",
     }),
   ];
   const sitemapEntries = [
-    makeSitemapEntry({ url: "https://karmahq.xyz" }),
-    makeSitemapEntry({ url: "https://karmahq.xyz/funders" }),
-    makeSitemapEntry({ url: "https://karmahq.xyz/privacy-policy", priority: "0.3" }),
+    makeSitemapEntry({ url: "https://karmahq.org" }),
+    makeSitemapEntry({ url: "https://karmahq.org/funders" }),
+    makeSitemapEntry({ url: "https://karmahq.org/privacy-policy", priority: "0.3" }),
   ];
 
   let output: string;

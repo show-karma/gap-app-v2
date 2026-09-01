@@ -158,7 +158,7 @@ describe("PublicControlCenter", () => {
     render(<PublicControlCenter />, { wrapper });
 
     // Table should still render — community details don't block it
-    expect(screen.getByText("Financials")).toBeInTheDocument();
+    expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
     expect(screen.queryByTestId("control-center-table")).toBeInTheDocument();
   });
 
@@ -203,10 +203,10 @@ describe("PublicControlCenter", () => {
     expect(screen.getByText("Retry")).toBeInTheDocument();
   });
 
-  it("renders 'Financials' title and subtitle", () => {
+  it("renders 'Commitments & Disbursements' title and subtitle", () => {
     render(<PublicControlCenter />, { wrapper });
 
-    expect(screen.getByText("Financials")).toBeInTheDocument();
+    expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Overview of grants, agreements, milestones, and disbursements made through programs in this community."

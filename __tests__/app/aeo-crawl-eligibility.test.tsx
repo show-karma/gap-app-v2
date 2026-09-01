@@ -298,11 +298,12 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
     it("renders the URL mentions as anchors in the page", async () => {
       const { FIND_FUNDERS_FAQ_LINKS } = await import("@/src/features/non-profits/lib/faq-content");
       const { NON_PROFITS_PAGES } = await import("@/utilities/pages");
+      const { ROOT_DOMAIN } = await import("@/utilities/domains");
       const { pageHtml } = await renderFindFunders();
 
       // The internal link resolves through the route constant, not a
       // hardcoded path; the MCP endpoint is external and absolute.
-      expect(FIND_FUNDERS_FAQ_LINKS["karmahq.xyz/nonprofits/find-funders/connect"]).toBe(
+      expect(FIND_FUNDERS_FAQ_LINKS[`${ROOT_DOMAIN}/nonprofits/find-funders/connect`]).toBe(
         NON_PROFITS_PAGES.CONNECT
       );
 

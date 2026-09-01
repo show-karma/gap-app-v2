@@ -1,0 +1,7 @@
+diff --git a/components/Crlf.tsx b/components/Crlf.tsx
+index 1234567..89abcde 100644
+--- a/components/Crlf.tsx
++++ b/components/Crlf.tsx
+@@ -10,0 +11,2 @@
++  <span className="bg-[#123456]">crlf</span>
++  <span className="text-brand">clean</span>

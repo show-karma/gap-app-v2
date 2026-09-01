@@ -302,8 +302,9 @@ describe("MilestoneCard (admin review) — cancellation banner", () => {
       />
     );
 
-    // "Cancelled" appears twice: the header status badge and the banner label.
-    expect(screen.getAllByText("Cancelled").length).toBeGreaterThanOrEqual(2);
+    // Both the header status badge and the banner label surface the state.
+    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+    expect(screen.getByText("Milestone cancelled")).toBeInTheDocument();
     // The canceller address is handed to EthereumAddressToProfileName (which
     // resolves it to a name/ENS/email), not printed raw as a label.
     expect(screen.getByText(CANCELLER)).toBeInTheDocument();
@@ -338,7 +339,8 @@ describe("MilestoneCard (admin review) — cancellation banner", () => {
 
     // Terminal cancelled state still surfaces the banner (header badge + banner
     // label) even when the on-chain overlay is absent.
-    expect(screen.getAllByText("Cancelled").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+    expect(screen.getByText("Milestone cancelled")).toBeInTheDocument();
     // No canceller metadata is rendered when the overlay is missing.
     expect(screen.queryByText(CANCELLER)).not.toBeInTheDocument();
   });
@@ -347,6 +349,7 @@ describe("MilestoneCard (admin review) — cancellation banner", () => {
     render(<MilestoneCard {...DEFAULT_PROPS} milestone={createMilestone()} />);
 
     expect(screen.queryByText("Cancelled")).not.toBeInTheDocument();
+    expect(screen.queryByText("Milestone cancelled")).not.toBeInTheDocument();
     expect(screen.queryByText(CANCELLER)).not.toBeInTheDocument();
   });
 });

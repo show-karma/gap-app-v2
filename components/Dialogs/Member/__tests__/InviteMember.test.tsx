@@ -13,7 +13,7 @@ vi.mock("@/hooks/useProjectAuthorization", () => ({
 vi.mock("@/hooks/useInviteLink", () => ({
   useInviteLink: () => mockInvite(),
   useInviteUrl: (_project: unknown, code: string | undefined) =>
-    code ? `https://karmahq.xyz/project/proj?invite-code=${code}` : null,
+    code ? `https://www.karmahq.org/project/proj?invite-code=${code}` : null,
 }));
 
 vi.mock("@/components/Utilities/Spinner", () => ({
@@ -133,7 +133,9 @@ describe("InviteMemberDialog", () => {
 
       fireEvent.click(screen.getByRole("button", { name: /copy invite link/i }));
 
-      expect(mockCopy).toHaveBeenCalledWith("https://karmahq.xyz/project/proj?invite-code=0xabc");
+      expect(mockCopy).toHaveBeenCalledWith(
+        "https://www.karmahq.org/project/proj?invite-code=0xabc"
+      );
     });
 
     it("should_regenerate_the_code_with_the_invite_id_when_the_regenerate_control_is_clicked", async () => {

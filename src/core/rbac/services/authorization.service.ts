@@ -24,6 +24,7 @@ interface AuthPermissionsApiResponse {
   isProgramCreator: boolean;
   isProjectOwner?: boolean;
   isProjectAdmin?: boolean;
+  isProjectMember?: boolean;
 }
 
 export interface GetPermissionsParams {
@@ -50,6 +51,7 @@ const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
   isProgramCreator: false,
   isProjectOwner: false,
   isProjectAdmin: false,
+  isProjectMember: false,
 };
 
 /**
@@ -193,6 +195,7 @@ export const authorizationService = {
       isProgramCreator: response.isProgramCreator === true,
       isProjectOwner: response.isProjectOwner === true,
       isProjectAdmin: response.isProjectAdmin === true,
+      isProjectMember: response.isProjectMember === true,
     };
   },
 };

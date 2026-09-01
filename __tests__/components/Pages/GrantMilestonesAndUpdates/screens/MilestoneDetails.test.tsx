@@ -4,8 +4,12 @@ import { MilestoneDetails } from "@/components/Pages/GrantMilestonesAndUpdates/s
 import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 
 vi.mock("@/components/Shared/ActivityCard", () => ({
-  ActivityCard: ({ isAuthorized }: { isAuthorized?: boolean }) => (
-    <div data-testid="activity-card" data-is-authorized={String(Boolean(isAuthorized))} />
+  ActivityCard: ({ activity, isAuthorized }: { activity?: any; isAuthorized?: boolean }) => (
+    <div
+      data-testid="activity-card"
+      data-is-authorized={String(Boolean(isAuthorized))}
+      data-cancellation-reason={activity?.data?.cancellation?.reason ?? ""}
+    />
   ),
 }));
 
@@ -56,5 +60,38 @@ describe("MilestoneDetails gating", () => {
     renderComponent();
 
     expect(screen.getByTestId("activity-card")).toHaveAttribute("data-is-authorized", "false");
+  });
+
+  it("should_thread_cancellation_derived_from_statusHistory_onto_the_unified_milestone", () => {
+    render(
+      <MilestoneDetails
+        milestone={
+          {
+            ...baseMilestone,
+            currentStatus: "cancelled",
+            statusHistory: [
+              { status: "pending", updatedAt: "2026-06-03T14:36:45.000Z" },
+              {
+                status: "cancelled",
+                updatedAt: "2026-07-22T20:54:02.000Z",
+                updatedBy: "0x8353",
+                statusReason: "This work carried over into Batch 2 contract tracking",
+              },
+            ],
+          } as any
+        }
+      />
+    );
+
+    expect(screen.getByTestId("activity-card")).toHaveAttribute(
+      "data-cancellation-reason",
+      "This work carried over into Batch 2 contract tracking"
+    );
+  });
+
+  it("should_not_thread_cancellation_for_a_non_cancelled_milestone", () => {
+    renderComponent();
+
+    expect(screen.getByTestId("activity-card")).toHaveAttribute("data-cancellation-reason", "");
   });
 });

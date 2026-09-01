@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronRight, Download } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/src/components/navigation/Link";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";

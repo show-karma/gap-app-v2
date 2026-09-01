@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { api } from "@/utilities/api/client";
@@ -49,10 +49,7 @@ export const useMilestone = () => {
   const { refetch } = useProjectUpdates(projectId as string);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const router = useRouter();
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { openShareDialog } = useShareDialogStore();
-  const _isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke(attestationToast);
   const { setupChainAndWallet } = useSetupChainAndWallet();
 

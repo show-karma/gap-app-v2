@@ -1,3 +1,5 @@
+import { bareHostname } from "@/utilities/domains";
+
 export interface WhitelabelDomain {
   domain: string;
   communitySlug: string;
@@ -138,7 +140,7 @@ export const WHITELABEL_DOMAINS: WhitelabelDomain[] = [
 ];
 
 export function getWhitelabelByDomain(hostname: string): WhitelabelDomain | null {
-  const normalizedHost = hostname.split(":")[0]?.toLowerCase();
+  const normalizedHost = bareHostname(hostname);
   return WHITELABEL_DOMAINS.find((d) => d.domain.toLowerCase() === normalizedHost) ?? null;
 }
 

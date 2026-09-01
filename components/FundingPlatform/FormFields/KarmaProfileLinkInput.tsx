@@ -16,12 +16,12 @@ import { useProject } from "@/hooks/useProject";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
 import type { IFormField } from "@/types/funding-platform";
-import { envVars } from "@/utilities/enviromentVars";
+import { appOrigin } from "@/utilities/domains";
 import { cn } from "@/utilities/tailwind";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 function AddProjectLink() {
-  const href = `${envVars.VERCEL_URL || "https://www.karmahq.xyz"}?action=create-project`;
+  const href = `${appOrigin()}?action=create-project`;
 
   return (
     <a

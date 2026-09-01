@@ -160,6 +160,80 @@ describe("useProjectUpdates", () => {
     expect(grantMilestone?.chainID).toBe(42161);
   });
 
+  it("threads the cancellation overlay onto cancelled grant milestones (DEV-523)", async () => {
+    const response: UpdatesApiResponse = {
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [
+        {
+          uid: "cancelled-milestone",
+          programId: "program-1",
+          chainId: "8453",
+          title: "Per-provider metering",
+          description: "Milestone description",
+          dueDate: "2026-08-15T00:00:00.000Z",
+          createdAt: "2026-07-22T00:00:00.000Z",
+          recipient: "0x123",
+          status: "cancelled",
+          grant: {
+            uid: "grant-1",
+            title: "Grant 1",
+            communityName: "Community",
+          },
+          completionDetails: null,
+          verificationDetails: null,
+          cancellation: {
+            uid: "0xcancellation",
+            cancelledBy: "0x8353e73573194d9275d82f775d248d30235e403a",
+            cancelledAt: "2026-07-22T20:54:02.000Z",
+            reason: "This work carried over into Batch 2 contract tracking",
+          },
+        },
+        {
+          uid: "pending-milestone",
+          programId: "program-1",
+          chainId: "8453",
+          title: "Milestone",
+          description: "Milestone description",
+          dueDate: null,
+          createdAt: "2026-07-22T00:00:00.000Z",
+          recipient: "0x123",
+          status: "pending",
+          grant: {
+            uid: "grant-1",
+            title: "Grant 1",
+            communityName: "Community",
+          },
+          completionDetails: null,
+          verificationDetails: null,
+        },
+      ],
+      grantUpdates: [],
+    };
+
+    mockGetProjectUpdates.mockResolvedValueOnce(response);
+
+    const { result } = renderHook(() => useProjectUpdates("test-project"), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    const cancelled = result.current.milestones.find((item) => item.uid === "cancelled-milestone");
+    const pending = result.current.milestones.find((item) => item.uid === "pending-milestone");
+
+    expect(cancelled?.currentStatus).toBe("cancelled");
+    expect(cancelled?.cancellation).toEqual({
+      uid: "0xcancellation",
+      cancelledBy: "0x8353e73573194d9275d82f775d248d30235e403a",
+      cancelledAt: "2026-07-22T20:54:02.000Z",
+      reason: "This work carried over into Batch 2 contract tracking",
+    });
+    expect(pending?.cancellation).toBeNull();
+  });
+
   it("passes milestoneStatus to getProjectUpdates when provided", async () => {
     mockGetProjectUpdates.mockResolvedValueOnce({
       projectUpdates: [],

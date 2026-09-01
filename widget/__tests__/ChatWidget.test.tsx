@@ -95,3 +95,64 @@ describe("ChatWidget", () => {
     expect(screen.getByText(/optimism grants/i)).toBeInTheDocument();
   });
 });
+
+describe("ChatWidget notice", () => {
+  /**
+   * The disclaimer a host shows when it has no session to pass, so a visitor
+   * knows the answers are general before acting on one.
+   */
+  const defaultProps = {
+    apiUrl: "https://test.api/v2/agent/stream",
+    communityId: "filecoin",
+  };
+
+  const openPanel = async () => {
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Open chat" }));
+  };
+
+  it("shows nothing when the host supplies no notice", async () => {
+    render(<ChatWidget {...defaultProps} />);
+    await openPanel();
+
+    expect(screen.queryByText(/answers here are general/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the host's text", async () => {
+    render(<ChatWidget {...defaultProps} notice={{ text: "Answers here are general." }} />);
+    await openPanel();
+
+    expect(screen.getByText(/answers here are general/i)).toBeInTheDocument();
+  });
+
+  it("renders the action as a link out, when the host gives one", async () => {
+    render(
+      <ChatWidget
+        {...defaultProps}
+        notice={{
+          text: "Answers here are general.",
+          actionLabel: "Ask in the app",
+          actionHref: "https://app.filpgf.io/ask-karma",
+        }}
+      />
+    );
+    await openPanel();
+
+    const link = screen.getByRole("link", { name: "Ask in the app" });
+    expect(link).toHaveAttribute("href", "https://app.filpgf.io/ask-karma");
+    // Opens away from the host page, and without handing it a live opener.
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+  });
+
+  it("shows the text without a link when only a label is given", async () => {
+    // Half a link is not a link — it would render as unclickable text.
+    render(
+      <ChatWidget {...defaultProps} notice={{ text: "General answers.", actionLabel: "Sign in" }} />
+    );
+    await openPanel();
+
+    expect(screen.getByText(/general answers/i)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Sign in" })).not.toBeInTheDocument();
+  });
+});
