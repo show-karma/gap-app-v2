@@ -3,6 +3,8 @@ import {
   NOTEBOOK_SPEC_MAX_SECTIONS,
   NOTEBOOK_SPEC_VERSION,
   type NotebookBarSource,
+  type NotebookComposedSpec,
+  type NotebookCustomHtmlSpec,
   type NotebookKpiMetric,
   type NotebookSection,
   type NotebookSpec,
@@ -23,8 +25,23 @@ import {
  * offered a choice the server would reject.
  */
 
+/**
+ * A blank CUSTOM page.
+ *
+ * Starts with a minimal document rather than an empty string so the preview
+ * has something to show immediately — an author who picks the blank canvas and
+ * sees nothing at all cannot tell the feature apart from a broken one.
+ */
+export function emptyCustomHtmlSpec(): NotebookCustomHtmlSpec {
+  return {
+    version: NOTEBOOK_SPEC_VERSION,
+    mode: "custom-html",
+    html: ["<h1>Your page</h1>", "<p>Write whatever you like here.</p>"].join("\n"),
+  };
+}
+
 /** A blank page: one KPI row, which is the section every dashboard starts with. */
-export function emptyNotebookSpec(): NotebookSpec {
+export function emptyNotebookSpec(): NotebookComposedSpec {
   return {
     version: NOTEBOOK_SPEC_VERSION,
     sections: [{ type: "kpis", metrics: ["committed"] }],
@@ -122,20 +139,20 @@ export function newSection(
   }
 }
 
-export function canAddSection(spec: NotebookSpec): boolean {
+export function canAddSection(spec: NotebookComposedSpec): boolean {
   return spec.sections.length < NOTEBOOK_SPEC_MAX_SECTIONS;
 }
 
 export function addSection(
-  spec: NotebookSpec,
+  spec: NotebookComposedSpec,
   type: NotebookSection["type"],
   defaultMetricId?: string
-): NotebookSpec {
+): NotebookComposedSpec {
   if (!canAddSection(spec)) return spec;
   return { ...spec, sections: [...spec.sections, newSection(type, defaultMetricId)] };
 }
 
-export function removeSection(spec: NotebookSpec, index: number): NotebookSpec {
+export function removeSection(spec: NotebookComposedSpec, index: number): NotebookComposedSpec {
   return { ...spec, sections: spec.sections.filter((_, i) => i !== index) };
 }
 
@@ -147,7 +164,11 @@ export function removeSection(spec: NotebookSpec, index: number): NotebookSpec {
  * rather than wrapping around — wrapping would silently relocate a section to
  * the opposite end of the page.
  */
-export function moveSection(spec: NotebookSpec, index: number, direction: -1 | 1): NotebookSpec {
+export function moveSection(
+  spec: NotebookComposedSpec,
+  index: number,
+  direction: -1 | 1
+): NotebookComposedSpec {
   const target = index + direction;
   if (index < 0 || index >= spec.sections.length) return spec;
   if (target < 0 || target >= spec.sections.length) return spec;
@@ -158,10 +179,10 @@ export function moveSection(spec: NotebookSpec, index: number, direction: -1 | 1
 }
 
 export function updateSection(
-  spec: NotebookSpec,
+  spec: NotebookComposedSpec,
   index: number,
   section: NotebookSection
-): NotebookSpec {
+): NotebookComposedSpec {
   return { ...spec, sections: spec.sections.map((s, i) => (i === index ? section : s)) };
 }
 
@@ -174,10 +195,10 @@ export function updateSection(
  * spec that fails on save with an error about a section they cannot see.
  */
 export function toggleKpiMetric(
-  spec: NotebookSpec,
+  spec: NotebookComposedSpec,
   index: number,
   metric: NotebookKpiMetric
-): NotebookSpec {
+): NotebookComposedSpec {
   const section = spec.sections[index];
   if (!section || section.type !== "kpis") return spec;
 
@@ -199,10 +220,10 @@ export function toggleKpiMetric(
  * have no way to see why from the form.
  */
 export function setBarSource(
-  spec: NotebookSpec,
+  spec: NotebookComposedSpec,
   index: number,
   source: NotebookBarSource
-): NotebookSpec {
+): NotebookComposedSpec {
   const section = spec.sections[index];
   if (!section || section.type !== "bars") return spec;
 

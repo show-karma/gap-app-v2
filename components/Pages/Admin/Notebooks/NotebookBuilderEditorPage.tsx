@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { NotebookOverviewView } from "@/components/Pages/Communities/Notebooks/NotebookOverview";
+import { NotebookSandboxFrame } from "@/components/Pages/Communities/Notebooks/NotebookSandboxFrame";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +21,22 @@ import type { NotebookProvenanceEntry } from "@/services/notebooks/notebook-gene
 import type { NotebookIndicatorOption } from "@/services/notebooks/notebook-indicators.types";
 import type { NotebookMetricCatalog } from "@/services/notebooks/notebook-metric-registry.types";
 import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.types";
-import type { NotebookSpec } from "@/services/notebooks/notebook-spec";
-import { emptyNotebookSpec, validateSpec } from "@/services/notebooks/notebook-spec-draft";
+import { notebookSandboxOrigin } from "@/services/notebooks/notebook-sandbox-origin";
+import {
+  isComposedNotebookSpec,
+  isCustomHtmlNotebookSpec,
+  type NotebookSpec,
+} from "@/services/notebooks/notebook-spec";
+import {
+  emptyCustomHtmlSpec,
+  emptyNotebookSpec,
+  validateSpec,
+} from "@/services/notebooks/notebook-spec-draft";
 import { sanitizeSlugInput, slugifyNotebookName } from "@/services/notebooks-admin.service";
 import { Link } from "@/src/components/navigation/Link";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
+import { CustomHtmlComposer } from "./CustomHtmlComposer";
 import { DescribePagePanel } from "./DescribePagePanel";
 import { MetricQueryBuilder } from "./MetricQueryBuilder";
 import { SectionComposer } from "./SectionComposer";
@@ -139,6 +150,7 @@ export function NotebookBuilderEditorPage({
     if (!slugTouched && !isEditing) setPageSlug(slugifyNotebookName(next));
   };
 
+  const sandboxOrigin = notebookSandboxOrigin();
   const validation = useMemo(() => validateSpec(spec), [spec]);
   const canSave = name.trim().length > 0 && pageSlug.length > 0 && validation.valid;
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -283,32 +295,56 @@ export function NotebookBuilderEditorPage({
             </label>
           </div>
 
-          {/* Above the composer: the description box is the primary way in,
+          {isCustomHtmlNotebookSpec(spec) ? (
+            <div className="rounded-2xl border border-border bg-background p-5">
+              <CustomHtmlComposer
+                spec={spec}
+                onChange={setSpec}
+                sandboxOrigin={sandboxOrigin}
+                onSwitchToComposed={() => setSpec(emptyNotebookSpec())}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Above the composer: the description box is the primary way in,
               and the composer is where the proposal gets checked. */}
-          <DescribePagePanel
-            communitySlug={communitySlug}
-            hasExistingSections={spec.sections.length > 0}
-            onGenerated={(result) => {
-              setSpec(result.spec);
-              setProvenance(result.provenance);
-              setProposed({ warnings: result.warnings });
-            }}
-          />
+              <DescribePagePanel
+                communitySlug={communitySlug}
+                hasExistingSections={isComposedNotebookSpec(spec) && spec.sections.length > 0}
+                onGenerated={(result) => {
+                  setSpec(result.spec);
+                  setProvenance(result.provenance);
+                  setProposed({ warnings: result.warnings });
+                }}
+              />
 
-          {unverified ? (
-            <AiDraftNotice unsaved={Boolean(proposed)} warnings={proposed?.warnings ?? []} />
-          ) : null}
+              {unverified ? (
+                <AiDraftNotice unsaved={Boolean(proposed)} warnings={proposed?.warnings ?? []} />
+              ) : null}
 
-          <div className="rounded-2xl border border-border bg-background p-5">
-            <SectionComposer
-              spec={spec}
-              onChange={setSpec}
-              indicators={indicators}
-              metricCatalog={metricCatalog}
-              provenance={provenance}
-              onProvenanceChange={setProvenance}
-            />
-          </div>
+              <div className="rounded-2xl border border-border bg-background p-5">
+                <SectionComposer
+                  spec={spec}
+                  onChange={setSpec}
+                  indicators={indicators}
+                  metricCatalog={metricCatalog}
+                  provenance={provenance}
+                  onProvenanceChange={setProvenance}
+                />
+              </div>
+
+              {/* The blank canvas is a deliberate exit from the guided builder,
+              offered once and named for what it costs. */}
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-max text-muted-foreground"
+                onClick={() => setSpec(emptyCustomHtmlSpec())}
+              >
+                Advanced: write this page yourself in HTML
+              </Button>
+            </>
+          )}
 
           {metricCatalog ? (
             <MetricQueryBuilder communityId={communitySlug} catalog={metricCatalog} />
@@ -351,7 +387,19 @@ export function NotebookBuilderEditorPage({
               be a second implementation to keep in step, and the first time it
               drifted an author would publish something they had not seen. */}
           <div className="rounded-2xl border border-border bg-muted/30 p-4">
-            {validation.valid ? (
+            {validation.valid && isCustomHtmlNotebookSpec(spec) ? (
+              sandboxOrigin ? (
+                <NotebookSandboxFrame
+                  sandboxOrigin={sandboxOrigin}
+                  html={spec.html}
+                  title={spec.title ?? name}
+                />
+              ) : (
+                <p className="py-12 text-center text-sm text-muted-foreground">
+                  Custom pages are not available in this environment.
+                </p>
+              )
+            ) : validation.valid && isComposedNotebookSpec(spec) ? (
               <NotebookOverviewView overview={overview} spec={spec} data={previewData} />
             ) : (
               <p className="py-12 text-center text-sm text-muted-foreground">

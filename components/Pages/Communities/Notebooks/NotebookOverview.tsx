@@ -8,10 +8,10 @@ import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.t
 import { querySectionKey, seriesKey } from "@/services/notebooks/notebook-page-data.types";
 import type {
   NotebookBarsSection,
+  NotebookComposedSpec,
   NotebookKpisSection,
   NotebookQuerySection,
   NotebookSection,
-  NotebookSpec,
   NotebookTableSection,
   NotebookTextSection,
   NotebookTiersSection,
@@ -553,7 +553,7 @@ export function NotebookOverviewView({
   data,
 }: {
   overview: NotebookOverview;
-  spec: NotebookSpec;
+  spec: NotebookComposedSpec;
   /**
    * The v2 datasets — kernel windows and indicator series.
    *

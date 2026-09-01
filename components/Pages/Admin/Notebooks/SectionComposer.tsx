@@ -38,13 +38,13 @@ import {
   NOTEBOOK_TEXT_BODY_MAX,
   type NotebookBarsSection,
   type NotebookChartStyle,
+  type NotebookComposedSpec,
   type NotebookDateRange,
   type NotebookKernelRange,
   type NotebookKernelTableColumn,
   type NotebookKpisSection,
   type NotebookQuerySection,
   type NotebookSection,
-  type NotebookSpec,
   type NotebookTableSection,
   type NotebookTextSection,
   type NotebookTiersSection,
@@ -66,8 +66,8 @@ import { QueryFields } from "./QueryFields";
 import { SectionProvenance } from "./SectionProvenance";
 
 interface Props {
-  spec: NotebookSpec;
-  onChange: (next: NotebookSpec) => void;
+  spec: NotebookComposedSpec;
+  onChange: (next: NotebookComposedSpec) => void;
   /**
    * The indicator catalog, fetched server-side and passed in.
    *
@@ -269,10 +269,10 @@ function SectionFields({
 }: {
   section: NotebookSection;
   index: number;
-  spec: NotebookSpec;
+  spec: NotebookComposedSpec;
   indicators: readonly NotebookIndicatorOption[];
   metricCatalog?: NotebookMetricCatalog;
-  onChange: (next: NotebookSpec) => void;
+  onChange: (next: NotebookComposedSpec) => void;
 }) {
   const fieldId = `section-${index}`;
   const update = (next: NotebookSection) => onChange(updateSection(spec, index, next));

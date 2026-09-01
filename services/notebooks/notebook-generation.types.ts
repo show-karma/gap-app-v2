@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NotebookSpecSchema } from "./notebook-spec";
+import { NotebookComposedSpecSchema } from "./notebook-spec";
 
 /**
  * The NL → spec generator's contract, and the reviewer's evidence.
@@ -47,7 +47,12 @@ export const NotebookGenerationResultSchema = z.object({
   // Spec-valid or the call fails. A generator that could hand back half a spec
   // would make the builder the place hallucinations get repaired, which is
   // exactly backwards.
-  spec: NotebookSpecSchema,
+  //
+  // COMPOSED ONLY, and that is a safety statement rather than a convenience:
+  // this generator must never be able to return a custom-html document. Raw
+  // model-written markup belongs in the sandboxed tier, reached deliberately,
+  // never smuggled back through the entry that populates the trusted builder.
+  spec: NotebookComposedSpecSchema,
   provenance: z.array(NotebookProvenanceEntrySchema).max(60),
   /** Things the generator could not honour, said plainly rather than dropped. */
   warnings: z.array(z.string().trim().min(1).max(500)).max(20).default([]),

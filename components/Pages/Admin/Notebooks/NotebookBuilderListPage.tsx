@@ -13,6 +13,7 @@ import {
   useDeleteNotebook,
   useSetNotebookStatus,
 } from "@/hooks/notebooks/useNotebookBuilder";
+import { isComposedNotebookSpec } from "@/services/notebooks/notebook-spec";
 import type { AdminNotebookListItem } from "@/services/notebooks-admin.service";
 import { Link } from "@/src/components/navigation/Link";
 import type { Community } from "@/types/v2/community";
@@ -146,8 +147,17 @@ export function NotebookBuilderListPage({ community }: Props) {
                   {notebook.spec ? (
                     <>
                       {" · "}
-                      {notebook.spec.sections.length}{" "}
-                      {notebook.spec.sections.length === 1 ? "section" : "sections"}
+                      {isComposedNotebookSpec(notebook.spec) ? (
+                        <>
+                          {notebook.spec.sections.length}{" "}
+                          {notebook.spec.sections.length === 1 ? "section" : "sections"}
+                        </>
+                      ) : (
+                        // Worth saying in the list: an admin scanning their
+                        // pages should know which ones are hand-written before
+                        // they open one expecting the guided builder.
+                        "custom page"
+                      )}
                     </>
                   ) : null}
                   {notebook.updatedAt ? ` · updated ${notebook.updatedAt.slice(0, 10)}` : null}

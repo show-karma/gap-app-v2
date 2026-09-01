@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import type { NotebookOverview } from "@/services/notebook-overview.service";
 import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.types";
+import type { NotebookComposedSpec } from "@/services/notebooks/notebook-spec";
 import type { NotebookConfig } from "@/services/notebooks.service";
 import { Link } from "@/src/components/navigation/Link";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
@@ -8,9 +9,19 @@ import { NOTEBOOK_LIVE_RUNTIME_ENABLED } from "@/utilities/notebooks-gate";
 import { PAGES } from "@/utilities/pages";
 import { NotebookOverviewView } from "./NotebookOverview";
 
+/**
+ * A page this renderer can draw.
+ *
+ * Narrowed at the TYPE, not by a guard inside: the route branches on mode
+ * before it gets here, and saying so in the signature means a custom-html
+ * document cannot reach the composed renderer even if someone later forgets
+ * the branch.
+ */
+type ComposedNotebookConfig = NotebookConfig & { spec: NotebookComposedSpec };
+
 interface NotebookViewerProps {
   communityId: string;
-  notebook: NotebookConfig;
+  notebook: ComposedNotebookConfig;
   overview: NotebookOverview;
   /** v2 datasets. Absent for a v1-only render (and for the builder preview). */
   data?: NotebookPageData;

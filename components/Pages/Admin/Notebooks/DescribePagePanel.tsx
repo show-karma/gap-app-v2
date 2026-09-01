@@ -8,7 +8,7 @@ import {
   NOTEBOOK_GENERATION_PROMPT_MAX,
   type NotebookProvenanceEntry,
 } from "@/services/notebooks/notebook-generation.types";
-import type { NotebookSpec } from "@/services/notebooks/notebook-spec";
+import type { NotebookComposedSpec } from "@/services/notebooks/notebook-spec";
 import { generateNotebookSpec } from "@/services/notebooks-admin.service";
 
 /**
@@ -34,7 +34,7 @@ interface Props {
   /** Whether the composer already holds work that generating would replace. */
   hasExistingSections: boolean;
   onGenerated: (result: {
-    spec: NotebookSpec;
+    spec: NotebookComposedSpec;
     provenance: Array<NotebookProvenanceEntry | undefined>;
     /** What the generator could not honour. Surfaced, never swallowed. */
     warnings: string[];

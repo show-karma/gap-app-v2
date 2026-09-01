@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { NotebookCustomViewer } from "@/components/Pages/Communities/Notebooks/NotebookCustomViewer";
 import { NotebooksUnavailable } from "@/components/Pages/Communities/Notebooks/NotebooksUnavailable";
 import { NotebookViewer } from "@/components/Pages/Communities/Notebooks/NotebookViewer";
 import { getNotebookPageData } from "@/services/notebooks/notebook-page-data";
+import { notebookSandboxOrigin } from "@/services/notebooks/notebook-sandbox-origin";
+import { isCustomHtmlNotebookSpec } from "@/services/notebooks/notebook-spec";
 import { getPublishedNotebook, type NotebookConfig } from "@/services/notebooks.service";
 import { HttpError } from "@/utilities/api/errors";
 import { NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
@@ -103,6 +106,24 @@ export default async function NotebookPage({ params }: { params: Params }) {
     notFound();
   }
 
+  // THE MODE BRANCH, taken before any data is fetched.
+  //
+  // A custom page names no metrics, so there is nothing to load — and more
+  // importantly its document must never reach the tier-A renderer. Branching
+  // here rather than inside the viewer means the two paths do not share a
+  // component that could be handed the wrong kind of spec.
+  if (isCustomHtmlNotebookSpec(notebook.spec)) {
+    return (
+      <NotebookCustomViewer
+        communityId={communityId}
+        name={notebook.name}
+        description={notebook.description}
+        spec={notebook.spec}
+        sandboxOrigin={notebookSandboxOrigin()}
+      />
+    );
+  }
+
   // Served from the tagged data cache, so the request path costs a cache read
   // rather than an upstream round trip. A refresh that fails keeps the last
   // good payload rather than blanking a page that was working (FR5).
@@ -113,7 +134,7 @@ export default async function NotebookPage({ params }: { params: Params }) {
   return (
     <NotebookViewer
       communityId={communityId}
-      notebook={notebook}
+      notebook={{ ...notebook, spec: notebook.spec }}
       overview={data.overview}
       data={data}
     />

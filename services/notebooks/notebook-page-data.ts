@@ -11,9 +11,9 @@ import type { NotebookPageData } from "./notebook-page-data.types";
 import { seriesKey as buildSeriesKey, querySectionKey } from "./notebook-page-data.types";
 import {
   isKernelKpiMetric,
+  type NotebookComposedSpec,
   type NotebookKernelRange,
   type NotebookQuerySection,
-  type NotebookSpec,
   resolveNotebookDateRange,
   resolveNotebookKernelRange,
 } from "./notebook-spec";
@@ -42,7 +42,7 @@ export type { NotebookPageData } from "./notebook-page-data.types";
 export { seriesKey } from "./notebook-page-data.types";
 
 /** The distinct datasets a spec needs, so nothing is fetched twice. */
-function planRequests(spec: NotebookSpec): {
+function planRequests(spec: NotebookComposedSpec): {
   kernelRanges: Set<NotebookKernelRange>;
   needsTierRollup: boolean;
   series: Map<string, { indicatorId: string; preset: string }>;
@@ -110,7 +110,7 @@ async function loadOrNull<T>(
 
 export async function getNotebookPageData(
   communityId: string,
-  spec: NotebookSpec
+  spec: NotebookComposedSpec
 ): Promise<NotebookPageData> {
   const { kernelRanges, needsTierRollup, series, queries } = planRequests(spec);
 

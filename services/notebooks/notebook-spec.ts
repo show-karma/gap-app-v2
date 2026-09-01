@@ -549,12 +549,65 @@ export const NotebookSectionSchema = z.union([
  * `version` is pinned: a document from a future schema is rejected rather than
  * half-rendered by a build that does not know what its new fields mean.
  */
-export const NotebookSpecSchema = z
+/**
+ * The largest custom document a page may carry.
+ *
+ * Generous enough for a real hand-built page with inline styles, small enough
+ * that it stays one database row and one postMessage rather than becoming a
+ * streaming problem.
+ */
+export const NOTEBOOK_CUSTOM_HTML_MAX = 500_000;
+
+/**
+ * A page composed from the closed vocabulary. The default, and tier A.
+ *
+ * `mode` is OPTIONAL here and absence means composed, because every spec
+ * stored before this field existed is one of these. Requiring it would
+ * invalidate the entire back catalogue to record something already true of
+ * all of them.
+ */
+export const NotebookComposedSpecSchema = z
   .object({
     version: z.literal(NOTEBOOK_SPEC_VERSION),
+    mode: z.literal("composed").optional(),
     sections: z.array(NotebookSectionSchema).min(1).max(NOTEBOOK_SPEC_MAX_SECTIONS),
   })
   .strict();
+
+/**
+ * A page whose body is an author's own HTML. Tier B, opt-in, and untrusted.
+ *
+ * WHOLE-PAGE, NEVER A SECTION. An `html` section type would let untrusted
+ * markup sit inside an otherwise trusted composed page, making every page a
+ * mixed-trust surface and punching a per-section hole through the boundary
+ * tier A rests on. A notebook is either composed or custom; never half.
+ *
+ * The document here is DATA, never something this application executes. It
+ * reaches a reader only by being posted into a sandboxed frame on a separate
+ * origin, and it is never URL-addressable on any origin — there is no loose
+ * document anywhere for someone to open in a plain tab.
+ */
+export const NotebookCustomHtmlSpecSchema = z
+  .object({
+    version: z.literal(NOTEBOOK_SPEC_VERSION),
+    mode: z.literal("custom-html"),
+    html: z.string().min(1).max(NOTEBOOK_CUSTOM_HTML_MAX),
+    title: sectionTitleSchema.optional(),
+  })
+  .strict();
+
+/**
+ * One page spec, in one of its two modes.
+ *
+ * ADDITIVE, so `version` stays 1. A v1 reader meeting a custom-html spec
+ * REJECTS it — the composed schema is strict and sees an unknown `mode` with
+ * no `sections` — rather than misreading it as something else. Rejection is
+ * not a bump; only a shape a v1 reader would accept and interpret WRONGLY is.
+ */
+export const NotebookSpecSchema = z.union([
+  NotebookComposedSpecSchema,
+  NotebookCustomHtmlSpecSchema,
+]);
 
 export type NotebookKpisSection = z.infer<typeof NotebookKpisSectionSchema>;
 export type NotebookBarsSection = z.infer<typeof NotebookBarsSectionSchema>;
@@ -569,7 +622,25 @@ export type NotebookQuerySection = z.infer<typeof NotebookQuerySectionSchema>;
 export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
 export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;
 export type NotebookSection = z.infer<typeof NotebookSectionSchema>;
+export type NotebookComposedSpec = z.infer<typeof NotebookComposedSpecSchema>;
+export type NotebookCustomHtmlSpec = z.infer<typeof NotebookCustomHtmlSpecSchema>;
 export type NotebookSpec = z.infer<typeof NotebookSpecSchema>;
+
+/**
+ * Which kind of page this is.
+ *
+ * The render path branches on these ONCE, at the top. Everything downstream
+ * takes the narrower type, so the tier-A renderer cannot be handed a custom
+ * document even by mistake — the compiler refuses it, which is a stronger
+ * guarantee than a runtime check nobody remembers to write.
+ */
+export function isComposedNotebookSpec(spec: NotebookSpec): spec is NotebookComposedSpec {
+  return spec.mode !== "custom-html";
+}
+
+export function isCustomHtmlNotebookSpec(spec: NotebookSpec): spec is NotebookCustomHtmlSpec {
+  return spec.mode === "custom-html";
+}
 
 /** Whether a value is a spec this build can render. */
 export function isRenderableNotebookSpec(value: unknown): value is NotebookSpec {
