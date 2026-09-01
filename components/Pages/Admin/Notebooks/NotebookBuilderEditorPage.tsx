@@ -17,6 +17,7 @@ import {
 } from "@/hooks/notebooks/useNotebookBuilder";
 import type { NotebookOverview } from "@/services/notebook-overview.service";
 import type { NotebookIndicatorOption } from "@/services/notebooks/notebook-indicators.types";
+import type { NotebookMetricCatalog } from "@/services/notebooks/notebook-metric-registry.types";
 import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.types";
 import type { NotebookSpec } from "@/services/notebooks/notebook-spec";
 import { emptyNotebookSpec, validateSpec } from "@/services/notebooks/notebook-spec-draft";
@@ -24,6 +25,7 @@ import { sanitizeSlugInput, slugifyNotebookName } from "@/services/notebooks-adm
 import { Link } from "@/src/components/navigation/Link";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
+import { MetricQueryBuilder } from "./MetricQueryBuilder";
 import { SectionComposer } from "./SectionComposer";
 
 interface Props {
@@ -50,6 +52,14 @@ interface Props {
    * like the indicator is broken.
    */
   previewData?: NotebookPageData;
+  /**
+   * The community-scoped metric catalogue, for the query explorer.
+   *
+   * Absent when it could not be loaded — the explorer is then simply not
+   * shown, because a builder is not the place to explain an upstream outage
+   * and the page's actual job still works without it.
+   */
+  metricCatalog?: NotebookMetricCatalog;
 }
 
 export function NotebookBuilderEditorPage({
@@ -58,6 +68,7 @@ export function NotebookBuilderEditorPage({
   overview,
   indicators,
   previewData,
+  metricCatalog,
 }: Props) {
   const communitySlug = community.details?.slug || community.uid;
   const router = useRouter();
@@ -247,6 +258,10 @@ export function NotebookBuilderEditorPage({
           <div className="rounded-2xl border border-border bg-background p-5">
             <SectionComposer spec={spec} onChange={setSpec} indicators={indicators} />
           </div>
+
+          {metricCatalog ? (
+            <MetricQueryBuilder communityId={communitySlug} catalog={metricCatalog} />
+          ) : null}
 
           {validation.error ? (
             <p role="alert" className="text-sm text-destructive">
