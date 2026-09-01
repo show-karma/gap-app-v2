@@ -5,6 +5,7 @@ import { unstable_cache } from "next/cache";
 import { z } from "zod";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
+import { notebookIndexerBaseUrl } from "./notebook-config-api";
 import {
   type NotebookMetricCatalogDto,
   NotebookMetricCatalogDtoSchema,
@@ -77,6 +78,7 @@ async function fetchCatalog(communityId: string): Promise<NotebookMetricCatalogD
   return api.get(INDEXER.V2.NOTEBOOK_METRICS.CATALOG(communityId), {
     schema: NotebookMetricCatalogDtoSchema,
     isAuthorized: false,
+    baseURL: notebookIndexerBaseUrl(),
   });
 }
 
@@ -184,6 +186,7 @@ async function fetchQuery(
   return api.get(INDEXER.V2.NOTEBOOK_METRICS.QUERY(input.communityId, parameters.toString()), {
     schema: NotebookMetricQueryResultDtoSchema,
     isAuthorized: false,
+    baseURL: notebookIndexerBaseUrl(),
   });
 }
 

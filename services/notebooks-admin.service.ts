@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
-import { notebookConfigApiBaseUrl } from "./notebooks/notebook-config-api";
+import { notebookIndexerBaseUrl } from "./notebooks/notebook-config-api";
 import type { NotebookSpec } from "./notebooks/notebook-spec";
 import {
   type AdminNotebookConfig,
@@ -75,7 +75,7 @@ export async function getAdminNotebooks(communitySlug: string): Promise<AdminNot
   // Fetched unvalidated on purpose: the array is validated element by element
   // below, which a list-level schema cannot do.
   const data = await api.get<unknown>(INDEXER.V2.NOTEBOOK_CONFIGS.ADMIN_LIST(communitySlug), {
-    baseURL: notebookConfigApiBaseUrl(),
+    baseURL: notebookIndexerBaseUrl(),
   });
 
   if (!Array.isArray(data)) return [];
@@ -123,7 +123,7 @@ export async function getAdminNotebook(
 ): Promise<AdminNotebookConfig> {
   return api.get<AdminNotebookConfig>(INDEXER.V2.NOTEBOOK_CONFIGS.ADMIN_GET(communitySlug, slug), {
     schema: AdminNotebookConfigSchema,
-    baseURL: notebookConfigApiBaseUrl(),
+    baseURL: notebookIndexerBaseUrl(),
   });
 }
 
@@ -137,7 +137,7 @@ export async function createNotebook(
 ): Promise<NotebookConfig> {
   return api.post<NotebookConfig>(INDEXER.V2.NOTEBOOK_CONFIGS.CREATE(communitySlug), body, {
     schema: NotebookConfigSchema,
-    baseURL: notebookConfigApiBaseUrl(),
+    baseURL: notebookIndexerBaseUrl(),
   });
 }
 
@@ -148,7 +148,7 @@ export async function updateNotebook(
 ): Promise<NotebookConfig> {
   return api.put<NotebookConfig>(INDEXER.V2.NOTEBOOK_CONFIGS.UPDATE(communitySlug, slug), body, {
     schema: NotebookConfigSchema,
-    baseURL: notebookConfigApiBaseUrl(),
+    baseURL: notebookIndexerBaseUrl(),
   });
 }
 
@@ -170,7 +170,7 @@ export async function deleteNotebook(communitySlug: string, slug: string): Promi
     // 204 No Content: there is no body to validate, and demanding one would
     // turn a successful delete into a parse error.
     schema: z.undefined().optional(),
-    baseURL: notebookConfigApiBaseUrl(),
+    baseURL: notebookIndexerBaseUrl(),
   });
 }
 
