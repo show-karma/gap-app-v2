@@ -1,12 +1,15 @@
 /**
- * @file Tests for the grant-page comments wrapper.
+ * @file Tests for the grant-page comments entry point.
  *
- * Covers the tri-state gate, the no-linked-application case, and — most
- * importantly — that a real `PermissionProvider` is mounted with an
- * `applicationId`, without which `can(APPLICATION_COMMENT)` is `false` forever
- * on `app/project/**`.
+ * The surface is a discreet right-aligned trigger that opens the thread in a
+ * side sheet. Covers: the no-linked-application case (no affordance at all),
+ * lazy mounting (no RBAC provider or section before the sheet opens), the
+ * tri-state auth skeleton inside the sheet, and — most importantly — that a
+ * real `PermissionProvider` is mounted with an `applicationId`, without which
+ * `can(APPLICATION_COMMENT)` is `false` forever on `app/project/**`.
  */
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import React from "react";
 import { GrantCommentsPanel } from "@/components/Pages/Grants/MilestonesAndUpdates/GrantCommentsPanel";
 import type { Grant } from "@/types/v2/grant";
@@ -71,27 +74,14 @@ const GRANT: Grant = {
   details: { title: "ProPGF Batch 2", programId: "1013_42161" },
 };
 
+const openSheet = async () => {
+  await userEvent.click(screen.getByTestId("grant-comments-trigger"));
+};
+
 describe("GrantCommentsPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseProjectAuthorization.mockReturnValue({ isAuthorized: true, isLoading: false });
-  });
-
-  describe("tri-state gate", () => {
-    it("renders a skeleton while authorization is resolving", () => {
-      mockUseProjectAuthorization.mockReturnValue({ isAuthorized: false, isLoading: true });
-
-      render(<GrantCommentsPanel grant={GRANT} />);
-
-      expect(screen.getByTestId("grant-comments-skeleton")).toBeInTheDocument();
-      expect(screen.queryByTestId("permission-provider")).not.toBeInTheDocument();
-    });
-
-    it("resolves the community from data.communityUID when the top-level field is missing", () => {
-      render(<GrantCommentsPanel grant={{ ...GRANT, communityUID: undefined }} />);
-
-      expect(mockUseProjectAuthorization).toHaveBeenCalledWith("0xcommunity");
-    });
   });
 
   describe("no linked funding application", () => {
@@ -112,12 +102,32 @@ describe("GrantCommentsPanel", () => {
     });
   });
 
-  describe("PermissionProvider mount", () => {
-    it("supplies community, BASE programId and applicationId", async () => {
+  describe("closed state", () => {
+    it("renders only the discreet trigger — no RBAC provider, no section", () => {
       render(<GrantCommentsPanel grant={GRANT} />);
 
-      await waitFor(() => expect(screen.getByTestId("permission-provider")).toBeInTheDocument());
+      expect(screen.getByTestId("grant-comments-trigger")).toBeInTheDocument();
+      expect(screen.queryByTestId("permission-provider")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("grant-comments-section")).not.toBeInTheDocument();
+    });
+  });
 
+  describe("opened sheet", () => {
+    it("shows a skeleton inside the sheet while authorization is resolving", async () => {
+      mockUseProjectAuthorization.mockReturnValue({ isAuthorized: false, isLoading: true });
+
+      render(<GrantCommentsPanel grant={GRANT} />);
+      await openSheet();
+
+      expect(screen.getByTestId("grant-comments-skeleton")).toBeInTheDocument();
+      expect(screen.queryByTestId("permission-provider")).not.toBeInTheDocument();
+    });
+
+    it("supplies community, BASE programId and applicationId to the provider", async () => {
+      render(<GrantCommentsPanel grant={GRANT} />);
+      await openSheet();
+
+      await waitFor(() => expect(screen.getByTestId("permission-provider")).toBeInTheDocument());
       expect(mockPermissionProvider).toHaveBeenCalledWith({
         communityId: "0xcommunity",
         programId: "1013",
@@ -125,8 +135,15 @@ describe("GrantCommentsPanel", () => {
       });
     });
 
+    it("resolves the community from data.communityUID when the top-level field is missing", async () => {
+      render(<GrantCommentsPanel grant={{ ...GRANT, communityUID: undefined }} />);
+
+      expect(mockUseProjectAuthorization).toHaveBeenCalledWith("0xcommunity");
+    });
+
     it("falls back to details.programId when the top-level field is null", async () => {
       render(<GrantCommentsPanel grant={{ ...GRANT, programId: null }} />);
+      await openSheet();
 
       await waitFor(() =>
         expect(mockPermissionProvider).toHaveBeenCalledWith(
@@ -137,6 +154,7 @@ describe("GrantCommentsPanel", () => {
 
     it("hands the section the BASE programId and the application reference", async () => {
       render(<GrantCommentsPanel grant={GRANT} />);
+      await openSheet();
 
       await waitFor(() =>
         expect(mockGrantCommentsSection).toHaveBeenCalledWith(
@@ -151,9 +169,9 @@ describe("GrantCommentsPanel", () => {
 
     it("renders the section inside the provider", async () => {
       render(<GrantCommentsPanel grant={GRANT} />);
+      await openSheet();
 
       await waitFor(() => expect(screen.getByTestId("grant-comments-section")).toBeInTheDocument());
-
       expect(screen.getByTestId("permission-provider")).toContainElement(
         screen.getByTestId("grant-comments-section")
       );

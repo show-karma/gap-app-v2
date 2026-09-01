@@ -119,16 +119,16 @@ describe("MilestonesAndUpdates comments placement", () => {
     mockUseProjectAuthorization.mockReturnValue({ isAuthorized: true, isLoading: false });
   });
 
-  it("renders the comments section for a grant with no milestones and no updates", async () => {
+  it("renders the comments trigger for a grant with no milestones and no updates", async () => {
     render(<MilestonesAndUpdates />);
 
-    await waitFor(() => expect(screen.getByTestId("grant-comments-section")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("grant-comments-trigger")).toBeInTheDocument());
   });
 
-  it("still renders the empty-milestone state alongside the comments", async () => {
+  it("still renders the empty-milestone state alongside the comments trigger", async () => {
     render(<MilestonesAndUpdates />);
 
-    await waitFor(() => expect(screen.getByTestId("grant-comments-section")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("grant-comments-trigger")).toBeInTheDocument());
     expect(screen.queryByTestId("milestones-list")).not.toBeInTheDocument();
     expect(screen.getByText(MESSAGES.PROJECT.EMPTY.GRANTS.UPDATES)).toBeInTheDocument();
   });
@@ -142,7 +142,7 @@ describe("MilestonesAndUpdates comments placement", () => {
     render(<MilestonesAndUpdates />);
 
     await waitFor(() => expect(screen.getByTestId("milestones-list")).toBeInTheDocument());
-    expect(screen.getByTestId("grant-comments-section")).toBeInTheDocument();
+    expect(screen.getByTestId("grant-comments-trigger")).toBeInTheDocument();
   });
 
   it("leaves the empty state untouched when the grant has no linked application", () => {
@@ -150,7 +150,7 @@ describe("MilestonesAndUpdates comments placement", () => {
 
     render(<MilestonesAndUpdates />);
 
-    expect(screen.queryByTestId("grant-comments-section")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("grant-comments-trigger")).not.toBeInTheDocument();
     expect(screen.queryByTestId("permission-provider")).not.toBeInTheDocument();
     expect(screen.getByText(MESSAGES.PROJECT.EMPTY.GRANTS.UPDATES)).toBeInTheDocument();
   });
@@ -160,7 +160,7 @@ describe("MilestonesAndUpdates comments placement", () => {
 
     render(<MilestonesAndUpdates />);
 
-    expect(screen.queryByTestId("grant-comments-section")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("grant-comments-trigger")).not.toBeInTheDocument();
     expect(screen.queryByTestId("permission-provider")).not.toBeInTheDocument();
   });
 });
