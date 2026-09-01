@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { RESEARCH_FAQS } from "@/app/knowledge/nonprofit-due-diligence/content";
-import NonprofitDueDiligencePage from "@/app/knowledge/nonprofit-due-diligence/page";
+import { RESEARCH_FAQS } from "@/app/t/[tenant]/knowledge/nonprofit-due-diligence/content";
+import NonprofitDueDiligencePage from "@/app/t/[tenant]/knowledge/nonprofit-due-diligence/page";
 
 describe("RESEARCH_FAQS content", () => {
   it("has a question and a non-empty answer for every entry", () => {

@@ -45,14 +45,14 @@ beforeEach(() => {
 
 describe("Redirect-only pages", () => {
   it("/admin/communities redirects to /admin", async () => {
-    const { default: Page } = await import("@/app/admin/communities/page");
+    const { default: Page } = await import("@/app/t/[tenant]/admin/communities/page");
     expect(() => Page()).toThrow(/NEXT_REDIRECT/);
     expect(redirectMock).toHaveBeenCalledWith("/admin");
   });
 
   it("/(whitelabel)/applications redirects to /dashboard", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/applications/page"
+      "@/app/t/[tenant]/community/[communityId]/(whitelabel)/applications/page"
     );
     await expect(Page()).rejects.toThrow(/NEXT_REDIRECT/);
     expect(redirectMock).toHaveBeenCalledWith("/dashboard");
@@ -60,7 +60,7 @@ describe("Redirect-only pages", () => {
 
   it("/(whitelabel)/programs redirects to community funding-opportunities", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/programs/page"
+      "@/app/t/[tenant]/community/[communityId]/(whitelabel)/programs/page"
     );
     await expect(Page({ params: Promise.resolve({ communityId: "abc" }) })).rejects.toThrow(
       /NEXT_REDIRECT/
@@ -70,7 +70,7 @@ describe("Redirect-only pages", () => {
 
   it("/manage/funding-platform/[programId] redirects to question-builder", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/manage/funding-platform/[programId]/page"
+      "@/app/t/[tenant]/community/[communityId]/manage/funding-platform/[programId]/page"
     );
     await expect(
       Page({ params: Promise.resolve({ communityId: "c1", programId: "p1" }) })
@@ -83,7 +83,7 @@ describe("Redirect-only pages", () => {
 
   it("/manage/funding-platform/[programId]/milestones redirects", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/manage/funding-platform/[programId]/milestones/page"
+      "@/app/t/[tenant]/community/[communityId]/manage/funding-platform/[programId]/milestones/page"
     );
     await expect(Page({ params: Promise.resolve({ communityId: "c1" }) })).rejects.toThrow(
       /NEXT_REDIRECT/
@@ -92,7 +92,9 @@ describe("Redirect-only pages", () => {
   });
 
   it("/manage/payouts permanent-redirects to control-center", async () => {
-    const { default: Page } = await import("@/app/community/[communityId]/manage/payouts/page");
+    const { default: Page } = await import(
+      "@/app/t/[tenant]/community/[communityId]/manage/payouts/page"
+    );
     await expect(
       Page({
         params: Promise.resolve({ communityId: "c1" }),
@@ -107,7 +109,7 @@ describe("Redirect-only pages", () => {
 
   it("/(with-header)/browse-applications/[referenceNumber] permanent-redirects", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(with-header)/browse-applications/[referenceNumber]/page"
+      "@/app/t/[tenant]/community/[communityId]/(with-header)/browse-applications/[referenceNumber]/page"
     );
     await expect(
       Page({ params: Promise.resolve({ communityId: "c1", referenceNumber: "AB123" }) })

@@ -155,7 +155,7 @@ describe("PAGES constants", () => {
     });
 
     it("ARTICLE resolves every article directory to its own route", () => {
-      const dir = path.resolve(__dirname, "../../app/knowledge");
+      const dir = path.resolve(__dirname, "../../app/t/[tenant]/knowledge");
       const slugs = readdirSync(dir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name);
@@ -168,7 +168,7 @@ describe("PAGES constants", () => {
     });
 
     it("is the only source of knowledge routes in the article pages", () => {
-      const dir = path.resolve(__dirname, "../../app/knowledge");
+      const dir = path.resolve(__dirname, "../../app/t/[tenant]/knowledge");
       const pages = readdirSync(dir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => path.join(dir, entry.name, "page.tsx"))
@@ -177,7 +177,7 @@ describe("PAGES constants", () => {
       // A quote immediately before the path catches a hardcoded route in any
       // string form — "/knowledge", '/knowledge' and `/knowledge`. Asserting on
       // the bare substring would not work: every article imports
-      // `@/app/knowledge/articleDates`, so the path appears legitimately.
+      // `@/app/t/[tenant]/knowledge/articleDates`, so the path appears legitimately.
       const hardcodedRoute = /["'`]\/knowledge/;
 
       for (const page of pages) {

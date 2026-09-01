@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 const PUBLIC_DIR = path.resolve(__dirname, "../../public");
-const LAYOUT_PATH = path.resolve(__dirname, "../../app/layout.tsx");
+const LAYOUT_PATH = path.resolve(__dirname, "../../app/t/[tenant]/layout.tsx");
 
 describe("Font optimization", () => {
   describe("WOFF2 variable font", () => {

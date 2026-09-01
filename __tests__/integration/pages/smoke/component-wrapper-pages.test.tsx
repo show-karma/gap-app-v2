@@ -113,10 +113,13 @@ vi.mock("@/components/Pages/Communities/Impact/ProjectDiscovery", () => ({
   ProjectDiscovery: () => <div data-testid="project-discovery">ProjectDiscovery</div>,
 }));
 
-vi.mock("@/app/community/[communityId]/(whitelabel)/claim-funds/ClaimFundsClient", () => ({
-  __esModule: true,
-  default: () => <div data-testid="claim-funds-client">ClaimFundsClient</div>,
-}));
+vi.mock(
+  "@/app/t/[tenant]/community/[communityId]/(whitelabel)/claim-funds/ClaimFundsClient",
+  () => ({
+    __esModule: true,
+    default: () => <div data-testid="claim-funds-client">ClaimFundsClient</div>,
+  })
+);
 
 const renderPage = async (importer: () => Promise<{ default: React.ComponentType }>) => {
   const mod = await importer();
@@ -130,64 +133,64 @@ beforeEach(() => {
 
 describe("Admin pages", () => {
   it("/super-admin renders SuperAdminPage", async () => {
-    await renderPage(() => import("@/app/super-admin/page"));
+    await renderPage(() => import("@/app/t/[tenant]/super-admin/page"));
     expect(screen.getByTestId("super-admin-page")).toBeInTheDocument();
   });
 
   it("/admin renders CommunitiesToAdmin", async () => {
-    await renderPage(() => import("@/app/admin/page"));
+    await renderPage(() => import("@/app/t/[tenant]/admin/page"));
     expect(screen.getByTestId("communities-to-admin-page")).toBeInTheDocument();
   });
 
   it("/admin/projects renders AllProjects", async () => {
-    await renderPage(() => import("@/app/admin/projects/page"));
+    await renderPage(() => import("@/app/t/[tenant]/admin/projects/page"));
     expect(screen.getByTestId("all-projects")).toBeInTheDocument();
   });
 
   it("/admin/communities/stats renders CommunityStats", async () => {
-    await renderPage(() => import("@/app/admin/communities/stats/page"));
+    await renderPage(() => import("@/app/t/[tenant]/admin/communities/stats/page"));
     expect(screen.getByTestId("community-stats")).toBeInTheDocument();
   });
 
   it("/admin/faucet renders FaucetAdminDashboard", async () => {
-    await renderPage(() => import("@/app/admin/faucet/page"));
+    await renderPage(() => import("@/app/t/[tenant]/admin/faucet/page"));
     expect(screen.getByTestId("faucet-admin-dashboard")).toBeInTheDocument();
   });
 
   it("/admin/sumup renders SumupAdmin", async () => {
-    await renderPage(() => import("@/app/admin/sumup/page"));
+    await renderPage(() => import("@/app/t/[tenant]/admin/sumup/page"));
     expect(screen.getByTestId("sumup-admin")).toBeInTheDocument();
   });
 });
 
 describe("Top-level component-wrapper pages", () => {
   it("/dashboard renders the dashboard overview", async () => {
-    await renderPage(() => import("@/app/dashboard/page"));
+    await renderPage(() => import("@/app/t/[tenant]/dashboard/page"));
     expect(screen.getByTestId("dashboard-component")).toBeInTheDocument();
   });
 
   it("/communities renders CommunitiesPage", async () => {
-    await renderPage(() => import("@/app/communities/page"));
+    await renderPage(() => import("@/app/t/[tenant]/communities/page"));
     expect(screen.getByTestId("communities-page")).toBeInTheDocument();
   });
 
   it("/funding-map/add-program renders AddProgramWrapper", async () => {
-    await renderPage(() => import("@/app/funding-map/add-program/page"));
+    await renderPage(() => import("@/app/t/[tenant]/funding-map/add-program/page"));
     expect(screen.getByTestId("add-program-wrapper")).toBeInTheDocument();
   });
 
   it("/funding-map/manage-programs renders ManageProgramsWrapper", async () => {
-    await renderPage(() => import("@/app/funding-map/manage-programs/page"));
+    await renderPage(() => import("@/app/t/[tenant]/funding-map/manage-programs/page"));
     expect(screen.getByTestId("manage-programs-wrapper")).toBeInTheDocument();
   });
 
   it("/safe/disburse renders DisbursementForm", async () => {
-    await renderPage(() => import("@/app/safe/disburse/page"));
+    await renderPage(() => import("@/app/t/[tenant]/safe/disburse/page"));
     expect(screen.getByTestId("disbursement-form")).toBeInTheDocument();
   });
 
   it("/old-home renders all sections", async () => {
-    await renderPage(() => import("@/app/old-home/page"));
+    await renderPage(() => import("@/app/t/[tenant]/old-home/page"));
     expect(screen.getByTestId("home-presentation")).toBeInTheDocument();
     expect(screen.getByTestId("home-communities")).toBeInTheDocument();
     expect(screen.getByTestId("home-what-is-solving")).toBeInTheDocument();
@@ -196,47 +199,60 @@ describe("Top-level component-wrapper pages", () => {
 
 describe("Community manage component-wrapper pages", () => {
   it("/manage/control-center renders ControlCenterPage", async () => {
-    await renderPage(() => import("@/app/community/[communityId]/manage/control-center/page"));
+    await renderPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/control-center/page")
+    );
     expect(screen.getByTestId("control-center-page")).toBeInTheDocument();
   });
 
   it("/manage/edit-categories renders EditCategoriesPage", async () => {
-    await renderPage(() => import("@/app/community/[communityId]/manage/edit-categories/page"));
+    await renderPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/edit-categories/page")
+    );
     expect(screen.getByTestId("edit-categories-page")).toBeInTheDocument();
   });
 
   it("/manage/edit-projects renders EditProjectsPage", async () => {
-    await renderPage(() => import("@/app/community/[communityId]/manage/edit-projects/page"));
+    await renderPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/edit-projects/page")
+    );
     expect(screen.getByTestId("edit-projects-page")).toBeInTheDocument();
   });
 
   it("/manage/impact renders ImpactPage", async () => {
-    await renderPage(() => import("@/app/community/[communityId]/manage/impact/page"));
+    await renderPage(() => import("@/app/t/[tenant]/community/[communityId]/manage/impact/page"));
     expect(screen.getByTestId("manage-impact-page")).toBeInTheDocument();
   });
 
   it("/manage/manage-indicators renders ManageIndicatorsPage", async () => {
-    await renderPage(() => import("@/app/community/[communityId]/manage/manage-indicators/page"));
+    await renderPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/manage/manage-indicators/page")
+    );
     expect(screen.getByTestId("manage-indicators-page")).toBeInTheDocument();
   });
 });
 
 describe("Community with-header component-wrapper pages", () => {
   it("/(with-header)/impact renders CommunityImpactCharts", async () => {
-    await renderPage(() => import("@/app/community/[communityId]/(with-header)/impact/page"));
+    await renderPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/(with-header)/impact/page")
+    );
     expect(screen.getByTestId("community-impact-charts")).toBeInTheDocument();
   });
 
   it("/(with-header)/impact/project-discovery renders ProjectDiscovery", async () => {
     await renderPage(
-      () => import("@/app/community/[communityId]/(with-header)/impact/project-discovery/page")
+      () =>
+        import(
+          "@/app/t/[tenant]/community/[communityId]/(with-header)/impact/project-discovery/page"
+        )
     );
     expect(screen.getByTestId("project-discovery")).toBeInTheDocument();
   });
 
   it("/donate/[programId]/checkout renders DonationCheckout", async () => {
     await renderPage(
-      () => import("@/app/community/[communityId]/donate/[programId]/checkout/page")
+      () => import("@/app/t/[tenant]/community/[communityId]/donate/[programId]/checkout/page")
     );
     expect(screen.getByTestId("donation-checkout")).toBeInTheDocument();
   });
@@ -244,7 +260,9 @@ describe("Community with-header component-wrapper pages", () => {
 
 describe("Whitelabel component-wrapper pages", () => {
   it("/(whitelabel)/claim-funds renders ClaimFundsClient", async () => {
-    await renderPage(() => import("@/app/community/[communityId]/(whitelabel)/claim-funds/page"));
+    await renderPage(
+      () => import("@/app/t/[tenant]/community/[communityId]/(whitelabel)/claim-funds/page")
+    );
     expect(screen.getByTestId("claim-funds-client")).toBeInTheDocument();
   });
 });

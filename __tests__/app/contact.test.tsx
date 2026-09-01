@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import ContactPage, { metadata } from "@/app/contact/page";
+import ContactPage, { metadata } from "@/app/t/[tenant]/contact/page";
 
 vi.mock("@/utilities/whitelabel-server", () => ({
   getWhitelabelContext: vi.fn().mockResolvedValue({ isWhitelabel: false }),

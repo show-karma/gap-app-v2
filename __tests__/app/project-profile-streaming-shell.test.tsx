@@ -148,8 +148,10 @@ async function renderProfileStream(): Promise<{ shellHtml: string; fullHtml: str
 
   const params = Promise.resolve({ projectId: "test-project" });
 
-  const { default: ProfileLayout } = await import("@/app/project/[projectId]/(profile)/layout");
-  const { default: ProjectLayout } = await import("@/app/project/[projectId]/layout");
+  const { default: ProfileLayout } = await import(
+    "@/app/t/[tenant]/project/[projectId]/(profile)/layout"
+  );
+  const { default: ProjectLayout } = await import("@/app/t/[tenant]/project/[projectId]/layout");
 
   const profileTree = await ProfileLayout({
     children: <SlowTabBody />,

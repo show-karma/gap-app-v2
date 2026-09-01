@@ -1,6 +1,6 @@
 import { isValidElement, type ReactElement, Suspense } from "react";
 import { createMockProject } from "@/__tests__/factories/project.factory";
-import Projects from "@/app/projects/page";
+import Projects from "@/app/t/[tenant]/projects/page";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
 
