@@ -1,18 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   NOTEBOOK_SANDBOX_ATTRIBUTE,
-  NOTEBOOK_SANDBOX_MESSAGE,
+  NOTEBOOK_SANDBOX_BOOTSTRAP,
+  NOTEBOOK_SANDBOX_DOCUMENT,
+  NOTEBOOK_SANDBOX_READY,
   NotebookSandboxFrame,
 } from "@/components/Pages/Communities/Notebooks/NotebookSandboxFrame";
 
 const ORIGIN = "https://sandbox.example";
-
-function renderFrame(html = "<h1>hello</h1>") {
-  return render(
-    <NotebookSandboxFrame sandboxOrigin={ORIGIN} html={html} title="Custom page preview" />
-  );
-}
 
 /**
  * The containment tests for the one place author HTML is rendered.
@@ -20,10 +16,59 @@ function renderFrame(html = "<h1>hello</h1>") {
  * These are not style assertions. `allow-scripts` together with
  * `allow-same-origin` silently defeats the sandbox — the frame regains a real
  * origin and can script its way back out — and the edit that does it is one
- * word in a diff that looks like it is loosening nothing. So the pair is
- * asserted directly, from several angles, and the test is written to fail
- * loudly rather than to describe current behaviour.
+ * word in a diff that looks like it is loosening nothing.
+ *
+ * The delivery tests encode a correction worth remembering. The first version
+ * posted the document with an exact target origin, which READS as the careful
+ * choice and is in fact broken: a frame without `allow-same-origin` has an
+ * OPAQUE origin, so the browser discards a message targeted at anything else.
+ * Exact-origin targeting and the sandbox we require cannot coexist. The
+ * resolution is a private MessagePort, and the invariant the tests now pin is
+ * the one that survives: CONTENT never goes to `"*"` — the single wildcard
+ * carries a port and nothing else.
  */
+
+/** Stands in for the shell, which jsdom does not run. */
+function stubFrameWindow() {
+  const postMessage = vi.fn();
+  Object.defineProperty(HTMLIFrameElement.prototype, "contentWindow", {
+    configurable: true,
+    get() {
+      // Identity must be stable per element: the component compares
+      // `event.source` against it.
+      if (!this.__stubWindow) this.__stubWindow = { postMessage };
+      return this.__stubWindow;
+    },
+  });
+  return postMessage;
+}
+
+function renderFrame(html = "<h1>hello</h1>") {
+  const result = render(
+    <NotebookSandboxFrame sandboxOrigin={ORIGIN} html={html} title="Custom page preview" />
+  );
+  // Scoped to THIS render's container: a test that mounts two frames would
+  // otherwise trip over the shared title.
+  const iframe = result.container.querySelector("iframe") as HTMLIFrameElement;
+  const nonce = decodeURIComponent(new URL(iframe.src).hash.replace("#nonce=", ""));
+  return { ...result, iframe, nonce };
+}
+
+/** The shell announcing itself, with everything overridable for the negatives. */
+function announce(
+  iframe: HTMLIFrameElement,
+  nonce: string,
+  overrides: { source?: unknown; origin?: string; nonce?: string } = {}
+) {
+  const event = new MessageEvent("message", {
+    origin: overrides.origin ?? "null",
+    data: { type: NOTEBOOK_SANDBOX_READY, nonce: overrides.nonce ?? nonce },
+  });
+  Object.defineProperty(event, "source", {
+    value: "source" in overrides ? overrides.source : iframe.contentWindow,
+  });
+  window.dispatchEvent(event);
+}
 
 describe("NotebookSandboxFrame containment", () => {
   it("should_sandbox_the_frame_with_scripts_only", () => {
@@ -32,8 +77,8 @@ describe("NotebookSandboxFrame containment", () => {
     expect(screen.getByTitle("Custom page preview")).toHaveAttribute("sandbox", "allow-scripts");
   });
 
-  // THE ONE THAT MATTERS. Stated as its own test so a failure names the
-  // actual danger rather than an attribute mismatch.
+  // THE ONE THAT MATTERS. Its own test so a failure names the actual danger
+  // rather than reporting an attribute mismatch.
   it("should_never_grant_allow_same_origin_which_would_defeat_the_sandbox", () => {
     renderFrame();
 
@@ -51,83 +96,117 @@ describe("NotebookSandboxFrame containment", () => {
     expect(NOTEBOOK_SANDBOX_ATTRIBUTE.split(/\s+/)).not.toContain(token);
   });
 
-  // Guards the constant itself, so a change made anywhere still trips.
   it("should_keep_the_sandbox_token_list_to_exactly_allow_scripts", () => {
     expect(NOTEBOOK_SANDBOX_ATTRIBUTE).toBe("allow-scripts");
   });
 
   it("should_load_the_shell_from_the_sandbox_origin_never_our_own", () => {
-    renderFrame();
+    const { iframe } = renderFrame();
 
-    const src = screen.getByTitle("Custom page preview").getAttribute("src") ?? "";
-    expect(src.startsWith(`${ORIGIN}/`)).toBe(true);
+    expect(iframe.src.startsWith(`${ORIGIN}/`)).toBe(true);
   });
 
-  // A custom page has no business with the camera, the microphone or payments.
   it("should_request_no_permissions_and_leak_no_referrer", () => {
-    renderFrame();
+    const { iframe } = renderFrame();
 
-    const frame = screen.getByTitle("Custom page preview");
-    expect(frame).not.toHaveAttribute("allow");
-    expect(frame).toHaveAttribute("referrerPolicy", "no-referrer");
+    expect(iframe).not.toHaveAttribute("allow");
+    expect(iframe).toHaveAttribute("referrerPolicy", "no-referrer");
+  });
+
+  // A fragment never reaches the server, so the nonce stays between us and the
+  // shell rather than turning up in an access log.
+  it("should_carry_an_unguessable_per_instance_nonce_in_the_fragment", () => {
+    const first = renderFrame().nonce;
+    const second = renderFrame().nonce;
+
+    expect(first).not.toBe(second);
+    expect(first.length).toBeGreaterThanOrEqual(16);
   });
 });
 
-/**
- * The document is handed over, never linked to.
- *
- * A draft has not been saved, so review has to happen before there is anything
- * to link to — otherwise the review is theatre performed after the fact.
- */
 describe("NotebookSandboxFrame delivery", () => {
-  function readyShell() {
-    const postMessage = vi.fn();
-    // jsdom does not run the shell, so stand in for it: the component must
-    // wait to be told the frame is listening.
-    Object.defineProperty(HTMLIFrameElement.prototype, "contentWindow", {
-      configurable: true,
-      get: () => ({ postMessage }),
+  let framePost: ReturnType<typeof stubFrameWindow>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    framePost = stubFrameWindow();
+  });
+
+  /** Every payload the parent sent to the frame window, with its target. */
+  const windowSends = () =>
+    framePost.mock.calls.map(([data, target]) => ({ data, target }) as { data: any; target: any });
+
+  it("should_send_nothing_before_the_shell_announces_itself", () => {
+    renderFrame();
+
+    expect(framePost).not.toHaveBeenCalled();
+  });
+
+  it("should_hand_over_a_port_once_the_shell_announces_itself", async () => {
+    const { iframe, nonce } = renderFrame();
+
+    announce(iframe, nonce);
+
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalledTimes(1));
+    const [{ data, target }] = windowSends();
+    expect(data.type).toBe(NOTEBOOK_SANDBOX_BOOTSTRAP);
+    expect(target).toBe("*");
+    expect(framePost.mock.calls[0][2]).toHaveLength(1);
+  });
+
+  /**
+   * THE INVARIANT, stated positively and negatively.
+   *
+   * The wildcard is permitted exactly once and only because an opaque origin
+   * cannot be named. What it carries must never be the author's document.
+   */
+  it("should_never_send_the_document_through_a_wildcard_window_message", async () => {
+    const { iframe, nonce } = renderFrame("<p>secret</p>");
+
+    announce(iframe, nonce);
+
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+    for (const { data, target } of windowSends()) {
+      const serialised = JSON.stringify(data ?? {});
+      if (target === "*") {
+        expect(serialised).not.toContain("secret");
+        expect(serialised).not.toContain("html");
+      }
+    }
+  });
+
+  it("should_send_the_document_over_the_private_port_instead", async () => {
+    const { iframe, nonce } = renderFrame("<p>secret</p>");
+
+    announce(iframe, nonce);
+
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+    const port = framePost.mock.calls[0][2][0] as MessagePort;
+    const received: unknown[] = [];
+    port.onmessage = (event) => received.push(event.data);
+    port.start();
+
+    await vi.waitFor(() => expect(received).toHaveLength(1));
+    expect(received[0]).toEqual({ type: NOTEBOOK_SANDBOX_DOCUMENT, html: "<p>secret</p>" });
+  });
+
+  describe("announcements it must refuse", () => {
+    it.each([
+      // Not our frame's window: any page can post to us claiming anything.
+      ["a different window", { source: { postMessage: vi.fn() } }],
+      // A real origin is not a sandboxed frame, whatever it says.
+      ["a real origin", { origin: ORIGIN }],
+      ["our own origin", { origin: "http://localhost" }],
+      // Another sandboxed frame on the page shares the opaque origin, so the
+      // nonce is what distinguishes ours from theirs.
+      ["the wrong nonce", { nonce: "not-the-nonce" }],
+    ])("should_ignore_an_announcement_from_%s", async (_label, overrides) => {
+      const { iframe, nonce } = renderFrame();
+
+      announce(iframe, nonce, overrides);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(framePost).not.toHaveBeenCalled();
     });
-    return postMessage;
-  }
-
-  it("should_not_post_the_document_before_the_shell_says_it_is_listening", () => {
-    const postMessage = readyShell();
-
-    renderFrame();
-
-    expect(postMessage).not.toHaveBeenCalled();
-  });
-
-  it("should_post_the_document_targeted_at_the_sandbox_origin_never_a_wildcard", async () => {
-    const postMessage = readyShell();
-    renderFrame("<p>body</p>");
-
-    window.dispatchEvent(
-      new MessageEvent("message", { origin: ORIGIN, data: `${NOTEBOOK_SANDBOX_MESSAGE}:ready` })
-    );
-
-    await vi.waitFor(() => expect(postMessage).toHaveBeenCalledTimes(1));
-    expect(postMessage).toHaveBeenCalledWith(
-      { type: NOTEBOOK_SANDBOX_MESSAGE, html: "<p>body</p>" },
-      // Explicit target: a wildcard would hand the document to whatever
-      // happened to be framed if the src were ever wrong.
-      ORIGIN
-    );
-  });
-
-  it("should_ignore_a_ready_message_from_any_other_origin", async () => {
-    const postMessage = readyShell();
-    renderFrame();
-
-    window.dispatchEvent(
-      new MessageEvent("message", {
-        origin: "https://evil.example",
-        data: `${NOTEBOOK_SANDBOX_MESSAGE}:ready`,
-      })
-    );
-
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(postMessage).not.toHaveBeenCalled();
   });
 });
