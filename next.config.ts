@@ -5,8 +5,38 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
-const FRAME_SRC =
-  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com";
+const FRAME_SOURCES = [
+  "'self'",
+  "https://auth.privy.io",
+  "https://*.privy.io",
+  "https://privy.karmahq.xyz",
+  "https://privy.karmahq.org",
+  "https://paragraph.com",
+  "https://*.paragraph.com",
+  "https://js.stripe.com",
+  "https://crypto-js.stripe.com",
+];
+
+/**
+ * The notebook custom-page sandbox, when one is configured.
+ *
+ * REQUIRED FOR TIER B TO RENDER ANYWHERE, production included. The frame is
+ * served from a separate origin on purpose, and `frame-src` is what decides
+ * whether the browser will fetch it at all — without this entry it makes no
+ * request whatsoever and the frame is simply broken, with nothing in the
+ * network log to explain why.
+ *
+ * ENV-DRIVEN RATHER THAN HARD-CODED, because each environment has its own
+ * sandbox origin and a literal here would either be wrong everywhere but one
+ * or grow a list of every environment's host. Unset adds nothing, which keeps
+ * the policy exactly as strict as it is today wherever the tier is off — the
+ * same fail-closed rule the renderer follows.
+ */
+const NOTEBOOK_SANDBOX_ORIGIN = process.env.NEXT_PUBLIC_NOTEBOOK_SANDBOX_ORIGIN?.trim();
+
+const FRAME_SRC = `frame-src ${[...FRAME_SOURCES, NOTEBOOK_SANDBOX_ORIGIN]
+  .filter(Boolean)
+  .join(" ")}`;
 
 const securityHeaders = [
   {
