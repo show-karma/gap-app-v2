@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 /**
  * The only place author-written HTML is ever rendered.
@@ -94,16 +94,62 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
   // cannot open this one's channel.
   const nonce = useMemo(mintNonce, []);
 
-  useEffect(() => {
+  /**
+   * How far the handshake has got, readable from the DOM.
+   *
+   * Deliberately a data attribute rather than logging: this file may not use
+   * console, a log line is gone the moment someone reloads, and "the frame is
+   * blank and nothing is in the console" is exactly the failure that needs a
+   * durable answer. Inspecting the element now says which step stalled — and
+   * `rejected` names WHY a message was refused, which is the thing that is
+   * otherwise invisible because refusing quietly is the correct behaviour.
+   */
+  const [state, setState] = useState<"waiting" | "connected">("waiting");
+  const [rejected, setRejected] = useState<string | null>(null);
+  // One bootstrap per LOAD. A shell that retries its announcement — the
+  // natural fix for a lost first one — would otherwise open a fresh channel
+  // each time, and the document would go over a port the shell had already
+  // discarded. Reset on load, so a genuine reload still reconnects.
+  const bootstrapped = useRef(false);
+
+  const handleLoad = useCallback(() => {
+    bootstrapped.current = false;
+    setState("waiting");
+  }, []);
+
+  // useLayoutEffect, not useEffect: this runs synchronously at commit, before
+  // paint, which is the earliest React lets us listen. The shell announces
+  // itself as soon as it executes, and on a local origin that can be very
+  // soon — a listener attached a frame later is a listener that missed it.
+  useLayoutEffect(() => {
     const onMessage = (event: MessageEvent) => {
       // THREE CHECKS, none redundant. `source` proves it came from the window
       // we created; the opaque origin proves that window is genuinely
       // sandboxed; the nonce proves it is this instance's shell rather than
       // another sandboxed frame on the same page.
-      if (event.source !== frame.current?.contentWindow) return;
-      if (event.origin !== OPAQUE_ORIGIN) return;
       const data = event.data as { type?: string; nonce?: string } | null;
-      if (data?.type !== NOTEBOOK_SANDBOX_READY || data.nonce !== nonce) return;
+      // Only diagnose messages that CLAIM to be ours. Every page receives
+      // unrelated chatter, and recording that as a rejection would bury the
+      // one refusal anybody cares about.
+      const claimsToBeOurs = data?.type === NOTEBOOK_SANDBOX_READY;
+
+      if (event.source !== frame.current?.contentWindow) {
+        if (claimsToBeOurs) setRejected("source");
+        return;
+      }
+      if (event.origin !== OPAQUE_ORIGIN) {
+        if (claimsToBeOurs) setRejected("origin");
+        return;
+      }
+      if (!claimsToBeOurs) return;
+      if (data?.nonce !== nonce) {
+        setRejected("nonce");
+        return;
+      }
+      if (bootstrapped.current) return;
+
+      bootstrapped.current = true;
+      setRejected(null);
 
       const channel = new MessageChannel();
       port.current = channel.port1;
@@ -122,6 +168,7 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
         channel.port2,
       ]);
       setConnected(true);
+      setState("connected");
     };
 
     window.addEventListener("message", onMessage);
@@ -144,6 +191,9 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
     <iframe
       ref={frame}
       title={title}
+      onLoad={handleLoad}
+      data-sandbox-state={state}
+      data-sandbox-rejected={rejected ?? undefined}
       // The nonce rides in the fragment: the shell reads it to announce itself,
       // and a fragment is never sent to the server.
       src={`${sandboxOrigin}/notebook-sandbox#nonce=${encodeURIComponent(nonce)}`}

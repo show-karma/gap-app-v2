@@ -241,3 +241,87 @@ describe("NotebookSandboxFrame delivery", () => {
     });
   });
 });
+
+/**
+ * Idempotence and observability, both added after a blank frame that produced
+ * no console output at all.
+ *
+ * A shell that retries its announcement is the natural fix for a lost first
+ * one — and the version before this opened a FRESH CHANNEL on every retry,
+ * so the document went over a port the shell had already discarded. The bug
+ * would only have appeared once the other side got more robust, which is the
+ * worst time to find it.
+ */
+describe("NotebookSandboxFrame handshake robustness", () => {
+  let framePost: ReturnType<typeof stubFrameWindow>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    framePost = stubFrameWindow();
+  });
+
+  it("should_bootstrap_once_however_many_times_the_shell_announces_itself", async () => {
+    const { iframe, nonce } = renderFrame();
+
+    announce(iframe, nonce);
+    announce(iframe, nonce);
+    announce(iframe, nonce);
+
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+    expect(framePost).toHaveBeenCalledTimes(1);
+  });
+
+  // A genuine reload is a different thing from a retry, and must reconnect.
+  it("should_bootstrap_again_after_the_frame_reloads", async () => {
+    const { iframe, nonce } = renderFrame();
+    announce(iframe, nonce);
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalledTimes(1));
+
+    iframe.dispatchEvent(new Event("load"));
+    announce(iframe, nonce);
+
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalledTimes(2));
+  });
+
+  describe("the handshake reports itself in the DOM", () => {
+    it("should_start_out_waiting", () => {
+      const { iframe } = renderFrame();
+
+      expect(iframe).toHaveAttribute("data-sandbox-state", "waiting");
+    });
+
+    it("should_report_connected_once_the_port_is_handed_over", async () => {
+      const { iframe, nonce } = renderFrame();
+
+      announce(iframe, nonce);
+
+      await vi.waitFor(() => expect(iframe).toHaveAttribute("data-sandbox-state", "connected"));
+    });
+
+    // The whole point: refusing quietly is correct, and silence is exactly
+    // what makes a blank frame impossible to diagnose. The reason is recorded
+    // where someone inspecting the element will find it.
+    it.each([
+      ["nonce", { nonce: "wrong" }],
+      ["origin", { origin: "https://sandbox.example" }],
+    ])("should_record_%s_as_the_reason_it_refused", async (reason, overrides) => {
+      const { iframe, nonce } = renderFrame();
+
+      announce(iframe, nonce, overrides);
+
+      await vi.waitFor(() => expect(iframe).toHaveAttribute("data-sandbox-rejected", reason));
+      expect(framePost).not.toHaveBeenCalled();
+    });
+
+    it("should_not_record_a_rejection_for_unrelated_page_chatter", async () => {
+      const { iframe } = renderFrame();
+
+      window.dispatchEvent(
+        new MessageEvent("message", { origin: "null", data: { type: "other" } })
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(iframe).not.toHaveAttribute("data-sandbox-rejected");
+    });
+  });
+});
