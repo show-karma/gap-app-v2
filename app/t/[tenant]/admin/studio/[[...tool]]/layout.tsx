@@ -18,9 +18,8 @@ export { viewport } from "next-sanity/studio";
 
 // Full-screen container — `NextStudioLayout` renders the fixed-height,
 // overscroll-locked `<div id="sanity">` the Studio UI expects. Site chrome
-// (navbar/footer) is suppressed globally for this route in
-// `src/components/navbar/global-navbar-slot.tsx` and
-// `src/components/footer/footer-switcher.tsx`.
+// (navbar/footer) is suppressed for this route by the route tree: it sits
+// outside the chrome group, so the chrome layout never wraps it.
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   return <NextStudioLayout>{children}</NextStudioLayout>;
 }
