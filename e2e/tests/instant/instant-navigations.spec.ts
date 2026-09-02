@@ -64,6 +64,16 @@ const SENTINEL_KEY = "__instantNavSentinel";
 const PREFETCH_GRACE_MS = 2_000;
 
 /**
+ * How long to keep looking for a link before deciding the page does not have
+ * one. Several of the index pages render their cards client-side — measured on
+ * a preview, `/communities` server-renders only 8 internal links and none of
+ * them is a community — so a scan that runs once at `domcontentloaded` finds
+ * nothing and the case would skip for the wrong reason.
+ */
+const LINK_DISCOVERY_TIMEOUT_MS = 15_000;
+const LINK_DISCOVERY_POLL_MS = 250;
+
+/**
  * Skip the current test when a link the case depends on is not on the page.
  *
  * `test.skip()` throws, so the `throw` below is unreachable at runtime; it is
@@ -95,8 +105,12 @@ async function findLink(page: Page, pattern: RegExp): Promise<Locator | null> {
     return null;
   };
 
-  const onPage = await scan();
-  if (onPage !== null) return onPage;
+  const deadline = Date.now() + LINK_DISCOVERY_TIMEOUT_MS;
+  do {
+    const onPage = await scan();
+    if (onPage !== null) return onPage;
+    await page.waitForTimeout(LINK_DISCOVERY_POLL_MS);
+  } while (Date.now() < deadline);
 
   const triggers = page.locator(`${APP_CHROME} button[aria-haspopup="menu"]`);
   const triggerCount = await triggers.count();
