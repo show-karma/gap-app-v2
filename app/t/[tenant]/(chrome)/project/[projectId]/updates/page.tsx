@@ -1,7 +1,7 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
-import { getProjectUpdates } from "@/services/project-updates.service";
+import { getProjectUpdatesCached } from "@/services/project.cached";
 import { generateProjectUpdatesMetadata } from "@/utilities/metadata/projectMetadata";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
@@ -52,7 +52,10 @@ export default async function RoadmapPage(props: { params: Promise<{ projectId: 
 
   await queryClient.prefetchQuery({
     queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
-    queryFn: () => getProjectUpdates(projectId),
+    // The cached twin: the raw loader defaults isAuthorized to true and reaches
+    // cookies(), which the build reported on this route as
+    // HANGING_PROMISE_REJECTION at project-updates.service.ts:107.
+    queryFn: () => getProjectUpdatesCached(projectId),
   });
 
   return (

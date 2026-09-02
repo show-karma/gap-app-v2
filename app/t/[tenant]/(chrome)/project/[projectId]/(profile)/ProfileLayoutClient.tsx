@@ -26,7 +26,7 @@ interface ProfileLayoutClientProps {
  * Provides the consistent header, sidebar, and tab navigation.
  */
 export function ProfileLayoutClient({ children }: ProfileLayoutClientProps) {
-  const { projectId } = useParams();
+  const { projectId } = useParams<{ projectId: string }>();
   const project = useProjectStore((state) => state.project);
   const projectName = project?.details?.title || "Project";
 
@@ -39,7 +39,7 @@ export function ProfileLayoutClient({ children }: ProfileLayoutClientProps) {
           { label: projectName, href: `/project/${projectId}` },
         ]}
       />
-      <ProjectProfileLayout>{children}</ProjectProfileLayout>
+      <ProjectProfileLayout projectId={projectId}>{children}</ProjectProfileLayout>
     </>
   );
 }

@@ -34,7 +34,7 @@ export default async function WithHeaderLayout(props: {
 
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
-      <CommunityHeader community={community} />
+      <CommunityHeader community={community} communityId={communityId} />
       <main className="flex w-full max-w-full flex-col">
         <CommunityContentWrapper>{props.children}</CommunityContentWrapper>
       </main>
