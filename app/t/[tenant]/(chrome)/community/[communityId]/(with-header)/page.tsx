@@ -15,10 +15,10 @@ import {
   parseCommunityProjectsPage,
 } from "@/utilities/queries/v2/communityProjectsRequest";
 import {
-  getCommunityCategories,
-  getCommunityDetails,
-  getCommunityProjects,
-} from "@/utilities/queries/v2/getCommunityData";
+  getCommunityCategoriesCached,
+  getCommunityDetailsCached,
+  getCommunityProjectsCached,
+} from "@/utilities/queries/v2/getCommunityData.cached";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 type Props = {
@@ -30,7 +30,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { communityId } = await params;
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   return {
@@ -65,9 +65,9 @@ export default async function Page(props: Props) {
   const page = parseCommunityProjectsPage(searchParams);
 
   const [communityDetails, categories, initialProjects] = await Promise.all([
-    getCommunityDetails(communityId),
-    getCommunityCategories(communityId),
-    getCommunityProjects(communityId, {
+    getCommunityDetailsCached(communityId),
+    getCommunityCategoriesCached(communityId),
+    getCommunityProjectsCached(communityId, {
       page,
       limit: COMMUNITY_PROJECTS_PAGE_SIZE,
       sortBy: mapSortToApiValue(DEFAULT_COMMUNITY_SORT),

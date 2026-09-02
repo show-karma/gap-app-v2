@@ -5,7 +5,7 @@ import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { communityId } = await params;
   const { isWhitelabel, config: wlConfig } = await getCachedContext();
 
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
 
   // Tripwire: a resolved community whose slug differs from the requested id
   // signals the cross-request render bleed (see reportCanonicalMismatchIfAny).

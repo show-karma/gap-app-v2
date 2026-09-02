@@ -8,7 +8,7 @@ import {
   DEFAULT_FUNDING_MAP_API_PARAMS,
   fundingProgramsKeys,
 } from "@/src/features/funding-map/constants/query-keys";
-import { fundingProgramsService } from "@/src/features/funding-map/services/funding-programs.service";
+import { getAllFundingProgramsCached } from "@/src/features/funding-map/services/funding-programs.cached";
 import { customMetadata } from "@/utilities/meta";
 
 const PAGE_DESCRIPTION =
@@ -32,7 +32,7 @@ async function prefetchDefaultPrograms(): Promise<QueryClient> {
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
     queryKey: fundingProgramsKeys.list(DEFAULT_FUNDING_MAP_API_PARAMS),
-    queryFn: () => fundingProgramsService.getAll(DEFAULT_FUNDING_MAP_API_PARAMS),
+    queryFn: () => getAllFundingProgramsCached(DEFAULT_FUNDING_MAP_API_PARAMS),
     staleTime: 5 * 60 * 1000,
   });
   return queryClient;
