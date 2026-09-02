@@ -5,6 +5,9 @@ import {
   type NotebookProvenanceEntry,
 } from "@/services/notebooks/notebook-generation.types";
 import {
+  NOTEBOOK_CUSTOM_HTML_MAX,
+  NOTEBOOK_SECTION_ID_MAX,
+  NOTEBOOK_SECTION_TITLE_MAX,
   NOTEBOOK_SPEC_MAX_SECTIONS,
   NotebookSectionSchema,
   NotebookSpecSchema,
@@ -258,6 +261,94 @@ const GENERATION_RESPONSE = {
   ],
   warnings: [],
 };
+
+/**
+ * THE INDEXER'S BOUNDS, WRITTEN AS LITERALS.
+ *
+ * Every other bound assertion in this repo compares our schema against OUR
+ * constant, which is a tautology: rename the constant on both sides and the
+ * test still passes while the two repos have quietly agreed on nothing. The
+ * numbers below are typed out because they are quoted from
+ * `gap-indexer/app/modules/v2/domain/models/notebook-spec.ts`, and a literal is
+ * the only form that fails when the indexer's copy moves and ours does not.
+ *
+ * WHY THIS BOUND IN PARTICULAR. `html` is the one field whose maximum is large
+ * enough that a real author will reach it — half a megabyte of hand-written
+ * page — and the drift is silent in the worst direction. If the indexer raises
+ * its cap and we do not, it accepts the write, stores it, serves it, and THIS
+ * build refuses to render it: a ContractViolationError on a published page,
+ * which reads as a bad save and is not one. That is the exact failure the `id`
+ * field already caused once, and the reason this file exists.
+ */
+const INDEXER_BOUNDS = {
+  customHtmlMax: 500_000,
+  sectionTitleMax: 200,
+  sectionIdMax: 80,
+  maxSections: 20,
+} as const;
+
+describe("a custom section at the indexer's own limits", () => {
+  it("should_match_the_bounds_this_side_declares", () => {
+    expect({
+      customHtmlMax: NOTEBOOK_CUSTOM_HTML_MAX,
+      sectionTitleMax: NOTEBOOK_SECTION_TITLE_MAX,
+      sectionIdMax: NOTEBOOK_SECTION_ID_MAX,
+      maxSections: NOTEBOOK_SPEC_MAX_SECTIONS,
+    }).toEqual(INDEXER_BOUNDS);
+  });
+
+  // The document the indexer would accept and store, at the byte.
+  it("should_be_readable_at_the_maximum_document_length", () => {
+    const parsed = NotebookSpecSchema.safeParse({
+      version: 1,
+      sections: [
+        {
+          id: "a".repeat(INDEXER_BOUNDS.sectionIdMax),
+          type: "custom-html",
+          html: "x".repeat(INDEXER_BOUNDS.customHtmlMax),
+          title: "t".repeat(INDEXER_BOUNDS.sectionTitleMax),
+        },
+      ],
+    });
+
+    expect(parsed.success ? [] : parsed.error.issues.map((issue) => issue.path.join("."))).toEqual(
+      []
+    );
+  });
+
+  /**
+   * The other direction, which matters just as much and is easier to forget: a
+   * document this side accepts and the indexer refuses fails on SAVE instead of
+   * on read. Same drift, same silence, opposite symptom — an author loses work
+   * rather than a reader losing a page.
+   */
+  it("should_refuse_one_byte_past_every_one_of_them", () => {
+    const overruns = [
+      { html: "x".repeat(INDEXER_BOUNDS.customHtmlMax + 1) },
+      { title: "t".repeat(INDEXER_BOUNDS.sectionTitleMax + 1) },
+      { id: "a".repeat(INDEXER_BOUNDS.sectionIdMax + 1) },
+    ];
+
+    for (const overrun of overruns) {
+      const section = { id: "block", type: "custom-html", html: "<p>x</p>", ...overrun };
+
+      expect(NotebookSpecSchema.safeParse({ version: 1, sections: [section] }).success).toBe(false);
+    }
+  });
+
+  it("should_refuse_a_page_of_custom_sections_past_the_section_cap", () => {
+    const sections = Array.from({ length: INDEXER_BOUNDS.maxSections + 1 }, (_, index) => ({
+      id: `block-${index}`,
+      type: "custom-html",
+      html: "<p>x</p>",
+    }));
+
+    expect(NotebookSpecSchema.safeParse({ version: 1, sections }).success).toBe(false);
+    expect(NotebookSpecSchema.safeParse({ version: 1, sections: sections.slice(1) }).success).toBe(
+      true
+    );
+  });
+});
 
 describe("the generate response the indexer returns", () => {
   it("is readable on this side", () => {
