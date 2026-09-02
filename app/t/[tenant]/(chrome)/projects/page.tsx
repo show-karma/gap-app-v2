@@ -6,7 +6,7 @@ import {
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
-import { getExplorerProjectsPaginated } from "@/services/projects-explorer.service";
+import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer.cached";
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
 import { customMetadata } from "@/utilities/meta";
 import {
@@ -55,7 +55,7 @@ export default async function Projects({
 async function ProjectsExplorerLoader({ initialState }: { initialState: ProjectsExplorerState }) {
   let initialData: PaginatedProjectsResponse | undefined;
   try {
-    initialData = await getExplorerProjectsPaginated({
+    initialData = await getExplorerProjectsPaginatedCached({
       search: initialState.q,
       page: initialState.page,
       limit: PROJECTS_EXPLORER_CONSTANTS.RESULT_LIMIT,

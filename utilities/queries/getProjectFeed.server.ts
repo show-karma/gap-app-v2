@@ -1,9 +1,11 @@
 import { cache } from "react";
 import { convertToUnifiedMilestones } from "@/hooks/v2/useProjectUpdates";
-import { getProjectGrants } from "@/services/project-grants.service";
-import { getProjectImpacts } from "@/services/project-impacts.service";
+import {
+  getProjectGrantsCached,
+  getProjectImpactsCached,
+  getProjectUpdatesCached,
+} from "@/services/project.cached";
 import { aggregateProjectProfileData } from "@/services/project-profile.service";
-import { getProjectUpdates } from "@/services/project-updates.service";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
@@ -33,9 +35,9 @@ export const getProjectFeed = cache(async (projectId: string): Promise<UnifiedMi
     if (!project) return [];
 
     const [grants, updates, impacts] = await Promise.all([
-      getProjectGrants(project.uid || projectId).catch(() => []),
-      getProjectUpdates(projectId).catch(() => null),
-      getProjectImpacts(projectId).catch(() => []),
+      getProjectGrantsCached(project.uid || projectId).catch(() => []),
+      getProjectUpdatesCached(projectId).catch(() => null),
+      getProjectImpactsCached(projectId).catch(() => []),
     ]);
 
     const milestones = updates ? convertToUnifiedMilestones(updates) : [];
