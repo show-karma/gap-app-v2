@@ -1,8 +1,12 @@
-import { getCommunityDetails, getCommunityProjects, getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
-import { fundingProgramsService } from "@/src/features/funding-map/services/funding-programs.service";
-import { getExplorerProjects } from "@/services/projects-explorer.service";
 import { getProject } from "@/services/project.service";
+import { getExplorerProjects } from "@/services/projects-explorer.service";
+import { fundingProgramsService } from "@/src/features/funding-map/services/funding-programs.service";
 import { api } from "@/utilities/api/client";
+import {
+  getCommunityDetails,
+  getCommunityProjects,
+  getCommunityStats,
+} from "@/utilities/queries/v2/getCommunityData";
 
 /**
  * The behavioural half of the D2 gate: the four public loaders must not send an

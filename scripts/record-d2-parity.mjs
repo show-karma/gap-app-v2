@@ -18,7 +18,8 @@ const OUT = process.argv[3] ?? "__tests__/fixtures/d2/public-payload-parity.raw.
 const TOKEN = process.env.INDEXER_TOKEN ?? "";
 
 /** The repo forbids `console` in committed code; scripts write to stdout directly. */
-const say = (line) => process.stdout.write(`${line}
+const say = (line) =>
+  process.stdout.write(`${line}
 `);
 
 /** Fields that legitimately change between two calls seconds apart. */
@@ -68,11 +69,24 @@ async function get(path, withAuth) {
 
 const ENDPOINTS = [
   { loader: "projects-explorer", name: "projects list", path: "/v2/projects?limit=3" },
-  { loader: "project.service", name: "project by slug", path: "/v2/projects?limit=1", follow: "slug" },
-  { loader: "funding-programs", name: "program registry search", path: "/v2/program-registry/search?page=1&pageSize=3" },
+  {
+    loader: "project.service",
+    name: "project by slug",
+    path: "/v2/projects?limit=1",
+    follow: "slug",
+  },
+  {
+    loader: "funding-programs",
+    name: "program registry search",
+    path: "/v2/program-registry/search?page=1&pageSize=3",
+  },
   { loader: "getCommunityData", name: "community", path: "/v2/communities/gitcoin" },
   { loader: "getCommunityData", name: "community stats", path: "/v2/communities/gitcoin/stats" },
-  { loader: "getCommunityData", name: "community projects", path: "/v2/communities/gitcoin/projects?limit=3" },
+  {
+    loader: "getCommunityData",
+    name: "community projects",
+    path: "/v2/communities/gitcoin/projects?limit=3",
+  },
 ];
 
 const results = [];
