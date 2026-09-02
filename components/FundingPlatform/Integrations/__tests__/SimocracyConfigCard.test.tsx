@@ -9,6 +9,8 @@ vi.mock("@/hooks/useApplicationIntegrations", async (importOriginal) => {
   return {
     ...actual,
     useSimocracyCouncil: () => ({ data: undefined }),
+    useSetSimocracyCredential: () => ({ mutate: vi.fn(), isPending: false }),
+    useDeleteSimocracyCredential: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useSimocracyProgramSummary: () => ({ data: undefined }),
   };
 });
@@ -128,7 +130,7 @@ describe("SimocracyConfigCard", () => {
       fireEvent.change(screen.getByLabelText("Gathering AT-URI"), {
         target: { value: "https://not-an-at-uri" },
       });
-      fireEvent.click(screen.getByRole("button", { name: /save/i }));
+      fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
       expect(await screen.findByRole("alert")).toHaveTextContent(/at:\/\//i);
       expect(mockUpdateProgramConfiguration).not.toHaveBeenCalled();
@@ -144,7 +146,7 @@ describe("SimocracyConfigCard", () => {
       fireEvent.change(screen.getByLabelText("Gathering AT-URI"), {
         target: { value: "at://did:plc:new/org.simocracy.gathering/next" },
       });
-      fireEvent.click(screen.getByRole("button", { name: /save/i }));
+      fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
       await waitFor(() => {
         expect(mockUpdateProgramConfiguration).toHaveBeenCalledWith("simo-test-1", {

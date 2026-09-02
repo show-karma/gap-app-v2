@@ -8,6 +8,7 @@ import type {
   SimocracySim,
 } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
+import { EvaluationFeedback } from "./EvaluationFeedback";
 
 const TOP_PAD_PCT = 10;
 
@@ -192,12 +193,20 @@ const CouncilCurvesPanel: FC<CouncilCurvesPanelProps> = ({ evaluations, geometry
   </div>
 );
 
+export interface FeedbackContext {
+  referenceNumber: string;
+  runId: string;
+  viewerAddresses: Set<string>;
+  canGiveFeedback: (simUri: string) => boolean;
+}
+
 interface ReasoningRowProps {
   evaluation: SimocracyEvaluationRow;
   tint: string;
   firstDollarValue: string | null;
   relPct: number | null;
   isLast: boolean;
+  feedback?: FeedbackContext;
 }
 
 const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
@@ -206,6 +215,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
   firstDollarValue,
   relPct,
   isLast,
+  feedback,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [sidecarOpen, setSidecarOpen] = useState(false);
@@ -320,6 +330,15 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
             )}
           </div>
         )}
+        {feedback && (
+          <EvaluationFeedback
+            referenceNumber={feedback.referenceNumber}
+            runId={feedback.runId}
+            simUri={evaluation.sim.simUri}
+            canGiveFeedback={feedback.canGiveFeedback(evaluation.sim.simUri)}
+            viewerAddresses={feedback.viewerAddresses}
+          />
+        )}
       </div>
     </div>
   );
@@ -329,9 +348,14 @@ export interface CouncilEvaluationsProps {
   evaluations: SimocracyEvaluationRow[];
   /** Linked, role-authorized sims from the program summary. */
   linkedSims?: SimocracySim[];
+  feedback?: FeedbackContext;
 }
 
-export const CouncilEvaluations: FC<CouncilEvaluationsProps> = ({ evaluations, linkedSims }) => {
+export const CouncilEvaluations: FC<CouncilEvaluationsProps> = ({
+  evaluations,
+  linkedSims,
+  feedback,
+}) => {
   const geometry = useMemo(() => computeGeometry(evaluations), [evaluations]);
 
   const respondedUris = useMemo(
@@ -375,6 +399,7 @@ export const CouncilEvaluations: FC<CouncilEvaluationsProps> = ({ evaluations, l
                 firstDollarValue={geo?.firstDollarValue ?? null}
                 relPct={geo?.relPct ?? null}
                 isLast={index === evaluations.length - 1 && silentSims.length === 0}
+                feedback={feedback}
               />
             );
           })}

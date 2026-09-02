@@ -12,6 +12,7 @@ import {
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { cn } from "@/utilities/tailwind";
+import { SimocracyCredentialSection } from "./SimocracyCredentialSection";
 
 const gatheringUriSchema = z
   .string()
@@ -252,6 +253,10 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
               </p>
             )}
           </div>
+
+          {canEdit && savedUri.length > 0 && (
+            <SimocracyCredentialSection programId={programId} config={saved} />
+          )}
         </>
       )}
     </div>

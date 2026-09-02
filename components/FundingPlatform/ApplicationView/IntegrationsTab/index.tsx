@@ -8,13 +8,17 @@ import {
   useApplicationIntegrations,
   useSimocracyEvaluations,
   useSimocracyProgramSummary,
+  useSimocracySimLinks,
 } from "@/hooks/useApplicationIntegrations";
+import { useAuth } from "@/hooks/useAuth";
 import { isIntegrationEnabled } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { CouncilEvaluations } from "./CouncilEvaluations";
 
 export interface IntegrationsTabProps {
   referenceNumber: string;
+  /** Enables sim-evaluation feedback controls (manage view; admin-scoped). */
+  feedbackAdmin?: boolean;
 }
 
 const LoadingSkeleton: FC = () => (
@@ -62,11 +66,16 @@ const EmptyState: FC<EmptyStateProps> = ({ title, description }) => (
 
 interface SimocracySectionProps {
   referenceNumber: string;
+  feedbackAdmin?: boolean;
 }
 
-const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber }) => {
+const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedbackAdmin }) => {
   const { data, isLoading, isError, error, refetch } = useSimocracyEvaluations(referenceNumber);
   const { data: summary } = useSimocracyProgramSummary(data?.programId ?? "");
+  const { address } = useAuth();
+  const { data: simLinks } = useSimocracySimLinks(data?.programId ?? "", {
+    enabled: !!feedbackAdmin && !!data?.programId,
+  });
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -110,7 +119,28 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber }) => {
         runId={data.runId}
         proposalUri={data.evaluations[0]?.proposalUri}
       />
-      <CouncilEvaluations evaluations={data.evaluations} linkedSims={summary?.sims} />
+      <CouncilEvaluations
+        evaluations={data.evaluations}
+        linkedSims={summary?.sims}
+        feedback={
+          feedbackAdmin && data.runId
+            ? {
+                referenceNumber,
+                runId: data.runId,
+                viewerAddresses: new Set(address ? [address.toLowerCase()] : []),
+                canGiveFeedback: (simUri: string) => {
+                  if (feedbackAdmin) return true;
+                  const link = (simLinks ?? []).find((l) => l.simUri === simUri);
+                  return (
+                    !!link &&
+                    !!address &&
+                    link.publicAddress.toLowerCase() === address.toLowerCase()
+                  );
+                },
+              }
+            : undefined
+        }
+      />
     </div>
   );
 };
@@ -185,7 +215,7 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
   );
 };
 
-export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber }) => {
+export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber, feedbackAdmin }) => {
   const { data, isLoading, isError, error, refetch } = useApplicationIntegrations(referenceNumber);
 
   if (isLoading) {
@@ -215,7 +245,7 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber }) =
   return (
     <div className="space-y-6">
       {hasSimocracy ? (
-        <SimocracySection referenceNumber={referenceNumber} />
+        <SimocracySection referenceNumber={referenceNumber} feedbackAdmin={feedbackAdmin} />
       ) : (
         <EmptyState
           title="No active integrations"

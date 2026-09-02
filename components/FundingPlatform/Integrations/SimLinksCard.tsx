@@ -2,6 +2,7 @@
 
 import {
   ArrowPathIcon,
+  ChevronDownIcon,
   ClipboardDocumentIcon,
   CpuChipIcon,
   LinkIcon,
@@ -27,6 +28,7 @@ import {
   useSimocracyProgramSummary,
   useSimocracySimLinkMutations,
   useSimocracySimLinks,
+  useSimocracySimPersona,
 } from "@/hooks/useApplicationIntegrations";
 import { useCommunityReviewers } from "@/hooks/useCommunityReviewers";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -89,6 +91,7 @@ const LinksSkeleton: FC = () => (
 );
 
 interface SimLinkRowProps {
+  programId: string;
   link: SimocracySimLink;
   sim?: SimocracyCouncilSim;
   reviewer?: ReviewerOption;
@@ -98,6 +101,7 @@ interface SimLinkRowProps {
 }
 
 const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
+  programId,
   link,
   sim,
   reviewer,
@@ -107,81 +111,128 @@ const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
 }) {
   const [, copy] = useCopyToClipboard();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [personaOpen, setPersonaOpen] = useState(false);
+  const { data: persona, isLoading: isPersonaLoading } = useSimocracySimPersona(
+    programId,
+    link.simUri,
+    { enabled: personaOpen }
+  );
   const name = sim?.simName ?? null;
 
   return (
-    <li className="flex items-center gap-3 px-5 py-3">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-          {reviewer?.name || shortAddress(link.publicAddress)}
-        </p>
-        {reviewer?.email && (
-          <p
-            className="truncate text-xs text-gray-500 dark:text-gray-400"
-            title={link.publicAddress}
-          >
-            {reviewer.email}
+    <li className="flex flex-col px-5 py-3">
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+            {reviewer?.name || shortAddress(link.publicAddress)}
           </p>
-        )}
-      </div>
-
-      <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:w-72">
-        {sim?.avatar ? (
-          <ProfilePicture
-            imageURL={sim.avatar}
-            name={name ?? link.simUri}
-            size="28"
-            className="h-7 w-7 rounded-md [image-rendering:pixelated]"
-            alt=""
-          />
-        ) : (
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
-            <CpuChipIcon className="h-4 w-4" />
-          </span>
-        )}
-        <div className="min-w-0">
-          {name && (
-            <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{name}</p>
-          )}
-          <div className="flex items-center gap-1.5">
-            <span
-              className="truncate font-mono text-[11px] text-gray-500 dark:text-gray-400"
-              title={link.simUri}
+          {reviewer?.email && (
+            <p
+              className="truncate text-xs text-gray-500 dark:text-gray-400"
+              title={link.publicAddress}
             >
-              {truncateMiddle(link.simUri, 18, 10)}
+              {reviewer.email}
+            </p>
+          )}
+        </div>
+
+        <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:w-72">
+          {sim?.avatar ? (
+            <ProfilePicture
+              imageURL={sim.avatar}
+              name={name ?? link.simUri}
+              size="28"
+              className="h-7 w-7 rounded-md [image-rendering:pixelated]"
+              alt=""
+            />
+          ) : (
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
+              <CpuChipIcon className="h-4 w-4" />
             </span>
+          )}
+          <div className="min-w-0">
+            {name && (
+              <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{name}</p>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span
+                className="truncate font-mono text-[11px] text-gray-500 dark:text-gray-400"
+                title={link.simUri}
+              >
+                {truncateMiddle(link.simUri, 18, 10)}
+              </span>
+              <button
+                type="button"
+                aria-label="Copy sim AT-URI"
+                onClick={() => copy(link.simUri, "Sim AT-URI copied")}
+                className="shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-gray-300"
+              >
+                <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
             <button
               type="button"
-              aria-label="Copy sim AT-URI"
-              onClick={() => copy(link.simUri, "Sim AT-URI copied")}
-              className="shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-gray-300"
+              onClick={() => setPersonaOpen((open) => !open)}
+              aria-expanded={personaOpen}
+              className="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
             >
-              <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+              <ChevronDownIcon
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-150 motion-reduce:transition-none",
+                  personaOpen && "rotate-180"
+                )}
+              />
+              Constitution &amp; Style
             </button>
           </div>
         </div>
+
+        {canDelete && (
+          <>
+            <button
+              type="button"
+              aria-label={`Remove link for ${name ?? link.simUri}`}
+              onClick={() => setIsDeleteOpen(true)}
+              disabled={isDeleting}
+              className="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            >
+              <TrashIcon className="h-4 w-4" />
+            </button>
+            <DeleteDialog
+              title={`Remove the link between ${reviewer?.name || shortAddress(link.publicAddress)} and ${name ?? truncateMiddle(link.simUri)}?`}
+              deleteFunction={() => onDelete(link.simUri)}
+              isLoading={isDeleting}
+              buttonElement={null}
+              externalIsOpen={isDeleteOpen}
+              externalSetIsOpen={setIsDeleteOpen}
+            />
+          </>
+        )}
       </div>
 
-      {canDelete && (
-        <>
-          <button
-            type="button"
-            aria-label={`Remove link for ${name ?? link.simUri}`}
-            onClick={() => setIsDeleteOpen(true)}
-            disabled={isDeleting}
-            className="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-          >
-            <TrashIcon className="h-4 w-4" />
-          </button>
-          <DeleteDialog
-            title={`Remove the link between ${reviewer?.name || shortAddress(link.publicAddress)} and ${name ?? truncateMiddle(link.simUri)}?`}
-            deleteFunction={() => onDelete(link.simUri)}
-            isLoading={isDeleting}
-            buttonElement={null}
-            externalIsOpen={isDeleteOpen}
-            externalSetIsOpen={setIsDeleteOpen}
-          />
-        </>
+      {personaOpen && (
+        <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
+          {isPersonaLoading ? (
+            <p className="text-xs text-gray-400 dark:text-gray-500">Loading…</p>
+          ) : (
+            <>
+              <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                  Constitution
+                </p>
+                <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+                  {persona?.constitution ?? "Not set on Simocracy."}
+                </p>
+              </div>
+              <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Style</p>
+                <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+                  {persona?.style ?? "Not set on Simocracy."}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
       )}
     </li>
   );
@@ -425,6 +476,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
           {rows.map((link) => (
             <SimLinkRow
               key={link.simUri}
+              programId={programId}
               link={link}
               sim={simsByUri.get(link.simUri)}
               reviewer={reviewerByAddress.get(link.publicAddress.toLowerCase())}

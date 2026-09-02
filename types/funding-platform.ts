@@ -122,6 +122,12 @@ export type ApplicationReportAction = "review" | "request_revision" | "approve" 
 export interface ISimocracyIntegrationConfig {
   gatheringUri: string;
   enabled: boolean;
+  // Non-secret credential summary surfaced by the read API (the encrypted
+  // password never leaves the backend).
+  credentialConfigured?: boolean;
+  credentialIdentifier?: string;
+  credentialDid?: string;
+  credentialVerifiedAt?: string;
 }
 
 export interface IProgramIntegrationsConfig {
