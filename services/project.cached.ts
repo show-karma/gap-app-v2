@@ -28,7 +28,7 @@ import { projectTag } from "@/utilities/cache/tags";
  * the 60s revalidate is exactly the `export const revalidate = 60` the project
  * layout carried before the flag, so the CDN cadence is unchanged.
  *
- * Grants and impacts take an explicit `isAuthorized: false`. Both default it to
+ * Grants, impacts and updates all take an explicit `isAuthorized: false`. Both default it to
  * `true`, which routes through `TokenManager` → `cookies()`; that is a request
  * read, and a request read inside `"use cache"` is both illegal and the
  * cache-poisoning case the plan forbids. Passing it explicitly also matches
@@ -67,5 +67,8 @@ export async function getProjectUpdatesCached(
   cacheLife("minutes");
   cacheTag(projectTag(projectIdOrSlug));
 
-  return getProjectUpdates(projectIdOrSlug);
+  // Third arg, not second: the second is `milestoneStatus`. Without
+  // `isAuthorized: false` this reaches TokenManager -> cookies() *inside* the
+  // cache scope, which Next rejects outright.
+  return getProjectUpdates(projectIdOrSlug, undefined, { isAuthorized: false });
 }

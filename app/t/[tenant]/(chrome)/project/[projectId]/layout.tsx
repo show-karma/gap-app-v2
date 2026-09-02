@@ -13,7 +13,7 @@ import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { ProjectJsonLd } from "@/components/Seo/ProjectJsonLd";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
 import { projectUpdatesQueryKey } from "@/hooks/v2/useProjectUpdates";
-import { getProjectUpdates } from "@/services/project-updates.service";
+import { getProjectUpdatesCached } from "@/services/project.cached";
 import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer.cached";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
@@ -103,7 +103,7 @@ async function safePrefetchProjectData(queryClient: QueryClient, projectId: stri
         // Same key factory the hook uses — a hand-written key silently misses
         // (that is exactly how the previous updates prefetch became a no-op).
         queryKey: projectUpdatesQueryKey(projectId),
-        queryFn: () => getProjectUpdates(projectId),
+        queryFn: () => getProjectUpdatesCached(projectId),
         staleTime: 5 * 60 * 1000,
       }),
     ]);
