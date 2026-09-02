@@ -22,8 +22,12 @@ vi.mock("@/utilities/api/client", () => ({
   },
 }));
 
+interface ScrollRevealProps {
+  children: React.ReactNode;
+}
+
 vi.mock("@/src/features/home/components/scroll-reveal", () => ({
-  ScrollReveal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ScrollReveal: ({ children }: ScrollRevealProps) => <div>{children}</div>,
 }));
 
 import { PricingSection } from "@/src/features/donor-advisors/components/pricing-section";
@@ -203,6 +207,27 @@ describe("PricingSection", () => {
     const chip = screen.getByText("Most popular");
     expect(chip.className).toContain("whitespace-nowrap");
     expect(chip.className).toContain("shrink-0");
+  });
+
+  it("does not advertise a zero allowance row", async () => {
+    // "0 donor profiles" is not a feature. Enterprise carries zeros across the
+    // board in the catalog because its volumes are contractual.
+    mockApiGet.mockResolvedValue({
+      ...CATALOG,
+      plans: [
+        plan("free", 0, 0, 0, 0, 1, false),
+        plan("starter", 2900, 10, 2, 5, 0, true),
+        plan("pro", 9900, 40, 8, 20, 10, true),
+        plan("firm", 39_900, 200, 30, 60, 30, true),
+        plan("enterprise", null, 0, 0, 0, 0, false),
+      ],
+    });
+    renderSection(qc);
+
+    await waitFor(() => expect(screen.getByText("10 reports / month")).toBeInTheDocument());
+    expect(screen.queryByText("0 donor profiles")).not.toBeInTheDocument();
+    // The rows with a real allowance are untouched.
+    expect(screen.getByText("10 donor profiles")).toBeInTheDocument();
   });
 
   it("uses singular copy when the grant is one report", async () => {

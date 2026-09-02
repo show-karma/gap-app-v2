@@ -20,15 +20,19 @@ import {
   useStartPackCheckout,
 } from "@/hooks/useDonorBilling";
 import {
+  DONOR_BILLING_PORTAL_ERROR_MESSAGE,
+  DONOR_BILLING_PORTAL_UNAVAILABLE_MESSAGE,
+  DONOR_SUBSCRIPTION_ALREADY_ACTIVE_MESSAGE,
+  isBillingPortalUnavailable,
   isSubscriptionAlreadyActive,
   statusGrantsPlanAllowance,
 } from "@/services/donor-research-billing.service";
 import {
+  DONOR_PLAN_CATALOG_FALLBACK,
   DONOR_PLAN_PRESENTATION,
-  FALLBACK_PACK_CATALOG,
-  FALLBACK_PLAN_CATALOG,
   formatPlanPrice,
 } from "@/src/features/donor-research/billing/pricing-content";
+import { useReportedError } from "@/src/features/donor-research/billing/use-reported-error";
 import type {
   DonorPackCatalogEntry,
   DonorPlanCatalogEntry,
@@ -40,6 +44,16 @@ import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 
 const PURCHASABLE_PLANS: readonly PurchasableDonorPlan[] = ["starter", "pro", "firm"];
+
+/**
+ * Fixed user-facing copy. The billing service copies the backend response text
+ * into the error it throws, so rendering `error.message` would put whatever the
+ * server said on screen (CWE-209); the original goes to Sentry through
+ * {@link useReportedError} instead.
+ */
+const CHECKOUT_ERROR_COPY = "Couldn't start checkout. Please try again in a moment.";
+
+const BILLING_UNAVAILABLE_DESCRIPTION = "Self-serve billing isn't available on this environment.";
 
 /** Which metered dimension the dialog is being opened for. */
 type UpgradeDimension = "reports" | "intros" | "diligence" | "profiles";
@@ -89,20 +103,18 @@ export function UpgradeDialog({
   const checkout = useStartCheckout();
   const packCheckout = useStartPackCheckout();
 
-  const entries = catalogQuery.data?.plans?.length
-    ? catalogQuery.data.plans
-    : FALLBACK_PLAN_CATALOG;
+  // Complete by construction: `useDonorPlanCatalog` merges the shipped defaults
+  // into the response per plan, so a paid tier the API omitted still prices
+  // itself here rather than rendering "—" above a live checkout button.
+  const catalog = catalogQuery.data ?? DONOR_PLAN_CATALOG_FALLBACK;
   const byPlan = new Map<string, DonorPlanCatalogEntry>(
-    entries.map((entry) => [entry.plan, entry])
+    catalog.plans.map((entry) => [entry.plan, entry])
   );
 
-  const allPacks: readonly DonorPackCatalogEntry[] = catalogQuery.data?.packs?.length
-    ? catalogQuery.data.packs
-    : FALLBACK_PACK_CATALOG;
   // Only reports and intros have a top-up pack; diligence/profiles upgrade only.
   const packDimension = dimension === "reports" || dimension === "intros" ? dimension : null;
   const dimensionPacks = packDimension
-    ? allPacks.filter((pack) => pack.dimension === packDimension)
+    ? catalog.packs.filter((pack) => pack.dimension === packDimension)
     : [];
 
   // Intro packs are a subscriber benefit. Until the entitlement resolves we do
@@ -120,6 +132,24 @@ export function UpgradeDialog({
   const anyPending = checkout.isPending || packCheckout.isPending;
   const alreadySubscribed = isSubscriptionAlreadyActive(checkout.error);
 
+  // Only a LOADED `false` disables checkout. An unreachable catalog is not an
+  // answer, and reading it as one would hide the upgrade path from every
+  // advisor whenever the endpoint blips — either source saying so is enough,
+  // since the entitlement resolves the environment for a signed-in advisor and
+  // the catalog resolves it for everyone.
+  const billingDisabled =
+    catalogQuery.data?.billingEnabled === false || entitlement?.billingEnabled === false;
+
+  useReportedError("Error starting donor-research checkout", checkout.error);
+  useReportedError("Error starting donor-research pack checkout", packCheckout.error);
+
+  // Every checkout control is REPLACED, not merely disabled: with no Stripe
+  // credentials on the environment there is nothing behind them, and a greyed
+  // out price still reads as an offer.
+  if (billingDisabled) {
+    return <BillingUnavailableDialog onOpenChange={onOpenChange} open={open} />;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background sm:max-w-2xl">
@@ -135,9 +165,7 @@ export function UpgradeDialog({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {PURCHASABLE_PLANS.map((plan) => (
             <PlanCard
-              allowance={
-                byPlan.get(plan) ? Number(byPlan.get(plan)?.[DIMENSION_LABEL[dimension].field]) : 0
-              }
+              allowance={Number(byPlan.get(plan)?.[DIMENSION_LABEL[dimension].field] ?? 0)}
               dimension={dimension}
               disabled={anyPending}
               entry={byPlan.get(plan)}
@@ -163,7 +191,6 @@ export function UpgradeDialog({
         {alreadySubscribed ? (
           <AlreadySubscribedNotice
             hasBillingAccount={Boolean(entitlement?.hasBillingAccount)}
-            message={checkout.error?.message}
             onClose={() => onOpenChange(false)}
           />
         ) : checkout.isError || packCheckout.isError ? (
@@ -172,7 +199,7 @@ export function UpgradeDialog({
             aria-live="assertive"
             className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
           >
-            {(checkout.error ?? packCheckout.error)?.message}
+            {CHECKOUT_ERROR_COPY}
           </div>
         ) : null}
 
@@ -196,6 +223,50 @@ export function UpgradeDialog({
             onClick={() => onOpenChange(false)}
             disabled={anyPending}
           >
+            Close
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface BillingUnavailableDialogProps {
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+}
+
+/**
+ * The dialog when the catalog or the entitlement reports
+ * `billingEnabled: false`: the environment has no Stripe credentials, so
+ * anything picked here would fail at the checkout call.
+ */
+function BillingUnavailableDialog({ onOpenChange, open }: BillingUnavailableDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-background sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Keep researching</DialogTitle>
+          <DialogDescription>{BILLING_UNAVAILABLE_DESCRIPTION}</DialogDescription>
+        </DialogHeader>
+
+        <div className="rounded-md border border-border bg-muted p-4 text-sm text-foreground">
+          <p>
+            Plans can't be purchased here yet.{" "}
+            <Link
+              href={SOCIALS.DONOR_PARTNER_FORM}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 hover:text-muted-foreground"
+            >
+              Talk to our team
+            </Link>{" "}
+            to set one up.
+          </p>
+        </div>
+
+        <div className="mt-2 flex justify-end">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
         </div>
@@ -351,22 +422,21 @@ function TopUpSection({
   );
 }
 
+interface AlreadySubscribedNoticeProps {
+  hasBillingAccount: boolean;
+  onClose: () => void;
+}
+
 /**
  * The 409 branch: the advisor already has a live Stripe subscription, so a
  * second checkout would bill in parallel. Plan changes belong in the billing
  * portal — which only exists once the webhook has written a Stripe customer,
  * hence the `hasBillingAccount` gate on the CTA.
  */
-function AlreadySubscribedNotice({
-  hasBillingAccount,
-  message,
-  onClose,
-}: {
-  hasBillingAccount: boolean;
-  message?: string;
-  onClose: () => void;
-}) {
+function AlreadySubscribedNotice({ hasBillingAccount, onClose }: AlreadySubscribedNoticeProps) {
   const portal = useOpenBillingPortal();
+
+  useReportedError("Error opening donor-research billing portal", portal.error);
 
   return (
     <div
@@ -374,7 +444,7 @@ function AlreadySubscribedNotice({
       aria-live="assertive"
       className="mt-3 flex flex-col items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300"
     >
-      <p>{message ?? "You already have an active subscription."}</p>
+      <p>{DONOR_SUBSCRIPTION_ALREADY_ACTIVE_MESSAGE}</p>
       <p>Change or cancel your plan from the billing portal; a second checkout would bill twice.</p>
       {hasBillingAccount ? (
         <Button
@@ -394,7 +464,13 @@ function AlreadySubscribedNotice({
           </Link>
         </Button>
       )}
-      {portal.isError ? <p>{portal.error.message}</p> : null}
+      {portal.isError ? (
+        <p>
+          {isBillingPortalUnavailable(portal.error)
+            ? DONOR_BILLING_PORTAL_UNAVAILABLE_MESSAGE
+            : DONOR_BILLING_PORTAL_ERROR_MESSAGE}
+        </p>
+      ) : null}
     </div>
   );
 }

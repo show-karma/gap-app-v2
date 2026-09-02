@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { useCreateDonorHandle } from "@/hooks/useDonorHandles";
 import { isProfileQuotaExhausted } from "@/services/donor-research-billing.service";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import type { DonorHandle } from "@/types/donor-research";
-import { UpgradeDialog } from "../../billing/UpgradeDialog";
 import { HandleNotesSection } from "../donor-detail/HandleNotesSection";
 
 // Keep the persona editor (narrative pane, refine, structured chips) out of the

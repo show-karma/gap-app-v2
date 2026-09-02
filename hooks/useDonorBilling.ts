@@ -11,6 +11,11 @@ import {
   startBillingPortal,
   startPackCheckout,
 } from "@/services/donor-research-billing.service";
+import {
+  FALLBACK_FREE_SIGNUP_REPORT_GRANT,
+  FALLBACK_PACK_CATALOG,
+  FALLBACK_PLAN_CATALOG,
+} from "@/src/features/donor-research/billing/pricing-content";
 import type {
   DonorBillingSession,
   DonorEntitlement,
@@ -23,14 +28,49 @@ import { PAGES } from "@/utilities/pages";
 const donorPlanCatalogQueryKey = ["donor-research", "billing", "plans"] as const;
 export const donorEntitlementQueryKey = ["donor-research", "billing", "subscription"] as const;
 
+const FALLBACK_PLANS_BY_PLAN = new Map(FALLBACK_PLAN_CATALOG.map((entry) => [entry.plan, entry]));
+
+/**
+ * Fills the gaps in a catalog response PER PLAN, not only when `plans` is empty.
+ *
+ * A response that simply omits a paid tier is not a loud failure anywhere: the
+ * pricing page would price the missing card at `$0`, and the upgrade dialog
+ * would render `—` above a checkout button that still POSTs that plan. Both are
+ * worse than the shipped default, which is at least a number the backend once
+ * agreed with. A plan the server knows about that the defaults don't (a tier
+ * shipped backend-first) is appended rather than dropped.
+ *
+ * This is the ONE place the fallback is merged in — every UI surface reads the
+ * catalog through {@link useDonorPlanCatalog} and therefore gets a complete one.
+ */
+function mergeDonorPlanCatalog(catalog: DonorPlanCatalog): DonorPlanCatalog {
+  const fromServer = catalog.plans ?? [];
+  const byPlan = new Map(fromServer.map((entry) => [entry.plan, entry]));
+  const plans = FALLBACK_PLAN_CATALOG.map((fallback) => byPlan.get(fallback.plan) ?? fallback);
+  for (const entry of fromServer) {
+    if (!FALLBACK_PLANS_BY_PLAN.has(entry.plan)) plans.push(entry);
+  }
+
+  return {
+    ...catalog,
+    plans,
+    packs: catalog.packs?.length ? catalog.packs : [...FALLBACK_PACK_CATALOG],
+    freeSignupReportGrant: catalog.freeSignupReportGrant ?? FALLBACK_FREE_SIGNUP_REPORT_GRANT,
+  };
+}
+
 /**
  * Public plan catalog. Cached hard — prices change on the order of quarters,
  * and this renders on a marketing page that should not re-request per view.
+ *
+ * `data` is always a COMPLETE catalog (see {@link mergeDonorPlanCatalog}); when
+ * there is no data at all, callers fall back to `DONOR_PLAN_CATALOG_FALLBACK`.
  */
 export function useDonorPlanCatalog() {
   return useQuery<DonorPlanCatalog>({
     queryKey: donorPlanCatalogQueryKey,
     queryFn: fetchDonorPlanCatalog,
+    select: mergeDonorPlanCatalog,
     staleTime: 60 * 60_000,
     gcTime: 60 * 60_000,
   });

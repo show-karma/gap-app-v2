@@ -102,8 +102,12 @@ const buildClient = () =>
     },
   });
 
+interface WrapperProps {
+  children: React.ReactNode;
+}
+
 function renderDialog(qc: QueryClient, dimension: "reports" | "intros") {
-  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+  const Wrapper = ({ children }: WrapperProps) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   );
   return render(<UpgradeDialog dimension={dimension} onOpenChange={() => {}} open />, {
@@ -154,5 +158,77 @@ describe("UpgradeDialog intro top-ups", () => {
 
     await waitFor(() => expect(screen.getByText("Or top up once")).toBeInTheDocument());
     expect(screen.getByText("10 reports")).toBeInTheDocument();
+  });
+});
+
+describe("UpgradeDialog when billing is unavailable", () => {
+  let qc: QueryClient;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    qc = buildClient();
+  });
+  afterEach(() => qc.clear());
+
+  it("replaces the plan controls when the catalog reports billingEnabled: false", async () => {
+    // No Stripe credentials on the environment: a plan button here would fail
+    // at the checkout call, after the advisor had already chosen.
+    mockApiGet.mockImplementation((path: string) =>
+      path === DONOR_BILLING_ENDPOINTS.SUBSCRIPTION
+        ? Promise.resolve(entitlement({ billingEnabled: false }))
+        : Promise.resolve({ ...CATALOG, billingEnabled: false })
+    );
+    renderDialog(qc, "reports");
+
+    await waitFor(() =>
+      expect(screen.getByText(/Self-serve billing isn't available/)).toBeInTheDocument()
+    );
+    expect(screen.getByRole("link", { name: "Talk to our team" })).toBeInTheDocument();
+    expect(screen.queryByText("Starter")).not.toBeInTheDocument();
+    expect(screen.queryByText("Or top up once")).not.toBeInTheDocument();
+  });
+
+  it("replaces them when only the entitlement reports billingEnabled: false", async () => {
+    mockApiGet.mockImplementation((path: string) =>
+      path === DONOR_BILLING_ENDPOINTS.SUBSCRIPTION
+        ? Promise.resolve(entitlement({ billingEnabled: false }))
+        : Promise.resolve(CATALOG)
+    );
+    renderDialog(qc, "reports");
+
+    await waitFor(() =>
+      expect(screen.getByText(/Self-serve billing isn't available/)).toBeInTheDocument()
+    );
+    expect(screen.queryByText("Starter")).not.toBeInTheDocument();
+  });
+
+  it("keeps the plan controls when billing is enabled", async () => {
+    serve(entitlement({ plan: "free", status: "free" }));
+    renderDialog(qc, "reports");
+
+    await waitFor(() => expect(screen.getByText("Starter")).toBeInTheDocument());
+    expect(screen.queryByText(/Self-serve billing isn't available/)).not.toBeInTheDocument();
+  });
+});
+
+describe("UpgradeDialog plan pricing", () => {
+  let qc: QueryClient;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    qc = buildClient();
+  });
+  afterEach(() => qc.clear());
+
+  it("prices a plan the catalog omitted from the shipped defaults", async () => {
+    // CATALOG carries Starter only. Pro and Firm must still price themselves
+    // rather than rendering "—" above an enabled checkout button.
+    serve(entitlement({ plan: "free", status: "free" }));
+    renderDialog(qc, "reports");
+
+    await waitFor(() => expect(screen.getByText("$29")).toBeInTheDocument());
+    expect(screen.getByText("$99")).toBeInTheDocument();
+    expect(screen.getByText("$399")).toBeInTheDocument();
+    expect(screen.queryByText("—")).not.toBeInTheDocument();
   });
 });

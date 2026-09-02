@@ -23,9 +23,9 @@ import {
 } from "@/hooks/useDiligence";
 import { isDiligenceQuotaExhausted } from "@/services/donor-research-billing.service";
 import type { CandidateDiligenceView, DiligenceQuestion } from "@/types/diligence";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import { DILIGENCE_TEMPLATE_LIMITS } from "@/types/diligence";
 import { PAGES } from "@/utilities/pages";
-import { UpgradeDialog } from "../../billing/UpgradeDialog";
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
 import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
@@ -64,6 +64,12 @@ export function AskQuestionsDialog({
 }: AskQuestionsDialogProps) {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
+  const handleClose = () => onOpenChange(false);
+  const handleQuotaExhausted = () => {
+    onOpenChange(false);
+    setUpgradeOpen(true);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,11 +84,8 @@ export function AskQuestionsDialog({
               view={view}
               candidateName={candidateName ?? null}
               viewer={viewer}
-              onClose={() => onOpenChange(false)}
-              onQuotaExhausted={() => {
-                onOpenChange(false);
-                setUpgradeOpen(true);
-              }}
+              onClose={handleClose}
+              onQuotaExhausted={handleQuotaExhausted}
             />
           ) : null}
         </DialogContent>

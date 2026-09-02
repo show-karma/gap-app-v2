@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { donorEntitlementQueryKey } from "@/hooks/useDonorBilling";
 import {
   askQuestions,
   fetchDiligenceResponseContext,
@@ -146,7 +147,9 @@ export function useOutreachPreview(
 
 /**
  * Ask Questions (202, async). Invalidates the candidate view so the new
- * `in_progress` / `blocked` state is reflected after the outbox dispatches.
+ * `in_progress` / `blocked` state is reflected after the outbox dispatches,
+ * and the entitlement, because the send SPENDS a diligence round — the billing
+ * page and the header quota badge would otherwise keep the pre-send count.
  * `body` carries the advisor-edited email body — pass it ONLY when edited so
  * an untouched preview lets the backend compose its own default.
  */
@@ -162,13 +165,15 @@ export function useAskQuestions() {
       queryClient.invalidateQueries({
         queryKey: candidateDiligenceQueryKey(reportId, candidateId),
       });
+      queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
     },
   });
 }
 
 /**
- * Connect / named intro (202 | 422-email). On a queued result invalidates the
- * candidate view. The `email_required` branch is surfaced to the caller (it
+ * Connect / named intro (202 | 422-email). On a QUEUED result invalidates the
+ * candidate view and the entitlement — an intro was spent. The
+ * `email_required` branch spends nothing and is surfaced to the caller (it
  * resolves, not rejects) so the UI can run the email-capture flow. `body`
  * follows the same only-when-edited contract as {@link useAskQuestions}.
  */
@@ -185,6 +190,7 @@ export function useRequestIntro() {
         queryClient.invalidateQueries({
           queryKey: candidateDiligenceQueryKey(reportId, candidateId),
         });
+        queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
       }
     },
   });

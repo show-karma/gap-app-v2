@@ -76,9 +76,13 @@ const buildClient = () =>
     },
   });
 
+interface QueryWrapperProps {
+  children: React.ReactNode;
+}
+
 const wrapper =
   (qc: QueryClient) =>
-  ({ children }: { children: React.ReactNode }) => (
+  ({ children }: QueryWrapperProps) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   );
 
@@ -133,6 +137,70 @@ describe("useDonorPlanCatalog", () => {
     qc = buildClient();
   });
   afterEach(() => qc.clear());
+
+  it("fills a plan the response omitted from the shipped defaults", async () => {
+    // An omitted paid tier is silent: the pricing page would price the card at
+    // $0 and the upgrade dialog would show "—" above a live checkout button.
+    mockApiGet.mockResolvedValue({
+      freeSignupReportGrant: 2,
+      billingEnabled: true,
+      plans: [
+        {
+          plan: "starter",
+          label: "Starter",
+          reportsIncluded: 12,
+          introsIncluded: 2,
+          diligenceIncluded: 5,
+          profilesIncluded: 3,
+          priceCents: 3100,
+          isPurchasable: true,
+        },
+      ],
+      packs: [],
+    });
+
+    const { result } = renderHook(() => useDonorPlanCatalog(), { wrapper: wrapper(qc) });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const byPlan = new Map(result.current.data?.plans.map((entry) => [entry.plan, entry]));
+    // The live entry wins where the server sent one...
+    expect(byPlan.get("starter")?.priceCents).toBe(3100);
+    expect(byPlan.get("starter")?.reportsIncluded).toBe(12);
+    // ...and every plan it left out comes from the shipped catalog.
+    expect(byPlan.get("pro")?.priceCents).toBe(9900);
+    expect(byPlan.get("firm")?.priceCents).toBe(39_900);
+    expect(byPlan.get("enterprise")?.priceCents).toBeNull();
+    // An empty pack list falls back wholesale — there is no per-pack identity
+    // worth reconciling, and an empty top-up row is the thing being avoided.
+    expect(result.current.data?.packs.length).toBeGreaterThan(0);
+  });
+
+  it("keeps a plan the shipped defaults do not know about", async () => {
+    // A tier shipped backend-first must not be dropped by the merge.
+    mockApiGet.mockResolvedValue({
+      freeSignupReportGrant: 2,
+      billingEnabled: true,
+      plans: [
+        {
+          plan: "boutique",
+          label: "Boutique",
+          reportsIncluded: 25,
+          introsIncluded: 4,
+          diligenceIncluded: 10,
+          profilesIncluded: 5,
+          priceCents: 5900,
+          isPurchasable: true,
+        },
+      ],
+      packs: [],
+    });
+
+    const { result } = renderHook(() => useDonorPlanCatalog(), { wrapper: wrapper(qc) });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.plans.map((entry) => entry.plan)).toContain("boutique");
+  });
 
   it("requests the public catalog unauthenticated", async () => {
     mockApiGet.mockResolvedValue({

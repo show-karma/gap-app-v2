@@ -4,13 +4,28 @@ import { AlertTriangle, CheckCircle2, CreditCard, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useDonorEntitlement, useOpenBillingPortal } from "@/hooks/useDonorBilling";
+import {
+  DONOR_BILLING_PORTAL_ERROR_MESSAGE,
+  DONOR_BILLING_PORTAL_UNAVAILABLE_MESSAGE,
+  isBillingPortalUnavailable,
+} from "@/services/donor-research-billing.service";
 import { Link } from "@/src/components/navigation/Link";
 import { DONOR_PLAN_PRESENTATION } from "@/src/features/donor-research/billing/pricing-content";
+import { useReportedError } from "@/src/features/donor-research/billing/use-reported-error";
 import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
+import { DonorResearchLoading } from "@/src/features/donor-research/components/common/DonorResearchLoading";
 import type { DonorEntitlement } from "@/types/donor-research-billing";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
-import { DonorResearchLoading } from "../components/common/DonorResearchLoading";
+import { cn } from "@/utilities/tailwind";
+
+/**
+ * Fixed user-facing copy. The billing service copies the backend response text
+ * into the error it throws, so rendering `error.message` would put whatever the
+ * server said on screen (CWE-209); the original goes to Sentry through
+ * {@link useReportedError} instead.
+ */
+const ENTITLEMENT_ERROR_COPY = "Something went wrong reading your subscription. Please try again.";
 
 interface BillingPageProps {
   /**
@@ -35,6 +50,16 @@ export function BillingPage({ checkoutParam = null }: BillingPageProps = {}) {
   const portal = useOpenBillingPortal();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
+  useReportedError("Error loading donor-research entitlement", entitlementQuery.error);
+  useReportedError("Error opening donor-research billing portal", portal.error);
+
+  const handleRetry = () => {
+    entitlementQuery.refetch();
+  };
+  const handleOpenUpgrade = () => setUpgradeOpen(true);
+  const handleUpgradeOpenChange = (open: boolean) => setUpgradeOpen(open);
+  const handleOpenBillingPortal = () => portal.mutate();
+
   if (entitlementQuery.isLoading) {
     return <DonorResearchLoading label="Loading your plan…" />;
   }
@@ -49,16 +74,8 @@ export function BillingPage({ checkoutParam = null }: BillingPageProps = {}) {
           <h1 className="text-lg font-semibold text-red-800 dark:text-red-300">
             Couldn't load your plan
           </h1>
-          <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-            {(entitlementQuery.error as Error)?.message ??
-              "Something went wrong reading your subscription."}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-4"
-            onClick={() => entitlementQuery.refetch()}
-          >
+          <p className="mt-1 text-sm text-red-700 dark:text-red-400">{ENTITLEMENT_ERROR_COPY}</p>
+          <Button type="button" variant="outline" className="mt-4" onClick={handleRetry}>
             Try again
           </Button>
         </div>
@@ -132,14 +149,14 @@ export function BillingPage({ checkoutParam = null }: BillingPageProps = {}) {
 
         {entitlement.billingEnabled ? (
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button type="button" onClick={() => setUpgradeOpen(true)}>
+            <Button type="button" onClick={handleOpenUpgrade}>
               {entitlement.plan === "free" ? "Choose a plan" : "Change plan"}
             </Button>
             {entitlement.hasBillingAccount ? (
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => portal.mutate()}
+                onClick={handleOpenBillingPortal}
                 disabled={portal.isPending}
               >
                 {portal.isPending ? (
@@ -173,7 +190,9 @@ export function BillingPage({ checkoutParam = null }: BillingPageProps = {}) {
 
         {portal.isError ? (
           <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">
-            {portal.error.message}
+            {isBillingPortalUnavailable(portal.error)
+              ? DONOR_BILLING_PORTAL_UNAVAILABLE_MESSAGE
+              : DONOR_BILLING_PORTAL_ERROR_MESSAGE}
           </p>
         ) : null}
       </section>
@@ -200,7 +219,7 @@ export function BillingPage({ checkoutParam = null }: BillingPageProps = {}) {
         </Link>
       </p>
 
-      {upgradeOpen ? <UpgradeDialog open onOpenChange={setUpgradeOpen} /> : null}
+      {upgradeOpen ? <UpgradeDialog open onOpenChange={handleUpgradeOpenChange} /> : null}
     </div>
   );
 }
@@ -213,13 +232,12 @@ export function BillingPage({ checkoutParam = null }: BillingPageProps = {}) {
  * `checkout=success` only means the browser came back from Stripe — the plan
  * itself lands via webhook, so the copy says "confirming", not "done".
  */
-function BillingBanners({
-  checkoutParam,
-  entitlement,
-}: {
+interface BillingBannersProps {
   checkoutParam: string | null;
   entitlement: DonorEntitlement;
-}) {
+}
+
+function BillingBanners({ checkoutParam, entitlement }: BillingBannersProps) {
   if (checkoutParam === "success") {
     return (
       <Banner tone="success" icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}>
@@ -256,24 +274,24 @@ function BillingBanners({
   return null;
 }
 
-/**
- * One metered-dimension counter: the spendable remaining figure with the
- * period usage beneath it. Profiles is a hard cap (`isCap`), so it reads "of N"
- * rather than "used this period".
- */
-function Counter({
-  label,
-  remaining,
-  used,
-  included,
-  isCap = false,
-}: {
+interface CounterProps {
   label: string;
   remaining: number;
   used: number;
   included: number;
   isCap?: boolean;
-}) {
+}
+
+/**
+ * One metered-dimension counter: the spendable remaining figure with the
+ * period usage beneath it. Profiles is a hard cap (`isCap`), so it reads "of N"
+ * rather than "used this period".
+ *
+ * An exhausted dimension reads as STATUS rather than as the number `0` — a
+ * lone "0" under an allowance label is a worse thing to scan than the words,
+ * and the upgrade button below the grid is the affordance in either state.
+ */
+function Counter({ label, remaining, used, included, isCap = false }: CounterProps) {
   const isEmpty = remaining <= 0;
   return (
     <div>
@@ -281,11 +299,12 @@ function Counter({
         {label}
       </dt>
       <dd
-        className={`mt-1 font-mono text-2xl tabular-nums ${
-          isEmpty ? "text-amber-600 dark:text-amber-400" : "text-foreground"
-        }`}
+        className={cn(
+          "mt-1 font-mono tabular-nums",
+          isEmpty ? "text-base text-amber-600 dark:text-amber-400" : "text-2xl text-foreground"
+        )}
       >
-        {remaining}
+        {isEmpty ? (isCap ? "At limit" : "None left") : remaining}
       </dd>
       <dd className="text-xs text-muted-foreground">
         {isCap ? `${used} of ${included} used` : `${used} of ${included} this month`}
@@ -302,21 +321,22 @@ const BANNER_TONES = {
   neutral: "border-border bg-muted text-foreground",
 } as const;
 
-function Banner({
-  tone,
-  icon,
-  children,
-}: {
+interface BannerProps {
   tone: keyof typeof BANNER_TONES;
   icon: React.ReactNode;
   children: React.ReactNode;
-}) {
+}
+
+function Banner({ tone, icon, children }: BannerProps) {
   // `<output>` carries an implicit role="status" (polite live region), which
   // is what these are: state that changed underneath the user — a checkout
   // return, a failed payment — not something they navigated to.
   return (
     <output
-      className={`mb-6 flex items-start gap-2 rounded-lg border p-4 text-sm ${BANNER_TONES[tone]}`}
+      className={cn(
+        "mb-6 flex items-start gap-2 rounded-lg border p-4 text-sm",
+        BANNER_TONES[tone]
+      )}
     >
       <span className="mt-0.5 shrink-0">{icon}</span>
       <span>{children}</span>

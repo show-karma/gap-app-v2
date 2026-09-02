@@ -211,6 +211,10 @@ export function donorQuotaErrorFrom(
   return new QuotaError(httpErrorMessage(error), refusal);
 }
 
+/** Fixed copy for the 409 branch, rendered instead of the backend message. */
+export const DONOR_SUBSCRIPTION_ALREADY_ACTIVE_MESSAGE =
+  "You already have an active subscription. Manage it from the billing portal.";
+
 /**
  * A second subscription checkout for an advisor who already has a live Stripe
  * subscription (indexer 409). Stripe Checkout does not dedupe, so the backend
@@ -219,7 +223,7 @@ export function donorQuotaErrorFrom(
  */
 export class DonorSubscriptionAlreadyActiveError extends Error {
   constructor(message?: string) {
-    super(message || "You already have an active subscription. Manage it from the billing portal.");
+    super(message || DONOR_SUBSCRIPTION_ALREADY_ACTIVE_MESSAGE);
     this.name = "DonorSubscriptionAlreadyActiveError";
   }
 }
@@ -346,6 +350,16 @@ export const startPackCheckout = async (
 };
 
 /**
+ * The two things the UI may say about a portal failure. Both are FIXED copy:
+ * the thrown error carries the backend's own message, which is not the
+ * advisor's to read (CWE-209) — that one goes to Sentry instead.
+ */
+export const DONOR_BILLING_PORTAL_UNAVAILABLE_MESSAGE =
+  "Your billing account is still being set up. Refresh in a moment, or subscribe to a plan first.";
+export const DONOR_BILLING_PORTAL_ERROR_MESSAGE =
+  "Couldn't open the billing portal. Please try again in a moment.";
+
+/**
  * The advisor has no Stripe customer yet, so there is no portal to open
  * (indexer 409 `Billing Portal Unavailable`, or 404 when no subscription row
  * exists at all). `stripe_customer_id` is written by the webhook, not by the
@@ -353,10 +367,7 @@ export const startPackCheckout = async (
  */
 export class DonorBillingPortalUnavailableError extends Error {
   constructor(message?: string) {
-    super(
-      message ||
-        "Your billing account is still being set up. Refresh in a moment, or subscribe to a plan first."
-    );
+    super(message || DONOR_BILLING_PORTAL_UNAVAILABLE_MESSAGE);
     this.name = "DonorBillingPortalUnavailableError";
   }
 }

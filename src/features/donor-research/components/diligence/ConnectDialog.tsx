@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useOutreachPreview, useRequestIntro, useUpdateAdvisorEmail } from "@/hooks/useDiligence";
 import { isIntroQuotaExhausted } from "@/services/donor-research-billing.service";
-import { UpgradeDialog } from "../../billing/UpgradeDialog";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
 import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
@@ -69,6 +69,12 @@ export function ConnectDialog({
 }: ConnectDialogProps) {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
+  const handleClose = () => onOpenChange(false);
+  const handleQuotaExhausted = () => {
+    onOpenChange(false);
+    setUpgradeOpen(true);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,11 +89,8 @@ export function ConnectDialog({
               canConnect={canConnect}
               candidateName={candidateName ?? null}
               viewer={viewer}
-              onClose={() => onOpenChange(false)}
-              onQuotaExhausted={() => {
-                onOpenChange(false);
-                setUpgradeOpen(true);
-              }}
+              onClose={handleClose}
+              onQuotaExhausted={handleQuotaExhausted}
             />
           ) : null}
         </DialogContent>

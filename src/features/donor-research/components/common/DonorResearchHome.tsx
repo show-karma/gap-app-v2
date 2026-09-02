@@ -8,9 +8,9 @@ import { BTN_BASE, BTN_MD, BTN_PRIMARY, SK } from "@/components/Pages/Dashboard/
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorReports } from "@/hooks/useDonorReports";
 import { Link } from "@/src/components/navigation/Link";
+import { ReportQuotaBadge } from "@/src/features/donor-research/billing/ReportQuotaBadge";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { ReportQuotaBadge } from "../../billing/ReportQuotaBadge";
 import { ReportListPanel } from "../report-list/ReportListPanel";
 
 function StatsSkeleton() {

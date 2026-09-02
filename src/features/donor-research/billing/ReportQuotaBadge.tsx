@@ -7,6 +7,9 @@ import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
+/** Non-numeric status copy for an exhausted allowance (never "0 reports left"). */
+const NO_REPORTS_LEFT_COPY = "No reports left";
+
 /**
  * "3 reports left · Starter" chip in the donor-research header.
  *
@@ -14,6 +17,10 @@ import { cn } from "@/utilities/tailwind";
  * away rather than something discovered at submit time. Renders "—" while
  * loading and on error rather than a fabricated count: an advisor acting on a
  * wrong number here would be worse than an advisor seeing no number.
+ *
+ * At zero the chip stops counting and states the status instead — a "0" in the
+ * same slot that normally holds a spendable balance reads as a number to act
+ * on. The upgrade affordance beside it is unchanged.
  */
 export function ReportQuotaBadge() {
   const entitlementQuery = useDonorEntitlement();
@@ -34,7 +41,9 @@ export function ReportQuotaBadge() {
       aria-label={
         remaining === null
           ? "Report allowance — open billing"
-          : `${remaining} ${pluralize("report", remaining)} left — open billing`
+          : isEmpty
+            ? `${NO_REPORTS_LEFT_COPY} — open billing`
+            : `${remaining} ${pluralize("report", remaining)} left — open billing`
       }
     >
       <div className="flex items-center gap-1.5 border-r border-border/60 px-2.5 py-1.5">
@@ -47,10 +56,18 @@ export function ReportQuotaBadge() {
         </span>
       </div>
       <div className="flex items-baseline gap-1 px-2.5 py-1.5">
-        <span className="font-mono tabular-nums text-foreground">{remaining ?? "—"}</span>
-        <span className="text-xs text-muted-foreground">
-          {remaining === null ? "reports left" : `${pluralize("report", remaining)} left`}
-        </span>
+        {isEmpty ? (
+          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+            {NO_REPORTS_LEFT_COPY}
+          </span>
+        ) : (
+          <>
+            <span className="font-mono tabular-nums text-foreground">{remaining ?? "—"}</span>
+            <span className="text-xs text-muted-foreground">
+              {remaining === null ? "reports left" : `${pluralize("report", remaining)} left`}
+            </span>
+          </>
+        )}
       </div>
       {isEmpty ? (
         <div className="flex items-center border-l border-amber-300/60 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-700 dark:border-amber-700/60 dark:text-amber-300">

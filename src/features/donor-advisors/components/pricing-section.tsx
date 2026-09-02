@@ -9,10 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useDonorPlanCatalog } from "@/hooks/useDonorBilling";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import {
+  DONOR_PLAN_CATALOG_FALLBACK,
   DONOR_PLAN_PRESENTATION,
-  FALLBACK_FREE_SIGNUP_REPORT_GRANT,
-  FALLBACK_PACK_CATALOG,
-  FALLBACK_PLAN_CATALOG,
   formatPlanPrice,
   PRICING_CARD_ORDER,
 } from "@/src/features/donor-research/billing/pricing-content";
@@ -32,10 +30,12 @@ import { cn } from "@/utilities/tailwind";
  *
  * The numbers come from `GET /v2/donor-research/billing/plans` — the same
  * catalog the quota engine enforces — so this page can never advertise an
- * allowance the backend won't honour. `FALLBACK_PLAN_CATALOG` renders while
- * that request is in flight and if it fails: a marketing page showing a
+ * allowance the backend won't honour. `DONOR_PLAN_CATALOG_FALLBACK` renders
+ * while that request is in flight and if it fails: a marketing page showing a
  * skeleton (or nothing) where its prices belong is worse than showing the
  * shipped defaults, which the live response overwrites the moment it lands.
+ * A response that arrives MISSING a plan is filled in per plan by
+ * `useDonorPlanCatalog`, so no card here can price itself at $0 by omission.
  *
  * Every card routes into the product rather than straight to Stripe. Checkout
  * needs an authenticated advisor, so an anonymous visitor onboards first and
@@ -45,19 +45,12 @@ import { cn } from "@/utilities/tailwind";
 export function PricingSection() {
   const catalogQuery = useDonorPlanCatalog();
 
-  const catalog = catalogQuery.data;
-  const entries: readonly DonorPlanCatalogEntry[] = catalog?.plans?.length
-    ? catalog.plans
-    : FALLBACK_PLAN_CATALOG;
-  const freeGrant = catalog?.freeSignupReportGrant ?? FALLBACK_FREE_SIGNUP_REPORT_GRANT;
+  const catalog = catalogQuery.data ?? DONOR_PLAN_CATALOG_FALLBACK;
+  const freeGrant = catalog.freeSignupReportGrant;
 
   const byPlan = new Map<DonorResearchPlan, DonorPlanCatalogEntry>(
-    entries.map((entry) => [entry.plan, entry])
+    catalog.plans.map((entry) => [entry.plan, entry])
   );
-
-  const packs: readonly DonorPackCatalogEntry[] = catalog?.packs?.length
-    ? catalog.packs
-    : FALLBACK_PACK_CATALOG;
 
   return (
     <section
@@ -112,7 +105,7 @@ export function PricingSection() {
           ))}
         </div>
 
-        <PackShowcase packs={packs} />
+        <PackShowcase packs={catalog.packs} />
 
         <p className="text-sm text-muted-foreground">
           Monthly billing, cancel any time from your billing page. Unused reports roll over up to
@@ -123,8 +116,12 @@ export function PricingSection() {
   );
 }
 
+interface PackShowcaseProps {
+  packs: readonly DonorPackCatalogEntry[];
+}
+
 /** One-time PAYG / top-up packs, shown below the plan cards. */
-function PackShowcase({ packs }: { packs: readonly DonorPackCatalogEntry[] }) {
+function PackShowcase({ packs }: PackShowcaseProps) {
   if (packs.length === 0) return null;
   return (
     <div className="flex w-full flex-col gap-3">
@@ -150,32 +147,40 @@ function PackShowcase({ packs }: { packs: readonly DonorPackCatalogEntry[] }) {
   );
 }
 
-/** The four metered allowances a paid plan grants, from the live catalog. */
-function AllowanceList({ entry }: { entry: DonorPlanCatalogEntry | undefined }) {
+interface AllowanceListProps {
+  entry: DonorPlanCatalogEntry | undefined;
+}
+
+/**
+ * The four metered allowances a paid plan grants, from the live catalog. A
+ * ZERO allowance is not a feature, so its row is dropped entirely rather than
+ * advertised as "0 donor profiles" — the profile cap included.
+ */
+function AllowanceList({ entry }: AllowanceListProps) {
   if (!entry) return null;
-  // A zero allowance is not advertised at all, so the rows are built in one
-  // pass rather than filtered and then mapped.
-  const perMonth: ReactElement[] = [];
+  // The rows are built in one pass rather than filtered and then mapped.
+  const rows: ReactElement[] = [];
   for (const item of [
     { count: entry.reportsIncluded, noun: "report" },
     { count: entry.introsIncluded, noun: "warm intro" },
     { count: entry.diligenceIncluded, noun: "diligence round" },
   ]) {
     if (item.count <= 0) continue;
-    perMonth.push(
+    rows.push(
       <li key={item.noun}>
         {item.count} {pluralize(item.noun, item.count)} / month
       </li>
     );
   }
-  return (
-    <ul className="flex flex-col gap-1 text-sm font-medium text-foreground">
-      {perMonth}
-      <li>
+  if (entry.profilesIncluded > 0) {
+    rows.push(
+      <li key="donor profile">
         {entry.profilesIncluded} donor {pluralize("profile", entry.profilesIncluded)}
       </li>
-    </ul>
-  );
+    );
+  }
+  if (rows.length === 0) return null;
+  return <ul className="flex flex-col gap-1 text-sm font-medium text-foreground">{rows}</ul>;
 }
 
 interface PricingCardProps {
@@ -262,15 +267,13 @@ function PricingCard({ plan, entry, freeGrant, isLoading }: PricingCardProps) {
   );
 }
 
-function PlanPrice({
-  entry,
-  isEnterprise,
-  isLoading,
-}: {
+interface PlanPriceProps {
   entry: DonorPlanCatalogEntry | undefined;
   isEnterprise: boolean;
   isLoading: boolean;
-}) {
+}
+
+function PlanPrice({ entry, isEnterprise, isLoading }: PlanPriceProps) {
   if (isEnterprise) {
     return (
       <p className="text-3xl font-semibold leading-none tracking-tight text-foreground">Custom</p>

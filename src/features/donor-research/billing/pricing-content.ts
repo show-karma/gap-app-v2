@@ -1,5 +1,6 @@
 import type {
   DonorPackCatalogEntry,
+  DonorPlanCatalog,
   DonorPlanCatalogEntry,
   DonorResearchPlan,
 } from "@/types/donor-research-billing";
@@ -181,6 +182,20 @@ export const FALLBACK_PACK_CATALOG: readonly DonorPackCatalogEntry[] = Object.fr
 ]);
 
 export const FALLBACK_FREE_SIGNUP_REPORT_GRANT = 2;
+
+/**
+ * The whole catalog as shipped, for the window before the live one arrives and
+ * for a request that fails outright. `billingEnabled` is TRUE here on purpose:
+ * an unreachable catalog means we do not know, and reading "no answer" as
+ * "billing is switched off" would hide the upgrade path from every advisor
+ * whenever the endpoint blips. Only a loaded `false` disables checkout.
+ */
+export const DONOR_PLAN_CATALOG_FALLBACK: DonorPlanCatalog = Object.freeze({
+  freeSignupReportGrant: FALLBACK_FREE_SIGNUP_REPORT_GRANT,
+  billingEnabled: true,
+  plans: [...FALLBACK_PLAN_CATALOG],
+  packs: [...FALLBACK_PACK_CATALOG],
+});
 
 /** Card order on the pricing page, cheapest to sales-led. */
 export const PRICING_CARD_ORDER: readonly DonorResearchPlan[] = Object.freeze([
