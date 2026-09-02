@@ -47,16 +47,23 @@ import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantJsonLd, TenantThemeStyle } from "@/src/components/layout/tenant-chrome";
 import { TenantStoreSync } from "@/src/components/layout/tenant-store-sync";
-import { isKnownTenantParam, listTenantParams } from "@/utilities/tenant-param";
+import { isKnownTenantParam, KARMA_TENANT_PARAM } from "@/utilities/tenant-param";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
-// Every value the `[tenant]` root param can take. Root params are available
-// without this, but Cache Components requires at least one value per root
-// param or the build fails — so the list is here from the start rather than
-// being bolted on when the flag flips.
+// Cache Components requires at least one value per root param or the build
+// fails, so the list is here from the start rather than being bolted on when
+// the flag flips.
+//
+// D3: only the karma shell is prerendered. Returning every tenant multiplied
+// the build by the number of tenants — 8 full copies of ~185 routes, 1477 page
+// renders — for shells that are identical apart from the theme. A tenant shell
+// renders on demand on its first request and is then persisted like any other
+// on-demand entry, so the only cost is one cold render per tenant per deploy.
+// `isKnownTenantParam()` below still accepts every tenant — this only
+// changes what is built ahead of time, not what is servable.
 export function generateStaticParams(): Array<{ tenant: string }> {
-  return listTenantParams().map((value) => ({ tenant: value }));
+  return [{ tenant: KARMA_TENANT_PARAM }];
 }
 
 // Keeps the rendering mode exactly as it was before the tenant moved into the
