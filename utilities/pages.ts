@@ -196,6 +196,7 @@ export const PAGES = {
   },
   BLOG: `/blog`,
   BLOG_POST: (slug: string) => `/blog/${slug}`,
+  BLOG_PREVIEW: (slug: string) => `/blog/preview/${slug}`,
   BLOG_PREVIEW_EXIT: `/api/blog/preview/exit`,
   // Embedded Sanity Studio (noindex) — see app/admin/studio/[[...tool]]/.
   ADMIN_STUDIO: `/admin/studio`,
