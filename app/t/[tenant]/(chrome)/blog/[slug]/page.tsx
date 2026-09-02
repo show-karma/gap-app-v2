@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPublishedPostBySlug } from "@/sanity/lib/gateway";
+import { getPublishedPostBySlug, getPublishedSlugs } from "@/sanity/lib/gateway";
 import { BlogPostArticle, resolveOgImage } from "@/src/components/blog/BlogPostArticle";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
@@ -20,8 +20,27 @@ import { PAGES } from "@/utilities/pages";
 // `getPublishedPostBySlug()` as `cacheLife("minutes")` (revalidate 60) with a
 // per-slug `cacheTag` the M4 webhook invalidates.
 
+const PRERENDERED_POST_SAMPLE = 3;
+
 interface PageProps {
   readonly params: Promise<{ slug: string }>;
+}
+
+/**
+ * A small sample of real posts, prerendered at build.
+ *
+ * Not the whole archive on purpose: the point is to prove the route prerenders
+ * and keep the newest posts warm, not to bake every post into every deploy.
+ * Any other slug renders on its first request and is then persisted.
+ *
+ * `getPublishedSlugs()` already backs the sitemap, so these are real slugs; it
+ * returns an empty list when Sanity is unconfigured, which yields a build with
+ * no prerendered posts rather than a failed one.
+ */
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  const slugs = await getPublishedSlugs();
+
+  return slugs.slice(0, PRERENDERED_POST_SAMPLE).map((entry) => ({ slug: entry.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

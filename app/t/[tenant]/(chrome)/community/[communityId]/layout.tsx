@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cache } from "react";
 import { WhitelabelJsonLd } from "@/components/Seo/WhitelabelJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
@@ -15,6 +16,27 @@ const getCachedContext = cache(getWhitelabelContext);
 type Params = Promise<{
   communityId: string;
 }>;
+
+const PRERENDERED_COMMUNITY_SAMPLE = 3;
+
+/**
+ * A small sample of real communities, prerendered at build.
+ *
+ * Its presence is the point as much as its contents: with `generateStaticParams`
+ * the layout may keep its top-level `await params`, because the sample values
+ * are known at build time. Every other community renders on its first request
+ * and is then persisted like any other on-demand entry, so this bounds build
+ * time without bounding what is servable.
+ *
+ * The slugs come from `chosenCommunities()` — the same list the homepage and
+ * the communities sitemap use, so they are real on both staging and production
+ * rather than hand-picked and liable to rot.
+ */
+export function generateStaticParams(): Array<{ communityId: string }> {
+  return chosenCommunities()
+    .slice(0, PRERENDERED_COMMUNITY_SAMPLE)
+    .map((community) => ({ communityId: community.slug }));
+}
 
 export async function generateViewport(): Promise<Viewport> {
   const { isWhitelabel, tenantConfig, config } = await getCachedContext();

@@ -14,6 +14,7 @@ import { ProjectJsonLd } from "@/components/Seo/ProjectJsonLd";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
 import { projectUpdatesQueryKey } from "@/hooks/v2/useProjectUpdates";
 import { getProjectUpdates } from "@/services/project-updates.service";
+import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer.cached";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { PAGES } from "@/utilities/pages";
@@ -25,6 +26,37 @@ import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonical
 type Params = Promise<{
   projectId: string;
 }>;
+
+const PRERENDERED_PROJECT_SAMPLE = 3;
+
+/**
+ * A small sample of real projects, prerendered at build.
+ *
+ * With `generateStaticParams` present the layout may keep its top-level
+ * `await params`: the sample values are known at build time, and any other
+ * project renders on first request and is then persisted.
+ *
+ * The slugs are read from the explorer rather than hard-coded, so they are
+ * real on whichever environment is building instead of a list that silently
+ * rots when a project is renamed. A failure here degrades to prerendering no
+ * projects — never to a failed build, and never to a fabricated slug.
+ */
+export async function generateStaticParams(): Promise<Array<{ projectId: string }>> {
+  try {
+    const { payload } = await getExplorerProjectsPaginatedCached({
+      page: 1,
+      limit: PRERENDERED_PROJECT_SAMPLE,
+    });
+
+    return payload
+      .map((project) => project.details?.slug ?? project.uid)
+      .filter((slug): slug is string => Boolean(slug))
+      .slice(0, PRERENDERED_PROJECT_SAMPLE)
+      .map((projectId) => ({ projectId }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   // Skip server-side API calls during E2E tests — the staging API may be
