@@ -273,8 +273,38 @@ export const NOTEBOOK_SPEC_MAX_SECTIONS = 20;
 const sectionTitleSchema = z.string().trim().min(1).max(NOTEBOOK_SECTION_TITLE_MAX);
 const sectionDescriptionSchema = z.string().trim().max(NOTEBOOK_SECTION_DESCRIPTION_MAX);
 
+/**
+ * Stable identity for a section, mirrored EXACTLY from the indexer's copy.
+ *
+ * Optional here because it is optional there: every page written before the
+ * generator existed carries no ids, and requiring one would retroactively
+ * invalidate the whole back catalogue. The generator's own output schema does
+ * require one on every section it emits, so an AI-composed page arrives with
+ * ids on all of them.
+ *
+ * This side is the READ half. A shape this schema refuses is a document the
+ * indexer already accepted and stored, which this build then cannot render —
+ * so the two shapes have to be the same shape, not merely compatible ones.
+ * Kept in step by the contract test, like the rest of the vocabulary.
+ */
+export const NOTEBOOK_SECTION_ID_MAX = 80;
+
+export const NotebookSectionIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(NOTEBOOK_SECTION_ID_MAX)
+  .regex(/^[a-z0-9][a-z0-9-]*$/);
+
+/**
+ * Spread into every section schema. Every section is `.strict()`, so a section
+ * type that forgets this rejects a stored id rather than ignoring it.
+ */
+const sectionIdentityFields = { id: NotebookSectionIdSchema.optional() };
+
 export const NotebookKpisSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("kpis"),
     metrics: z
       .array(z.enum(NOTEBOOK_KPI_METRICS))
@@ -297,6 +327,7 @@ export const NotebookKpisSectionSchema = z
  */
 export const NotebookTableSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("table"),
     source: z.literal("kernel"),
     columns: z
@@ -350,6 +381,7 @@ const queryFilterValues = (max: number) =>
 
 export const NotebookQuerySectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("query"),
     // Shaped like the catalogue's ids rather than free text: a metric id is an
     // identifier, and anything that is not shaped like one cannot be one.
@@ -392,6 +424,7 @@ export const NotebookQuerySectionSchema = z
  */
 export const NotebookTiersSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("tiers"),
     source: z.literal("kernel"),
     title: sectionTitleSchema,
@@ -401,6 +434,7 @@ export const NotebookTiersSectionSchema = z
 
 export const NotebookBarsSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("bars"),
     source: z.enum(NOTEBOOK_BAR_SOURCES),
     metric: z.enum(NOTEBOOK_BAR_METRICS),
@@ -414,7 +448,7 @@ export const NotebookBarsSectionSchema = z
   });
 
 export const NotebookApplicationsSectionSchema = z
-  .object({ type: z.literal("applications") })
+  .object({ ...sectionIdentityFields, type: z.literal("applications") })
   .strict();
 
 /**
@@ -426,6 +460,7 @@ export const NotebookApplicationsSectionSchema = z
  */
 export const NotebookTextSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("text"),
     title: sectionTitleSchema.optional(),
     body: z.string().trim().min(1).max(NOTEBOOK_TEXT_BODY_MAX),
@@ -446,6 +481,7 @@ export const NotebookTextSectionSchema = z
  */
 export const NotebookTimeseriesSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("timeseries"),
     source: z.literal("indicators"),
     indicatorId: z.string().uuid(),
@@ -469,6 +505,7 @@ export const NotebookTimeseriesSectionSchema = z
  */
 export const NotebookHeaderSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("header"),
     eyebrow: z.string().trim().min(1).max(NOTEBOOK_EYEBROW_MAX).optional(),
     breadcrumbs: z
@@ -481,6 +518,7 @@ export const NotebookHeaderSectionSchema = z
 
 export const NotebookHeroSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("hero"),
     headline: z.string().trim().min(1).max(NOTEBOOK_HEADLINE_MAX),
     subheadline: z.string().trim().min(1).max(NOTEBOOK_SECTION_DESCRIPTION_MAX).optional(),
@@ -495,6 +533,7 @@ export const NotebookHeroSectionSchema = z
  */
 export const NotebookNavSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("nav"),
     title: sectionTitleSchema.optional(),
   })
@@ -509,6 +548,7 @@ export const NotebookNavSectionSchema = z
  */
 export const NotebookNarrativeSectionSchema = z
   .object({
+    ...sectionIdentityFields,
     type: z.literal("narrative"),
     title: sectionTitleSchema.optional(),
     body: z.string().trim().min(1).max(NOTEBOOK_NARRATIVE_BODY_MAX),

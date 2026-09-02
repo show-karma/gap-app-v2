@@ -25,7 +25,15 @@ export const NotebookProvenanceSourceSchema = z.object({
   kind: z.enum(NOTEBOOK_PROVENANCE_KINDS),
   /** The catalogue id behind this element, absent when the source is authored. */
   id: z.string().trim().max(200).optional(),
-  label: z.string().trim().min(1).max(200),
+  /**
+   * 300, because that is the indexer's bound. NOT 200.
+   *
+   * A read schema tighter than the write schema is a payload the API happily
+   * returns and this build refuses — a valid generation that 400s on arrival
+   * and reads like a model fault. The rule for every bound in this file: the
+   * indexer's copy is authoritative and this one may be looser, never tighter.
+   */
+  label: z.string().trim().min(1).max(300),
 });
 
 export const NotebookProvenanceEntrySchema = z.object({
@@ -54,8 +62,15 @@ export const NotebookGenerationResultSchema = z.object({
   // never smuggled back through the entry that populates the trusted builder.
   spec: NotebookComposedSpecSchema,
   provenance: z.array(NotebookProvenanceEntrySchema).max(60),
-  /** Things the generator could not honour, said plainly rather than dropped. */
-  warnings: z.array(z.string().trim().min(1).max(500)).max(20).default([]),
+  /**
+   * Things the generator could not honour, said plainly rather than dropped.
+   *
+   * 1000 per warning, matching the indexer. A warning is prose explaining what
+   * the model could not do, and it is exactly the field that runs long — which
+   * made a 500-character reader the thing that turned a wordy explanation into
+   * a failed request.
+   */
+  warnings: z.array(z.string().trim().min(1).max(1000)).max(20).default([]),
 });
 
 export type NotebookProvenanceSource = z.infer<typeof NotebookProvenanceSourceSchema>;
