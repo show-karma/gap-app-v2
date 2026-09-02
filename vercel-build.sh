@@ -67,8 +67,14 @@ report_build_machine() {
 
 report_build_machine
 
+# TEMPORARY (P2-6): `--debug-prerender` makes Next print the real server frame
+# for each prerender failure instead of the shell component that happened to be
+# holding the render. Remove once the failing-route count reaches zero — it
+# disables some build optimisations and is only worth its cost while triaging.
+NEXT_BUILD_ARGS="--debug-prerender"
+
 SECONDS=0
-timeout -k "${KILL_GRACE_SECONDS}s" "${SOFT_DEADLINE_SECONDS}s" pnpm build
+timeout -k "${KILL_GRACE_SECONDS}s" "${SOFT_DEADLINE_SECONDS}s" pnpm build ${NEXT_BUILD_ARGS}
 code=$?
 elapsed=$SECONDS
 
