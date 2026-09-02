@@ -1,18 +1,19 @@
 "use client";
 
 import { AlertCircle, Search } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { PAGES } from "@/utilities/pages";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
-import { useFundingFilters } from "../hooks/use-funding-filters";
-import { useFundingProgramByCompositeId, useFundingPrograms } from "../hooks/use-funding-programs";
+import { useFundingFiltersValue } from "../context/funding-filters-context";
+import type { FundingFilters } from "../hooks/use-funding-filters";
+import { useFundingPrograms } from "../hooks/use-funding-programs";
 import type { FundingProgramResponse } from "../types/funding-program";
 import { FundingMapCard } from "./funding-map-card";
 import { FundingMapCardSkeleton } from "./funding-map-card-skeleton";
 import { FundingMapFilters } from "./funding-map-filters";
 import { FundingMapPagination } from "./funding-map-pagination";
-import { FundingProgramDetailsDialog } from "./funding-program-details-dialog";
+import { FundingMapUrlState } from "./funding-map-url-state";
 
 /**
  * Crawlable detail-page URL for a program, when one exists. Programs
@@ -45,7 +46,11 @@ function getProgramId(program: FundingProgramResponse): string {
 }
 
 export function FundingMapList() {
-  const { apiParams, filters, programId, setProgramId } = useFundingFilters();
+  // No URL read here: nuqs calls useSearchParams(), which aborts the prerender
+  // of this sitemap-crawlable route unconditionally. The params start at the
+  // server default the page prefetched and are replaced by FundingMapUrlState
+  // after hydration.
+  const { apiParams, filters, openProgram } = useFundingFiltersValue();
   const { data, isLoading, isError, error } = useFundingPrograms(apiParams);
   const { mixpanel } = useMixpanel("karma");
   const hasTrackedPageView = useRef(false);
@@ -61,53 +66,27 @@ export function FundingMapList() {
         referrer: document.referrer,
         hasFiltersInUrl: urlParams.toString().length > 0,
         initialFilters: {
-          search: filters.search,
-          status: filters.status,
-          categories: filters.categories,
-          grantTypes: filters.grantTypes,
-          onlyOnKarma: filters.onlyOnKarma,
+          search: filters?.search,
+          status: filters?.status,
+          categories: filters?.categories,
+          grantTypes: filters?.grantTypes,
+          onlyOnKarma: filters?.onlyOnKarma,
         },
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch program from URL if programId is set
-  const {
-    data: programFromUrl,
-    isLoading: isProgramLoading,
-    isFetched: isProgramFetched,
-  } = useFundingProgramByCompositeId(programId || null);
-
-  // Program not found: query completed but returned null
-  const isProgramNotFound =
-    Boolean(programId) && isProgramFetched && !isProgramLoading && !programFromUrl;
-
   const programs = data?.programs ?? [];
   const totalCount = data?.count ?? 0;
 
-  // Dialog is open when we have a programId in URL
-  const dialogOpen = Boolean(programId);
-
   // Use program from URL query, or find from list as fallback
-  const selectedProgram = programFromUrl ?? null;
-
-  // Track card clicks via ref flag for details-open source detection
-  const cardClickedRef = useRef(false);
 
   const handleProgramClick = (program: FundingProgramResponse) => {
-    cardClickedRef.current = true;
-    // Use programId (preferred), or MongoDB _id as fallback for programs without programId
-    // MongoDB _id is unique across the collection
-    const id = program.programId || getProgramId(program);
-    setProgramId(id);
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    if (!open) {
-      // Clear programId from URL when closing dialog
-      setProgramId("");
-    }
+    // Use programId (preferred), or MongoDB _id as fallback for programs without
+    // programId. The URL write itself lives in the leaf, which is the only place
+    // allowed to touch it.
+    openProgram(program.programId || getProgramId(program));
   };
 
   // Track empty results
@@ -117,11 +96,11 @@ export function FundingMapList() {
         event: "funding-map:empty-results",
         properties: {
           activeFilters: {
-            searchLength: filters.search.length,
-            status: filters.status,
-            categories: filters.categories,
-            grantTypes: filters.grantTypes,
-            onlyOnKarma: filters.onlyOnKarma,
+            searchLength: filters?.search.length,
+            status: filters?.status,
+            categories: filters?.categories,
+            grantTypes: filters?.grantTypes,
+            onlyOnKarma: filters?.onlyOnKarma,
           },
         },
       });
@@ -137,11 +116,11 @@ export function FundingMapList() {
         properties: {
           errorType: error.name,
           activeFilters: {
-            searchLength: filters.search.length,
-            status: filters.status,
-            categories: filters.categories,
-            grantTypes: filters.grantTypes,
-            onlyOnKarma: filters.onlyOnKarma,
+            searchLength: filters?.search.length,
+            status: filters?.status,
+            categories: filters?.categories,
+            grantTypes: filters?.grantTypes,
+            onlyOnKarma: filters?.onlyOnKarma,
           },
         },
       });
@@ -151,14 +130,18 @@ export function FundingMapList() {
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <FundingMapFilters totalCount={totalCount} />
+      {/* Controls, not content: they read the URL, so they sit behind leaf
+          boundaries. Neither renders a link, so no crawlable graph is hidden. */}
+      <Suspense fallback={null}>
+        <FundingMapFilters totalCount={totalCount} />
+      </Suspense>
 
       {isLoading && <FundingMapListSkeleton />}
 
       {isError && <FundingMapError error={error} />}
 
       {!isLoading && !isError && programs.length === 0 && (
-        <FundingMapEmpty hasFilters={hasActiveFilters(filters)} />
+        <FundingMapEmpty hasFilters={filters ? hasActiveFilters(filters) : false} />
       )}
 
       {!isLoading && !isError && programs.length > 0 && (
@@ -171,22 +154,21 @@ export function FundingMapList() {
                 onClick={() => handleProgramClick(program)}
                 href={getProgramDetailHref(program)}
                 cardPosition={index}
-                page={filters.page}
+                page={filters?.page ?? 1}
               />
             ))}
           </div>
-          <FundingMapPagination totalCount={totalCount} />
+          <Suspense fallback={null}>
+            <FundingMapPagination totalCount={totalCount} />
+          </Suspense>
         </div>
       )}
 
-      <FundingProgramDetailsDialog
-        program={selectedProgram}
-        open={dialogOpen}
-        onOpenChange={handleDialogClose}
-        isLoading={isProgramLoading}
-        isNotFound={isProgramNotFound}
-        cardClickedRef={cardClickedRef}
-      />
+      {/* Link-free leaf: it owns every URL read on this route and renders only
+          the dialog, which no crawler needs. The grid above stays prerendered. */}
+      <Suspense fallback={null}>
+        <FundingMapUrlState />
+      </Suspense>
     </section>
   );
 }
@@ -231,7 +213,7 @@ function FundingMapEmpty({ hasFilters }: { hasFilters: boolean }) {
   );
 }
 
-function hasActiveFilters(filters: ReturnType<typeof useFundingFilters>["filters"]): boolean {
+function hasActiveFilters(filters: FundingFilters): boolean {
   return (
     filters.search !== "" ||
     filters.status !== "Active" ||
