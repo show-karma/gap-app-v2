@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer.cached";
+import { publicReadOptions } from "@/utilities/api/public-read";
 import {
   generateGrantOverviewMetadata,
   generateProjectFundingMetadata,
@@ -72,7 +73,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     getProjectCachedData(projectId),
     // Anonymous: the authorized default reaches TokenManager -> cookies(), which
     // is a request read on a route this PR is trying to prerender.
-    getProjectGrants(projectId, { isAuthorized: false }),
+    getProjectGrants(projectId, publicReadOptions()),
   ]);
 
   if (!projectInfo) {
