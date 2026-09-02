@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useLoadPrivy, usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
+import { TokenManager } from "@/utilities/auth/token-manager";
+import { isDonorResearchTokenRoute, PAGES } from "@/utilities/pages";
 import { DonorResearchLoading } from "./DonorResearchLoading";
 import { DonorResearchShell } from "./DonorResearchShell";
 import { DonorResearchSignInGate } from "./DonorResearchSignInGate";
-import { TokenManager } from "@/utilities/auth/token-manager";
-import { isDonorResearchTokenRoute, PAGES } from "@/utilities/pages";
 
 const DONOR_RESEARCH_QUERY_ROOT = ["donor-research"] as const;
 
