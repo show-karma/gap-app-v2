@@ -14,9 +14,12 @@ import { formatDate } from "@/utilities/formatDate";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 
-// Self-healing ISR: paired with the revalidation webhook (M4), which
-// invalidates this exact path on publish/unpublish/edit.
-export const revalidate = 60;
+// TODO(P2-3 stage 2): `export const revalidate = 60` lived here, paired with
+// the M4 revalidation webhook that invalidates this exact path on
+// publish/unpublish/edit. cacheComponents rejects the segment config; the
+// equivalent is `"use cache"` + `cacheLife` (60s) on the post loader in
+// `sanity/lib/gateway.ts` with a per-slug `cacheTag`. Until that lands this
+// page renders per request.
 
 const OG_IMAGE_WIDTH = 1200;
 const OG_IMAGE_HEIGHT = 630;

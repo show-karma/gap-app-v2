@@ -66,18 +66,15 @@ export function generateStaticParams(): Array<{ tenant: string }> {
   return [{ tenant: KARMA_TENANT_PARAM }];
 }
 
-// Keeps the rendering mode exactly as it was before the tenant moved into the
-// URL. Until this PR every route was dynamic as a side effect of the root
-// layout awaiting `headers()`; with that read gone Next would start
-// prerendering several hundred pages at build time, which is a far bigger
-// change than this refactor is allowed to make — 47 modules call
-// `useSearchParams()` and each unguarded one fails the export outright.
-//
-// Route-by-route triage (Stream / Cache / Block) is Phase 2 of the Instant
-// Navigations plan; this line is what Phase 2 deletes, one segment at a time.
-// It does NOT affect the cacheComponents readiness proof, which is measured on
-// a throwaway build with this export removed.
-export const dynamic = "force-dynamic";
+// `export const dynamic = "force-dynamic"` used to sit here. It pinned every
+// route to dynamic rendering after the tenant moved out of `headers()` and
+// into the `[tenant]` root param, and its own comment said Phase 2 would
+// delete it one segment at a time. This is that deletion, and it is not
+// incremental because cacheComponents replaces the question the export was
+// holding open: a segment prerenders what it can and streams the rest, rather
+// than the whole tree being forced into one mode. Nothing takes its place — a
+// route that must stay dynamic now says so itself, with `connection()` or an
+// uncached read.
 
 export async function generateMetadata(): Promise<Metadata> {
   const { isWhitelabel, config, tenantConfig } = await getWhitelabelContext();
