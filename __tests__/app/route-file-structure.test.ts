@@ -23,6 +23,65 @@ import { describe, expect, it } from "vitest";
  *
  * To clear an entry: add the missing file, then remove the directory from the
  * matching allowlist. Never add new entries — fix the route instead.
+ *
+ * ## What makes a route dynamic (this file's premise, restated)
+ *
+ * This ratchet used to rest on a premise that is no longer true: that every
+ * route rendered dynamically as a side effect of the root layout awaiting
+ * `headers()` to resolve the whitelabel host. That read is gone.
+ * `utilities/whitelabel-server.ts` resolves the tenant from the `[tenant]`
+ * root param instead, which is URL-derived and costs no dynamic render.
+ *
+ * Routes are still dynamic, but for a different and deliberately temporary
+ * reason: `app/t/[tenant]/layout.tsx` exports `dynamic = "force-dynamic"`,
+ * held in place so that removing the host read did not silently start
+ * prerendering several hundred pages. That one line is what the Instant
+ * Navigations phases delete, one segment at a time.
+ *
+ * So the hazard below is unchanged today, but its cause is now scheduled for
+ * deletion - and when it goes, a crawlable route that is not explicitly
+ * cacheable does not become safe, it becomes *streamed*, which is the same
+ * hidden-chunk failure arriving by another road.
+ *
+ * ## The invariant: crawlable means Cache-class, never Stream
+ *
+ * A route in SITEMAP_NO_LOADING carries two obligations:
+ *
+ *   1. No `loading.tsx` anywhere on its segment chain. TESTED below.
+ *   2. Nothing on its page/layout chain may reach a module that reads URL
+ *      state (`useSearchParams()`, `usePathname()`) without a Suspense
+ *      boundary between the crawlable content and that read. An unguarded URL
+ *      read is what stops a segment being prerendered, and a crawlable route
+ *      that cannot prerender streams its content as a hidden chunk.
+ *      DOCUMENTED ONLY - deliberately not tested; see below.
+ *
+ * ### Why obligation 2 is documentation and not a test
+ *
+ * It was measured before it was rejected. A check that walks each crawlable
+ * route's page/layout chain and flags an import of any module calling those
+ * hooks flags 53 of the 53 crawlable routes today - and so does a transitive
+ * walk. Nearly all of them for one reason: the root layout renders
+ * `components/DeferredLayoutComponents.tsx`, which calls `usePathname()` and
+ * whose every heavy child is a `dynamic(..., { ssr: false })` import, i.e.
+ * exactly the shape the rule is meant to allow. Whether a boundary sits
+ * between the crawlable content and the read is a question about JSX
+ * structure, not about imports, and no import-graph check can answer it. A
+ * ratchet that fires on 100% of its subjects on day one is an allowlist
+ * factory, not a gate.
+ *
+ * What does enforce obligation 2 is the no-JS crawl -
+ * `node scripts/crawl-sitemap.mjs --visibility-mode no-js` - which measures
+ * rendered HTML instead of guessing from imports, and the route-class triage
+ * that precedes any `"use cache"` work.
+ *
+ * ### What is tested instead: chrome group membership
+ *
+ * The closest enforceable proxy. Which shell a route gets is decided by which
+ * route group holds it, and for a crawlable page that shell IS the internal
+ * link graph it contributes to the no-JS HTML. A crawlable route moved from
+ * `(chrome)` to `(bare)` silently loses the navbar and footer, and nothing
+ * else in this file would notice. SITEMAP_BARE_ROUTES pins the exceptions;
+ * every other crawlable route must be in `(chrome)`.
  */
 
 // The route tree lives under the `[tenant]` root param, an internal prefix the
@@ -41,7 +100,8 @@ const CHROME_GROUPS = ["(chrome)", "(bare)"] as const;
 
 // Sitemap-crawlable routes where loading.tsx is FORBIDDEN along the whole
 // segment chain (DEV-612). Any loading.tsx above a page puts the page segment
-// behind a Suspense boundary; when the route renders dynamically Next then
+// behind a Suspense boundary; while the route renders dynamically — which it
+// still does today, see "What makes a route dynamic" above — Next then
 // streams the page HTML as a hidden late chunk (`<div hidden id="S:n">`) with
 // the loading fallback as the visible document. A reader that does not execute
 // JavaScript (most AI crawlers/fetchers) sees only the fallback. These routes
@@ -109,6 +169,20 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
   "projects",
   "seeds",
   "terms-and-conditions",
+]);
+
+// The crawlable routes that legitimately live in `(bare)`: the find-funders
+// section brings its own navbar and footer, which is why it sits outside
+// `(chrome)`. Every OTHER route in SITEMAP_NO_LOADING must be in `(chrome)`.
+// Listing only the exceptions keeps this to one short list instead of a second
+// copy of all 53 routes, and it still fails in both directions — a route that
+// leaves `(chrome)` fails here, and an entry whose route stops being crawlable
+// fails as stale.
+const SITEMAP_BARE_ROUTES: ReadonlySet<string> = new Set([
+  "nonprofits/find-funders",
+  "nonprofits/find-funders/connect",
+  "nonprofits/find-funders/connect/chatgpt",
+  "nonprofits/find-funders/connect/claude",
 ]);
 
 // Routes known to be missing loading.tsx at the time this ratchet was added.
@@ -338,6 +412,29 @@ describe("App Router route-file structure ratchet", () => {
       }
     }
     expect(violations, violations.join("\n")).toEqual([]);
+  });
+
+  it("every sitemap-crawlable route sits in the chrome group it is pinned to", () => {
+    const violations: string[] = [];
+    for (const dir of SITEMAP_NO_LOADING) {
+      const expected = SITEMAP_BARE_ROUTES.has(dir) ? "(bare)" : "(chrome)";
+      const groupRoot = groupRootFor(dir);
+      const actual = groupRoot === null ? "no group" : path.basename(groupRoot);
+      if (actual !== expected) {
+        violations.push(
+          `${dir || "(root)"}: expected ${expected}, found ${actual} — a crawlable route changing group changes whether the navbar and footer render, and that chrome is the page's whole internal link graph without JavaScript. If the move is intended, update SITEMAP_BARE_ROUTES and re-run the no-JS crawl.`
+        );
+      }
+    }
+    expect(violations, violations.join("\n")).toEqual([]);
+  });
+
+  it("has no stale SITEMAP_BARE_ROUTES entries", () => {
+    const stale = [...SITEMAP_BARE_ROUTES].filter((dir) => !SITEMAP_NO_LOADING.has(dir));
+    expect(
+      stale,
+      `These SITEMAP_BARE_ROUTES entries are no longer crawlable routes. Delete them from SITEMAP_BARE_ROUTES:\n${stale.join("\n")}`
+    ).toEqual([]);
   });
 
   it("has no overlap between SITEMAP_NO_LOADING and the legacy allowlist", () => {
