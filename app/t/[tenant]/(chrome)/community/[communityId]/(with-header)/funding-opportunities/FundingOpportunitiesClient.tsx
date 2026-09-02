@@ -155,7 +155,15 @@ function FundingOpportunitiesFilteredEmptySlot({
 
 export default function FundingOpportunitiesClient() {
   const { communityId } = useParams<{ communityId: string }>();
-  const { programs, loading, error, filters, setFilters, refetch } = usePrograms(communityId);
+  // `prerenderSafe`: this list renders above the crawlable content of a
+  // Cache-class route, where DEV-612 forbids the boundary Next would want for
+  // React Query's clock read. (An earlier version of this opt-in was replaced
+  // when #2102's toolbar split landed on this line.)
+  const { programs, loading, error, filters, setFilters, refetch } = usePrograms(
+    communityId,
+    undefined,
+    { prerenderSafe: true }
+  );
 
   const stats = useMemo(() => {
     let totalPool = 0;

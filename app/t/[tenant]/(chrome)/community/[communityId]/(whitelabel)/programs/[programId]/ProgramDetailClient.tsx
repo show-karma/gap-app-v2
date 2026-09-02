@@ -17,7 +17,8 @@ function ProgramDetailContent() {
     programId: string;
   }>();
 
-  const { program, loading, error, refetch } = useProgram(programId);
+  // Renders above the crawlable program content on a Cache-class route.
+  const { program, loading, error, refetch } = useProgram(programId, { prerenderSafe: true });
 
   // Loading state
   if (loading) {
