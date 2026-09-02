@@ -1,3 +1,4 @@
+import { getCommunityPrograms } from "@/services/community-programs.service";
 import { getProject } from "@/services/project.service";
 import { getExplorerProjects } from "@/services/projects-explorer.service";
 import { fundingProgramsService } from "@/src/features/funding-map/services/funding-programs.service";
@@ -9,7 +10,7 @@ import {
 } from "@/utilities/queries/v2/getCommunityData";
 
 /**
- * The behavioural half of the D2 gate: the four public loaders must not send an
+ * The behavioural half of the D2 gate: the public loaders must not send an
  * `Authorization` header while rendering on the server.
  *
  * `__tests__/utilities/api/public-read.test.ts` covers *why* that is safe — the
@@ -61,6 +62,7 @@ describe("public loaders drop the token on the server", () => {
     ["getCommunityData getCommunityDetails", () => getCommunityDetails("gitcoin")],
     ["getCommunityData getCommunityStats", () => getCommunityStats("gitcoin")],
     ["getCommunityData getCommunityProjects", () => getCommunityProjects("gitcoin", {})],
+    ["community-programs getCommunityPrograms", () => getCommunityPrograms("gitcoin")],
   ];
 
   it.each(loaders)("%s sends isAuthorized: false server-side", async (_name, run) => {
