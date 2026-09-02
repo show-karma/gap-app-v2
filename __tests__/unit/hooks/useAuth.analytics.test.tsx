@@ -120,6 +120,9 @@ describe("useAuth analytics", () => {
     __resetUserSwitchGuardForTests();
     mockPathname.mockReturnValue("/funding-map");
     resetBridge();
+    // A persisted Privy token now changes what the pre-`ready` emit gate does,
+    // so it must not leak between cases.
+    localStorage.clear();
   });
 
   describe("login_started", () => {
@@ -168,9 +171,12 @@ describe("useAuth analytics", () => {
       });
     });
 
-    it("stays silent until Privy is ready", async () => {
-      // Before `ready`, `authenticated` is false for everyone, so a start
-      // reported here may already be a no-op.
+    it("reports the start of an anonymous visitor whose Privy SDK has not loaded yet", async () => {
+      // The funnel-opening click: for an anonymous visitor the SDK is
+      // deliberately deferred, so `ready` is still false when they click. With
+      // no persisted token there is no session to hydrate — they are certainly
+      // signed out and the start is real. Gating on `ready` alone dropped
+      // nearly every one of these while `login_completed` still fired.
       setBridge({ ready: false });
       const { result } = renderHook(() => useAuth());
 
@@ -178,7 +184,52 @@ describe("useAuth analytics", () => {
         await result.current.login("navbar");
       });
 
+      expect(track).toHaveBeenCalledWith("login_started", { entry_point: "navbar" });
+    });
+
+    it("stays silent before Privy is ready when a session may still be hydrating", async () => {
+      // A persisted token means the SDK is loading a session that may restore.
+      // A start reported for it would open a funnel nothing closes.
+      setBridge({ ready: false });
+      localStorage.setItem("privy:token", "persisted-session-token");
+
+      const { result } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.login("navbar");
+      });
+
       expect(track).not.toHaveBeenCalled();
+    });
+
+    it("treats unreadable storage as signed out, matching the deferred SDK load", async () => {
+      // Storage can throw outright (privacy mode, blocked storage, enterprise
+      // policy). PrivyProviderWrapper takes the anonymous deferred path in
+      // exactly that case, so the emit gate has to agree or the click that
+      // opens the funnel goes unreported.
+      setBridge({ ready: false });
+      // Scoped to the Privy key: `adaptedLogin` also reads sessionStorage for
+      // the post-login redirect, and that read is unguarded, so throwing for
+      // every key would fail the case on an unrelated line.
+      const realGetItem = Storage.prototype.getItem;
+      const getItem = vi
+        .spyOn(Storage.prototype, "getItem")
+        .mockImplementation(function (this: Storage, key: string) {
+          if (key === "privy:token") throw new Error("storage unavailable");
+          return realGetItem.call(this, key);
+        });
+
+      try {
+        const { result } = renderHook(() => useAuth());
+
+        await act(async () => {
+          await result.current.login("navbar");
+        });
+
+        expect(track).toHaveBeenCalledWith("login_started", { entry_point: "navbar" });
+      } finally {
+        getItem.mockRestore();
+      }
     });
 
     it("does not open a funnel it will never close for an already signed-in user", async () => {
