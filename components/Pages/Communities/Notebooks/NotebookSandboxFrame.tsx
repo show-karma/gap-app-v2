@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  type NotebookSandboxThemeSnapshot,
+  readNotebookSandboxTheme,
+} from "@/services/notebooks/notebook-sandbox-theme";
 
 /**
  * The only place author-written HTML is ever rendered.
@@ -79,6 +83,26 @@ export const NOTEBOOK_SANDBOX_DOCUMENT = "karma:notebook-sandbox:document" as co
 export const NOTEBOOK_SANDBOX_HEIGHT = "karma:notebook-sandbox:height" as const;
 
 /**
+ * The app telling the shell what it looks like.
+ *
+ * PARENT-WARD IN THE OTHER DIRECTION, and it exists for the seamless variant.
+ * A block that is genuinely part of the page cannot be styled by the page —
+ * the frame is a separate document in an opaque origin, so our cascade stops
+ * dead at its boundary and there is no stylesheet, class or inherited property
+ * that reaches inside. Left alone the document renders in the browser's
+ * defaults: Times New Roman on white, inside a page in Inter on whatever the
+ * reader's theme is. The block then reads as an embed, which is precisely the
+ * thing this variant exists to stop being.
+ *
+ * So the theme is SENT, as values, over the same private port. See
+ * `notebook-sandbox-theme.ts` for what is in it and why every field of it is
+ * inert. Sent on connect and again on every theme change, because a reader who
+ * flips to dark mode and is left with one blindingly light block in the middle
+ * of the page has found the seam in the most visible way possible.
+ */
+export const NOTEBOOK_SANDBOX_THEME = "karma:notebook-sandbox:theme" as const;
+
+/**
  * Bounds on a height this component will honour. The shell mirrors them.
  *
  * The number crosses a trust boundary: what is being measured is the AUTHOR'S
@@ -94,6 +118,31 @@ export const NOTEBOOK_SANDBOX_MIN_HEIGHT = 320;
 export const NOTEBOOK_SANDBOX_MAX_HEIGHT = 20_000;
 
 /**
+ * No floor at all for a seamless block, and that is not an oversight.
+ *
+ * The 320px minimum is right for a WHOLE PAGE: a custom page measured before
+ * its layout settled and collapsed to nothing would look like a broken route.
+ * A seamless SECTION is a different object — a one-line callout between two
+ * composed sections is a legitimate thing to write, and a 320px floor would
+ * pad it with 250px of blank page that no author asked for and none can
+ * remove. The clamp still refuses zero and negatives, which is the case that
+ * actually indicates a bad measurement.
+ */
+export const NOTEBOOK_SANDBOX_SEAMLESS_MIN_HEIGHT = 0;
+
+/**
+ * What a seamless block is tall before the shell has measured it.
+ *
+ * There has to be SOMETHING. `height: 0` until the first report would make a
+ * section on an older shell — or one that never reports — invisible, and an
+ * invisible section is indistinguishable from a section the author deleted.
+ * An iframe's 150px CSS default would do the same job by accident; naming it
+ * makes it a decision, and one small enough that the single reflow when the
+ * real height arrives is a nudge rather than a jump.
+ */
+export const NOTEBOOK_SANDBOX_SEAMLESS_INITIAL_HEIGHT = 180;
+
+/**
  * The reported height as pixels this component will apply, or `null` for
  * anything it will not.
  *
@@ -102,12 +151,20 @@ export const NOTEBOOK_SANDBOX_MAX_HEIGHT = 20_000;
  * height the frame already has, which is why a malformed message must not come
  * back as some default — a default would let a garbled message resize a page.
  */
-export function clampNotebookSandboxHeight(value: unknown): number | null {
+export function clampNotebookSandboxHeight(
+  value: unknown,
+  /**
+   * The floor, which is a per-VARIANT decision rather than a property of the
+   * protocol — see `NOTEBOOK_SANDBOX_SEAMLESS_MIN_HEIGHT`. Defaulted so every
+   * existing caller and every existing test keeps the page-sized floor it had.
+   */
+  minimum: number = NOTEBOOK_SANDBOX_MIN_HEIGHT
+): number | null {
   if (typeof value !== "number" || !Number.isFinite(value)) return null;
   // Ceil, not round: half a pixel short of the content is a scrollbar.
   const measured = Math.ceil(value);
   if (measured <= 0) return null;
-  return Math.min(Math.max(measured, NOTEBOOK_SANDBOX_MIN_HEIGHT), NOTEBOOK_SANDBOX_MAX_HEIGHT);
+  return Math.min(Math.max(measured, minimum), NOTEBOOK_SANDBOX_MAX_HEIGHT);
 }
 
 /**
@@ -172,6 +229,27 @@ interface Props {
    * re-measured. A preview is a window onto the page; the page itself is not.
    */
   fitToContent?: boolean;
+  /**
+   * How the frame presents itself.
+   *
+   * `card` is the whole-page tier: a bordered, rounded panel on our background,
+   * which is honest about the document being a separate thing being shown to
+   * you.
+   *
+   * `seamless` is a SECTION inside a composed page, and it is the opposite
+   * claim: no border, no background of its own, no rounding, full width of its
+   * container, and no inner scrollbar — the block flows with the page and its
+   * gutters come from the page's own layout rather than from anything set
+   * here. Paired with the theme message it is meant to be indistinguishable
+   * from a section we rendered ourselves.
+   *
+   * PRESENTATION ONLY. Not one thing about the containment changes between the
+   * two: same sandbox tokens, same separate origin, same port, same clamp.
+   * Someone reading this prop in a diff should be able to satisfy themselves
+   * of that in one glance, which is why the security constants above are not
+   * parameterised by it.
+   */
+  variant?: "card" | "seamless";
 }
 
 export function NotebookSandboxFrame({
@@ -180,7 +258,14 @@ export function NotebookSandboxFrame({
   title,
   className,
   fitToContent = true,
+  variant = "card",
 }: Props) {
+  const seamless = variant === "seamless";
+  // A seamless block ALWAYS grows to its document. The alternative is an inner
+  // scrollbar in the middle of a page, which is the single most obvious tell
+  // that a section is an embed — and it is unreachable anyway, since the
+  // page's own wheel events never make it into the frame.
+  const fits = seamless || fitToContent;
   const frame = useRef<HTMLIFrameElement>(null);
   const port = useRef<MessagePort | null>(null);
   const [connected, setConnected] = useState(false);
@@ -209,8 +294,12 @@ export function NotebookSandboxFrame({
   // Read through a ref for the same reason as the document: the listener must
   // not be torn down and rebuilt because a prop changed, and re-attaching
   // mid-handshake is how a listener misses the announcement it was waiting for.
-  const fitToContentRef = useRef(fitToContent);
-  fitToContentRef.current = fitToContent;
+  const fitToContentRef = useRef(fits);
+  fitToContentRef.current = fits;
+  const minHeightRef = useRef(0);
+  minHeightRef.current = seamless
+    ? NOTEBOOK_SANDBOX_SEAMLESS_MIN_HEIGHT
+    : NOTEBOOK_SANDBOX_MIN_HEIGHT;
   /** What the shell already has, so an edit sends and a reconnect does not. */
   /** What the shell already has, so an edit sends and a reconnect does not. */
   const sentHtml = useRef<string | null>(null);
@@ -256,6 +345,39 @@ export function NotebookSandboxFrame({
    * regress: the fallback IS the previous behaviour.
    */
   const [height, setHeight] = useState<number | null>(null);
+
+  /**
+   * Push the current theme down the port, if there is one.
+   *
+   * Guarded on the variant: a card frame is a panel with its own border on our
+   * background and has never wanted our fonts inside it, so sending them would
+   * be changing how tier B looks as a side effect of building tier A. Reading
+   * the theme also walks every stylesheet in the document, which is not free
+   * and is entirely wasted on a frame that will not use it.
+   *
+   * A THROW HERE MUST NOT TAKE THE FRAME WITH IT. Everything this reads is
+   * CSSOM, which browsers have historically been inventive about — and a page
+   * that renders in the wrong font is a cosmetic problem, while a page that
+   * throws during the handshake never renders the document at all. The catch
+   * is the difference between those two outcomes.
+   */
+  const sendTheme = useCallback(() => {
+    if (!seamless) return;
+    const channel = port.current;
+    if (!channel) return;
+    let snapshot: NotebookSandboxThemeSnapshot;
+    try {
+      snapshot = readNotebookSandboxTheme();
+    } catch {
+      return;
+    }
+    channel.postMessage({ type: NOTEBOOK_SANDBOX_THEME, ...snapshot });
+  }, [seamless]);
+
+  // Read through a ref for the same reason as the document: the handshake
+  // listener must survive a prop change without being re-attached.
+  const sendThemeRef = useRef(sendTheme);
+  sendThemeRef.current = sendTheme;
 
   // useLayoutEffect, not useEffect: this runs synchronously at commit, before
   // paint, which is the earliest React lets us listen. The shell announces
@@ -325,7 +447,7 @@ export function NotebookSandboxFrame({
         const payload = message.data as { type?: string; height?: unknown } | null;
         if (payload?.type !== NOTEBOOK_SANDBOX_HEIGHT) return;
         if (!fitToContentRef.current) return;
-        const measured = clampNotebookSandboxHeight(payload.height);
+        const measured = clampNotebookSandboxHeight(payload.height, minHeightRef.current);
         if (measured === null) return;
         // Compared before setting: the shell reports on every resize, and an
         // unchanged number re-rendering the frame is churn at best.
@@ -348,6 +470,14 @@ export function NotebookSandboxFrame({
       // The document goes over the NEW port immediately: a port replaced
       // mid-handshake would otherwise leave the shell connected to a channel
       // nothing was ever sent on.
+      // THEME FIRST, DOCUMENT SECOND, over the same port and in that order.
+      //
+      // A MessagePort preserves order, so the shell has the palette and the
+      // font faces in hand before the document it must style with them ever
+      // arrives. The other order works too — the shell would restyle — but it
+      // paints once in Times New Roman on white first, and a flash of the
+      // unstyled block is exactly the seam a reader notices.
+      sendThemeRef.current();
       port.current.postMessage({ type: NOTEBOOK_SANDBOX_DOCUMENT, html: htmlRef.current });
       sentHtml.current = htmlRef.current;
       setConnected(true);
@@ -360,6 +490,32 @@ export function NotebookSandboxFrame({
       port.current = null;
     };
   }, [nonce]);
+
+  /**
+   * Re-send the theme when the app's theme changes.
+   *
+   * A MutationObserver on the `class` attribute of `<html>`, because that IS
+   * the theme under Tailwind's `darkMode: ["class"]` — the switch adds and
+   * removes `dark` there. Not `prefers-color-scheme`: a reader who has picked
+   * a theme in the app has overridden their OS, and following the OS would
+   * leave one block disagreeing with the page around it.
+   *
+   * Observing `class` and not `attributes` wholesale: `<html>` carries other
+   * attributes that change for unrelated reasons, and re-reading every
+   * stylesheet in the document each time one of them moved would be a real
+   * cost for no effect.
+   */
+  useEffect(() => {
+    if (!seamless || !connected) return;
+    if (typeof MutationObserver === "undefined") return;
+
+    const observer = new MutationObserver(() => sendThemeRef.current());
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, [seamless, connected]);
 
   // Author HTML travels ONLY here, over the private channel. A port has no
   // target-origin argument to get wrong, which is the property that makes this
@@ -398,9 +554,37 @@ export function NotebookSandboxFrame({
       // Inline, because it OVERRIDES the class rather than replacing it: the
       // class stays the fallback for every frame that has not reported, and
       // for a caller that passed its own className.
-      style={height === null ? undefined : { height: `${height}px` }}
+      // A seamless frame is ALWAYS given a height, because it has no sensible
+      // one to fall back to — an iframe's 150px default is a number the
+      // browser picked, and a section silently 150px tall reads as broken. A
+      // card frame keeps its class-driven height until the shell reports, so
+      // a shell that never reports renders exactly as it did before.
+      style={
+        seamless
+          ? { height: `${height ?? NOTEBOOK_SANDBOX_SEAMLESS_INITIAL_HEIGHT}px` }
+          : height === null
+            ? undefined
+            : { height: `${height}px` }
+      }
       data-sandbox-height={height ?? undefined}
-      className={className ?? "h-[60vh] w-full rounded-2xl border border-border bg-background"}
+      data-sandbox-variant={variant}
+      // The inner document's scrollbar belongs to the inner document, so no
+      // parent CSS can hide it. `scrolling` is the one thing that can, and it
+      // is deprecated rather than removed — every engine still honours it.
+      // Belt to the braces of an exact height: a shell that over-measures by a
+      // pixel would otherwise put a scrollbar in the middle of the page.
+      scrolling={seamless ? "no" : undefined}
+      className={
+        className ??
+        (seamless
+          ? // Deliberately nothing that draws: no border, no background, no
+            // radius, no shadow. `block` because an iframe is inline by
+            // default and would otherwise sit on a text baseline with a few
+            // pixels of descender space under it — a gap that looks like
+            // sloppy spacing and is invisible in the markup.
+            "block w-full overflow-hidden border-0 bg-transparent"
+          : "h-[60vh] w-full rounded-2xl border border-border bg-background")
+      }
     />
   );
 }

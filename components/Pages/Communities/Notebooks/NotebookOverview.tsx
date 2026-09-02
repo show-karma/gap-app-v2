@@ -25,6 +25,7 @@ import {
   resolveNotebookDateRange,
   resolveNotebookKernelRange,
 } from "@/services/notebooks/notebook-spec";
+import { NotebookCustomSection } from "./NotebookCustomSection";
 import {
   HeaderSection,
   HeroSection,
@@ -496,6 +497,8 @@ function SectionView({
       return <ApplicationsSection entries={overview.applications} />;
     case "text":
       return <TextSection section={section} />;
+    case "custom-html":
+      return <NotebookCustomSection section={section} />;
     case "header":
       return <HeaderSection section={section} />;
     case "hero":
@@ -544,6 +547,14 @@ function SectionView({
 /** Stable enough to key a static, ordered list without leaning on the index alone. */
 function sectionKey(section: NotebookSection, index: number): string {
   if (section.type === "bars") return `${index}-bars-${section.source}-${section.metric}`;
+  // Custom blocks are keyed by POSITION ALONE, like every other section.
+  //
+  // Keying on the document would look more precise and would be wrong: every
+  // edit would change the key, React would unmount the iframe and mount a new
+  // one, and the handshake would start again from nothing — so each keystroke
+  // in the editor would blank the preview and rebuild it. The frame handles
+  // its own updates by posting the new document over the port it already has,
+  // which is the entire reason that port exists.
   return `${index}-${section.type}`;
 }
 

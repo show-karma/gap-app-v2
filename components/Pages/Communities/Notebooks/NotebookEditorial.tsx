@@ -60,6 +60,13 @@ export function sectionTitle(section: NotebookSection): string | undefined {
       return section.headline;
     case "applications":
       return "Applications";
+    case "custom-html":
+      // IT HAS A `title` AND DELIBERATELY DOES NOT RETURN IT. That field is
+      // the frame's accessible name, not a heading: nothing draws it, because
+      // a seamless block draws no chrome of its own. Listing it in the nav
+      // would give a reader a link that scrolls to no visible heading, which
+      // reads as a broken anchor rather than as a section without one.
+      return undefined;
     default:
       return undefined;
   }

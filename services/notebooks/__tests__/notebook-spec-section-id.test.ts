@@ -49,6 +49,13 @@ const SECTION_FIXTURES: readonly NotebookSection[] = [
   { type: "hero", headline: "Kernel live monitor" },
   { type: "nav" },
   { type: "narrative", body: "Plain prose with no tokens." },
+  // The one untrusted member, LAST because that is where the indexer's union
+  // puts it — the two files are hand-mirrored and should diff, not translate.
+  // It carries an id like every other section, and that is the point: the
+  // block is quarantined at RENDER time rather than by being second-class in
+  // the spec, so provenance and the reorder controls address it exactly as
+  // they address a KPI row.
+  { type: "custom-html", html: "<main>Hand-written</main>" },
 ];
 
 describe("section ids", () => {
@@ -70,6 +77,7 @@ describe("section ids", () => {
       "hero",
       "nav",
       "narrative",
+      "custom-html",
     ]);
   });
 

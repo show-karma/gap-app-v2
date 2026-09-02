@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { NotebookSandboxFrame } from "@/components/Pages/Communities/Notebooks/NotebookSandboxFrame";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -18,12 +19,14 @@ import {
   type NotebookIndicatorOption,
 } from "@/services/notebooks/notebook-indicators.types";
 import type { NotebookMetricCatalog } from "@/services/notebooks/notebook-metric-registry.types";
+import { notebookSandboxOrigin } from "@/services/notebooks/notebook-sandbox-origin";
 import {
   NOTEBOOK_BAR_METRIC_LABELS,
   NOTEBOOK_BAR_SOURCE_LABELS,
   NOTEBOOK_BAR_SOURCES,
   NOTEBOOK_CHART_STYLE_LABELS,
   NOTEBOOK_CHART_STYLES,
+  NOTEBOOK_CUSTOM_HTML_MAX,
   NOTEBOOK_DATE_RANGE_LABELS,
   NOTEBOOK_DATE_RANGES_BY_SOURCE,
   NOTEBOOK_KERNEL_COLUMN_LABELS,
@@ -39,6 +42,7 @@ import {
   type NotebookBarsSection,
   type NotebookChartStyle,
   type NotebookComposedSpec,
+  type NotebookCustomHtmlSection,
   type NotebookDateRange,
   type NotebookKernelRange,
   type NotebookKernelTableColumn,
@@ -63,7 +67,7 @@ import {
 } from "@/services/notebooks/notebook-spec-draft";
 import { HeaderFields, HeroFields, NarrativeFields } from "./EditorialFields";
 import { QueryFields } from "./QueryFields";
-import { SectionProvenance } from "./SectionProvenance";
+import { CustomSectionNotice, SectionProvenance } from "./SectionProvenance";
 
 interface Props {
   spec: NotebookComposedSpec;
@@ -207,6 +211,12 @@ export function SectionComposer({
               </div>
 
               <SectionProvenance entry={provenance?.[index]} />
+              {/* Unconditional for this type, and independent of `provenance`:
+                  what it says is true of a custom block an author pasted in by
+                  hand, which has no provenance entry at all and is the common
+                  case. Keying it off the generator's evidence would show the
+                  warning on exactly the blocks that did not need it. */}
+              {section.type === "custom-html" ? <CustomSectionNotice /> : null}
               <SectionFields
                 section={section}
                 index={index}
@@ -329,6 +339,8 @@ function SectionFields({
       return <TableFields fieldId={fieldId} section={section} onFieldChange={update} />;
     case "text":
       return <TextFields fieldId={fieldId} section={section} onFieldChange={update} />;
+    case "custom-html":
+      return <CustomHtmlFields fieldId={fieldId} section={section} onFieldChange={update} />;
     case "header":
       return <HeaderFields fieldId={fieldId} section={section} onFieldChange={update} />;
     case "hero":
@@ -363,6 +375,7 @@ const SECTION_TYPE_LABELS: Record<NotebookSection["type"], string> = {
   table: "Table",
   tiers: "Tier rollup",
   query: "Query",
+  "custom-html": "Custom HTML",
   header: "Page header",
   hero: "Headline",
   nav: "Section nav",
@@ -391,6 +404,12 @@ const ADDABLE_SECTION_TYPES = [
   "query",
   "applications",
   "text",
+  // LAST IN THE LIST, and that is the only nudge this gets. It is the one
+  // section whose contents nothing checks, so it should not be the button
+  // beside "KPI tiles" that someone reaches for by accident — but an author
+  // who wants it should not have to find a mode switch either, which is the
+  // thing that made the two tiers feel like different products.
+  "custom-html",
 ] as const;
 
 function sectionLabel(section: NotebookSection): string {
@@ -703,6 +722,114 @@ function TextFields({
           Plain text only — formatting and links are not rendered.
         </span>
       </label>
+    </div>
+  );
+}
+
+/**
+ * The one editor in this file that takes markup.
+ *
+ * DELIBERATELY UNASSISTED. No syntax highlighting, no formatter, no live DOM
+ * inspector — a monospace textarea and a character count. Anything richer
+ * would suggest the field is checked, and it is not: what an author types here
+ * is stored verbatim, posted into the sandbox verbatim, and rendered by the
+ * browser verbatim. A form that looked like it understood the HTML would be
+ * making a promise nothing behind it keeps.
+ *
+ * IT DOES NOT SANITISE, AND MUST NOT START. Stripping tags here would be
+ * security theatre in the most literal sense: it is a form, an author can post
+ * the config without ever loading it, and the indexer stores whatever arrives.
+ * The containment is the sandbox and the separate origin — both of which hold
+ * whatever this field contains — so a filter here would buy nothing real while
+ * making the next reader believe the markup had been vetted.
+ */
+function CustomHtmlFields({
+  fieldId,
+  section,
+  onFieldChange,
+}: {
+  fieldId: string;
+  section: NotebookCustomHtmlSection;
+  onFieldChange: (next: NotebookCustomHtmlSection) => void;
+}) {
+  // Read directly: `NEXT_PUBLIC_*` is inlined at build time, so this is a
+  // constant in the bundle rather than something to thread through the
+  // composer's props from the page that renders it.
+  const sandboxOrigin = notebookSandboxOrigin();
+
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-custom-title`}>
+        <span className="font-medium text-foreground">
+          Frame title <span className="text-muted-foreground">(optional)</span>
+        </span>
+        <Input
+          id={`${fieldId}-custom-title`}
+          type="text"
+          value={section.title ?? ""}
+          maxLength={NOTEBOOK_SECTION_TITLE_MAX}
+          onChange={(event) =>
+            onFieldChange({
+              ...section,
+              title: event.target.value.trim() === "" ? undefined : event.target.value,
+            })
+          }
+        />
+        {/* Said explicitly because the field is called "title" and every other
+            title in this form is drawn on the page. This one is not: the block
+            renders with no heading and no chrome, by design. */}
+        <span className="text-xs text-muted-foreground">
+          How this block is announced to screen readers. It is not shown on the page.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-custom-body`}>
+        <span className="font-medium text-foreground">HTML</span>
+        <Textarea
+          id={`${fieldId}-custom-body`}
+          className="min-h-64 font-mono text-xs"
+          value={section.html}
+          maxLength={NOTEBOOK_CUSTOM_HTML_MAX}
+          spellCheck={false}
+          onChange={(event) => onFieldChange({ ...section, html: event.target.value })}
+        />
+        <span className="text-xs text-muted-foreground">
+          {section.html.length.toLocaleString("en-US")} of{" "}
+          {NOTEBOOK_CUSTOM_HTML_MAX.toLocaleString("en-US")} characters. This block runs in an
+          isolated frame: it cannot read anything from Karma, and Karma cannot read anything from
+          it. It inherits the page&apos;s fonts and colours, so plain HTML looks like the rest of
+          the page.
+        </span>
+      </label>
+
+      <div className="flex flex-col gap-2">
+        <h4 className="text-sm font-medium text-foreground">Preview</h4>
+        {section.html.trim() === "" ? (
+          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            Write some HTML to see it here.
+          </p>
+        ) : sandboxOrigin ? (
+          <NotebookSandboxFrame
+            sandboxOrigin={sandboxOrigin}
+            html={section.html}
+            title={section.title ?? "Custom section preview"}
+            // A BORDERED, FIXED-HEIGHT PREVIEW OF A BORDERLESS, GROWING BLOCK,
+            // and the mismatch is the right call in both directions. The
+            // preview sits between two form fields, so a frame that grew to
+            // its document would push the textarea being typed into off the
+            // screen, and would do it again on every keystroke; and a preview
+            // with no border of its own would blend into the FORM, where the
+            // reader needs to see exactly where the author's markup starts and
+            // stops. On the published page the opposite is true of both.
+            fitToContent={false}
+            className="h-64 w-full rounded-2xl border border-border bg-background"
+          />
+        ) : (
+          <p className="rounded-2xl border border-border p-4 text-sm text-muted-foreground">
+            Custom blocks are not available in this environment, so there is nothing to preview.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

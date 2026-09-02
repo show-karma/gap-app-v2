@@ -56,6 +56,39 @@ export function SectionProvenance({ entry }: { entry?: NotebookProvenanceEntry }
 }
 
 /**
+ * What is true about a CUSTOM block, said where the reviewer is looking.
+ *
+ * IT IS NOT A PROVENANCE ENTRY, and could not be. `SectionProvenance` reports
+ * what a generated section was built FROM — a metric id, a kernel window, a
+ * catalogue label a reviewer can go and check. A custom block was built from
+ * nothing this system knows about: the markup is the author's, the figures in
+ * it are the author's, and there is no id to print and nothing behind it to
+ * check against. The honest report is the absence itself, which is why this is
+ * a fixed statement rather than a row with empty sources.
+ *
+ * IN THE WARNING COLOUR, LIKE `authored` PROSE, and for the same reason. Every
+ * other section on the page carries figures our query layer computed and
+ * reconciled; this one carries whatever was typed. A reviewer skimming a page
+ * has to be able to see which is which without reading, because that is how a
+ * page actually gets reviewed.
+ *
+ * ONLY IN THE BUILDER. The published page shows nothing of the sort: the whole
+ * point of the seamless variant is that a reader sees a page rather than a
+ * mosaic of trust levels, and a badge over one block would announce the seam
+ * this design exists to remove. The judgement belongs to the person publishing
+ * it, at the moment they publish — which is exactly where this is.
+ */
+export function CustomSectionNotice() {
+  return (
+    <p className="rounded-xl border border-warning-500 bg-warning-50 p-3 text-xs text-warning-900">
+      Custom — figures unverified. Nothing in this block comes from your community&apos;s data:
+      whatever it shows was written by hand and is not computed, checked or kept up to date. It runs
+      in an isolated frame that cannot read anything from Karma.
+    </p>
+  );
+}
+
+/**
  * What is true about a page the model proposed, said in two parts.
  *
  * THE TWO CLAIMS HAVE DIFFERENT LIFETIMES, and bundling them made the weaker

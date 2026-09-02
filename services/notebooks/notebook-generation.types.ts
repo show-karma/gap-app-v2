@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NOTEBOOK_CUSTOM_HTML_MAX, NotebookComposedSpecSchema } from "./notebook-spec";
+import { NOTEBOOK_CUSTOM_HTML_MAX, NotebookGeneratedSpecSchema } from "./notebook-spec";
 
 /**
  * The NL → spec generator's contract, and the reviewer's evidence.
@@ -57,10 +57,19 @@ export const NotebookGenerationResultSchema = z.object({
   // exactly backwards.
   //
   // COMPOSED ONLY, and that is a safety statement rather than a convenience:
-  // this generator must never be able to return a custom-html document. Raw
-  // model-written markup belongs in the sandboxed tier, reached deliberately,
-  // never smuggled back through the entry that populates the trusted builder.
-  spec: NotebookComposedSpecSchema,
+  // this generator must never be able to return model-written markup. It
+  // belongs in the sandboxed tier, reached deliberately, never smuggled back
+  // through the entry that populates the trusted builder.
+  //
+  // `NotebookGeneratedSpecSchema`, NOT `NotebookComposedSpecSchema`, and the
+  // difference is the whole of the guarantee. Custom HTML used to be a page
+  // MODE only, so a schema for composed pages refused it for free. It is now
+  // also a SECTION type an author may place, which means a plain composed
+  // schema here would accept a model-authored page with a custom-html block in
+  // it — markup and figures both written by the model, arriving inside the
+  // trusted builder. The generated schema is the composed vocabulary minus
+  // that one section, and it exists for exactly this line.
+  spec: NotebookGeneratedSpecSchema,
   provenance: z.array(NotebookProvenanceEntrySchema).max(60),
   /**
    * Things the generator could not honour, said plainly rather than dropped.

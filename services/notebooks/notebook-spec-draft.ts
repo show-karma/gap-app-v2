@@ -89,6 +89,14 @@ export function newSection(
       return { type: "applications" };
     case "text":
       return { type: "text", body: "" };
+    case "custom-html":
+      // Starts with a real element rather than an empty string, for the same
+      // reason `emptyCustomHtmlSpec` does: an author who adds a block and sees
+      // nothing at all cannot tell the feature from a broken one. Also the
+      // schema's `min(1)` — a section that is invalid the instant it is
+      // created would put the whole page in an error state before the author
+      // has typed anything.
+      return { type: "custom-html", html: "<p>Your HTML goes here.</p>" };
     case "bars":
       return {
         type: "bars",

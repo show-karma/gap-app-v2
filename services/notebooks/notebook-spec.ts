@@ -270,6 +270,21 @@ export const NOTEBOOK_SECTION_DESCRIPTION_MAX = 500;
 /** How many sections one page may carry. A page is a dashboard, not a feed. */
 export const NOTEBOOK_SPEC_MAX_SECTIONS = 20;
 
+/**
+ * The largest custom document a page may carry.
+ *
+ * Generous enough for a real hand-built page with inline styles, small enough
+ * that it stays one database row and one postMessage rather than becoming a
+ * streaming problem.
+ *
+ * ONE BOUND FOR BOTH PLACEMENTS — the whole-page mode and the section. A
+ * section is not a smaller thing than a page here: the same document, posted
+ * over the same port into the same frame, just sitting inside a composed page
+ * rather than being the whole of one. Two numbers would be two limits to keep
+ * in step with the indexer, for no difference anyone can point at.
+ */
+export const NOTEBOOK_CUSTOM_HTML_MAX = 500_000;
+
 const sectionTitleSchema = z.string().trim().min(1).max(NOTEBOOK_SECTION_TITLE_MAX);
 const sectionDescriptionSchema = z.string().trim().max(NOTEBOOK_SECTION_DESCRIPTION_MAX);
 
@@ -568,7 +583,29 @@ export const NotebookNarrativeSectionSchema = z
     }
   });
 
-export const NotebookSectionSchema = z.union([
+/**
+ * Every section whose content this system produced: the closed vocabulary
+ * minus `custom-html`. Sections the composed AI generator may propose.
+ *
+ * NAMED AND ORDERED TO MATCH the indexer's `NotebookTrustedSectionSchema`,
+ * because the two modules are hand-mirrored and a reader reconciling them
+ * should be doing a diff, not a translation.
+ *
+ * IT IS A SAFETY PROPERTY, not a convenience. Before the section type existed,
+ * "the composed generator cannot return custom HTML" was true for free —
+ * custom HTML was only ever a page MODE, and the generator returns a composed
+ * spec. Adding the section handed that refusal back: a model could return a
+ * composed page with one custom-html block in it and be inside the trusted
+ * builder, having written both the markup and every figure in it. So the
+ * exclusion is now something a person wrote down, which means it is now
+ * something a person can delete — hence the tests that name it.
+ *
+ * A HUMAN AUTHOR MAY STILL PLACE ONE, and the distinction is the point: a
+ * person choosing to paste their own HTML has made a decision and put their
+ * community's name to it; a model reaching for the one section type with no
+ * data layer behind it has made no decision at all.
+ */
+export const NotebookTrustedSectionSchema = z.union([
   NotebookKpisSectionSchema,
   NotebookBarsSectionSchema,
   NotebookApplicationsSectionSchema,
@@ -584,22 +621,60 @@ export const NotebookSectionSchema = z.union([
 ]);
 
 /**
- * One page spec.
+ * An author's own HTML, inside an otherwise composed page.
  *
- * `version` is pinned: a document from a future schema is rejected rather than
- * half-rendered by a build that does not know what its new fields mean.
+ * THE ONE PLACE UNTRUSTED MARKUP ENTERS A COMPOSED PAGE, and it is quarantined
+ * exactly as the whole-page tier is: posted over a private MessagePort into a
+ * frame that is `allow-scripts` WITHOUT `allow-same-origin`, served from a
+ * separate origin, never URL-addressable. The containment does not weaken by
+ * one attribute because the document now shares a page with trusted sections —
+ * that is the entire premise of allowing this at all.
+ *
+ * WHAT DID CHANGE IS THE READER'S CONTRACT, and it is worth saying plainly.
+ * This module's header says a spec SELECTS and LABELS but cannot compute. A
+ * custom-html section is the exception, and the only one: whatever numbers are
+ * inside it were typed by an author and reconciled against nothing. Everything
+ * true of tier A's figures — the pooled denominators, the em dash for absent
+ * data, the provenance line — is simply not true of this block. The review
+ * surface says so beside it, and it is deliberately absent from
+ * `NotebookTrustedSectionSchema` above, so a model cannot reach for the one
+ * section type that would let it write a figure nobody computed.
+ *
+ * `title` IS THE FRAME'S ACCESSIBLE NAME, not a heading. Nothing renders it as
+ * text: the block draws seamlessly into the page with no card and no chrome,
+ * so a title drawn above it would be a heading the author did not write. It is
+ * what a screen reader announces for the frame, which otherwise announces
+ * "iframe" — and it is why `sectionTitle` returns undefined for this type, so
+ * the auto nav does not list an anchor that lands on no visible heading.
  */
+export const NotebookCustomHtmlSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("custom-html"),
+    html: z.string().min(1).max(NOTEBOOK_CUSTOM_HTML_MAX),
+    title: sectionTitleSchema.optional(),
+  })
+  .strict();
+
 /**
- * The largest custom document a page may carry.
+ * The whole vocabulary: everything trusted, plus the one thing that is not.
  *
- * Generous enough for a real hand-built page with inline styles, small enough
- * that it stays one database row and one postMessage rather than becoming a
- * streaming problem.
+ * SPREAD RATHER THAN RE-LISTED, matching the indexer. Two hand-maintained
+ * copies of the same twelve names is one place for them to disagree, and the
+ * disagreement would be a section type this build accepts and the generator's
+ * schema silently also accepts — the exact failure the split exists to
+ * prevent.
  */
-export const NOTEBOOK_CUSTOM_HTML_MAX = 500_000;
+export const NotebookSectionSchema = z.union([
+  ...NotebookTrustedSectionSchema.options,
+  NotebookCustomHtmlSectionSchema,
+]);
 
 /**
  * A page composed from the closed vocabulary. The default, and tier A.
+ *
+ * `version` is pinned: a document from a future schema is rejected rather than
+ * half-rendered by a build that does not know what its new fields mean.
  *
  * `mode` is OPTIONAL here and absence means composed, because every spec
  * stored before this field existed is one of these. Requiring it would
@@ -615,12 +690,41 @@ export const NotebookComposedSpecSchema = z
   .strict();
 
 /**
- * A page whose body is an author's own HTML. Tier B, opt-in, and untrusted.
+ * The same page, as a GENERATOR may propose it. See
+ * `NotebookTrustedSectionSchema` for why this is its own schema rather than a
+ * check somewhere downstream.
  *
- * WHOLE-PAGE, NEVER A SECTION. An `html` section type would let untrusted
- * markup sit inside an otherwise trusted composed page, making every page a
- * mixed-trust surface and punching a per-section hole through the boundary
- * tier A rests on. A notebook is either composed or custom; never half.
+ * Every value this accepts is also a valid `NotebookComposedSpec`, so nothing
+ * downstream needs to know which of the two produced it — the narrowing exists
+ * at the one boundary where a model's output arrives, and stops there.
+ */
+export const NotebookGeneratedSpecSchema = z
+  .object({
+    version: z.literal(NOTEBOOK_SPEC_VERSION),
+    mode: z.literal("composed").optional(),
+    sections: z.array(NotebookTrustedSectionSchema).min(1).max(NOTEBOOK_SPEC_MAX_SECTIONS),
+  })
+  .strict();
+
+/**
+ * A page whose body is an author's own HTML AND NOTHING ELSE. Tier B, opt-in,
+ * and untrusted.
+ *
+ * THIS USED TO BE THE ONLY WAY IN, and the note here used to say so: an html
+ * SECTION was refused on the grounds that it would make a composed page a
+ * mixed-trust surface. That objection was answered rather than overruled. A
+ * composed page carrying a `custom-html` section IS mixed-trust — it simply
+ * says so, at every layer that matters: the section is quarantined in the same
+ * sandbox on the same separate origin, the review surface marks it beside the
+ * block, and the AI composer cannot emit one at all. What was really being
+ * protected is the trusted renderer's promise that every FIGURE on a page came
+ * from the query layer, and that promise is now scoped to the sections that
+ * can actually keep it rather than asserted over the whole page.
+ *
+ * WHAT THIS MODE STILL BUYS is a page with no composed frame around it at all:
+ * no heading, no provenance line, no chrome the author did not write. That is
+ * a different thing from a composed page with a custom block in it, which is
+ * why both survive rather than one replacing the other.
  *
  * The document here is DATA, never something this application executes. It
  * reaches a reader only by being posted into a sandboxed frame on a separate
@@ -660,19 +764,26 @@ export type NotebookTableSection = z.infer<typeof NotebookTableSectionSchema>;
 export type NotebookTiersSection = z.infer<typeof NotebookTiersSectionSchema>;
 export type NotebookQuerySection = z.infer<typeof NotebookQuerySectionSchema>;
 export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
+export type NotebookCustomHtmlSection = z.infer<typeof NotebookCustomHtmlSectionSchema>;
 export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;
 export type NotebookSection = z.infer<typeof NotebookSectionSchema>;
 export type NotebookComposedSpec = z.infer<typeof NotebookComposedSpecSchema>;
+export type NotebookGeneratedSpec = z.infer<typeof NotebookGeneratedSpecSchema>;
 export type NotebookCustomHtmlSpec = z.infer<typeof NotebookCustomHtmlSpecSchema>;
 export type NotebookSpec = z.infer<typeof NotebookSpecSchema>;
 
 /**
  * Which kind of page this is.
  *
- * The render path branches on these ONCE, at the top. Everything downstream
- * takes the narrower type, so the tier-A renderer cannot be handed a custom
- * document even by mistake — the compiler refuses it, which is a stronger
- * guarantee than a runtime check nobody remembers to write.
+ * The render path branches on these ONCE, at the top, and everything
+ * downstream takes the narrower type.
+ *
+ * WHAT THIS STILL GUARANTEES, precisely: a WHOLE-PAGE custom document cannot
+ * be handed to the composed renderer, because the compiler refuses it. What it
+ * no longer guarantees is that a composed page contains no untrusted markup —
+ * a `custom-html` SECTION is exactly that, by design. The containment for the
+ * section is not the type system but the sandbox it renders into, which is the
+ * same containment this mode has always relied on.
  */
 export function isComposedNotebookSpec(spec: NotebookSpec): spec is NotebookComposedSpec {
   return spec.mode !== "custom-html";

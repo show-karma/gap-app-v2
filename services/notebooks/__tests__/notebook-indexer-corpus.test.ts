@@ -139,6 +139,31 @@ const EVERY_SECTION_TYPE_WITH_AN_ID = {
       body: "Committed to date: {{committed}}, of which {{disbursed}} has been disbursed.",
       kernelRange: "30d",
     },
+    /**
+     * The untrusted block, inside an otherwise composed page.
+     *
+     * Quoted against `NotebookCustomHtmlSectionSchema` in
+     * `gap-indexer/app/modules/v2/domain/models/notebook-spec.ts`, and placed
+     * LAST because that is where it sits in the indexer's union — its
+     * `NotebookSectionSchema` is `[...NotebookTrustedSectionSchema.options,
+     * NotebookCustomHtmlSectionSchema]`, so a reader comparing the two lists
+     * line by line finds it in the same place.
+     *
+     * THE HTML IS DELIBERATELY HOSTILE. A fixture carrying `<p>hello</p>`
+     * would pass while this side quietly grew a sanitiser, a length trim or a
+     * tag filter the indexer does not have — and the two copies would then
+     * disagree about what is storable without a single test going red. The
+     * document is DATA on both sides: neither validates its contents, both
+     * bound only its length, and the containment is the sandboxed frame it is
+     * posted into. A day when this fixture stops parsing is a day someone
+     * moved that boundary.
+     */
+    {
+      id: "author-written-block",
+      type: "custom-html",
+      html: '<script>window.top.location="https://attacker.invalid"</script><img src=x onerror=alert(1)>',
+      title: "Live detail",
+    },
   ],
 } as const;
 

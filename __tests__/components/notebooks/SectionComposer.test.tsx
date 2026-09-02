@@ -543,3 +543,75 @@ describe("SectionComposer", () => {
     expect(screen.getByDisplayValue("T")).toHaveAttribute("maxlength", "200");
   });
 });
+
+/**
+ * The composer's one door for untrusted markup.
+ *
+ * The tests that matter here are not about the textarea. They are about what
+ * the surface SAYS: a reviewer looking at a page has to be able to tell the
+ * block whose figures came from our query layer from the block whose figures
+ * came from whoever typed them, and the moment that distinction is only in a
+ * schema, it stops being visible to the person deciding whether to publish.
+ */
+describe("SectionComposer custom HTML", () => {
+  it("offers a custom block as an ordinary section type", async () => {
+    const onChange = renderComposer(spec([{ type: "applications" }]));
+
+    await userEvent.click(screen.getByRole("button", { name: /Custom HTML/i }));
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sections: [{ type: "applications" }, expect.objectContaining({ type: "custom-html" })],
+      })
+    );
+  });
+
+  // A section that is invalid the instant it is created puts the whole page in
+  // an error state before the author has typed anything.
+  it("creates it already valid rather than empty", async () => {
+    const onChange = renderComposer(spec([{ type: "applications" }]));
+
+    await userEvent.click(screen.getByRole("button", { name: /Custom HTML/i }));
+
+    const added = onChange.mock.calls[0][0].sections[1];
+    expect(added.html.length).toBeGreaterThan(0);
+  });
+
+  // THE ONE THAT MATTERS. Publishing is how an admin vouches for a page, and
+  // this block is the one part of it nothing behind them has checked.
+  it("marks the block unverified beside it, not in a summary elsewhere", () => {
+    renderComposer(spec([{ type: "custom-html", html: "<p>hand written</p>" }]));
+
+    expect(screen.getByText(/Custom — figures unverified/i)).toBeInTheDocument();
+  });
+
+  it("shows that notice on a hand-pasted block, which has no provenance entry", () => {
+    // The common case: an author who pasted their own markup. Keying the
+    // warning off the generator's evidence would show it on exactly the blocks
+    // that did not need it.
+    renderComposer(spec([{ type: "custom-html", html: "<p>x</p>" }]));
+
+    expect(screen.getByText(/Custom — figures unverified/i)).toBeInTheDocument();
+  });
+
+  it("does not mark a composed section as unverified", () => {
+    renderComposer(spec([{ type: "applications" }]));
+
+    expect(screen.queryByText(/Custom — figures unverified/i)).not.toBeInTheDocument();
+  });
+
+  it("bounds the document to what the schema accepts", () => {
+    renderComposer(spec([{ type: "custom-html", html: "<p>x</p>" }]));
+
+    expect(screen.getByDisplayValue("<p>x</p>")).toHaveAttribute("maxlength", "500000");
+  });
+
+  // The field is called "title" and every other title in this form is drawn on
+  // the page. This one is not, and the form has to say so or an author will
+  // reasonably expect a heading that never appears.
+  it("says the frame title is not shown on the page", () => {
+    renderComposer(spec([{ type: "custom-html", html: "<p>x</p>", title: "Methodology" }]));
+
+    expect(screen.getByText(/not shown on the page/i)).toBeInTheDocument();
+  });
+});

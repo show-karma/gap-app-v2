@@ -9,6 +9,9 @@ import {
   NOTEBOOK_SANDBOX_MAX_HEIGHT,
   NOTEBOOK_SANDBOX_MIN_HEIGHT,
   NOTEBOOK_SANDBOX_READY,
+  NOTEBOOK_SANDBOX_SEAMLESS_INITIAL_HEIGHT,
+  NOTEBOOK_SANDBOX_SEAMLESS_MIN_HEIGHT,
+  NOTEBOOK_SANDBOX_THEME,
   NotebookSandboxFrame,
 } from "@/components/Pages/Communities/Notebooks/NotebookSandboxFrame";
 
@@ -565,5 +568,228 @@ describe("NotebookSandboxFrame content height", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(iframe.style.height).toBe("");
+  });
+});
+
+/**
+ * The seamless variant: a custom block that has to look like it was rendered
+ * by the page around it.
+ *
+ * WHAT MUST NOT CHANGE is checked here too, and deliberately in the same file
+ * as the containment tests. "Seamless" is a request to make the isolation
+ * INVISIBLE, and the failure mode of granting that request is making it
+ * absent — the tempting way to give an author's HTML the page's fonts and
+ * colours is to stop putting it in a frame at all, or to add
+ * `allow-same-origin` so it can read the parent's stylesheet. Both are one
+ * short diff, both look like presentation work, and both are catastrophic.
+ * The first test in this block is the one that catches them.
+ */
+describe("NotebookSandboxFrame seamless variant", () => {
+  let framePost: ReturnType<typeof stubFrameWindow>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    framePost = stubFrameWindow();
+    document.documentElement.className = "";
+  });
+
+  function renderSeamless(html = "<p>inline</p>") {
+    const result = render(
+      <NotebookSandboxFrame
+        variant="seamless"
+        sandboxOrigin={ORIGIN}
+        html={html}
+        title="Custom section"
+      />
+    );
+    const iframe = result.container.querySelector("iframe") as HTMLIFrameElement;
+    const nonce = decodeURIComponent(new URL(iframe.src).hash.replace("#nonce=", ""));
+    return { ...result, iframe, nonce };
+  }
+
+  async function connectSeamless(iframe: HTMLIFrameElement, nonce: string) {
+    announce(iframe, nonce);
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+    return framePost.mock.calls[0][2][0] as MessagePort;
+  }
+
+  /** Every message the shell receives over the port, in order. */
+  function collect(port: MessagePort) {
+    const seen: Record<string, unknown>[] = [];
+    port.onmessage = (event: MessageEvent) => seen.push(event.data);
+    return seen;
+  }
+
+  // THE ONE THAT MATTERS IN THIS BLOCK.
+  it("should_contain_a_seamless_block_exactly_as_strictly_as_a_card", () => {
+    const { iframe } = renderSeamless();
+
+    expect(iframe).toHaveAttribute("sandbox", NOTEBOOK_SANDBOX_ATTRIBUTE);
+    expect((iframe.getAttribute("sandbox") ?? "").split(/\s+/)).not.toContain("allow-same-origin");
+    expect(iframe.src.startsWith(`${ORIGIN}/`)).toBe(true);
+  });
+
+  it("should_draw_no_border_no_background_and_no_radius", () => {
+    const { iframe } = renderSeamless();
+
+    expect(iframe.className).toContain("border-0");
+    expect(iframe.className).toContain("bg-transparent");
+    expect(iframe.className).not.toContain("rounded");
+    expect(iframe.className).not.toContain("border-border");
+  });
+
+  it("should_be_a_full_width_block_with_no_inner_scrollbar", () => {
+    const { iframe } = renderSeamless();
+
+    expect(iframe.className).toContain("w-full");
+    // `block`, because an iframe is inline by default and would otherwise sit
+    // on a text baseline with descender space beneath it — a few pixels of gap
+    // that reads as sloppy spacing and appears nowhere in the markup.
+    expect(iframe.className).toContain("block");
+    expect(iframe.className).toContain("overflow-hidden");
+    expect(iframe).toHaveAttribute("scrolling", "no");
+  });
+
+  it("should_never_leave_a_seamless_block_without_a_height", () => {
+    const { iframe } = renderSeamless();
+
+    // Zero until measured would make a section invisible on a shell that never
+    // reports, and an invisible section is indistinguishable from a deleted one.
+    expect(iframe.style.height).toBe(`${NOTEBOOK_SANDBOX_SEAMLESS_INITIAL_HEIGHT}px`);
+  });
+
+  it("should_size_itself_to_the_height_reported_over_the_port", async () => {
+    const { iframe, nonce } = renderSeamless();
+    const shellPort = await connectSeamless(iframe, nonce);
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 640 });
+
+    await vi.waitFor(() => expect(iframe.style.height).toBe("640px"));
+  });
+
+  /**
+   * The floor that applies to a whole PAGE must not apply to a block.
+   *
+   * A one-line callout between two composed sections is a legitimate thing to
+   * write, and 320px of floor would pad it with a quarter of a screen of blank
+   * page that no author asked for and none could remove.
+   */
+  it("should_honour_a_short_block_rather_than_padding_it_to_the_page_floor", async () => {
+    const { iframe, nonce } = renderSeamless();
+    const shellPort = await connectSeamless(iframe, nonce);
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 72 });
+
+    await vi.waitFor(() => expect(iframe.style.height).toBe("72px"));
+    expect(NOTEBOOK_SANDBOX_SEAMLESS_MIN_HEIGHT).toBe(0);
+  });
+
+  it("should_still_clamp_a_height_that_would_make_the_page_absurdly_tall", async () => {
+    const { iframe, nonce } = renderSeamless();
+    const shellPort = await connectSeamless(iframe, nonce);
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 9_000_000 });
+
+    await vi.waitFor(() => expect(iframe.style.height).toBe(`${NOTEBOOK_SANDBOX_MAX_HEIGHT}px`));
+  });
+
+  /**
+   * A height must come over the PORT or not at all.
+   *
+   * The port is what proves who is talking: it has two ends and nothing else
+   * on the page holds one. A window message claiming the same type has no such
+   * proof, and honouring it would let any frame on the page resize this one.
+   */
+  it("should_refuse_a_height_that_arrives_as_a_window_message", async () => {
+    const { iframe, nonce } = renderSeamless();
+    await connectSeamless(iframe, nonce);
+
+    const event = new MessageEvent("message", {
+      origin: "null",
+      data: { type: NOTEBOOK_SANDBOX_HEIGHT, nonce, height: 9000 },
+    });
+    Object.defineProperty(event, "source", { value: iframe.contentWindow });
+    window.dispatchEvent(event);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(iframe.style.height).toBe(`${NOTEBOOK_SANDBOX_SEAMLESS_INITIAL_HEIGHT}px`);
+  });
+
+  describe("the theme it sends", () => {
+    it("should_send_the_theme_before_the_document", async () => {
+      const { iframe, nonce } = renderSeamless();
+      announce(iframe, nonce);
+      await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+      const shellPort = framePost.mock.calls[0][2][0] as MessagePort;
+      const seen = collect(shellPort);
+
+      // A port preserves order, so the shell holds the palette and the font
+      // faces before the document it must style with them arrives. The other
+      // order works and paints once in Times New Roman first — which is
+      // precisely the seam this variant exists to remove.
+      await vi.waitFor(() => expect(seen).toHaveLength(2));
+      expect(seen[0].type).toBe(NOTEBOOK_SANDBOX_THEME);
+      expect(seen[1].type).toBe(NOTEBOOK_SANDBOX_DOCUMENT);
+    });
+
+    it("should_send_the_mode_the_app_is_actually_in", async () => {
+      document.documentElement.classList.add("dark");
+      const { iframe, nonce } = renderSeamless();
+      announce(iframe, nonce);
+      await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+      const seen = collect(framePost.mock.calls[0][2][0] as MessagePort);
+
+      await vi.waitFor(() => expect(seen.length).toBeGreaterThan(0));
+      expect(seen[0]).toMatchObject({ type: NOTEBOOK_SANDBOX_THEME, mode: "dark" });
+      expect(seen[0]).toHaveProperty("vars");
+      expect(seen[0]).toHaveProperty("fontFaces");
+    });
+
+    /**
+     * A reader who flips to dark mode and is left with one blindingly light
+     * block in the middle of the page has found the seam in the most visible
+     * way there is.
+     */
+    it("should_re_send_the_theme_when_the_root_class_changes", async () => {
+      const { iframe, nonce } = renderSeamless();
+      announce(iframe, nonce);
+      await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+      const seen = collect(framePost.mock.calls[0][2][0] as MessagePort);
+      await vi.waitFor(() => expect(seen).toHaveLength(2));
+
+      document.documentElement.classList.add("dark");
+
+      await vi.waitFor(() => expect(seen).toHaveLength(3));
+      expect(seen[2]).toMatchObject({ type: NOTEBOOK_SANDBOX_THEME, mode: "dark" });
+    });
+
+    /**
+     * A card frame is a panel with its own border on our own background, and
+     * has never wanted our fonts inside it. Sending them would change how tier
+     * B looks as a side effect of building tier A.
+     */
+    it("should_send_no_theme_to_a_card_frame", async () => {
+      const { iframe, nonce } = renderFrame();
+      announce(iframe, nonce);
+      await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+      const seen = collect(framePost.mock.calls[0][2][0] as MessagePort);
+
+      await vi.waitFor(() => expect(seen).toHaveLength(1));
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(seen.map((message) => message.type)).toEqual([NOTEBOOK_SANDBOX_DOCUMENT]);
+    });
+
+    // It travels the same private channel the document does. A theme posted to
+    // "*" would be contentless enough to be harmless, which is exactly why the
+    // rule has to be pinned rather than argued about: CONTENT NEVER GOES TO "*".
+    it("should_send_the_theme_over_the_port_never_to_a_wildcard_window", async () => {
+      const { iframe, nonce } = renderSeamless();
+      announce(iframe, nonce);
+      await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+
+      for (const call of framePost.mock.calls) {
+        expect(call[0]).not.toMatchObject({ type: NOTEBOOK_SANDBOX_THEME });
+      }
+    });
   });
 });
