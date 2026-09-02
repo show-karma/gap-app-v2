@@ -4,10 +4,6 @@ import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
 import { FundingMapSearch } from "@/src/features/funding-map/components/funding-map-search";
 import { FundingMapSidebar } from "@/src/features/funding-map/components/funding-map-sidebar";
-import {
-  DEFAULT_FUNDING_MAP_API_PARAMS,
-  fundingProgramsKeys,
-} from "@/src/features/funding-map/constants/query-keys";
 import { getFundingMapSeedCached } from "@/src/features/funding-map/services/funding-programs.cached";
 import { customMetadata } from "@/utilities/meta";
 
