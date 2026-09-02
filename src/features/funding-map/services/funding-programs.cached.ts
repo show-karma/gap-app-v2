@@ -1,7 +1,10 @@
 import "server-only";
 
+import type { DehydratedState } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
+import { buildDehydratedState } from "@/utilities/cache/hydration-seed";
 import { programListTag } from "@/utilities/cache/tags";
+import { DEFAULT_FUNDING_MAP_API_PARAMS, fundingProgramsKeys } from "../constants/query-keys";
 import type { PaginatedFundingPrograms } from "../types/funding-program";
 import { fundingProgramsService } from "./funding-programs.service";
 
@@ -31,4 +34,24 @@ export async function getAllFundingProgramsCached(
   cacheTag(programListTag());
 
   return fundingProgramsService.getAll(params);
+}
+
+/**
+ * The `/funding-map` hydration seed, cached whole.
+ *
+ * `cacheLife` and `cacheTag` match `getAllFundingProgramsCached` exactly, so the
+ * seed and the data it carries can never disagree about how long they live or
+ * what invalidates them.
+ */
+export async function getFundingMapSeedCached(): Promise<DehydratedState> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(programListTag());
+
+  return buildDehydratedState(async (queryClient) => {
+    await queryClient.prefetchQuery({
+      queryKey: fundingProgramsKeys.list(DEFAULT_FUNDING_MAP_API_PARAMS),
+      queryFn: () => getAllFundingProgramsCached(DEFAULT_FUNDING_MAP_API_PARAMS),
+    });
+  });
 }
