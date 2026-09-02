@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { MilestonesReviewPage } from "@/components/Pages/Admin/MilestonesReview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { FundingPlatformGuard } from "@/src/core/rbac";
@@ -9,7 +9,7 @@ import { usePermissionContext } from "@/src/core/rbac/context/permission-context
 import { useGranteeMilestoneRedirect } from "@/src/core/rbac/hooks/use-grantee-milestone-redirect";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
-export default function Page() {
+function MilestonesReviewPageContent() {
   const params = useParams() as {
     communityId: string;
     programId: string;
@@ -63,5 +63,27 @@ export default function Page() {
         referrer={from}
       />
     </FundingPlatformGuard>
+  );
+}
+
+/**
+ * `useSearchParams()` is URL data: read in a client component without a
+ * boundary above it, it makes the whole route dynamic
+ * (`CLIENT_HOOK_DYNAMIC`). Same shape as the sibling application-detail route.
+ *
+ * The manage tree is noindex on its own layout, so the boundary hides nothing
+ * from a crawler and DEV-612 does not apply.
+ */
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex w-full items-center justify-center min-h-[400px]">
+          <Spinner />
+        </div>
+      }
+    >
+      <MilestonesReviewPageContent />
+    </Suspense>
   );
 }
