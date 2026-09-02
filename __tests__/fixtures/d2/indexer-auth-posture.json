@@ -40,7 +40,11 @@
       "path": "/v2/program-registry/search",
       "posture": "optionalAuthentication",
       "source": "app/modules/v2/api/routes/program-registry/program-registry.routes.ts",
-      "sessionAddsFields": ["metadata.ingestionSource", "metadata.ingestionRunId", "metadata.rawData"],
+      "sessionAddsFields": [
+        "metadata.ingestionSource",
+        "metadata.ingestionRunId",
+        "metadata.rawData"
+      ],
       "gatedOn": "authorizationService.isStaff(session.publicAddress) — a non-staff session changes nothing",
       "mapper": "app/modules/v2/api/controllers/program-registry/read/mapper/program-registry.api.mapper.ts (includeAdminFields)"
     },
@@ -49,7 +53,11 @@
       "path": "/v2/program-registry/:programId",
       "posture": "optionalAuthentication",
       "source": "app/modules/v2/api/routes/program-registry/program-registry.routes.ts",
-      "sessionAddsFields": ["metadata.ingestionSource", "metadata.ingestionRunId", "metadata.rawData"],
+      "sessionAddsFields": [
+        "metadata.ingestionSource",
+        "metadata.ingestionRunId",
+        "metadata.rawData"
+      ],
       "gatedOn": "authorizationService.isStaff(session.publicAddress) — a non-staff session changes nothing",
       "mapper": "app/modules/v2/api/controllers/program-registry/read/mapper/program-registry.api.mapper.ts (includeAdminFields)"
     }

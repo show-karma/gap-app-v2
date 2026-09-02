@@ -2,8 +2,8 @@ import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { api } from "@/utilities/api/client";
-import { publicReadOptions } from "@/utilities/api/public-read";
 import { ContractViolationError, HttpError } from "@/utilities/api/errors";
+import { publicReadOptions } from "@/utilities/api/public-read";
 import { INDEXER } from "@/utilities/indexer";
 
 const SlugAvailabilityResultSchema = z
