@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { FoundationDetailDynamic } from "@/src/features/non-profits/components/foundation-detail-dynamic";
 import { customMetadata } from "@/utilities/meta";
-import Loading from "./loading";
 
 /**
  * Foundation detail page (Phase 4).
@@ -62,31 +60,11 @@ export async function generateMetadata({
   });
 }
 
-/**
- * The `params` read lives in the async child below, not in the page body.
- *
- * Under `cacheComponents` a `params` access in the page itself is runtime data
- * outside a boundary, and the route fails to prerender outright (P2-6). One
- * level down it sits behind this Suspense boundary: the shell prerenders and
- * only the id-dependent part streams. The fallback is the route's own
- * `loading.tsx`, so the streamed state is byte-for-byte what this route already
- * showed while it was fully dynamic.
- *
- * This is allowed here in a way it would not be on a crawlable route: these
- * `[id]` detail routes are not in the sitemap. The section landing and its
- * `/connect` pages are (app/sitemaps/static/sitemap.ts), so DEV-612's ban on a
- * boundary above page content is live one level up -- it just does not reach
- * here.
- */
-export default function FoundationPage({ params }: { params: Promise<FoundationPageParams> }) {
-  return (
-    <Suspense fallback={<Loading />}>
-      <FoundationDetailContent params={params} />
-    </Suspense>
-  );
-}
-
-async function FoundationDetailContent({ params }: { params: Promise<FoundationPageParams> }) {
+export default async function FoundationPage({
+  params,
+}: {
+  params: Promise<FoundationPageParams>;
+}) {
   const { id } = await params;
 
   return (
