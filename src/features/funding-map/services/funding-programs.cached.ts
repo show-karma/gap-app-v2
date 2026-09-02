@@ -9,8 +9,11 @@ import type { PaginatedFundingPrograms } from "../types/funding-program";
 import { fundingProgramsService } from "./funding-programs.service";
 
 /**
- * Cached, server-only twin of the program-registry list read — the
- * `/funding-map` SSR prefetch.
+ * Cached, server-only read of the program-registry list, and the `/funding-map`
+ * hydration seed built from it.
+ *
+ * The list read is module-local: the page consumes the seed, not the list, so
+ * exporting it would leave a second entry point nobody calls.
  *
  * The whitelabel program detail page caches its own inline fetch instead: it
  * already passed `isAuthorized: false` and lives in the page, so routing it
@@ -26,7 +29,7 @@ import { fundingProgramsService } from "./funding-programs.service";
  * tier is the right ceiling; the tags are what a webhook would use to beat it.
  */
 
-export async function getAllFundingProgramsCached(
+async function getAllFundingProgramsCached(
   params: Parameters<typeof fundingProgramsService.getAll>[0] = {}
 ): Promise<PaginatedFundingPrograms> {
   "use cache";

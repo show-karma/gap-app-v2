@@ -1,9 +1,9 @@
-// TODO(P2-3 stage 2): `export const revalidate = 60` lived here — 60s CDN ISR
-// for every project page. cacheComponents rejects the segment config, so the
-// caching moves onto the loaders this layout and its pages read
-// (`services/project.service.ts`, project-grants, project-impacts,
-// project-updates) as `"use cache"` + `cacheLife`, tagged per project. Until
-// that lands project pages render per request.
+// `export const revalidate = 60` lived here — 60s CDN ISR for every project
+// page — until cacheComponents rejected the segment config. The caching now
+// sits on the loaders this layout and its pages read, as `"use cache"` +
+// `cacheLife("minutes")` (revalidate 60, the same ceiling) tagged per project:
+// see `services/project.cached.ts`. The React Query seed below is cached the
+// same way, because dehydrate() stamps entries with `Date.now()`.
 
 import { HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
@@ -12,14 +12,12 @@ import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShare
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { ProjectJsonLd } from "@/components/Seo/ProjectJsonLd";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
-import { projectUpdatesQueryKey } from "@/hooks/v2/useProjectUpdates";
 import { getProjectSeedCached } from "@/services/project.cached";
 import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer.cached";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { PAGES } from "@/utilities/pages";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 
 type Params = Promise<{
