@@ -2,7 +2,7 @@
 
 import { Calendar, Coins } from "lucide-react";
 import Image from "next/image";
-import type { KeyboardEvent } from "react";
+import { type KeyboardEvent, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useMixpanel } from "@/hooks/useMixpanel";
@@ -68,7 +68,17 @@ export function FundingMapCard({
   const grantTypes = metadata?.grantTypes;
   const organizations = metadata?.organizations;
   const endsAt = formatDate(metadata?.endsAt, "UTC", "MMM D, YYYY");
-  const hasEnded = metadata?.endsAt && new Date(metadata.endsAt) < new Date();
+  // `new Date()` during render is an unstable value and cacheComponents rejects
+  // it (blocking-prerender-current-time-client). This card sits above the
+  // crawlable list, so it cannot go behind a boundary — the comparison moves to
+  // after hydration, which is also when "has it ended" becomes a question about
+  // the reader's clock rather than the build's.
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => {
+    setNowMs(Date.now());
+  }, []);
+  const endsAtMs = metadata?.endsAt ? new Date(metadata.endsAt).getTime() : null;
+  const hasEnded = endsAtMs !== null && nowMs !== null && endsAtMs < nowMs;
 
   // Check if we have valid communities with names
   const validCommunities = communities?.filter((c) => c.name && c.name.trim().length > 0) ?? [];
