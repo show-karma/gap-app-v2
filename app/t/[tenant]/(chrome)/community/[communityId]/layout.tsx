@@ -6,6 +6,7 @@ import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+import { FALLBACK_PROGRAM_PAIRS, withPrerenderFallback } from "@/utilities/prerender-samples";
 import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
@@ -33,9 +34,16 @@ const PRERENDERED_COMMUNITY_SAMPLE = 3;
  * rather than hand-picked and liable to rot.
  */
 export function generateStaticParams(): Array<{ communityId: string }> {
-  return chosenCommunities()
-    .slice(0, PRERENDERED_COMMUNITY_SAMPLE)
-    .map((community) => ({ communityId: community.slug }));
+  // `chosenCommunities()` is a checked-in list and cannot be empty today, but
+  // the guard is not decoration: under cacheComponents an empty
+  // generateStaticParams fails the build at page-data collection, so every
+  // sampler states its floor rather than relying on a caller staying non-empty.
+  return withPrerenderFallback(
+    chosenCommunities()
+      .slice(0, PRERENDERED_COMMUNITY_SAMPLE)
+      .map((community) => ({ communityId: community.slug })),
+    FALLBACK_PROGRAM_PAIRS.slice(0, 1).map(({ communityId }) => ({ communityId }))
+  );
 }
 
 export async function generateViewport(): Promise<Viewport> {
