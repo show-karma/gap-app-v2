@@ -1,4 +1,4 @@
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
@@ -8,7 +8,7 @@ import {
   DEFAULT_FUNDING_MAP_API_PARAMS,
   fundingProgramsKeys,
 } from "@/src/features/funding-map/constants/query-keys";
-import { getAllFundingProgramsCached } from "@/src/features/funding-map/services/funding-programs.cached";
+import { getFundingMapSeedCached } from "@/src/features/funding-map/services/funding-programs.cached";
 import { customMetadata } from "@/utilities/meta";
 
 const PAGE_DESCRIPTION =
@@ -28,18 +28,10 @@ export const metadata: Metadata = customMetadata({
  * renders exactly as before (skeletons, then client fetch with its own
  * error state).
  */
-async function prefetchDefaultPrograms(): Promise<QueryClient> {
-  const queryClient = new QueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: fundingProgramsKeys.list(DEFAULT_FUNDING_MAP_API_PARAMS),
-    queryFn: () => getAllFundingProgramsCached(DEFAULT_FUNDING_MAP_API_PARAMS),
-    staleTime: 5 * 60 * 1000,
-  });
-  return queryClient;
-}
-
 const FundingMapPage = async () => {
-  const queryClient = await prefetchDefaultPrograms();
+  // The seed is built inside `"use cache"`: React Query stamps entries with
+  // `Date.now()`, which cacheComponents rejects during prerender.
+  const dehydratedState = await getFundingMapSeedCached();
 
   return (
     <main className="flex w-full flex-col">
@@ -64,7 +56,7 @@ const FundingMapPage = async () => {
         </div>
       </section>
       <div className="flex w-full flex-col gap-6 px-6 py-8 lg:flex-row lg:px-8">
-        <HydrationBoundary state={dehydrate(queryClient)}>
+        <HydrationBoundary state={dehydratedState}>
           <FundingMapList />
         </HydrationBoundary>
         <FundingMapSidebar />
