@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getProjectGrants } from "@/services/project-grants.service";
+import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer.cached";
 import {
   generateGrantOverviewMetadata,
   generateProjectFundingMetadata,
@@ -11,6 +12,52 @@ type Params = Promise<{
   projectId: string;
   grantUid: string;
 }>;
+
+const PRERENDERED_PROJECT_SAMPLE = 1;
+const PRERENDERED_GRANT_SAMPLE = 2;
+
+/**
+ * Real grant uids for a sampled project, prerendered at build.
+ *
+ * Without a sample here, `[grantUid]` is unknown at build time, and every
+ * `useDynamicRouteParams` reader above these routes aborts the prerender — the
+ * profile layout's `useParams()`/`usePathname()` among them. That is why the
+ * non-nested profile routes passed while these did not: same components, but
+ * their params were samples.
+ *
+ * A boundary is not the alternative: the profile root is Cache-class, so the
+ * sample is the lever. Degrades to an empty list — a build with no prerendered
+ * grant pages, never a fabricated uid.
+ */
+export async function generateStaticParams(): Promise<
+  Array<{ projectId: string; grantUid: string }>
+> {
+  try {
+    const { payload } = await getExplorerProjectsPaginatedCached({
+      page: 1,
+      limit: PRERENDERED_PROJECT_SAMPLE,
+    });
+
+    const pairs = await Promise.all(
+      payload.map(async (project) => {
+        const projectId = project.details?.slug ?? project.uid;
+        if (!projectId) return [];
+
+        const grants = await getProjectGrants(projectId, { isAuthorized: false }).catch(() => []);
+
+        return grants
+          .map((grant) => grant.uid)
+          .filter((grantUid): grantUid is string => Boolean(grantUid))
+          .slice(0, PRERENDERED_GRANT_SAMPLE)
+          .map((grantUid) => ({ projectId, grantUid }));
+      })
+    );
+
+    return pairs.flat();
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId, grantUid } = await params;
