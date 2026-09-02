@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PublicReportViewPage } from "@/components/Pages/Community/PortfolioReports/PublicReportViewPage";
 import { communitySubpageMetadata } from "@/utilities/metadata/communityCanonical";
 import { CONFIG_SLUG_REGEX, RUN_DATE_REGEX } from "@/utilities/portfolio-reports/period";
-import { getCommunityDetails } from "@/utilities/queries/v2/community";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 interface Props {
   params: Promise<{ communityId: string; runDate: string; configSlug: string }>;
@@ -28,7 +28,7 @@ export default async function Page(props: Props) {
     notFound();
   }
 
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
 
   if (!community) {
     notFound();
