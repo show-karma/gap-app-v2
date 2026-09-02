@@ -12,39 +12,87 @@ Karma is funding infrastructure for philanthropy. Foundations run grant programs
 - Documentation
 - Site URL Index
 - Knowledge Base - Core Concepts (7 articles)
-- Knowledge Base - Capabilities (5 articles)
+- Knowledge Base - Capabilities (4 articles)
 
 ## Landing Pages
 
 ### Home
 
-Karma - Funding software for foundations, donor advisors, and nonprofits
-Karma is funding infrastructure for philanthropy. Foundations run grant programs, hackathons, and RFPs, with AI agents handling evaluation, milestone tracking, and impact reporting. Donor advisors build ranked nonprofit shortlists for any cause, geography, or grant size, each with a compliance check, activity score, and mission match. Nonprofits build funder-facing profiles from their own website and search for aligned foundations, grounded in every IRS 990 on record with every answer cited.
+Agentic funding software
+Fund nonprofits, projects, and initiatives with AI agents. Fund nonprofits projects initiatives with AI agents.
+Foundation officers and donor advisors run Karma from ChatGPT, Claude, or any agent they already use. Or right here in the browser. Discover projects, approve funding, pull grantee updates, generate reports.
+Schedule a demo Why funders pick Karma
+- Regen Coordination
+- UNICEF
+- San Francisco Foundation
+- Trinity Center
+- Filecoin
+- Arbitrum
+- Gitcoin
+- Celo
+- Polygon
+- Optimism
+- Octant
+- Celo Public Goods
+- Public Nouns
+- Good Dollar
+Why Karma
+Find the organizations worth funding.
+Karma indexes nonprofit projects and updates from across philanthropy, plus the progress grantees post directly. This rich source of live nonprofit data lets donor advisors recommend the right organization to clients, and foundations run end-to-end grant programs. Fund on better data.
+For donor advisors
+Generate a donor-ready research brief in 10 minutes
+Donor advisors use Karma to build a ranked shortlist for any cause, geography, or grant size. Every brief ships with a composite score, the inputs that produced it, and source documents linked, so you save hours of diligence and hand donors a recommendation they can act on with confidence.
+- Composite scoring with mission match, online presence, and IRS 990 recency
+- IRS Pub 78, latest 990, and state registries verified up front
+- Deep mode: 3-day diligence with outreach. Fast mode ships a shortlist in 10 minutes.
+Explore Nonprofit Research Get a demo
+A research brief from a recent gift, with the score breakdown.
+For grant programs and foundations
+Cut application review time by 70% and pay on proof of work
+Run grants, hackathons, and RFPs end to end. Intake, AI-assisted evaluation with risk flags, milestone-gated payouts, board-ready impact reports.
+Application evaluation feeding the live project registry.
+See Karma on your stack.
+Foundations and donor advisors: book a 30-minute walkthrough with the team.
+Schedule a demo →
 
 ### For Funders
 
-For Funders - Allocate funding and grow your ecosystem
-Discover how Karma helps funders allocate grants, track milestones, measure impact, and grow their ecosystems.
-From intake to impact, Karma gives you the tools to fund smarter, track progress
-transparently, and maximize the ROI of every funded project.
+From intake to impact, Karma gives you the tools to fund smarter, track progress transparently, and maximize the ROI of every funded project.
+- Arbitrum
+- Gitcoin
+- Celo
+- Polygon
+- Filecoin
+- Optimism
+- UNICEF
+- Octant
+- Celo Public Goods
+- Scroll
+- Lisk
+- Public Nouns
+- Livepeer
+- Regen Coordination
+- Good Dollar
 Proven expertise in ecosystem funding
-We've powered some of the largest onchain funding programs, helping ecosystems
-distribute capital transparently, measure outcomes, and grow faster.
-From Optimism to Celo, we
+We've powered some of the largest onchain funding programs, helping ecosystems distribute capital transparently, measure outcomes, and grow faster.
 for growth and impact
-Whether you&apos;re running applications, tracking milestones, or measuring impact, each
-module works independently and seamlessly together. Launch fast, adapt easily, and scale
-your ecosystem with confidence.
-Smarter decisions with AI-powered evaluation
-One place for all projects and their progress
+Whether you're running applications, tracking milestones, or measuring impact, each module works independently and seamlessly together. Launch fast, adapt easily, and scale your ecosystem with confidence.
+Application Evaluation Smarter decisions with AI-powered evaluation
+Leverage AI to evaluate grant applications at scale. Get instant scoring, risk assessments, and funding recommendations based on historical performance, cross-ecosystem reputation, and proposal quality—so you can review and approve funding with confidence.
+Public Registry One place for all projects and their progress
 A public registry of every project in your ecosystem with complete visibility into funding, milestones, and updates. Track project progress in real-time as grantees submit milestone updates with proof of work.
+Impact Measure what matters with real-time insights
+Track project metrics automatically through GitHub, Dune, and custom integrations. Apply the industry-leading 'Common Approach' framework to measure impact, evaluate performance in real time, and continuously improve your funding program.
+Distribution Funding methods to meet your needs
 Support projects smarter: issue direct grants with AI-driven evaluations and milestone-based funding, then scale impact with our retro funding platform.
-Leverage AI to evaluate grant applications at scale.
-Over the past 10 months, Celo has leveraged Karma
+“ Karma isn't just software, they're a true partner. Their AI-driven evaluations cut review time dramatically. Their platform fits our needs perfectly and their team ships features at lightning speed.
+Optimism
+Over the past 10 months, Celo has leveraged Karma's platform to track 400+ projects, 850+ grants and 3600+ milestones, moving from fragmented tracking to a unified onchain project registry and funding funnel to simplify impact measurement and grow their ecosystem.
 Meet your dedicated success partner who will guide you through setup, onboarding, and best practices.
 We’ll help you set up your community space, enable whitelabel branding, and deploy the onchain modules you need — all tailored to your workflow.
 Design your funding program, set evaluation criteria, and go live. Start receiving applications and funding projects within 48 hours.
-scale when you&apos;re ready
+scale when you're ready
+Pro
 
 ### Projects
 
@@ -65,6 +113,7 @@ Organizations on Karma
 Explore organizations running grants, hackathons, and funding programs on Karma. Discover
 opportunities, track progress, and see real impact.
 Add your organization
+) : communitiesLoading ? (
 
 ## Supported Networks
 
@@ -439,9 +488,9 @@ Milestone Reviewers
 Application reviewers are responsible for evaluating incoming grant applications and making approve/reject decisions. This guide walks you through the review process step by step.
 Getting Started
 Step 1: Log In
-Go to www.karmahq.org and click the Login button in the top right corner.
+Go to www.karmahq.xyz and click the Login button in the top right corner.
 Step 2: Access Your Reviews
-Click [ Review]( https://www.karmahq.org/my-reviews ) in the header navigation. This displays all applications in the program for review.
+Click [ Review]( https://www.karmahq.xyz/my-reviews ) in the header navigation. This displays all applications in the program for review.
 Note: If you don't see the My Reviews link, contact your grant program administrator to ensure you've been added as a reviewer.
 Reviewing Applications
 Step 3: Open an Application
@@ -636,10 +685,10 @@ Filecoin ProPGF Grantee Guide
 Welcome to Karma! Filecoin has partnered with Karma to manage ProPGF grants going forward. If you're a grantee from ProPGF Batch 1, this guide will walk you through everything you need to know to access your project, submit milestone updates, and stay on track with your grant.
 What's Changed?
 We've migrated all 14 projects and milestones from Questbook into Karma's platform. Your project information, milestones, and deliverables are already set up and waiting for you, no need to re-enter anything.
-You can view all Batch 1 projects here: https://www.karmahq.org/community/filecoin
+You can view all Batch 1 projects here: https://www.karmahq.xyz/community/filecoin
 Getting Started
 Step 1: Find Your Project
-Go to https://www.karmahq.org/community/filecoin
+Go to https://www.karmahq.xyz/community/filecoin
 Browse the list to locate your project
 Click on your project name to open your project page
 Step 2: Verify Your Admin Wallet
@@ -805,10 +854,12 @@ At the end of the funding cycle, mark the grant as complete and submit a link to
 - [Blog](https://www.karmahq.org/blog)
 - [Contact](https://www.karmahq.org/contact)
 - [Create Project Profile](https://www.karmahq.org/create-project-profile): Create a public project profile to track funding, milestones, and updates
+- [Foundation Funding Data](https://www.karmahq.org/data/foundation-funding): Methodology and definitions for Karma's index of IRS Form 990 and 990-PF filings
 - [Donor Advisors](https://www.karmahq.org/donor-advisors)
 - [For Agents](https://www.karmahq.org/for-agents)
 - [Foundations](https://www.karmahq.org/foundations)
 - [Connect](https://www.karmahq.org/mcp/connect)
+- [Nonprofit Research](https://www.karmahq.org/nonprofit-research)
 - [Nonprofits](https://www.karmahq.org/nonprofits)
 - [Find Funders](https://www.karmahq.org/nonprofits/find-funders)
 - [Connect](https://www.karmahq.org/nonprofits/find-funders/connect)
@@ -829,6 +880,7 @@ At the end of the funding cycle, mark the grant as complete and submit a link to
 - [Karma Ships April Edition](https://www.karmahq.org/blog/karma-ships-april-edition)
 - [Karma Ships February 2026](https://www.karmahq.org/blog/karma-ships-february-2026)
 - [Karma Ships January 2026](https://www.karmahq.org/blog/karma-ships-january-2026)
+- [Karma Ships July Edition](https://www.karmahq.org/blog/karma-ships-july-edition)
 - [Karma Ships June Edition](https://www.karmahq.org/blog/karma-ships-june-edition)
 - [Karma Ships May Edition](https://www.karmahq.org/blog/karma-ships-may-edition)
 - [Karma Skills Making The Entire Karma Platform Agent Friendly](https://www.karmahq.org/blog/karma-skills-making-the-entire-karma-platform-agent-friendly)
@@ -867,7 +919,7 @@ A project can meet milestones without impact, or create impact while missing mil
 Treating them as the same obscures performance.
 #### Related articles
 #### Karma's model
-[Karma](https://www.karmahq.org)
+Karma
 separates milestone tracking from impact documentation so evaluation remains clear and
 honest.
 
@@ -904,7 +956,7 @@ learning.
 - Better future funding decisions
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.org)
+Karma
 provides milestone tracking as shared infrastructure rather than ad-hoc reporting
 artifacts.
 
@@ -929,7 +981,7 @@ public evidence rather than centralized audits alone.
 - Historical consistency
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.org)
+Karma
 supports impact as a living record rather than a one-time report.
 
 ### Manual vs Platform-Based Grant Tracking
@@ -952,7 +1004,7 @@ platforms trade flexibility for structure and memory.
 - Cross-round learning
 #### Related articles
 #### When Karma is used
-[Karma](https://www.karmahq.org)
+Karma
 is used when ecosystems need repeatable funding decisions and durable execution history.
 
 ### The Grant Lifecycle: From Proposal to Verified Impact
@@ -988,7 +1040,7 @@ Modern programs use:
 - Automated summaries and risk signals
 - Human reviewers for judgment and final decisions
 This reduces reviewer fatigue while preserving accountability.
-[→ Related: AI-assisted grant evaluation](/knowledge/ai-grant-evaluation)
+→ Related: AI-assisted grant evaluation
 ##### 3. Selection and approval
 Approved projects move forward with clearly defined expectations:
 - Scope of work
@@ -1003,7 +1055,7 @@ Operational challenges include:
 - Following up on incomplete checks
 - Preventing premature payments
 Lifecycle-aware systems treat KYC as a gated dependency, not an afterthought.
-[→ Related: KYC in grant programs](/knowledge/grant-kyc)
+→ Related: KYC in grant programs
 ##### 5. Agreement and document signing
 Many programs require signed agreements defining:
 - Milestones
@@ -1014,7 +1066,7 @@ Without integrated signing:
 - Status becomes unclear
 - Payments stall
 Signing must be tied directly to grant status.
-[→ Related: Document signing in grants](/knowledge/grant-document-signing)
+→ Related: Document signing in grants
 ##### 6. Fund disbursement
 Disbursement is not a single action — it is a coordination step.
 Before funds are released, systems must confirm:
@@ -1023,14 +1075,14 @@ Before funds are released, systems must confirm:
 - Internal approvals
 - Correct payment configuration
 Good systems surface blockers clearly and prevent mistakes.
-[→ Related: Grant fund disbursement](/knowledge/grant-fund-disbursement)
+→ Related: Grant fund disbursement
 ##### 7. Milestone execution and progress tracking
 For milestone-based grants, execution is tracked over time:
 - Projects submit updates
 - Evidence is attached
 - Progress is reviewed
 This turns commitments into visible execution history.
-[→ Related: DAO grant milestones](/knowledge/dao-grant-milestones)
+→ Related: DAO grant milestones
 ##### 8. Public project registry
 As projects execute, their work should be visible.
 A project registry:
@@ -1039,7 +1091,7 @@ A project registry:
 - Preserves historical context
 - Enables community transparency
 Registries turn funding into shared memory.
-[→ Related: Public project registries](/knowledge/project-registry)
+→ Related: Public project registries
 ##### 9. Impact measurement
 Beyond milestones, programs want to understand outcomes.
 Impact measurement aggregates:
@@ -1048,7 +1100,7 @@ Impact measurement aggregates:
 - Manually reported metrics
 - Community-level rollups
 This allows ecosystems to assess what funding actually produced.
-[→ Related: Impact measurement](/knowledge/impact-measurement)
+→ Related: Impact measurement
 ##### 10. Reputation accumulation and learning
 Execution and impact data feed forward:
 - Projects build reputation
@@ -1057,7 +1109,7 @@ Execution and impact data feed forward:
 Without this step, every funding round starts from zero.
 #### Related articles
 #### How Karma fits
-[Karma](https://www.karmahq.org)
+Karma
 supports the entire grant lifecycle, integrating evaluation, compliance, execution
 tracking, payments, impact measurement, and reputation into a single system.
 
@@ -1093,7 +1145,7 @@ Grant accountability is not reporting. It requires:
 - Accountability ≠ centralized audits only
 #### Related articles
 #### How Karma fits
-[Karma](https://www.karmahq.org)
+Karma
 provides modular infrastructure for ecosystems to define milestones, collect structured
 updates, attach reviews, and preserve execution history so accountability compounds
 instead of disappearing.
@@ -1127,43 +1179,12 @@ When execution data is missing, future funding decisions are made with no memory
 Ecosystems repeat the same risks without realizing it.
 #### Related articles
 #### How Karma addresses this
-[Karma](https://www.karmahq.org)
+Karma
 shifts the center of gravity from **funding events** to
 **execution histories**, enabling grant programs to learn which teams
 actually deliver.
 
 ## Knowledge Base - Capabilities
-
-### AI-Assisted Grant Evaluation at Scale
-
-Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling.
-
-#### In one sentence
-AI-assisted evaluation helps grant programs process high volumes of applications without
-sacrificing review quality.
-#### Short answer
-When programs receive hundreds of applications, fully manual review does not scale.
-AI-assisted evaluation provides first-pass filtering, automated summaries, and risk
-signals while preserving human judgment for final decisions.
-#### Why this matters
-Grant programs often face a tradeoff between speed and rigor. Reviewer fatigue leads to
-inconsistent evaluations, missed red flags, and delayed decisions.
-AI assistance addresses this by handling repetitive analysis while keeping humans in
-control of judgment calls.
-#### What AI-assisted evaluation enables
-- Automated summaries of long applications
-- Consistency checks across submissions
-- Risk signal detection
-- Reduced reviewer fatigue
-- Faster turnaround without cutting corners
-#### What it does not replace
-AI does not replace human judgment. Final decisions, nuanced evaluation, and
-context-sensitive assessments remain with reviewers.
-#### Related articles
-#### Karma's role
-[Karma](https://www.karmahq.org)
-integrates AI-assisted evaluation into the grant workflow, helping programs scale review
-without losing accountability.
 
 ### Document Signing in Grant Programs
 
@@ -1188,7 +1209,7 @@ chaos.
 - No audit trail for agreements
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.org)
+Karma
 integrates document signing into the grant workflow so signature status is always
 visible and tied to disbursement readiness.
 
@@ -1216,7 +1237,7 @@ Each dependency introduces delays if tracked manually.
 - Create auditability
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.org)
+Karma
 coordinates KYC, signing, and grant status so program managers can confidently trigger
 payments without operational chaos.
 
@@ -1245,7 +1266,7 @@ ecosystems cannot learn which types of funding produce the best outcomes.
 - Qualitative outcomes are hard to capture
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.org)
+Karma
 aggregates impact data from multiple sources, allowing ecosystems to assess what funding
 actually produced.
 
@@ -1273,6 +1294,6 @@ KYC coordination often involves:
 - Privacy-preserving verification
 #### Related articles
 #### Karma's role
-[Karma](https://www.karmahq.org)
+Karma
 integrates KYC into the grant workflow so verification happens seamlessly without
 delaying other operations.
