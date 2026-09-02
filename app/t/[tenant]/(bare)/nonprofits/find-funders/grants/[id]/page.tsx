@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { GrantDetailDynamic } from "@/src/features/non-profits/components/grant-detail-dynamic";
 import { customMetadata } from "@/utilities/meta";
+import Loading from "./loading";
 
 /**
  * Grant detail page (Phase 4).
@@ -75,7 +77,29 @@ export async function generateMetadata({
   });
 }
 
-export default async function GrantPage({ params }: { params: Promise<GrantPageParams> }) {
+/**
+ * The `params` read lives in the async child below, not in the page body.
+ *
+ * Under `cacheComponents` a `params` access in the page itself is runtime data
+ * outside a boundary, and the route fails to prerender outright (P2-6). One
+ * level down it sits behind this Suspense boundary: the shell prerenders and
+ * only the id-dependent part streams. The fallback is the route's own
+ * `loading.tsx`, so the streamed state is byte-for-byte what this route already
+ * showed while it was fully dynamic.
+ *
+ * This is allowed here in a way it would not be on a crawlable route: nothing
+ * under find-funders is in the sitemap, so DEV-612's ban on a boundary above
+ * page content does not apply.
+ */
+export default function GrantPage({ params }: { params: Promise<GrantPageParams> }) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <GrantDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+async function GrantDetailContent({ params }: { params: Promise<GrantPageParams> }) {
   const { id } = await params;
 
   return (
