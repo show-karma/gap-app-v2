@@ -34,6 +34,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 interface LayoutProps {
   children: React.ReactNode;
+  params: Params;
 }
 
 /**
@@ -47,6 +48,12 @@ interface LayoutProps {
  * Used within the (profile) route group to maintain the main project profile layout
  * while showing grant-specific content.
  */
-export default function Layout({ children }: LayoutProps) {
-  return <GrantDetailLayoutClient>{children}</GrantDetailLayoutClient>;
+export default async function Layout({ children, params }: LayoutProps) {
+  const { projectId, grantUid } = await params;
+
+  return (
+    <GrantDetailLayoutClient projectId={projectId} grantUid={grantUid}>
+      {children}
+    </GrantDetailLayoutClient>
+  );
 }
