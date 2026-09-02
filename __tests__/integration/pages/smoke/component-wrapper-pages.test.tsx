@@ -109,6 +109,14 @@ vi.mock("@/components/Pages/Communities/Impact/ImpactCharts", () => ({
   CommunityImpactCharts: () => <div data-testid="community-impact-charts">ImpactCharts</div>,
 }));
 
+// The impact index renders the filter row itself now that the layout no longer
+// decides by pathname which of the two impact routes wants it. Its real
+// implementation mounts ProgramFilter, which calls useQuery, so it gets a
+// sentinel here like every other inner component in this file.
+vi.mock("@/components/Pages/Communities/Impact/FilterRow", () => ({
+  CommunityImpactFilterRow: () => <div data-testid="community-impact-filter-row">FilterRow</div>,
+}));
+
 vi.mock("@/components/Pages/Communities/Impact/ProjectDiscovery", () => ({
   ProjectDiscovery: () => <div data-testid="project-discovery">ProjectDiscovery</div>,
 }));
@@ -236,10 +244,11 @@ describe("Community manage component-wrapper pages", () => {
 });
 
 describe("Community with-header component-wrapper pages", () => {
-  it("/(with-header)/impact renders CommunityImpactCharts", async () => {
+  it("/(with-header)/impact renders the filter row and CommunityImpactCharts", async () => {
     await renderPage(
       () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/impact/page")
     );
+    expect(screen.getByTestId("community-impact-filter-row")).toBeInTheDocument();
     expect(screen.getByTestId("community-impact-charts")).toBeInTheDocument();
   });
 

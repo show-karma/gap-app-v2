@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { CommunityImpactFilterRow } from "@/components/Pages/Communities/Impact/FilterRow";
 import { ImpactTabNavigator } from "@/components/Pages/Communities/Impact/ImpactTabNavigator";
 import { PROJECT_NAME } from "@/constants/brand";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
@@ -32,7 +31,10 @@ export default function ImpactLayout({ children }: LayoutProps) {
   return (
     <div className="flex flex-col gap-5 sm:px-3 md:px-4 px-6  py-2">
       <ImpactTabNavigator />
-      <CommunityImpactFilterRow />
+      {/* The filter row is rendered by the impact index page rather than here:
+          it does not belong on /impact/project-discovery, and asking which of
+          the two routes is active meant a `usePathname()` read in a client
+          component, which is what kept both of them out of the prerender. */}
       {children}
     </div>
   );
