@@ -134,8 +134,15 @@ export function ProjectProfileLayout({
     </Suspense>
   );
 
+  // `prerenderSafe`: this layout renders above the crawlable project content,
+  // where DEV-612 forbids a Suspense boundary, so its queries must not read the
+  // clock during prerender. See PRERENDER_SAFE_STALE_TIME for the exact React
+  // Query code path and the refetch trade-off it accepts.
   const { project, isProjectLoading, isLoading, isError, isVerified, stats } = useProjectProfile(
-    projectId as string
+    projectId as string,
+    undefined,
+    undefined,
+    { prerenderSafe: true }
   );
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)

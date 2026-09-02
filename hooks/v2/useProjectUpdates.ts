@@ -21,6 +21,7 @@ import {
 } from "@/utilities/milestones/milestoneDueDate";
 import { parseChainId } from "@/utilities/parseChainId";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { withRequestTimeout } from "@/utilities/requestTimeout";
@@ -382,6 +383,8 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
 const EMPTY_MILESTONES: UnifiedMilestone[] = [];
 
 interface UseProjectUpdatesOptions {
+  /** Opt into a clock-free staleTime so this may render above crawlable content. */
+  prerenderSafe?: boolean;
   /**
    * Whether the request should attach a Privy bearer token. Defaults to
    * `true` for backward compatibility. Public profile callers MUST pass
@@ -470,6 +473,8 @@ export function useProjectUpdates(
     enabled: !!projectIdOrSlug,
     // Longer than the shared default: the feed is expensive and rarely stale.
     staleTime: 5 * 60 * 1000,
+    // Above crawlable content this must not read the clock. See the constant.
+    ...(options.prerenderSafe ? { staleTime: PRERENDER_SAFE_STALE_TIME } : {}),
     placeholderData: keepPreviousData,
   });
 
