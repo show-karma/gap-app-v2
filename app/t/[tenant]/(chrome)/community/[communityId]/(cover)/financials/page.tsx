@@ -1,6 +1,8 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { PublicControlCenter } from "@/components/Pages/Communities/Financials/PublicControlCenter";
+import { PageHero } from "@/components/Pages/Communities/PageHero";
 import { Link } from "@/src/components/navigation/Link";
 import { getCommunityPayoutsPublic } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { api } from "@/utilities/api/client";
@@ -10,6 +12,7 @@ import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import Loading from "./loading";
 import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 type Params = Promise<{ communityId: string }>;
@@ -115,6 +118,46 @@ export default async function FinancialsPage({ params }: { params: Params }) {
     );
   }
 
+  return (
+    <div className="flex flex-col gap-5 py-6 animate-fade-in-up">
+      <div className="px-4">
+        <PageHero
+          compact
+          eyebrow="Treasury"
+          title={COMMITMENTS_AND_DISBURSEMENTS}
+          description="Overview of grants, agreements, milestones, and disbursements made through programs in this community."
+        />
+      </div>
+      <Suspense fallback={<Loading />}>
+        <FinancialsWithSeededCache communityId={communityId} />
+      </Suspense>
+    </div>
+  );
+}
+
+/**
+ * Everything that needs data sits behind the boundary; the heading above does
+ * not.
+ *
+ * Two things in here are runtime reads outside a boundary if they stay in the
+ * page body, and either one alone stops the route prerendering:
+ * `prefetchFinancialsData` (the payouts list and the KYC config, uncached
+ * `api.*` calls), and `PublicControlCenter` itself, which reads
+ * `useSearchParams()` for its filter state.
+ *
+ * Caching the seed was considered and rejected: payouts and KYC are
+ * per-community operational data, not the shared crawlable payload the cached
+ * loaders serve, and a cached response has to belong to no one
+ * (`publicReadOptions`). So the seed streams instead. This route is Stream-class
+ * -- absent from the sitemap, no self-canonical (see generateMetadata) -- so
+ * DEV-612 does not reach it, and the fallback is the route's own `loading.tsx`.
+ *
+ * The <h1> stays in the shell because the hero moved up here out of
+ * `PublicControlCenter`; the four counts it used to carry went with the data,
+ * into the KpiStrip that component now renders. The (cover) group asserts
+ * exactly one <h1> per page and it is still this one.
+ */
+async function FinancialsWithSeededCache({ communityId }: { communityId: string }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: defaultQueryOptions },
   });
@@ -123,9 +166,7 @@ export default async function FinancialsPage({ params }: { params: Params }) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="flex flex-col gap-5 py-6 animate-fade-in-up">
-        <PublicControlCenter />
-      </div>
+      <PublicControlCenter />
     </HydrationBoundary>
   );
 }

@@ -340,12 +340,22 @@ describe("Whitelabel programs/[programId] page", () => {
 });
 
 describe("/(cover)/financials page", () => {
-  it("renders PublicControlCenter for enabled community", async () => {
+  // PublicControlCenter is no longer in the page's synchronous output: it sits
+  // behind a Suspense boundary with the React Query seed, because both the seed
+  // (uncached api.* reads) and the component itself (useSearchParams) are runtime
+  // data that stopped the route prerendering. What the shell must still render on
+  // its own is the heading -- that is the point of the split, and
+  // community-cover-group.test.tsx asserts it is the page's only <h1>.
+  it("renders the heading in the shell and streams the control center", async () => {
     const { default: Page } = await import(
       "@/app/t/[tenant]/(chrome)/community/[communityId]/(cover)/financials/page"
     );
     const result = await Page({ params: Promise.resolve({ communityId: "c1" }) });
-    renderInQueryClient(result);
-    expect(screen.getByTestId("public-control-center")).toBeInTheDocument();
+    const { container } = renderInQueryClient(result);
+
+    expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
+    // The boundary's fallback is the route's own loading.tsx skeleton.
+    expect(container.querySelector(".animate-pulse")).not.toBeNull();
+    expect(screen.queryByTestId("public-control-center")).not.toBeInTheDocument();
   });
 });
