@@ -1,6 +1,5 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
@@ -11,9 +10,20 @@ import { ManageChromeBoundary } from "./ManageChromeBoundary";
 import { ManageDeniedView } from "./ManageDeniedView";
 import { ManageSidebar } from "./ManageSidebar";
 
-export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
-  const params = useParams();
-  const communityId = params.communityId as string;
+/**
+ * `communityId` is a prop for the same reason it is one on ManageLayoutClient:
+ * `useParams()` here read the whole matched route, unknown nested segment
+ * included. This component renders above `children` on every manage route, so
+ * the read had to go too -- fixing only the client layout would have moved the
+ * CLIENT_HOOK_DYNAMIC failure one component down rather than removing it.
+ */
+export function ManageLayoutShell({
+  communityId,
+  children,
+}: {
+  communityId: string;
+  children: React.ReactNode;
+}) {
   const { data: community, isLoading, isError } = useCommunityDetails(communityId);
   const {
     isCommunityAdmin,
