@@ -1,13 +1,17 @@
 import "server-only";
 
 import { cacheLife, cacheTag } from "next/cache";
-import { programListTag, programTag } from "@/utilities/cache/tags";
-import type { FundingProgramResponse, PaginatedFundingPrograms } from "../types/funding-program";
+import { programListTag } from "@/utilities/cache/tags";
+import type { PaginatedFundingPrograms } from "../types/funding-program";
 import { fundingProgramsService } from "./funding-programs.service";
 
 /**
- * Cached, server-only twins of the program-registry reads — the `/funding-map`
- * SSR prefetch and the whitelabel program detail page.
+ * Cached, server-only twin of the program-registry list read — the
+ * `/funding-map` SSR prefetch.
+ *
+ * The whitelabel program detail page caches its own inline fetch instead: it
+ * already passed `isAuthorized: false` and lives in the page, so routing it
+ * through here would add an indirection without adding anything.
  *
  * `fundingProgramsService` itself stays uncached: three client hooks import it
  * (`useFundingOpportunities`, `useFundingOpportunitiesCount`,
@@ -27,14 +31,4 @@ export async function getAllFundingProgramsCached(
   cacheTag(programListTag());
 
   return fundingProgramsService.getAll(params);
-}
-
-export async function getFundingProgramByIdCached(
-  programId: string
-): Promise<FundingProgramResponse | null> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag(programTag(programId));
-
-  return fundingProgramsService.getById(programId);
 }
