@@ -68,12 +68,28 @@ const nextConfig: NextConfig = {
       "markdown-it": "markdown-it/dist/index.cjs.js",
     },
   },
+  // Cache Components. A route now combines a prerendered shell with dynamic
+  // content streamed into it, and `"use cache"` / `cacheLife` / `cacheTag`
+  // become available, instead of every route being either fully static or
+  // fully dynamic.
+  //
+  // Top-level in 16.3.3, not experimental, and it subsumes
+  // `experimental.useCache`: `server/config.js` backfills useCache from this
+  // option and warns "no longer needed" when both are set, so the old flag is
+  // removed rather than left to warn on every build. Removing it is NOT the
+  // same as setting it to false — an explicit `useCache: false` alongside
+  // cacheComponents throws E1465.
+  cacheComponents: true,
+  // Opts the whole app into Partial Prefetching: `<Link prefetch>` fetches
+  // only a route's static part, never its dynamic data, and the default
+  // segment-level prefetch becomes 'partial'. Per-segment `prefetch` exports
+  // still win. Requires cacheComponents and does nothing without it.
+  partialPrefetching: true,
   experimental: {
     // app/global-not-found.tsx is the 404 for everything the router cannot
     // match. The flag still exists in 16.3.3 and defaults to false; without it
     // the file is ignored and Next serves its own unbranded 404.
     globalNotFound: true,
-    useCache: true,
     optimizePackageImports: [
       "@tremor/react",
       "lucide-react",

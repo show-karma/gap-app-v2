@@ -8,10 +8,13 @@ import { PostCard } from "@/src/components/blog/PostCard";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 
-// Self-healing ISR: the revalidation webhook (M4) invalidates this path on
-// publish/unpublish, but a 60s ceiling means new posts show up even if the
-// webhook is ever missed or misconfigured.
-export const revalidate = 60;
+// TODO(P2-3 stage 2): `export const revalidate = 60` lived here — self-healing
+// ISR, so a new post appeared within 60s even when the M4 revalidation webhook
+// was missed or misconfigured. cacheComponents rejects the segment config, so
+// that ceiling has to come back as `"use cache"` + `cacheLife` (60s) on
+// `getPublishedPosts()` in `sanity/lib/gateway.ts`, with a `cacheTag` the
+// webhook can invalidate. Until that lands this page is uncached and re-queries
+// Sanity on every request: correct, but not cached.
 
 const TITLE = "Blog";
 const DESCRIPTION =

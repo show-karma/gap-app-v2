@@ -1,5 +1,9 @@
-/** ISR: revalidate project pages every 60 seconds for CDN caching */
-export const revalidate = 60;
+// TODO(P2-3 stage 2): `export const revalidate = 60` lived here — 60s CDN ISR
+// for every project page. cacheComponents rejects the segment config, so the
+// caching moves onto the loaders this layout and its pages read
+// (`services/project.service.ts`, project-grants, project-impacts,
+// project-updates) as `"use cache"` + `cacheLife`, tagged per project. Until
+// that lands project pages render per request.
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
