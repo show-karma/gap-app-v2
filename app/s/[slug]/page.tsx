@@ -61,7 +61,6 @@ export default async function PublicScorecardPage({ params }: PageProps) {
         slug={slug}
         grade={initial?.grade ?? null}
         totalScore={initial?.totalScore ?? null}
-        orgName={initial?.orgName ?? null}
       />
       {/* Members-area CTA now lives inside PublicScorecard's success branch
           so it is not shown over a failed/absent scorecard. */}

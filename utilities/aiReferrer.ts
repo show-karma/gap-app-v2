@@ -9,7 +9,7 @@
  *      is deliberately NOT attributed rather than guessed at.
  *
  * The resulting label is merged into every Mixpanel event (see
- * `utilities/mixpanelEvent.ts` / `hooks/useMixpanel.ts`) and set as GA4 user
+ * `utilities/analytics/client.ts`) and set as GA4 user
  * properties (see `components/Utilities/AiReferrerTracker.tsx`), so a
  * conversion several navigations after the landing still carries its AI origin
  * in both tools.

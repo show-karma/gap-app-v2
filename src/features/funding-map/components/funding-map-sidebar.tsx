@@ -6,12 +6,11 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { useMixpanel } from "@/hooks/useMixpanel";
+import { track } from "@/utilities/analytics/client";
 import { PAGES } from "@/utilities/pages";
 import { FundingMapAgentCard } from "./funding-map-agent-card";
 
 export function FundingMapSidebar() {
-  const { mixpanel } = useMixpanel("karma");
   const { resolvedTheme } = useTheme();
   const embedTheme = resolvedTheme === "dark" ? "dark" : "light";
 
@@ -62,9 +61,7 @@ export function FundingMapSidebar() {
               href={PAGES.REGISTRY.ADD_PROGRAM}
               prefetch
               onClick={() => {
-                mixpanel.reportEvent({
-                  event: "funding-map:submit-program-click",
-                });
+                track("funding_map_submit_program_clicked", {});
               }}
             >
               Submit a program
@@ -84,9 +81,7 @@ export function FundingMapSidebar() {
       <div
         className="flex flex-col gap-5 rounded-xl p-5"
         onClickCapture={() => {
-          mixpanel.reportEvent({
-            event: "funding-map:create-profile-click",
-          });
+          track("funding_map_create_profile_clicked", {});
         }}
       >
         <CircleUser className="h-5 w-5 text-muted-foreground" />

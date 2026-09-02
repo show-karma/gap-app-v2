@@ -20,6 +20,7 @@ import { Role } from "@/src/core/rbac/types";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import type { Project as ProjectResponse } from "@/types/v2/project";
+import { track } from "@/utilities/analytics/client";
 import { api } from "@/utilities/api/client";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { INDEXER } from "@/utilities/indexer";
@@ -226,6 +227,10 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
               if (alreadyExists) {
                 retries = 0;
+                track("project_merged", {
+                  source_project_id: project.uid,
+                  target_project_id: ogProjectUID,
+                });
                 showSuccess(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
                 setTimeout(() => {
                   dismiss();

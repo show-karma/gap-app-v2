@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMixpanel } from "@/hooks/useMixpanel";
+import { track } from "@/utilities/analytics/client";
 import { cn } from "@/utilities/tailwind";
 import {
   FUNDING_MAP_CATEGORIES,
@@ -66,8 +66,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     toggleType,
     resetFilters,
   } = useFundingFilters();
-  const { mixpanel } = useMixpanel("karma");
-  const { categories, grantTypes, status, onlyOnKarma } = filters;
+  const { onlyOnKarma } = filters;
 
   const { data: typeCounts, isError: typeCountsError } = useTypeCounts({
     onlyOnKarma: filters.onlyOnKarma || undefined,
@@ -107,38 +106,23 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
   const handleKarmaToggle = useCallback(() => {
     const newValue = !onlyOnKarma;
     setOnlyOnKarma(newValue);
-    mixpanel.reportEvent({
-      event: "funding-map:filter-karma-toggle",
-      properties: { onlyOnKarma: newValue, resultCount: totalCount },
-    });
-  }, [onlyOnKarma, setOnlyOnKarma, mixpanel, totalCount]);
+    track("funding_map_filter_applied", { filter_type: "karma_only", value: newValue });
+  }, [onlyOnKarma, setOnlyOnKarma]);
 
   const handleStatusChange = useCallback(
     (value: string) => {
       setStatus(value);
-      mixpanel.reportEvent({
-        event: "funding-map:filter-status",
-        properties: { status: value, resultCount: totalCount },
-      });
+      track("funding_map_filter_applied", { filter_type: "status", value });
     },
-    [setStatus, mixpanel, totalCount]
+    [setStatus]
   );
 
   const handleCategoryToggle = useCallback(
     (category: string) => {
-      const isSelected = categories.includes(category);
       toggleCategory(category);
-      mixpanel.reportEvent({
-        event: "funding-map:filter-category",
-        properties: {
-          category,
-          selected: !isSelected,
-          totalCategoriesSelected: isSelected ? categories.length - 1 : categories.length + 1,
-          resultCount: totalCount,
-        },
-      });
+      track("funding_map_filter_applied", { filter_type: "category", value: category });
     },
-    [categories, toggleCategory, mixpanel, totalCount]
+    [toggleCategory]
   );
 
   const handleUnifiedTypeToggle = useCallback(
@@ -148,16 +132,9 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
       } else {
         toggleGrantType(option.value);
       }
-      mixpanel.reportEvent({
-        event: "funding-map:filter-type",
-        properties: {
-          type: option.value,
-          filterTarget: option.filterTarget,
-          resultCount: totalCount,
-        },
-      });
+      track("funding_map_filter_applied", { filter_type: "type", value: option.value });
     },
-    [toggleType, toggleGrantType, mixpanel, totalCount]
+    [toggleType, toggleGrantType]
   );
 
   const handleClearTypes = useCallback(() => {
@@ -166,20 +143,9 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
   }, [setSelectedTypes, setGrantTypes]);
 
   const handleClearFilters = useCallback(() => {
-    mixpanel.reportEvent({
-      event: "funding-map:filters-clear",
-      properties: {
-        clearedFilters: {
-          status,
-          categories,
-          grantTypes,
-          onlyOnKarma,
-          selectedTypes: filters.selectedTypes,
-        },
-      },
-    });
+    track("funding_map_filters_cleared", {});
     resetFilters();
-  }, [status, categories, grantTypes, onlyOnKarma, filters.selectedTypes, resetFilters, mixpanel]);
+  }, [resetFilters]);
 
   const isUnifiedOptionSelected = (option: (typeof UNIFIED_TYPE_OPTIONS)[number]) => {
     if (option.filterTarget === "type") {

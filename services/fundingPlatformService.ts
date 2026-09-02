@@ -13,6 +13,7 @@ import type {
   IFundingProgramConfig,
   IPaginatedApplicationsResponse,
 } from "@/types/funding-platform";
+import { emitApplicationStatusChanged } from "@/utilities/analytics/emitters/application";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
@@ -389,6 +390,7 @@ export const fundingApplicationsAPI = {
       `/v2/funding-applications/${applicationId}/status`,
       request
     );
+    emitApplicationStatusChanged(applicationId, request.status);
     return response.data;
   },
 

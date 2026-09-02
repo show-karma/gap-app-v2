@@ -21,6 +21,7 @@ import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { Grant } from "@/types/v2/grant";
+import { track } from "@/utilities/analytics/client";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -176,6 +177,10 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             const alreadyExists = updatedGrant?.updates?.find((u) => u.uid === attestUID);
             if (alreadyExists) {
               retries = 0;
+              track("grant_update_posted", {
+                grant_id: grantToUpdate.uid,
+                community_id: grantToUpdate.data?.communityUID ?? null,
+              });
               showSuccess(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
               afterSubmit?.();
               setTimeout(() => {

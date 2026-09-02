@@ -9,11 +9,7 @@ vi.mock("next-themes", () => ({
 }));
 
 // Mock dependencies
-vi.mock("@/hooks/useMixpanel", () => ({
-  useMixpanel: () => ({
-    mixpanel: { reportEvent: vi.fn() },
-  }),
-}));
+vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
 vi.mock("next/dynamic", () => ({
   __esModule: true,

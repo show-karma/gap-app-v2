@@ -10,10 +10,10 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useAuth } from "@/hooks/useAuth";
-import { useMixpanel } from "@/hooks/useMixpanel";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOnboarding } from "@/store/modals/onboarding";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
+import { track } from "@/utilities/analytics/client";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
@@ -26,6 +26,9 @@ const ProjectDialog = dynamic(
   () => import("@/components/Dialogs/ProjectDialog/index").then((mod) => mod.ProjectDialog),
   { ssr: false }
 );
+
+/** Stable surface id for the walkthrough's only entry point today. */
+const ONBOARDING_ENTRY_POINT = "my_projects";
 
 const pickColor = (index: number) => {
   const cardColors = [
@@ -47,22 +50,15 @@ export default function MyProjects() {
   const { authenticated: isAuth, address, ready } = useAuth();
   const { theme: currentTheme } = useTheme();
   const { setIsOnboarding } = useOnboarding();
-  const { mixpanel } = useMixpanel();
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
 
   const handleStartWalkthrough = () => {
+    track("onboarding_started", { entry_point: ONBOARDING_ENTRY_POINT });
+    // The store only reports a step change while the walkthrough is open, so
+    // the first step is reported here — opening IS arriving on "welcome".
+    track("onboarding_step_viewed", { step: "welcome" });
     setIsOnboarding(true);
-    if (address) {
-      mixpanel.reportEvent({
-        event: "onboarding:popup",
-        properties: { address },
-      });
-      mixpanel.reportEvent({
-        event: "onboarding:navigation",
-        properties: { address, id: "welcome" },
-      });
-    }
   };
 
   const {

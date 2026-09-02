@@ -56,6 +56,7 @@ import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
+import * as projectEvents from "@/utilities/analytics/emitters/project";
 import { api } from "@/utilities/api/client";
 import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
@@ -473,6 +474,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const createProject = async (data: SchemaType): Promise<void> => {
     try {
       setIsLoading(true);
+      projectEvents.emitProjectCreateStarted();
       startAttestation("Creating project...");
       if (!isAuth) {
         login?.();
@@ -702,6 +704,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           showError("Something went wrong with contact info save. Please try again later.");
         }
 
+        projectEvents.emitProjectCreateCompleted(fetchedProject.uid, chainSelected);
         showSuccess(MESSAGES.PROJECT.CREATE.SUCCESS);
         setTimeout(() => {
           dismiss();
@@ -717,6 +720,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setCustomLinks([]);
     } catch (error: any) {
       if (handleSignerError(error)) return;
+      projectEvents.emitProjectCreateFailed(data.chainID, error);
       // A transient chain-switch / bundler-RPC hiccup (GAP-FRONTEND-23C) is
       // recoverable by retrying — tell the user that instead of a dead-end
       // generic error. The form data is preserved either way.
@@ -825,6 +829,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         customLinks,
       };
 
+      const editSnapshot = projectEvents.projectEditSnapshot(fetchedProject);
       await updateProject(
         fetchedProject,
         newProjectInfo,
@@ -837,6 +842,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         startAttestation,
         showSuccess
       ).then(async (res) => {
+        projectEvents.emitProjectEdited(
+          fetchedProject.uid,
+          editSnapshot,
+          newProjectInfo,
+          socialData
+        );
         // updateProject calls showSuccess internally
         setStep(0);
         // Brief delay to show success, then redirect

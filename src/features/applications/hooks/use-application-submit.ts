@@ -3,7 +3,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { Application } from "@/types/whitelabel-entities";
+import { track } from "@/utilities/analytics/client";
+import { toErrorCode } from "@/utilities/analytics/error-code";
 import { api } from "@/utilities/api/client";
+import { secondsSinceApplicationStarted } from "../lib/application-timing";
 import type { ApplicationFormData, UseApplicationSubmitReturn } from "../types";
 
 export function useApplicationSubmit(communityId: string): UseApplicationSubmitReturn {
@@ -35,6 +38,19 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
         throw new Error("Failed to submit application");
       }
       return response;
+    },
+    onSuccess: (_application, { programId }) => {
+      track("application_submitted", {
+        program_id: programId,
+        community_id: communityId,
+        time_to_submit_s: secondsSinceApplicationStarted(programId),
+      });
+    },
+    onError: (error, { programId }) => {
+      track("application_submit_failed", {
+        program_id: programId,
+        error_code: toErrorCode(error),
+      });
     },
   });
 

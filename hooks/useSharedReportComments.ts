@@ -19,6 +19,7 @@ import type {
   SharedReportCommentNode,
   SharedReportCommentsResponse,
 } from "@/types/donor-research-comments";
+import { track } from "@/utilities/analytics/client";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -136,7 +137,14 @@ export function useSharedReportComments(
         }
       );
     },
-    onSuccess: () => {
+    onSuccess: (_comment, { request }) => {
+      track("comment_posted", {
+        target_type: "report",
+        // A shared-report link is public by construction: anyone holding it can
+        // read the thread.
+        is_public: true,
+        is_reply: Boolean(request.parentCommentId),
+      });
       // Reconcile with the server only on success — the optimistic row is
       // replaced by the real one. (Failed rows are preserved by skipping
       // invalidation on error.)
