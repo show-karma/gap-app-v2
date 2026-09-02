@@ -1,12 +1,10 @@
 "use client";
 
 import { type QueryClient, useQueryClient } from "@tanstack/react-query";
-import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useLoadPrivy, usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import { isDonorResearchTokenRoute, PAGES } from "@/utilities/pages";
 import { DonorResearchLoading } from "./DonorResearchLoading";
 import { DonorResearchShell } from "./DonorResearchShell";
 import { DonorResearchSignInGate } from "./DonorResearchSignInGate";
@@ -132,13 +130,39 @@ function DonorResearchSessionBoundary({
 }
 
 /**
+ * Which of the section's four postures a route sits in.
+ *
+ * This used to be three `usePathname()` tests inside the layout itself, and
+ * that is what stopped `nonprofit-research/[reportId]` and
+ * `personas/[handleId]` from prerendering: a client component reading URL
+ * state above the page is runtime data outside a boundary
+ * (CLIENT_HOOK_DYNAMIC, confirmed by --debug-prerender at
+ * donor-research-section-layout.tsx:168). The route tree already knows the
+ * answer -- each group has exactly one posture -- so each server layout names
+ * it and the hook is gone. A Suspense boundary would have been the other fix,
+ * and it is the wrong one: it goes above page content for the whole section.
+ *
+ * - `advisor`          gated, and inside the advisor shell (sidebar + breadcrumbs)
+ * - `gated-fullscreen` gated, no shell -- onboarding, which brings its own
+ * - `public`           the section index: anonymous, no shell (it renders its
+ *                      own sign-in gate and, for advisors, the workspace)
+ * - `token`            the two anonymous token routes; the token IS the
+ *                      credential and they carry their own TokenPageShell
+ *
+ * Gating is unchanged by the switch: `advisor` and `gated-fullscreen` require
+ * auth, `public` and `token` do not, exactly as the pathname tests decided.
+ */
+export type DonorResearchSectionMode = "advisor" | "gated-fullscreen" | "public" | "token";
+
+/**
  * Donor-research section layout (U12).
  *
  * Lives here rather than in the route tree because it has to be mounted from
- * two places: the section's advisor routes sit in the `(chrome)` group and its
- * two anonymous token routes sit in `(bare)`, which is what keeps the app
- * navbar and footer off them. Both route layouts are thin wrappers around
- * this component, so the behaviour below is defined once.
+ * several places: the section's advisor routes, its onboarding flow and its
+ * public index sit in `(chrome)`, and its two anonymous token routes sit in
+ * `(bare)`, which is what keeps the app navbar and footer off them. Every one
+ * of those route layouts is a thin wrapper that names its `mode`, so the
+ * behaviour below is defined once.
  *
  * Wraps the section in the global `PermissionProvider` (same posture as
  * `/dashboard`) so any nested permission hooks resolve cleanly. The
@@ -155,8 +179,7 @@ function DonorResearchSessionBoundary({
  * anonymous token routes (donor share view + diligence response), which carry
  * their own `TokenPageShell`. Wrapping those in the advisor shell would flash
  * the authenticated sidebar/breadcrumb (and its route skeleton) for a beat
- * before the page resolves to its slim chrome — so they bypass it entirely,
- * matching the footer suppression keyed on the same `isDonorResearchTokenRoute`.
+ * before the page resolves to its slim chrome — so they bypass it entirely.
  *
  * Skipping the shell is not the same as skipping auth. Only the token routes
  * are genuinely anonymous — their token *is* the credential. Onboarding creates
@@ -164,21 +187,18 @@ function DonorResearchSessionBoundary({
  * gate its advisor query threw a 401 straight into the error boundary, which
  * showed a second, differently-worded sign-in screen for the same user state.
  */
-export function DonorResearchSectionLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const isTokenRoute = isDonorResearchTokenRoute(pathname);
-  // The section index carries public, server-rendered answer content (E4,
-  // DEV-595), so the layout neither auth-gates nor shell-wraps it — the
-  // index page renders the sign-in gate for anonymous visitors and the
-  // advisor shell + workspace for signed-in advisors itself
-  // (ResearchIndexExperience). Every other non-token route stays gated
-  // here exactly as before.
-  const isPublicIndex = pathname === PAGES.DONOR_RESEARCH.INDEX;
-  const isShellless =
-    pathname.startsWith(PAGES.DONOR_RESEARCH.ONBOARDING) || isTokenRoute || isPublicIndex;
+export function DonorResearchSectionLayout({
+  mode,
+  children,
+}: {
+  mode: DonorResearchSectionMode;
+  children: React.ReactNode;
+}) {
+  const requiresAuth = mode === "advisor" || mode === "gated-fullscreen";
+  const isShellless = mode !== "advisor";
 
   return (
-    <DonorResearchSessionBoundary requiresAuth={!isTokenRoute && !isPublicIndex}>
+    <DonorResearchSessionBoundary requiresAuth={requiresAuth}>
       <PermissionProvider>
         {isShellless ? children : <DonorResearchShell>{children}</DonorResearchShell>}
       </PermissionProvider>
