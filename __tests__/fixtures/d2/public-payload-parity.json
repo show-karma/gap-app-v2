@@ -1,7 +1,7 @@
 {
   "$schema": "D2 public-payload parity evidence",
   "recordedAgainst": "https://gapstagapi.karmahq.xyz",
-  "recordedAt": "2026-09-01T22:22:08.659Z",
+  "recordedAt": "2026-09-02T18:51:25.231Z",
   "tokenPresent": false,
   "howToRerecord": "INDEXER_TOKEN=<staging privy jwt> node scripts/record-d2-parity.mjs",
   "endpoints": [
@@ -301,6 +301,46 @@
         ".payload[].percentCompleted",
         ".payload[].regions",
         ".payload[].uid"
+      ]
+    },
+    {
+      "loader": "community-programs",
+      "name": "community programs",
+      "path": "/v2/communities/gitcoin/programs",
+      "anonStatus": 200,
+      "anonKeyCount": 31,
+      "anonKeyPaths": [
+        "[].chainID",
+        "[].metadata",
+        "[].metadata.anyoneCanJoin",
+        "[].metadata.bannerImg",
+        "[].metadata.categories",
+        "[].metadata.description",
+        "[].metadata.ecosystems",
+        "[].metadata.endsAt",
+        "[].metadata.grantTypes",
+        "[].metadata.logoImg",
+        "[].metadata.maxGrantSize",
+        "[].metadata.minGrantSize",
+        "[].metadata.networks",
+        "[].metadata.programBudget",
+        "[].metadata.shortDescription",
+        "[].metadata.socialLinks",
+        "[].metadata.socialLinks.blog",
+        "[].metadata.socialLinks.discord",
+        "[].metadata.socialLinks.forum",
+        "[].metadata.socialLinks.grantsSite",
+        "[].metadata.socialLinks.orgWebsite",
+        "[].metadata.socialLinks.telegram",
+        "[].metadata.socialLinks.twitter",
+        "[].metadata.socialLinks.website",
+        "[].metadata.startsAt",
+        "[].metadata.status",
+        "[].metadata.title",
+        "[].metadata.type",
+        "[].metadata.website",
+        "[].name",
+        "[].programId"
       ]
     }
   ]

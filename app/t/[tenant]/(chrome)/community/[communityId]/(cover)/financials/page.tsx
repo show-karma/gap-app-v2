@@ -1,7 +1,8 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { cache } from "react";
+import { Suspense } from "react";
 import { PublicControlCenter } from "@/components/Pages/Communities/Financials/PublicControlCenter";
+import { PageHero } from "@/components/Pages/Communities/PageHero";
 import { Link } from "@/src/components/navigation/Link";
 import { getCommunityPayoutsPublic } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { api } from "@/utilities/api/client";
@@ -11,11 +12,15 @@ import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import Loading from "./loading";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 type Params = Promise<{ communityId: string }>;
 
-const getCachedCommunity = cache(getCommunityDetails);
+// `cache(getCommunityDetails)` used to stand here. React `cache()` dedupes
+// within one render; it does not survive it, so the read was still uncached
+// I/O during the prerender. The shared "use cache" twin does both jobs -- one
+// entry per slug, reused across the metadata and body reads below.
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId } = await params;
@@ -24,7 +29,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     return {};
   }
 
-  const community = await getCachedCommunity(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   // No self-canonical: this route is a client-rendered shell, so it is absent
@@ -95,7 +100,7 @@ export default async function FinancialsPage({ params }: { params: Params }) {
   // no community navigator), so the copy names the community itself and the
   // link back to the community explorer is the only way out.
   if (!FINANCIALS_ENABLED_COMMUNITIES.includes(communityId)) {
-    const community = await getCachedCommunity(communityId);
+    const community = await getCommunityDetailsCached(communityId);
     const communityName = community?.details?.name || communityId;
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
@@ -113,6 +118,46 @@ export default async function FinancialsPage({ params }: { params: Params }) {
     );
   }
 
+  return (
+    <div className="flex flex-col gap-5 py-6 animate-fade-in-up">
+      <div className="px-4">
+        <PageHero
+          compact
+          eyebrow="Treasury"
+          title={COMMITMENTS_AND_DISBURSEMENTS}
+          description="Overview of grants, agreements, milestones, and disbursements made through programs in this community."
+        />
+      </div>
+      <Suspense fallback={<Loading />}>
+        <FinancialsWithSeededCache communityId={communityId} />
+      </Suspense>
+    </div>
+  );
+}
+
+/**
+ * Everything that needs data sits behind the boundary; the heading above does
+ * not.
+ *
+ * Two things in here are runtime reads outside a boundary if they stay in the
+ * page body, and either one alone stops the route prerendering:
+ * `prefetchFinancialsData` (the payouts list and the KYC config, uncached
+ * `api.*` calls), and `PublicControlCenter` itself, which reads
+ * `useSearchParams()` for its filter state.
+ *
+ * Caching the seed was considered and rejected: payouts and KYC are
+ * per-community operational data, not the shared crawlable payload the cached
+ * loaders serve, and a cached response has to belong to no one
+ * (`publicReadOptions`). So the seed streams instead. This route is Stream-class
+ * -- absent from the sitemap, no self-canonical (see generateMetadata) -- so
+ * DEV-612 does not reach it, and the fallback is the route's own `loading.tsx`.
+ *
+ * The <h1> stays in the shell because the hero moved up here out of
+ * `PublicControlCenter`; the four counts it used to carry went with the data,
+ * into the KpiStrip that component now renders. The (cover) group asserts
+ * exactly one <h1> per page and it is still this one.
+ */
+async function FinancialsWithSeededCache({ communityId }: { communityId: string }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: defaultQueryOptions },
   });
@@ -121,9 +166,7 @@ export default async function FinancialsPage({ params }: { params: Params }) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="flex flex-col gap-5 py-6 animate-fade-in-up">
-        <PublicControlCenter />
-      </div>
+      <PublicControlCenter />
     </HydrationBoundary>
   );
 }

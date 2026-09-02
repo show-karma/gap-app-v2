@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicReportListPage } from "@/components/Pages/Community/PortfolioReports/PublicReportListPage";
 import { communitySubpageMetadata } from "@/utilities/metadata/communityCanonical";
-import { getCommunityDetails } from "@/utilities/queries/v2/community";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 interface Props {
   params: Promise<{ communityId: string }>;
@@ -18,7 +18,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { communityId } = await params;
   const canonicalMetadata = await communitySubpageMetadata(communityId, "reports");
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   return {
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page(props: Props) {
   const { communityId } = await props.params;
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
 
   if (!community) {
     notFound();
