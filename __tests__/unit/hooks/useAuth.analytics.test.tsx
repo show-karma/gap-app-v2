@@ -18,6 +18,7 @@ import {
   takePendingLogoutReason,
 } from "@/utilities/analytics/auth-transitions";
 import { track } from "@/utilities/analytics/client";
+import { clearPreReadyLoginStart } from "@/utilities/analytics/emitters/auth";
 
 // Undo the global mock of useAuth so we exercise the real hook
 vi.unmock("@/hooks/useAuth");
@@ -123,6 +124,8 @@ describe("useAuth analytics", () => {
     // A persisted Privy token now changes what the pre-`ready` emit gate does,
     // so it must not leak between cases.
     localStorage.clear();
+    // The pre-`ready` start is module state and outlives a test.
+    clearPreReadyLoginStart();
   });
 
   describe("login_started", () => {
@@ -230,6 +233,67 @@ describe("useAuth analytics", () => {
       } finally {
         getItem.mockRestore();
       }
+    });
+
+    it("reports one start when the pre-ready click is retried once Privy is ready", async () => {
+      // Before the SDK loads the bridge's `login` is a noop and nothing replays
+      // the click, so the visitor sees nothing happen and clicks again. Two
+      // clicks, one funnel opening.
+      setBridge({ ready: false });
+      const { result, rerender } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.login("navbar");
+      });
+
+      setBridge({ ready: true });
+      rerender();
+
+      await act(async () => {
+        await result.current.login("navbar");
+      });
+
+      const starts = vi.mocked(track).mock.calls.filter(([name]) => name === "login_started");
+      // Only the event count is asserted: the bridge double's `login` is a
+      // vi.fn(), where production's pre-`ready` bridge hands back a real noop.
+      expect(starts).toHaveLength(1);
+    });
+
+    it("reports a ready click that no pre-ready click preceded", async () => {
+      // The dedupe must only suppress a retry — an ordinary signed-out click
+      // with nothing before it still opens the funnel.
+      const { result } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.login("navbar");
+      });
+
+      const starts = vi.mocked(track).mock.calls.filter(([name]) => name === "login_started");
+      expect(starts).toHaveLength(1);
+    });
+
+    it("opens the funnel again for a click after the retry was suppressed", async () => {
+      // Suppressing the retry consumes the mark, so a later attempt — a modal
+      // dismissed, a genuine second try — is a new activation, not a retry.
+      setBridge({ ready: false });
+      const { result, rerender } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.login("navbar");
+      });
+
+      setBridge({ ready: true });
+      rerender();
+
+      await act(async () => {
+        await result.current.login("navbar");
+      });
+      await act(async () => {
+        await result.current.login("navbar");
+      });
+
+      const starts = vi.mocked(track).mock.calls.filter(([name]) => name === "login_started");
+      expect(starts).toHaveLength(2);
     });
 
     it("does not open a funnel it will never close for an already signed-in user", async () => {

@@ -99,6 +99,14 @@ Unreadable storage (privacy mode, blocked third-party storage, enterprise
 policy) counts as "no token", which is the same answer the SDK loader acts on —
 both read `hasPersistedPrivySession` so they cannot drift apart.
 
+That pre-`ready` click is also a **noop**: the bridge's `login` is a stub until
+the SDK mounts, and nothing replays the click. So the visitor sees nothing
+happen and clicks again once Privy is ready — two clicks, one funnel opening.
+`emitLoginStarted` records the pre-`ready` start and drops a `ready` start that
+follows it within 60s, so the retry is not counted twice. Suppressing a retry
+consumes the mark, and a completed login clears it, so the next click opens the
+funnel again.
+
 This under-counts in one remaining case: a returning user with a live persisted
 session who clicks sign-in during the brief window before `ready`. That click is
 usually a no-op for an already-signed-in user, which is exactly the funnel we do

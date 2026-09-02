@@ -494,12 +494,16 @@ export const useAuth = () => {
       // is certainly signed out, so the start is real. With a token present we
       // still say nothing: that session may be about to restore, and a start
       // reported for it would open a funnel nothing closes.
-      const signedOutBeforePrivyResolved = !ready && !hasPersistedPrivySession();
-      if (
-        (ready && (!authenticated || needsWalletReconnect)) ||
-        signedOutBeforePrivyResolved
-      ) {
+      //
+      // The two branches are told apart for the emitter: before the SDK loads
+      // the bridge's `login` is a noop and nothing replays the click, so the
+      // visitor sees nothing happen and clicks again once Privy is ready. That
+      // is one funnel opening reached by two clicks, and `emitLoginStarted`
+      // drops the second.
+      if (ready && (!authenticated || needsWalletReconnect)) {
         emitLoginStarted(entryPoint, pathname);
+      } else if (!ready && !hasPersistedPrivySession()) {
+        emitLoginStarted(entryPoint, pathname, { beforePrivyReady: true });
       }
 
       if (typeof window !== "undefined" && !authenticated) {

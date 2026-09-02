@@ -15,7 +15,7 @@
  *   `ready` is still false came from a visitor who is certainly signed out.
  */
 
-export const PRIVY_TOKEN_STORAGE_KEY = "privy:token";
+const PRIVY_TOKEN_STORAGE_KEY = "privy:token";
 
 /**
  * Returns true only when a persisted Privy token is readable.
