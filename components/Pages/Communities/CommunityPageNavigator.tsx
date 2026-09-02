@@ -8,8 +8,8 @@ import {
   SquareUser,
   Wallet,
 } from "lucide-react";
-import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
@@ -115,13 +115,45 @@ const resolveSubSegment = (pathname: string): string => {
   return segments[0] ?? "";
 };
 
-export const CommunityPageNavigator = () => {
-  const params = useParams();
+/**
+ * Reads `?programId=` and hands it up. Renders nothing — no links, no content —
+ * so the leaf `<Suspense>` around it never covers anything crawlable. The tab
+ * links render immediately with their bare hrefs and gain the `programId`
+ * suffix on hydration.
+ */
+function ProgramIdFromUrl({ onChange }: { onChange: (value: string | null) => void }) {
   const searchParams = useSearchParams();
-  const communityId = params.communityId as string;
+  const value = searchParams.get("programId");
+
+  useEffect(() => {
+    onChange(value);
+  }, [value, onChange]);
+
+  return null;
+}
+
+/**
+ * The community tab bar.
+ *
+ * Three URL reads sat here, and the build named them:
+ *
+ *   at CommunityPageNavigator (CommunityPageNavigator.tsx:120)  useSearchParams()
+ *   at NormalCommunityHeader (components/Community/Header.tsx:272)
+ *
+ * They are not equivalent. `useParams()`/`usePathname()` go through Next's
+ * `useDynamicRouteParams`, which only aborts a prerender when a param is not
+ * known at build time. `useSearchParams()` goes through
+ * `useDynamicSearchParams`, which aborts unconditionally — so that one read
+ * blocked every route in the group, sampled params or not.
+ *
+ * `communityId` is therefore a prop (the server layout has it), and the
+ * `programId` search-param read moves into ProgramIdFromUrl below: a leaf that
+ * renders no links, so the crawlable tab graph stays outside the boundary.
+ */
+export const CommunityPageNavigator = ({ communityId }: { communityId: string }) => {
+  const [programId, setProgramId] = useState<string | null>(null);
   const rawPathname = usePathname();
   const { isWhitelabel } = useWhitelabel();
-  const programId = searchParams.get("programId");
   // In whitelabel mode, the middleware rewrites the root to /community/<slug>/funding-opportunities
   // but usePathname() still returns "/". Normalize so tab highlighting works correctly.
   const isWhitelabelRoot = isWhitelabel && (rawPathname === "/" || rawPathname === "");
@@ -198,6 +230,11 @@ export const CommunityPageNavigator = () => {
 
   return (
     <div className="flex flex-row flex-nowrap overflow-x-auto scrollbar-none pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max w-full">
+      {/* Link-free leaf: it renders null, so the tab links below stay outside
+          the boundary and remain part of the prerendered link graph. */}
+      <Suspense fallback={null}>
+        <ProgramIdFromUrl onChange={setProgramId} />
+      </Suspense>
       {visibleNavigationItems.map(({ id, path, Icon, showNewTag }) => {
         const href = path(communityId);
         const active = id === activeItemId;

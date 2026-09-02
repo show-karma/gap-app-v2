@@ -9,6 +9,7 @@ import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { programTag } from "@/utilities/cache/tags";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
@@ -122,6 +123,50 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 // today's behaviour: the client fetches and shows the skeleton, then retries
 // under its own defaults. A 404 resolves to null and IS hydrated — the client
 // renders its not-found state from the cache without refetching.
+const PRERENDERED_PROGRAM_SAMPLE = 2;
+
+/**
+ * A small sample of real programs, prerendered at build.
+ *
+ * The build named this page's `await params` directly:
+ *
+ *   at ProgramDetailPage (.../programs/[programId]/page.tsx:126:38)
+ * > 126 |   const { communityId, programId } = await params;
+ *
+ * Same class as the community and project layouts before they had samples: a
+ * top-level params read on a segment with no build-time value. This route is
+ * Cache-class, so a Suspense boundary is not available — `generateStaticParams`
+ * is the lever, and it is the one that already worked twice.
+ *
+ * The ids are read from the registry for the sampled communities rather than
+ * hard-coded, and degrade to an empty list on failure: a build with no
+ * prerendered program pages, never a fabricated id that prerenders a 404.
+ */
+export async function generateStaticParams(): Promise<
+  Array<{ communityId: string; programId: string }>
+> {
+  const communities = chosenCommunities().slice(0, 1);
+
+  const perCommunity = await Promise.all(
+    communities.map(async (community) => {
+      try {
+        const programs = await api.get<FundingProgram[]>(
+          INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(encodeURIComponent(community.slug)),
+          { isAuthorized: false }
+        );
+
+        return (programs ?? [])
+          .slice(0, PRERENDERED_PROGRAM_SAMPLE)
+          .map((program) => ({ communityId: community.slug, programId: program.programId }));
+      } catch {
+        return [];
+      }
+    })
+  );
+
+  return perCommunity.flat();
+}
+
 export default async function ProgramDetailPage({ params }: { params: Params }) {
   const { communityId, programId } = await params;
 
