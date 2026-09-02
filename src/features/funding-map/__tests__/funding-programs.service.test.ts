@@ -1,3 +1,4 @@
+import { publicReadOptions } from "@/utilities/api/public-read";
 import { INDEXER } from "@/utilities/indexer";
 import { FUNDING_MAP_DEFAULT_CHAIN_ID, FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import type {
@@ -63,7 +64,10 @@ describe("fundingProgramsService", () => {
 
       const result = await fundingProgramsService.getAll();
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining(INDEXER.V2.REGISTRY.GET_ALL));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining(INDEXER.V2.REGISTRY.GET_ALL),
+        publicReadOptions()
+      );
       expect(result.programs).toEqual(mockPrograms);
       expect(result.count).toBe(1);
       expect(result.totalPages).toBe(1);
@@ -76,7 +80,8 @@ describe("fundingProgramsService", () => {
       await fundingProgramsService.getAll();
 
       expect(mockApiGet).toHaveBeenCalledWith(
-        expect.stringContaining("/v2/program-registry/search")
+        expect.stringContaining("/v2/program-registry/search"),
+        publicReadOptions()
       );
     });
 
@@ -89,7 +94,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll({ page: 3 });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("page=3"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("page=3"),
+        publicReadOptions()
+      );
     });
 
     it("should pass pageSize as limit parameter", async () => {
@@ -98,7 +106,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll({ pageSize: 20 });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("limit=20"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("limit=20"),
+        publicReadOptions()
+      );
     });
 
     it("should use default pageSize when not provided", async () => {
@@ -108,7 +119,8 @@ describe("fundingProgramsService", () => {
       await fundingProgramsService.getAll();
 
       expect(mockApiGet).toHaveBeenCalledWith(
-        expect.stringContaining(`limit=${FUNDING_MAP_PAGE_SIZE}`)
+        expect.stringContaining(`limit=${FUNDING_MAP_PAGE_SIZE}`),
+        publicReadOptions()
       );
     });
 
@@ -118,7 +130,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll({ search: "optimism" });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("name=optimism"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("name=optimism"),
+        publicReadOptions()
+      );
     });
 
     it("should pass status filter", async () => {
@@ -127,7 +142,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll({ status: "active" });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("status=active"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("status=active"),
+        publicReadOptions()
+      );
     });
 
     it("should pass categories filter", async () => {
@@ -136,7 +154,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll({ categories: ["DeFi", "NFT"] });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("categories="));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("categories="),
+        publicReadOptions()
+      );
     });
 
     it("should pass ecosystems filter", async () => {
@@ -145,7 +166,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll({ ecosystems: ["Optimism"] });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("ecosystems=Optimism"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("ecosystems=Optimism"),
+        publicReadOptions()
+      );
     });
 
     it("should pass networks filter", async () => {
@@ -154,7 +178,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll({ networks: ["Ethereum"] });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("networks=Ethereum"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("networks=Ethereum"),
+        publicReadOptions()
+      );
     });
 
     it("should pass grantTypes filter", async () => {
@@ -163,7 +190,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll({ grantTypes: ["Direct Funding"] });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("grantTypes="));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("grantTypes="),
+        publicReadOptions()
+      );
     });
 
     it("should use totalPages from V2 response directly", async () => {
@@ -227,7 +257,10 @@ describe("fundingProgramsService", () => {
       const result = await fundingProgramsService.getById("program-1");
 
       expect(result).toEqual(mockProgram);
-      expect(mockApiGet).toHaveBeenCalledWith(INDEXER.V2.REGISTRY.GET_BY_ID("program-1"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        INDEXER.V2.REGISTRY.GET_BY_ID("program-1"),
+        publicReadOptions()
+      );
     });
 
     it("should use V2 program-registry endpoint for single program", async () => {
@@ -236,7 +269,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getById("program-1");
 
-      expect(mockApiGet).toHaveBeenCalledWith("/v2/program-registry/program-1");
+      expect(mockApiGet).toHaveBeenCalledWith(
+        "/v2/program-registry/program-1",
+        publicReadOptions()
+      );
     });
 
     it("should pass composite programId format through to API", async () => {
@@ -247,7 +283,10 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getById("program-1_42161");
 
-      expect(mockApiGet).toHaveBeenCalledWith("/v2/program-registry/program-1_42161");
+      expect(mockApiGet).toHaveBeenCalledWith(
+        "/v2/program-registry/program-1_42161",
+        publicReadOptions()
+      );
     });
 
     it("should return null when program not found", async () => {

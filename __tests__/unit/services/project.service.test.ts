@@ -30,6 +30,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getProject } from "@/services/project.service";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
+import { publicReadOptions } from "@/utilities/api/public-read";
 
 const mockApiGet = api.get as vi.MockedFunction<typeof api.get>;
 const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
@@ -51,7 +52,10 @@ describe("project.service", () => {
       const result = await getProject("project-slug");
 
       expect(result).toEqual(mockProject);
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("project-slug"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("project-slug"),
+        publicReadOptions()
+      );
     });
 
     it("should return null without reporting on 404", async () => {

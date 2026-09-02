@@ -6,6 +6,7 @@ import type { Community, CommunityProjects, CommunityStats } from "@/types/v2/co
 import { zeroUID } from "@/utilities/commons";
 import { INDEXER } from "@/utilities/indexer";
 import { api } from "../../api/client";
+import { publicReadOptions } from "../../api/public-read";
 
 // Deliberately NOT `orElse`: this loader is awaited unguarded (no `.catch`)
 // from ~30 server components/layouts under app/community/[communityId]/**.
@@ -20,7 +21,10 @@ import { api } from "../../api/client";
 // TODO(#1775): add zod schema once the "not found" response shape is confirmed.
 export const getCommunityDetails = cache(async (slug: string): Promise<Community | null> => {
   try {
-    const data = await api.get<Community | null>(INDEXER.COMMUNITY.V2.GET(slug));
+    const data = await api.get<Community | null>(
+      INDEXER.COMMUNITY.V2.GET(slug),
+      publicReadOptions()
+    );
 
     if (!data || data?.uid === zeroUID || !data?.details?.name) {
       return null;
@@ -69,6 +73,7 @@ export const getCommunityStats = cache(async (slug: string): Promise<CommunitySt
   let data: CommunityStats | undefined;
   try {
     data = await api.get<CommunityStats>(INDEXER.COMMUNITY.V2.STATS(slug), {
+      ...publicReadOptions(),
       schema: CommunityStatsSchema,
     });
   } catch (error) {
@@ -112,7 +117,8 @@ export const getCommunityProjects = async (
     // CommunityProject shape (members/links/endorsements/etc.) not safe to
     // re-derive strictly here.
     const data = await api.get<CommunityProjects | null>(
-      INDEXER.COMMUNITY.V2.PROJECTS(slug, normalizedOptions)
+      INDEXER.COMMUNITY.V2.PROJECTS(slug, normalizedOptions),
+      publicReadOptions()
     );
 
     if (data) {
