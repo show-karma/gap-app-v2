@@ -3,17 +3,12 @@
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useParams, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
-import {
-  useApplication,
-  useApplicationStatus,
-  useFundingApplications,
-  useProgramConfig,
-} from "@/hooks/useFundingPlatform";
+import { useApplication, useApplicationStatus, useProgramConfig } from "@/hooks/useFundingPlatform";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly, FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
@@ -23,16 +18,26 @@ import { getBrowseApplicationsRedirectUrl } from "@/utilities/fundingPlatformUrl
 import { PAGES } from "@/utilities/pages";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
-export default function ApplicationsPage() {
+/**
+ * The applications list, and the only thing on this route that reads the URL.
+ *
+ * `useSearchParams()` in a client component is URL data: unguarded it makes the
+ * whole route dynamic (`CLIENT_HOOK_DYNAMIC`). Keeping the read down here means
+ * only the list waits on it — the page header above prerenders.
+ *
+ * The manage tree is noindex on its own layout, so a boundary here hides
+ * nothing from a crawler and DEV-612 does not apply.
+ */
+function ApplicationsListSection(props: {
+  programId: string;
+  communityId: string;
+  showStatusActions: boolean;
+  onApplicationSelect: (application: IFundingApplication) => void;
+  onApplicationHover: (applicationId: string) => void;
+  onStatusChange: (applicationId: string, status: string, note?: string) => Promise<unknown>;
+  isAdmin: boolean;
+}) {
   const searchParams = useSearchParams();
-  const { communityId, programId: combinedProgramId } = useParams() as {
-    communityId: string;
-    programId: string;
-  };
-
-  const programId = combinedProgramId.includes("_")
-    ? combinedProgramId.split("_")[0]
-    : combinedProgramId;
 
   const initialFilters = useMemo((): IApplicationFilters => {
     const filters: IApplicationFilters = {};
@@ -61,6 +66,19 @@ export default function ApplicationsPage() {
     return filters;
   }, [searchParams]);
 
+  return <ApplicationListWithAPI {...props} initialFilters={initialFilters} />;
+}
+
+export default function ApplicationsPage() {
+  const { communityId, programId: combinedProgramId } = useParams() as {
+    communityId: string;
+    programId: string;
+  };
+
+  const programId = combinedProgramId.includes("_")
+    ? combinedProgramId.split("_")[0]
+    : combinedProgramId;
+
   const isAdmin = useIsFundingPlatformAdmin();
   const { isLoading } = usePermissionContext();
 
@@ -81,7 +99,6 @@ export default function ApplicationsPage() {
   );
 
   const { data: programConfig } = useProgramConfig(programId);
-  const { applications: _applications } = useFundingApplications(programId, initialFilters);
   const { prefetchApplication } = useApplication(null);
   const { updateStatusAsync } = useApplicationStatus(programId);
 
@@ -161,16 +178,23 @@ export default function ApplicationsPage() {
 
         {/* Applications List */}
         <div className="sm:px-3 md:px-4 px-6 py-2 flex-1">
-          <ApplicationListWithAPI
-            programId={programId}
-            communityId={communityId}
-            showStatusActions={isAdmin}
-            onApplicationSelect={handleApplicationSelect}
-            onApplicationHover={handleApplicationHover}
-            initialFilters={initialFilters}
-            onStatusChange={handleStatusChange}
-            isAdmin={isAdmin}
-          />
+          <Suspense
+            fallback={
+              <div className="flex w-full items-center justify-center min-h-[600px]">
+                <Spinner />
+              </div>
+            }
+          >
+            <ApplicationsListSection
+              programId={programId}
+              communityId={communityId}
+              showStatusActions={isAdmin}
+              onApplicationSelect={handleApplicationSelect}
+              onApplicationHover={handleApplicationHover}
+              onStatusChange={handleStatusChange}
+              isAdmin={isAdmin}
+            />
+          </Suspense>
         </div>
       </div>
     </FundingPlatformGuard>
