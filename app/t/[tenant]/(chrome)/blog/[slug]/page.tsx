@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublishedPostBySlug, getPublishedSlugs } from "@/sanity/lib/gateway";
-import { BlogPostArticle, resolveOgImage } from "@/src/components/blog/BlogPostArticle";
+import { BlogPostArticle } from "@/src/components/blog/BlogPostArticle";
+import { resolveOgImage } from "@/src/components/blog/blog-og-image";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 
