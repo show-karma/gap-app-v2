@@ -5,6 +5,7 @@ import {
   generateGrantOverviewMetadata,
   generateProjectFundingMetadata,
 } from "@/utilities/metadata/projectMetadata";
+import { FALLBACK_GRANT_PAIRS, withPrerenderFallback } from "@/utilities/prerender-samples";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { GrantDetailLayoutClient } from "./GrantDetailLayoutClient";
 
@@ -13,50 +14,56 @@ type Params = Promise<{
   grantUid: string;
 }>;
 
-const PRERENDERED_PROJECT_SAMPLE = 1;
+const PROJECT_LOOKUP_LIMIT = 12;
 const PRERENDERED_GRANT_SAMPLE = 2;
 
 /**
- * Real grant uids for a sampled project, prerendered at build.
+ * Real (projectId, grantUid) pairs, prerendered at build.
  *
- * Without a sample here, `[grantUid]` is unknown at build time, and every
- * `useDynamicRouteParams` reader above these routes aborts the prerender — the
- * profile layout's `useParams()`/`usePathname()` among them. That is why the
- * non-nested profile routes passed while these did not: same components, but
- * their params were samples.
+ * The first version of this sampler took the first project the explorer
+ * returned and asked for its grants. That project was `tas-hub`, which has
+ * none, so the sampler returned `[]` — and under cacheComponents an empty
+ * generateStaticParams fails the build at page-data collection:
  *
- * A boundary is not the alternative: the profile root is Cache-class, so the
- * sample is the lever. Degrades to an empty list — a build with no prerendered
- * grant pages, never a fabricated uid.
+ *   error: empty-generate-static-params
+ *   failed collecting page data for /project/[projectId]/funding/[grantUid]/complete-grant
+ *
+ * So it now scans a window of projects and keeps the first that actually has
+ * grants, which is also what makes this sample agree with the project layout's:
+ * both prefer projects with grants. If the scan finds nothing it uses the
+ * checked-in fallback rather than an empty list.
  */
 export async function generateStaticParams(): Promise<
   Array<{ projectId: string; grantUid: string }>
 > {
+  const found: Array<{ projectId: string; grantUid: string }> = [];
+
   try {
     const { payload } = await getExplorerProjectsPaginatedCached({
       page: 1,
-      limit: PRERENDERED_PROJECT_SAMPLE,
+      limit: PROJECT_LOOKUP_LIMIT,
     });
 
-    const pairs = await Promise.all(
-      payload.map(async (project) => {
-        const projectId = project.details?.slug ?? project.uid;
-        if (!projectId) return [];
+    for (const project of payload) {
+      const projectId = project.details?.slug ?? project.uid;
+      if (!projectId) continue;
 
-        const grants = await getProjectGrants(projectId, { isAuthorized: false }).catch(() => []);
+      const grants = await getProjectGrants(projectId, { isAuthorized: false }).catch(() => []);
+      const uids = grants
+        .map((grant) => grant.uid)
+        .filter((grantUid): grantUid is string => Boolean(grantUid))
+        .slice(0, PRERENDERED_GRANT_SAMPLE);
 
-        return grants
-          .map((grant) => grant.uid)
-          .filter((grantUid): grantUid is string => Boolean(grantUid))
-          .slice(0, PRERENDERED_GRANT_SAMPLE)
-          .map((grantUid) => ({ projectId, grantUid }));
-      })
-    );
-
-    return pairs.flat();
+      if (uids.length > 0) {
+        found.push(...uids.map((grantUid) => ({ projectId, grantUid })));
+        break;
+      }
+    }
   } catch {
-    return [];
+    // Fall through to the checked-in pairs.
   }
+
+  return withPrerenderFallback(found, FALLBACK_GRANT_PAIRS);
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {

@@ -14,6 +14,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { DEFAULT_DESCRIPTION, SITE_URL, twitterMeta } from "@/utilities/meta";
+import { FALLBACK_PROGRAM_PAIRS, withPrerenderFallback } from "@/utilities/prerender-samples";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 import ProgramDetailClient from "./ProgramDetailClient";
@@ -139,8 +140,9 @@ const PRERENDERED_PROGRAM_SAMPLE = 2;
  * is the lever, and it is the one that already worked twice.
  *
  * The ids are read from the registry for the sampled communities rather than
- * hard-coded, and degrade to an empty list on failure: a build with no
- * prerendered program pages, never a fabricated id that prerenders a 404.
+ * hard-coded. An empty result falls back to the checked-in pairs, because under
+ * cacheComponents an empty list fails the build outright — and the sampled
+ * community can genuinely have no programs.
  */
 export async function generateStaticParams(): Promise<
   Array<{ communityId: string; programId: string }>
@@ -164,7 +166,7 @@ export async function generateStaticParams(): Promise<
     })
   );
 
-  return perCommunity.flat();
+  return withPrerenderFallback(perCommunity.flat(), FALLBACK_PROGRAM_PAIRS);
 }
 
 export default async function ProgramDetailPage({ params }: { params: Params }) {
