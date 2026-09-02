@@ -41,7 +41,11 @@ describe("Static legal pages", () => {
 
 describe("Knowledge base pages", () => {
   const knowledgePages: Array<[string, () => Promise<{ default: React.ComponentType }>, RegExp]> = [
-    ["index", () => import("@/app/t/[tenant]/(chrome)/knowledge/page"), /grant funding knowledge base/i],
+    [
+      "index",
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/page"),
+      /grant funding knowledge base/i,
+    ],
     [
       "ai-grant-evaluation",
       () => import("@/app/t/[tenant]/(chrome)/knowledge/ai-grant-evaluation/page"),
@@ -120,7 +124,8 @@ describe("Knowledge base pages", () => {
     ],
     [
       "project-profiles-software-vs-nonsoftware",
-      () => import("@/app/t/[tenant]/(chrome)/knowledge/project-profiles-software-vs-nonsoftware/page"),
+      () =>
+        import("@/app/t/[tenant]/(chrome)/knowledge/project-profiles-software-vs-nonsoftware/page"),
       /software/i,
     ],
     [

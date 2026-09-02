@@ -139,9 +139,12 @@ beforeEach(() => {
 
 describe("Community async server pages — happy path", () => {
   it("/manage renders DashboardOverview", async () => {
-    await renderAsyncPage(() => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/page"), {
-      params: Promise.resolve({ communityId: "c1" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/page"),
+      {
+        params: Promise.resolve({ communityId: "c1" }),
+      }
+    );
     expect(screen.getByTestId("dashboard-overview")).toBeInTheDocument();
   });
 
@@ -175,7 +178,10 @@ describe("Community async server pages — happy path", () => {
 
   it("/manage/notification-settings renders NotificationSettingsPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/notification-settings/page"),
+      () =>
+        import(
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/notification-settings/page"
+        ),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("notification-settings-page")).toBeInTheDocument();
@@ -183,7 +189,8 @@ describe("Community async server pages — happy path", () => {
 
   it("/manage/portfolio-reports renders PortfolioReportListPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/portfolio-reports/page"),
+      () =>
+        import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/portfolio-reports/page"),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("portfolio-report-list-page")).toBeInTheDocument();
@@ -191,7 +198,10 @@ describe("Community async server pages — happy path", () => {
 
   it("/manage/portfolio-reports/config renders ReportConfigPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/portfolio-reports/config/page"),
+      () =>
+        import(
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/portfolio-reports/config/page"
+        ),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("report-config-page")).toBeInTheDocument();
@@ -200,7 +210,9 @@ describe("Community async server pages — happy path", () => {
   it("/manage/portfolio-reports/[reportId] renders editor", async () => {
     await renderAsyncPage(
       () =>
-        import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/portfolio-reports/[reportId]/page"),
+        import(
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/portfolio-reports/[reportId]/page"
+        ),
       { params: Promise.resolve({ communityId: "c1", reportId: "r1" }) }
     );
     expect(screen.getByTestId("portfolio-report-editor-page")).toBeInTheDocument();
@@ -229,7 +241,8 @@ describe("Community async server pages — happy path", () => {
 
   it("/manage/milestones-report renders ReportMilestonePage", async () => {
     await renderAsyncPage(
-      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/milestones-report/page"),
+      () =>
+        import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/milestones-report/page"),
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("report-milestone-page")).toBeInTheDocument();
@@ -255,7 +268,8 @@ describe("Community async server pages — happy path", () => {
 
   it("/(cover)/reports/[runDate] renders PublicReportViewPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(cover)/reports/[runDate]/page"),
+      () =>
+        import("@/app/t/[tenant]/(chrome)/community/[communityId]/(cover)/reports/[runDate]/page"),
       { params: Promise.resolve({ communityId: "c1", runDate: "2025-04-01" }) }
     );
     expect(screen.getByTestId("public-report-view-page")).toBeInTheDocument();

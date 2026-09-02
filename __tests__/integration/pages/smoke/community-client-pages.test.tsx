@@ -278,7 +278,9 @@ describe("Community client pages", () => {
   it("/(with-header)/browse-applications renders client", async () => {
     await renderClientPage(
       () =>
-        import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/browse-applications/page")
+        import(
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/browse-applications/page"
+        )
     );
     // The page itself is a thin shell: the heading and all UI now live inside
     // BrowseApplicationsClient (mocked here), so the page-level smoke check is

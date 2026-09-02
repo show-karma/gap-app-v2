@@ -109,11 +109,17 @@ type MetadataModule = {
  */
 const SUBPAGE_METADATA_MODULES: Record<string, () => Promise<MetadataModule>> = {
   "funding-opportunities": () =>
-    import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/funding-opportunities/layout"),
-  projects: () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/projects/page"),
-  updates: () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/updates/layout"),
-  impact: () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/impact/layout"),
-  financials: () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(cover)/financials/page"),
+    import(
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/funding-opportunities/layout"
+    ),
+  projects: () =>
+    import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/projects/page"),
+  updates: () =>
+    import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/updates/layout"),
+  impact: () =>
+    import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/impact/layout"),
+  financials: () =>
+    import("@/app/t/[tenant]/(chrome)/community/[communityId]/(cover)/financials/page"),
   reports: () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(cover)/reports/page"),
 };
 

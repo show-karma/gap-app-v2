@@ -373,7 +373,9 @@ describe("SSR Server Components", () => {
 
   describe("CommunityMainPage (with-header)", () => {
     const importPage = async () => {
-      const mod = await import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/page");
+      const mod = await import(
+        "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/page"
+      );
       return mod.default;
     };
 

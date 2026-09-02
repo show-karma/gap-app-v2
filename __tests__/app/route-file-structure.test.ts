@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 /**
  * Structural ratchet for the App Router "route trio" rule.
  *
- * Every `app/**​/page.tsx` directory must also contain `error.tsx`, and
+ * Every `app/**�/page.tsx` directory must also contain `error.tsx`, and
  * non-crawlable routes must also contain `loading.tsx` so each route renders
  * loading, empty, AND error states locally (CLAUDE.md route-trio rule).
  *
