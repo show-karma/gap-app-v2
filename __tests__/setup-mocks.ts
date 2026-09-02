@@ -180,3 +180,14 @@ vi.mock("react-hot-toast", () => ({
     remove: vi.fn(),
   },
 }));
+
+// next/server — `connection()` marks a route handler runtime-only (it replaces
+// `export const dynamic = "force-dynamic"`, which cacheComponents rejects). It
+// throws outside a request scope, and a unit test importing a route handler
+// directly has none. Everything else in the module is the real thing: this is a
+// partial mock, so NextResponse/NextRequest are untouched.
+// Individual test files can still override with their own vi.mock().
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  connection: vi.fn(async () => {}),
+}));

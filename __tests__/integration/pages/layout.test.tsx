@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { notFound } from "next/navigation";
 import { tenant } from "next/root-params";
 import RootLayout, { generateStaticParams } from "@/app/t/[tenant]/layout";
+import { isKnownTenantParam } from "@/utilities/tenant-param";
+import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 import "@testing-library/jest-dom";
 
 // next/font/local and next/font/google are mocked globally in
@@ -125,12 +127,25 @@ describe("RootLayout - the request-independent App Shell", () => {
 
   // cacheComponents fails the build unless every root param has at least one
   // value, and each listed value gets its own prerendered shell.
-  it("lists the main tenant and every whitelabel domain as a static param", () => {
+  //
+  // D3: only karma is prerendered. Listing every tenant multiplied the build by
+  // the tenant count — 8 full copies of ~185 routes — for shells that differ
+  // only by theme. Tenant shells render on demand and persist after the first
+  // request, so the cost is one cold render per tenant per deploy.
+  it("prerenders only the karma shell", () => {
     const params = generateStaticParams();
 
-    expect(params).toContainEqual({ tenant: "karma" });
-    expect(params).toContainEqual({ tenant: "app.opgrants.io" });
-    expect(new Set(params.map((p) => p.tenant)).size).toBe(params.length);
+    expect(params).toEqual([{ tenant: "karma" }]);
+  });
+
+  // The narrower prerender list must not narrow what is servable: every
+  // whitelabel domain still has to pass validation and render on demand.
+  it("still accepts every whitelabel tenant at request time", () => {
+    for (const config of WHITELABEL_DOMAINS) {
+      expect(isKnownTenantParam(config.domain)).toBe(true);
+    }
+    expect(isKnownTenantParam("karma")).toBe(true);
+    expect(isKnownTenantParam("not-a-tenant")).toBe(false);
   });
 
   it("renders the document scaffold and the theme provider", async () => {

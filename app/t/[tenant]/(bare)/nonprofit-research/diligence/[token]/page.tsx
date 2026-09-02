@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { DiligenceResponsePage } from "@/src/features/donor-research/components/diligence-response/DiligenceResponsePage";
 import { customMetadata } from "@/utilities/meta";
 
@@ -6,7 +7,6 @@ import { customMetadata } from "@/utilities/meta";
 // nonprofit sees the current request (and, after they submit, the
 // already-submitted state). `dynamic = 'force-dynamic'` keeps the response out
 // of edge caches so an expired or already-answered token can't be served stale.
-export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ token: string }>;
@@ -21,6 +21,12 @@ export const metadata: Metadata = customMetadata({
 });
 
 export default async function Page({ params }: PageProps) {
+  // Runtime-only. Replaces `export const dynamic = "force-dynamic"`, which
+  // cacheComponents rejects. `export const instant = false` is the eventual
+  // Block-class marker, but it is a hard build error until cacheComponents
+  // is on, so it lands with the flag in P2-6.
+  await connection();
+
   const { token } = await params;
   return <DiligenceResponsePage token={token} />;
 }
