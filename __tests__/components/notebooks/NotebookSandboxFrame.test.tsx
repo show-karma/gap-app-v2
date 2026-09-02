@@ -1,9 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  clampNotebookSandboxHeight,
   NOTEBOOK_SANDBOX_ATTRIBUTE,
   NOTEBOOK_SANDBOX_BOOTSTRAP,
   NOTEBOOK_SANDBOX_DOCUMENT,
+  NOTEBOOK_SANDBOX_HEIGHT,
+  NOTEBOOK_SANDBOX_MAX_HEIGHT,
+  NOTEBOOK_SANDBOX_MIN_HEIGHT,
   NOTEBOOK_SANDBOX_READY,
   NotebookSandboxFrame,
 } from "@/components/Pages/Communities/Notebooks/NotebookSandboxFrame";
@@ -373,5 +377,193 @@ describe("NotebookSandboxFrame handshake robustness", () => {
       expect(iframe).not.toHaveAttribute("data-sandbox-rejected");
       expect(iframe).not.toHaveAttribute("data-sandbox-last-type");
     });
+  });
+});
+
+/**
+ * Sizing the frame to the document it contains.
+ *
+ * The parent CANNOT measure this content — the frame is cross-origin and
+ * opaque, which is the whole design — so the height has to arrive as a
+ * message. That makes it the first thing the shell ever tells the parent, and
+ * these tests pin the two properties that keeps honest: it arrives over the
+ * PRIVATE PORT (a window message claiming the same thing is not enough), and
+ * the number is clamped before it reaches a style attribute.
+ *
+ * Without this the frame is a fixed 60vh box, and a long report becomes a
+ * small window with an inner scrollbar the parent's wheel events cannot reach.
+ */
+describe("clampNotebookSandboxHeight", () => {
+  it.each([
+    ["a plain measurement", 4200, 4200],
+    ["a fractional one, rounded up so it never leaves a scrollbar", 4200.2, 4201],
+    ["one under the minimum", 10, NOTEBOOK_SANDBOX_MIN_HEIGHT],
+    ["one over the maximum", 10_000_000, NOTEBOOK_SANDBOX_MAX_HEIGHT],
+  ])("should_accept_%s", (_label, value, expected) => {
+    expect(clampNotebookSandboxHeight(value)).toBe(expected);
+  });
+
+  // `null`, not a fallback number: the caller keeps the height it already has,
+  // so a garbled message cannot resize a page it failed to describe.
+  it.each([
+    ["a string", "4200px"],
+    ["a numeric string", "4200"],
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["zero", 0],
+    ["a negative number", -1],
+    ["null", null],
+    ["undefined", undefined],
+    ["an object", { height: 4200 }],
+  ])("should_refuse_%s", (_label, value) => {
+    expect(clampNotebookSandboxHeight(value)).toBeNull();
+  });
+});
+
+describe("NotebookSandboxFrame content height", () => {
+  let framePost: ReturnType<typeof stubFrameWindow>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    framePost = stubFrameWindow();
+  });
+
+  /** The shell's end of the private channel, as the shell receives it. */
+  async function connectShell(iframe: HTMLIFrameElement, nonce: string) {
+    announce(iframe, nonce);
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalled());
+    return framePost.mock.calls[0][2][0] as MessagePort;
+  }
+
+  it("should_size_the_frame_to_the_height_the_shell_reports", async () => {
+    const { iframe, nonce } = renderFrame();
+    const shellPort = await connectShell(iframe, nonce);
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 4200 });
+
+    await vi.waitFor(() => expect(iframe.style.height).toBe("4200px"));
+    expect(iframe).toHaveAttribute("data-sandbox-height", "4200");
+  });
+
+  // The fallback is the previous behaviour, deliberately: a shell that never
+  // reports renders exactly as it did before this existed.
+  it("should_leave_the_fallback_height_in_place_until_the_shell_reports", async () => {
+    const { iframe, nonce } = renderFrame();
+    await connectShell(iframe, nonce);
+
+    expect(iframe.style.height).toBe("");
+    expect(iframe.className).toContain("h-[60vh]");
+  });
+
+  it("should_follow_the_shell_when_the_document_grows_or_shrinks", async () => {
+    const { iframe, nonce } = renderFrame();
+    const shellPort = await connectShell(iframe, nonce);
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 900 });
+    await vi.waitFor(() => expect(iframe.style.height).toBe("900px"));
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 5400 });
+    await vi.waitFor(() => expect(iframe.style.height).toBe("5400px"));
+  });
+
+  it("should_clamp_a_height_that_would_make_the_page_absurdly_tall", async () => {
+    const { iframe, nonce } = renderFrame();
+    const shellPort = await connectShell(iframe, nonce);
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 10_000_000 });
+
+    await vi.waitFor(() => expect(iframe.style.height).toBe(`${NOTEBOOK_SANDBOX_MAX_HEIGHT}px`));
+  });
+
+  // A message that fails the clamp must be inert, not a reset: the frame keeps
+  // the last height it was legitimately told about.
+  it("should_keep_the_last_good_height_when_a_later_message_is_malformed", async () => {
+    const { iframe, nonce } = renderFrame();
+    const shellPort = await connectShell(iframe, nonce);
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 900 });
+    await vi.waitFor(() => expect(iframe.style.height).toBe("900px"));
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: "12000px" });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(iframe.style.height).toBe("900px");
+  });
+
+  /**
+   * THE ONE THAT MATTERS HERE. The port is what proves who is talking.
+   *
+   * A window message can be posted by any frame on the page, and this one
+   * carries a real source and a real nonce — everything the READY handshake
+   * checks — and still must not move the frame. Resizing on it would make the
+   * height the only part of the protocol that any window could drive.
+   */
+  it("should_ignore_a_height_that_arrives_as_a_window_message", async () => {
+    const { iframe, nonce } = renderFrame();
+    await connectShell(iframe, nonce);
+
+    const event = new MessageEvent("message", {
+      origin: "null",
+      data: { type: NOTEBOOK_SANDBOX_HEIGHT, nonce, height: 12_000 },
+    });
+    Object.defineProperty(event, "source", { value: iframe.contentWindow });
+    window.dispatchEvent(event);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(iframe.style.height).toBe("");
+    expect(iframe).not.toHaveAttribute("data-sandbox-height");
+  });
+
+  // The port is replaced on every announcement; the handler has to come with
+  // it, or a reconnect silently ends the page's ability to resize.
+  it("should_keep_reporting_after_the_shell_reconnects", async () => {
+    const { iframe, nonce } = renderFrame();
+    await connectShell(iframe, nonce);
+
+    announce(iframe, nonce);
+    await vi.waitFor(() => expect(framePost).toHaveBeenCalledTimes(2));
+    const reconnected = framePost.mock.calls[1][2][0] as MessagePort;
+
+    reconnected.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 3300 });
+
+    await vi.waitFor(() => expect(iframe.style.height).toBe("3300px"));
+  });
+
+  /**
+   * The builder's preview pane opts out, and the opt-out has to be real.
+   *
+   * A preview that grew to a long document would push the textarea the author
+   * is typing into off the screen, on every keystroke. Ignoring the message is
+   * the behaviour; a `className` that happens to win the cascade is not, because
+   * the inline style this component writes would beat it.
+   */
+  it("should_not_resize_when_the_caller_asked_for_a_fixed_box", async () => {
+    const result = render(
+      <NotebookSandboxFrame
+        sandboxOrigin={ORIGIN}
+        html="<h1>hello</h1>"
+        title="Custom page preview"
+        fitToContent={false}
+      />
+    );
+    const iframe = result.container.querySelector("iframe") as HTMLIFrameElement;
+    const nonce = decodeURIComponent(new URL(iframe.src).hash.replace("#nonce=", ""));
+    const shellPort = await connectShell(iframe, nonce);
+
+    shellPort.postMessage({ type: NOTEBOOK_SANDBOX_HEIGHT, height: 4200 });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(iframe.style.height).toBe("");
+    expect(iframe).not.toHaveAttribute("data-sandbox-height");
+  });
+
+  it("should_ignore_a_message_over_the_port_that_is_not_a_height", async () => {
+    const { iframe, nonce } = renderFrame();
+    const shellPort = await connectShell(iframe, nonce);
+
+    shellPort.postMessage({ type: "karma:notebook-sandbox:something-else", height: 12_000 });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(iframe.style.height).toBe("");
   });
 });

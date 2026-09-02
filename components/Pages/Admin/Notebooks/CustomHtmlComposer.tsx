@@ -104,6 +104,13 @@ export function CustomHtmlComposer({ spec, onChange, sandboxOrigin, onSwitchToCo
             sandboxOrigin={sandboxOrigin}
             html={spec.html}
             title={spec.title ?? "Custom page preview"}
+            // A fixed box on purpose. This preview sits below the textarea in
+            // the normal flow, so a frame that grew to a long document would
+            // push the field the author is typing into off the screen — and
+            // would do it again on every keystroke, as each edit is re-sent
+            // and re-measured. The published page grows; the preview is a
+            // window onto it.
+            fitToContent={false}
           />
         ) : (
           <p className="rounded-2xl border border-border p-6 text-sm text-muted-foreground">

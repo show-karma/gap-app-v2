@@ -62,6 +62,55 @@ export const NOTEBOOK_SANDBOX_BOOTSTRAP = "karma:notebook-sandbox:port" as const
 export const NOTEBOOK_SANDBOX_DOCUMENT = "karma:notebook-sandbox:document" as const;
 
 /**
+ * The shell reporting how tall its document actually is.
+ *
+ * The ONLY message that travels parent-ward, and it travels over the private
+ * port rather than a window message — which is what makes it trustworthy: a
+ * port has exactly two ends and nothing else on the page holds one, so there
+ * is no origin and no source left to re-check by the time it arrives.
+ *
+ * It exists because only the SHELL can measure the document. Its content is
+ * cross-origin and opaque to us by design, so a parent that wants to size the
+ * frame to its content has no way to measure it and no way to ask — the shell
+ * has to volunteer the number. The alternative is a fixed box, and a fixed box
+ * turns a full report into a small scrolling window whose inner scrollbar the
+ * parent's own wheel events cannot reach.
+ */
+export const NOTEBOOK_SANDBOX_HEIGHT = "karma:notebook-sandbox:height" as const;
+
+/**
+ * Bounds on a height this component will honour. The shell mirrors them.
+ *
+ * The number crosses a trust boundary: what is being measured is the AUTHOR'S
+ * document, so the measurement is author-influenced even though the shell
+ * doing the measuring is ours. Unclamped, a page could make itself a hundred
+ * thousand pixels tall, or zero pixels tall and effectively invisible.
+ *
+ * The maximum is deliberately generous — a long report is the entire point of
+ * this feature — and the minimum is about a screenful, so a shell that
+ * measures before layout settles cannot collapse the frame to nothing.
+ */
+export const NOTEBOOK_SANDBOX_MIN_HEIGHT = 320;
+export const NOTEBOOK_SANDBOX_MAX_HEIGHT = 20_000;
+
+/**
+ * The reported height as pixels this component will apply, or `null` for
+ * anything it will not.
+ *
+ * Separate from the component so the rules can be tested as rules. `null` and
+ * a clamped number mean different things at the call site: `null` KEEPS the
+ * height the frame already has, which is why a malformed message must not come
+ * back as some default — a default would let a garbled message resize a page.
+ */
+export function clampNotebookSandboxHeight(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  // Ceil, not round: half a pixel short of the content is a scrollbar.
+  const measured = Math.ceil(value);
+  if (measured <= 0) return null;
+  return Math.min(Math.max(measured, NOTEBOOK_SANDBOX_MIN_HEIGHT), NOTEBOOK_SANDBOX_MAX_HEIGHT);
+}
+
+/**
  * The origin a sandboxed frame reports.
  *
  * Named rather than inlined so the check below reads as the deliberate test it
@@ -110,9 +159,28 @@ interface Props {
   html: string;
   title: string;
   className?: string;
+  /**
+   * Whether the frame grows to the document inside it.
+   *
+   * TRUE for a reader looking at a published page: it is a page, and a page
+   * that scrolls inside a 60vh box is an embedded widget wearing a page's URL.
+   *
+   * FALSE for the builder's preview pane, and that is not a detail. The
+   * preview sits in the normal flow underneath the editor, so a full-height
+   * preview would push the textarea an author is typing into off the screen,
+   * and it would do so again on every keystroke as the document is re-sent and
+   * re-measured. A preview is a window onto the page; the page itself is not.
+   */
+  fitToContent?: boolean;
 }
 
-export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: Props) {
+export function NotebookSandboxFrame({
+  sandboxOrigin,
+  html,
+  title,
+  className,
+  fitToContent = true,
+}: Props) {
   const frame = useRef<HTMLIFrameElement>(null);
   const port = useRef<MessagePort | null>(null);
   const [connected, setConnected] = useState(false);
@@ -138,6 +206,11 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
   // how a listener comes to miss the announcement it was waiting for.
   const htmlRef = useRef(html);
   htmlRef.current = html;
+  // Read through a ref for the same reason as the document: the listener must
+  // not be torn down and rebuilt because a prop changed, and re-attaching
+  // mid-handshake is how a listener misses the announcement it was waiting for.
+  const fitToContentRef = useRef(fitToContent);
+  fitToContentRef.current = fitToContent;
   /** What the shell already has, so an edit sends and a reconnect does not. */
   /** What the shell already has, so an edit sends and a reconnect does not. */
   const sentHtml = useRef<string | null>(null);
@@ -173,6 +246,16 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
    */
   const [seenCount, setSeenCount] = useState(0);
   const [sourceMatch, setSourceMatch] = useState<string | null>(null);
+
+  /**
+   * The document's own height, once the shell has told us.
+   *
+   * `null` until then, and the CSS class keeps its viewport-relative height —
+   * so a shell that never reports, or one on an older build, renders exactly
+   * as it did before. There is no waiting state to design and nothing to
+   * regress: the fallback IS the previous behaviour.
+   */
+  const [height, setHeight] = useState<number | null>(null);
 
   // useLayoutEffect, not useEffect: this runs synchronously at commit, before
   // paint, which is the earliest React lets us listen. The shell announces
@@ -226,6 +309,28 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
       port.current?.close();
       const channel = new MessageChannel();
       port.current = channel.port1;
+      /**
+       * The parent-ward half of the channel.
+       *
+       * Assigning `onmessage` starts the port, which is what makes the shell's
+       * queued messages arrive — a port that is never started silently buffers
+       * forever, and "the shell reported and nothing happened" would look
+       * exactly like "the shell never reported".
+       *
+       * Nothing here trusts the CONTENT of the message: only a height is read,
+       * only if it is a number, and only through the clamp. The port proves
+       * who sent it; the clamp decides what that sender is allowed to ask for.
+       */
+      channel.port1.onmessage = (message: MessageEvent) => {
+        const payload = message.data as { type?: string; height?: unknown } | null;
+        if (payload?.type !== NOTEBOOK_SANDBOX_HEIGHT) return;
+        if (!fitToContentRef.current) return;
+        const measured = clampNotebookSandboxHeight(payload.height);
+        if (measured === null) return;
+        // Compared before setting: the shell reports on every resize, and an
+        // unchanged number re-rendering the frame is churn at best.
+        setHeight((current) => (current === measured ? current : measured));
+      };
       // THE ONE PERMITTED WILDCARD, and it carries no content: a type tag, the
       // correlation nonce, and a transferred port. An opaque origin cannot be
       // named, so "*" is the only way to hand the port over at all — which is
@@ -290,6 +395,11 @@ export function NotebookSandboxFrame({ sandboxOrigin, html, title, className }: 
       // No allow= list: a custom page has no business with the camera, the
       // microphone, geolocation or payments, and silence is the safe default.
       referrerPolicy="no-referrer"
+      // Inline, because it OVERRIDES the class rather than replacing it: the
+      // class stays the fallback for every frame that has not reported, and
+      // for a caller that passed its own className.
+      style={height === null ? undefined : { height: `${height}px` }}
+      data-sandbox-height={height ?? undefined}
       className={className ?? "h-[60vh] w-full rounded-2xl border border-border bg-background"}
     />
   );
