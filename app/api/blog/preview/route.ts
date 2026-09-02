@@ -9,7 +9,11 @@ import { PAGES } from "@/utilities/pages";
 // secret enables Next.js draft mode (sets the `__prerender_bypass` /
 // `__next_preview_data` cookies) and redirects into the post itself, which
 // then reads through the content gateway with `{ draft: true }` so it can
-// render unpublished edits. See `app/blog/[slug]/page.tsx`.
+// render unpublished edits.
+//
+// The redirect target is `/blog/preview/<slug>`, not the public post: the
+// public route no longer reads draft mode at all, because a request read there
+// would keep a sitemap-crawlable page out of the prerender.
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { SANITY_PREVIEW_SECRET } = getServerEnv();
   const secret = request.nextUrl.searchParams.get("secret");
@@ -25,5 +29,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   (await draftMode()).enable();
 
-  return NextResponse.redirect(new URL(PAGES.BLOG_POST(slug), request.url));
+  return NextResponse.redirect(new URL(PAGES.BLOG_PREVIEW(slug), request.url));
 }

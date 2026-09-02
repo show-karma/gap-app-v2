@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
-import { getPublishedPosts } from "@/sanity/lib/gateway";
+import { getPublishedPostsCached } from "@/sanity/lib/gateway";
 import { PostCard } from "@/src/components/blog/PostCard";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
@@ -43,7 +43,7 @@ function BlogEmptyState() {
 }
 
 export default async function BlogIndexPage() {
-  const posts = await getPublishedPosts();
+  const posts = await getPublishedPostsCached();
 
   return (
     <main className="container mx-auto max-w-5xl px-4 py-12">

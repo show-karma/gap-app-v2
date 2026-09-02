@@ -13,7 +13,7 @@ const { getPublishedPostsMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/sanity/lib/gateway", () => ({
-  getPublishedPosts: getPublishedPostsMock,
+  getPublishedPostsCached: getPublishedPostsMock,
 }));
 
 function getJsonLdScripts(container: HTMLElement) {
