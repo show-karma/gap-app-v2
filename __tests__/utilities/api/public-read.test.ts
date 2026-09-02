@@ -62,7 +62,7 @@ describe("D2 — indexer auth posture of the public loaders' endpoints", () => {
   const publicEndpoints = authPosture.endpoints.filter((e) => e.posture === "PUBLIC");
   const optionalAuth = authPosture.endpoints.filter((e) => e.posture === "optionalAuthentication");
 
-  it("covers every endpoint the four loaders read", () => {
+  it("covers every endpoint the public loaders read", () => {
     const loaders = new Set(authPosture.endpoints.map((e) => e.loader));
 
     expect(loaders).toEqual(
@@ -71,17 +71,22 @@ describe("D2 — indexer auth posture of the public loaders' endpoints", () => {
         "services/project.service.ts",
         "utilities/queries/v2/getCommunityData.ts",
         "src/features/funding-map/services/funding-programs.service.ts",
+        // Joined in the pre-flip cleanup: its two server readers (the manage
+        // portfolio-reports config and milestones-report pages) were still
+        // reaching cookies() through the default authorized read.
+        "services/community-programs.service.ts",
       ])
     );
   });
 
   // A route with no auth preHandler never reads the header, so dropping the token
-  // cannot change a single byte. This is the whole argument for five of the seven.
-  it("has five endpoints where the Authorization header is never read at all", () => {
+  // cannot change a single byte. This is the whole argument for six of the eight.
+  it("has six endpoints where the Authorization header is never read at all", () => {
     expect(publicEndpoints.map((e) => e.path).sort()).toEqual([
       "/v2/communities/:slug/projects",
       "/v2/communities/:slug/stats",
       "/v2/communities/:uidOrSlug",
+      "/v2/communities/:uidOrSlug/programs",
       "/v2/projects",
       "/v2/projects/:identifier",
     ]);
@@ -121,7 +126,7 @@ describe("D2 — recorded public payloads", () => {
   });
 
   it("answers 200 with a populated payload for every endpoint, with no credential", () => {
-    expect(parity.endpoints.length).toBeGreaterThanOrEqual(6);
+    expect(parity.endpoints.length).toBeGreaterThanOrEqual(7);
 
     for (const endpoint of parity.endpoints) {
       expect(endpoint.anonStatus, `${endpoint.name} anonymous status`).toBe(200);
