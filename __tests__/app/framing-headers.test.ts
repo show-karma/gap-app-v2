@@ -158,3 +158,42 @@ describe("notebook sandbox frame-src", () => {
     }
   });
 });
+
+/**
+ * Fonts the notebook sandbox can actually fetch.
+ *
+ * THE FAILURE THIS GUARDS HAS NO ERROR IN IT. The seamless custom block is a
+ * document on a separate origin that redeclares this app's `@font-face` rules
+ * from the theme snapshot it is sent. A font fetched cross-origin is a CORS
+ * request whatever the CSS says, and a refused one produces no console error
+ * a reader would see and no visibly failed request — just a fallback face. The
+ * block then renders in Times New Roman inside a page in Inter, while every
+ * part of the feature reports success. Deleting this header would look like
+ * tidying and would land as that.
+ *
+ * Scoped to `media`, which is where next/font emits font files. The same
+ * header on `chunks` would make this app's JavaScript readable cross-origin by
+ * any page on the internet, which is a real change and not one this feature
+ * needs — so the scope is asserted, not just the presence.
+ */
+describe("notebook sandbox font access", () => {
+  const acaoOf = (rule: HeaderRule) =>
+    rule.headers.find((header) => header.key === "Access-Control-Allow-Origin")?.value;
+
+  it("should_let_another_origin_read_the_app_font_files", async () => {
+    const rules = await getHeaderRules();
+
+    const fonts = rules.find((rule) => rule.source.startsWith("/_next/static/media"));
+
+    expect(fonts).toBeDefined();
+    expect(acaoOf(fonts as HeaderRule)).toBe("*");
+  });
+
+  it("should_not_open_up_anything_beyond_the_font_files", async () => {
+    const rules = await getHeaderRules();
+
+    const opened = rules.filter((rule) => acaoOf(rule) !== undefined).map((rule) => rule.source);
+
+    expect(opened).toEqual(["/_next/static/media/:path*"]);
+  });
+});
