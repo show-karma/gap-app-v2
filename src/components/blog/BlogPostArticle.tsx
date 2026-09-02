@@ -3,37 +3,14 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { urlForImage } from "@/sanity/lib/image";
-import type { BlogPost, CoverImage } from "@/sanity/lib/types";
+import type { BlogPost } from "@/sanity/lib/types";
+import { resolveOgImage } from "@/src/components/blog/blog-og-image";
 import { PostBody } from "@/src/components/blog/PostBody";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 
-export const OG_IMAGE_WIDTH = 1200;
-export const OG_IMAGE_HEIGHT = 630;
 const COVER_WIDTH = 1200;
 const COVER_HEIGHT = 630;
-
-/**
- * The OG/Twitter image for a post: the explicit SEO override if the editor set
- * one, otherwise the cover. Exported because both blog routes build metadata
- * from it and neither owns the post shape.
- */
-export function resolveOgImage(
-  post: BlogPost
-): { url: string; width: number; height: number; alt: string } | undefined {
-  const image: CoverImage | null | undefined = post.seo?.ogImage ?? post.coverImage;
-  if (!image?.asset) return undefined;
-  return {
-    url: urlForImage(image)
-      .width(OG_IMAGE_WIDTH)
-      .height(OG_IMAGE_HEIGHT)
-      .withOptions({ fit: "crop", auto: "format" })
-      .url(),
-    width: OG_IMAGE_WIDTH,
-    height: OG_IMAGE_HEIGHT,
-    alt: image.alt || post.title,
-  };
-}
 
 /**
  * The rendered article, shared by the public post route and the preview route.

@@ -51,11 +51,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // The post bodies now live in `"use cache"` entries, which revalidatePath
     // does not reach — without this the webhook would still return 200 while
     // the page kept serving the cached copy until the 60s window expired.
-    // "max" purges the entry rather than scheduling a refresh, which is what a
-    // publish/unpublish needs: the next reader must not get the old body.
-    revalidateTag(blogListTag(), "max");
-    const slug = body ? extractSlug(body) : null;
-    if (slug) revalidateTag(blogPostTag(slug), "max");
+    // The post bodies live in `"use cache"` entries, which revalidatePath does
+    // not reach — without this the webhook would still return 200 while the
+    // page kept serving the cached copy until the 60s window expired.
+    //
+    // Gated on `paths` so a payload that maps to nothing (a non-post document)
+    // stays a no-op here exactly as it already is for paths. "max" purges the
+    // entry rather than scheduling a refresh, which is what a publish or an
+    // unpublish needs: the next reader must not get the old body.
+    if (paths.length > 0) {
+      revalidateTag(blogListTag(), "max");
+      const slug = body ? extractSlug(body) : null;
+      if (slug) revalidateTag(blogPostTag(slug), "max");
+    }
 
     return NextResponse.json({ ok: true, revalidated: paths }, { status: 200 });
   } catch (error) {
