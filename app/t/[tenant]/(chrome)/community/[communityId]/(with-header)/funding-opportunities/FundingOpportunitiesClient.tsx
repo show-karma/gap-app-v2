@@ -4,7 +4,7 @@ import { AlertCircle, RefreshCw, Search } from "lucide-react";
 import Image from "next/image";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
-import { useCallback, useEffect, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo } from "react";
 import {
   computeProgramView,
   EditorialProgramCard,
@@ -28,29 +28,25 @@ const VALID_STATUSES: ReadonlyArray<ProgramStatus | "all"> = ["all", "active", "
 
 const SKELETON_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6"];
 
-export default function FundingOpportunitiesClient() {
-  const { communityId } = useParams<{ communityId: string }>();
+type Filters = ReturnType<typeof usePrograms>["filters"];
+type SetFilters = ReturnType<typeof usePrograms>["setFilters"];
+
+/**
+ * Reads the URL and returns the writer that puts filter state back into it.
+ *
+ * `useSearchParams()`/`usePathname()` are URL data: read in a client component
+ * with no boundary above, they make the whole route dynamic
+ * (`CLIENT_HOOK_DYNAMIC`). This hook is therefore only ever called from a
+ * component that sits behind `<Suspense>`.
+ *
+ * The body is unchanged from when it lived in the page component — same params
+ * source, same pathname, same `router.replace`. Moving the read is the point;
+ * changing what gets written is not.
+ */
+function useProgramFilterUrl() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { programs, loading, error, filters, setFilters, refetch } = usePrograms(communityId);
-
-  const urlStatusRaw = searchParams.get("status");
-  const urlStatus: ProgramStatus | "all" | null =
-    urlStatusRaw && (VALID_STATUSES as readonly string[]).includes(urlStatusRaw)
-      ? (urlStatusRaw as ProgramStatus | "all")
-      : null;
-  const urlSearch = searchParams.get("q") ?? "";
-
-  // Seed filter store from URL on mount / when URL changes externally.
-  useEffect(() => {
-    const desiredStatus = urlStatus === "all" || urlStatus === null ? undefined : urlStatus;
-    const desiredSearch = urlSearch || undefined;
-    if (filters.status !== desiredStatus || filters.search !== desiredSearch) {
-      setFilters({ ...filters, status: desiredStatus, search: desiredSearch });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlStatus, urlSearch]);
 
   const writeUrl = useCallback(
     (next: { status?: ProgramStatus | "all"; search?: string }) => {
@@ -70,6 +66,96 @@ export default function FundingOpportunitiesClient() {
     },
     [pathname, router, searchParams]
   );
+
+  return { searchParams, writeUrl };
+}
+
+/**
+ * The filter toolbar, and the only place the URL is read for filter state.
+ *
+ * It sits behind its own boundary so the *directory* does not. The page
+ * server-fetches the programs and hydrates them into React Query precisely so
+ * every opportunity is in the initial HTML (DEV-596); putting that behind a
+ * boundary would stream it as a late chunk and take it straight back out
+ * (DEV-612). A toolbar is interactive chrome — it does nothing without
+ * JavaScript, so nothing is lost by letting it stream in.
+ */
+function FundingOpportunitiesToolbarSlot({
+  activeStatus,
+  searchValue,
+  filters,
+  setFilters,
+}: {
+  activeStatus: ProgramStatus | "all";
+  searchValue: string;
+  filters: Filters;
+  setFilters: SetFilters;
+}) {
+  const { searchParams, writeUrl } = useProgramFilterUrl();
+
+  const urlStatusRaw = searchParams.get("status");
+  const urlStatus: ProgramStatus | "all" | null =
+    urlStatusRaw && (VALID_STATUSES as readonly string[]).includes(urlStatusRaw)
+      ? (urlStatusRaw as ProgramStatus | "all")
+      : null;
+  const urlSearch = searchParams.get("q") ?? "";
+
+  // Seed filter store from URL on mount / when URL changes externally.
+  // Deliberately lives here and nowhere else: two copies would seed twice.
+  useEffect(() => {
+    const desiredStatus = urlStatus === "all" || urlStatus === null ? undefined : urlStatus;
+    const desiredSearch = urlSearch || undefined;
+    if (filters.status !== desiredStatus || filters.search !== desiredSearch) {
+      setFilters({ ...filters, status: desiredStatus, search: desiredSearch });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlStatus, urlSearch]);
+
+  return (
+    <ProgramsToolbar
+      activeStatus={activeStatus}
+      searchValue={searchValue}
+      onSearchChange={(v) => {
+        setFilters({ ...filters, search: v || undefined });
+        writeUrl({ status: activeStatus, search: v });
+      }}
+      onStatusChange={(key) => {
+        setFilters({ ...filters, status: key === "all" ? undefined : key });
+        writeUrl({ status: key, search: filters.search });
+      }}
+    />
+  );
+}
+
+/**
+ * The "no matches, clear your filters" state. It writes the URL too, so it is
+ * the second (and last) consumer of the read and gets its own boundary.
+ *
+ * It only ever renders once a filter is active, which cannot happen on the
+ * server — so this boundary hides nothing that was in the initial HTML.
+ */
+function FundingOpportunitiesFilteredEmptySlot({
+  filters,
+  setFilters,
+}: {
+  filters: Filters;
+  setFilters: SetFilters;
+}) {
+  const { writeUrl } = useProgramFilterUrl();
+
+  return (
+    <ProgramsFilteredEmpty
+      onClearFilters={() => {
+        setFilters({ ...filters, status: undefined, search: undefined });
+        writeUrl({ status: "all", search: "" });
+      }}
+    />
+  );
+}
+
+export default function FundingOpportunitiesClient() {
+  const { communityId } = useParams<{ communityId: string }>();
+  const { programs, loading, error, filters, setFilters, refetch } = usePrograms(communityId);
 
   const stats = useMemo(() => {
     let totalPool = 0;
@@ -152,18 +238,8 @@ export default function FundingOpportunitiesClient() {
         others={others}
         activeStatus={activeStatus}
         searchValue={filters.search ?? ""}
-        onSearchChange={(v) => {
-          setFilters({ ...filters, search: v || undefined });
-          writeUrl({ status: activeStatus, search: v });
-        }}
-        onStatusChange={(key) => {
-          setFilters({ ...filters, status: key === "all" ? undefined : key });
-          writeUrl({ status: key, search: filters.search });
-        }}
-        onClearFilters={() => {
-          setFilters({ ...filters, status: undefined, search: undefined });
-          writeUrl({ status: "all", search: "" });
-        }}
+        filters={filters}
+        setFilters={setFilters}
         onRetry={refetch}
       />
     </div>
@@ -179,9 +255,8 @@ interface ProgramsContentProps {
   others: ReturnType<typeof usePrograms>["programs"];
   activeStatus: ProgramStatus | "all";
   searchValue: string;
-  onSearchChange: (v: string) => void;
-  onStatusChange: (key: ProgramStatus | "all") => void;
-  onClearFilters: () => void;
+  filters: Filters;
+  setFilters: SetFilters;
   onRetry: () => void;
 }
 
@@ -194,9 +269,8 @@ function ProgramsContent({
   others,
   activeStatus,
   searchValue,
-  onSearchChange,
-  onStatusChange,
-  onClearFilters,
+  filters,
+  setFilters,
   onRetry,
 }: ProgramsContentProps) {
   if (loading) return <ProgramsSkeleton />;
@@ -207,15 +281,23 @@ function ProgramsContent({
 
   return (
     <>
+      {/* Featured program and the grid below stay OUTSIDE every boundary: the
+          page hydrates them from a server fetch so the directory is in the
+          initial HTML (DEV-596), and a boundary would stream it away (DEV-612).
+          Only the two URL-reading slots are wrapped. */}
       {featured ? <FeaturedProgram program={featured} communityId={communityId} /> : null}
-      <ProgramsToolbar
-        activeStatus={activeStatus}
-        searchValue={searchValue}
-        onSearchChange={onSearchChange}
-        onStatusChange={onStatusChange}
-      />
+      <Suspense fallback={<ProgramsToolbarSkeleton />}>
+        <FundingOpportunitiesToolbarSlot
+          activeStatus={activeStatus}
+          searchValue={searchValue}
+          filters={filters}
+          setFilters={setFilters}
+        />
+      </Suspense>
       {programs.length === 0 && hasActiveFilters ? (
-        <ProgramsFilteredEmpty onClearFilters={onClearFilters} />
+        <Suspense fallback={null}>
+          <FundingOpportunitiesFilteredEmptySlot filters={filters} setFilters={setFilters} />
+        </Suspense>
       ) : others.length > 0 ? (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {others.map((program, idx) => (
