@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
 import { safeJsonLdStringify } from "@/utilities/jsonLd";
 import { SITE_URL } from "@/utilities/meta";
-import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 type Props = {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ communityId: string }>;
 }): Promise<Metadata> {
   const { communityId } = await params;
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   return {
@@ -26,7 +26,12 @@ export async function generateMetadata({
 
 export default async function DonateLayout({ children, params }: Props) {
   const { communityId } = await params;
-  const community = await getCommunityDetails(communityId);
+  // The cached twin. Uncached, this read is what stopped all three donate
+  // routes from prerendering (--debug-prerender named lines 27-29 here): `api.*`
+  // is axios, so it never reaches Next's patched fetch and no fetch-cache option
+  // applies -- "use cache" is the only lever. The `await params` above it
+  // resolves from the build-time community sample.
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   return (
