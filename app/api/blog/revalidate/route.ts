@@ -1,9 +1,14 @@
 import * as Sentry from "@sentry/nextjs";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { parseBody } from "next-sanity/webhook";
-import { mapPayloadToPaths, type SanityRevalidatePayload } from "@/src/domain/blog/revalidate";
+import { blogListTag, blogPostTag } from "@/sanity/lib/gateway";
+import {
+  extractSlug,
+  mapPayloadToPaths,
+  type SanityRevalidatePayload,
+} from "@/src/domain/blog/revalidate";
 import { getServerEnv } from "@/utilities/env";
 
 // Sanity Studio webhook (Settings > API > Webhooks): fires on post
@@ -42,6 +47,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const paths = mapPayloadToPaths(body);
     for (const path of paths) revalidatePath(path);
+
+    // The post bodies now live in `"use cache"` entries, which revalidatePath
+    // does not reach — without this the webhook would still return 200 while
+    // the page kept serving the cached copy until the 60s window expired.
+    // "max" purges the entry rather than scheduling a refresh, which is what a
+    // publish/unpublish needs: the next reader must not get the old body.
+    revalidateTag(blogListTag(), "max");
+    const slug = body ? extractSlug(body) : null;
+    if (slug) revalidateTag(blogPostTag(slug), "max");
 
     return NextResponse.json({ ok: true, revalidated: paths }, { status: 200 });
   } catch (error) {
