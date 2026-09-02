@@ -1,5 +1,6 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { cacheLife, cacheTag } from "next/cache";
 import { cache } from "react";
 import { GrantJsonLd } from "@/components/Seo/GrantJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
@@ -7,6 +8,7 @@ import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
+import { programTag } from "@/utilities/cache/tags";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
@@ -35,7 +37,15 @@ type Params = Promise<{
 // program resolves to null (the client renders its not-found empty state),
 // anything else throws so a transient indexer 5xx is never hydrated into the
 // client cache as a false "Program not found".
-const getProgramDetails = cache(async (programId: string): Promise<FundingProgram | null> => {
+// `"use cache"` needs a named declaration; React's `cache()` still wraps it for
+// per-request dedup. The rethrow above 404 is deliberate and survives caching:
+// a thrown error is not a cached value, so a transient indexer 5xx is retried
+// on the next request instead of being frozen in as a false "not found".
+async function fetchProgramDetails(programId: string): Promise<FundingProgram | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(programTag(programId));
+
   try {
     // TODO(#1775): add zod schema
     return await api.get<FundingProgram>(
@@ -48,7 +58,9 @@ const getProgramDetails = cache(async (programId: string): Promise<FundingProgra
     }
     throw err;
   }
-});
+}
+
+const getProgramDetails = cache(fetchProgramDetails);
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId, programId } = await params;

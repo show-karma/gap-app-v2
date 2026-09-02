@@ -1,10 +1,12 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { cacheLife, cacheTag } from "next/cache";
 import { cache } from "react";
 import { ItemListJsonLd } from "@/components/Seo/ItemListJsonLd";
 import { DEFAULT_PROGRAMS_LIMIT } from "@/src/features/programs/lib/constants";
 import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
+import { communityTag, programListTag } from "@/utilities/cache/tags";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -16,14 +18,24 @@ type Params = Promise<{ communityId: string }>;
 // Server-side programs fetch, memoized with React.cache so any other reader in
 // the same request (metadata, layout) shares one indexer round-trip. Public
 // endpoint (isAuthorized false) — this page ships in the communities sitemap.
-const getCommunityPrograms = cache(async (communityId: string): Promise<FundingProgram[]> => {
+// `"use cache"` needs a named declaration, and React's `cache()` still wraps it
+// so repeat readers in one request share the entry rather than re-entering the
+// cache lookup. The endpoint is already anonymous, which is what makes caching
+// it safe: there is no per-viewer payload to leak into a shared document.
+async function fetchCommunityPrograms(communityId: string): Promise<FundingProgram[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(communityTag(communityId), programListTag());
+
   // TODO(#1775): add zod schema
   const programs = await api.get<FundingProgram[]>(
     INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(encodeURIComponent(communityId)),
     { isAuthorized: false }
   );
   return programs ?? [];
-});
+}
+
+const getCommunityPrograms = cache(fetchCommunityPrograms);
 
 // The program directory is fetched here and handed to the client tree as a
 // hydrated React Query cache entry, so each opportunity's title, status,
