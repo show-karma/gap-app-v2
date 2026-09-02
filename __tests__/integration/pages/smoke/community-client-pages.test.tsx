@@ -39,7 +39,7 @@ vi.mock("next/navigation", async () => {
 
 // Inner-component mocks
 vi.mock(
-  "@/app/t/[tenant]/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient",
+  "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient",
   () => ({
     BrowseApplicationsClient: () => (
       <div data-testid="browse-applications-client">BrowseApplications</div>
@@ -278,7 +278,9 @@ describe("Community client pages", () => {
   it("/(with-header)/browse-applications renders client", async () => {
     await renderClientPage(
       () =>
-        import("@/app/t/[tenant]/community/[communityId]/(with-header)/browse-applications/page")
+        import(
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/browse-applications/page"
+        )
     );
     // The page itself is a thin shell: the heading and all UI now live inside
     // BrowseApplicationsClient (mocked here), so the page-level smoke check is
@@ -293,7 +295,7 @@ describe("Community client pages", () => {
     await renderClientPage(
       () =>
         import(
-          "@/app/t/[tenant]/community/[communityId]/(with-header)/funding-opportunities/FundingOpportunitiesClient"
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/funding-opportunities/FundingOpportunitiesClient"
         )
     );
     // With no programs the page renders its hero (PageHero <h1>) plus the
@@ -306,7 +308,7 @@ describe("Community client pages", () => {
 
   it("/manage/program-scores renders ProgramScoresUpload", async () => {
     await renderClientPage(
-      () => import("@/app/t/[tenant]/community/[communityId]/manage/program-scores/page")
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/program-scores/page")
     );
     expect(screen.getByTestId("program-scores-upload")).toBeInTheDocument();
   });
@@ -315,7 +317,7 @@ describe("Community client pages", () => {
     await renderClientPage(
       () =>
         import(
-          "@/app/t/[tenant]/community/[communityId]/manage/funding-platform/[programId]/milestones/[projectId]/page"
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/funding-platform/[programId]/milestones/[projectId]/page"
         )
     );
     expect(screen.getByTestId("milestones-review-page")).toBeInTheDocument();
@@ -325,7 +327,7 @@ describe("Community client pages", () => {
     await renderClientPage(
       () =>
         import(
-          "@/app/t/[tenant]/community/[communityId]/manage/funding-platform/[programId]/setup/page"
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/funding-platform/[programId]/setup/page"
         )
     );
     expect(screen.getByTestId("setup-wizard")).toBeInTheDocument();
@@ -335,7 +337,7 @@ describe("Community client pages", () => {
     await renderClientPage(
       () =>
         import(
-          "@/app/t/[tenant]/community/[communityId]/manage/funding-platform/[programId]/question-builder/page"
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/funding-platform/[programId]/question-builder/page"
         )
     );
     expect(screen.getByTestId("question-builder")).toBeInTheDocument();
@@ -345,7 +347,7 @@ describe("Community client pages", () => {
     await renderClientPage(
       () =>
         import(
-          "@/app/t/[tenant]/community/[communityId]/manage/funding-platform/[programId]/applications/page"
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/funding-platform/[programId]/applications/page"
         )
     );
     expect(screen.getByTestId("application-list-with-api")).toBeInTheDocument();
@@ -353,7 +355,7 @@ describe("Community client pages", () => {
 
   it("/manage/send-email renders client section", async () => {
     await renderClientPage(
-      () => import("@/app/t/[tenant]/community/[communityId]/manage/send-email/page")
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/send-email/page")
     );
     // SendEmail page either renders the composer or an empty/error state — at
     // minimum the heading must mount.

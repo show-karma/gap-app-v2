@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import FaucetAdminLayout from "@/app/t/[tenant]/admin/faucet/layout";
+import FaucetAdminLayout from "@/app/t/[tenant]/(chrome)/admin/faucet/layout";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({

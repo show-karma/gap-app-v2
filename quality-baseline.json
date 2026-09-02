@@ -159,7 +159,7 @@
       "maxLines": 800,
       "maxBytes": 60000
     },
-    "app/t/[tenant]/community/[communityId]/manage/funding-platform/page.tsx": {
+    "app/t/[tenant]/(chrome)/community/[communityId]/manage/funding-platform/page.tsx": {
       "lines": 717,
       "bytes": 30185,
       "maxLines": 600,

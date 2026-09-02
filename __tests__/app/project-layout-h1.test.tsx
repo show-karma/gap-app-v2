@@ -83,7 +83,9 @@ describe("Project Layout - server-rendered single h1", () => {
   });
 
   async function renderLayout(projectId = "test-project") {
-    const { default: RootLayout } = await import("@/app/t/[tenant]/project/[projectId]/layout");
+    const { default: RootLayout } = await import(
+      "@/app/t/[tenant]/(chrome)/project/[projectId]/layout"
+    );
     const element = await RootLayout({
       children: <div data-testid="children">Children</div>,
       params: Promise.resolve({ projectId }),

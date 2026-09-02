@@ -30,7 +30,7 @@ vi.mock("@/utilities/queries/getProjectFeed.server", () => ({
 }));
 
 // Import the actual page component after mocks
-import UpdatesPage from "@/app/t/[tenant]/project/[projectId]/(profile)/page";
+import UpdatesPage from "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/page";
 
 const params = Promise.resolve({ projectId: "test-project" });
 

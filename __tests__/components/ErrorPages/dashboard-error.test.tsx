@@ -10,7 +10,7 @@
 
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import DashboardError from "@/app/t/[tenant]/dashboard/error";
+import DashboardError from "@/app/t/[tenant]/(chrome)/dashboard/error";
 import { renderWithProviders } from "../../utils/render";
 
 // Mock lucide-react icons

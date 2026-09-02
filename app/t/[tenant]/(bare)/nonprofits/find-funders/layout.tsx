@@ -6,10 +6,10 @@ import { NonProfitsNavbar } from "@/src/features/non-profits/components/non-prof
 /**
  * Dedicated chrome for the /nonprofits/find-funders section.
  *
- * The global app navbar/footer are suppressed for this route because it sits
- * outside the chrome group; this layout supplies the standalone
- * "Karma Find Funders" navbar + footer instead. The `.landing` wrapper provides the
- * CSS custom properties the lp-* classes depend on.
+ * The route lives in the `(bare)` group, so it gets no app navbar or footer;
+ * this layout supplies the standalone "Karma Find Funders" navbar + footer
+ * instead. The `.landing` wrapper provides the CSS custom properties the lp-*
+ * classes depend on.
  */
 export default function NonProfitsLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import FundingMapPage from "@/app/t/[tenant]/funding-map/page";
+import FundingMapPage from "@/app/t/[tenant]/(chrome)/funding-map/page";
 import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
 import { FundingMapSearch } from "@/src/features/funding-map/components/funding-map-search";
 import { FundingMapSidebar } from "@/src/features/funding-map/components/funding-map-sidebar";

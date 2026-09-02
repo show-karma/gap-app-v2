@@ -56,33 +56,36 @@ vi.mock("@/components/Pages/Project/v2/MainContent/AboutScrollHandler", () => ({
 }));
 
 vi.mock(
-  "@/app/t/[tenant]/project/[projectId]/(profile)/contact-info/ContactInfoPageClient",
+  "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/contact-info/ContactInfoPageClient",
   () => ({
     ContactInfoPageClient: () => <div data-testid="contact-info-page-client">ContactInfo</div>,
   })
 );
 
-vi.mock("@/app/t/[tenant]/project/[projectId]/(profile)/team/TeamPageClient", () => ({
+vi.mock("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/team/TeamPageClient", () => ({
   TeamPageClient: () => <div data-testid="team-page-client">Team</div>,
 }));
 
-vi.mock("@/app/t/[tenant]/project/[projectId]/(profile)/impact/ImpactPageClient", () => ({
+vi.mock("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/impact/ImpactPageClient", () => ({
   ImpactPageClient: () => <div data-testid="impact-page-client">Impact</div>,
 }));
 
-vi.mock("@/app/t/[tenant]/project/[projectId]/(profile)/funding/new/NewGrantPageClient", () => ({
-  NewGrantPageClient: () => <div data-testid="new-grant-page-client">NewGrant</div>,
-}));
+vi.mock(
+  "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/new/NewGrantPageClient",
+  () => ({
+    NewGrantPageClient: () => <div data-testid="new-grant-page-client">NewGrant</div>,
+  })
+);
 
 vi.mock(
-  "@/app/t/[tenant]/project/[projectId]/(profile)/funding/[grantUid]/edit/EditGrantPageClient",
+  "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/edit/EditGrantPageClient",
   () => ({
     EditGrantPageClient: () => <div data-testid="edit-grant-page-client">EditGrant</div>,
   })
 );
 
 vi.mock(
-  "@/app/t/[tenant]/project/[projectId]/(profile)/funding/[grantUid]/complete-grant/CompleteGrantPageClient",
+  "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/complete-grant/CompleteGrantPageClient",
   () => ({
     CompleteGrantPageClient: () => (
       <div data-testid="complete-grant-page-client">CompleteGrant</div>
@@ -127,7 +130,7 @@ beforeEach(() => {
 describe("Project profile pages", () => {
   it("/project/[projectId]/(profile)/about renders server About content", async () => {
     await renderAsyncPage(
-      () => import("@/app/t/[tenant]/project/[projectId]/(profile)/about/page"),
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/about/page"),
       {
         params: Promise.resolve({ projectId: "test-project" }),
       }
@@ -137,35 +140,38 @@ describe("Project profile pages", () => {
 
   it("/project/[projectId]/(profile)/contact-info renders ContactInfoPageClient", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/project/[projectId]/(profile)/contact-info/page")
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/contact-info/page")
     );
     expect(screen.getByTestId("contact-info-page-client")).toBeInTheDocument();
   });
 
   it("/project/[projectId]/(profile)/team renders TeamPageClient", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/project/[projectId]/(profile)/team/page")
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/team/page")
     );
     expect(screen.getByTestId("team-page-client")).toBeInTheDocument();
   });
 
   it("/project/[projectId]/(profile)/impact renders ImpactPageClient", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/project/[projectId]/(profile)/impact/page")
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/impact/page")
     );
     expect(screen.getByTestId("impact-page-client")).toBeInTheDocument();
   });
 
   it("/project/[projectId]/(profile)/funding/new renders NewGrantPageClient", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/project/[projectId]/(profile)/funding/new/page")
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/new/page")
     );
     expect(screen.getByTestId("new-grant-page-client")).toBeInTheDocument();
   });
 
   it("/project/[projectId]/(profile)/funding/[grantUid]/edit renders EditGrantPageClient", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/project/[projectId]/(profile)/funding/[grantUid]/edit/page")
+      () =>
+        import(
+          "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/edit/page"
+        )
     );
     expect(screen.getByTestId("edit-grant-page-client")).toBeInTheDocument();
   });
@@ -174,7 +180,7 @@ describe("Project profile pages", () => {
     await renderPageElement(
       () =>
         import(
-          "@/app/t/[tenant]/project/[projectId]/(profile)/funding/[grantUid]/complete-grant/page"
+          "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/complete-grant/page"
         )
     );
     expect(screen.getByTestId("complete-grant-page-client")).toBeInTheDocument();
@@ -184,7 +190,7 @@ describe("Project profile pages", () => {
 describe("Project profile pages — dynamic imports", () => {
   it("/project/[projectId]/(profile)/funding renders dynamic stub", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/project/[projectId]/(profile)/funding/page")
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/page")
     );
     // dynamic() returns a stub — proves dynamic was invoked with real loader
     expect(screen.getByTestId("dynamic-stub")).toBeInTheDocument();
@@ -192,7 +198,8 @@ describe("Project profile pages — dynamic imports", () => {
 
   it("/project/[projectId]/(profile)/funding/[grantUid] renders dynamic stub", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/project/[projectId]/(profile)/funding/[grantUid]/page")
+      () =>
+        import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/page")
     );
     expect(screen.getByTestId("dynamic-stub")).toBeInTheDocument();
   });
@@ -201,7 +208,7 @@ describe("Project profile pages — dynamic imports", () => {
     await renderPageElement(
       () =>
         import(
-          "@/app/t/[tenant]/project/[projectId]/(profile)/funding/[grantUid]/impact-criteria/page"
+          "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/impact-criteria/page"
         )
     );
     expect(screen.getByTestId("dynamic-stub")).toBeInTheDocument();
@@ -211,7 +218,7 @@ describe("Project profile pages — dynamic imports", () => {
     await renderPageElement(
       () =>
         import(
-          "@/app/t/[tenant]/project/[projectId]/(profile)/funding/[grantUid]/milestones-and-updates/page"
+          "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/milestones-and-updates/page"
         )
     );
     expect(screen.getByTestId("dynamic-stub")).toBeInTheDocument();
@@ -221,16 +228,21 @@ describe("Project profile pages — dynamic imports", () => {
     // The updates index is an async server component (server-fetches the feed),
     // so it must be awaited like the other async pages rather than rendered as
     // an element. The mocked data layer above keeps the server fetch offline.
-    await renderAsyncPage(() => import("@/app/t/[tenant]/project/[projectId]/(profile)/page"), {
-      params: Promise.resolve({ projectId: "p1" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/page"),
+      {
+        params: Promise.resolve({ projectId: "p1" }),
+      }
+    );
     expect(screen.getByTestId("updates-content-skeleton")).toBeInTheDocument();
   });
 });
 
 describe("Project /updates async page", () => {
   it("renders ProjectRoadmap when project data loads", async () => {
-    const { default: Page } = await import("@/app/t/[tenant]/project/[projectId]/updates/page");
+    const { default: Page } = await import(
+      "@/app/t/[tenant]/(chrome)/project/[projectId]/updates/page"
+    );
     const result = await Page({ params: Promise.resolve({ projectId: "p1" }) });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(<QueryClientProvider client={client}>{result}</QueryClientProvider>);
@@ -241,7 +253,7 @@ describe("Project /updates async page", () => {
     const cached = await import("@/utilities/queries/getProjectCachedData");
     vi.mocked(cached.getProjectCachedData).mockResolvedValueOnce(null);
     const result = await renderAsyncPage(
-      () => import("@/app/t/[tenant]/project/[projectId]/updates/page"),
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/updates/page"),
       {
         params: Promise.resolve({ projectId: "p1" }),
       }
