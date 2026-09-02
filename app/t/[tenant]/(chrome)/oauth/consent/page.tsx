@@ -11,6 +11,11 @@ export const metadata: Metadata = customMetadata({
   robots: { index: false, follow: false },
 });
 
+// Block class. An authorization decision, never a destination reached by
+// prefetch: the consent screen must reflect the live request, so this segment
+// is opted out of instant navigation. Only legal with `cacheComponents` on.
+export const instant = false;
+
 // OAuthConsentClient calls useSearchParams(), which Next.js App Router
 // requires to be wrapped in a Suspense boundary or the production build
 // fails with "useSearchParams() should be wrapped in a Suspense
