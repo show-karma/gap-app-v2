@@ -11,6 +11,13 @@ vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useSimocracyEvaluations: (referenceNumber: string) =>
     mockUseSimocracyEvaluations(referenceNumber),
   useSimocracyProgramSummary: (programId: string) => mockUseSimocracyProgramSummary(programId),
+  useSimocracySimLinks: () => ({ data: [] }),
+  useSimocracyFeedback: () => ({ data: [] }),
+  useSubmitSimocracyFeedback: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ address: undefined }),
 }));
 
 function mockIndex(data: { key: string; enabled: boolean }[] | undefined, extra = {}) {

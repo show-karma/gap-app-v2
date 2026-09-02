@@ -219,7 +219,10 @@ export default function ApplicationDetailView({
             icon: TabIcons.Integrations,
             content: (
               <TabPanel>
-                <IntegrationsTab referenceNumber={application.referenceNumber} />
+                <IntegrationsTab
+                  referenceNumber={application.referenceNumber}
+                  feedbackAdmin={isAdmin}
+                />
               </TabPanel>
             ),
           } satisfies TabConfig,

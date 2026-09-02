@@ -18,6 +18,7 @@ vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useSimocracyProgramSummary: (programId: string) => mockUseSimocracyProgramSummary(programId),
   useSimocracyCouncil: (programId: string, options?: { enabled?: boolean }) =>
     mockUseSimocracyCouncil(programId, options),
+  useSimocracySimPersona: () => ({ data: undefined, isLoading: false }),
   useSimocracySimLinkMutations: () => ({
     addSimLinkAsync: mockAddSimLinkAsync,
     isAdding: false,

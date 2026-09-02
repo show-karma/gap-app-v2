@@ -3,13 +3,19 @@ import toast from "react-hot-toast";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import {
   addSimocracySimLink,
+  deleteSimocracyCredential,
   deleteSimocracySimLink,
   fetchApplicationIntegrations,
   fetchSimocracyCouncil,
   fetchSimocracyEvaluations,
+  fetchSimocracyFeedback,
   fetchSimocracyProgramSummary,
   fetchSimocracySimLinks,
+  fetchSimocracySimPersona,
+  type SimocracyFeedbackVerdict,
   type SimocracySimLink,
+  setSimocracyCredential,
+  submitSimocracyFeedback,
 } from "@/services/fundingApplicationIntegrations.service";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
 import type { ISimocracyIntegrationConfig } from "@/types/funding-platform";
@@ -55,6 +61,19 @@ export function useSimocracyCouncil(
     queryFn: () => fetchSimocracyCouncil(programId ?? ""),
     enabled: (options?.enabled ?? true) && !!programId,
     staleTime: INTEGRATIONS_STALE_TIME_MS,
+  });
+}
+
+export function useSimocracySimPersona(
+  programId: string,
+  simUri: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.simocracySimPersona(programId, simUri),
+    queryFn: () => fetchSimocracySimPersona(programId, simUri),
+    enabled: (options?.enabled ?? false) && !!programId && !!simUri,
+    staleTime: 30_000,
   });
 }
 
@@ -183,5 +202,57 @@ export function useUpdateSimocracyIntegration(programId: string) {
       queryClient.invalidateQueries({ queryKey: configKey });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.simocracyProgramSummary(programId) });
     },
+  });
+}
+
+export function useSetSimocracyCredential(programId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (appPassword: string) => setSimocracyCredential(programId, appPassword),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId) });
+      toast.success("Simocracy credential verified and saved");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function useDeleteSimocracyCredential(programId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => deleteSimocracyCredential(programId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId) });
+      toast.success("Simocracy credential removed");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function useSimocracyFeedback(
+  referenceNumber: string,
+  runId: string | null,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.simocracyFeedback(referenceNumber, runId ?? ""),
+    queryFn: () => fetchSimocracyFeedback(referenceNumber, runId ?? ""),
+    enabled: (options?.enabled ?? true) && !!referenceNumber && !!runId,
+    staleTime: INTEGRATIONS_STALE_TIME_MS,
+  });
+}
+
+export function useSubmitSimocracyFeedback(referenceNumber: string, runId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { simUri: string; verdict: SimocracyFeedbackVerdict; comment?: string }) =>
+      submitSimocracyFeedback(referenceNumber, { runId, ...input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.simocracyFeedback(referenceNumber, runId),
+      });
+      toast.success("Feedback saved");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 }
