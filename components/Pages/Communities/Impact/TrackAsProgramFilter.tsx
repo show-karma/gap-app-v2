@@ -2,6 +2,15 @@
 import { useTracksForCommunity } from "@/hooks/useTracks";
 import { SearchWithValueDropdown } from "./SearchWithValueDropdown";
 
+// Copied verbatim from ProgramFilter's label: this control sits in the exact
+// same slot for one community, so the two must be pixel-identical. The 11px /
+// 0.06em pair has no equivalent on the type or tracking scale, and adding one
+// for a single label would change how the shared ProgramFilter renders for
+// every other community.
+const LABEL_CLASSNAME =
+  // design-check-ignore: DS006 matches the ProgramFilter label this control replaces
+  "text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
+
 interface TrackAsProgramFilterProps {
   /** Community UID (not slug) — the tracks list is fetched per-community. */
   communityUid: string;
@@ -33,10 +42,7 @@ export const TrackAsProgramFilter = ({
 
   return (
     <div className="flex flex-col gap-1.5 flex-1 min-w-[220px] max-w-[400px]">
-      <label
-        htmlFor="filter-by-programs"
-        className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-      >
+      <label htmlFor="filter-by-programs" className={LABEL_CLASSNAME}>
         Choose Program
       </label>
 
