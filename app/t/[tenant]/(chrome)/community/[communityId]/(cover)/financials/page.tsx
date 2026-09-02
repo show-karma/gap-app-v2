@@ -1,6 +1,5 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { cache } from "react";
 import { PublicControlCenter } from "@/components/Pages/Communities/Financials/PublicControlCenter";
 import { Link } from "@/src/components/navigation/Link";
 import { getCommunityPayoutsPublic } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
@@ -11,11 +10,14 @@ import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 type Params = Promise<{ communityId: string }>;
 
-const getCachedCommunity = cache(getCommunityDetails);
+// `cache(getCommunityDetails)` used to stand here. React `cache()` dedupes
+// within one render; it does not survive it, so the read was still uncached
+// I/O during the prerender. The shared "use cache" twin does both jobs -- one
+// entry per slug, reused across the metadata and body reads below.
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId } = await params;
@@ -24,7 +26,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     return {};
   }
 
-  const community = await getCachedCommunity(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   // No self-canonical: this route is a client-rendered shell, so it is absent
@@ -95,7 +97,7 @@ export default async function FinancialsPage({ params }: { params: Params }) {
   // no community navigator), so the copy names the community itself and the
   // link back to the community explorer is the only way out.
   if (!FINANCIALS_ENABLED_COMMUNITIES.includes(communityId)) {
-    const community = await getCachedCommunity(communityId);
+    const community = await getCommunityDetailsCached(communityId);
     const communityName = community?.details?.name || communityId;
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
