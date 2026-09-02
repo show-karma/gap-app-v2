@@ -4,6 +4,7 @@ import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram, ProgramFilters, ProgramStatus } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
+import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
 import { DEFAULT_PROGRAMS_LIMIT, PROGRAMS_LIST_STALE_TIME } from "../lib/constants";
 import { useProgramsStore } from "../lib/store";
 import type { UseProgramsReturn } from "../types";
@@ -35,7 +36,8 @@ function matchesStatus(program: FundingProgram, status: ProgramStatus): boolean 
 
 export function usePrograms(
   communityId: string,
-  initialFilters?: ProgramFilters
+  initialFilters?: ProgramFilters,
+  options: { prerenderSafe?: boolean } = {}
 ): UseProgramsReturn {
   const {
     filters: storeFilters,
@@ -58,7 +60,10 @@ export function usePrograms(
       );
       return { programs: res ?? [], limit };
     },
-    staleTime: PROGRAMS_LIST_STALE_TIME,
+    // Above crawlable content this must not read the clock: React Query's
+    // staleness check calls Date.now(), which cacheComponents rejects during
+    // prerender. See PRERENDER_SAFE_STALE_TIME for the code path.
+    staleTime: options.prerenderSafe ? PRERENDER_SAFE_STALE_TIME : PROGRAMS_LIST_STALE_TIME,
     enabled: !!communityId,
   });
 

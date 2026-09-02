@@ -1,4 +1,4 @@
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { type DehydratedState, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import { cache } from "react";
@@ -8,6 +8,7 @@ import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
+import { buildDehydratedState } from "@/utilities/cache/hydration-seed";
 import { programTag } from "@/utilities/cache/tags";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { envVars } from "@/utilities/enviromentVars";
@@ -63,6 +64,37 @@ async function fetchProgramDetails(programId: string): Promise<FundingProgram | 
 }
 
 const getProgramDetails = cache(fetchProgramDetails);
+
+/**
+ * The program page's hydration seed, cached whole.
+ *
+ * `dehydrate()` stamps entries with `Date.now()`, which cacheComponents rejects
+ * during prerender, so the seed is built inside the cache rather than at render
+ * time. Same `cacheLife` and `cacheTag` as the fetch it seeds from.
+ */
+async function getProgramSeedCached(
+  programId: string
+): Promise<{ state: DehydratedState; program: FundingProgram | null | undefined }> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(programTag(programId));
+
+  const program = await getProgramDetails(programId).catch(
+    // SUPPRESSED: a transient indexer failure degrades to the client fetch.
+    (): undefined => undefined
+  );
+
+  const state = await buildDehydratedState(async (queryClient) => {
+    if (program !== undefined) {
+      queryClient.setQueryData(wlQueryKeys.programs.detail(programId), program);
+    }
+  });
+
+  // The program comes back with the seed rather than being re-read by the page:
+  // one indexer round-trip feeds both the hydrated entry and the JSON-LD, which
+  // is the property program-detail-ssr.test.tsx pins.
+  return { state, program };
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId, programId } = await params;
@@ -172,24 +204,15 @@ export async function generateStaticParams(): Promise<
 export default async function ProgramDetailPage({ params }: { params: Params }) {
   const { communityId, programId } = await params;
 
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: defaultQueryOptions },
-  });
-
   // One server-side fetch (deduped with generateMetadata by React.cache) feeds
   // both the hydrated React Query entry and the Grant JSON-LD below. The
   // schema only ships when the page body renders the program, and it only
   // carries facts that body states — the title (h1), the description, and the
   // "by <community>" byline as funder.
-  const program = await getProgramDetails(programId).catch(
-    // SUPPRESSED: a transient indexer failure must degrade to the client fetch
-    // path, not fail the whole route; the client surfaces the error state.
-    (): undefined => undefined
-  );
-
-  if (program !== undefined) {
-    queryClient.setQueryData(wlQueryKeys.programs.detail(programId), program);
-  }
+  // One server-side fetch feeds both the hydrated React Query entry and the
+  // Grant JSON-LD below. The seed is built inside `"use cache"` because
+  // dehydrate() stamps entries with `Date.now()`, which cacheComponents rejects.
+  const { state: dehydratedState, program } = await getProgramSeedCached(programId);
 
   const { isWhitelabel, config: wlConfig } = await getWhitelabelContext();
   const siteUrl = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : SITE_URL;
@@ -202,7 +225,7 @@ export default async function ProgramDetailPage({ params }: { params: Params }) 
   const grantName = program?.metadata?.title || program?.name || "";
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary state={dehydratedState}>
       {program && grantName ? (
         <GrantJsonLd
           name={grantName}
