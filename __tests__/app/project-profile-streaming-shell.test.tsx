@@ -151,7 +151,9 @@ async function renderProfileStream(): Promise<{ shellHtml: string; fullHtml: str
   const { default: ProfileLayout } = await import(
     "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/layout"
   );
-  const { default: ProjectLayout } = await import("@/app/t/[tenant]/(chrome)/project/[projectId]/layout");
+  const { default: ProjectLayout } = await import(
+    "@/app/t/[tenant]/(chrome)/project/[projectId]/layout"
+  );
 
   const profileTree = await ProfileLayout({
     children: <SlowTabBody />,

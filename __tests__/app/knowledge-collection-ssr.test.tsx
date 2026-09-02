@@ -121,7 +121,8 @@ async function renderRoute(
 }
 
 describe("knowledge article template — no-JS rendering", () => {
-  const importArticle = () => import("@/app/t/[tenant]/(chrome)/knowledge/grant-accountability/page");
+  const importArticle = () =>
+    import("@/app/t/[tenant]/(chrome)/knowledge/grant-accountability/page");
 
   it("server-renders a heading and substantive prose", async () => {
     const html = await renderRoute(importArticle);

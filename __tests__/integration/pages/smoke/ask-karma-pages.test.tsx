@@ -122,9 +122,12 @@ describe("/ask-karma (root) page", () => {
 
 describe("/community/[communityId]/ask-karma (community) page", () => {
   it("renders AskKarmaPage with the community id from params", async () => {
-    await renderAsyncPage(() => import("@/app/t/[tenant]/(chrome)/community/[communityId]/ask-karma/page"), {
-      params: Promise.resolve({ communityId: "filecoin" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/ask-karma/page"),
+      {
+        params: Promise.resolve({ communityId: "filecoin" }),
+      }
+    );
     expect(screen.getByTestId("ask-karma-page")).toBeInTheDocument();
     expect(screen.getByTestId("ask-karma-page")).toHaveAttribute("data-community-id", "filecoin");
     const props = askKarmaPageSpy.mock.calls[0][0];
@@ -151,9 +154,12 @@ describe("/community/[communityId]/ask-karma (community) page", () => {
     }));
 
     await expect(
-      renderAsyncPage(() => import("@/app/t/[tenant]/(chrome)/community/[communityId]/ask-karma/page"), {
-        params: Promise.resolve({ communityId: "unknown" }),
-      })
+      renderAsyncPage(
+        () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/ask-karma/page"),
+        {
+          params: Promise.resolve({ communityId: "unknown" }),
+        }
+      )
     ).rejects.toThrow();
 
     expect(notFound).toHaveBeenCalled();

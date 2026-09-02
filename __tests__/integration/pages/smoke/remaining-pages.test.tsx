@@ -311,7 +311,9 @@ describe("/donations page", () => {
 
 describe("/community/[communityId]/donate program-select page", () => {
   it("renders programs select when loaded", async () => {
-    await renderClientPage(() => import("@/app/t/[tenant]/(chrome)/community/[communityId]/donate/page"));
+    await renderClientPage(
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/donate/page")
+    );
     // Page either renders the loading state, redirect spinner, or the program
     // selector — all acceptable proof that the module loads & mounts.
     const heading = screen.queryByText(/select.*program/i);

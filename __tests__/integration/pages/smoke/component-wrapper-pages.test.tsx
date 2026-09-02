@@ -220,13 +220,16 @@ describe("Community manage component-wrapper pages", () => {
   });
 
   it("/manage/impact renders ImpactPage", async () => {
-    await renderPage(() => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/impact/page"));
+    await renderPage(
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/impact/page")
+    );
     expect(screen.getByTestId("manage-impact-page")).toBeInTheDocument();
   });
 
   it("/manage/manage-indicators renders ManageIndicatorsPage", async () => {
     await renderPage(
-      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/manage-indicators/page")
+      () =>
+        import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/manage-indicators/page")
     );
     expect(screen.getByTestId("manage-indicators-page")).toBeInTheDocument();
   });
@@ -252,7 +255,8 @@ describe("Community with-header component-wrapper pages", () => {
 
   it("/donate/[programId]/checkout renders DonationCheckout", async () => {
     await renderPage(
-      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/donate/[programId]/checkout/page")
+      () =>
+        import("@/app/t/[tenant]/(chrome)/community/[communityId]/donate/[programId]/checkout/page")
     );
     expect(screen.getByTestId("donation-checkout")).toBeInTheDocument();
   });
@@ -261,7 +265,8 @@ describe("Community with-header component-wrapper pages", () => {
 describe("Whitelabel component-wrapper pages", () => {
   it("/(whitelabel)/claim-funds renders ClaimFundsClient", async () => {
     await renderPage(
-      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/claim-funds/page")
+      () =>
+        import("@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/claim-funds/page")
     );
     expect(screen.getByTestId("claim-funds-client")).toBeInTheDocument();
   });

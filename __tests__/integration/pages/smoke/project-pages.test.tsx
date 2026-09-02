@@ -70,9 +70,12 @@ vi.mock("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/impact/ImpactPa
   ImpactPageClient: () => <div data-testid="impact-page-client">Impact</div>,
 }));
 
-vi.mock("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/new/NewGrantPageClient", () => ({
-  NewGrantPageClient: () => <div data-testid="new-grant-page-client">NewGrant</div>,
-}));
+vi.mock(
+  "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/new/NewGrantPageClient",
+  () => ({
+    NewGrantPageClient: () => <div data-testid="new-grant-page-client">NewGrant</div>,
+  })
+);
 
 vi.mock(
   "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/edit/EditGrantPageClient",
@@ -165,7 +168,10 @@ describe("Project profile pages", () => {
 
   it("/project/[projectId]/(profile)/funding/[grantUid]/edit renders EditGrantPageClient", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/edit/page")
+      () =>
+        import(
+          "@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/edit/page"
+        )
     );
     expect(screen.getByTestId("edit-grant-page-client")).toBeInTheDocument();
   });
@@ -192,7 +198,8 @@ describe("Project profile pages — dynamic imports", () => {
 
   it("/project/[projectId]/(profile)/funding/[grantUid] renders dynamic stub", async () => {
     await renderPageElement(
-      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/page")
+      () =>
+        import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/funding/[grantUid]/page")
     );
     expect(screen.getByTestId("dynamic-stub")).toBeInTheDocument();
   });
@@ -221,16 +228,21 @@ describe("Project profile pages — dynamic imports", () => {
     // The updates index is an async server component (server-fetches the feed),
     // so it must be awaited like the other async pages rather than rendered as
     // an element. The mocked data layer above keeps the server fetch offline.
-    await renderAsyncPage(() => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/page"), {
-      params: Promise.resolve({ projectId: "p1" }),
-    });
+    await renderAsyncPage(
+      () => import("@/app/t/[tenant]/(chrome)/project/[projectId]/(profile)/page"),
+      {
+        params: Promise.resolve({ projectId: "p1" }),
+      }
+    );
     expect(screen.getByTestId("updates-content-skeleton")).toBeInTheDocument();
   });
 });
 
 describe("Project /updates async page", () => {
   it("renders ProjectRoadmap when project data loads", async () => {
-    const { default: Page } = await import("@/app/t/[tenant]/(chrome)/project/[projectId]/updates/page");
+    const { default: Page } = await import(
+      "@/app/t/[tenant]/(chrome)/project/[projectId]/updates/page"
+    );
     const result = await Page({ params: Promise.resolve({ projectId: "p1" }) });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(<QueryClientProvider client={client}>{result}</QueryClientProvider>);
