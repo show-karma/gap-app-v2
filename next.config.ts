@@ -39,9 +39,21 @@ const tokenBridgeHeaders = [
 
 const removeImports = require("next-remove-imports")();
 
+// Read straight from package.json rather than from `npm_package_version`: the
+// hosting platform runs `next build` directly, with no package-manager script
+// wrapper, so that variable is unset there and every production event would
+// report `app_version: "unknown"`.
+const { version: APP_VERSION } = require("./package.json");
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Stamped into the client bundle at build time so every analytics event
+  // carries the release it came from (see the `app_version` super property in
+  // utilities/analytics/client.ts).
+  env: {
+    NEXT_PUBLIC_APP_VERSION: APP_VERSION,
+  },
   // Cap per-page static generation at 2 min. The app has no
   // generateStaticParams and builds in ~5 min, so nothing legitimately
   // approaches this — a longer stall means a hung build-time fetch that

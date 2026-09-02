@@ -166,14 +166,14 @@
       "maxBytes": 40000
     },
     "components/Dialogs/ProgressDialog/UnifiedMilestoneScreen.tsx": {
-      "lines": 648,
-      "bytes": 24325,
+      "lines": 651,
+      "bytes": 24588,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Dialogs/ProjectDialog/index.tsx": {
-      "lines": 1705,
-      "bytes": 64549,
+      "lines": 1716,
+      "bytes": 65052,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -184,14 +184,14 @@
       "maxBytes": 40000
     },
     "components/Forms/MilestoneUpdate.tsx": {
-      "lines": 764,
-      "bytes": 28424,
+      "lines": 766,
+      "bytes": 28594,
       "maxLines": 600,
       "maxBytes": 40000
     },
     "components/Forms/ProjectUpdate.tsx": {
-      "lines": 1051,
-      "bytes": 39500,
+      "lines": 1054,
+      "bytes": 39734,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -334,8 +334,8 @@
       "maxBytes": 40000
     },
     "hooks/useMilestoneCompletionVerification.ts": {
-      "lines": 662,
-      "bytes": 22158,
+      "lines": 664,
+      "bytes": 22295,
       "maxLines": 600,
       "maxBytes": 40000
     },
@@ -346,8 +346,8 @@
       "maxBytes": 60000
     },
     "services/fundingPlatformService.ts": {
-      "lines": 645,
-      "bytes": 21436,
+      "lines": 647,
+      "bytes": 21592,
       "maxLines": 600,
       "maxBytes": 40000
     },

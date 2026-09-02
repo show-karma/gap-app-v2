@@ -37,6 +37,9 @@ export const clientSchema = z.object({
   NEXT_PUBLIC_GA_TRACKING_ID: z.string().min(1).optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   NEXT_PUBLIC_AMPLITUDE_KEY: z.string().min(1).optional(),
+  // Injected by next.config.ts from the package version at build time, so it is
+  // absent in tests and in any runtime that bypasses the Next build.
+  NEXT_PUBLIC_APP_VERSION: z.string().min(1).optional(),
 
   // Third-party integrations
   NEXT_PUBLIC_PROJECT_ID: z.string().optional().default(""),

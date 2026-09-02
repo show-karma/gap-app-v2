@@ -26,9 +26,7 @@ vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ address: "0xrequester", ready: true }),
 }));
 
-vi.mock("@/hooks/useMixpanel", () => ({
-  useMixpanel: () => ({ mixpanel: { reportEvent: vi.fn() } }),
-}));
+vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
 vi.mock("react-hot-toast", async () => {
   const actual = await vi.importActual<typeof import("react-hot-toast")>("react-hot-toast");

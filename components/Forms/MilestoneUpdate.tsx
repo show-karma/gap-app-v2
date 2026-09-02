@@ -29,6 +29,7 @@ import { submitGranteeInvoice } from "@/src/features/payout-disbursement/service
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
+import * as milestoneEvents from "@/utilities/analytics/emitters/milestone";
 import { api } from "@/utilities/api/client";
 import { hasAnyDirtyField } from "@/utilities/hasAnyDirtyField";
 import {
@@ -350,6 +351,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               if (isCompleted) {
                 retries = 0;
                 changeStepperStep("indexed");
+                milestoneEvents.emitMilestoneCompleted(milestone, data.deliverables.length);
                 showSuccess(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
 
                 // Send outputs and deliverables data

@@ -417,7 +417,6 @@ export function LoggedInDetail({ scanId, userEmail }: LoggedInDetailProps) {
         slug={data.slug}
         grade={data.grade}
         totalScore={data.totalScore}
-        orgName={data.orgName ?? null}
         viewerIsOwner={data.viewerIsOwner}
       />
 

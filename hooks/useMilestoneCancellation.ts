@@ -5,13 +5,13 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useMixpanel } from "@/hooks/useMixpanel";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import type {
   GrantMilestoneWithCompletion,
   ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
+import { track } from "@/utilities/analytics/client";
 import { notifyIndexer } from "@/utilities/indexer-notification";
 import { requireMilestoneRecipient } from "@/utilities/milestones/attestationIdentity";
 import { isMilestoneCancelled } from "@/utilities/milestones/cancellation";
@@ -54,7 +54,6 @@ export const useMilestoneCancellation = ({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { showError, showSuccess, showLoading, dismiss } = useAttestationToast();
-  const { mixpanel } = useMixpanel();
 
   const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
 
@@ -139,10 +138,7 @@ export const useMilestoneCancellation = ({
       return { previousData };
     },
     onSuccess: (_result, { milestone }) => {
-      mixpanel.reportEvent({
-        event: "milestone:cancel:success",
-        properties: { requestedBy: address, milestoneUID: milestone.uid, programId },
-      });
+      track("milestone_cancel_completed", { milestone_id: milestone.uid });
       showSuccess("Milestone cancelled");
       onSuccess?.();
     },
@@ -200,10 +196,7 @@ export const useMilestoneCancellation = ({
       return { previousData };
     },
     onSuccess: (_result, { milestone }) => {
-      mixpanel.reportEvent({
-        event: "milestone:uncancel:success",
-        properties: { requestedBy: address, milestoneUID: milestone.uid, programId },
-      });
+      track("milestone_uncancel_completed", { milestone_id: milestone.uid });
       showSuccess("Milestone restored");
       onSuccess?.();
     },

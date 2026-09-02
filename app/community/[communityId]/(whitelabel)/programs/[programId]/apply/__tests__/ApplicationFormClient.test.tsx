@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { __resetApplicationTimingForTests } from "@/src/features/applications/lib/application-timing";
+import { track } from "@/utilities/analytics/client";
 import { api } from "@/utilities/api/client";
 import { ApplicationFormClient } from "../ApplicationFormClient";
 
@@ -15,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   rbacLoading: false,
   isWhitelabel: false,
   communitySlug: null as string | null,
+  authenticated: true,
   capturedOnSubmit: null as
     | ((
         data: Record<string, unknown>,
@@ -31,7 +34,16 @@ vi.mock("@/utilities/api/client", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.routerPush }),
   useSearchParams: () => mocks.searchParams,
+  usePathname: () => "/community/gitcoin/programs/prog-1/apply",
 }));
+
+// The client reads auth to report whether the applicant started the form
+// signed in (`application_started.is_authenticated`).
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ authenticated: mocks.authenticated }),
+}));
+
+vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
 vi.mock("@/src/core/rbac/context/permission-context", () => ({
   usePermissionContext: () => ({
@@ -127,6 +139,8 @@ function resetMocks() {
   mocks.communitySlug = null;
   mocks.capturedOnSubmit = null;
   mocks.modalState = null;
+  mocks.authenticated = true;
+  __resetApplicationTimingForTests();
 }
 
 describe("ApplicationFormClient", () => {
@@ -566,5 +580,78 @@ describe("ApplicationFormClient", () => {
       expect(screen.queryByText(/admin override/i)).not.toBeInTheDocument();
       expect(screen.getByTestId("application-form")).toBeInTheDocument();
     });
+  });
+});
+
+/**
+ * `application_started` opens the funding funnel that `application_submitted`
+ * closes. It must not fire for a visitor still stuck on the access-code wall —
+ * that would make every gated programme look like a mass drop-off.
+ */
+describe("ApplicationFormClient — application_started", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetMocks();
+    try {
+      window.sessionStorage.clear();
+    } catch {
+      // ignore
+    }
+  });
+
+  it("opens the funnel when the form is reachable", () => {
+    render(
+      <Wrapper>
+        <ApplicationFormClient {...openProps} />
+      </Wrapper>
+    );
+
+    expect(track).toHaveBeenCalledWith("application_started", {
+      program_id: PROGRAM_ID,
+      community_id: COMMUNITY_ID,
+      is_authenticated: true,
+    });
+  });
+
+  it("reports an anonymous visitor as not authenticated", () => {
+    mocks.authenticated = false;
+
+    render(
+      <Wrapper>
+        <ApplicationFormClient {...openProps} />
+      </Wrapper>
+    );
+
+    expect(track).toHaveBeenCalledWith(
+      "application_started",
+      expect.objectContaining({ is_authenticated: false })
+    );
+  });
+
+  it("stays silent while the visitor is stuck on the access-code wall", () => {
+    render(
+      <Wrapper>
+        <ApplicationFormClient {...gatedProps} />
+      </Wrapper>
+    );
+
+    expect(track).not.toHaveBeenCalledWith("application_started", expect.anything());
+  });
+
+  it("opens the funnel only once across re-renders", () => {
+    const { rerender } = render(
+      <Wrapper>
+        <ApplicationFormClient {...openProps} />
+      </Wrapper>
+    );
+    rerender(
+      <Wrapper>
+        <ApplicationFormClient {...openProps} />
+      </Wrapper>
+    );
+
+    expect(
+      vi.mocked(track).mock.calls.filter(([name]) => name === "application_started")
+    ).toHaveLength(1);
   });
 });

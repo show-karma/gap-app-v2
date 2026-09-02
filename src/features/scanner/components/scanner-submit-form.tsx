@@ -73,6 +73,7 @@ export function ScannerSubmitForm({ showExamples = false }: ScannerSubmitFormPro
   const submittedUrlRef = useRef<string | null>(null);
 
   const { mutate, isPending } = useSubmitScan({
+    entryPoint: "scanner_submit_form",
     onSuccess: (response) => {
       submittingRef.current = false;
       if (response.created) {

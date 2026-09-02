@@ -4,6 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import toast from "react-hot-toast";
 import type { Application } from "@/types/whitelabel-entities";
+import { track } from "@/utilities/analytics/client";
+import { toErrorCode } from "@/utilities/analytics/error-code";
 import { api } from "@/utilities/api/client";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 
@@ -102,6 +104,10 @@ export function usePostApprovalSubmit(
       }
     },
     onSuccess: () => {
+      track("post_approval_submitted", {
+        application_id: application.id,
+        program_id: application.programId,
+      });
       toast.success(
         application.postApprovalData
           ? "Post-approval information updated successfully!"
@@ -112,6 +118,11 @@ export function usePostApprovalSubmit(
       });
     },
     onError: (err) => {
+      track("post_approval_submit_failed", {
+        application_id: application.id,
+        program_id: application.programId,
+        error_code: toErrorCode(err),
+      });
       const errorType = parseErrorType(err);
       const errorMessage = getErrorMessage(
         errorType,

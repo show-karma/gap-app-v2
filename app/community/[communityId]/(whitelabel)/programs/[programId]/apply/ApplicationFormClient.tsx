@@ -4,13 +4,16 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { AccessCodeInput } from "@/src/features/applications/components/AccessCodeInput";
 import { AccessCodeModal } from "@/src/features/applications/components/AccessCodeModal";
 import { ApplicationForm } from "@/src/features/applications/components/ApplicationForm";
 import { useApplicationSubmit } from "@/src/features/applications/hooks/use-application-submit";
+import { markApplicationStarted } from "@/src/features/applications/lib/application-timing";
 import type { ApplicationFormData } from "@/src/features/applications/types";
 import { useCanBypassClosedProgram } from "@/src/features/programs/hooks/use-can-bypass-closed-program";
 import type { ApplicationQuestion, IFormSchema } from "@/types/whitelabel-entities";
+import { track } from "@/utilities/analytics/client";
 import { api } from "@/utilities/api/client";
 import { PAGES } from "@/utilities/pages";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
@@ -41,6 +44,7 @@ export function ApplicationFormClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isWhitelabel, communitySlug } = useWhitelabel();
+  const { authenticated } = useAuth();
 
   const { submit } = useApplicationSubmit(communityId);
 
@@ -176,6 +180,22 @@ export function ApplicationFormClient({
       ""
     );
   };
+
+  // Opens the funnel and starts the clock `time_to_submit_s` is measured
+  // against. Gated on the form actually being reachable — a visitor stuck on
+  // the access-code wall has not started an application.
+  const canStart = !isGated || Boolean(unlockedAccessCode);
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (!canStart || startedRef.current) return;
+    startedRef.current = true;
+    markApplicationStarted(programId);
+    track("application_started", {
+      program_id: programId,
+      community_id: communityId,
+      is_authenticated: authenticated,
+    });
+  }, [canStart, programId, communityId, authenticated]);
 
   const handleSubmit = async (
     data: ApplicationFormData,

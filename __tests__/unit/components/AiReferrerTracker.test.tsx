@@ -11,17 +11,15 @@ import {
   AI_FIRST_TOUCH_STORAGE_KEY,
   type AiFirstTouch,
 } from "@/utilities/aiReferrer";
-import { mixpanelEvent } from "@/utilities/mixpanelEvent";
+import { track } from "@/utilities/analytics/client";
 
 vi.mock("@next/third-parties/google", () => ({
   sendGAEvent: vi.fn(),
 }));
 
-vi.mock("@/utilities/mixpanelEvent", () => ({
-  mixpanelEvent: vi.fn(),
-}));
+vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
-const mockMixpanelEvent = vi.mocked(mixpanelEvent);
+const mockTrack = vi.mocked(track);
 const mockSendGAEvent = vi.mocked(sendGAEvent);
 
 describe("AiReferrerTracker", () => {
@@ -59,14 +57,11 @@ describe("AiReferrerTracker", () => {
     const { rerender } = render(<AiReferrerTracker />);
     rerender(<AiReferrerTracker />);
 
-    expect(mockMixpanelEvent).toHaveBeenCalledTimes(1);
-    expect(mockMixpanelEvent).toHaveBeenCalledWith({
-      event: "ai-referral-landing",
-      properties: {
-        ai_source: "perplexity",
-        ai_source_medium: "referral",
-        ai_landing_path: window.location.pathname,
-      },
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith("ai_referral_landing", {
+      ai_source: "perplexity",
+      ai_source_medium: "referral",
+      ai_landing_path: window.location.pathname,
     });
 
     const stored = JSON.parse(
@@ -80,7 +75,7 @@ describe("AiReferrerTracker", () => {
 
     render(<AiReferrerTracker />);
 
-    expect(mockMixpanelEvent).not.toHaveBeenCalled();
+    expect(mockTrack).not.toHaveBeenCalled();
     expect(window.localStorage.getItem(AI_FIRST_TOUCH_STORAGE_KEY)).toBeNull();
   });
 
@@ -96,7 +91,7 @@ describe("AiReferrerTracker", () => {
 
     render(<AiReferrerTracker />);
 
-    expect(mockMixpanelEvent).not.toHaveBeenCalled();
+    expect(mockTrack).not.toHaveBeenCalled();
     expect(JSON.parse(window.localStorage.getItem(AI_FIRST_TOUCH_STORAGE_KEY) ?? "null")).toEqual(
       existing
     );
@@ -174,7 +169,7 @@ describe("AiReferrerTracker", () => {
         ai_source_medium: "referral",
         ai_first_touch_at: "2026-07-31T10:00:00.000Z",
       });
-      expect(mockMixpanelEvent).not.toHaveBeenCalled();
+      expect(mockTrack).not.toHaveBeenCalled();
     });
 
     it("sets nothing for a visitor with no AI first touch", () => {

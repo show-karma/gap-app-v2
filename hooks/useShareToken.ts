@@ -6,6 +6,7 @@ import {
   revokeShareToken,
 } from "@/services/donor-research.service";
 import type { ShareTokenPayload } from "@/types/donor-research";
+import { track } from "@/utilities/analytics/client";
 
 export function useGenerateShareToken() {
   const queryClient = useQueryClient();
@@ -16,6 +17,7 @@ export function useGenerateShareToken() {
   >({
     mutationFn: ({ reportId, body }) => generateShareToken(reportId, body),
     onSuccess: (_data, variables) => {
+      track("report_shared", { report_id: variables.reportId, share_type: "token" });
       queryClient.invalidateQueries({
         queryKey: donorReportQueryKey(variables.reportId),
       });

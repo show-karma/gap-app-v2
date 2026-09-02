@@ -3,14 +3,11 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { type FC, Fragment } from "react";
-import type { Hex } from "viem";
-import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
 import { useOnboarding } from "@/store/modals/onboarding";
 import { Button } from "../Utilities/Button";
 
 const WelcomeStep = () => {
-  const { address } = useAccount();
   const { changeOnboardingStep } = useOnboarding();
 
   return (
@@ -47,7 +44,7 @@ const WelcomeStep = () => {
         <div className="flex flex-row gap-4 mt-2 justify-end max-sm:flex-col">
           <Button
             className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("project", address as Hex)}
+            onClick={() => changeOnboardingStep("project")}
           >
             Next <ChevronRightIcon className="h-5 w-5" />
           </Button>
@@ -58,7 +55,6 @@ const WelcomeStep = () => {
 };
 const FirstStep = () => {
   const { changeOnboardingStep } = useOnboarding();
-  const { address } = useAccount();
   return (
     <div className="flex flex-row gap-6 items-center">
       <Image
@@ -83,14 +79,14 @@ You do this just once!`}</p>
         <div className="flex flex-row gap-4 mt-12 justify-end max-sm:flex-col">
           <Button
             className="text-black text-lg bg-white border max-sm:justify-center border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("welcome", address as Hex)}
+            onClick={() => changeOnboardingStep("welcome")}
           >
             <ChevronLeftIcon className="h-5 w-5" />
             Back
           </Button>
           <Button
             className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("grants", address as Hex)}
+            onClick={() => changeOnboardingStep("grants")}
           >
             Next <ChevronRightIcon className="h-5 w-5" />
           </Button>
@@ -101,7 +97,6 @@ You do this just once!`}</p>
 };
 const GrantStep = () => {
   const { changeOnboardingStep } = useOnboarding();
-  const { address } = useAccount();
 
   return (
     <div className="flex flex-row gap-6 items-start pt-6">
@@ -124,14 +119,14 @@ const GrantStep = () => {
         <div className="flex flex-row gap-4 mt-12 justify-end max-sm:flex-col">
           <Button
             className="text-black text-lg bg-white border max-sm:justify-center border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("project", address as Hex)}
+            onClick={() => changeOnboardingStep("project")}
           >
             <ChevronLeftIcon className="h-5 w-5" />
             Back
           </Button>
           <Button
             className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("updates-milestones", address as Hex)}
+            onClick={() => changeOnboardingStep("updates-milestones")}
           >
             Next <ChevronRightIcon className="h-5 w-5" />
           </Button>
@@ -142,8 +137,6 @@ const GrantStep = () => {
 };
 const UpdatesStep = () => {
   const { changeOnboardingStep } = useOnboarding();
-
-  const { address } = useAccount();
 
   return (
     <div className="flex flex-col">
@@ -171,14 +164,14 @@ const UpdatesStep = () => {
       <div className="flex flex-row gap-4 justify-end max-sm:mt-10 max-sm:flex-col">
         <Button
           className="text-black text-lg bg-white border max-sm:justify-center border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-          onClick={() => changeOnboardingStep("grants", address as Hex)}
+          onClick={() => changeOnboardingStep("grants")}
         >
           <ChevronLeftIcon className="h-5 w-5" />
           Back
         </Button>
         <Button
           className="max-sm:justify-center text-white text-lg bg-black border-black flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-          onClick={() => changeOnboardingStep("structure", address as Hex)}
+          onClick={() => changeOnboardingStep("structure")}
         >
           Next <ChevronRightIcon className="h-5 w-5" />
         </Button>
@@ -188,8 +181,6 @@ const UpdatesStep = () => {
 };
 const StructureStep = () => {
   const { changeOnboardingStep, setIsOnboarding } = useOnboarding();
-
-  const { address } = useAccount();
 
   return (
     <div className="flex flex-col">
@@ -208,7 +199,7 @@ const StructureStep = () => {
       <div className="flex flex-row gap-4 justify-end max-sm:flex-col">
         <Button
           className="text-black text-lg  bg-white max-sm:justify-center border border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-          onClick={() => changeOnboardingStep("updates-milestones", address as Hex)}
+          onClick={() => changeOnboardingStep("updates-milestones")}
         >
           <ChevronLeftIcon className="h-5 w-5" />
           Back

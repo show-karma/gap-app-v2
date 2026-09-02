@@ -2,10 +2,37 @@ export interface E2EAuthState {
   authenticated?: boolean;
   ready?: boolean;
   user?: {
+    /** Always {@link E2E_MOCK_USER_ID}; the fixture cannot choose it. */
+    id?: string;
     wallet?: {
       address?: string;
     };
   };
+}
+
+/**
+ * The distinct id a mock-authenticated E2E session identifies as.
+ *
+ * Without one, Privy produces no `user` under the bypass, so `AnalyticsProvider`
+ * has no id to identify and gates OFF every authenticated emission — which made
+ * all authenticated analytics untestable under Playwright.
+ *
+ * Deliberately not a shape Privy can mint: real DIDs are `did:privy:` followed
+ * by a lowercase-alphanumeric cuid, with no hyphen. So this id can never
+ * collide with a real user, and a production row carrying it is proof of a
+ * misconfigured bypass rather than a real session.
+ */
+export const E2E_MOCK_USER_ID = "did:privy:e2e-mock-user";
+
+/** A real Privy DID: the prefix, then a lowercase-alphanumeric cuid. */
+const REAL_PRIVY_DID = /^did:privy:[a-z0-9]+$/;
+
+// Fails at module load if the id is ever "tidied" into something Privy could
+// actually issue — the whole guarantee above rests on it staying impossible.
+if (REAL_PRIVY_DID.test(E2E_MOCK_USER_ID)) {
+  throw new Error(
+    `E2E_MOCK_USER_ID must not look like a real Privy DID, got "${E2E_MOCK_USER_ID}"`
+  );
 }
 
 /** @deprecated Use E2EAuthState instead */
@@ -36,7 +63,9 @@ export const getE2EMockAuthState = (): E2EAuthState | null => {
 
     const parsedState = JSON.parse(rawState) as E2EAuthState;
     if (parsedState.authenticated === true) {
-      return parsedState;
+      // The fixture supplies the wallet; the id is ours, so a test cannot
+      // invent one — and this is only reachable behind the two guards above.
+      return { ...parsedState, user: { ...parsedState.user, id: E2E_MOCK_USER_ID } };
     }
   } catch {
     // Ignore invalid test auth payloads and fall back to real auth state.

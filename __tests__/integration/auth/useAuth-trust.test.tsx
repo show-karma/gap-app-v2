@@ -81,6 +81,7 @@ vi.mock("@/store/modals/projectCreate", () => ({
 
 vi.mock("@/utilities/auth/e2e-auth", () => ({
   getE2EMockAuthState: vi.fn().mockReturnValue(null),
+  E2E_MOCK_USER_ID: "did:privy:e2e-mock-user",
 }));
 
 vi.mock("@/utilities/auth/token-manager", () => ({
