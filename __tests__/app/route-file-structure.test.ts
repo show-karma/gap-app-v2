@@ -179,10 +179,10 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
 // leaves `(chrome)` fails here, and an entry whose route stops being crawlable
 // fails as stale.
 const SITEMAP_BARE_ROUTES: ReadonlySet<string> = new Set([
-  "nonprofits/find-funders",
-  "nonprofits/find-funders/connect",
-  "nonprofits/find-funders/connect/chatgpt",
-  "nonprofits/find-funders/connect/claude",
+  "nonprofits/find-funders/(landing-nav)",
+  "nonprofits/find-funders/(workbench-nav)/connect",
+  "nonprofits/find-funders/(workbench-nav)/connect/chatgpt",
+  "nonprofits/find-funders/(workbench-nav)/connect/claude",
 ]);
 
 // Routes known to be missing loading.tsx at the time this ratchet was added.
