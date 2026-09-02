@@ -1,7 +1,7 @@
 {
   "$schema": "D2 — the gap-indexer auth posture of every endpoint the public loaders read",
   "recordedFrom": "gap-indexer @ feat/analytics-server-events, app/modules/v2/api/routes/**",
-  "recordedAt": "2026-09-01",
+  "recordedAt": "2026-09-02",
   "howToRerecord": "node scripts/record-d2-parity.mjs re-records the payload half; this posture half is read from the gap-indexer route definitions by hand — see the `source` on each entry",
   "why": "A route with no auth preHandler never reads the Authorization header, so dropping the token on the server provably cannot change the payload. optionalAuthentication is the only posture where it can — those are enumerated below with the exact fields a session adds.",
   "endpoints": [
@@ -34,6 +34,13 @@
       "path": "/v2/communities/:slug/projects",
       "posture": "PUBLIC",
       "source": "app/modules/v2/api/routes/community/community.routes.ts"
+    },
+    {
+      "loader": "services/community-programs.service.ts",
+      "path": "/v2/communities/:uidOrSlug/programs",
+      "posture": "PUBLIC",
+      "source": "app/modules/v2/api/routes/community/community.routes.ts",
+      "note": "preHandler is [publicEndpointRateLimiter] only; the route comment reads \"Intentionally public: no auth middleware, abuse guarded by rate limiter.\""
     },
     {
       "loader": "src/features/funding-map/services/funding-programs.service.ts",
