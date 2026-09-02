@@ -66,7 +66,7 @@ event that no board depends on.
 
 | Event | Fires when | Properties | Board |
 |---|---|---|---|
-| `login_started` | `adaptedLogin` is called, before Privy's modal opens. Only when Privy is `ready`; never queued. | `entry_point` | Activation |
+| `login_started` | `adaptedLogin` is called, before Privy's modal opens. Never queued. Emitted when Privy is `ready` and the user is signed out, and also before `ready` when no Privy token is persisted — see [The pre-`ready` login click](#the-pre-ready-login-click). | `entry_point` | Activation |
 | `login_completed` | Privy's `useLogin({ onComplete })` fires. | `auth_method`, `is_new_user`, `was_already_authenticated` | Activation |
 | `logout` | The `authenticated` true→false transition, emitted **once**, by `AnalyticsProvider`. | `reason` | — |
 
@@ -74,6 +74,43 @@ event that no board depends on.
 was invoked while the user was already signed in, so the callback fired without
 a real sign-in. It is **not** a session-restore flag — a reload into an existing
 session fires no event at all.
+
+#### The pre-`ready` login click
+
+For an anonymous visitor the Privy SDK is deliberately deferred —
+`PrivyProviderWrapper` loads it on an idle callback (5s timeout) or on the first
+login click, whichever comes first — so the click that OPENS the funnel almost
+always lands while `ready` is still false.
+
+The original gate emitted only when `ready`, which dropped nearly every start
+while the matching `login_completed` — emitted once the SDK is up and the user
+has signed in — still fired. Production showed completions against roughly zero
+starts, so the Activation funnel had no first step.
+
+`ready` alone cannot decide it: before Privy resolves, `authenticated` is false
+for everyone, so a signed-out visitor and a signed-in one whose session has not
+hydrated look identical. The persisted token settles it. When `localStorage`
+holds no `privy:token` there is no session to restore and the visitor is
+certainly signed out, so the start is real and is reported. When a token IS
+present the event is still withheld: that session may be about to restore, and a
+start reported for it would open a funnel nothing closes.
+
+Unreadable storage (privacy mode, blocked third-party storage, enterprise
+policy) counts as "no token", which is the same answer the SDK loader acts on —
+both read `hasPersistedPrivySession` so they cannot drift apart.
+
+That pre-`ready` click is also a **noop**: the bridge's `login` is a stub until
+the SDK mounts, and nothing replays the click. So the visitor sees nothing
+happen and clicks again once Privy is ready — two clicks, one funnel opening.
+`emitLoginStarted` records the pre-`ready` start and drops a `ready` start that
+follows it within 60s, so the retry is not counted twice. Suppressing a retry
+consumes the mark, and a completed login clears it, so the next click opens the
+funnel again.
+
+This under-counts in one remaining case: a returning user with a live persisted
+session who clicks sign-in during the brief window before `ready`. That click is
+usually a no-op for an already-signed-in user, which is exactly the funnel we do
+not want to open.
 
 `logout` has one emitter on purpose. `useAuth` mounts at ~100 call sites and
 every instance runs the same session-ending guards, so emitting there produced

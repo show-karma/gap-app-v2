@@ -11,6 +11,7 @@ import {
 } from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { ensureCryptoRandomUUID } from "@/utilities/auth/ensure-crypto-random-uuid";
+import { hasPersistedPrivySession } from "@/utilities/auth/persisted-privy-session";
 import { queryClient } from "@/utilities/query-client";
 import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";
 
@@ -55,18 +56,15 @@ function PrivyLoader({
     };
 
     // Returning user (has privy token) or explicit load request — load immediately.
-    // Storage can be unavailable outright (privacy mode, blocked third-party
-    // storage, enterprise policy) and then ANY access throws — and since this
-    // effect runs on every page at boot, an unguarded read here crashed the
-    // whole app to the error boundary before login was even reachable (QA A6).
+    // The read is guarded inside `hasPersistedPrivySession`: storage can be
+    // unavailable outright (privacy mode, blocked third-party storage,
+    // enterprise policy) and then ANY access throws — and since this effect
+    // runs on every page at boot, an unguarded read here crashed the whole app
+    // to the error boundary before login was even reachable (QA A6).
     // Unreadable storage means "no token": take the anonymous deferred path.
-    let hasToken: string | null = null;
-    try {
-      hasToken = typeof window !== "undefined" ? localStorage.getItem("privy:token") : null;
-    } catch {
-      // SUPPRESSED: storage unavailable — treat as anonymous; Privy still lazy-loads.
-    }
-    if (hasToken || loadRequested) {
+    // `useAuth` reads the same helper to tell whether a login click that lands
+    // during this deferral came from a visitor who is certainly signed out.
+    if (hasPersistedPrivySession() || loadRequested) {
       doLoad();
       return;
     }

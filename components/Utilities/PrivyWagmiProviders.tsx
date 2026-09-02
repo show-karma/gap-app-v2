@@ -12,6 +12,7 @@ import { useEnsureEmbeddedWallet } from "@/hooks/useEnsureEmbeddedWallet";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { toAuthMethod } from "@/utilities/analytics/auth-method";
 import { track } from "@/utilities/analytics/client";
+import { clearPreReadyLoginStart } from "@/utilities/analytics/emitters/auth";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";
@@ -50,6 +51,9 @@ function PrivyBridgeUpdater() {
   // would have to guess.
   useLogin({
     onComplete: ({ isNewUser, wasAlreadyAuthenticated, loginMethod }) => {
+      // This funnel is closed, so the pre-`ready` start that opened it must not
+      // suppress the next one — that would be a new activation, not a retry.
+      clearPreReadyLoginStart();
       track("login_completed", {
         auth_method: toAuthMethod(loginMethod),
         is_new_user: isNewUser,
