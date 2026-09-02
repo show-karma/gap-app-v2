@@ -50,9 +50,7 @@ const legalLinks = [
   { label: "Privacy", href: PAGES.PRIVACY_POLICY },
 ];
 
-export function Footer() {
-  const currentYear = new Date().getFullYear();
-
+export function Footer({ copyrightYear }: { copyrightYear: number }) {
   return (
     <footer className={cn("w-full bg-background flex flex-col items-center justify-center")}>
       <div className={cn(layoutTheme.padding, "w-full max-w-[1920px] flex flex-col")}>
@@ -139,7 +137,7 @@ export function Footer() {
 
             {/* Copyright */}
             <p className="font-normal text-sm leading-6 text-muted-foreground">
-              © {currentYear} Karma. All rights reserved.
+              © {copyrightYear} Karma. All rights reserved.
             </p>
           </div>
         </div>

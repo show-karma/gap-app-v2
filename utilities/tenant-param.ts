@@ -83,6 +83,24 @@ export function isKnownTenantParam(value: string): boolean {
   return value === KARMA_TENANT_PARAM || resolveWhitelabelFromTenantParam(value) !== null;
 }
 
+/**
+ * The path a blocked `/t/*` request is served from.
+ *
+ * A bodyless 404 is a dead end for whoever lands on one, so the request is
+ * rewritten to a path nothing can match. `app/global-not-found.tsx` answers it
+ * with the branded page and a real 404 — the same answer any other unmatched
+ * URL gets, which is the point: one 404 for the whole app rather than a
+ * special case for this prefix.
+ *
+ * The segment is deliberately not a route. It carries the reason in its own
+ * name so it is self-explanatory in a log line.
+ */
+export const TENANT_NOT_FOUND_SEGMENT = "blocked-internal-path";
+
+export function tenantNotFoundPathname(tenantParam: string): string {
+  return `${TENANT_ROUTE_PREFIX}/${encodeURIComponent(tenantParam)}/${TENANT_NOT_FOUND_SEGMENT}`;
+}
+
 /** Whether a request is addressing the internal prefix directly. Lower-cased so
  *  a `/T/...` probe is blocked by the same rule rather than falling through. */
 export function isTenantRoutePath(pathname: string): boolean {

@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { CANONICAL_HOST, STAGING_HOST } from "@/utilities/domains";
 import {
   isKnownTenantParam,
@@ -7,6 +9,8 @@ import {
   listTenantParams,
   resolveTenantParam,
   resolveWhitelabelFromTenantParam,
+  TENANT_NOT_FOUND_SEGMENT,
+  tenantNotFoundPathname,
   tenantRewritePathname,
 } from "@/utilities/tenant-param";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
@@ -241,5 +245,51 @@ describe("tenantRewritePathname", () => {
     expect(tenantRewritePathname("founders.polygon.technology", "/about")).toBe(
       "/t/founders.polygon.technology/about"
     );
+  });
+});
+
+describe("tenantNotFoundPathname", () => {
+  it("builds a path under the requested tenant", () => {
+    expect(tenantNotFoundPathname(KARMA_TENANT_PARAM)).toBe(
+      `/t/${KARMA_TENANT_PARAM}/${TENANT_NOT_FOUND_SEGMENT}`
+    );
+    expect(tenantNotFoundPathname("app.opgrants.io")).toBe(
+      `/t/app.opgrants.io/${TENANT_NOT_FOUND_SEGMENT}`
+    );
+  });
+
+  it("is itself inside the blocked prefix, so it can never be requested directly", () => {
+    expect(isTenantRoutePath(tenantNotFoundPathname(KARMA_TENANT_PARAM))).toBe(true);
+  });
+
+  it("points at a path no route can match", () => {
+    // The 404 comes from app/global-not-found.tsx, which only runs when the
+    // router matches nothing. A real route here would render instead of 404ing.
+    const tenantRoot = path.join(process.cwd(), "app", "t", "[tenant]");
+    const children = fs.readdirSync(tenantRoot, { withFileTypes: true });
+
+    expect(children.map((entry) => entry.name)).not.toContain(TENANT_NOT_FOUND_SEGMENT);
+    // A dynamic segment at this depth would swallow it and serve a page.
+    expect(
+      children.filter((e) => e.isDirectory() && e.name.startsWith("[")).map((e) => e.name)
+    ).toEqual([]);
+  });
+
+  it("keeps app/global-not-found.tsx, which is what actually answers", () => {
+    // Covers three cases that otherwise fall through to Next's unbranded 404:
+    // any unmatched public URL, the unknown-tenant guard thrown by the root
+    // layout, and this blocked-prefix rewrite. It renders instead of the root
+    // layout, so it must own its <html>/<body>.
+    const page = path.join(process.cwd(), "app", "global-not-found.tsx");
+    expect(fs.existsSync(page)).toBe(true);
+
+    const source = fs.readFileSync(page, "utf-8");
+    expect(source).toContain("<html");
+    expect(source).toContain("<body");
+
+    // The file is inert unless the flag is on — Next 16.3.3 still defaults
+    // experimental.globalNotFound to false.
+    const nextConfig = fs.readFileSync(path.join(process.cwd(), "next.config.ts"), "utf-8");
+    expect(nextConfig).toMatch(/globalNotFound:\s*true/);
   });
 });

@@ -69,6 +69,10 @@ const nextConfig: NextConfig = {
     },
   },
   experimental: {
+    // app/global-not-found.tsx is the 404 for everything the router cannot
+    // match. The flag still exists in 16.3.3 and defaults to false; without it
+    // the file is ignored and Next serves its own unbranded 404.
+    globalNotFound: true,
     optimizePackageImports: [
       "@tremor/react",
       "lucide-react",
