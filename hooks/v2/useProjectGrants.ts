@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { getProjectGrants } from "@/services/project-grants.service";
 import type { Grant } from "@/types/v2/grant";
+import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
 import { queryClient } from "@/utilities/query-client";
 import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -12,6 +13,8 @@ import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
 const EMPTY_GRANTS: Grant[] = [];
 
 interface UseProjectGrantsOptions {
+  /** Opt into a clock-free staleTime so this may render above crawlable content. */
+  prerenderSafe?: boolean;
   /**
    * Whether the request should attach a Privy bearer token.
    * Defaults to `true` for backward compatibility. Public pages (e.g. the
@@ -43,6 +46,8 @@ export function useProjectGrants(projectIdOrSlug: string, options: UseProjectGra
     queryFn: () => getProjectGrants(projectIdOrSlug, { isAuthorized }),
     enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000,
+    // Above crawlable content this must not read the clock. See the constant.
+    ...(options.prerenderSafe ? { staleTime: PRERENDER_SAFE_STALE_TIME } : {}),
   });
 
   const grants = data ?? EMPTY_GRANTS;
