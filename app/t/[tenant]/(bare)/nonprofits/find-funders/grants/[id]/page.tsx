@@ -87,9 +87,11 @@ export async function generateMetadata({
  * `loading.tsx`, so the streamed state is byte-for-byte what this route already
  * showed while it was fully dynamic.
  *
- * This is allowed here in a way it would not be on a crawlable route: nothing
- * under find-funders is in the sitemap, so DEV-612's ban on a boundary above
- * page content does not apply.
+ * This is allowed here in a way it would not be on a crawlable route: these
+ * `[id]` detail routes are not in the sitemap. The section landing and its
+ * `/connect` pages are (app/sitemaps/static/sitemap.ts), so DEV-612's ban on a
+ * boundary above page content is live one level up -- it just does not reach
+ * here.
  */
 export default function GrantPage({ params }: { params: Promise<GrantPageParams> }) {
   return (
