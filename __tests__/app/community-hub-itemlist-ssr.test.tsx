@@ -137,7 +137,7 @@ async function renderPageToHtml(
   searchParams: Record<string, string | string[] | undefined> = {}
 ): Promise<string> {
   const { default: Page } = await import(
-    "@/app/t/[tenant]/community/[communityId]/(with-header)/page"
+    "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/page"
   );
   const ui = await Page({
     params: Promise.resolve({ communityId: COMMUNITY_ID }),

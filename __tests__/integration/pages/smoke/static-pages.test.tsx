@@ -20,19 +20,19 @@ beforeEach(() => {
 
 describe("Static legal pages", () => {
   it("Terms and Conditions renders", async () => {
-    await renderPage(() => import("@/app/t/[tenant]/terms-and-conditions/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/terms-and-conditions/page"));
     expect(
       screen.getByRole("heading", { name: /terms and conditions/i, level: 1 })
     ).toBeInTheDocument();
   });
 
   it("Privacy Policy renders", async () => {
-    await renderPage(() => import("@/app/t/[tenant]/privacy-policy/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/privacy-policy/page"));
     expect(screen.getByRole("heading", { name: /privacy policy/i, level: 1 })).toBeInTheDocument();
   });
 
   it("Create Project Profile renders", async () => {
-    await renderPage(() => import("@/app/t/[tenant]/create-project-profile/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/create-project-profile/page"));
     expect(
       screen.getByRole("heading", { name: /create your project profile/i, level: 1 })
     ).toBeInTheDocument();
@@ -41,126 +41,131 @@ describe("Static legal pages", () => {
 
 describe("Knowledge base pages", () => {
   const knowledgePages: Array<[string, () => Promise<{ default: React.ComponentType }>, RegExp]> = [
-    ["index", () => import("@/app/t/[tenant]/knowledge/page"), /grant funding knowledge base/i],
+    [
+      "index",
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/page"),
+      /grant funding knowledge base/i,
+    ],
     [
       "ai-grant-evaluation",
-      () => import("@/app/t/[tenant]/knowledge/ai-grant-evaluation/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/ai-grant-evaluation/page"),
       /AI[- ]Assisted Grant Evaluation/i,
     ],
     [
       "dao-grant-milestones",
-      () => import("@/app/t/[tenant]/knowledge/dao-grant-milestones/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/dao-grant-milestones/page"),
       /DAO/i,
     ],
     [
       "funding-distribution-mechanisms",
-      () => import("@/app/t/[tenant]/knowledge/funding-distribution-mechanisms/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/funding-distribution-mechanisms/page"),
       /distribution mechanisms/i,
     ],
     [
       "grant-accountability",
-      () => import("@/app/t/[tenant]/knowledge/grant-accountability/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/grant-accountability/page"),
       /grant accountability/i,
     ],
     [
       "grant-document-signing",
-      () => import("@/app/t/[tenant]/knowledge/grant-document-signing/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/grant-document-signing/page"),
       /document signing/i,
     ],
     [
       "grant-fund-disbursement",
-      () => import("@/app/t/[tenant]/knowledge/grant-fund-disbursement/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/grant-fund-disbursement/page"),
       /disbursement/i,
     ],
-    ["grant-kyc", () => import("@/app/t/[tenant]/knowledge/grant-kyc/page"), /kyc/i],
+    ["grant-kyc", () => import("@/app/t/[tenant]/(chrome)/knowledge/grant-kyc/page"), /kyc/i],
     [
       "grant-lifecycle",
-      () => import("@/app/t/[tenant]/knowledge/grant-lifecycle/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/grant-lifecycle/page"),
       /grant lifecycle/i,
     ],
     [
       "how-funders-use-project-profiles",
-      () => import("@/app/t/[tenant]/knowledge/how-funders-use-project-profiles/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/how-funders-use-project-profiles/page"),
       /how funders/i,
     ],
     [
       "impact-measurement",
-      () => import("@/app/t/[tenant]/knowledge/impact-measurement/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/impact-measurement/page"),
       /impact measurement/i,
     ],
     [
       "impact-verification",
-      () => import("@/app/t/[tenant]/knowledge/impact-verification/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/impact-verification/page"),
       /impact/i,
     ],
     [
       "manual-vs-platform-grant-tracking",
-      () => import("@/app/t/[tenant]/knowledge/manual-vs-platform-grant-tracking/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/manual-vs-platform-grant-tracking/page"),
       /manual vs platform/i,
     ],
     [
       "milestones-vs-impact",
-      () => import("@/app/t/[tenant]/knowledge/milestones-vs-impact/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/milestones-vs-impact/page"),
       /milestones vs impact/i,
     ],
     [
       "onchain-project-profiles",
-      () => import("@/app/t/[tenant]/knowledge/onchain-project-profiles/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/onchain-project-profiles/page"),
       /onchain project profiles/i,
     ],
     [
       "onchain-reputation",
-      () => import("@/app/t/[tenant]/knowledge/onchain-reputation/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/onchain-reputation/page"),
       /onchain reputation/i,
     ],
     [
       "project-profiles-as-resumes",
-      () => import("@/app/t/[tenant]/knowledge/project-profiles-as-resumes/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/project-profiles-as-resumes/page"),
       /project profiles/i,
     ],
     [
       "project-profiles-software-vs-nonsoftware",
-      () => import("@/app/t/[tenant]/knowledge/project-profiles-software-vs-nonsoftware/page"),
+      () =>
+        import("@/app/t/[tenant]/(chrome)/knowledge/project-profiles-software-vs-nonsoftware/page"),
       /software/i,
     ],
     [
       "project-profiles",
-      () => import("@/app/t/[tenant]/knowledge/project-profiles/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/project-profiles/page"),
       /project profiles/i,
     ],
     [
       "project-registry",
-      () => import("@/app/t/[tenant]/knowledge/project-registry/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/project-registry/page"),
       /project registr/i,
     ],
     [
       "project-reputation",
-      () => import("@/app/t/[tenant]/knowledge/project-reputation/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/project-reputation/page"),
       /reputation/i,
     ],
     [
       "project-updates-and-reputation",
-      () => import("@/app/t/[tenant]/knowledge/project-updates-and-reputation/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/project-updates-and-reputation/page"),
       /reputation/i,
     ],
     [
       "reputation-compounding",
-      () => import("@/app/t/[tenant]/knowledge/reputation-compounding/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/reputation-compounding/page"),
       /reputation/i,
     ],
     [
       "whitelabel-funding-platforms",
-      () => import("@/app/t/[tenant]/knowledge/whitelabel-funding-platforms/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/whitelabel-funding-platforms/page"),
       /whitelabel/i,
     ],
     [
       "why-grant-programs-fail",
-      () => import("@/app/t/[tenant]/knowledge/why-grant-programs-fail/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/why-grant-programs-fail/page"),
       /grant programs fail/i,
     ],
     [
       "why-grantees-need-project-profiles",
-      () => import("@/app/t/[tenant]/knowledge/why-grantees-need-project-profiles/page"),
+      () => import("@/app/t/[tenant]/(chrome)/knowledge/why-grantees-need-project-profiles/page"),
       /grantees/i,
     ],
   ];

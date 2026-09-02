@@ -94,13 +94,13 @@ const MIN_MEANINGFUL_CHARS = 200;
 
 describe("/seeds — canonical", () => {
   it("self-canonicals instead of inheriting the root layout's '/'", async () => {
-    const { metadata } = await import("@/app/t/[tenant]/seeds/page");
+    const { metadata } = await import("@/app/t/[tenant]/(chrome)/seeds/page");
 
     expect(canonicalOf(metadata)).toBe("/seeds");
   });
 
   it("keeps its bespoke openGraph and twitter copy", async () => {
-    const { metadata } = await import("@/app/t/[tenant]/seeds/page");
+    const { metadata } = await import("@/app/t/[tenant]/(chrome)/seeds/page");
 
     expect(metadata.openGraph?.title).toBe("Karma Seeds - Accept Support Without a Token");
     expect(metadata.twitter?.title).toBe("Karma Seeds - Raise Funds for Your Project");
@@ -180,7 +180,7 @@ describe("/communities — heading survives every query state", () => {
   });
 
   it("self-canonicals at /communities", async () => {
-    const { metadata } = await import("@/app/t/[tenant]/communities/page");
+    const { metadata } = await import("@/app/t/[tenant]/(chrome)/communities/page");
 
     expect(canonicalOf(metadata)).toBe("/communities");
   });
@@ -198,7 +198,7 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
    * as a hidden `<div hidden id="S:n">` chunk.
    */
   async function renderFindFunders(): Promise<{ pageHtml: string }> {
-    const { default: Page } = await import("@/app/t/[tenant]/nonprofits/find-funders/page");
+    const { default: Page } = await import("@/app/t/[tenant]/(bare)/nonprofits/find-funders/page");
     return { pageHtml: renderToString(Page()) };
   }
 
@@ -234,7 +234,7 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
   });
 
   it("self-canonicals at its own path", async () => {
-    const { metadata } = await import("@/app/t/[tenant]/nonprofits/find-funders/page");
+    const { metadata } = await import("@/app/t/[tenant]/(bare)/nonprofits/find-funders/page");
 
     expect(canonicalOf(metadata)).toBe("/nonprofits/find-funders");
   });
@@ -338,7 +338,7 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
    * find-funders keeps its instant loading state.
    */
   it("keeps loading boundaries off the sitemap routes and on the workbench subroutes", () => {
-    const segment = path.join(process.cwd(), "app/t/[tenant]/nonprofits/find-funders");
+    const segment = path.join(process.cwd(), "app/t/[tenant]/(bare)/nonprofits/find-funders");
 
     for (const forbidden of [
       "loading.tsx",

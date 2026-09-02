@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { KARMA_ASSISTANT_PANEL_ID } from "@/components/AgentChat/panel-dom";
 // Deliberately NOT SparklesIcon: sparkles is the app-wide marker for
 // AI-*generated content* (AI evaluation, analysis tabs, inbox scores), so it
@@ -29,7 +29,7 @@ interface NavbarAssistantButtonProps {
  * entry points (community header ⌘K, milestone `@mention` buttons) working
  * unchanged since they all drive the same `setOpen`.
  */
-export function NavbarAssistantButton({ compact = false, className }: NavbarAssistantButtonProps) {
+function NavbarAssistantButtonInner({ compact = false, className }: NavbarAssistantButtonProps) {
   const isOpen = useAgentChatStore((state) => state.isOpen);
   const toggleOpen = useAgentChatStore((state) => state.toggleOpen);
   const pathname = usePathname();
@@ -110,5 +110,27 @@ export function NavbarAssistantButton({ compact = false, className }: NavbarAssi
           below `xl` costs nothing for assistive tech. */}
       {!compact && <span className="hidden whitespace-nowrap xl:inline">Ask Karma</span>}
     </button>
+  );
+}
+
+/**
+ * The `usePathname()` above is the last URL read left in the navbar, and the
+ * navbar is on every route — unguarded it opts the whole app out of static
+ * rendering. It cannot move into the route tree the way the navbar/footer
+ * suppressions did: `/ask-karma` and `/community/<slug>/ask-karma` keep their
+ * chrome, so there is no group boundary to hang the answer on, and the second
+ * lives under the community layout it must stay inside.
+ *
+ * A boundary is free here in the way it is not for the navbar's links: this is
+ * a button that does nothing without JavaScript, so a no-JS reader loses
+ * nothing it could have used, and no crawlable content sits behind it
+ * (DEV-612 is about content and the internal link graph). The fallback is null
+ * for the same reason.
+ */
+export function NavbarAssistantButton(props: NavbarAssistantButtonProps) {
+  return (
+    <Suspense fallback={null}>
+      <NavbarAssistantButtonInner {...props} />
+    </Suspense>
   );
 }

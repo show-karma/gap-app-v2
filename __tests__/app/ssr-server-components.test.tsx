@@ -116,7 +116,7 @@ describe("SSR Server Components", () => {
     // Dynamically import after mocks are set up
     const importPage = async () => {
       const mod = await import(
-        "@/app/t/[tenant]/community/[communityId]/(with-header)/projects/page"
+        "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/projects/page"
       );
       return mod.default;
     };
@@ -336,7 +336,7 @@ describe("SSR Server Components", () => {
 
   describe("RoadmapPage (Project Updates)", () => {
     const importPage = async () => {
-      const mod = await import("@/app/t/[tenant]/project/[projectId]/updates/page");
+      const mod = await import("@/app/t/[tenant]/(chrome)/project/[projectId]/updates/page");
       return mod.default;
     };
 
@@ -373,7 +373,9 @@ describe("SSR Server Components", () => {
 
   describe("CommunityMainPage (with-header)", () => {
     const importPage = async () => {
-      const mod = await import("@/app/t/[tenant]/community/[communityId]/(with-header)/page");
+      const mod = await import(
+        "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/page"
+      );
       return mod.default;
     };
 

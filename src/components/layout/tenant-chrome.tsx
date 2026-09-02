@@ -2,7 +2,7 @@ import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { COPYRIGHT_YEAR } from "@/src/components/footer/copyright-year";
 import { Footer } from "@/src/components/footer/footer";
 import { WhitelabelFooter } from "@/src/components/footer/whitelabel-footer";
-import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
+import { Navbar } from "@/src/components/navbar/navbar";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { toHslToken, type WhitelabelDomain } from "@/utilities/whitelabel-config";
@@ -97,7 +97,17 @@ export async function TenantThemeStyle({ whitelabel }: { whitelabel: Whitelabel 
 export async function TenantNavbar({ whitelabel }: { whitelabel: Whitelabel }) {
   const { isWhitelabel } = await whitelabel;
 
-  return isWhitelabel ? <WhitelabelNavbar /> : <GlobalNavbarSlot />;
+  if (isWhitelabel) return <WhitelabelNavbar />;
+
+  // The spacer offsets the fixed navbar. It used to live in GlobalNavbarSlot
+  // alongside three `pathname.startsWith(...)` suppressions; those are now the
+  // `(bare)` route group, so nothing is left to decide and the slot is gone.
+  return (
+    <>
+      <Navbar />
+      <div data-app-chrome className="h-[var(--navbar-height)]" />
+    </>
+  );
 }
 
 export async function TenantFooter({ whitelabel }: { whitelabel: Whitelabel }) {

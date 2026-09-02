@@ -32,7 +32,7 @@ describe("/blog index page", () => {
     ];
     getPublishedPostsMock.mockResolvedValue(posts);
 
-    const { default: BlogIndexPage } = await import("@/app/t/[tenant]/blog/page");
+    const { default: BlogIndexPage } = await import("@/app/t/[tenant]/(chrome)/blog/page");
     const result = await BlogIndexPage();
     render(result);
 
@@ -47,7 +47,7 @@ describe("/blog index page", () => {
     const posts = [createMockBlogPostSummary({ tags: ["public-goods"] })];
     getPublishedPostsMock.mockResolvedValue(posts);
 
-    const { default: BlogIndexPage } = await import("@/app/t/[tenant]/blog/page");
+    const { default: BlogIndexPage } = await import("@/app/t/[tenant]/(chrome)/blog/page");
     const result = await BlogIndexPage();
     render(result);
 
@@ -61,7 +61,7 @@ describe("/blog index page", () => {
   it("renders a designed empty state when there are no posts", async () => {
     getPublishedPostsMock.mockResolvedValue([]);
 
-    const { default: BlogIndexPage } = await import("@/app/t/[tenant]/blog/page");
+    const { default: BlogIndexPage } = await import("@/app/t/[tenant]/(chrome)/blog/page");
     const result = await BlogIndexPage();
     render(result);
 
@@ -71,7 +71,7 @@ describe("/blog index page", () => {
   it("renders CollectionPage and Breadcrumb JSON-LD", async () => {
     getPublishedPostsMock.mockResolvedValue([]);
 
-    const { default: BlogIndexPage } = await import("@/app/t/[tenant]/blog/page");
+    const { default: BlogIndexPage } = await import("@/app/t/[tenant]/(chrome)/blog/page");
     const result = await BlogIndexPage();
     const { container } = render(result);
 

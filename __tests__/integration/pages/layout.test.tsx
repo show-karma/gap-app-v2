@@ -161,14 +161,23 @@ describe("RootLayout - the request-independent App Shell", () => {
     expect(screen.getByTestId("tenant-store-sync")).toBeInTheDocument();
   });
 
-  it("mounts the tenant-dependent chrome around the page", async () => {
+  it("mounts the tenant-dependent chrome that is not navbar or footer", async () => {
     const { container } = render(await RootLayout({ children: <>Test Content</> }));
 
     expect(screen.getByTestId("tenant-theme-style")).toBeInTheDocument();
-    expect(screen.getByTestId("tenant-navbar")).toBeInTheDocument();
-    expect(screen.getByTestId("tenant-footer")).toBeInTheDocument();
     expect(screen.getByTestId("tenant-json-ld")).toBeInTheDocument();
     expect(container.querySelector("[data-app-content]")).toBeInTheDocument();
+  });
+
+  // Which routes get chrome is answered by the route tree — the `(chrome)` and
+  // `(bare)` groups — not by a `usePathname()` test in a client component. The
+  // root layout must therefore render neither, or the `(bare)` sections would
+  // get the app navbar on top of their own.
+  it("renders no navbar and no footer of its own", async () => {
+    render(await RootLayout({ children: <>Test Content</> }));
+
+    expect(screen.queryByTestId("tenant-navbar")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("tenant-footer")).not.toBeInTheDocument();
   });
 });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
@@ -147,7 +147,6 @@ export const useAuth = () => {
   } = usePrivyBridge();
 
   const router = useRouter();
-  const pathname = usePathname();
   const { isWhitelabel } = useWhitelabel();
 
   // Resolve the wallet representing the authenticated user's identity. See
@@ -205,7 +204,14 @@ export const useAuth = () => {
       // In whitelabel mode, "/" is the community homepage — don't redirect.
       // Skip redirect if create project modal is open (user triggered login from the modal).
       const isCreateModalOpen = useProjectCreateModalStore.getState().isProjectCreateModalOpen;
-      if (pathname === "/" && !isWhitelabel && !isCreateModalOpen) {
+      // Read the path here rather than from `usePathname()`. The value is only
+      // ever consumed inside this effect, and this effect does not list it as
+      // a dependency — it fires on the authenticated transition and closes
+      // over whatever render it was created in. `window.location.pathname` is
+      // the same string at the moment that matters, and dropping the hook
+      // takes the last URL read out of `useAuth`, which the navbar calls on
+      // every route: unguarded it opts the whole app out of prerendering.
+      if (window.location.pathname === "/" && !isWhitelabel && !isCreateModalOpen) {
         const redirectUrl = getPostLoginRedirect();
         if (redirectUrl) {
           router.push(redirectUrl);

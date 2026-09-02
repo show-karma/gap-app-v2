@@ -4,7 +4,7 @@
  * hero + two-row "Why Karma" section (Nonprofit Research + Foundations).
  */
 
-import HomePage from "@/app/t/[tenant]/page";
+import HomePage from "@/app/t/[tenant]/(chrome)/page";
 import { mockAuthState } from "../setup";
 import { createMockAuth, renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";

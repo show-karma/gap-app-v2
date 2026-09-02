@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import AdminNonprofitResearchLayout from "@/app/t/[tenant]/admin/nonprofit-research/layout";
+import AdminNonprofitResearchLayout from "@/app/t/[tenant]/(chrome)/admin/nonprofit-research/layout";
 import { permissionsKeys } from "@/src/core/rbac/hooks/use-permissions";
 
 /**

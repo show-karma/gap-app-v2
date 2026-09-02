@@ -261,7 +261,7 @@ vi.mock("@/components/FundingPlatform/ApplicationView/DeleteApplicationModal", (
 }));
 
 // /donations DonationHistoryList
-vi.mock("@/app/t/[tenant]/donations/components/DonationHistoryList", () => ({
+vi.mock("@/app/t/[tenant]/(chrome)/donations/components/DonationHistoryList", () => ({
   DonationHistoryList: ({ donations }: { donations: unknown[] }) => (
     <div data-testid="donation-history-list">count={donations.length}</div>
   ),
@@ -303,7 +303,7 @@ beforeEach(() => {
 
 describe("/donations page", () => {
   it("renders empty-state when no donations", async () => {
-    await renderClientPage(() => import("@/app/t/[tenant]/donations/page"));
+    await renderClientPage(() => import("@/app/t/[tenant]/(chrome)/donations/page"));
     expect(screen.getByRole("heading", { name: /my donations/i })).toBeInTheDocument();
     expect(screen.getByText(/no donations yet/i)).toBeInTheDocument();
   });
@@ -311,7 +311,9 @@ describe("/donations page", () => {
 
 describe("/community/[communityId]/donate program-select page", () => {
   it("renders programs select when loaded", async () => {
-    await renderClientPage(() => import("@/app/t/[tenant]/community/[communityId]/donate/page"));
+    await renderClientPage(
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/donate/page")
+    );
     // Page either renders the loading state, redirect spinner, or the program
     // selector — all acceptable proof that the module loads & mounts.
     const heading = screen.queryByText(/select.*program/i);
@@ -323,7 +325,7 @@ describe("/community/[communityId]/donate program-select page", () => {
 describe("/community/[communityId]/(with-header)/updates page", () => {
   it("renders updates page with filter controls", async () => {
     await renderClientPage(
-      () => import("@/app/t/[tenant]/community/[communityId]/(with-header)/updates/page")
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/updates/page")
     );
     // Loose: the page should at minimum mount without throwing — assert
     // some text from one of its many states is present.
@@ -336,7 +338,7 @@ describe("/community/[communityId]/(with-header)/updates page", () => {
 describe("/community/[communityId]/manage/funding-platform list page", () => {
   it("renders programs stats or empty state", async () => {
     await renderClientPage(
-      () => import("@/app/t/[tenant]/community/[communityId]/manage/funding-platform/page")
+      () => import("@/app/t/[tenant]/(chrome)/community/[communityId]/manage/funding-platform/page")
     );
     const empty = screen.queryByTestId("no-programs-empty");
     const cards = screen.queryAllByTestId("funding-platform-stats-card");
@@ -349,7 +351,7 @@ describe("/community/[communityId]/manage/funding-platform/[programId]/applicati
     await renderClientPage(
       () =>
         import(
-          "@/app/t/[tenant]/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page"
+          "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page"
         )
     );
     // Page mounts; with no application data it shows a spinner or back nav.
