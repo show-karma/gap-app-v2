@@ -11,6 +11,7 @@ import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { watchCrossTabSession } from "@/utilities/auth/cross-tab-session";
 import { E2E_MOCK_USER_ID, getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 import { hasNonWalletIdentity } from "@/utilities/auth/has-non-wallet-identity";
+import { hasPersistedPrivySession } from "@/utilities/auth/persisted-privy-session";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import {
   __resetUserSwitchGuardForTests,
@@ -478,12 +479,31 @@ export const useAuth = () => {
       // of the auto-login effect — so the funnel opens here rather than at
       // either call site. Calling adaptedLogin on an already-signed-in user is
       // a no-op and must not open a funnel it will never close.
-      // Gated on `ready`: before Privy resolves, `authenticated` is false for
-      // everyone, so a call here cannot tell a signed-out visitor from a
-      // signed-in one whose session has not hydrated yet. Reporting a start
-      // that may already be a no-op is worse than reporting nothing.
+      //
+      // Before Privy resolves, `authenticated` is false for everyone, so it
+      // alone cannot tell a signed-out visitor from a signed-in one whose
+      // session has not hydrated yet. The persisted token settles it: for an
+      // anonymous visitor the SDK is deliberately deferred (idle callback, up
+      // to 5s, or this very click — see `PrivyProviderWrapper`), so the click
+      // that OPENS the funnel almost always lands while `ready` is false. A
+      // plain `ready` gate therefore dropped nearly every start while the
+      // matching `login_completed` — emitted once the SDK is up — still fired,
+      // which is why production showed completions against ~zero starts.
+      //
+      // With no persisted token there is no session to hydrate and the visitor
+      // is certainly signed out, so the start is real. With a token present we
+      // still say nothing: that session may be about to restore, and a start
+      // reported for it would open a funnel nothing closes.
+      //
+      // The two branches are told apart for the emitter: before the SDK loads
+      // the bridge's `login` is a noop and nothing replays the click, so the
+      // visitor sees nothing happen and clicks again once Privy is ready. That
+      // is one funnel opening reached by two clicks, and `emitLoginStarted`
+      // drops the second.
       if (ready && (!authenticated || needsWalletReconnect)) {
         emitLoginStarted(entryPoint, pathname);
+      } else if (!ready && !hasPersistedPrivySession()) {
+        emitLoginStarted(entryPoint, pathname, { beforePrivyReady: true });
       }
 
       if (typeof window !== "undefined" && !authenticated) {
