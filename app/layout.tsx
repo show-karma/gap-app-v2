@@ -41,15 +41,15 @@ import "@/components/Utilities/DynamicStars/styles.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
-import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
-import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
-import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
-import { GlobalNavbarSlot } from "@/src/components/navbar/global-navbar-slot";
-import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
-import type { TenantConfig } from "@/src/infrastructure/types/tenant";
-import { toHslToken, type WhitelabelDomain } from "@/utilities/whitelabel-config";
+import {
+  TenantFooter,
+  TenantJsonLd,
+  TenantNavbar,
+  TenantThemeStyle,
+} from "@/src/components/layout/tenant-chrome";
+import { TenantStoreSync } from "@/src/components/layout/tenant-store-sync";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
@@ -118,43 +118,37 @@ const toasterConfig = {
   containerStyle: { top: 20, right: 20 },
 };
 
-function getWhitelabelThemeStyle(
-  config: WhitelabelDomain | null,
-  tenantConfig: TenantConfig | null
-): React.CSSProperties | undefined {
-  const tenantPrimaryToken = tenantConfig?.theme?.colors?.primary
-    ? (toHslToken(tenantConfig.theme.colors.primary) ?? tenantConfig.theme.colors.primary)
-    : null;
-  const configPrimaryToken = config?.theme?.primaryColor
-    ? toHslToken(config.theme.primaryColor)
-    : null;
-  const primaryToken = configPrimaryToken ?? tenantPrimaryToken;
-  const tenantPrimaryForegroundToken = tenantConfig?.theme?.colors?.buttontext
-    ? toHslToken(tenantConfig.theme.colors.buttontext)
-    : null;
-  const configPrimaryForegroundToken = config?.theme?.buttonTextColor
-    ? toHslToken(config.theme.buttonTextColor)
-    : null;
-  const primaryForegroundToken = configPrimaryForegroundToken ?? tenantPrimaryForegroundToken;
-
-  if (!primaryToken && !primaryForegroundToken) return undefined;
-
-  return {
-    ...(primaryToken ? { "--primary": primaryToken } : {}),
-    ...(primaryForegroundToken ? { "--primary-foreground": primaryForegroundToken } : {}),
-  } as React.CSSProperties;
-}
-
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isWhitelabel, communitySlug, config, tenantConfig } = await getWhitelabelContext();
-  const themeStyle = isWhitelabel ? getWhitelabelThemeStyle(config, tenantConfig) : undefined;
+// Synchronous by design: the layout starts the whitelabel read but never
+// awaits it, so <html>, the fonts, <body> and the theme provider are the same
+// for every route and every host.
+//
+// The promise is created once and handed down two ways: the host-dependent
+// chrome — theme, navbar, footer, JSON-LD — takes it directly, and
+// WhitelabelProvider unwraps it for the ~25 client consumers that expect a
+// plain value.
+//
+// There is deliberately no Suspense boundary anywhere in here. A boundary
+// above the page makes Next stream it as a hidden late chunk that only
+// JavaScript reveals, which is what DEV-612 forbids for sitemap-crawlable
+// routes; one around the navbar and footer costs the page its internal link
+// graph the same way. Without a boundary React holds the shell until the host
+// is known and then emits one complete document — holding, not hiding.
+//
+// So this is the prerequisite, not the finished job: the layout no longer
+// awaits, but WhitelabelProvider still blocks the tree. Making the shell
+// genuinely prerenderable needs that provider to stop blocking, which in turn
+// needs an answer for the crawlable routes — see the PR discussion.
+//
+// generateMetadata above still awaits headers(); metadata resolves off the
+// critical path and does not hold up the shell.
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const whitelabel = getWhitelabelContext();
 
   return (
     <html
       lang="en"
       className={`h-full ${inter.variable} ${displayFont.variable} ${monoFont.variable}`}
       suppressHydrationWarning
-      style={themeStyle}
     >
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "production" && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string} />
@@ -170,16 +164,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           enableSystem={true}
           disableTransitionOnChange
         >
-          <PrivyProviderWrapper tenantConfig={isWhitelabel ? tenantConfig : null}>
-            <WhitelabelProvider
-              isWhitelabel={isWhitelabel}
-              communitySlug={communitySlug}
-              config={config}
-              tenantConfig={tenantConfig ?? null}
-            >
-              {isWhitelabel && tenantConfig && (
-                <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
-              )}
+          <TenantThemeStyle whitelabel={whitelabel} />
+          <PrivyProviderWrapper whitelabel={whitelabel}>
+            <WhitelabelProvider value={whitelabel}>
+              <TenantStoreSync />
               <PermissionsProvider />
               <DeferredLayoutComponents toasterConfig={toasterConfig} />
               <div
@@ -187,15 +175,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
               >
                 <div className="flex flex-col w-full h-full">
-                  {isWhitelabel ? <WhitelabelNavbar /> : <GlobalNavbarSlot />}
+                  <TenantNavbar whitelabel={whitelabel} />
                   {children}
                 </div>
-                <FooterSwitcher isWhitelabel={isWhitelabel} />
+                <TenantFooter whitelabel={whitelabel} />
               </div>
             </WhitelabelProvider>
           </PrivyProviderWrapper>
+          <TenantJsonLd whitelabel={whitelabel} />
         </ThemeProvider>
-        {!isWhitelabel && <OrganizationJsonLd />}
       </body>
     </html>
   );

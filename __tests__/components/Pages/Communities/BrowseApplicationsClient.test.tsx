@@ -302,10 +302,12 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
   const renderWhitelabel = (communityId: string) =>
     render(
       <WhitelabelProvider
-        isWhitelabel
-        communitySlug={communityId}
-        config={null}
-        tenantConfig={null}
+        value={{
+          isWhitelabel: true,
+          communitySlug: communityId,
+          config: null,
+          tenantConfig: null,
+        }}
       >
         <BrowseApplicationsClient communityId={communityId} />
       </WhitelabelProvider>,
