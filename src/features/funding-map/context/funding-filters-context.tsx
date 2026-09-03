@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, type ReactNode, use, useCallback, useMemo, useState } from "react";
 import { DEFAULT_FUNDING_MAP_API_PARAMS } from "../constants/query-keys";
 import type { FundingFilters } from "../hooks/use-funding-filters";
 import type { FetchFundingProgramsParams } from "../types/funding-program";
@@ -76,7 +76,7 @@ export function FundingFiltersProvider({ children }: { children: ReactNode }) {
 export function useFundingFiltersValue(): FundingFiltersState & {
   openProgram: (id: string) => void;
 } {
-  const { apiParams, filters, openProgram } = useContext(FundingFiltersContext);
+  const { apiParams, filters, openProgram } = use(FundingFiltersContext);
   return { apiParams, filters, openProgram };
 }
 
@@ -85,6 +85,6 @@ export function useFundingFiltersValue(): FundingFiltersState & {
  * around it covers no content at all.
  */
 export function useFundingFiltersPublisher() {
-  const { publish, publishOpenProgram } = useContext(FundingFiltersContext);
+  const { publish, publishOpenProgram } = use(FundingFiltersContext);
   return { publish, publishOpenProgram };
 }
