@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, use, useEffect, useMemo, useState } from "react";
 
 const RenderClockCtx = createContext<number | null>(null);
 
@@ -26,7 +26,10 @@ export function RenderClockProvider({
  * the reader happens to look.
  */
 export function useRenderedAt(): number {
-  const renderedAt = useContext(RenderClockCtx);
+  // Unconditional, and first: `use()` may legally be called inside a branch or
+  // after an early return, which `useContext` could not. A clock read a path
+  // can skip is a DEV-612 violation that still type-checks, so it stays here.
+  const renderedAt = use(RenderClockCtx);
   // Outside the app shell (tests, stories) there is no provider; the wall
   // clock is the honest fallback and no prerender is in progress to object.
   const [fallback] = useState(() => renderedAt ?? Date.now());
