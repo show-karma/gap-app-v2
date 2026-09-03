@@ -21,7 +21,9 @@ import {
   useOutreachPreview,
   useSaveDiligenceTemplate,
 } from "@/hooks/useDiligence";
+import { isDiligenceQuotaExhausted } from "@/services/donor-research-billing.service";
 import type { CandidateDiligenceView, DiligenceQuestion } from "@/types/diligence";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import { DILIGENCE_TEMPLATE_LIMITS } from "@/types/diligence";
 import { PAGES } from "@/utilities/pages";
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
@@ -60,24 +62,46 @@ export function AskQuestionsDialog({
   candidateName,
   viewer,
 }: AskQuestionsDialogProps) {
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const handleClose = () => onOpenChange(false);
+  const handleQuotaExhausted = () => {
+    onOpenChange(false);
+    setUpgradeOpen(true);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
-        {/* The portal only mounts children when open, so the template/preview
-            fetches in AskQuestionsBody run lazily — never for closed dialogs —
-            and the edited-body draft resets on close via unmount. */}
-        {open ? (
-          <AskQuestionsBody
-            reportId={reportId}
-            candidateId={candidateId}
-            view={view}
-            candidateName={candidateName ?? null}
-            viewer={viewer}
-            onClose={() => onOpenChange(false)}
-          />
-        ) : null}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+          {/* The portal only mounts children when open, so the template/preview
+              fetches in AskQuestionsBody run lazily — never for closed dialogs —
+              and the edited-body draft resets on close via unmount. */}
+          {open ? (
+            <AskQuestionsBody
+              reportId={reportId}
+              candidateId={candidateId}
+              view={view}
+              candidateName={candidateName ?? null}
+              viewer={viewer}
+              onClose={handleClose}
+              onQuotaExhausted={handleQuotaExhausted}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Mounted only while open — the dialog owns billing queries that a
+          closed prompt has no reason to run. */}
+      {upgradeOpen ? (
+        <UpgradeDialog
+          dimension="diligence"
+          onOpenChange={setUpgradeOpen}
+          open
+          reason="You've used all the diligence rounds on your plan. Upgrade to send more."
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -88,6 +112,8 @@ interface AskQuestionsBodyProps {
   candidateName: string | null;
   viewer: DiligenceViewer;
   onClose: () => void;
+  /** Raised on a 402 diligence-quota refusal so the parent can offer plans. */
+  onQuotaExhausted: () => void;
 }
 
 function AskQuestionsBody({
@@ -97,6 +123,7 @@ function AskQuestionsBody({
   candidateName,
   viewer,
   onClose,
+  onQuotaExhausted,
 }: AskQuestionsBodyProps) {
   // The template is only consulted for the empty guard — the email content
   // itself always comes from the backend preview, which composes from the
@@ -154,7 +181,12 @@ function AskQuestionsBody({
           }
           onClose();
         },
-        onError: () => {
+        onError: (error) => {
+          // Out of diligence rounds is a purchasing decision, not a failure.
+          if (isDiligenceQuotaExhausted(error)) {
+            onQuotaExhausted();
+            return;
+          }
           toast.error("Couldn't send the questions. Please try again.");
         },
       }

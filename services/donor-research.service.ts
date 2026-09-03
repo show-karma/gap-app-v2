@@ -17,6 +17,7 @@ import type {
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
+import { donorQuotaErrorFrom } from "./donor-research-billing.service";
 
 /**
  * Donor-research API client.
@@ -118,7 +119,17 @@ export interface CreateHandleRequest {
 
 export const createDonorHandle = async (body: CreateHandleRequest): Promise<DonorHandle> => {
   // TODO(#1775): add zod schema
-  const data = await api.post<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLES, body);
+  let data: DonorHandle | null;
+  try {
+    data = await api.post<DonorHandle>(INDEXER.DONOR_RESEARCH.HANDLES, body);
+  } catch (error) {
+    // The profile cap answers 402: the advisor is authenticated and authorized,
+    // they have simply reached the donor-profile limit on their plan. Throw the
+    // dimension-specific type so the UI opens the upgrade prompt.
+    const quotaError = donorQuotaErrorFrom(error, "profiles");
+    if (quotaError) throw quotaError;
+    throw error;
+  }
   if (!data) throw new Error("Failed to create donor handle");
   return data;
 };
@@ -369,7 +380,17 @@ export const createResearchReport = async (
   body: CreateReportRequest
 ): Promise<ReportCreateResponse> => {
   // TODO(#1775): add zod schema
-  const data = await api.post<ReportCreateResponse>(INDEXER.DONOR_RESEARCH.REPORTS, body);
+  let data: ReportCreateResponse | null;
+  try {
+    data = await api.post<ReportCreateResponse>(INDEXER.DONOR_RESEARCH.REPORTS, body);
+  } catch (error) {
+    // 402 is the quota gate, not a failure: the advisor is authenticated and
+    // authorized, they are simply out of reports. Throw a distinct type so the
+    // UI opens the upgrade prompt instead of a red error line.
+    const quotaError = donorQuotaErrorFrom(error, "reports");
+    if (quotaError) throw quotaError;
+    throw error;
+  }
   if (!data) throw new Error("Failed to start research report");
   return data;
 };

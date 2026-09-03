@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CTASection } from "@/src/features/donor-advisors/components/cta-section";
 import { FeaturesSection } from "@/src/features/donor-advisors/components/features-section";
 import { Hero } from "@/src/features/donor-advisors/components/hero";
+import { PricingSection } from "@/src/features/donor-advisors/components/pricing-section";
 import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
@@ -23,6 +24,8 @@ export default function DonorAdvisorsPage() {
         <Hero />
         <HorizontalLine className="max-w-full" />
         <FeaturesSection />
+        <HorizontalLine className="max-w-full" />
+        <PricingSection />
         <CTASection />
       </div>
     </main>

@@ -19,6 +19,8 @@ import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorPersona } from "@/hooks/useDonorPersona";
 import { useCreateDonorReport } from "@/hooks/useDonorReports";
+import { isReportQuotaExhausted } from "@/services/donor-research-billing.service";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import { PAGES } from "@/utilities/pages";
 import { buildPersonaPrefill, type PersonaPrefill } from "../../utils/persona-prefill";
 import { DEFAULT_TOP_COUNT, DEFAULT_WEIGHTS_BASIS_POINTS } from "../report-brief/scoring";
@@ -155,6 +157,7 @@ export function CriteriaInputPanel({ initialDonorHandleId }: CriteriaInputPanelP
   const [pendingHandleId, setPendingHandleId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editHandleId, setEditHandleId] = useState<string | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   // A `/new?handle=<id>` seed that matches no loaded handle (stale link,
   // deleted handle, wrong tenant) leaves the picker showing its placeholder
@@ -246,6 +249,14 @@ export function CriteriaInputPanel({ initialDonorHandleId }: CriteriaInputPanelP
       });
       router.push(PAGES.DONOR_RESEARCH.REPORT(result.reportId));
     } catch (error) {
+      // Running out of reports is a purchasing decision, not a failure — offer
+      // the plans instead of a toast + red error line. Every other error keeps
+      // the toast, because the submit button lives in a sticky footer and the
+      // inline banner can land off-screen.
+      if (isReportQuotaExhausted(error)) {
+        setUpgradeOpen(true);
+        return;
+      }
       toast.error(error instanceof Error ? error.message : "Couldn't start the report. Try again.");
     }
   };
@@ -264,7 +275,7 @@ export function CriteriaInputPanel({ initialDonorHandleId }: CriteriaInputPanelP
         personaExists={personaExists}
         prefilledFields={prefilledFields}
         submitError={
-          createReport.isError
+          createReport.isError && !isReportQuotaExhausted(createReport.error)
             ? (createReport.error as Error)?.message || "Couldn't start the report. Try again."
             : null
         }
@@ -307,6 +318,17 @@ export function CriteriaInputPanel({ initialDonorHandleId }: CriteriaInputPanelP
         }}
         open={personaModalOpen}
       />
+
+      {/* Mounted only while open: the dialog owns the plan-catalog and
+          entitlement queries, and neither is worth running for a prompt the
+          advisor never triggered. */}
+      {upgradeOpen ? (
+        <UpgradeDialog
+          onOpenChange={setUpgradeOpen}
+          open
+          reason="You've used all the reports on your plan. Pick a monthly plan to keep researching — your criteria are still here when you get back."
+        />
+      ) : null}
     </>
   );
 }

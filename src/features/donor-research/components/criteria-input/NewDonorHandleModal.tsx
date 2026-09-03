@@ -12,6 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCreateDonorHandle } from "@/hooks/useDonorHandles";
+import { isProfileQuotaExhausted } from "@/services/donor-research-billing.service";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import type { DonorHandle } from "@/types/donor-research";
 import { HandleNotesSection } from "../donor-detail/HandleNotesSection";
 
@@ -253,6 +255,7 @@ export function NewDonorHandleModal({
   const [personaDirty, setPersonaDirty] = useState(false);
   const [notesDirty, setNotesDirty] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -290,6 +293,13 @@ export function NewDonorHandleModal({
         onOpenChange(false);
       }
     } catch (error) {
+      // Hitting the donor-profile cap is a purchasing decision, not a failure:
+      // close this dialog and offer the plans instead of an inline red line.
+      if (isProfileQuotaExhausted(error)) {
+        onOpenChange(false);
+        setUpgradeOpen(true);
+        return;
+      }
       setCreateError(
         error instanceof Error ? error.message : "Couldn't create the donor. Try again."
       );
@@ -341,14 +351,25 @@ export function NewDonorHandleModal({
   }
 
   return (
-    <Dialog onOpenChange={requestClose} open={open}>
-      {activeStep}
-      <DiscardPersonaDialog
-        personaName={activeHandle?.opaqueLabel}
-        onCancel={() => setConfirmDiscard(false)}
-        onDiscard={discardAndClose}
-        open={confirmDiscard}
-      />
-    </Dialog>
+    <>
+      <Dialog onOpenChange={requestClose} open={open}>
+        {activeStep}
+        <DiscardPersonaDialog
+          personaName={activeHandle?.opaqueLabel}
+          onCancel={() => setConfirmDiscard(false)}
+          onDiscard={discardAndClose}
+          open={confirmDiscard}
+        />
+      </Dialog>
+
+      {upgradeOpen ? (
+        <UpgradeDialog
+          dimension="profiles"
+          onOpenChange={setUpgradeOpen}
+          open
+          reason="You've reached the donor-profile limit on your plan. Upgrade to track more donors."
+        />
+      ) : null}
+    </>
   );
 }

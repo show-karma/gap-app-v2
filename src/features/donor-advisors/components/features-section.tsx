@@ -80,7 +80,7 @@ export function FeaturesSection() {
                 className="w-full h-auto"
               />
             </div>
-            <figcaption className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground text-center">
+            <figcaption className="text-xs font-medium tracking-widest uppercase text-muted-foreground text-center">
               {donorResearchBriefPreview.caption}
             </figcaption>
           </figure>

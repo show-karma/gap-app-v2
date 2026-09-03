@@ -17,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useOutreachPreview, useRequestIntro, useUpdateAdvisorEmail } from "@/hooks/useDiligence";
+import { isIntroQuotaExhausted } from "@/services/donor-research-billing.service";
+import { UpgradeDialog } from "@/src/features/donor-research/billing/UpgradeDialog";
 import { OutreachEmailPreview } from "./OutreachEmailPreview";
 import { getOutreachBodyIssue } from "./outreach-body";
 import { NO_CONTACT_FOUND_MESSAGE } from "./outreach-messages";
@@ -65,24 +67,46 @@ export function ConnectDialog({
   candidateName,
   viewer,
 }: ConnectDialogProps) {
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const handleClose = () => onOpenChange(false);
+  const handleQuotaExhausted = () => {
+    onOpenChange(false);
+    setUpgradeOpen(true);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
-        {/* The portal only mounts children when open, so the preview fetch in
-            ConnectBody runs lazily, and closing resets the step, the email
-            form, and the edited-body draft via unmount. */}
-        {open ? (
-          <ConnectBody
-            reportId={reportId}
-            candidateId={candidateId}
-            canConnect={canConnect}
-            candidateName={candidateName ?? null}
-            viewer={viewer}
-            onClose={() => onOpenChange(false)}
-          />
-        ) : null}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+          {/* The portal only mounts children when open, so the preview fetch in
+              ConnectBody runs lazily, and closing resets the step, the email
+              form, and the edited-body draft via unmount. */}
+          {open ? (
+            <ConnectBody
+              reportId={reportId}
+              candidateId={candidateId}
+              canConnect={canConnect}
+              candidateName={candidateName ?? null}
+              viewer={viewer}
+              onClose={handleClose}
+              onQuotaExhausted={handleQuotaExhausted}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Mounted only while open — the dialog owns billing queries that a
+          closed prompt has no reason to run. */}
+      {upgradeOpen ? (
+        <UpgradeDialog
+          dimension="intros"
+          onOpenChange={setUpgradeOpen}
+          open
+          reason="You've used all the warm intros on your plan. Upgrade for more, or buy an intro pack to connect now."
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -93,6 +117,8 @@ interface ConnectBodyProps {
   candidateName: string | null;
   viewer: DiligenceViewer;
   onClose: () => void;
+  /** Raised on a 402 intro-quota refusal so the parent can offer plans. */
+  onQuotaExhausted: () => void;
 }
 
 function ConnectBody({
@@ -102,6 +128,7 @@ function ConnectBody({
   candidateName,
   viewer,
   onClose,
+  onQuotaExhausted,
 }: ConnectBodyProps) {
   const [step, setStep] = useState<Step>("confirm");
   const [emailPrompt, setEmailPrompt] = useState<string | null>(null);
@@ -155,7 +182,13 @@ function ConnectBody({
             onEmailRequired(result.message);
           }
         },
-        onError: () => {
+        onError: (error) => {
+          // Running out of intros is a purchasing decision, not a failure —
+          // close this dialog and offer the upgrade / top-up instead.
+          if (isIntroQuotaExhausted(error)) {
+            onQuotaExhausted();
+            return;
+          }
           toast.error("Couldn't send the intro. Please try again.");
         },
       }

@@ -72,6 +72,9 @@ export const PAGES = {
     ADMIN: `/admin/nonprofit-research`,
     // Advisor's one-per-advisor diligence question template editor (DEV-428).
     DILIGENCE_TEMPLATE: `/nonprofit-research/diligence-template`,
+    // Plan, remaining reports, upgrade, and Stripe billing portal. Also the
+    // Stripe Checkout return target (`?checkout=success|cancel`).
+    BILLING: `/nonprofit-research/billing`,
     // Public nonprofit response page — the secure email link opens this.
     // The token in the path is the capability; no login required.
     DILIGENCE_RESPONSE: (token: string) => `/nonprofit-research/diligence/${token}`,

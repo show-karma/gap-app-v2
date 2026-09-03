@@ -15,6 +15,7 @@ import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { DILIGENCE_ENDPOINTS } from "@/utilities/diligenceEndpoints";
 import { fetchCurrentAdvisor, onboardAdvisor } from "./donor-research.service";
+import { donorQuotaErrorFrom } from "./donor-research-billing.service";
 
 /**
  * Nonprofit-diligence + advisor-intro API client (DEV-428).
@@ -174,6 +175,10 @@ export const askQuestions = async (
       body === undefined ? {} : { body }
     );
   } catch (error) {
+    // 402 is the diligence-quota gate, not a failure — the caller opens the
+    // upgrade prompt off the typed error rather than showing a red line.
+    const quotaError = donorQuotaErrorFrom(error, "diligence");
+    if (quotaError) throw quotaError;
     throw new Error(httpErrorMessage(error) || "Failed to send diligence request");
   }
   if (!data) {
@@ -209,6 +214,10 @@ export const requestIntro = async (
       body === undefined ? {} : { body }
     );
   } catch (error) {
+    // 402 is the intro-quota gate — a purchasing decision, kept distinct from
+    // the 422 email-capture path below, which is recoverable in-dialog.
+    const quotaError = donorQuotaErrorFrom(error, "intros");
+    if (quotaError) throw quotaError;
     if (error instanceof HttpError && error.status === 422) {
       return {
         kind: "email_required",

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { donorEntitlementQueryKey } from "@/hooks/useDonorBilling";
 import {
   type CreateReportRequest,
   createResearchReport,
@@ -6,6 +7,7 @@ import {
   type ListReportsOptions,
   listResearchReports,
 } from "@/services/donor-research.service";
+import { isReportQuotaExhausted } from "@/services/donor-research-billing.service";
 import type {
   ReportCreateResponse,
   ResearchReportDetail,
@@ -58,6 +60,17 @@ export function useCreateDonorReport() {
       queryClient.invalidateQueries({
         queryKey: ["donor-research", "reports"],
       });
+      // A successful create spent a report, so the header badge and billing
+      // page are now stale.
+      queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
+    },
+    onError: (error) => {
+      // A quota refusal means the cached allowance disagrees with the server
+      // (a report ran in another tab, or a subscription lapsed). Re-read it so
+      // the upgrade prompt shows the real numbers.
+      if (isReportQuotaExhausted(error)) {
+        queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
+      }
     },
   });
 }

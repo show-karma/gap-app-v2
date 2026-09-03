@@ -87,6 +87,13 @@ vi.mock("@/src/features/donor-advisors/components/features-section", () => ({
 vi.mock("@/src/features/donor-advisors/components/cta-section", () => ({
   CTASection: () => <div data-testid="donor-advisors-cta" />,
 }));
+// The pricing section reads the live plan catalog through react-query. Mocked
+// like every other section here: this file asserts page COMPOSITION, and a
+// section that needs a provider would otherwise force one on all nine pages.
+// The real component is covered in __tests__/features/donor-advisors.
+vi.mock("@/src/features/donor-advisors/components/pricing-section", () => ({
+  PricingSection: () => <div data-testid="donor-advisors-pricing" />,
+}));
 
 // /funders sections
 vi.mock("@/src/features/funders/components/case-studies-section", () => ({
@@ -261,9 +268,14 @@ describe("/nonprofits marketing page", () => {
 });
 
 describe("/donor-advisors marketing page", () => {
-  it("renders hero, features, cta", async () => {
+  it("renders hero, features, pricing, cta", async () => {
     await renderPage(() => import("@/app/donor-advisors/page"));
-    ["donor-advisors-hero", "donor-advisors-features", "donor-advisors-cta"].forEach((id) => {
+    [
+      "donor-advisors-hero",
+      "donor-advisors-features",
+      "donor-advisors-pricing",
+      "donor-advisors-cta",
+    ].forEach((id) => {
       expect(screen.getByTestId(id)).toBeInTheDocument();
     });
   });

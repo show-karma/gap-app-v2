@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { donorEntitlementQueryKey } from "@/hooks/useDonorBilling";
 import {
   type CreateHandleRequest,
   createDonorHandle,
@@ -79,11 +80,13 @@ export function useCreateDonorHandle() {
   return useMutation({
     mutationFn: (body: CreateHandleRequest) => createDonorHandle(body),
     // Refresh every handle list view so the new handle shows up in the
-    // criteria-form picker and the report-list filter without a refetch.
+    // criteria-form picker and the report-list filter without a refetch, and
+    // the entitlement, because a new handle SPENDS a donor-profile slot.
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["donor-research", "handles"],
       });
+      queryClient.invalidateQueries({ queryKey: donorEntitlementQueryKey });
     },
   });
 }

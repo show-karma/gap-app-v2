@@ -8,6 +8,7 @@ import { BTN_BASE, BTN_MD, BTN_PRIMARY, SK } from "@/components/Pages/Dashboard/
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { useDonorReports } from "@/hooks/useDonorReports";
 import { Link } from "@/src/components/navigation/Link";
+import { ReportQuotaBadge } from "@/src/features/donor-research/billing/ReportQuotaBadge";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { ReportListPanel } from "../report-list/ReportListPanel";
@@ -148,10 +149,15 @@ export function DonorResearchHome() {
             recent 990 filings, and live activity signals.
           </p>
         </div>
-        <Link className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY)} href={PAGES.DONOR_RESEARCH.NEW}>
-          <SoftIcon className="h-4 w-4" name="plus" />
-          New report
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* How many reports are left to spend, next to the action that
+              spends one. */}
+          <ReportQuotaBadge />
+          <Link className={cn(BTN_BASE, BTN_MD, BTN_PRIMARY)} href={PAGES.DONOR_RESEARCH.NEW}>
+            <SoftIcon className="h-4 w-4" name="plus" />
+            New report
+          </Link>
+        </div>
       </header>
 
       <ReportsStats />
