@@ -198,7 +198,9 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
    * as a hidden `<div hidden id="S:n">` chunk.
    */
   async function renderFindFunders(): Promise<{ pageHtml: string }> {
-    const { default: Page } = await import("@/app/t/[tenant]/(bare)/nonprofits/find-funders/(landing-nav)/page");
+    const { default: Page } = await import(
+      "@/app/t/[tenant]/(bare)/nonprofits/find-funders/(landing-nav)/page"
+    );
     return { pageHtml: renderToString(Page()) };
   }
 
@@ -234,7 +236,9 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
   });
 
   it("self-canonicals at its own path", async () => {
-    const { metadata } = await import("@/app/t/[tenant]/(bare)/nonprofits/find-funders/(landing-nav)/page");
+    const { metadata } = await import(
+      "@/app/t/[tenant]/(bare)/nonprofits/find-funders/(landing-nav)/page"
+    );
 
     expect(canonicalOf(metadata)).toBe("/nonprofits/find-funders");
   });

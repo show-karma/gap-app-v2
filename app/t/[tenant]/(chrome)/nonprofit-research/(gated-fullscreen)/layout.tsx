@@ -1,6 +1,4 @@
-import {
-  DonorResearchSectionLayout,
-} from "@/src/features/donor-research/components/common/donor-research-section-layout";
+import { DonorResearchSectionLayout } from "@/src/features/donor-research/components/common/donor-research-section-layout";
 
 /**
  * Onboarding: gated like the advisor routes, but full-screen. It creates the
@@ -9,6 +7,12 @@ import {
  * the user saw a second, differently-worded sign-in screen. It brings its own
  * chrome, so it renders outside the advisor shell.
  */
-export default function DonorResearchGatedFullscreenLayout({ children }: { children: React.ReactNode }) {
-  return <DonorResearchSectionLayout mode="gated-fullscreen">{children}</DonorResearchSectionLayout>;
+export default function DonorResearchGatedFullscreenLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <DonorResearchSectionLayout mode="gated-fullscreen">{children}</DonorResearchSectionLayout>
+  );
 }
