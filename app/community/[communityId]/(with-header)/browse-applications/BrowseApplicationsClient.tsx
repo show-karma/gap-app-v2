@@ -6,16 +6,22 @@ import pluralize from "pluralize";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+import { TrackAsProgramFilter } from "@/components/Pages/Communities/Impact/TrackAsProgramFilter";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
+import { useApplicationsByTrack } from "@/hooks/useApplicationsByTrack";
 import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
-import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
+import {
+  EXPLORER_NAV_OVERRIDES,
+  isTracksAsPrimaryExplorerFacet,
+} from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
 import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
+import { StatusPill } from "./BrowseApplicationsTable";
 
 interface BrowseApplicationsClientProps {
   communityId: string;
@@ -57,65 +63,6 @@ const statusOptions: Array<{
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Declined" },
 ];
-
-interface StatusStyle {
-  pill: string;
-  dot: string;
-  label: string;
-}
-
-const STATUS_STYLES: Record<ApplicationStatus, StatusStyle> = {
-  under_review: {
-    pill: "bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
-    dot: "bg-blue-500",
-    label: "Under review",
-  },
-  pending: {
-    pill: "bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
-    dot: "bg-blue-500",
-    label: "Pending",
-  },
-  resubmitted: {
-    pill: "bg-violet-50 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300",
-    dot: "bg-violet-500",
-    label: "Resubmitted",
-  },
-  revision_requested: {
-    pill: "bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-300",
-    dot: "bg-amber-600",
-    label: "Needs info",
-  },
-  approved: {
-    pill: "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
-    dot: "bg-emerald-500",
-    label: "Approved",
-  },
-  rejected: {
-    pill: "bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300",
-    dot: "bg-red-600",
-    label: "Declined",
-  },
-  draft: {
-    pill: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-    dot: "bg-zinc-500",
-    label: "Draft",
-  },
-};
-
-function StatusPill({ status }: { status: ApplicationStatus }) {
-  const style = STATUS_STYLES[status] ?? STATUS_STYLES.draft;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold",
-        style.pill
-      )}
-    >
-      <span className={cn("h-1.5 w-1.5 rounded-full", style.dot)} aria-hidden />
-      {style.label}
-    </span>
-  );
-}
 
 interface ApplicationsPageData {
   applications: Application[];
@@ -252,11 +199,20 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   const {
     programId: selectedProgramId,
     setProgramId: setSelectedProgramId,
+    trackId: selectedTrackId,
+    setTrackId: setSelectedTrackId,
     status: statusFilter,
     setStatus: setStatusFilter,
     search: searchInput,
     setSearch: setSearchInput,
   } = useBrowseApplicationFilters();
+
+  // Filecoin browses this tab by track, matching its projects explorer. An
+  // application has no track of its own — it inherits the one its funded
+  // project carries, so the two queries below resolve the track's projects and
+  // keep the applications pointing at them.
+  const tracksAsPrimaryFacet = isTracksAsPrimaryExplorerFacet(communityId);
+
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
 
   // Debounce only the value that drives the API query; the URL write is already
@@ -265,6 +221,16 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 500);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  const byTrack = useApplicationsByTrack({
+    communityId,
+    enabled: tracksAsPrimaryFacet,
+    trackId: selectedTrackId,
+    programs,
+    status: statusFilter,
+    search: debouncedSearch,
+    getTitle: getProjectTitle,
+  });
 
   const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
   const hasPrivateApplicationsSetting =
@@ -296,7 +262,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     ];
   }, [programMetrics]);
 
-  const chipCounts: Record<ApplicationStatus | "all", number> = useMemo(() => {
+  const programChipCounts: Record<ApplicationStatus | "all", number> = useMemo(() => {
     return {
       all: programMetrics?.totalApplications ?? 0,
       pending: programMetrics?.pendingApplications ?? 0,
@@ -309,41 +275,62 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     };
   }, [programMetrics]);
 
-  const { data, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery<ApplicationsPageData>({
-      queryKey: [
-        "wl-browse-applications",
-        communityId,
-        selectedProgramId,
-        statusFilter,
-        debouncedSearch,
-      ],
-      queryFn: async ({ pageParam }) => {
-        const page = pageParam as number;
-        const statusParam = statusFilter === "all" ? "" : `&status=${statusFilter}`;
-        const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "";
+  const {
+    data,
+    isLoading: isProgramLoading,
+    error: programError,
+    refetch: refetchProgram,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<ApplicationsPageData>({
+    queryKey: [
+      "wl-browse-applications",
+      communityId,
+      selectedProgramId,
+      statusFilter,
+      debouncedSearch,
+    ],
+    queryFn: async ({ pageParam }) => {
+      const page = pageParam as number;
+      const statusParam = statusFilter === "all" ? "" : `&status=${statusFilter}`;
+      const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "";
 
-        // TODO(#1775): add zod schema
-        return await api.get<ApplicationsPageData>(
-          `/v2/funding-applications/program/${selectedProgramId}?page=${page}&limit=100${statusParam}${searchParam}`,
-          { isAuthorized: false }
-        );
-      },
-      initialPageParam: 1,
-      getNextPageParam: (lastPage) => {
-        if (lastPage.pagination.page < lastPage.pagination.totalPages) {
-          return lastPage.pagination.page + 1;
-        }
-        return undefined;
-      },
-      enabled: !!selectedProgramId && !hasPrivateApplicationsSetting,
-      // Re-selecting a status chip you already viewed serves the cached page
-      // instead of re-hitting the API on every toggle.
-      staleTime: 1000 * 60 * 2, // 2 minutes
-    });
+      // TODO(#1775): add zod schema
+      return await api.get<ApplicationsPageData>(
+        `/v2/funding-applications/program/${selectedProgramId}?page=${page}&limit=100${statusParam}${searchParam}`,
+        { isAuthorized: false }
+      );
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
+    enabled: !tracksAsPrimaryFacet && !!selectedProgramId && !hasPrivateApplicationsSetting,
+    // Re-selecting a status chip you already viewed serves the cached page
+    // instead of re-hitting the API on every toggle.
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
 
-  const applications = data?.pages.flatMap((page) => page.applications) || [];
-  const totalCount = data?.pages[0]?.pagination.total ?? 0;
+  const applications = tracksAsPrimaryFacet
+    ? byTrack.applications
+    : data?.pages.flatMap((page) => page.applications) || [];
+  const totalCount = tracksAsPrimaryFacet
+    ? byTrack.totalCount
+    : (data?.pages[0]?.pagination.total ?? 0);
+
+  const isLoading = tracksAsPrimaryFacet ? byTrack.isLoading : isProgramLoading;
+  const error = tracksAsPrimaryFacet ? byTrack.error : programError;
+  const refetch = tracksAsPrimaryFacet ? byTrack.refetch : refetchProgram;
+  /** Whether the user has picked the thing this tab is browsed by. */
+  const hasSelection = tracksAsPrimaryFacet ? !!selectedTrackId : !!selectedProgramId;
+  const showPrivateNotice = !tracksAsPrimaryFacet && Boolean(hasPrivateApplicationsSetting);
+  const selectedTrackName = byTrack.trackName;
+
+  const chipCounts = tracksAsPrimaryFacet ? byTrack.chipCounts : programChipCounts;
 
   const handleClearFilters = useCallback(() => {
     setSearchInput("");
@@ -372,10 +359,15 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const applicationCount = programMetrics?.totalApplications ?? 0;
-  const headerSubtitle = selectedProgram
+  // In track mode the count is the loaded track, not a program's metrics, and
+  // the trailing name is the track the user picked.
+  const applicationCount = tracksAsPrimaryFacet
+    ? totalCount
+    : (programMetrics?.totalApplications ?? 0);
+  const selectionName = tracksAsPrimaryFacet ? selectedTrackName : selectedProgram?.name;
+  const headerSubtitle = hasSelection
     ? `${applicationCount} ${pluralize(itemNoun, applicationCount)}${
-        selectedProgram.name ? ` · ${selectedProgram.name}` : ""
+        selectionName ? ` · ${selectionName}` : ""
       }`
     : `Choose a program to browse public ${pluralize(itemNoun, 2)}.`;
 
@@ -393,7 +385,15 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
       </header>
 
       {/* Program selector: same labeled dropdown used on projects/updates/financials */}
-      {programs.length > 0 ? (
+      {tracksAsPrimaryFacet ? (
+        <div className="w-[260px] max-lg:w-full">
+          <TrackAsProgramFilter
+            communityUid={byTrack.communityUid}
+            selectedTrackId={selectedTrackId || null}
+            onChange={(trackId) => setSelectedTrackId(trackId ?? "")}
+          />
+        </div>
+      ) : programs.length > 0 ? (
         <div className="flex w-[260px] flex-col gap-1.5 max-lg:w-full">
           <label
             htmlFor="browse-applications-program"
@@ -414,10 +414,10 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
         </div>
       ) : null}
 
-      {selectedProgramId && statItems ? <StatStrip items={statItems} /> : null}
+      {hasSelection && statItems ? <StatStrip items={statItems} /> : null}
 
       {/* Filters: search + status chips inline */}
-      {selectedProgramId && !hasPrivateApplicationsSetting ? (
+      {hasSelection && !showPrivateNotice ? (
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search
@@ -491,8 +491,8 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
       ) : null}
 
       {/* Applications table / empty / error / private */}
-      {selectedProgramId ? (
-        hasPrivateApplicationsSetting ? (
+      {hasSelection ? (
+        showPrivateNotice ? (
           <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
             <Lock className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
             <h3 className="mb-2 text-xl font-semibold text-foreground">Private applications</h3>
