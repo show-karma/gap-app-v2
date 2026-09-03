@@ -12,7 +12,6 @@ import {
   type CommunityProjectsSearchParams,
   DEFAULT_COMMUNITY_SORT,
   mapSortToApiValue,
-  parseCommunityProjectsPage,
 } from "@/utilities/queries/v2/communityProjectsRequest";
 import {
   getCommunityCategoriesCached,
@@ -38,18 +37,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: `Browse the full list of grants and funded projects by ${communityName}. Filter by category, track milestones, and explore grantee progress on ${PROJECT_NAME}.`,
   };
 }
-
-// Filter query params the client hub reads through nuqs. When any is present
-// the server payload (fetched unfiltered) is not what the page renders — the
-// client refetches with the filters applied — so the JSON-LD ItemList below
-// must not describe it (DEV-596).
-const FILTER_SEARCH_PARAMS = [
-  "categories",
-  "sortBy",
-  "maturityStage",
-  "programId",
-  "trackIds",
-] as const;
 
 export default async function Page(props: Props) {
   const { communityId } = await props.params;

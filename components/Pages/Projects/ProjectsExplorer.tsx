@@ -1,27 +1,15 @@
 "use client";
 
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import type { InfiniteData } from "@tanstack/react-query";
-import debounce from "lodash.debounce";
-import { useQueryState } from "nuqs";
-import { Suspense, useEffect, useRef, useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Suspense, useRef, useState } from "react";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite";
-import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import type { ExplorerSortByOptions } from "@/types/explorer";
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
 import {
   type ProjectsExplorerState,
   parseProjectsExplorerRequest,
 } from "@/utilities/projects-explorer-request";
-import { queryClient } from "@/utilities/query-client";
 import { CrawlableProjectsPagination } from "./CrawlablePagination";
 import { ProjectsLoading } from "./Loading";
 import { ProjectCard } from "./ProjectCard";
@@ -45,7 +33,6 @@ interface ProjectsExplorerProps {
 
 export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorerProps = {}) => {
   const sectionRef = useRef<HTMLElement>(null);
-  const hasScrolledRef = useRef(false);
 
   // No URL read here: nuqs calls useSearchParams(), which aborts the prerender
   // of this crawlable route. The controls own the reads and publish the live

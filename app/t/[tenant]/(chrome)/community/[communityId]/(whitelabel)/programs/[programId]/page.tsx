@@ -16,7 +16,6 @@ import { INDEXER } from "@/utilities/indexer";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { DEFAULT_DESCRIPTION, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { FALLBACK_PROGRAM_PAIRS, withPrerenderFallback } from "@/utilities/prerender-samples";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 import ProgramDetailClient from "./ProgramDetailClient";
 
