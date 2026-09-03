@@ -27,6 +27,13 @@ env:
   NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
   NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
   NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
+  # Model auth: OpenRouter's Anthropic-compatible endpoint, bearer key in
+  # ANTHROPIC_AUTH_TOKEN. The main model is set explicitly per invocation; the
+  # aliases only cover the background (haiku) and subagent roles.
+  ANTHROPIC_BASE_URL: https://openrouter.ai/api
+  ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+  ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
+  CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
 
 concurrency:
   group: qa-pipeline-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
@@ -347,12 +354,6 @@ jobs:
       - name: Generate QA Plan
         if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: z-ai/glm-5.3
-          ANTHROPIC_DEFAULT_SONNET_MODEL: z-ai/glm-5.3
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
-          CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -730,12 +731,6 @@ jobs:
       - name: Execute QA Plan (shard ${{ matrix.shard }})
         if: steps.shard-count.outputs.shard_count != '0'
         env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: z-ai/glm-5.3
-          ANTHROPIC_DEFAULT_SONNET_MODEL: z-ai/glm-5.3
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
-          CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
@@ -1330,12 +1325,6 @@ jobs:
       - name: Run Dogfood Exploration (shard ${{ matrix.shard }})
         if: steps.scope.outputs.scope_pages != ''
         env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: z-ai/glm-5.3
-          ANTHROPIC_DEFAULT_SONNET_MODEL: z-ai/glm-5.3
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
-          CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
