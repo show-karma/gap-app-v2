@@ -347,11 +347,16 @@ jobs:
       - name: Generate QA Plan
         if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_BASE_URL: https://openrouter.ai/api
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: z-ai/glm-5.3
+          ANTHROPIC_DEFAULT_SONNET_MODEL: z-ai/glm-5.3
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
+          CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          claude --print --dangerously-skip-permissions \
+          claude --print --dangerously-skip-permissions --model z-ai/glm-5.3 \
             "You are a strict senior QA engineer. Read and follow the skill at .claude/skills/qa-plan-generator/SKILL.md exactly.
             PR number: $PR_NUMBER.
             Generate a QA plan for this PR. Save to qa-plan.md.
@@ -725,7 +730,12 @@ jobs:
       - name: Execute QA Plan (shard ${{ matrix.shard }})
         if: steps.shard-count.outputs.shard_count != '0'
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_BASE_URL: https://openrouter.ai/api
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: z-ai/glm-5.3
+          ANTHROPIC_DEFAULT_SONNET_MODEL: z-ai/glm-5.3
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
+          CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
@@ -769,7 +779,7 @@ jobs:
           rc=0
           timeout --kill-after=10s --signal=TERM 14m \
             stdbuf -oL -eL \
-            claude --print --debug --dangerously-skip-permissions "$PROMPT" \
+            claude --print --debug --dangerously-skip-permissions --model z-ai/glm-5.3 "$PROMPT" \
             > qa-output/claude-stdout-${SHARD_ID}.log \
             2> qa-output/claude-stderr-${SHARD_ID}.log \
             || rc=$?
@@ -1320,7 +1330,12 @@ jobs:
       - name: Run Dogfood Exploration (shard ${{ matrix.shard }})
         if: steps.scope.outputs.scope_pages != ''
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_BASE_URL: https://openrouter.ai/api
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: z-ai/glm-5.3
+          ANTHROPIC_DEFAULT_SONNET_MODEL: z-ai/glm-5.3
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
+          CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
@@ -1335,7 +1350,7 @@ jobs:
           # every tool call.
           START_TS=$(date +%s)
           export START_TS
-          claude --print --dangerously-skip-permissions \
+          claude --print --dangerously-skip-permissions --model z-ai/glm-5.3 \
             "You are a strict senior QA engineer doing focused exploratory dogfood testing.
             PR #$PR_NUMBER. Target: http://localhost:3000 (always — never a preview/vercel URL).
             SHARD_ID=$SHARD_ID. SCOPE_PAGES=$SCOPE_PAGES.
