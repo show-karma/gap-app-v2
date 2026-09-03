@@ -4,7 +4,6 @@ import type { InfiniteData } from "@tanstack/react-query";
 import { Suspense, useRef, useState } from "react";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite";
-import type { ExplorerSortByOptions } from "@/types/explorer";
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
 import {
   type ProjectsExplorerState,
@@ -14,15 +13,6 @@ import { CrawlableProjectsPagination } from "./CrawlablePagination";
 import { ProjectsLoading } from "./Loading";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectsExplorerControls } from "./ProjectsExplorerControls";
-
-export const sortOptions: Record<ExplorerSortByOptions, string> = {
-  createdAt: "Recently Added",
-  updatedAt: "Recently Updated",
-  title: "Title",
-  noOfGrants: "No. of Grants",
-  noOfProjectMilestones: "No. of Roadmap items",
-  noOfGrantMilestones: "No. of Milestones",
-};
 
 interface ProjectsExplorerProps {
   /** Server-rendered first page for the initial (matching) request. */

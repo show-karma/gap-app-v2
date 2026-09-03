@@ -20,7 +20,7 @@ import {
   type ProjectsExplorerState,
   parseProjectsExplorerRequest,
 } from "@/utilities/projects-explorer-request";
-import { sortOptions } from "./ProjectsExplorer";
+import { sortOptions } from "./sortOptions";
 
 /**
  * The explorer's controls, and the only place `/projects` reads the URL.

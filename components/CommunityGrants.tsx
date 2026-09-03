@@ -11,10 +11,12 @@ import { useRenderedAt } from "@/utilities/render-clock-context";
 import {
   CommunityGrantsToolbar,
   CommunityGrantsToolbarSkeleton,
-  type CommunityProjectFilters,
-  sameCommunityProjectFilters,
 } from "./CommunityGrants/CommunityGrantsToolbar";
 import { CrawlableCommunityPagination } from "./CommunityGrants/CrawlableCommunityPagination";
+import {
+  type CommunityProjectFilters,
+  sameCommunityProjectFilters,
+} from "./CommunityGrants/communityProjectFilters";
 import { ProjectsGrid } from "./CommunityGrants/ProjectsGrid";
 import { ProjectsGridSkeleton } from "./CommunityGrants/ProjectsGridSkeleton";
 import { ProgramBanner } from "./ProgramBanner";
