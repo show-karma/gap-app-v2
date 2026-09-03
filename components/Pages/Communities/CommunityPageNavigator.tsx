@@ -99,8 +99,22 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   },
 ] as const;
 
-const getPathWithProgramId = (program: string | null, basePath: string) => {
-  return program ? `${basePath}?programId=${program}` : basePath;
+/**
+ * Appends the active `programId`/`trackIds` filter to a tab's link so it
+ * survives switching tabs (Explorer -> Impact -> Reports -> ...). `trackIds`
+ * is forwarded as-is — it is already the comma-joined string nuqs stores in
+ * the URL (see `useProjectFilters`'s `trackIds` serializer).
+ */
+const getPathWithFilterParams = (
+  programId: string | null,
+  trackIds: string | null,
+  basePath: string
+) => {
+  const filterParams = new URLSearchParams();
+  if (programId) filterParams.set("programId", programId);
+  if (trackIds) filterParams.set("trackIds", trackIds);
+  const query = filterParams.toString();
+  return query ? `${basePath}?${query}` : basePath;
 };
 
 /**
@@ -122,6 +136,7 @@ export const CommunityPageNavigator = () => {
   const rawPathname = usePathname();
   const { isWhitelabel } = useWhitelabel();
   const programId = searchParams.get("programId");
+  const trackIds = searchParams.get("trackIds");
   // In whitelabel mode, the middleware rewrites the root to /community/<slug>/funding-opportunities
   // but usePathname() still returns "/". Normalize so tab highlighting works correctly.
   const isWhitelabelRoot = isWhitelabel && (rawPathname === "/" || rawPathname === "");
@@ -205,7 +220,7 @@ export const CommunityPageNavigator = () => {
           <Link
             key={id}
             ref={active ? activeLinkRef : undefined}
-            href={getPathWithProgramId(programId, href)}
+            href={getPathWithFilterParams(programId, trackIds, href)}
             className={cn(baseLinkStyle, active ? activeLinkStyle : inactiveLinkStyle)}
           >
             <Icon

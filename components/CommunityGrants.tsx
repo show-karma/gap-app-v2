@@ -8,6 +8,7 @@ import { useProjectFilters } from "@/hooks/useProjectFilters";
 import { useCommunityStore } from "@/store/community";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import type { CommunityProjects } from "@/types/v2/community";
+import { isTracksAsPrimaryExplorerFacet } from "@/utilities/community-flags";
 import { CategoryFilter } from "./CommunityGrants/CategoryFilter";
 import { CrawlableCommunityPagination } from "./CommunityGrants/CrawlableCommunityPagination";
 import { MaturityStageFilter } from "./CommunityGrants/MaturityStageFilter";
@@ -15,6 +16,7 @@ import { ProjectsGrid } from "./CommunityGrants/ProjectsGrid";
 import { ProjectsGridSkeleton } from "./CommunityGrants/ProjectsGridSkeleton";
 import { SortFilter } from "./CommunityGrants/SortFilter";
 import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
+import { TrackAsProgramFilter } from "./Pages/Communities/Impact/TrackAsProgramFilter";
 import { TrackFilter } from "./Pages/Communities/Impact/TrackFilter";
 import { ProgramBanner } from "./ProgramBanner";
 import { errorManager } from "./Utilities/errorManager";
@@ -48,6 +50,7 @@ export const CommunityGrants = ({
   const params = useParams();
   const communityId = params.communityId as string;
   const { setFilteredStats, setIsLoadingFilters } = useCommunityStore();
+  const tracksAsPrimaryFacet = isTracksAsPrimaryExplorerFacet(communityId);
 
   const {
     selectedCategories,
@@ -217,14 +220,35 @@ export const CommunityGrants = ({
     [changeTrackIds]
   );
 
+  // Under TRACKS_AS_PRIMARY_EXPLORER_FACET the primary dropdown selects a
+  // track directly — write trackIds and make sure no stale programId lingers
+  // (the program/batch dropdown is not rendered for these communities, so
+  // programId should never be set, but a hand-typed or carried-over URL param
+  // could still have one).
+  const handleTrackFacetChange = useCallback(
+    async (trackId: string | null) => {
+      await changeProgramId(null);
+      await changeTrackIds(trackId ? [trackId] : null);
+    },
+    [changeProgramId, changeTrackIds]
+  );
+
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
         <div className="flex items-stretch sm:items-end gap-x-3 flex-wrap gap-y-3 w-full">
-          <ProgramFilter onChange={handleProgramChange} />
+          {tracksAsPrimaryFacet ? (
+            <TrackAsProgramFilter
+              communityUid={communityUid}
+              selectedTrackId={selectedTrackIds?.[0] ?? null}
+              onChange={handleTrackFacetChange}
+            />
+          ) : (
+            <ProgramFilter onChange={handleProgramChange} />
+          )}
 
           <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-y-3 gap-x-8 justify-start flex-wrap sm:pb-3">
-            {selectedProgramId && (
+            {!tracksAsPrimaryFacet && selectedProgramId && (
               <TrackFilter
                 onChange={handleTrackChange}
                 communityUid={communityUid}
