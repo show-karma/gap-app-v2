@@ -138,6 +138,16 @@ export const INDEXER = {
         return `/v2/funding-program-configs/${programId}/check-permission?${params.toString()}`;
       },
       MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
+      INTEGRATION_SIMOCRACY: (programId: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy`,
+      SIMOCRACY_COUNCIL: (programId: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy/council`,
+      SIMOCRACY_SIM_PERSONA: (programId: string, simUri: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy/sim-persona?simUri=${encodeURIComponent(simUri)}`,
+      SIM_LINKS: (programId: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy/sim-links`,
+      SIMOCRACY_CREDENTIAL: (programId: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy/credential`,
       PROMPTS: {
         GET: (programId: string) => `/v2/funding-program-configs/${programId}/prompts`,
         SAVE: (programId: string, promptType: "external" | "internal") =>
@@ -183,6 +193,12 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/grantee-contacts`,
       REVIEWER_INBOX: (communityId: string, qs?: string) =>
         `/v2/funding-applications/community/${communityId}/reviewer-inbox${qs ? `?${qs}` : ""}`,
+      INTEGRATIONS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/integrations`,
+      INTEGRATION_SIMOCRACY: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/integrations/simocracy`,
+      SIMOCRACY_FEEDBACK: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/integrations/simocracy/feedback`,
     },
     AUTH: {
       PERMISSIONS: (params?: {

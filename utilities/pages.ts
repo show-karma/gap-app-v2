@@ -90,6 +90,8 @@ export const PAGES = {
         `/community/${community}/manage/funding-platform/${programId}/question-builder`,
       SETUP: (community: string, programId: string) =>
         `/community/${community}/manage/funding-platform/${programId}/setup`,
+      INTEGRATIONS: (community: string, programId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/integrations`,
       MILESTONES: (
         community: string,
         programId: string,

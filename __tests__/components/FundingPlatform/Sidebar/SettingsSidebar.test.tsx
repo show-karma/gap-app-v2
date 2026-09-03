@@ -269,12 +269,12 @@ describe("SettingsSidebar", () => {
       render(<SettingsSidebar {...defaultProps} />);
 
       const buttons = screen.getAllByRole("button");
-      // 6 navigation items (help tooltips were removed to keep sidebar clean)
-      expect(buttons.length).toBe(6);
+      // 7 navigation items (help tooltips were removed to keep sidebar clean)
+      expect(buttons.length).toBe(7);
 
       // Verify all navigation buttons have proper text content
       const navButtons = buttons.filter((btn) => btn.querySelector(".text-sm"));
-      expect(navButtons.length).toBe(6);
+      expect(navButtons.length).toBe(7);
     });
   });
 

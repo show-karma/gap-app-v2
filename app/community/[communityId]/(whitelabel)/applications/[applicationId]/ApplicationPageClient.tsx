@@ -4,7 +4,10 @@ import { ArrowLeft } from "lucide-react";
 import pluralize from "pluralize";
 import { useCallback, useMemo } from "react";
 import { ApplicationDataView } from "@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationDataView";
+import { IntegrationsTab } from "@/components/FundingPlatform/ApplicationView/IntegrationsTab";
+import { useApplicationIntegrations } from "@/hooks/useApplicationIntegrations";
 import { useAuth } from "@/hooks/useAuth";
+import { isIntegrationEnabled } from "@/services/fundingApplicationIntegrations.service";
 import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
@@ -165,6 +168,9 @@ export function ApplicationPageClient({
   // Persistent tab bar: Details is always present; Milestones / Post Approval
   // appear only when there's data; Comments appears when the viewer has an
   // activity surface (authenticated timeline or enabled public comments).
+  const { data: integrationsIndex } = useApplicationIntegrations(application.referenceNumber);
+  const showSimocracy = isIntegrationEnabled(integrationsIndex, "simocracy");
+
   const tabs = useMemo<TabDescriptor[]>(() => {
     const list: TabDescriptor[] = [
       { key: "details", label: "Application Details", Icon: TAB_ICONS.details },
@@ -183,12 +189,22 @@ export function ApplicationPageClient({
     if (hasCommentsSurface) {
       list.push({ key: "comments", label: "Comments", Icon: TAB_ICONS.comments });
     }
+    if (showSimocracy) {
+      list.push({ key: "simocracy", label: "Simocracy", Icon: TAB_ICONS.simocracy });
+    }
     // Reviewer/admin-only — never added for applicants/guests (fail-closed).
     if (canViewNotes) {
       list.push({ key: "notes", label: "Notes", Icon: TAB_ICONS.notes });
     }
     return list;
-  }, [hasMilestones, milestoneCount, showPostApproval, hasCommentsSurface, canViewNotes]);
+  }, [
+    hasMilestones,
+    milestoneCount,
+    showPostApproval,
+    hasCommentsSurface,
+    canViewNotes,
+    showSimocracy,
+  ]);
 
   // A lone Details tab isn't worth a switcher — render the card directly.
   const hasTabs = tabs.length > 1;
@@ -286,6 +302,9 @@ export function ApplicationPageClient({
             />
           )}
           {hasTabs && activeTab === "comments" && commentsSection}
+          {hasTabs && activeTab === "simocracy" && showSimocracy && (
+            <IntegrationsTab referenceNumber={application.referenceNumber} />
+          )}
           {hasTabs && activeTab === "notes" && canViewNotes && (
             <PrivateNotesTab
               referenceNumber={application.referenceNumber}
