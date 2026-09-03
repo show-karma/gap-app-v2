@@ -12,6 +12,15 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+# Model auth: OpenRouter's Anthropic-compatible endpoint, bearer key in
+# ANTHROPIC_AUTH_TOKEN. The main model is set explicitly per invocation; the
+# aliases only cover the background (haiku) and subagent roles.
+env:
+  ANTHROPIC_BASE_URL: https://openrouter.ai/api
+  ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+  ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
+  CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
+
 jobs:
   claude:
     if: |
@@ -31,16 +40,6 @@ jobs:
       group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
-    env:
-      # CI review runs on GLM 5.3 through OpenRouter's Anthropic-compatible endpoint.
-      # Claude Code sends ANTHROPIC_AUTH_TOKEN as a bearer token; the same key also
-      # goes to anthropic_api_key below only to satisfy the action's auth check.
-      ANTHROPIC_BASE_URL: https://openrouter.ai/api
-      ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-      ANTHROPIC_DEFAULT_OPUS_MODEL: z-ai/glm-5.3
-      ANTHROPIC_DEFAULT_SONNET_MODEL: z-ai/glm-5.3
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: z-ai/glm-5.3-flash
-      CLAUDE_CODE_SUBAGENT_MODEL: z-ai/glm-5.3
     permissions:
       contents: write
       pull-requests: write
