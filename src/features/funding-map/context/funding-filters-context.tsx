@@ -1,16 +1,8 @@
 "use client";
 
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { DEFAULT_FUNDING_MAP_API_PARAMS } from "../constants/query-keys";
-import { type FundingFilters, useFundingFilters } from "../hooks/use-funding-filters";
+import type { FundingFilters } from "../hooks/use-funding-filters";
 import type { FetchFundingProgramsParams } from "../types/funding-program";
 
 /**
