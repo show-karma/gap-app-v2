@@ -122,8 +122,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // `themeColor` is serialised into a <meta name="theme-color"> tag the browser
+  // reads before any stylesheet, so it takes a literal colour: a Tailwind class
+  // or a var(--token) reference would render as that string.
   themeColor: [
+    // design-check-ignore: DS002 meta theme-color takes a literal, not a token.
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    // design-check-ignore: DS002 meta theme-color takes a literal, not a token.
     { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
