@@ -86,14 +86,6 @@ const nextConfig: NextConfig = {
   // still win. Requires cacheComponents and does nothing without it.
   partialPrefetching: true,
   experimental: {
-    // TEMPORARY DIAGNOSTIC — REMOVE BEFORE MERGE.
-    //
-    // `prerenderEarlyExit` defaults to true, so the build dies on the FIRST
-    // route that fails to prerender and reports only that one. While P2-6 is
-    // being triaged we want the whole list from a single remote build, which
-    // is what the readiness proof's pass 3 did locally. This line exists to
-    // produce that list and must not survive into a merged flip.
-    prerenderEarlyExit: false,
     // app/global-not-found.tsx is the 404 for everything the router cannot
     // match. The flag still exists in 16.3.3 and defaults to false; without it
     // the file is ignored and Next serves its own unbranded 404.
