@@ -1,6 +1,4 @@
-import {
-  DonorResearchSectionLayout,
-} from "@/src/features/donor-research/components/common/donor-research-section-layout";
+import { DonorResearchSectionLayout } from "@/src/features/donor-research/components/common/donor-research-section-layout";
 
 /**
  * The two anonymous token routes -- the donor share view and the nonprofit
