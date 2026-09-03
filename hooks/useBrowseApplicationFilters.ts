@@ -19,6 +19,9 @@ const isFilterableStatus = (value: string | null): value is ApplicationStatus =>
 interface BrowseApplicationFiltersState {
   programId: string;
   setProgramId: (value: string) => void;
+  /** Single track id, for communities that browse by track instead of by program. */
+  trackId: string;
+  setTrackId: (value: string) => void;
   status: BrowseApplicationStatusFilter;
   setStatus: (value: BrowseApplicationStatusFilter) => void;
   search: string;
@@ -36,6 +39,13 @@ interface BrowseApplicationFiltersState {
  */
 export function useBrowseApplicationFilters(): BrowseApplicationFiltersState {
   const [programId, setProgramId] = useQueryState("programId", {
+    defaultValue: "",
+    clearOnDefault: true,
+  });
+
+  // Named `trackIds` to match the explorer, so a track carried across tabs by
+  // CommunityPageNavigator lands on the same param here.
+  const [trackId, setTrackId] = useQueryState("trackIds", {
     defaultValue: "",
     clearOnDefault: true,
   });
@@ -58,6 +68,8 @@ export function useBrowseApplicationFilters(): BrowseApplicationFiltersState {
   return {
     programId,
     setProgramId,
+    trackId,
+    setTrackId,
     status,
     setStatus,
     search,
