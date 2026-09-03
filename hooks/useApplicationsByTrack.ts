@@ -41,6 +41,7 @@ interface UseApplicationsByTrackOptions {
   communityId: string;
   /** Off for communities that browse this tab by program; nothing is fetched. */
   enabled: boolean;
+  /** Empty is the dropdown's "All Programs" option: every track, unfiltered. */
   trackId: string;
   programs: ApplicationProgram[];
   status: ApplicationStatus | "all";
@@ -90,14 +91,20 @@ export function useApplicationsByTrack({
       publicPrograms.map((program) => program.programId).join(","),
     ],
     queryFn: async () => {
-      const projects = await api.get<{ payload: { uid: string }[] }>(
-        INDEXER.COMMUNITY.V2.PROJECTS(communityId, {
-          limit: 100,
-          selectedTrackIds: [trackId],
-        }),
-        { isAuthorized: false }
-      );
-      const trackProjectUIDs = new Set((projects?.payload ?? []).map((project) => project.uid));
+      // No track selected is the dropdown's "All Programs" option, which is
+      // every public application with no track narrowing at all — so the
+      // track's projects are only resolved when there is a track to resolve.
+      let trackProjectUIDs: Set<string> | null = null;
+      if (trackId) {
+        const projects = await api.get<{ payload: { uid: string }[] }>(
+          INDEXER.COMMUNITY.V2.PROJECTS(communityId, {
+            limit: 100,
+            selectedTrackIds: [trackId],
+          }),
+          { isAuthorized: false }
+        );
+        trackProjectUIDs = new Set((projects?.payload ?? []).map((project) => project.uid));
+      }
 
       // The API caps `limit` at 100 and a batch can exceed that (Filecoin's
       // Batch 2 holds 106), so every remaining page is fetched — one page
@@ -120,13 +127,16 @@ export function useApplicationsByTrack({
         })
       );
 
-      return [...firstPages, ...restPages]
-        .flatMap((page) => page?.applications ?? [])
-        .filter(
-          (application) => application.projectUID && trackProjectUIDs.has(application.projectUID)
-        );
+      const allApplications = [...firstPages, ...restPages].flatMap(
+        (page) => page?.applications ?? []
+      );
+      if (!trackProjectUIDs) return allApplications;
+      const uids = trackProjectUIDs;
+      return allApplications.filter(
+        (application) => application.projectUID && uids.has(application.projectUID)
+      );
     },
-    enabled: enabled && !!trackId && publicPrograms.length > 0,
+    enabled: enabled && publicPrograms.length > 0,
     staleTime: 1000 * 60 * 2,
   });
 

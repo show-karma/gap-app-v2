@@ -350,8 +350,6 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
     const user = userEvent.setup();
     renderWhitelabel("filecoin");
 
-    expect(screen.getByText("Choose a program to browse public projects.")).toBeInTheDocument();
-
     // filecoin browses this tab by track, so the selection is a track — the
     // noun in the count still has to follow the heading.
     await selectProgram(user, "Kernel");
@@ -472,6 +470,33 @@ describe("BrowseApplicationsClient - browsing by track", () => {
       expect(screen.queryByText("Not in this track")).not.toBeInTheDocument();
       expect(screen.queryByText("Never funded")).not.toBeInTheDocument();
     });
+  });
+
+  it("lists every public application when no track is picked", async () => {
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    // "All Programs" is the dropdown's no-track state, and it is where the page
+    // lands — it must show the whole catalog, not the "choose a program" prompt.
+    expect(await screen.findByText("A Kernel project")).toBeInTheDocument();
+    expect(await screen.findByText("A Kernel project on page two")).toBeInTheDocument();
+    expect(await screen.findByText("Not in this track")).toBeInTheDocument();
+    // An application whose project was never funded carries no track, so this
+    // is the only view it can appear in.
+    expect(await screen.findByText("Never funded")).toBeInTheDocument();
+  });
+
+  it("goes back to the whole catalog when the track is cleared", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByLabelText("Choose Program"));
+    await user.click(await screen.findByRole("button", { name: "Kernel" }));
+    await waitFor(() => expect(screen.queryByText("Not in this track")).not.toBeInTheDocument());
+
+    // The dropdown stays open after a pick, so "All Programs" is still there.
+    await user.click(await screen.findByRole("button", { name: "All Programs" }));
+
+    expect(await screen.findByText("Not in this track")).toBeInTheDocument();
   });
 
   it("puts the track in the URL as trackIds, the same param the explorer uses", async () => {

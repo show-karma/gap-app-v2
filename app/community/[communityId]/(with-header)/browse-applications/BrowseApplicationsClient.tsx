@@ -325,8 +325,13 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   const isLoading = tracksAsPrimaryFacet ? byTrack.isLoading : isProgramLoading;
   const error = tracksAsPrimaryFacet ? byTrack.error : programError;
   const refetch = tracksAsPrimaryFacet ? byTrack.refetch : refetchProgram;
-  /** Whether the user has picked the thing this tab is browsed by. */
-  const hasSelection = tracksAsPrimaryFacet ? !!selectedTrackId : !!selectedProgramId;
+  /**
+   * Whether there is a list to show. Browsing by track always has one: no track
+   * selected is the dropdown's "All Programs" option, which lists every public
+   * application. Browsing by program still needs a program — that dropdown has
+   * no "all" option and each program is a separate API call.
+   */
+  const hasSelection = tracksAsPrimaryFacet || !!selectedProgramId;
   const showPrivateNotice = !tracksAsPrimaryFacet && Boolean(hasPrivateApplicationsSetting);
   const selectedTrackName = byTrack.trackName;
 
