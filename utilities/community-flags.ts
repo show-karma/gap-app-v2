@@ -49,3 +49,21 @@ export const EXPLORER_NAV_OVERRIDES: Readonly<Partial<Record<string, ExplorerNav
     tabLabels: { "browse-applications": "Browse Projects" },
   },
 };
+
+/**
+ * Communities whose project explorer is browsed by Track (a community's
+ * funding initiatives, e.g. Kernel / R&D / Revenue Development) instead of by
+ * Program (a funding round, e.g. Batch 1/2/3). For these communities the
+ * explorer's primary dropdown lists the community's tracks and writes the
+ * `trackIds` URL param instead of `programId`; the program/batch dropdown is
+ * not shown. Label text stays "Choose Program" — the tenant's own vocabulary
+ * calls tracks "funding programs".
+ *
+ * Keyed by the `communityId` ROUTE PARAM (the slug as it appears in the URL),
+ * same caveat as {@link EXPLORER_NAV_OVERRIDES}.
+ */
+export const TRACKS_AS_PRIMARY_EXPLORER_FACET: readonly string[] = ["filecoin"];
+
+/** Whether the explorer for this community should be browsed by Track instead of Program. */
+export const isTracksAsPrimaryExplorerFacet = (communityId: string): boolean =>
+  TRACKS_AS_PRIMARY_EXPLORER_FACET.includes(communityId);
