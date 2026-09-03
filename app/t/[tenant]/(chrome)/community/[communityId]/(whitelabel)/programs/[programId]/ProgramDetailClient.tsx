@@ -9,6 +9,7 @@ import { useProgram } from "@/features/programs/hooks/use-program";
 import { Link } from "@/src/components/navigation/Link";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 import { getProgramStatusInfo, isProgramEnabled } from "@/utilities/funding-programs";
+import { useRenderNow } from "@/utilities/render-clock-context";
 import { cn } from "@/utilities/tailwind";
 
 function ProgramDetailContent() {
@@ -19,6 +20,9 @@ function ProgramDetailContent() {
 
   // Renders above the crawlable program content on a Cache-class route.
   const { program, loading, error, refetch } = useProgram(programId, { prerenderSafe: true });
+  // The deadline is judged during render, above the crawlable program body, so
+  // it reads the render clock: `new Date()` here aborts the prerender.
+  const now = useRenderNow();
 
   // Loading state
   if (loading) {
@@ -82,8 +86,8 @@ function ProgramDetailContent() {
     );
   }
 
-  const isEnabled = isProgramEnabled(program);
-  const statusInfo = getProgramStatusInfo(program);
+  const isEnabled = isProgramEnabled(program, now);
+  const statusInfo = getProgramStatusInfo(program, now);
   const description = program.metadata?.description || "No description available";
 
   return (

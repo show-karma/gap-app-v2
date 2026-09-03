@@ -15,6 +15,7 @@ import { ProgramCardSkeleton } from "@/src/features/programs/components/ProgramC
 import { usePrograms } from "@/src/features/programs/hooks/use-programs";
 import type { ProgramStatus } from "@/types/whitelabel-entities";
 import formatCurrency from "@/utilities/formatCurrency";
+import { useRenderNow } from "@/utilities/render-clock-context";
 import { cn } from "@/utilities/tailwind";
 
 const STATUS_TABS: Array<{ key: ProgramStatus | "all"; label: string }> = [
@@ -165,20 +166,23 @@ export default function FundingOpportunitiesClient() {
     { prerenderSafe: true }
   );
 
+  // The KPI strip judges deadlines during render, above the crawlable
+  // directory — so it reads the render clock, never `new Date()`.
+  const now = useRenderNow();
   const stats = useMemo(() => {
     let totalPool = 0;
     let openCount = 0;
     let closingNow = 0;
     let applicants = 0;
     for (const p of programs) {
-      const v = computeProgramView(p);
+      const v = computeProgramView(p, now);
       totalPool += v.pool;
       applicants += v.applicants;
       if (v.status === "open") openCount += 1;
       if (v.urgency === "urgent" || v.urgency === "closing") closingNow += 1;
     }
     return { totalPool, openCount, closingNow, applicants };
-  }, [programs]);
+  }, [programs, now]);
 
   const featured = programs[0];
   const others = programs.slice(1);
