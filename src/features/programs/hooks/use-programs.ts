@@ -5,12 +5,15 @@ import type { FundingProgram, ProgramFilters, ProgramStatus } from "@/types/whit
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
+import { useRenderNow } from "@/utilities/render-clock-context";
 import { DEFAULT_PROGRAMS_LIMIT, PROGRAMS_LIST_STALE_TIME } from "../lib/constants";
 import { useProgramsStore } from "../lib/store";
 import type { UseProgramsReturn } from "../types";
 
-function matchesStatus(program: FundingProgram, status: ProgramStatus): boolean {
-  const now = new Date();
+// `now` is an argument rather than a clock read: this runs during render on
+// the funding-opportunities directory, above crawlable content, where
+// cacheComponents rejects `new Date()`. Callers pass `useRenderNow()`.
+function matchesStatus(program: FundingProgram, status: ProgramStatus, now: Date): boolean {
   const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
   const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
@@ -46,6 +49,7 @@ export function usePrograms(
     hasUserChangedFilters,
   } = useProgramsStore();
   const filters = { ...initialFilters, ...storeFilters };
+  const now = useRenderNow();
 
   const { data, isLoading, error, refetch } = useQuery<{
     programs: FundingProgram[];
@@ -73,7 +77,7 @@ export function usePrograms(
   const programs = useMemo(() => {
     let result = allPrograms;
     if (filters.status) {
-      result = result.filter((p) => matchesStatus(p, filters.status!));
+      result = result.filter((p) => matchesStatus(p, filters.status!, now));
     }
     if (filters.search) {
       const term = filters.search.toLowerCase();
@@ -85,7 +89,7 @@ export function usePrograms(
       );
     }
     return result;
-  }, [allPrograms, filters.status, filters.search]);
+  }, [allPrograms, filters.status, filters.search, now]);
 
   // If the default Active filter is in effect but the community has no active
   // programs, fall back to showing all so the page isn't empty by default.
@@ -96,11 +100,11 @@ export function usePrograms(
     if (!fetchedPrograms || fetchedPrograms.length === 0) return;
     if (hasUserChangedFilters) return;
     if (storeFilters.status !== "active") return;
-    if (fetchedPrograms.some((p) => matchesStatus(p, "active"))) return;
+    if (fetchedPrograms.some((p) => matchesStatus(p, "active", now))) return;
 
     const { status: _status, ...rest } = storeFilters;
     applyAutoFilters(rest);
-  }, [fetchedPrograms, hasUserChangedFilters, storeFilters, applyAutoFilters]);
+  }, [fetchedPrograms, hasUserChangedFilters, storeFilters, applyAutoFilters, now]);
 
   return {
     programs,

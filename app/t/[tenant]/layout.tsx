@@ -47,6 +47,8 @@ import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantJsonLd, TenantThemeStyle } from "@/src/components/layout/tenant-chrome";
 import { TenantStoreSync } from "@/src/components/layout/tenant-store-sync";
+import { RenderClockProvider } from "@/utilities/render-clock-context";
+import { getRenderClock } from "@/utilities/render-clock-server";
 import { isKnownTenantParam, KARMA_TENANT_PARAM } from "@/utilities/tenant-param";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
@@ -170,7 +172,7 @@ const toasterConfig = {
 // cacheComponents and partialPrefetching are still OFF. This layout is the
 // prerequisite they were waiting on, not the flip itself.
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // The only await in here. `/t/<tenant>` is an internal prefix the proxy
+  // The only request-derived await in here. `/t/<tenant>` is an internal prefix the proxy
   // writes and the browser never sees, so a value the proxy would not have
   // produced means a hand-crafted URL: 404 rather than a silent fall back to
   // karma. Unlike the old `headers()` read this resolves from the matched
@@ -180,6 +182,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (!isKnownTenantParam(tenantParam)) notFound();
 
   const whitelabel = getWhitelabelContext();
+
+  // The one clock read the shell makes, and it is a cached one: `Date.now()`
+  // in a Client Component aborts a cacheComponents prerender, so every
+  // component that needs "now" during render reads it from this provider
+  // (`useRenderNow()`) instead. Cached with `cacheLife("minutes")`, it does
+  // not make the shell dynamic; it is prerendered like any other cached value.
+  const renderedAt = await getRenderClock();
 
   return (
     <html
@@ -204,21 +213,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <TenantThemeStyle whitelabel={whitelabel} />
           <PrivyProviderWrapper whitelabel={whitelabel}>
             <WhitelabelProvider value={whitelabel}>
-              <TenantStoreSync />
-              <PermissionsProvider />
-              <DeferredLayoutComponents toasterConfig={toasterConfig} />
-              {/* The page column. Navbar and footer are supplied by the
+              <RenderClockProvider renderedAt={renderedAt}>
+                <TenantStoreSync />
+                <PermissionsProvider />
+                <DeferredLayoutComponents toasterConfig={toasterConfig} />
+                {/* The page column. Navbar and footer are supplied by the
                   `(chrome)` group's layout, which renders inside here; the
                   `(bare)` group's layout renders the same column without
                   them. This wrapper stays at the root because the embed
                   stylesheet targets `[data-app-content]` on every route,
                   chrome or not. */}
-              <div
-                data-app-content
-                className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
-              >
-                {children}
-              </div>
+                <div
+                  data-app-content
+                  className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
+                >
+                  {children}
+                </div>
+              </RenderClockProvider>
             </WhitelabelProvider>
           </PrivyProviderWrapper>
           <TenantJsonLd whitelabel={whitelabel} />

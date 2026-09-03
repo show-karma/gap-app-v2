@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
+import { useRenderNow } from "@/utilities/render-clock-context";
 import { cn } from "@/utilities/tailwind";
 
 type Urgency = "open" | "closing" | "urgent" | "closed" | "upcoming";
@@ -30,8 +31,16 @@ function parseAmount(raw?: string | number): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function computeProgramView(program: FundingProgram): ProgramComputed {
-  const now = new Date();
+/**
+ * `now` is taken as an argument because this runs during render on the
+ * funding-opportunities directory, above crawlable content: a clock read there
+ * aborts the cacheComponents prerender. Components pass `useRenderNow()`; the
+ * default keeps the pure-function callers (tests, server code) unchanged.
+ */
+export function computeProgramView(
+  program: FundingProgram,
+  now: Date = new Date()
+): ProgramComputed {
   const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
   const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
 
@@ -100,7 +109,8 @@ interface EditorialProgramCardProps {
 }
 
 export function EditorialProgramCard({ program, communityId }: EditorialProgramCardProps) {
-  const view = computeProgramView(program);
+  const now = useRenderNow();
+  const view = computeProgramView(program, now);
   const title = program.metadata?.title ?? program.name ?? "Untitled program";
   const description = program.metadata?.shortDescription ?? program.metadata?.description ?? "";
   const href = PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, program.programId);
