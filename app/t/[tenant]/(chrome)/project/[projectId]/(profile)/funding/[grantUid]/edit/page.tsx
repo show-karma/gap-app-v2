@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getProjectGrants } from "@/services/project-grants.service";
+import { publicReadOptions } from "@/utilities/api/public-read";
 import {
   generateGrantEditMetadata,
   generateProjectFundingMetadata,
@@ -16,7 +17,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { projectId, grantUid } = await params;
   const [projectInfo, grants] = await Promise.all([
     getProjectCachedData(projectId),
-    getProjectGrants(projectId),
+    // Metadata is a shared, cacheable read: no token on the server, the same
+    // public grant list the layout reads (D2).
+    getProjectGrants(projectId, publicReadOptions()),
   ]);
 
   if (!projectInfo) {
