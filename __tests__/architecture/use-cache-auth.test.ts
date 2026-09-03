@@ -51,15 +51,13 @@ import {
  * Reachable, unguarded `api.*` calls as of this commit.
  *
  * Format: `<entry file>#<entry fn> -> <file holding the call>:<method>`.
- * Alpha owns these loaders and is fixing them; this list is the ratchet, not a
- * blessing.
+ *
+ * Empty, and it stays that way. The one entry this ratchet was created for —
+ * `getCommunityCategoriesCached` reaching `getCommunityCategoriesOrThrow`'s
+ * optionless `api.get` — was fixed with `publicReadOptions()`, so the stale
+ * check below now enforces the absence. Never add an entry: fix the loader.
  */
-const KNOWN_OFFENDERS: ReadonlySet<string> = new Set([
-  // getCommunityCategoriesOrThrow calls api.get with NO options at all, so it
-  // defaults to isAuthorized: true. Reached from the cached loader through the
-  // React cache() wrapper. This is the hub failure; Alpha is fixing it.
-  "utilities/queries/v2/getCommunityData.cached.ts#getCommunityCategoriesCached -> utilities/queries/v2/getCommunityData.ts:get",
-]);
+const KNOWN_OFFENDERS: ReadonlySet<string> = new Set<string>([]);
 
 const ROOT = process.env.D2_GUARD_ROOT ?? process.cwd();
 
