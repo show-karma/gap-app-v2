@@ -110,7 +110,10 @@ export const fundingProgramsService = {
     const url = qs ? `${INDEXER.V2.REGISTRY.GET_TYPES}?${qs}` : INDEXER.V2.REGISTRY.GET_TYPES;
 
     // TODO(#1775): add zod schema
-    const response = await api.get<TypeCount[]>(url);
+    // publicReadOptions() even though no cached scope reaches this today: it is
+    // public registry data, and the cost of the authorized default is a
+    // server-side cookies() read plus a trap for whoever caches this next.
+    const response = await api.get<TypeCount[]>(url, publicReadOptions());
 
     if (!response) {
       throw new Error("Failed to fetch type counts");
@@ -125,7 +128,10 @@ export const fundingProgramsService = {
    */
   async getOrganizationFilters(): Promise<OrganizationFiltersResponse> {
     // TODO(#1775): add zod schema
-    const response = await api.get<OrganizationFiltersResponse>(INDEXER.V2.REGISTRY.GET_FILTERS);
+    const response = await api.get<OrganizationFiltersResponse>(
+      INDEXER.V2.REGISTRY.GET_FILTERS,
+      publicReadOptions()
+    );
 
     return response || { options: [] };
   },

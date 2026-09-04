@@ -215,7 +215,12 @@ describe("PublicControlCenter", () => {
   it("renders the four KPI counts the heading used to carry", () => {
     render(<PublicControlCenter />, { wrapper });
 
-    for (const label of ["Tracked grants", "Signed agreements", "Disbursements", "Awaiting action"]) {
+    for (const label of [
+      "Tracked grants",
+      "Signed agreements",
+      "Disbursements",
+      "Awaiting action",
+    ]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
   });

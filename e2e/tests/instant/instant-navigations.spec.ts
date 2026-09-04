@@ -63,6 +63,26 @@ const SENTINEL_KEY = "__instantNavSentinel";
 /** How long to let a prefetch land before clicking anyway. */
 const PREFETCH_GRACE_MS = 2_000;
 
+/** How long to let a dropdown open, and to let its modal state lift again. */
+const MENU_OPEN_TIMEOUT_MS = 2_000;
+const MENU_CLOSE_TIMEOUT_MS = 5_000;
+
+/**
+ * The cookie `instant()` uses to hold the navigation lock, and how long to wait
+ * for a page load's in-flight write of it to finish.
+ *
+ * `@next/playwright` documents the hazard in `releaseInstantCookie`: a locked
+ * MPA page load re-writes this cookie asynchronously, and the client only stops
+ * writing once it observes the deletion — an event that races the pending
+ * write. Its own release loop is bounded at five attempts for exactly that
+ * reason. The same race runs the other way at acquire time: `instant()` clears
+ * the cookie before setting it, so a write still in flight from the `goto()`
+ * that opened the source page can land afterwards and leave the scope holding a
+ * cookie it did not write.
+ */
+const INSTANT_LOCK_COOKIE = "next-instant-navigation-testing";
+const LOCK_SETTLE_TIMEOUT_MS = 5_000;
+
 /**
  * How long to keep looking for a link before deciding the page does not have
  * one. Several of the index pages render their cards client-side — measured on
@@ -94,32 +114,101 @@ function skipUnlessFound(link: Locator | null, message: string): asserts link is
  * repeated, leaving the successful one open for the click.
  */
 async function findLink(page: Page, pattern: RegExp): Promise<Locator | null> {
-  const scan = async (): Promise<Locator | null> => {
-    const anchors = page.locator('a[href^="/"]');
-    const count = await anchors.count();
-    for (let index = 0; index < count; index++) {
-      const anchor = anchors.nth(index);
-      const href = await anchor.getAttribute("href");
-      if (href !== null && pattern.test(href)) return anchor;
-    }
-    return null;
+  // Returns the matching *href*, not a locator. Three reasons, all measured:
+  //
+  // One round trip instead of one per anchor. The previous shape called
+  // `getAttribute` inside a loop, a separate protocol call each time; `/` holds
+  // 60+ internal anchors once a dropdown is open and this scan re-runs every
+  // LINK_DISCOVERY_POLL_MS, which exhausted the 30s test budget mid-scan
+  // (observed failing at anchor 62) before the dropdown fallback was reached.
+  //
+  // And an index is not a stable handle. Returning `anchors.nth(i)` produced a
+  // locator re-resolved at use time against a DOM that had since re-rendered:
+  // test 1 asked for `/projects`, and by the time it hovered, index 23 had
+  // become `<a href="/community/celopg">` — an animating pill that never went
+  // stable, so the hover hung until the test timed out. Keying on the href
+  // survives re-renders and cannot silently select a different destination.
+  //
+  // And rendered anchors only. Responsive layouts ship the same link twice — the
+  // project profile has its tab bar in both a `lg:hidden` mobile copy and a
+  // desktop copy — and the mobile one is `display: none` at the test viewport,
+  // so it has no client rects. Taking it would hand back a link no user can
+  // click: test 8 selected exactly that copy and sat in
+  // `scrollIntoViewIfNeeded` ("element is not visible") until the test timed
+  // out. `getClientRects()` is empty only for genuinely unrendered elements,
+  // so an off-screen link that just needs scrolling still qualifies.
+  const scan = async (): Promise<string | null> => {
+    const hrefs = await page
+      .locator('a[href^="/"]')
+      .evaluateAll((nodes) =>
+        nodes
+          .filter((node) => node.getClientRects().length > 0)
+          .map((node) => node.getAttribute("href"))
+      );
+
+    return hrefs.find((href): href is string => href !== null && pattern.test(href)) ?? null;
   };
 
-  const deadline = Date.now() + LINK_DISCOVERY_TIMEOUT_MS;
-  do {
-    const onPage = await scan();
-    if (onPage !== null) return onPage;
-    await page.waitForTimeout(LINK_DISCOVERY_POLL_MS);
-  } while (Date.now() < deadline);
+  const locate = (href: string): Locator =>
+    page
+      .locator(`a[href="${href.replaceAll('"', '\\"')}"]`)
+      .filter({ visible: true })
+      .first();
 
+  const onPage = await scan();
+  if (onPage !== null) return locate(onPage);
+
+  // Dropdowns first, then the slow poll. A dropdown's contents are static once
+  // opened, so this path is deterministic and costs a few hundred milliseconds
+  // — whereas the poll below exists for client-rendered lists and always burns
+  // its full LINK_DISCOVERY_TIMEOUT_MS when the link is not in the initial HTML.
+  // Running the poll first charged that timeout to every dropdown-only
+  // destination (/projects, /communities, /funding-map are reachable no other
+  // way) and left too little of the 30s test budget for the navigation itself.
   const triggers = page.locator(`${APP_CHROME} button[aria-haspopup="menu"]`);
   const triggerCount = await triggers.count();
   for (let index = 0; index < triggerCount; index++) {
     await triggers.nth(index).click();
+
+    // Wait for the menu to actually render before scanning it. Radix mounts the
+    // content asynchronously, and the scan only counts anchors that have client
+    // rects — so scanning too early finds nothing and the case skips with "no
+    // link matching …", which the suite reserves for an environment genuinely
+    // missing the data. Observed once as a spurious skip of test 3. A trigger
+    // that opens nothing simply falls through to the next one.
+    await page
+      .locator('[role="menu"]')
+      .first()
+      .waitFor({ state: "visible", timeout: MENU_OPEN_TIMEOUT_MS })
+      .catch(() => undefined);
+
     const inMenu = await scan();
-    if (inMenu !== null) return inMenu;
+    if (inMenu !== null) {
+      // Scope to the open menu. The same href can appear both in the menu and
+      // in the page behind it — /communities lists communities that the
+      // dropdown also links to — and the page copy is under Radix's modal
+      // overlay, so hovering it fails with `<html> intercepts pointer events`.
+      // The menu copy is the one the click has to go through anyway.
+      const scoped = page.locator(`[role="menu"] a[href="${inMenu.replaceAll('"', '\\"')}"]`);
+      return (await scoped.count()) > 0 ? scoped.first() : locate(inMenu);
+    }
     await page.keyboard.press("Escape");
   }
+
+  // No dropdown had it, so leave the document interactive again before falling
+  // through. Radix keeps `pointer-events: none` on `<body>` while a menu is
+  // open, and a trailing Escape does not always land before the next action:
+  // without this the list link found below is visible and stable but unhoverable,
+  // reported as `<html> intercepts pointer events` until the test times out.
+  await waitForMenuDismissed(page);
+
+  // Nothing in the chrome either: wait for a client-rendered list to arrive.
+  const deadline = Date.now() + LINK_DISCOVERY_TIMEOUT_MS;
+  do {
+    await page.waitForTimeout(LINK_DISCOVERY_POLL_MS);
+    const settled = await scan();
+    if (settled !== null) return locate(settled);
+  } while (Date.now() < deadline);
 
   return null;
 }
@@ -150,9 +239,109 @@ async function primePrefetch(page: Page, link: Locator, href: string): Promise<v
     )
     .catch(() => null);
 
+  // A dropdown left open by link discovery still has Radix's overlay up, and
+  // the overlay swallows the hover below (`<html> intercepts pointer events`)
+  // for any link that is not itself inside the menu — which is every link found
+  // by the client-render poll after the dropdown scan opened one. Links that ARE
+  // in the menu sit above the overlay and must keep it: dismissing would unmount
+  // the very link about to be clicked.
+  const linkIsInMenu = await link.evaluate((node) => node.closest('[role="menu"]') !== null);
+  if (!linkIsInMenu) await waitForMenuDismissed(page);
+
   await link.scrollIntoViewIfNeeded();
   await link.hover();
   await prefetched;
+}
+
+/**
+ * Wait for an open Radix dropdown's modal state to lift.
+ *
+ * Three of these navigations start from a link that only exists inside a navbar
+ * dropdown, and Radix renders those as *modal* menus: while one is open it sets
+ * `aria-hidden="true"` on the page wrapper and `pointer-events: none` on
+ * `<body>`. `aria-hidden` removes everything behind the menu from the
+ * accessibility tree, and `getByRole()` queries that tree rather than the DOM —
+ * so the destination's `<h1>` is present and painted but invisible to the
+ * assertion. Measured on the preview with a menu open: `getByRole("heading",
+ * { level: 1 })` matches 0 while `document.querySelectorAll("h1")` matches 1;
+ * once the menu closes both match 1. The chrome assertion is unaffected,
+ * because `nav[data-app-chrome]` is a CSS selector and never consults the
+ * accessibility tree.
+ *
+ * Outside the navigation lock the click would dismiss the menu on its own, as
+ * the destination unmounts it. Inside the lock it does not: the lock holds the
+ * transition, the source page stays mounted, and Radix keeps the menu — and the
+ * hidden accessibility tree — open indefinitely. Measured: `pointer-events`
+ * stays `none` for the full timeout after the click. So the menu is dismissed
+ * explicitly, the same way a user leaving a dropdown does.
+ *
+ * This runs after the click, so the navigation has already been initiated and
+ * Escape only closes the menu. It does not weaken any assertion: what is
+ * asserted is unchanged, everything still runs inside the lock, and a route
+ * that genuinely needed a server round trip would still fail.
+ */
+async function waitForMenuDismissed(page: Page): Promise<void> {
+  // Both halves of the modal state, polled together. Radix restores
+  // `pointer-events` and clears `aria-hidden` on separate ticks, so keying on
+  // either one alone lets the other still be in force: watching only
+  // `pointer-events` left `aria-hidden` set and the `getByRole` heading
+  // assertion still failed intermittently.
+  const modalState = () =>
+    page.evaluate(() => {
+      const blocked =
+        document.body.style.pointerEvents === "none" ||
+        getComputedStyle(document.body).pointerEvents === "none";
+      const hiddenFromA11y = [...document.querySelectorAll('[aria-hidden="true"]')].some(
+        (node) => node.querySelector("h1, [role='heading']") !== null
+      );
+      return blocked || hiddenFromA11y;
+    });
+
+  if (!(await modalState())) return;
+
+  await page.keyboard.press("Escape");
+  await expect.poll(modalState, { timeout: MENU_CLOSE_TIMEOUT_MS }).toBe(false);
+}
+
+/**
+ * Wait until no lock cookie is left over from the page load about to be
+ * navigated away from.
+ *
+ * Applies `@next/playwright`'s own guidance from the other side: rather than
+ * letting `instant()` clear the cookie and hope no write is still in flight,
+ * settle it *before* entering the scope, so the lock the scope acquires is the
+ * only one in play. Polling — not a single read — because the resurrecting
+ * write is asynchronous and a cookie observed absent once can come back.
+ *
+ * This does not remove or weaken the lock. It runs entirely before `instant()`
+ * is called, and the navigation under test is still made inside the scope.
+ */
+async function settleInstantLock(page: Page): Promise<void> {
+  const context = page.context();
+  const lockCookies = async () =>
+    (await context.cookies()).filter((cookie) => cookie.name === INSTANT_LOCK_COOKIE);
+
+  await expect
+    .poll(
+      async () => {
+        const stale = await lockCookies();
+        if (stale.length === 0) return 0;
+        // Re-add each entry with a past expiry: the same deletion the library
+        // uses, which removes only these without disturbing the app's cookies.
+        await context.addCookies(
+          stale.map((cookie) => ({
+            name: cookie.name,
+            value: cookie.value,
+            domain: cookie.domain,
+            path: cookie.path,
+            expires: 1,
+          }))
+        );
+        return stale.length;
+      },
+      { timeout: LOCK_SETTLE_TIMEOUT_MS }
+    )
+    .toBe(0);
 }
 
 interface InstantExpectation {
@@ -182,8 +371,11 @@ async function expectInstantNavigation(
     Object.assign(globalThis, { [key]: true });
   }, SENTINEL_KEY);
 
+  await settleInstantLock(page);
+
   await instant(page, async () => {
     await link.click();
+    await waitForMenuDismissed(page);
 
     await expect(page).toHaveURL(expectation.url);
     await expect(page.locator(APP_CHROME).first()).toBeVisible();

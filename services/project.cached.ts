@@ -111,3 +111,25 @@ export async function getProjectSeedCached(projectIdOrSlug: string): Promise<Deh
     }
   });
 }
+
+/**
+ * The /project/[projectId]/updates hydration seed, cached whole.
+ *
+ * Same reason as getProjectSeedCached: prefetchQuery and dehydrate stamp entries
+ * with Date.now(), which cacheComponents rejects during prerender, so the seed
+ * itself is the cached unit.
+ */
+export async function getProjectUpdatesSeedCached(
+  projectIdOrSlug: string
+): Promise<DehydratedState> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(projectTag(projectIdOrSlug));
+
+  return buildDehydratedState(async (queryClient) => {
+    await queryClient.prefetchQuery({
+      queryKey: QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
+      queryFn: () => getProjectUpdatesCached(projectIdOrSlug),
+    });
+  });
+}

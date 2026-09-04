@@ -1,6 +1,4 @@
-import {
-  DonorResearchSectionLayout,
-} from "@/src/features/donor-research/components/common/donor-research-section-layout";
+import { DonorResearchSectionLayout } from "@/src/features/donor-research/components/common/donor-research-section-layout";
 
 /**
  * The section index. Public, server-rendered answer content (E4, DEV-595), so

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense, useCallback, useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -74,6 +74,8 @@ import { ProjectSidePanelSkeleton } from "../Skeletons/ProjectSidePanelSkeleton"
 import { ProjectInviteCodeWatcher } from "./ProjectInviteCodeWatcher";
 
 interface ProjectProfileLayoutProps {
+  /** From the server segment; see the note in the component. */
+  projectId: string;
   children: ReactNode;
   className?: string;
   /** Server-rendered sidebar panel (RSC slot pattern). When provided, renders
@@ -103,8 +105,17 @@ export function ProjectProfileLayout({
   children,
   className,
   serverSidePanel,
+  projectId,
 }: ProjectProfileLayoutProps) {
-  const { projectId } = useParams();
+  // `projectId` is a prop from the server ProfileLayout. The build named this
+  // read for every nested grant route:
+  //
+  //   at ProjectProfileLayout (ProjectProfileLayout.tsx:107:34)  useParams()
+  //   at ProfileLayout ((profile)/layout.tsx:29:25)
+  //
+  // `useParams()` aborts the prerender whenever any param on the route is not a
+  // build-time sample, which is why `/project/<sample>` passed and
+  // `/project/<sample>/funding/[grantUid]` did not.
   const pathname = usePathname();
 
   // Support tab is mobile-only and has no URL — track with local state
