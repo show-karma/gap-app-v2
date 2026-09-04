@@ -81,14 +81,6 @@ describe("CommunityTrackFilter", () => {
     expect(screen.getByLabelText("Choose Track")).toHaveTextContent("R&D");
   });
 
-  it("shows a loading state while the parent is still fetching tracks", () => {
-    render(
-      <CommunityTrackFilter tracks={[]} selectedTrackId={null} onChange={vi.fn()} isLoading />
-    );
-
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
-  });
-
   // The parent gates rendering on tracks.length > 0 and passes an id per slot,
   // so the label stays wired to its own control when both dropdowns are up.
   it("uses the id it is given so the label targets the right control", () => {

@@ -20,7 +20,6 @@ export interface CommunityTrackFilterProps {
   selectedTrackId: string | null;
   /** `null` is the "All Tracks" option. */
   onChange: (trackId: string | null) => void;
-  isLoading?: boolean;
   /** Input id, defaults to "filter-by-tracks". */
   id?: string;
 }
@@ -36,7 +35,6 @@ export const CommunityTrackFilter = ({
   tracks,
   selectedTrackId,
   onChange,
-  isLoading = false,
   id = "filter-by-tracks",
 }: CommunityTrackFilterProps) => {
   const list = tracks.map((track) => ({ title: track.name, value: track.id }));
@@ -57,7 +55,6 @@ export const CommunityTrackFilter = ({
         prefixUnselected="All"
         buttonClassname="w-full max-w-full"
         isMultiple={false}
-        isLoading={isLoading}
         cleanFunction={() => onChange(null)}
       />
     </div>

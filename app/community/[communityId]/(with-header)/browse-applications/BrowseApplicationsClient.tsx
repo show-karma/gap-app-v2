@@ -211,20 +211,8 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   // the route slug.
   const { community } = useCommunityDetails(communityId);
   const communityUid = community?.uid ?? "";
-  const { data: tracksData, isLoading: tracksQueryLoading } = useTracksForCommunity(communityUid);
-  // The community's UID has to be resolved before its tracks can even be
-  // asked for, so the control is "still loading" across both round trips.
-  const tracksLoading = !communityUid || tracksQueryLoading;
+  const { data: tracksData } = useTracksForCommunity(communityUid);
   const tracks = useMemo(() => tracksData ?? [], [tracksData]);
-  /**
-   * Whether to give the track dropdown a slot at all.
-   *
-   * Held open while the tracks are still resolving so a community that has
-   * them shows a loading control beside the program dropdown rather than
-   * popping one in two round trips later. A community with none settles back
-   * to the single program dropdown it has always shown.
-   */
-  const showTrackFilter = tracks.length > 0 || tracksLoading;
 
   /**
    * Which query serves the list. A program on its own is the one combination
@@ -418,9 +406,8 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
       </header>
 
       {/* Filters: program and track, independent and combinable. A community
-          with no tracks settles into the single program dropdown it has
-          always shown. */}
-      {programs.length > 0 || showTrackFilter ? (
+          with no tracks renders the program dropdown alone, as before. */}
+      {programs.length > 0 || tracks.length > 0 ? (
         <div className="flex flex-wrap gap-3">
           {programs.length > 0 ? (
             <div className="flex w-[260px] flex-col gap-1.5 max-lg:w-full">
@@ -444,13 +431,12 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
             </div>
           ) : null}
 
-          {showTrackFilter ? (
+          {tracks.length > 0 ? (
             <div className="w-[260px] max-lg:w-full">
               <CommunityTrackFilter
                 tracks={tracks}
                 selectedTrackId={selectedTrackId || null}
                 onChange={(trackId) => setSelectedTrackId(trackId ?? "")}
-                isLoading={tracksLoading}
               />
             </div>
           ) : null}

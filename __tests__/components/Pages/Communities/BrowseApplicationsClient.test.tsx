@@ -827,9 +827,9 @@ describe("BrowseApplicationsClient - loading and mode boundaries", () => {
     await waitFor(() => expect(container.querySelector(".animate-spin")).not.toBeInTheDocument());
   });
 
-  // The community UID has to resolve before the tracks can be asked for, so the
-  // control holds a slot across both round trips rather than popping in late.
-  it("shows the track dropdown in a loading state before the tracks arrive", () => {
+  // C1: the control is withheld until the tracks are known, rather than
+  // flashing a dropdown into and out of every community that has none.
+  it("withholds the track dropdown until the tracks arrive", () => {
     vi.mocked(useTracksForCommunity).mockReturnValue({
       data: undefined,
       isLoading: true,
@@ -837,8 +837,8 @@ describe("BrowseApplicationsClient - loading and mode boundaries", () => {
 
     render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
 
-    expect(screen.getByLabelText("Choose Track")).toBeInTheDocument();
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Choose Track")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Choose Program")).toBeInTheDocument();
   });
 
   it("settles to the program dropdown alone for a community with no tracks", async () => {
