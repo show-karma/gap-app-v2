@@ -7,6 +7,7 @@ import { forwardRef } from "react";
 import { useUrlBuilder } from "@/hooks/use-url-builder";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
+import { toWhitelabelRouteAlias } from "@/utilities/whitelabel-routes";
 
 export type CustomLinkProps = Omit<LinkProps, "href"> &
   Omit<ComponentProps<"a">, "href"> & {
@@ -29,6 +30,11 @@ export const Link = forwardRef<HTMLAnchorElement, CustomLinkProps>(
       if (urlBuilded.startsWith(prefix)) {
         urlBuilded = urlBuilded.slice(prefix.length) || "/";
       }
+      // Then say it in the tenant's own words. A tenant that renamed a section
+      // renamed its URL too (WHITELABEL_ROUTE_ALIASES); doing it here means the
+      // rename holds for every link into that section, not only the three the
+      // navigation owns. No-op for a tenant with no alias.
+      urlBuilded = toWhitelabelRouteAlias(urlBuilded, communitySlug);
     }
 
     if (disabled) {

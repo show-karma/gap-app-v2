@@ -430,7 +430,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
               aria-hidden
             />
             <label htmlFor="application-search" className="sr-only">
-              Search applications
+              Search {pluralize(itemNoun, 2)}
             </label>
             <input
               id="application-search"
@@ -538,14 +538,17 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
               </div>
             ) : applications.length === 0 && !hasActiveFilters ? (
               <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
-                <h3 className="mb-2 text-xl font-semibold text-foreground">No applications yet</h3>
+                <h3 className="mb-2 text-xl font-semibold text-foreground">
+                  No {pluralize(itemNoun, 2)} yet
+                </h3>
                 <p className="text-muted-foreground">
-                  This program doesn't have any public applications yet.
+                  This program doesn&apos;t have any public {pluralize(itemNoun, 2)} yet.
                 </p>
               </div>
             ) : applications.length === 0 ? (
               <div className="rounded-xl border border-border py-12 text-center text-muted-foreground">
-                No applications match the current filters — try adjusting your search or status.
+                No {pluralize(itemNoun, 2)} match the current filters — try adjusting your search or
+                status.
               </div>
             ) : (
               <div>
@@ -587,7 +590,8 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
         <div className="rounded-xl border-2 border-dashed border-border py-10 text-center">
           <h3 className="mb-2 text-xl font-semibold text-foreground">Choose a program</h3>
           <p className="text-muted-foreground">
-            Pick a funding program from the selector above to browse its public applications.
+            Pick a funding program from the selector above to browse its public{" "}
+            {pluralize(itemNoun, 2)}.
           </p>
         </div>
       )}

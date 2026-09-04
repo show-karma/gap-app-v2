@@ -24,6 +24,18 @@ type ExplorerNavOverride = {
   readonly hiddenTabs?: readonly CommunityNavItemId[];
   /** Navigation item id -> replacement tab label. */
   readonly tabLabels?: Readonly<Partial<Record<CommunityNavItemId, string>>>;
+  /**
+   * Navigation item id -> replacement destination, as the host-relative path a
+   * whitelabel visitor sees. For a tab the tenant has renamed: a URL that still
+   * says `browse-applications` contradicts the tab that led to it, and the
+   * destination is what gets copied out of the address bar and shared.
+   *
+   * These are `WHITELABEL_ROUTE_ALIASES` keys, which only resolve on a tenant
+   * host — which is also why they are bare paths rather than `PAGES` builders:
+   * this table stays free of runtime imports (see `community-nav.ts`), and a
+   * `/community/<slug>/...` builder would imply a URL that does not exist.
+   */
+  readonly tabPaths?: Readonly<Partial<Record<CommunityNavItemId, string>>>;
 };
 
 /**
@@ -46,7 +58,12 @@ export const EXPLORER_NAV_OVERRIDES: Readonly<Partial<Record<string, ExplorerNav
     // navbar's Funding -> Grants entries, though those are program-scoped —
     // the unfiltered list is only linked from filpgf.io itself.
     hiddenTabs: ["community-projects", "reports", "financials"],
+    // This tenant funds projects, not applications, and says so everywhere: the
+    // landing site's "Projects Explorer" (filecoin-grants `src/data/nav.ts`),
+    // the tenant navbar's entry of the same name, and this tab all arrive at
+    // the same listing, under the same name and at the same URL.
     tabLabels: { "browse-applications": "Browse Projects" },
+    tabPaths: { "browse-applications": "/browse-projects" },
   },
 };
 
