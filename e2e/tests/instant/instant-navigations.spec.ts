@@ -97,7 +97,7 @@ function skipUnlessFound(link: Locator | null, message: string): asserts link is
  * repeated, leaving the successful one open for the click.
  */
 async function findLink(page: Page, pattern: RegExp): Promise<Locator | null> {
-  // Returns the matching *href*, not a locator. Two reasons, both measured:
+  // Returns the matching *href*, not a locator. Three reasons, all measured:
   //
   // One round trip instead of one per anchor. The previous shape called
   // `getAttribute` inside a loop, a separate protocol call each time; `/` holds
@@ -111,16 +111,32 @@ async function findLink(page: Page, pattern: RegExp): Promise<Locator | null> {
   // become `<a href="/community/celopg">` — an animating pill that never went
   // stable, so the hover hung until the test timed out. Keying on the href
   // survives re-renders and cannot silently select a different destination.
+  //
+  // And rendered anchors only. Responsive layouts ship the same link twice — the
+  // project profile has its tab bar in both a `lg:hidden` mobile copy and a
+  // desktop copy — and the mobile one is `display: none` at the test viewport,
+  // so it has no client rects. Taking it would hand back a link no user can
+  // click: test 8 selected exactly that copy and sat in
+  // `scrollIntoViewIfNeeded` ("element is not visible") until the test timed
+  // out. `getClientRects()` is empty only for genuinely unrendered elements,
+  // so an off-screen link that just needs scrolling still qualifies.
   const scan = async (): Promise<string | null> => {
     const hrefs = await page
       .locator('a[href^="/"]')
-      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href")));
+      .evaluateAll((nodes) =>
+        nodes
+          .filter((node) => node.getClientRects().length > 0)
+          .map((node) => node.getAttribute("href"))
+      );
 
     return hrefs.find((href): href is string => href !== null && pattern.test(href)) ?? null;
   };
 
   const locate = (href: string): Locator =>
-    page.locator(`a[href="${href.replaceAll('"', '\\"')}"]`).first();
+    page
+      .locator(`a[href="${href.replaceAll('"', '\\"')}"]`)
+      .filter({ visible: true })
+      .first();
 
   const onPage = await scan();
   if (onPage !== null) return locate(onPage);
