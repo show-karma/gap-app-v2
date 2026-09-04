@@ -67,6 +67,22 @@ const PREFETCH_GRACE_MS = 2_000;
 const MENU_CLOSE_TIMEOUT_MS = 5_000;
 
 /**
+ * The cookie `instant()` uses to hold the navigation lock, and how long to wait
+ * for a page load's in-flight write of it to finish.
+ *
+ * `@next/playwright` documents the hazard in `releaseInstantCookie`: a locked
+ * MPA page load re-writes this cookie asynchronously, and the client only stops
+ * writing once it observes the deletion — an event that races the pending
+ * write. Its own release loop is bounded at five attempts for exactly that
+ * reason. The same race runs the other way at acquire time: `instant()` clears
+ * the cookie before setting it, so a write still in flight from the `goto()`
+ * that opened the source page can land afterwards and leave the scope holding a
+ * cookie it did not write.
+ */
+const INSTANT_LOCK_COOKIE = "next-instant-navigation-testing";
+const LOCK_SETTLE_TIMEOUT_MS = 5_000;
+
+/**
  * How long to keep looking for a link before deciding the page does not have
  * one. Several of the index pages render their cards client-side — measured on
  * a preview, `/communities` server-renders only 8 internal links and none of
@@ -273,6 +289,47 @@ async function waitForMenuDismissed(page: Page): Promise<void> {
   await expect.poll(modalState, { timeout: MENU_CLOSE_TIMEOUT_MS }).toBe(false);
 }
 
+/**
+ * Wait until no lock cookie is left over from the page load about to be
+ * navigated away from.
+ *
+ * Applies `@next/playwright`'s own guidance from the other side: rather than
+ * letting `instant()` clear the cookie and hope no write is still in flight,
+ * settle it *before* entering the scope, so the lock the scope acquires is the
+ * only one in play. Polling — not a single read — because the resurrecting
+ * write is asynchronous and a cookie observed absent once can come back.
+ *
+ * This does not remove or weaken the lock. It runs entirely before `instant()`
+ * is called, and the navigation under test is still made inside the scope.
+ */
+async function settleInstantLock(page: Page): Promise<void> {
+  const context = page.context();
+  const lockCookies = async () =>
+    (await context.cookies()).filter((cookie) => cookie.name === INSTANT_LOCK_COOKIE);
+
+  await expect
+    .poll(
+      async () => {
+        const stale = await lockCookies();
+        if (stale.length === 0) return 0;
+        // Re-add each entry with a past expiry: the same deletion the library
+        // uses, which removes only these without disturbing the app's cookies.
+        await context.addCookies(
+          stale.map((cookie) => ({
+            name: cookie.name,
+            value: cookie.value,
+            domain: cookie.domain,
+            path: cookie.path,
+            expires: 1,
+          }))
+        );
+        return stale.length;
+      },
+      { timeout: LOCK_SETTLE_TIMEOUT_MS }
+    )
+    .toBe(0);
+}
+
 interface InstantExpectation {
   /** The URL the click must commit to, checked inside the instant scope. */
   url: RegExp;
@@ -299,6 +356,8 @@ async function expectInstantNavigation(
   await page.evaluate((key) => {
     Object.assign(globalThis, { [key]: true });
   }, SENTINEL_KEY);
+
+  await settleInstantLock(page);
 
   await instant(page, async () => {
     await link.click();
