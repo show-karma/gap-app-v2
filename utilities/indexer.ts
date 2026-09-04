@@ -123,6 +123,55 @@ export const INDEXER = {
       `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
     COMMUNITY_PROGRAM_METRICS: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/metrics`,
+    KERNEL: {
+      OVERVIEW: (windowDays: number) => `/v2/kernel/overview?windowDays=${windowDays}`,
+      FUNCTIONS: (windowDays: number) => `/v2/kernel/functions?windowDays=${windowDays}`,
+    },
+    NOTEBOOK_METRICS: {
+      CATALOG: (communityIdOrSlug: string) =>
+        `/v2/communities/${encodeURIComponent(communityIdOrSlug)}/notebook-metrics/catalog`,
+      QUERY: (communityIdOrSlug: string, query: string) =>
+        `/v2/communities/${encodeURIComponent(communityIdOrSlug)}/notebook-metrics/query?${query}`,
+    },
+    /**
+     * Notebook pages. Both reads are public and return `published` configs
+     * only — a draft answers 404 exactly as an unknown slug does, so the
+     * viewer cannot distinguish the two (gap-indexer PR #2411).
+     */
+    NOTEBOOK_CONFIGS: {
+      LIST: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/notebook-configs`,
+      GET: (communityIdOrSlug: string, slug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/${slug}`,
+      CREATE: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs`,
+      UPDATE: (communityIdOrSlug: string, slug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/${slug}`,
+      DELETE: (communityIdOrSlug: string, slug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/${slug}`,
+      /**
+       * Builder reads. Separate paths from the public ones, not a flag on
+       * them: these return DRAFTS, and the indexer gates them on community
+       * admin. Calling them anonymously is a 401, never an empty list.
+       */
+      /**
+       * NL -> spec generation. Admin-gated like the writes, because it spends
+       * tokens and it composes a page that will carry a tenant's name.
+       */
+      GENERATE: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/generate`,
+      /**
+       * NL -> custom HTML. A SECOND endpoint on purpose: the composed
+       * generator refuses to return custom-html, so model-written markup can
+       * never be smuggled back through the entry that populates the trusted
+       * builder. Reaching this one is a deliberate act.
+       */
+      GENERATE_CUSTOM: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/generate-custom`,
+      ADMIN_LIST: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/admin/all`,
+      ADMIN_GET: (communityIdOrSlug: string, slug: string) =>
+        `/v2/communities/${communityIdOrSlug}/notebook-configs/admin/${slug}`,
+    },
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
       BY_COMMUNITY_ACTIVE: (communityId: string, limit = 100) =>

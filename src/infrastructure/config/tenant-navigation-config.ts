@@ -237,6 +237,10 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
           { label: "Monthly Pods Report", href: filecoinReportHref("monthlyPods") },
           { label: "Bi-Weekly Progress Report", href: filecoinReportHref("biweeklyProgress") },
           { label: "All reports", href: "/reports" },
+          // Whitelabel-only navbar, so the clean path is safe here — see the
+          // Funding items above. The explorer tab is hidden on this host to
+          // avoid duplicating this entry (EXPLORER_NAV_OVERRIDES.filecoin).
+          { label: "Notebooks", href: "/notebooks" },
         ],
       },
       {

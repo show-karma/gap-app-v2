@@ -18,6 +18,14 @@ import type { CommunityNavItemId } from "./community-nav";
  */
 export const FINANCIALS_ENABLED_COMMUNITIES: readonly string[] = ["filecoin"];
 
+/**
+ * Communities where notebook pages are enabled. Gates the
+ * `/community/<id>/notebooks` routes — every other community gets a "not
+ * available" state there, matching {@link FINANCIALS_ENABLED_COMMUNITIES} —
+ * and the explorer tab that points at them.
+ */
+export const NOTEBOOKS_ENABLED_COMMUNITIES: readonly string[] = ["filecoin"];
+
 /** Per-community tweaks to the community explorer tab bar. */
 type ExplorerNavOverride = {
   /** Navigation item ids to drop from the tab bar entirely. */
@@ -45,7 +53,9 @@ export const EXPLORER_NAV_OVERRIDES: Readonly<Partial<Record<string, ExplorerNav
     // navbar under Funding and Reports. Funded projects are reachable from the
     // navbar's Funding -> Grants entries, though those are program-scoped —
     // the unfiltered list is only linked from filpgf.io itself.
-    hiddenTabs: ["community-projects", "reports", "financials"],
+    // Notebooks is in the filpgf.io navbar under Reports, so the tab would
+    // duplicate it there. On karmahq.org the tab stays — it is the only way in.
+    hiddenTabs: ["community-projects", "reports", "financials", "notebooks"],
     tabLabels: { "browse-applications": "Browse Projects" },
   },
 };

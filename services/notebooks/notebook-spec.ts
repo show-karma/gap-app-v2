@@ -1,0 +1,867 @@
+import { z } from "zod";
+
+/**
+ * The notebook page spec — the closed vocabulary a page is composed from.
+ *
+ * MIRROR of `gap-indexer/app/modules/v2/domain/models/notebook-spec.ts`. The
+ * indexer's copy is authoritative: it is what rejects a bad write, and it is
+ * the only one an attacker cannot skip. This copy exists for two other jobs —
+ * the builder composes against it, and the read path re-validates with it, so
+ * a config that somehow arrives malformed fails at this boundary instead of
+ * reaching a renderer that would have to guess.
+ *
+ * Deliberately duplicated rather than shared through a package: the two repos
+ * deploy independently, and a shared type would let a frontend deploy silently
+ * widen what the backend believes it is storing. The pairing is held by tests
+ * on both sides, not by a build-time link.
+ *
+ * WHAT A SPEC MAY NOT DO. It carries no numbers, formulas, filters or
+ * thresholds — every figure comes from the metrics query layer, the single
+ * auditable seam for anything this product publishes. A spec SELECTS and
+ * LABELS; it cannot compute. And `title` / `description` are the only free
+ * text in it: both render as text nodes, never as markup.
+ */
+
+/**
+ * Schema version of a spec document.
+ *
+ * MIGRATION RULE — the whole of it, in one line:
+ *
+ *   BUMP WHEN A READER OF THE PREVIOUS VERSION WOULD *MISREAD* A DOCUMENT.
+ *   NEVER BUMP WHEN IT WOULD MERELY *REJECT* ONE.
+ *
+ * Rejection is already safe and automatic: the section union is closed and
+ * every section is `.strict()`, so a build predating a new section type
+ * rejects the document rather than half-drawing it. A version must catch the
+ * case the union cannot — an existing field changing meaning or type, where an
+ * old reader parses successfully and draws the WRONG page.
+ *
+ * The v2 builder (kernel/indicator sources, time-series, text) is therefore an
+ * ADDITIVE widening and stays at version 1. Every v1 document renders
+ * unchanged, which is what lets the golden test hold BY CONSTRUCTION.
+ *
+ * Kept verbatim in step with the indexer's copy — see that file's header for
+ * why the two are duplicated rather than shared.
+ */
+export const NOTEBOOK_SPEC_VERSION = 1;
+
+/** Where a section's numbers come from. */
+export const NOTEBOOK_DATA_SOURCES = ["funding", "kernel", "indicators"] as const;
+
+export type NotebookDataSource = (typeof NOTEBOOK_DATA_SOURCES)[number];
+
+/**
+ * Date windows a section may ask for.
+ *
+ * Closed and small on purpose: each preset is a distinct cache entry, so an
+ * open-ended range would make cache cardinality unbounded and turn "a filter
+ * change is a fast cached refetch" into a cold fetch every time.
+ *
+ * `all` is the default, and that is a correctness decision: indicator series
+ * are short and sparse, so a windowed default would render an empty chart for
+ * a healthy metric — which a reader takes to mean the metric is broken.
+ */
+export const NOTEBOOK_DATE_RANGES = ["all", "30d", "90d", "12m"] as const;
+
+export type NotebookDateRange = (typeof NOTEBOOK_DATE_RANGES)[number];
+
+export const NOTEBOOK_DEFAULT_DATE_RANGE: NotebookDateRange = "all";
+
+/**
+ * The windows each SOURCE can actually express.
+ *
+ * Not one shared list, because the two sources mean different things by a
+ * window. An indicator series is a set of dated points, so "all time" is a
+ * real and useful answer. The kernel API takes a `windowDays` and computes
+ * over it, so there is no such thing as an unwindowed kernel reading — "all"
+ * would be a token the server cannot honour.
+ *
+ * Offering a source a window it cannot express would produce a section that
+ * renders empty or, worse, silently falls back to a different window than the
+ * one the author picked. Correctness beats a uniform picker.
+ */
+export const NOTEBOOK_DATE_RANGES_BY_SOURCE: Readonly<
+  Record<"indicators" | "kernel", readonly NotebookDateRange[]>
+> = {
+  indicators: ["all", "30d", "90d", "12m"],
+  kernel: ["30d", "90d", "12m"],
+};
+
+/** Whether a source can express a window. */
+export function isValidRangeForSource(
+  source: "indicators" | "kernel",
+  range: NotebookDateRange
+): boolean {
+  return NOTEBOOK_DATE_RANGES_BY_SOURCE[source].includes(range);
+}
+
+/**
+ * The window a section asks for, with the default applied.
+ *
+ * One place, so the renderer, the composer and the cache key cannot drift.
+ */
+export function resolveNotebookDateRange(range?: NotebookDateRange): NotebookDateRange {
+  return range ?? NOTEBOOK_DEFAULT_DATE_RANGE;
+}
+
+/** How a time series is drawn. Both are the same data, differently weighted. */
+export const NOTEBOOK_CHART_STYLES = ["line", "area"] as const;
+
+export type NotebookChartStyle = (typeof NOTEBOOK_CHART_STYLES)[number];
+
+/** Bounds on the editorial sections. Kept in step with the indexer by test. */
+export const NOTEBOOK_EYEBROW_MAX = 80;
+export const NOTEBOOK_HEADLINE_MAX = 200;
+export const NOTEBOOK_BREADCRUMB_MAX = 60;
+export const NOTEBOOK_BREADCRUMB_COUNT_MAX = 5;
+export const NOTEBOOK_NARRATIVE_BODY_MAX = 4000;
+
+/**
+ * Any `{{...}}` placeholder, capturing its contents.
+ *
+ * Permissive on purpose so validation can refuse an unrecognised one: a
+ * narrower pattern would not match `{{a.b.c}}` at all, and those braces would
+ * publish verbatim.
+ */
+export const NOTEBOOK_NARRATIVE_TOKEN_PATTERN = /\{\{([^{}]*)\}\}/g;
+
+export function extractNarrativeTokens(body: string): string[] {
+  const found: string[] = [];
+  // Fresh regex per call — a shared /g regex carries lastIndex and would skip
+  // every other match.
+  const pattern = new RegExp(NOTEBOOK_NARRATIVE_TOKEN_PATTERN.source, "g");
+  let match = pattern.exec(body);
+  while (match !== null) {
+    found.push(match[1].trim());
+    match = pattern.exec(body);
+  }
+  return found;
+}
+
+/** Bound on a text block's body — a paragraph of context, not a CMS. */
+export const NOTEBOOK_TEXT_BODY_MAX = 2000;
+
+/**
+ * KPI tiles an author may place.
+ *
+ * `milestoneCompletion` is the canonical completed/total fraction the
+ * community header shows, not the unweighted per-project mean the API also
+ * exposes. An author cannot pick the other one — it is not in this set, which
+ * is how the page is prevented from becoming a third disagreeing surface.
+ */
+/**
+ * Kernel KPI ids, mirrored EXACTLY from the query layer's
+ * NOTEBOOK_KERNEL_KPI_IDS. A contract test pins the two lists together, so a
+ * rename there fails here rather than silently producing a tile that renders
+ * nothing.
+ */
+export const NOTEBOOK_KERNEL_KPI_METRICS = [
+  "kernelFunctionsInScope",
+  "kernelFunctionsMeasured",
+  "kernelSlaMet",
+  "kernelCoverage",
+  "kernelProjectsReporting",
+] as const;
+
+/**
+ * Every KPI tile an author may place.
+ *
+ * Funding and kernel ids share ONE list, and the `kernel` prefix says which
+ * layer computes a figure — so one row can mix funding totals with kernel
+ * health, which is the point of the v2 builder. No separate `source` field: it
+ * would restate what the id already says, and give two things that can disagree.
+ */
+export const NOTEBOOK_KPI_METRICS = [
+  "committed",
+  "disbursed",
+  "fundedProjects",
+  "milestoneCompletion",
+  ...NOTEBOOK_KERNEL_KPI_METRICS,
+] as const;
+
+/** True when a metric is computed by the kernel layer rather than funding. */
+/**
+ * Placeholders a narrative may interpolate — the same ids the KPI tiles use,
+ * so prose and tiles on one page cannot quote different numbers.
+ */
+export const NOTEBOOK_NARRATIVE_TOKENS = NOTEBOOK_KPI_METRICS;
+
+export type NotebookNarrativeToken = (typeof NOTEBOOK_NARRATIVE_TOKENS)[number];
+
+export function isKernelKpiMetric(metric: NotebookKpiMetric): boolean {
+  return (NOTEBOOK_KERNEL_KPI_METRICS as readonly string[]).includes(metric);
+}
+
+/**
+ * Windows the KERNEL can express. No `all` — the kernel API computes over a
+ * windowDays. Default 90d, matching the rolling window filpgf.io/kernel uses.
+ */
+export const NOTEBOOK_KERNEL_RANGES = ["30d", "90d", "12m"] as const;
+
+export type NotebookKernelRange = (typeof NOTEBOOK_KERNEL_RANGES)[number];
+
+export const NOTEBOOK_DEFAULT_KERNEL_RANGE: NotebookKernelRange = "90d";
+
+export function resolveNotebookKernelRange(range?: NotebookKernelRange): NotebookKernelRange {
+  return range ?? NOTEBOOK_DEFAULT_KERNEL_RANGE;
+}
+
+/**
+ * Inventory columns an author may show, mirrored from the query layer.
+ *
+ * Deliberately not "every field on the row": an API that adds a field must not
+ * thereby turn an infrastructure value into a public reporting choice.
+ */
+export const NOTEBOOK_KERNEL_TABLE_COLUMNS = [
+  "function",
+  "tier",
+  "category",
+  "subcategory",
+  "inScope",
+  "maintainers",
+  "measured",
+  "commitments",
+  "projectsReporting",
+  "readings",
+  "lastReadingAt",
+  "slaMetPct",
+  "coveragePct",
+] as const;
+
+export type NotebookKernelTableColumn = (typeof NOTEBOOK_KERNEL_TABLE_COLUMNS)[number];
+
+export type NotebookKpiMetric = (typeof NOTEBOOK_KPI_METRICS)[number];
+
+/** Pre-aggregated bar series an author may place. */
+export const NOTEBOOK_BAR_SOURCES = ["programs", "tracks"] as const;
+
+export type NotebookBarSource = (typeof NOTEBOOK_BAR_SOURCES)[number];
+
+export const NOTEBOOK_BAR_METRICS = ["disbursedVsCommitted", "milestoneCompletion"] as const;
+
+export type NotebookBarMetric = (typeof NOTEBOOK_BAR_METRICS)[number];
+
+/**
+ * Which metric each source can actually express.
+ *
+ * The metrics layer computes exactly one series per source, so a `tracks`
+ * section asking for `disbursedVsCommitted` names a series that does not
+ * exist. The builder reads this table to populate its metric options, so an
+ * author is never offered a pairing the server would reject.
+ */
+export const NOTEBOOK_BAR_METRICS_BY_SOURCE: Readonly<
+  Record<NotebookBarSource, readonly NotebookBarMetric[]>
+> = {
+  programs: ["disbursedVsCommitted"],
+  tracks: ["milestoneCompletion"],
+};
+
+export function isValidBarMetricForSource(
+  source: NotebookBarSource,
+  metric: NotebookBarMetric
+): boolean {
+  return NOTEBOOK_BAR_METRICS_BY_SOURCE[source].includes(metric);
+}
+
+/** Bounds on author free text. Kept in step with the indexer's copy by test. */
+export const NOTEBOOK_SECTION_TITLE_MAX = 200;
+export const NOTEBOOK_SECTION_DESCRIPTION_MAX = 500;
+
+/** How many sections one page may carry. A page is a dashboard, not a feed. */
+export const NOTEBOOK_SPEC_MAX_SECTIONS = 20;
+
+/**
+ * The largest custom document a page may carry.
+ *
+ * Generous enough for a real hand-built page with inline styles, small enough
+ * that it stays one database row and one postMessage rather than becoming a
+ * streaming problem.
+ *
+ * ONE BOUND FOR BOTH PLACEMENTS — the whole-page mode and the section. A
+ * section is not a smaller thing than a page here: the same document, posted
+ * over the same port into the same frame, just sitting inside a composed page
+ * rather than being the whole of one. Two numbers would be two limits to keep
+ * in step with the indexer, for no difference anyone can point at.
+ */
+export const NOTEBOOK_CUSTOM_HTML_MAX = 500_000;
+
+const sectionTitleSchema = z.string().trim().min(1).max(NOTEBOOK_SECTION_TITLE_MAX);
+const sectionDescriptionSchema = z.string().trim().max(NOTEBOOK_SECTION_DESCRIPTION_MAX);
+
+/**
+ * Stable identity for a section, mirrored EXACTLY from the indexer's copy.
+ *
+ * Optional here because it is optional there: every page written before the
+ * generator existed carries no ids, and requiring one would retroactively
+ * invalidate the whole back catalogue. The generator's own output schema does
+ * require one on every section it emits, so an AI-composed page arrives with
+ * ids on all of them.
+ *
+ * This side is the READ half. A shape this schema refuses is a document the
+ * indexer already accepted and stored, which this build then cannot render —
+ * so the two shapes have to be the same shape, not merely compatible ones.
+ * Kept in step by the contract test, like the rest of the vocabulary.
+ */
+export const NOTEBOOK_SECTION_ID_MAX = 80;
+
+export const NotebookSectionIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(NOTEBOOK_SECTION_ID_MAX)
+  .regex(/^[a-z0-9][a-z0-9-]*$/);
+
+/**
+ * Spread into every section schema. Every section is `.strict()`, so a section
+ * type that forgets this rejects a stored id rather than ignoring it.
+ */
+const sectionIdentityFields = { id: NotebookSectionIdSchema.optional() };
+
+export const NotebookKpisSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("kpis"),
+    metrics: z
+      .array(z.enum(NOTEBOOK_KPI_METRICS))
+      .min(1)
+      .max(NOTEBOOK_KPI_METRICS.length)
+      .refine((values) => new Set(values).size === values.length, {
+        message: "kpis.metrics must not repeat a metric",
+      }),
+    // Applies to the KERNEL metrics in this row and nothing else — funding
+    // totals are not windowed.
+    kernelRange: z.enum(NOTEBOOK_KERNEL_RANGES).optional(),
+  })
+  .strict();
+
+/**
+ * The kernel inventory as a table.
+ *
+ * `columns` is ordered, not a set: column order IS a table's reading order,
+ * and an author who puts "Function" last means it.
+ */
+export const NotebookTableSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("table"),
+    source: z.literal("kernel"),
+    columns: z
+      .array(z.enum(NOTEBOOK_KERNEL_TABLE_COLUMNS))
+      .min(1)
+      .max(NOTEBOOK_KERNEL_TABLE_COLUMNS.length)
+      .refine((values) => new Set(values).size === values.length, {
+        message: "table.columns must not repeat a column",
+      }),
+    range: z.enum(NOTEBOOK_KERNEL_RANGES).optional(),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
+  })
+  .strict();
+
+/**
+ * A catalogue-driven query, composed onto a page.
+ *
+ * THE VOCABULARY IS DECLARED HERE, NOT IMPORTED FROM THE REGISTRY. This module
+ * describes what may be PERSISTED, and a stored document's validity must not
+ * change because a service constant was refactored — a dimension dropped
+ * upstream would otherwise retroactively invalidate every page that used it,
+ * with no decision taken by anybody. The contract test asserts the two lists
+ * still agree, so drift is caught and reconciled deliberately.
+ *
+ * That is the opposite of how the RESULT is treated, and deliberately so: the
+ * result's columns, labels and formatted values travel with the data and are
+ * never stored, because there the single source of truth costs nothing and
+ * gains everything. Store the question; never store the answer's presentation.
+ *
+ * NO `projectUIDs`. The catalogue publishes no project list, so nothing can
+ * check that one is real, and an unvalidated id is an unbounded cache key. The
+ * preview route refuses it for the same reason; see issue #2092.
+ */
+export const NOTEBOOK_QUERY_DIMENSIONS = [
+  "none",
+  "program",
+  "project",
+  "date",
+  "tier",
+  "function",
+] as const;
+export const NOTEBOOK_QUERY_WINDOWS = ["30d", "90d", "12m", "all"] as const;
+export const NOTEBOOK_QUERY_AGGREGATIONS = ["sum", "last", "first", "avg", "max", "min"] as const;
+
+export type NotebookQueryDimension = (typeof NOTEBOOK_QUERY_DIMENSIONS)[number];
+export type NotebookQueryWindow = (typeof NOTEBOOK_QUERY_WINDOWS)[number];
+
+const queryFilterValues = (max: number) =>
+  z.array(z.string().trim().min(1).max(200)).max(max).optional();
+
+export const NotebookQuerySectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("query"),
+    // Shaped like the catalogue's ids rather than free text: a metric id is an
+    // identifier, and anything that is not shaped like one cannot be one.
+    metricId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .regex(/^[a-z0-9][a-z0-9.-]*$/),
+    groupBy: z.enum(NOTEBOOK_QUERY_DIMENSIONS),
+    window: z.enum(NOTEBOOK_QUERY_WINDOWS),
+    filters: z
+      .object({
+        programIds: queryFilterValues(100),
+        aggregation: z.enum(NOTEBOOK_QUERY_AGGREGATIONS).optional(),
+        tier: queryFilterValues(10),
+        category: queryFilterValues(50),
+        inScope: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
+  })
+  .strict();
+
+/**
+ * The kernel tier rollup.
+ *
+ * FOUR ROWS, one per OSO tier — a different object from the `table` section's
+ * 31-row function inventory, which is why it is its own section type rather
+ * than a `source` on that one. Conflating them would make "which population is
+ * this?" a question the reader has to work out from the row count.
+ *
+ * It carries NO column list. The rollup's columns, their labels, their enum
+ * display copy and the accent mapping are all DECLARED BY THE QUERY LAYER and
+ * arrive with the data, so there is exactly one place that decides what the
+ * rollup looks like. Letting an author reorder them here would put a second
+ * copy of that decision in every stored spec, to drift from the first.
+ */
+export const NotebookTiersSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("tiers"),
+    source: z.literal("kernel"),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
+  })
+  .strict();
+
+export const NotebookBarsSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("bars"),
+    source: z.enum(NOTEBOOK_BAR_SOURCES),
+    metric: z.enum(NOTEBOOK_BAR_METRICS),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
+  })
+  .strict()
+  .refine((section) => isValidBarMetricForSource(section.source, section.metric), {
+    message: "bars.metric is not available for the chosen bars.source",
+    path: ["metric"],
+  });
+
+export const NotebookApplicationsSectionSchema = z
+  .object({ ...sectionIdentityFields, type: z.literal("applications") })
+  .strict();
+
+/**
+ * A paragraph of author context.
+ *
+ * The only section carrying no data at all — it exists so a dashboard can say
+ * what its numbers mean. `body` renders as a TEXT NODE exactly like `title`:
+ * no markdown, no HTML, no links. A deliberate limitation, not an oversight.
+ */
+export const NotebookTextSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("text"),
+    title: sectionTitleSchema.optional(),
+    body: z.string().trim().min(1).max(NOTEBOOK_TEXT_BODY_MAX),
+  })
+  .strict();
+
+/**
+ * A time series drawn from one indicator.
+ *
+ * `indicatorId` is an opaque reference into another system's table: it cannot
+ * be validated for existence, only for shape, and it CAN DANGLE when an
+ * indicator is deleted or renamed after the page is published. The renderer
+ * treats "indicator not found" as an ordinary state to draw.
+ *
+ * `range` is optional rather than defaulted — the indexer's Ajv strict mode
+ * refuses a `default` inside a union branch and would fail its route schema at
+ * boot. Absent means "not chosen"; use resolveNotebookDateRange.
+ */
+export const NotebookTimeseriesSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("timeseries"),
+    source: z.literal("indicators"),
+    indicatorId: z.string().uuid(),
+    chartStyle: z.enum(NOTEBOOK_CHART_STYLES),
+    range: z.enum(NOTEBOOK_DATE_RANGES).optional(),
+    title: sectionTitleSchema,
+    description: sectionDescriptionSchema.optional(),
+  })
+  .strict()
+  .refine(
+    (section) => isValidRangeForSource(section.source, resolveNotebookDateRange(section.range)),
+    {
+      message: "range is not available for the chosen source",
+      path: ["range"],
+    }
+  );
+
+/**
+ * Branded page header. Breadcrumb crumbs are LABELS, not links — a page must
+ * not become a way to point readers at arbitrary URLs.
+ */
+export const NotebookHeaderSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("header"),
+    eyebrow: z.string().trim().min(1).max(NOTEBOOK_EYEBROW_MAX).optional(),
+    breadcrumbs: z
+      .array(z.string().trim().min(1).max(NOTEBOOK_BREADCRUMB_MAX))
+      .min(1)
+      .max(NOTEBOOK_BREADCRUMB_COUNT_MAX)
+      .optional(),
+  })
+  .strict();
+
+export const NotebookHeroSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("hero"),
+    headline: z.string().trim().min(1).max(NOTEBOOK_HEADLINE_MAX),
+    subheadline: z.string().trim().min(1).max(NOTEBOOK_SECTION_DESCRIPTION_MAX).optional(),
+  })
+  .strict();
+
+/**
+ * In-page anchor nav, derived from the page's own titled sections.
+ *
+ * Carries no item list: an index that stores its own copy of the page falls
+ * out of step with it. Placing one is a decision; writing one is not.
+ */
+export const NotebookNavSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("nav"),
+    title: sectionTitleSchema.optional(),
+  })
+  .strict();
+
+/**
+ * Prose with data-bound `{{token}}` placeholders.
+ *
+ * Prose renders as a text node; tokens come from a closed set and resolve to
+ * the same figures the KPI tiles show. An unknown token is refused here rather
+ * than published as literal braces.
+ */
+export const NotebookNarrativeSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("narrative"),
+    title: sectionTitleSchema.optional(),
+    body: z.string().trim().min(1).max(NOTEBOOK_NARRATIVE_BODY_MAX),
+    kernelRange: z.enum(NOTEBOOK_KERNEL_RANGES).optional(),
+  })
+  .strict()
+  .superRefine((section, ctx) => {
+    const known = new Set<string>(NOTEBOOK_NARRATIVE_TOKENS);
+    for (const token of extractNarrativeTokens(section.body)) {
+      if (!known.has(token)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["body"],
+          message: `Unknown narrative token '${token}'`,
+        });
+      }
+    }
+  });
+
+/**
+ * Every section whose content this system produced: the closed vocabulary
+ * minus `custom-html`. Sections the composed AI generator may propose.
+ *
+ * NAMED AND ORDERED TO MATCH the indexer's `NotebookTrustedSectionSchema`,
+ * because the two modules are hand-mirrored and a reader reconciling them
+ * should be doing a diff, not a translation.
+ *
+ * IT IS A SAFETY PROPERTY, not a convenience. Before the section type existed,
+ * "the composed generator cannot return custom HTML" was true for free —
+ * custom HTML was only ever a page MODE, and the generator returns a composed
+ * spec. Adding the section handed that refusal back: a model could return a
+ * composed page with one custom-html block in it and be inside the trusted
+ * builder, having written both the markup and every figure in it. So the
+ * exclusion is now something a person wrote down, which means it is now
+ * something a person can delete — hence the tests that name it.
+ *
+ * A HUMAN AUTHOR MAY STILL PLACE ONE, and the distinction is the point: a
+ * person choosing to paste their own HTML has made a decision and put their
+ * community's name to it; a model reaching for the one section type with no
+ * data layer behind it has made no decision at all.
+ */
+export const NotebookTrustedSectionSchema = z.union([
+  NotebookKpisSectionSchema,
+  NotebookBarsSectionSchema,
+  NotebookApplicationsSectionSchema,
+  NotebookTextSectionSchema,
+  NotebookTimeseriesSectionSchema,
+  NotebookTableSectionSchema,
+  NotebookTiersSectionSchema,
+  NotebookQuerySectionSchema,
+  NotebookHeaderSectionSchema,
+  NotebookHeroSectionSchema,
+  NotebookNavSectionSchema,
+  NotebookNarrativeSectionSchema,
+]);
+
+/**
+ * An author's own HTML, inside an otherwise composed page.
+ *
+ * THE ONE PLACE UNTRUSTED MARKUP ENTERS A COMPOSED PAGE, and it is quarantined
+ * exactly as the whole-page tier is: posted over a private MessagePort into a
+ * frame that is `allow-scripts` WITHOUT `allow-same-origin`, served from a
+ * separate origin, never URL-addressable. The containment does not weaken by
+ * one attribute because the document now shares a page with trusted sections —
+ * that is the entire premise of allowing this at all.
+ *
+ * WHAT DID CHANGE IS THE READER'S CONTRACT, and it is worth saying plainly.
+ * This module's header says a spec SELECTS and LABELS but cannot compute. A
+ * custom-html section is the exception, and the only one: whatever numbers are
+ * inside it were typed by an author and reconciled against nothing. Everything
+ * true of tier A's figures — the pooled denominators, the em dash for absent
+ * data, the provenance line — is simply not true of this block. The review
+ * surface says so beside it, and it is deliberately absent from
+ * `NotebookTrustedSectionSchema` above, so a model cannot reach for the one
+ * section type that would let it write a figure nobody computed.
+ *
+ * `title` IS THE FRAME'S ACCESSIBLE NAME, not a heading. Nothing renders it as
+ * text: the block draws seamlessly into the page with no card and no chrome,
+ * so a title drawn above it would be a heading the author did not write. It is
+ * what a screen reader announces for the frame, which otherwise announces
+ * "iframe" — and it is why `sectionTitle` returns undefined for this type, so
+ * the auto nav does not list an anchor that lands on no visible heading.
+ */
+export const NotebookCustomHtmlSectionSchema = z
+  .object({
+    ...sectionIdentityFields,
+    type: z.literal("custom-html"),
+    html: z.string().min(1).max(NOTEBOOK_CUSTOM_HTML_MAX),
+    title: sectionTitleSchema.optional(),
+  })
+  .strict();
+
+/**
+ * The whole vocabulary: everything trusted, plus the one thing that is not.
+ *
+ * SPREAD RATHER THAN RE-LISTED, matching the indexer. Two hand-maintained
+ * copies of the same twelve names is one place for them to disagree, and the
+ * disagreement would be a section type this build accepts and the generator's
+ * schema silently also accepts — the exact failure the split exists to
+ * prevent.
+ */
+export const NotebookSectionSchema = z.union([
+  ...NotebookTrustedSectionSchema.options,
+  NotebookCustomHtmlSectionSchema,
+]);
+
+/**
+ * A page composed from the closed vocabulary. The default, and tier A.
+ *
+ * `version` is pinned: a document from a future schema is rejected rather than
+ * half-rendered by a build that does not know what its new fields mean.
+ *
+ * `mode` is OPTIONAL here and absence means composed, because every spec
+ * stored before this field existed is one of these. Requiring it would
+ * invalidate the entire back catalogue to record something already true of
+ * all of them.
+ */
+export const NotebookComposedSpecSchema = z
+  .object({
+    version: z.literal(NOTEBOOK_SPEC_VERSION),
+    mode: z.literal("composed").optional(),
+    sections: z.array(NotebookSectionSchema).min(1).max(NOTEBOOK_SPEC_MAX_SECTIONS),
+  })
+  .strict();
+
+/**
+ * The same page, as a GENERATOR may propose it. See
+ * `NotebookTrustedSectionSchema` for why this is its own schema rather than a
+ * check somewhere downstream.
+ *
+ * Every value this accepts is also a valid `NotebookComposedSpec`, so nothing
+ * downstream needs to know which of the two produced it — the narrowing exists
+ * at the one boundary where a model's output arrives, and stops there.
+ */
+export const NotebookGeneratedSpecSchema = z
+  .object({
+    version: z.literal(NOTEBOOK_SPEC_VERSION),
+    mode: z.literal("composed").optional(),
+    sections: z.array(NotebookTrustedSectionSchema).min(1).max(NOTEBOOK_SPEC_MAX_SECTIONS),
+  })
+  .strict();
+
+/**
+ * A page whose body is an author's own HTML AND NOTHING ELSE. Tier B, opt-in,
+ * and untrusted.
+ *
+ * THIS USED TO BE THE ONLY WAY IN, and the note here used to say so: an html
+ * SECTION was refused on the grounds that it would make a composed page a
+ * mixed-trust surface. That objection was answered rather than overruled. A
+ * composed page carrying a `custom-html` section IS mixed-trust — it simply
+ * says so, at every layer that matters: the section is quarantined in the same
+ * sandbox on the same separate origin, the review surface marks it beside the
+ * block, and the AI composer cannot emit one at all. What was really being
+ * protected is the trusted renderer's promise that every FIGURE on a page came
+ * from the query layer, and that promise is now scoped to the sections that
+ * can actually keep it rather than asserted over the whole page.
+ *
+ * WHAT THIS MODE STILL BUYS is a page with no composed frame around it at all:
+ * no heading, no provenance line, no chrome the author did not write. That is
+ * a different thing from a composed page with a custom block in it, which is
+ * why both survive rather than one replacing the other.
+ *
+ * The document here is DATA, never something this application executes. It
+ * reaches a reader only by being posted into a sandboxed frame on a separate
+ * origin, and it is never URL-addressable on any origin — there is no loose
+ * document anywhere for someone to open in a plain tab.
+ */
+export const NotebookCustomHtmlSpecSchema = z
+  .object({
+    version: z.literal(NOTEBOOK_SPEC_VERSION),
+    mode: z.literal("custom-html"),
+    html: z.string().min(1).max(NOTEBOOK_CUSTOM_HTML_MAX),
+    title: sectionTitleSchema.optional(),
+  })
+  .strict();
+
+/**
+ * One page spec, in one of its two modes.
+ *
+ * ADDITIVE, so `version` stays 1. A v1 reader meeting a custom-html spec
+ * REJECTS it — the composed schema is strict and sees an unknown `mode` with
+ * no `sections` — rather than misreading it as something else. Rejection is
+ * not a bump; only a shape a v1 reader would accept and interpret WRONGLY is.
+ */
+export const NotebookSpecSchema = z.union([
+  NotebookComposedSpecSchema,
+  NotebookCustomHtmlSpecSchema,
+]);
+
+export type NotebookKpisSection = z.infer<typeof NotebookKpisSectionSchema>;
+export type NotebookBarsSection = z.infer<typeof NotebookBarsSectionSchema>;
+export type NotebookApplicationsSection = z.infer<typeof NotebookApplicationsSectionSchema>;
+export type NotebookHeaderSection = z.infer<typeof NotebookHeaderSectionSchema>;
+export type NotebookHeroSection = z.infer<typeof NotebookHeroSectionSchema>;
+export type NotebookNavSection = z.infer<typeof NotebookNavSectionSchema>;
+export type NotebookNarrativeSection = z.infer<typeof NotebookNarrativeSectionSchema>;
+export type NotebookTableSection = z.infer<typeof NotebookTableSectionSchema>;
+export type NotebookTiersSection = z.infer<typeof NotebookTiersSectionSchema>;
+export type NotebookQuerySection = z.infer<typeof NotebookQuerySectionSchema>;
+export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
+export type NotebookCustomHtmlSection = z.infer<typeof NotebookCustomHtmlSectionSchema>;
+export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;
+export type NotebookSection = z.infer<typeof NotebookSectionSchema>;
+export type NotebookComposedSpec = z.infer<typeof NotebookComposedSpecSchema>;
+export type NotebookGeneratedSpec = z.infer<typeof NotebookGeneratedSpecSchema>;
+export type NotebookCustomHtmlSpec = z.infer<typeof NotebookCustomHtmlSpecSchema>;
+export type NotebookSpec = z.infer<typeof NotebookSpecSchema>;
+
+/**
+ * Which kind of page this is.
+ *
+ * The render path branches on these ONCE, at the top, and everything
+ * downstream takes the narrower type.
+ *
+ * WHAT THIS STILL GUARANTEES, precisely: a WHOLE-PAGE custom document cannot
+ * be handed to the composed renderer, because the compiler refuses it. What it
+ * no longer guarantees is that a composed page contains no untrusted markup —
+ * a `custom-html` SECTION is exactly that, by design. The containment for the
+ * section is not the type system but the sandbox it renders into, which is the
+ * same containment this mode has always relied on.
+ */
+export function isComposedNotebookSpec(spec: NotebookSpec): spec is NotebookComposedSpec {
+  return spec.mode !== "custom-html";
+}
+
+export function isCustomHtmlNotebookSpec(spec: NotebookSpec): spec is NotebookCustomHtmlSpec {
+  return spec.mode === "custom-html";
+}
+
+/** Whether a value is a spec this build can render. */
+export function isRenderableNotebookSpec(value: unknown): value is NotebookSpec {
+  return NotebookSpecSchema.safeParse(value).success;
+}
+
+/**
+ * Human labels for the vocabulary, for the builder's option lists.
+ *
+ * Kept beside the vocabulary so adding a metric forces a decision about what
+ * to call it, rather than leaving the builder to render a raw enum id. The
+ * PUBLIC page does not read these — its KPI labels come from the metrics
+ * layer, which owns what each figure is called wherever it appears.
+ */
+export const NOTEBOOK_KPI_METRIC_LABELS: Readonly<Record<NotebookKpiMetric, string>> = {
+  committed: "Committed",
+  disbursed: "Disbursed",
+  fundedProjects: "Funded projects",
+  milestoneCompletion: "Milestone completion",
+  // Kernel labels for the COMPOSER's picker only. The public page uses the
+  // label the query layer returns with each figure, so a wording change there
+  // does not need a deploy here — these exist because a picker cannot render a
+  // raw enum id at an author.
+  kernelFunctionsInScope: "Kernel functions in scope",
+  kernelFunctionsMeasured: "Kernel functions measured",
+  kernelSlaMet: "Kernel SLA met",
+  kernelCoverage: "Kernel coverage",
+  kernelProjectsReporting: "Kernel projects reporting",
+};
+
+export const NOTEBOOK_KERNEL_COLUMN_LABELS: Readonly<Record<NotebookKernelTableColumn, string>> = {
+  function: "Function",
+  tier: "Tier",
+  category: "Category",
+  subcategory: "Subcategory",
+  inScope: "In scope",
+  maintainers: "Maintainers",
+  measured: "Measured",
+  commitments: "Commitments",
+  projectsReporting: "Projects reporting",
+  readings: "Readings",
+  lastReadingAt: "Last reading",
+  slaMetPct: "SLA met",
+  coveragePct: "Coverage",
+};
+
+export const NOTEBOOK_KERNEL_RANGE_LABELS: Readonly<Record<NotebookKernelRange, string>> = {
+  "30d": "Last 30 days",
+  "90d": "Last 90 days",
+  "12m": "Last 12 months",
+};
+
+export const NOTEBOOK_BAR_SOURCE_LABELS: Readonly<Record<NotebookBarSource, string>> = {
+  programs: "Funding programs",
+  tracks: "Tracks",
+};
+
+export const NOTEBOOK_DATE_RANGE_LABELS: Readonly<Record<NotebookDateRange, string>> = {
+  all: "All time",
+  "30d": "Last 30 days",
+  "90d": "Last 90 days",
+  "12m": "Last 12 months",
+};
+
+export const NOTEBOOK_CHART_STYLE_LABELS: Readonly<Record<NotebookChartStyle, string>> = {
+  line: "Line",
+  area: "Area",
+};
+
+export const NOTEBOOK_BAR_METRIC_LABELS: Readonly<Record<NotebookBarMetric, string>> = {
+  disbursedVsCommitted: "Disbursed against commitment",
+  milestoneCompletion: "Average milestone completion",
+};

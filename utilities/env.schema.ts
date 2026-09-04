@@ -73,6 +73,12 @@ export const serverSchema = z.object({
   SANITY_VIEWER_TOKEN: z.string().optional().default(""),
   SANITY_WEBHOOK_SECRET: z.string().optional().default(""),
   SANITY_PREVIEW_SECRET: z.string().optional().default(""),
+
+  // Notebook pages — bearer token gap-indexer presents to
+  // /api/notebooks/revalidate on new ingest. Unset means the endpoint refuses
+  // every call: an unauthenticated revalidation endpoint is a free cache-buster
+  // and a cheap way to hammer the upstream API on someone else's behalf.
+  NOTEBOOKS_REVALIDATE_SECRET: z.string().optional().default(""),
 });
 
 // --- Validation ---

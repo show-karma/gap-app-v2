@@ -1,0 +1,590 @@
+"use client";
+
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  type NotebookSandboxThemeSnapshot,
+  readNotebookSandboxTheme,
+} from "@/services/notebooks/notebook-sandbox-theme";
+
+/**
+ * The only place author-written HTML is ever rendered.
+ *
+ * TWO INDEPENDENT CONTAINMENTS, and each one is load-bearing on its own.
+ *
+ * 1. `sandbox="allow-scripts"` WITHOUT `allow-same-origin`. The document lands
+ *    in an opaque origin: it cannot read the parent, our cookies, our storage,
+ *    or anything belonging to a real origin. Adding `allow-same-origin`
+ *    alongside `allow-scripts` DEFEATS THE SANDBOX ENTIRELY — the frame could
+ *    then reach into its own origin's storage and script its way back out. The
+ *    two tokens together are the single most dangerous edit anyone can make to
+ *    this file, they look innocuous in a diff, and that is why the token list
+ *    is a frozen constant with tests that fail if the pair ever appears.
+ *
+ * 2. A SEPARATE ORIGIN to serve from. Not redundant with the sandbox: the
+ *    attribute only applies to the frame, while a stored document is also
+ *    reachable by URL and can be opened in a plain tab where no sandbox
+ *    exists. Served from our own origin that would be stored XSS against the
+ *    app whatever this component does. In this design nothing is
+ *    URL-addressable at all — the origin serves only the trusted shell — so
+ *    this is the second belt rather than the only one.
+ *
+ * HOW THE DOCUMENT ACTUALLY GETS THERE, and why it is not the obvious way.
+ *
+ * The obvious way is `frame.contentWindow.postMessage(html, sandboxOrigin)`.
+ * IT SILENTLY DOES NOTHING. Because the frame has no `allow-same-origin` its
+ * origin is OPAQUE — the browser compares our target origin against `null`,
+ * finds no match, and DISCARDS the message. Exact-origin targeting and the
+ * sandbox we require are mutually exclusive, and the resolution is emphatically
+ * not to add `allow-same-origin`.
+ *
+ * So delivery is a MessageChannel:
+ *
+ *   - the shell announces itself, and we accept that announcement only if it
+ *     came from THIS frame's window, from an opaque origin, carrying the nonce
+ *     minted for this instance;
+ *   - we then send ONE bootstrap message with `targetOrigin: "*"` whose entire
+ *     payload is a transferred `MessagePort` — no document, no author data,
+ *     nothing worth intercepting even if another frame could receive it;
+ *   - every byte of author HTML travels over that private port afterwards.
+ *
+ * The rule that matters, and the one the tests pin: CONTENT NEVER GOES TO
+ * `"*"`. The single wildcard is contentless by construction.
+ */
+
+/**
+ * Frozen because it is a security control, not a style choice.
+ *
+ * `allow-scripts` alone. If a custom page ever needs another capability that
+ * is a conversation with a security review attached, not a token appended
+ * here — and `allow-same-origin` is never that conversation's answer.
+ */
+export const NOTEBOOK_SANDBOX_ATTRIBUTE = "allow-scripts" as const;
+
+/** Message names, so a stray postMessage from anything else is ignored. */
+export const NOTEBOOK_SANDBOX_READY = "karma:notebook-sandbox:ready" as const;
+export const NOTEBOOK_SANDBOX_BOOTSTRAP = "karma:notebook-sandbox:port" as const;
+export const NOTEBOOK_SANDBOX_DOCUMENT = "karma:notebook-sandbox:document" as const;
+
+/**
+ * The shell reporting how tall its document actually is.
+ *
+ * The ONLY message that travels parent-ward, and it travels over the private
+ * port rather than a window message — which is what makes it trustworthy: a
+ * port has exactly two ends and nothing else on the page holds one, so there
+ * is no origin and no source left to re-check by the time it arrives.
+ *
+ * It exists because only the SHELL can measure the document. Its content is
+ * cross-origin and opaque to us by design, so a parent that wants to size the
+ * frame to its content has no way to measure it and no way to ask — the shell
+ * has to volunteer the number. The alternative is a fixed box, and a fixed box
+ * turns a full report into a small scrolling window whose inner scrollbar the
+ * parent's own wheel events cannot reach.
+ */
+export const NOTEBOOK_SANDBOX_HEIGHT = "karma:notebook-sandbox:height" as const;
+
+/**
+ * The app telling the shell what it looks like.
+ *
+ * PARENT-WARD IN THE OTHER DIRECTION, and it exists for the seamless variant.
+ * A block that is genuinely part of the page cannot be styled by the page —
+ * the frame is a separate document in an opaque origin, so our cascade stops
+ * dead at its boundary and there is no stylesheet, class or inherited property
+ * that reaches inside. Left alone the document renders in the browser's
+ * defaults: Times New Roman on white, inside a page in Inter on whatever the
+ * reader's theme is. The block then reads as an embed, which is precisely the
+ * thing this variant exists to stop being.
+ *
+ * So the theme is SENT, as values, over the same private port. See
+ * `notebook-sandbox-theme.ts` for what is in it and why every field of it is
+ * inert. Sent on connect and again on every theme change, because a reader who
+ * flips to dark mode and is left with one blindingly light block in the middle
+ * of the page has found the seam in the most visible way possible.
+ */
+export const NOTEBOOK_SANDBOX_THEME = "karma:notebook-sandbox:theme" as const;
+
+/**
+ * Bounds on a height this component will honour. The shell mirrors them.
+ *
+ * The number crosses a trust boundary: what is being measured is the AUTHOR'S
+ * document, so the measurement is author-influenced even though the shell
+ * doing the measuring is ours. Unclamped, a page could make itself a hundred
+ * thousand pixels tall, or zero pixels tall and effectively invisible.
+ *
+ * The maximum is deliberately generous — a long report is the entire point of
+ * this feature — and the minimum is about a screenful, so a shell that
+ * measures before layout settles cannot collapse the frame to nothing.
+ */
+export const NOTEBOOK_SANDBOX_MIN_HEIGHT = 320;
+export const NOTEBOOK_SANDBOX_MAX_HEIGHT = 20_000;
+
+/**
+ * No floor at all for a seamless block, and that is not an oversight.
+ *
+ * The 320px minimum is right for a WHOLE PAGE: a custom page measured before
+ * its layout settled and collapsed to nothing would look like a broken route.
+ * A seamless SECTION is a different object — a one-line callout between two
+ * composed sections is a legitimate thing to write, and a 320px floor would
+ * pad it with 250px of blank page that no author asked for and none can
+ * remove. The clamp still refuses zero and negatives, which is the case that
+ * actually indicates a bad measurement.
+ */
+export const NOTEBOOK_SANDBOX_SEAMLESS_MIN_HEIGHT = 0;
+
+/**
+ * What a seamless block is tall before the shell has measured it.
+ *
+ * There has to be SOMETHING. `height: 0` until the first report would make a
+ * section on an older shell — or one that never reports — invisible, and an
+ * invisible section is indistinguishable from a section the author deleted.
+ * An iframe's 150px CSS default would do the same job by accident; naming it
+ * makes it a decision, and one small enough that the single reflow when the
+ * real height arrives is a nudge rather than a jump.
+ */
+export const NOTEBOOK_SANDBOX_SEAMLESS_INITIAL_HEIGHT = 180;
+
+/**
+ * The reported height as pixels this component will apply, or `null` for
+ * anything it will not.
+ *
+ * Separate from the component so the rules can be tested as rules. `null` and
+ * a clamped number mean different things at the call site: `null` KEEPS the
+ * height the frame already has, which is why a malformed message must not come
+ * back as some default — a default would let a garbled message resize a page.
+ */
+export function clampNotebookSandboxHeight(
+  value: unknown,
+  /**
+   * The floor, which is a per-VARIANT decision rather than a property of the
+   * protocol — see `NOTEBOOK_SANDBOX_SEAMLESS_MIN_HEIGHT`. Defaulted so every
+   * existing caller and every existing test keeps the page-sized floor it had.
+   */
+  minimum: number = NOTEBOOK_SANDBOX_MIN_HEIGHT
+): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  // Ceil, not round: half a pixel short of the content is a scrollbar.
+  const measured = Math.ceil(value);
+  if (measured <= 0) return null;
+  return Math.min(Math.max(measured, minimum), NOTEBOOK_SANDBOX_MAX_HEIGHT);
+}
+
+/**
+ * The origin a sandboxed frame reports.
+ *
+ * Named rather than inlined so the check below reads as the deliberate test it
+ * is: an announcement from a REAL origin is not our sandboxed frame, whatever
+ * else it claims about itself.
+ */
+const OPAQUE_ORIGIN = "null";
+
+/** Shared by every message in the protocol, so we can spot ours before judging it. */
+const NOTEBOOK_SANDBOX_PREFIX = "karma:notebook-sandbox:";
+
+/**
+ * A per-instance nonce that is IDENTICAL on the server and the client.
+ *
+ * `crypto.randomUUID()` was the obvious choice and the wrong one: a value
+ * minted during render differs between the two, which React reports as a
+ * hydration mismatch it "will not patch up" — and the subtree then never comes
+ * alive, so the listener never attaches and the frame sits inert with every
+ * attribute looking correct. Deferring the mint to an effect fixed the
+ * mismatch and broke something else: nothing rendered on the first pass.
+ *
+ * `useId` is React's answer to exactly this. It is unique per component
+ * instance, stable across re-renders, and the SAME string on both sides of
+ * hydration — which is the property that matters here.
+ *
+ * NOT SECRECY, CORRELATION. The nonce exists so one sandboxed frame cannot
+ * accept a bootstrap meant for a different frame on the same page. Uniqueness
+ * per instance is the whole requirement; the port transfer, the opaque-origin
+ * check and the shell's own parent-origin allowlist are what make the channel
+ * private.
+ *
+ * The shape is dictated by the shell, which validates `[A-Za-z0-9_-]{22,128}`:
+ * React's ids contain characters outside that set and are far shorter, so they
+ * are sanitised and padded deterministically. Deterministically, because any
+ * randomness here would put us straight back into the hydration mismatch.
+ */
+function nonceFromId(id: string): string {
+  const cleaned = id.replace(/[^A-Za-z0-9_-]/g, "") || "0";
+  return `karma-notebook-sandbox-${cleaned}`;
+}
+
+interface Props {
+  /** Absolute origin the trusted shell is served from. Never our own. */
+  sandboxOrigin: string;
+  /** The author's document. Untrusted by construction. */
+  html: string;
+  title: string;
+  className?: string;
+  /**
+   * Whether the frame grows to the document inside it.
+   *
+   * TRUE for a reader looking at a published page: it is a page, and a page
+   * that scrolls inside a 60vh box is an embedded widget wearing a page's URL.
+   *
+   * FALSE for the builder's preview pane, and that is not a detail. The
+   * preview sits in the normal flow underneath the editor, so a full-height
+   * preview would push the textarea an author is typing into off the screen,
+   * and it would do so again on every keystroke as the document is re-sent and
+   * re-measured. A preview is a window onto the page; the page itself is not.
+   */
+  fitToContent?: boolean;
+  /**
+   * How the frame presents itself.
+   *
+   * `card` is the whole-page tier: a bordered, rounded panel on our background,
+   * which is honest about the document being a separate thing being shown to
+   * you.
+   *
+   * `seamless` is a SECTION inside a composed page, and it is the opposite
+   * claim: no border, no background of its own, no rounding, full width of its
+   * container, and no inner scrollbar — the block flows with the page and its
+   * gutters come from the page's own layout rather than from anything set
+   * here. Paired with the theme message it is meant to be indistinguishable
+   * from a section we rendered ourselves.
+   *
+   * PRESENTATION ONLY. Not one thing about the containment changes between the
+   * two: same sandbox tokens, same separate origin, same port, same clamp.
+   * Someone reading this prop in a diff should be able to satisfy themselves
+   * of that in one glance, which is why the security constants above are not
+   * parameterised by it.
+   */
+  variant?: "card" | "seamless";
+}
+
+export function NotebookSandboxFrame({
+  sandboxOrigin,
+  html,
+  title,
+  className,
+  fitToContent = true,
+  variant = "card",
+}: Props) {
+  const seamless = variant === "seamless";
+  // A seamless block ALWAYS grows to its document. The alternative is an inner
+  // scrollbar in the middle of a page, which is the single most obvious tell
+  // that a section is an embed — and it is unreachable anyway, since the
+  // page's own wheel events never make it into the frame.
+  const fits = seamless || fitToContent;
+  const frame = useRef<HTMLIFrameElement>(null);
+  const port = useRef<MessagePort | null>(null);
+  const [connected, setConnected] = useState(false);
+
+  /**
+   * Minted AFTER MOUNT, on the client only. Never during render.
+   *
+   * A nonce generated while rendering is variable input, so the server writes
+   * one value into the iframe `src` and the client computes another — a
+   * hydration mismatch React reports and explicitly declines to patch up. The
+   * symptom is vicious: the markup looks perfect, the attributes are all
+   * there, and nothing works, because the subtree never comes alive.
+   *
+   * Deferring it also DISSOLVES THE RACE this component previously worked
+   * around. The frame is not rendered until the nonce exists, and the nonce
+   * only exists after the listener is attached, so the shell cannot possibly
+   * announce itself before we are listening.
+   */
+  const nonce = nonceFromId(useId());
+
+  // The listener must send the CURRENT document without being torn down and
+  // rebuilt on every keystroke in the editor — re-attaching mid-handshake is
+  // how a listener comes to miss the announcement it was waiting for.
+  const htmlRef = useRef(html);
+  htmlRef.current = html;
+  // Read through a ref for the same reason as the document: the listener must
+  // not be torn down and rebuilt because a prop changed, and re-attaching
+  // mid-handshake is how a listener misses the announcement it was waiting for.
+  const fitToContentRef = useRef(fits);
+  fitToContentRef.current = fits;
+  const minHeightRef = useRef(0);
+  minHeightRef.current = seamless
+    ? NOTEBOOK_SANDBOX_SEAMLESS_MIN_HEIGHT
+    : NOTEBOOK_SANDBOX_MIN_HEIGHT;
+  /** What the shell already has, so an edit sends and a reconnect does not. */
+  /** What the shell already has, so an edit sends and a reconnect does not. */
+  const sentHtml = useRef<string | null>(null);
+
+  /**
+   * How far the handshake has got, readable from the DOM.
+   *
+   * Deliberately data attributes rather than logging: this file may not use
+   * console, a log line is gone the moment someone reloads, and "the frame is
+   * blank and nothing is in the console" is exactly the failure that needs a
+   * durable answer. These sit on the iframe ELEMENT, which lives in OUR
+   * document, so they are readable from the top frame — unlike anything inside
+   * the sandboxed shell, which is cross-origin and opaque by design.
+   *
+   * `readyCount` and `bootstrapCount` are what distinguish "the shell never
+   * reached us" from "we answered and it did not land": the first stays 0 in
+   * one case and climbs in the other. `lastType` catches the case both counts
+   * miss — a shell announcing itself under a type string we do not recognise,
+   * which the checks below refuse silently because refusing quietly is right.
+   */
+  const [readyCount, setReadyCount] = useState(0);
+  const [bootstrapCount, setBootstrapCount] = useState(0);
+  const [rejected, setRejected] = useState<string | null>(null);
+  const [lastType, setLastType] = useState<string | null>(null);
+  /**
+   * Messages that CLAIM to be ours, counted regardless of which window sent
+   * them, plus whether the last one came from the window we created.
+   *
+   * `seen` climbing while `ready` stays at zero says the shell is talking and
+   * something after this point is refusing it; both at zero says nothing is
+   * arriving at all. Without the pair those two are indistinguishable, which
+   * is precisely how a blank frame stays unexplained.
+   */
+  const [seenCount, setSeenCount] = useState(0);
+  const [sourceMatch, setSourceMatch] = useState<string | null>(null);
+
+  /**
+   * The document's own height, once the shell has told us.
+   *
+   * `null` until then, and the CSS class keeps its viewport-relative height —
+   * so a shell that never reports, or one on an older build, renders exactly
+   * as it did before. There is no waiting state to design and nothing to
+   * regress: the fallback IS the previous behaviour.
+   */
+  const [height, setHeight] = useState<number | null>(null);
+
+  /**
+   * Push the current theme down the port, if there is one.
+   *
+   * Guarded on the variant: a card frame is a panel with its own border on our
+   * background and has never wanted our fonts inside it, so sending them would
+   * be changing how tier B looks as a side effect of building tier A. Reading
+   * the theme also walks every stylesheet in the document, which is not free
+   * and is entirely wasted on a frame that will not use it.
+   *
+   * A THROW HERE MUST NOT TAKE THE FRAME WITH IT. Everything this reads is
+   * CSSOM, which browsers have historically been inventive about — and a page
+   * that renders in the wrong font is a cosmetic problem, while a page that
+   * throws during the handshake never renders the document at all. The catch
+   * is the difference between those two outcomes.
+   */
+  const sendTheme = useCallback(() => {
+    if (!seamless) return;
+    const channel = port.current;
+    if (!channel) return;
+    let snapshot: NotebookSandboxThemeSnapshot;
+    try {
+      snapshot = readNotebookSandboxTheme();
+    } catch {
+      return;
+    }
+    channel.postMessage({ type: NOTEBOOK_SANDBOX_THEME, ...snapshot });
+  }, [seamless]);
+
+  // Read through a ref for the same reason as the document: the handshake
+  // listener must survive a prop change without being re-attached.
+  const sendThemeRef = useRef(sendTheme);
+  sendThemeRef.current = sendTheme;
+
+  // useLayoutEffect, not useEffect: this runs synchronously at commit, before
+  // paint, which is the earliest React lets us listen. The shell announces
+  // itself as soon as it executes, and on a local origin that can be very
+  // soon — a listener attached a frame later is a listener that missed it.
+  useLayoutEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      // THREE CHECKS, none redundant. `source` proves it came from the window
+      // we created; the opaque origin proves that window is genuinely
+      // sandboxed; the nonce proves it is this instance's shell rather than
+      // another sandboxed frame on the same page.
+      const data = event.data as { type?: string; nonce?: string } | null;
+      // Recorded BEFORE the source check, and that ordering is the whole point.
+      //
+      // An earlier version filtered on `source` first and returned silently,
+      // so a shell announcing itself perfectly well while the source
+      // comparison failed looked exactly like a shell that never spoke: every
+      // counter zero, no rejection, nothing to tell the two apart. The check
+      // itself is right — it is the diagnosis that must not depend on passing
+      // it.
+      if (typeof data?.type === "string" && data.type.startsWith(NOTEBOOK_SANDBOX_PREFIX)) {
+        setSeenCount((count) => count + 1);
+        setLastType(data.type);
+        setSourceMatch(event.source === frame.current?.contentWindow ? "yes" : "no");
+      }
+
+      if (event.source !== frame.current?.contentWindow) return;
+
+      if (event.origin !== OPAQUE_ORIGIN) {
+        setRejected("origin");
+        return;
+      }
+      if (data?.type !== NOTEBOOK_SANDBOX_READY) return;
+      if (data.nonce !== nonce) {
+        setRejected("nonce");
+        return;
+      }
+
+      setRejected(null);
+      setReadyCount((count) => count + 1);
+
+      // ANSWER EVERY ANNOUNCEMENT, not just the first.
+      //
+      // A window.postMessage is not queued the way a MessagePort is: if our
+      // bootstrap arrives before the shell has attached its own listener, it
+      // is gone. Answering once and latching meant the shell then retried
+      // forever against a parent that had decided it was already done — a
+      // deadlock in which both sides are behaving reasonably and nothing
+      // happens. The shell stops announcing when a bootstrap lands, so
+      // replying every time converges instead of looping.
+      port.current?.close();
+      const channel = new MessageChannel();
+      port.current = channel.port1;
+      /**
+       * The parent-ward half of the channel.
+       *
+       * Assigning `onmessage` starts the port, which is what makes the shell's
+       * queued messages arrive — a port that is never started silently buffers
+       * forever, and "the shell reported and nothing happened" would look
+       * exactly like "the shell never reported".
+       *
+       * Nothing here trusts the CONTENT of the message: only a height is read,
+       * only if it is a number, and only through the clamp. The port proves
+       * who sent it; the clamp decides what that sender is allowed to ask for.
+       */
+      channel.port1.onmessage = (message: MessageEvent) => {
+        const payload = message.data as { type?: string; height?: unknown } | null;
+        if (payload?.type !== NOTEBOOK_SANDBOX_HEIGHT) return;
+        if (!fitToContentRef.current) return;
+        const measured = clampNotebookSandboxHeight(payload.height, minHeightRef.current);
+        if (measured === null) return;
+        // Compared before setting: the shell reports on every resize, and an
+        // unchanged number re-rendering the frame is churn at best.
+        setHeight((current) => (current === measured ? current : measured));
+      };
+      // THE ONE PERMITTED WILDCARD, and it carries no content: a type tag, the
+      // correlation nonce, and a transferred port. An opaque origin cannot be
+      // named, so "*" is the only way to hand the port over at all — which is
+      // exactly why the thing handed over is a port and not the document.
+      //
+      // THE NONCE TRAVELS BOTH WAYS, and it is not redundant with the checks
+      // above. Those tell US the announcement came from our frame; this one
+      // tells the SHELL the bootstrap was meant for it, so a shell cannot
+      // accept a port intended for a different frame instance on the same
+      // page, and a replayed bootstrap does not connect.
+      frame.current?.contentWindow?.postMessage({ type: NOTEBOOK_SANDBOX_BOOTSTRAP, nonce }, "*", [
+        channel.port2,
+      ]);
+      setBootstrapCount((count) => count + 1);
+      // The document goes over the NEW port immediately: a port replaced
+      // mid-handshake would otherwise leave the shell connected to a channel
+      // nothing was ever sent on.
+      // THEME FIRST, DOCUMENT SECOND, over the same port and in that order.
+      //
+      // A MessagePort preserves order, so the shell has the palette and the
+      // font faces in hand before the document it must style with them ever
+      // arrives. The other order works too — the shell would restyle — but it
+      // paints once in Times New Roman on white first, and a flash of the
+      // unstyled block is exactly the seam a reader notices.
+      sendThemeRef.current();
+      port.current.postMessage({ type: NOTEBOOK_SANDBOX_DOCUMENT, html: htmlRef.current });
+      sentHtml.current = htmlRef.current;
+      setConnected(true);
+    };
+
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      port.current?.close();
+      port.current = null;
+    };
+  }, [nonce]);
+
+  /**
+   * Re-send the theme when the app's theme changes.
+   *
+   * A MutationObserver on the `class` attribute of `<html>`, because that IS
+   * the theme under Tailwind's `darkMode: ["class"]` — the switch adds and
+   * removes `dark` there. Not `prefers-color-scheme`: a reader who has picked
+   * a theme in the app has overridden their OS, and following the OS would
+   * leave one block disagreeing with the page around it.
+   *
+   * Observing `class` and not `attributes` wholesale: `<html>` carries other
+   * attributes that change for unrelated reasons, and re-reading every
+   * stylesheet in the document each time one of them moved would be a real
+   * cost for no effect.
+   */
+  useEffect(() => {
+    if (!seamless || !connected) return;
+    if (typeof MutationObserver === "undefined") return;
+
+    const observer = new MutationObserver(() => sendThemeRef.current());
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, [seamless, connected]);
+
+  // Author HTML travels ONLY here, over the private channel. A port has no
+  // target-origin argument to get wrong, which is the property that makes this
+  // safer than any window.postMessage could be under an opaque origin.
+  //
+  // This handles EDITS. The first send happens as the port is created, so a
+  // connection never sits open with nothing on it while an author waits.
+  useEffect(() => {
+    if (!connected) return;
+    // Already sent as the port was created. Re-sending an unchanged document on
+    // every reconnect would push the whole thing over the wire for nothing,
+    // and would make "how many documents were sent" useless as a diagnostic.
+    if (sentHtml.current === html) return;
+    port.current?.postMessage({ type: NOTEBOOK_SANDBOX_DOCUMENT, html });
+    sentHtml.current = html;
+  }, [connected, html]);
+
+  return (
+    <iframe
+      ref={frame}
+      title={title}
+      data-sandbox-state={connected ? "connected" : "waiting"}
+      data-sandbox-ready-count={readyCount}
+      data-sandbox-bootstrap-count={bootstrapCount}
+      data-sandbox-last-type={lastType ?? undefined}
+      data-sandbox-seen-count={seenCount}
+      data-sandbox-source-match={sourceMatch ?? undefined}
+      data-sandbox-rejected={rejected ?? undefined}
+      // The nonce rides in the fragment: the shell reads it to announce itself,
+      // and a fragment is never sent to the server.
+      src={`${sandboxOrigin}/notebook-sandbox#nonce=${encodeURIComponent(nonce)}`}
+      sandbox={NOTEBOOK_SANDBOX_ATTRIBUTE}
+      // No allow= list: a custom page has no business with the camera, the
+      // microphone, geolocation or payments, and silence is the safe default.
+      referrerPolicy="no-referrer"
+      // Inline, because it OVERRIDES the class rather than replacing it: the
+      // class stays the fallback for every frame that has not reported, and
+      // for a caller that passed its own className.
+      // A seamless frame is ALWAYS given a height, because it has no sensible
+      // one to fall back to — an iframe's 150px default is a number the
+      // browser picked, and a section silently 150px tall reads as broken. A
+      // card frame keeps its class-driven height until the shell reports, so
+      // a shell that never reports renders exactly as it did before.
+      style={
+        seamless
+          ? { height: `${height ?? NOTEBOOK_SANDBOX_SEAMLESS_INITIAL_HEIGHT}px` }
+          : height === null
+            ? undefined
+            : { height: `${height}px` }
+      }
+      data-sandbox-height={height ?? undefined}
+      data-sandbox-variant={variant}
+      // The inner document's scrollbar belongs to the inner document, so no
+      // parent CSS can hide it. `scrolling` is the one thing that can, and it
+      // is deprecated rather than removed — every engine still honours it.
+      // Belt to the braces of an exact height: a shell that over-measures by a
+      // pixel would otherwise put a scrollbar in the middle of the page.
+      scrolling={seamless ? "no" : undefined}
+      className={
+        className ??
+        (seamless
+          ? // Deliberately nothing that draws: no border, no background, no
+            // radius, no shadow. `block` because an iframe is inline by
+            // default and would otherwise sit on a text baseline with a few
+            // pixels of descender space under it — a gap that looks like
+            // sloppy spacing and is invisible in the markup.
+            "block w-full overflow-hidden border-0 bg-transparent"
+          : "h-[60vh] w-full rounded-2xl border border-border bg-background")
+      }
+    />
+  );
+}

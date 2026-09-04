@@ -98,3 +98,102 @@ describe("framing headers", () => {
     expect(sources).toContain(TOKEN_BRIDGE_PATH);
   });
 });
+
+/**
+ * The notebook custom-page sandbox has to be in `frame-src`, or tier B does
+ * not render anywhere.
+ *
+ * This is the failure mode worth pinning because it is invisible: with the
+ * origin missing the browser makes NO REQUEST AT ALL for the frame — nothing
+ * in the network log, no console error worth the name, just a broken frame and
+ * a correct-looking iframe element. It cost a browser session to find once.
+ *
+ * `frame-src` is also the opposite direction from `frame-ancestors` above:
+ * that one governs who may frame US, this one what we may frame. Widening this
+ * admits a document into our page, so it stays env-driven and empty by
+ * default rather than accumulating every environment's host as a literal.
+ */
+describe("notebook sandbox frame-src", () => {
+  const ORIGIN = "https://sandbox.example";
+
+  async function frameSrcWith(origin?: string): Promise<string> {
+    const previous = process.env.NEXT_PUBLIC_NOTEBOOK_SANDBOX_ORIGIN;
+    if (origin === undefined) delete process.env.NEXT_PUBLIC_NOTEBOOK_SANDBOX_ORIGIN;
+    else process.env.NEXT_PUBLIC_NOTEBOOK_SANDBOX_ORIGIN = origin;
+
+    // The config reads the variable at module scope, so it has to be reloaded
+    // rather than merely re-invoked.
+    vi.resetModules();
+    const reloaded = (await import("@/next.config")).default;
+    const rules = (await reloaded.headers!()) as HeaderRule[];
+
+    if (previous === undefined) delete process.env.NEXT_PUBLIC_NOTEBOOK_SANDBOX_ORIGIN;
+    else process.env.NEXT_PUBLIC_NOTEBOOK_SANDBOX_ORIGIN = previous;
+
+    return rules.map(cspOf).find((csp) => csp.includes("frame-src")) ?? "";
+  }
+
+  it("should_allow_the_configured_sandbox_origin_to_be_framed", async () => {
+    const csp = await frameSrcWith(ORIGIN);
+
+    expect(csp).toContain(ORIGIN);
+  });
+
+  // Fail-closed, exactly as the renderer is: no sandbox configured means the
+  // tier is off, and the policy stays precisely as strict as it is today.
+  it("should_add_nothing_when_no_sandbox_is_configured", async () => {
+    const csp = await frameSrcWith(undefined);
+
+    expect(csp).toContain("frame-src 'self'");
+    expect(csp).not.toContain("undefined");
+    expect(csp.trim()).not.toMatch(/\s{2,}/);
+  });
+
+  // The existing allowances are not this feature's to touch.
+  it("should_leave_the_established_frame_sources_alone", async () => {
+    const csp = await frameSrcWith(ORIGIN);
+
+    for (const source of ["'self'", "https://auth.privy.io", "https://js.stripe.com"]) {
+      expect(csp).toContain(source);
+    }
+  });
+});
+
+/**
+ * Fonts the notebook sandbox can actually fetch.
+ *
+ * THE FAILURE THIS GUARDS HAS NO ERROR IN IT. The seamless custom block is a
+ * document on a separate origin that redeclares this app's `@font-face` rules
+ * from the theme snapshot it is sent. A font fetched cross-origin is a CORS
+ * request whatever the CSS says, and a refused one produces no console error
+ * a reader would see and no visibly failed request — just a fallback face. The
+ * block then renders in Times New Roman inside a page in Inter, while every
+ * part of the feature reports success. Deleting this header would look like
+ * tidying and would land as that.
+ *
+ * Scoped to `media`, which is where next/font emits font files. The same
+ * header on `chunks` would make this app's JavaScript readable cross-origin by
+ * any page on the internet, which is a real change and not one this feature
+ * needs — so the scope is asserted, not just the presence.
+ */
+describe("notebook sandbox font access", () => {
+  const acaoOf = (rule: HeaderRule) =>
+    rule.headers.find((header) => header.key === "Access-Control-Allow-Origin")?.value;
+
+  it("should_let_another_origin_read_the_app_font_files", async () => {
+    const rules = await getHeaderRules();
+
+    const fonts = rules.find((rule) => rule.source.startsWith("/_next/static/media"));
+
+    expect(fonts).toBeDefined();
+    expect(acaoOf(fonts as HeaderRule)).toBe("*");
+  });
+
+  it("should_not_open_up_anything_beyond_the_font_files", async () => {
+    const rules = await getHeaderRules();
+
+    const opened = rules.filter((rule) => acaoOf(rule) !== undefined).map((rule) => rule.source);
+
+    expect(opened).toEqual(["/_next/static/media/:path*"]);
+  });
+});

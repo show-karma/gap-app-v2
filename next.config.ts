@@ -5,8 +5,38 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
-const FRAME_SRC =
-  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com";
+const FRAME_SOURCES = [
+  "'self'",
+  "https://auth.privy.io",
+  "https://*.privy.io",
+  "https://privy.karmahq.xyz",
+  "https://privy.karmahq.org",
+  "https://paragraph.com",
+  "https://*.paragraph.com",
+  "https://js.stripe.com",
+  "https://crypto-js.stripe.com",
+];
+
+/**
+ * The notebook custom-page sandbox, when one is configured.
+ *
+ * REQUIRED FOR TIER B TO RENDER ANYWHERE, production included. The frame is
+ * served from a separate origin on purpose, and `frame-src` is what decides
+ * whether the browser will fetch it at all — without this entry it makes no
+ * request whatsoever and the frame is simply broken, with nothing in the
+ * network log to explain why.
+ *
+ * ENV-DRIVEN RATHER THAN HARD-CODED, because each environment has its own
+ * sandbox origin and a literal here would either be wrong everywhere but one
+ * or grow a list of every environment's host. Unset adds nothing, which keeps
+ * the policy exactly as strict as it is today wherever the tier is off — the
+ * same fail-closed rule the renderer follows.
+ */
+const NOTEBOOK_SANDBOX_ORIGIN = process.env.NEXT_PUBLIC_NOTEBOOK_SANDBOX_ORIGIN?.trim();
+
+const FRAME_SRC = `frame-src ${[...FRAME_SOURCES, NOTEBOOK_SANDBOX_ORIGIN]
+  .filter(Boolean)
+  .join(" ")}`;
 
 const securityHeaders = [
   {
@@ -135,6 +165,34 @@ const nextConfig: NextConfig = {
         headers: tokenBridgeHeaders,
       },
     ];
+    /**
+     * Fonts, readable by the notebook sandbox.
+     *
+     * WITHOUT THIS THE SEAMLESS BLOCK SILENTLY RENDERS IN TIMES NEW ROMAN. The
+     * sandbox shell is on a different origin and redeclares our `@font-face`
+     * rules from the theme snapshot the parent sends it; a font fetched
+     * cross-origin is a CORS request whatever the CSS says, and one that is
+     * refused produces NO console error a reader would see and no failed row
+     * worth noticing — just a fallback face. It is the single most likely way
+     * for this feature to look broken while every part of it reports success.
+     *
+     * `*` rather than the sandbox origin, and that is safe here for reasons
+     * that would not hold one directory up. `/_next/static/media` holds
+     * content-hashed, public build assets: no credentials are involved (a CORS
+     * response without `Access-Control-Allow-Credentials` cannot carry any),
+     * and every byte of it is already served to anyone who loads the app. What
+     * `*` grants is the ability to read a font file that is public anyway.
+     *
+     * Scoped to `media` on purpose — that is where next/font emits font files.
+     * The same header on `/_next/static/chunks` would make our JavaScript
+     * readable cross-origin by any page on the internet, which is a real
+     * change and not one this feature needs.
+     */
+    headerRules.push({
+      source: "/_next/static/media/:path*",
+      headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+    });
+
     // Content-hashed build assets are safe to cache forever: a new deploy emits
     // new filenames, so a stale cache entry is never served for new code. This
     // ONLY holds in production. In dev, Turbopack reuses stable chunk

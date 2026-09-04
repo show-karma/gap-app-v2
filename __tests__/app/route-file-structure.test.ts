@@ -50,6 +50,12 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
   "blog",
   "blog/[slug]",
   "communities",
+  // Notebook pages are server-rendered content whose whole value is being in
+  // the initially-visible HTML: a loading boundary here streamed the page as a
+  // hidden Suspense chunk, so curl and every no-JS reader saw only a skeleton
+  // (DEV-612). Sitemap entries follow once the routes are public.
+  "community/[communityId]/(cover)/notebooks",
+  "community/[communityId]/(cover)/notebooks/[slug]",
   "community/[communityId]/(whitelabel)/programs/[programId]",
   "community/[communityId]/(with-header)",
   "community/[communityId]/(with-header)/funding-opportunities",

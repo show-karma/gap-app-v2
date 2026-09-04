@@ -47,6 +47,9 @@ export const PAGES = {
       configSlug
         ? `/community/${community}/reports/${encodeURIComponent(runDate)}/${encodeURIComponent(configSlug)}`
         : `/community/${community}/reports/${encodeURIComponent(runDate)}`,
+    NOTEBOOKS: (community: string) => `/community/${community}/notebooks`,
+    NOTEBOOK_DETAIL: (community: string, slug: string) =>
+      `/community/${community}/notebooks/${encodeURIComponent(slug)}`,
     ASK_KARMA: (community: string) => `/community/${community}/ask-karma`,
   },
   MY_PROJECTS: `/my-projects`,
@@ -132,6 +135,10 @@ export const PAGES = {
       `/community/${community}/manage/portfolio-reports/${reportId}/preview`,
     PORTFOLIO_REPORTS_CONFIG: (community: string) =>
       `/community/${community}/manage/portfolio-reports/config`,
+    NOTEBOOKS: (community: string) => `/community/${community}/manage/notebooks`,
+    NOTEBOOKS_NEW: (community: string) => `/community/${community}/manage/notebooks/new`,
+    NOTEBOOKS_EDIT: (community: string, slug: string) =>
+      `/community/${community}/manage/notebooks/${encodeURIComponent(slug)}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

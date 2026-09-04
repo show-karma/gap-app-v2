@@ -35,6 +35,7 @@ vi.mock("@/utilities/pages", () => ({
       IMPACT: (id: string) => `/community/${id}/impact`,
       REPORTS: (id: string) => `/community/${id}/reports`,
       FINANCIALS: (id: string) => `/community/${id}/financials`,
+      NOTEBOOKS: (id: string) => `/community/${id}/notebooks`,
       BROWSE_APPLICATIONS: (id: string) => `/community/${id}/browse-applications`,
     },
   },
@@ -43,9 +44,10 @@ vi.mock("@/utilities/pages", () => ({
 // Mock community-flags
 vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
+  NOTEBOOKS_ENABLED_COMMUNITIES: ["filecoin"],
   EXPLORER_NAV_OVERRIDES: {
     filecoin: {
-      hiddenTabs: ["community-projects", "reports", "financials"],
+      hiddenTabs: ["community-projects", "reports", "financials", "notebooks"],
       tabLabels: { "browse-applications": "Browse Projects" },
     },
   },
@@ -58,6 +60,7 @@ vi.mock("lucide-react", () => ({
   FileSearch: (props: any) => <svg data-testid="file-search-icon" {...props} />,
   FileText: (props: any) => <svg data-testid="file-text-icon" {...props} />,
   LandPlot: (props: any) => <svg data-testid="land-plot-icon" {...props} />,
+  NotebookText: (props: any) => <svg data-testid="notebook-text-icon" {...props} />,
   SquareUser: (props: any) => <svg data-testid="square-user-icon" {...props} />,
   Wallet: (props: any) => <svg data-testid="wallet-icon" {...props} />,
 }));

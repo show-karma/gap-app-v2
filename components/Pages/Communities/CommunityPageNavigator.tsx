@@ -5,6 +5,7 @@ import {
   FileSearch,
   FileText,
   LandPlot,
+  NotebookText,
   SquareUser,
   Wallet,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { Link } from "@/src/components/navigation/Link";
 import {
   EXPLORER_NAV_OVERRIDES,
   FINANCIALS_ENABLED_COMMUNITIES,
+  NOTEBOOKS_ENABLED_COMMUNITIES,
 } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS, type CommunityNavItemId } from "@/utilities/community-nav";
 import { PAGES } from "@/utilities/pages";
@@ -89,6 +91,15 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     path: (communityId: string) => PAGES.COMMUNITY.REPORTS(communityId),
     Icon: FileText,
     isActive: (segment: string) => segment === "reports",
+  },
+  {
+    id: "notebooks",
+    path: (communityId: string) => PAGES.COMMUNITY.NOTEBOOKS(communityId),
+    Icon: NotebookText,
+    // Also highlights on a page's own route (/notebooks/<slug>), which shares
+    // the segment with the list.
+    isActive: (segment: string) => segment === "notebooks",
+    showNewTag: true,
   },
   {
     id: "financials",
@@ -168,32 +179,44 @@ export const CommunityPageNavigator = () => {
   const publishedReportsCount = publishedReports?.length ?? 0;
 
   const isFinancialsEnabled = FINANCIALS_ENABLED_COMMUNITIES.includes(communityId);
+  const isNotebooksEnabled = NOTEBOOKS_ENABLED_COMMUNITIES.includes(communityId);
 
   const visibleNavigationItems = useMemo(() => {
+    // One predicate per tab that has a visibility rule; a tab absent from the
+    // map is always visible. Keeping these as separate entries (rather than a
+    // chain of `if`s inside the filter) is what holds this callback under the
+    // cognitive-complexity budget as tabs are added.
+    const isVisible: Partial<Record<CommunityNavItemId, () => boolean>> = {
+      // In whitelabel mode, always show funding opportunities (it's the landing
+      // page). In normal mode, hide it if the community has no programs at all.
+      "funding-opportunities": () => programsCount > 0 || isWhitelabel,
+      // Show browse applications if the community has at least one program
+      // (live or ended).
+      "browse-applications": () => programsCount > 0,
+      // Show reports only when the community has published reports.
+      reports: () => publishedReportsCount > 0,
+      // Show financials only for enabled communities with programs.
+      financials: () => isFinancialsEnabled && programsCount > 0,
+      // Notebooks is flag-gated only — unlike financials it does not depend on
+      // programs, and an enabled community with no published page still gets
+      // the tab so the empty state is reachable.
+      notebooks: () => isNotebooksEnabled,
+    };
+
     return NAVIGATION_ITEMS.filter((item) => {
       if (override?.hiddenTabs?.includes(item.id)) {
         return false;
       }
-      // In whitelabel mode, always show funding opportunities (it's the landing page).
-      // In normal mode, hide it if the community has no programs at all (live or not).
-      if (item.id === "funding-opportunities" && programsCount === 0 && !isWhitelabel) {
-        return false;
-      }
-      // Show browse applications if the community has at least one program (live or ended)
-      if (item.id === "browse-applications" && programsCount === 0) {
-        return false;
-      }
-      // Show reports only when the community has published reports
-      if (item.id === "reports" && publishedReportsCount === 0) {
-        return false;
-      }
-      // Show financials only for enabled communities with programs
-      if (item.id === "financials" && (!isFinancialsEnabled || programsCount === 0)) {
-        return false;
-      }
-      return true;
+      return isVisible[item.id]?.() ?? true;
     });
-  }, [programsCount, publishedReportsCount, isWhitelabel, isFinancialsEnabled, override]);
+  }, [
+    programsCount,
+    publishedReportsCount,
+    isWhitelabel,
+    isFinancialsEnabled,
+    isNotebooksEnabled,
+    override,
+  ]);
 
   // No match means no highlight. A path that belongs to no visible tab (say
   // /community/<id>/projects where the funded-projects tab is hidden) is not a
