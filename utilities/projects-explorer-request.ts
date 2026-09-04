@@ -8,7 +8,10 @@ import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer"
 import { PAGES } from "@/utilities/pages";
 
 /** Shape of Next.js `searchParams` once resolved. */
-export type ProjectsExplorerSearchParams = Record<string, string | string[] | undefined>;
+// Module-local: the /projects page stopped reading searchParams (a runtime read
+// at the top level of a crawlable route blocks the prerender), so the only
+// remaining consumer is parseProjectsExplorerRequest below.
+type ProjectsExplorerSearchParams = Record<string, string | string[] | undefined>;
 
 /** The effective, fully-normalized explorer request. */
 export interface ProjectsExplorerState {

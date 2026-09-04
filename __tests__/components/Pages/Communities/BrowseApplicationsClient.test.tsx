@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
+import { BrowseApplicationsClient } from "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
 import { api } from "@/utilities/api/client";
 import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
@@ -302,10 +302,12 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
   const renderWhitelabel = (communityId: string) =>
     render(
       <WhitelabelProvider
-        isWhitelabel
-        communitySlug={communityId}
-        config={null}
-        tenantConfig={null}
+        value={{
+          isWhitelabel: true,
+          communitySlug: communityId,
+          config: null,
+          tenantConfig: null,
+        }}
       >
         <BrowseApplicationsClient communityId={communityId} />
       </WhitelabelProvider>,

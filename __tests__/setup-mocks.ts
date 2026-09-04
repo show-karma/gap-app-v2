@@ -102,6 +102,19 @@ vi.mock("next/headers", () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// next/root-params
+// The shipped module is a compiler placeholder that throws on import — the
+// real getters are generated during `next build`/`next dev`, which never runs
+// under vitest. The tenant root param is what `getWhitelabelContext()` reads,
+// so default it to the main tenant, matching the non-whitelabel host the
+// `next/headers` mock above assumes. Tests exercising tenant behavior override
+// this with their own vi.mock().
+// ---------------------------------------------------------------------------
+vi.mock("next/root-params", () => ({
+  tenant: async () => "karma",
+}));
+
+// ---------------------------------------------------------------------------
 // @/utilities/enviromentVars
 // Most tests only need NEXT_PUBLIC_GAP_INDEXER_URL. Tests that need RPC
 // values or other env vars should provide their own vi.mock() override.
@@ -166,4 +179,27 @@ vi.mock("react-hot-toast", () => ({
     custom: vi.fn(),
     remove: vi.fn(),
   },
+}));
+
+// next/server — `connection()` marks a route handler runtime-only (it replaces
+// `export const dynamic = "force-dynamic"`, which cacheComponents rejects). It
+// throws outside a request scope, and a unit test importing a route handler
+// directly has none. Everything else in the module is the real thing: this is a
+// partial mock, so NextResponse/NextRequest are untouched.
+// Individual test files can still override with their own vi.mock().
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  connection: vi.fn(async () => {}),
+}));
+
+// next/cache — `cacheLife()` and `cacheTag()` only work inside a Next cache
+// work-unit store, which a unit test importing a `"use cache"` module directly
+// does not have; without this they throw before the function body runs. They
+// configure caching and return nothing, so a no-op is a faithful stand-in: the
+// cached function still computes and returns its real value.
+// Partial mock — revalidateTag/revalidatePath and friends stay real.
+vi.mock("next/cache", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/cache")>()),
+  cacheLife: vi.fn(),
+  cacheTag: vi.fn(),
 }));

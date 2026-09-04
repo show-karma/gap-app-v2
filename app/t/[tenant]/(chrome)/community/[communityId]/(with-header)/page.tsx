@@ -1,0 +1,116 @@
+/* eslint-disable @next/next/no-img-element */
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { CommunityGrants } from "@/components/CommunityGrants";
+import { ItemListJsonLd } from "@/components/Seo/ItemListJsonLd";
+import { PROJECT_NAME } from "@/constants/brand";
+import type { MaturityStageOptions, SortByOptions } from "@/types";
+import { PAGES } from "@/utilities/pages";
+import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+import {
+  COMMUNITY_PROJECTS_PAGE_SIZE,
+  type CommunityProjectsSearchParams,
+  DEFAULT_COMMUNITY_SORT,
+  mapSortToApiValue,
+} from "@/utilities/queries/v2/communityProjectsRequest";
+import {
+  getCommunityCategoriesCached,
+  getCommunityDetailsCached,
+  getCommunityProjectsCached,
+} from "@/utilities/queries/v2/getCommunityData.cached";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
+
+type Props = {
+  params: Promise<{
+    communityId: string;
+  }>;
+  searchParams: Promise<CommunityProjectsSearchParams>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { communityId } = await params;
+  const community = await getCommunityDetailsCached(communityId);
+  const communityName = community?.details?.name || communityId;
+
+  return {
+    title: `${communityName} Community Grants | ${PROJECT_NAME}`,
+    description: `Browse the full list of grants and funded projects by ${communityName}. Filter by category, track milestones, and explore grantee progress on ${PROJECT_NAME}.`,
+  };
+}
+
+export default async function Page(props: Props) {
+  const { communityId } = await props.params;
+
+  if (pagesOnRoot.includes(communityId)) {
+    return undefined;
+  }
+
+  // `searchParams` is deliberately NOT read. It is runtime data, and reading it
+  // at the top level of this crawlable route blocks the prerender outright —
+  // the build named this exact line. The page-1 grid is what a crawler should
+  // index anyway; `?page` is handled client-side after hydration, the same
+  // shape /projects uses.
+  const page = 1;
+
+  const [communityDetails, categories, initialProjects] = await Promise.all([
+    getCommunityDetailsCached(communityId),
+    getCommunityCategoriesCached(communityId),
+    getCommunityProjectsCached(communityId, {
+      page,
+      limit: COMMUNITY_PROJECTS_PAGE_SIZE,
+      sortBy: mapSortToApiValue(DEFAULT_COMMUNITY_SORT),
+    }),
+  ]);
+
+  // Extract category names for the filter
+  const categoriesOptions = categories
+    .map((cat) => cat.name)
+    .sort((a, b) => a.localeCompare(b, "en"));
+
+  if (!communityDetails) {
+    notFound();
+  }
+
+  const defaultSortBy: SortByOptions = DEFAULT_COMMUNITY_SORT;
+  const defaultSelectedCategories: string[] = [];
+  const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
+
+  // JSON-LD ItemList of exactly the project entities the server renders
+  // (DEV-596): the seeded page of the hub, in its rendered order.
+  //
+  // The old filter check read `searchParams` to decide whether a seed was
+  // rejected. The server no longer reads the URL at all — it always renders the
+  // unfiltered page 1 — so the entities it renders are always the seeded ones
+  // and the schema always describes what is on the page. Filtering happens
+  // client-side after hydration, which crawlers do not see.
+  const listedProjects = (initialProjects?.payload ?? []).filter((project) =>
+    Boolean(project.details?.title)
+  );
+
+  // On a tenant domain the schema must describe the tenant's own URLs, not the
+  // Karma-branded ones these PAGES helpers build.
+  const whitelabel = await getWhitelabelContext();
+
+  return (
+    <div className="-my-4 flex flex-col w-full max-w-full py-2">
+      <ItemListJsonLd
+        name={`${communityDetails.details?.name || communityId} funded projects`}
+        whitelabel={whitelabel}
+        items={listedProjects.map((project) => ({
+          name: project.details.title,
+          url: PAGES.PROJECT.OVERVIEW(project.details.slug || project.uid),
+        }))}
+      />
+      <CommunityGrants
+        categoriesOptions={categoriesOptions}
+        defaultSelectedCategories={defaultSelectedCategories}
+        defaultSortBy={defaultSortBy}
+        defaultSelectedMaturityStage={defaultSelectedMaturityStage}
+        communityUid={communityDetails.uid}
+        initialProjects={initialProjects}
+        initialPage={page}
+        paginationBasePath={PAGES.COMMUNITY.ALL_GRANTS(communityId)}
+      />
+    </div>
+  );
+}

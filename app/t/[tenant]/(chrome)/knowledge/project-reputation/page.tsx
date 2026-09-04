@@ -1,0 +1,136 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticlePublishedDate } from "@/components/Knowledge/ArticlePublishedDate";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
+import { customMetadata, SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { getKnowledgeArticleDate } from "../articleDates";
+
+const title = "How Projects Build Reputation Through Funding";
+const description =
+  "How projects build credibility by documenting milestones and creating verifiable execution records. Discover what strengthens and weakens project reputation.";
+
+export const metadata: Metadata = customMetadata({
+  title,
+  description,
+  path: PAGES.KNOWLEDGE.ARTICLE("project-reputation"),
+  ogType: "article",
+});
+
+const PUBLISHED_AT = getKnowledgeArticleDate("project-reputation");
+
+export default function ProjectReputationPage() {
+  return (
+    <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: PAGES.KNOWLEDGE.ROOT },
+          { label: "Project Reputation", href: PAGES.KNOWLEDGE.ARTICLE("project-reputation") },
+        ]}
+      />
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url={PAGES.KNOWLEDGE.ARTICLE("project-reputation")}
+        datePublished={PUBLISHED_AT}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: PAGES.KNOWLEDGE.ROOT },
+          { name: "Project Reputation", url: PAGES.KNOWLEDGE.ARTICLE("project-reputation") },
+        ]}
+      />
+      <article className="space-y-8">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold">How Projects Build Reputation Through Funding</h1>
+          <ArticlePublishedDate date={PUBLISHED_AT} />
+        </header>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">In one sentence</h2>
+          <p className="text-gray-700 dark:text-gray-300">
+            Reputation is the accumulation of visible follow-through.
+          </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Short answer</h2>
+          <p className="text-gray-700 dark:text-gray-300">
+            Projects build reputation by consistently documenting execution across funding cycles,
+            not by winning individual grants.
+          </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">How reputation compounds</h2>
+          <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-gray-300">
+            <li>Commit to milestones</li>
+            <li>Document progress over time</li>
+            <li>Receive contextual review</li>
+            <li>Build execution history</li>
+            <li>Earn trust from future funders and users</li>
+          </ol>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">What weakens reputation</h2>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
+            <li>Missing updates</li>
+            <li>Overpromising milestones</li>
+            <li>Lack of evidence</li>
+            <li>Inconsistent communication</li>
+          </ul>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href={PAGES.KNOWLEDGE.ARTICLE("onchain-reputation")}
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What is onchain reputation?
+            </Link>
+            <Link
+              href={PAGES.KNOWLEDGE.ARTICLE("reputation-compounding")}
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → How reputation compounds in open funding
+            </Link>
+            <Link
+              href={PAGES.KNOWLEDGE.ARTICLE("project-profiles")}
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What are project profiles?
+            </Link>
+            <Link
+              href={PAGES.KNOWLEDGE.ARTICLE("project-registry")}
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Public project registries
+            </Link>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Karma's role</h2>
+          <p className="text-gray-700 dark:text-gray-300">
+            <a
+              href={SITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              Karma
+            </a>{" "}
+            provides the surface where execution history persists and compounds into reputation.
+          </p>
+        </section>
+      </article>
+    </main>
+  );
+}

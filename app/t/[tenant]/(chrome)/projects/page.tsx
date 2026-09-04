@@ -1,0 +1,88 @@
+import {
+  ProjectsExplorer,
+  ProjectsHeroSection,
+  ProjectsStatsSection,
+} from "@/components/Pages/Projects";
+import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
+import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer.cached";
+import type { PaginatedProjectsResponse } from "@/types/v2/project";
+import { customMetadata } from "@/utilities/meta";
+import {
+  type ProjectsExplorerState,
+  parseProjectsExplorerRequest,
+} from "@/utilities/projects-explorer-request";
+
+export const metadata = customMetadata({
+  title: "Explore Grant-Funded Projects",
+  description:
+    "Discover thousands of projects using Karma to track grants, share progress, and build reputation. Explore projects making a difference across funding ecosystems.",
+  path: "/projects",
+});
+
+export default function Projects() {
+  // /projects ships in the sitemap, so the list must be in the initially
+  // visible HTML (DEV-612). It used to sit behind an in-page <Suspense> that
+  // streamed ~3k projects into a hidden chunk. Awaiting the loader trades the
+  // instant skeleton for a crawlable list, as every SITEMAP_NO_LOADING route does.
+  //
+  // `searchParams` is deliberately NOT read here. Under cacheComponents it is
+  // runtime data, and reading it at the top level of a crawlable page blocks
+  // the prerender outright:
+  //
+  //   projects/page.tsx:34  parseProjectsExplorerRequest(await searchParams)
+  //
+  // So the page prerenders the DEFAULT, unfiltered list — which is what a
+  // crawler should index anyway — and filtering stays a client concern. No leaf
+  // boundary is needed to swap the filtered list in: ProjectsExplorer already
+  // compares the nuqs URL state against `initialState` and ignores the seed
+  // when they differ, so a filtered deep link paints the default list and then
+  // refetches. A second server-side seed would render the explorer twice.
+  const initialState = parseProjectsExplorerRequest({});
+
+  return (
+    <main className="flex flex-col w-full">
+      <CollectionPageJsonLd
+        name="Explore Grant-Funded Projects"
+        description="Discover thousands of projects using Karma to track grants, share progress, and build reputation. Explore projects making a difference across funding ecosystems."
+        url="/projects"
+      />
+      <ProjectsHeroSection />
+      <ProjectsExplorerLoader initialState={initialState} />
+      <ProjectsStatsSection />
+    </main>
+  );
+}
+
+/**
+ * Deferred data boundary: the only place the first page is fetched. A failure
+ * degrades to a client-only render (no seed) so React Query can retry; the
+ * effective request state is always handed to the explorer.
+ */
+async function ProjectsExplorerLoader({ initialState }: { initialState: ProjectsExplorerState }) {
+  let initialData: PaginatedProjectsResponse | undefined;
+  try {
+    initialData = await getExplorerProjectsPaginatedCached({
+      search: initialState.q,
+      page: initialState.page,
+      limit: PROJECTS_EXPLORER_CONSTANTS.RESULT_LIMIT,
+      sortBy: initialState.sortBy,
+      sortOrder: initialState.sortOrder,
+      includeStats: true,
+      hasPayoutAddress: initialState.raisingFunds,
+    });
+  } catch (error) {
+    // Fail closed: degrade to a client-only render (React Query retries with no
+    // seed). Record the failure through the shared Sentry pipeline for
+    // observability, with a route-scoped context that deliberately omits the
+    // request query / user data (transient network/gateway errors are dropped
+    // inside errorManager, so this stays quiet under normal upstream blips).
+    errorManager("SSR /projects seed fetch failed; degrading to client render", error, {
+      context: "app/projects/page",
+    });
+    initialData = undefined;
+  }
+
+  return <ProjectsExplorer initialData={initialData} initialState={initialState} />;
+}

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { getProjectImpacts, type ProjectImpact } from "@/services/project-impacts.service";
+import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -13,6 +14,8 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 const EMPTY_IMPACTS: ProjectImpact[] = [];
 
 interface UseProjectImpactsOptions {
+  /** Opt into a clock-free staleTime so this may render above crawlable content. */
+  prerenderSafe?: boolean;
   /**
    * Whether the request should attach a Privy bearer token. Defaults to
    * `true` for backward compatibility. Public profile callers MUST pass
@@ -44,6 +47,8 @@ export function useProjectImpacts(projectIdOrSlug: string, options: UseProjectIm
     queryFn: () => getProjectImpacts(projectIdOrSlug, { isAuthorized }),
     enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000,
+    // Above crawlable content this must not read the clock. See the constant.
+    ...(options.prerenderSafe ? { staleTime: PRERENDER_SAFE_STALE_TIME } : {}),
   });
 
   const impacts = data ?? EMPTY_IMPACTS;

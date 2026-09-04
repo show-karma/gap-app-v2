@@ -1,0 +1,163 @@
+"use client";
+
+import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
+import { useParams } from "next/navigation";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { ProgramByline } from "@/features/programs/components/ProgramByline";
+import { ProgramDetailsSidebar } from "@/features/programs/components/ProgramDetailsSidebar";
+import { useProgram } from "@/features/programs/hooks/use-program";
+import { Link } from "@/src/components/navigation/Link";
+import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
+import { getProgramStatusInfo, isProgramEnabled } from "@/utilities/funding-programs";
+import { useRenderNow } from "@/utilities/render-clock-context";
+import { cn } from "@/utilities/tailwind";
+
+function ProgramDetailContent() {
+  const { communityId, programId } = useParams<{
+    communityId: string;
+    programId: string;
+  }>();
+
+  // Renders above the crawlable program content on a Cache-class route.
+  const { program, loading, error, refetch } = useProgram(programId, { prerenderSafe: true });
+  // The deadline is judged during render, above the crawlable program body, so
+  // it reads the render clock: `new Date()` here aborts the prerender.
+  const now = useRenderNow();
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="mb-6 h-5 w-32 animate-pulse rounded bg-muted" />
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <div className="flex-1 space-y-4">
+            <div className="h-10 w-3/4 animate-pulse rounded-lg bg-muted" />
+            <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+            <div className="space-y-2">
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
+              <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+          <div className="h-80 w-full animate-pulse rounded-xl bg-muted lg:w-96" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <h1 className="text-xl font-semibold">Failed to load program</h1>
+          <p className="text-sm text-muted-foreground">{error.message}</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (!program) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
+          <h1 className="text-xl font-semibold">Program not found</h1>
+          <p className="text-sm text-muted-foreground">
+            The program you are looking for does not exist or has been removed.
+          </p>
+          <Link
+            href={`/community/${communityId}/programs`}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Browse programs
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const isEnabled = isProgramEnabled(program, now);
+  const statusInfo = getProgramStatusInfo(program, now);
+  const description = program.metadata?.description || "No description available";
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Back link */}
+      <Link
+        href={`/community/${communityId}/programs`}
+        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to programs
+      </Link>
+
+      <div className="flex flex-col gap-8 lg:flex-row">
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Banner Image */}
+          {program.metadata?.bannerImg ? (
+            <div className="mb-6 overflow-hidden rounded-xl">
+              <img
+                src={program.metadata.bannerImg}
+                alt={`${program.metadata?.title || program.name} banner`}
+                className="h-48 w-full object-cover"
+              />
+            </div>
+          ) : null}
+
+          {/* Title */}
+          <h1 className="mb-2 text-3xl font-bold text-foreground">
+            {program.metadata?.title || program.name}
+          </h1>
+
+          {/* Application status — stated in the page body, not just implied by
+              the sidebar's apply button, so it survives with JS disabled. */}
+          <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground">
+            <span className={cn("h-2 w-2 rounded-full", statusInfo.dotColor)} aria-hidden="true" />
+            {statusInfo.label}
+          </p>
+
+          {/* Byline */}
+          {program.communitySlug ? (
+            <div className="mb-6">
+              <ProgramByline
+                tenantName={program.communitySlug}
+                tenantLogo={program.metadata?.logoImg}
+                socialLinks={program.metadata?.socialLinks}
+              />
+            </div>
+          ) : null}
+
+          {/* Description — rendered as markdown to preserve formatting */}
+          <MarkdownPreview source={description} />
+        </div>
+
+        {/* Sidebar */}
+        <ProgramDetailsSidebar program={program} communityId={communityId} isEnabled={isEnabled} />
+      </div>
+    </div>
+  );
+}
+
+export default function ProgramDetailClient() {
+  const { communityId, programId } = useParams<{
+    communityId: string;
+    programId: string;
+  }>();
+
+  return (
+    <PermissionProvider resourceContext={{ communityId, programId }}>
+      <ProgramDetailContent />
+    </PermissionProvider>
+  );
+}

@@ -2,8 +2,6 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { CANONICAL_HOST } from "@/utilities/domains";
 
-export const runtime = "edge";
-
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const title = searchParams.get("title") || "Knowledge Base";

@@ -16,7 +16,7 @@ describe("/.well-known/ai-plugin.json route handler", () => {
 
   it("returns the ChatGPT plugin manifest with name_for_human=Karma", async () => {
     const { GET } = await import("@/app/.well-known/ai-plugin.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.schema_version).toBe("v1");
     expect(body.name_for_human).toBe("Karma");
@@ -25,7 +25,7 @@ describe("/.well-known/ai-plugin.json route handler", () => {
 
   it("points api.url at the apex openapi.json proxy", async () => {
     const { GET } = await import("@/app/.well-known/ai-plugin.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.api.url).toBe(`${SITE_URL}/openapi.json`);
     expect(body.api.type).toBe("openapi");
@@ -33,7 +33,7 @@ describe("/.well-known/ai-plugin.json route handler", () => {
 
   it("points auth.authorization_url at the indexer's OAuth endpoint", async () => {
     const { GET } = await import("@/app/.well-known/ai-plugin.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.auth.type).toBe("oauth");
     expect(body.auth.authorization_url).toBe(`${INDEXER_URL}/v2/oauth/authorize`);
@@ -41,7 +41,7 @@ describe("/.well-known/ai-plugin.json route handler", () => {
 
   it("uses the public Karma logo and contact email", async () => {
     const { GET } = await import("@/app/.well-known/ai-plugin.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.logo_url).toBe(`${SITE_URL}/logo/karma-logo.svg`);
     expect(body.contact_email).toBe("info@karmahq.xyz");
@@ -50,7 +50,7 @@ describe("/.well-known/ai-plugin.json route handler", () => {
 
   it("sets wide-open CORS headers so AI crawlers can read it", async () => {
     const { GET } = await import("@/app/.well-known/ai-plugin.json/route");
-    const res = GET();
+    const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("GET");
     expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
@@ -79,7 +79,7 @@ describe("/.well-known/mcp.json route handler", () => {
 
   it("declares a single 'karma' MCP server with http transport", async () => {
     const { GET } = await import("@/app/.well-known/mcp.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.mcpServers.karma.transport).toBe("http");
     expect(body.mcpServers.karma.url).toBe(`${INDEXER_URL}/mcp`);
@@ -87,7 +87,7 @@ describe("/.well-known/mcp.json route handler", () => {
 
   it("advertises oauth2 auth with the indexer's protected-resource metadata", async () => {
     const { GET } = await import("@/app/.well-known/mcp.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.mcpServers.karma.auth.type).toBe("oauth2");
     expect(body.mcpServers.karma.auth.metadata).toBe(
@@ -97,14 +97,14 @@ describe("/.well-known/mcp.json route handler", () => {
 
   it("links the human-facing documentation page", async () => {
     const { GET } = await import("@/app/.well-known/mcp.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.mcpServers.karma.documentation).toBe(`${SITE_URL}/mcp/connect`);
   });
 
   it("sets wide-open CORS headers", async () => {
     const { GET } = await import("@/app/.well-known/mcp.json/route");
-    const res = GET();
+    const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
@@ -346,7 +346,7 @@ describe("/.well-known/mcp.json route handler with a trailing slash in the env v
       envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://gapapi.karmahq.xyz/" },
     }));
     const { GET } = await import("@/app/.well-known/mcp.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.mcpServers.karma.url).toBe("https://gapapi.karmahq.xyz/mcp");
     expect(body.mcpServers.karma.url).not.toContain("//mcp");

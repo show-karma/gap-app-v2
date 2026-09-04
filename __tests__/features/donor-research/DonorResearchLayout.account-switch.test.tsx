@@ -2,7 +2,10 @@ import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-quer
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import DonorResearchLayout from "@/app/nonprofit-research/layout";
+import TokenLayout from "@/app/t/[tenant]/(bare)/nonprofit-research/layout";
+import AdvisorLayout from "@/app/t/[tenant]/(chrome)/nonprofit-research/(advisor)/layout";
+import GatedFullscreenLayout from "@/app/t/[tenant]/(chrome)/nonprofit-research/(gated-fullscreen)/layout";
+import PublicLayout from "@/app/t/[tenant]/(chrome)/nonprofit-research/(public)/layout";
 
 const authState = {
   ready: true,
@@ -30,15 +33,14 @@ vi.mock("@/src/components/ui/AccessDenied", () => ({
     ),
 }));
 
-// A layout-gated route. The section index ("/nonprofit-research") is no
-// longer gated by the layout — its page owns the gate so its public FAQ
-// content can be server-rendered (E4, DEV-595) — so the account-isolation
-// suite runs on a route that still is.
-const routeState = { pathname: "/nonprofit-research/new" };
-
-vi.mock("next/navigation", () => ({
-  usePathname: () => routeState.pathname,
-}));
+// Which posture a route gets is the route group it sits in, not a
+// `usePathname()` test inside the layout — that hook was the
+// CLIENT_HOOK_DYNAMIC read that stopped the section from prerendering. So
+// these suites render the real route layouts and assert the gate each one
+// declares. The account-isolation suite runs on `(advisor)`, which is gated;
+// the section index ("/nonprofit-research") is not gated by its layout,
+// because its page owns the gate so the public FAQ content can be
+// server-rendered (E4, DEV-595).
 
 // The shell's advisor-gating behavior has its own suite
 // (DonorResearchShell.test.tsx) — here it must not swallow children.
@@ -71,12 +73,20 @@ function AccountOwnedReport() {
   return <p>{report.data ?? "Loading reports…"}</p>;
 }
 
-function TestRoot({ queryClient }: { queryClient: QueryClient }) {
+type RouteLayout = (props: { children: ReactNode }) => ReactNode;
+
+function TestRoot({
+  queryClient,
+  Layout = AdvisorLayout,
+}: {
+  queryClient: QueryClient;
+  Layout?: RouteLayout;
+}) {
   return (
     <QueryClientProvider client={queryClient}>
-      <DonorResearchLayout>
+      <Layout>
         <AccountOwnedReport />
-      </DonorResearchLayout>
+      </Layout>
     </QueryClientProvider>
   );
 }
@@ -87,7 +97,6 @@ describe("DonorResearchLayout account isolation", () => {
     authState.ready = true;
     authState.authenticated = true;
     authState.user = { id: "user-a" };
-    routeState.pathname = "/nonprofit-research/new";
   });
 
   it("renders children in the first pass on first visit without an account-refresh pause", () => {
@@ -167,13 +176,12 @@ describe("DonorResearchLayout sign-in gate coverage", () => {
   });
 
   it.each([
-    ["a gated section route", "/nonprofit-research/new"],
-    ["onboarding", "/nonprofit-research/onboarding"],
-  ])("gates %s with the same sign-in screen", (_label, pathname) => {
-    routeState.pathname = pathname;
+    ["the advisor group", AdvisorLayout],
+    ["onboarding", GatedFullscreenLayout],
+  ])("gates %s with the same sign-in screen", (_label, Layout) => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-    render(<TestRoot queryClient={queryClient} />);
+    render(<TestRoot queryClient={queryClient} Layout={Layout} />);
 
     expect(screen.getByText("Sign in to access nonprofit research")).toBeVisible();
     expect(screen.queryByText("Signed out")).not.toBeInTheDocument();
@@ -183,23 +191,20 @@ describe("DonorResearchLayout sign-in gate coverage", () => {
     // The index page (ResearchIndexExperience) shows the same sign-in gate
     // for anonymous visitors; the layout just stops swallowing the page's
     // server-rendered FAQ content. Covered by ResearchIndexExperience tests.
-    routeState.pathname = "/nonprofit-research";
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-    render(<TestRoot queryClient={queryClient} />);
+    render(<TestRoot queryClient={queryClient} Layout={PublicLayout} />);
 
     expect(screen.getByText("Signed out")).toBeVisible();
     expect(screen.queryByText("Sign in to access nonprofit research")).not.toBeInTheDocument();
   });
 
-  it.each([
-    ["the donor share view", "/nonprofit-research/shared/token-abc"],
-    ["the diligence response page", "/nonprofit-research/diligence/token-abc"],
-  ])("leaves %s anonymous — the token is the credential", (_label, pathname) => {
-    routeState.pathname = pathname;
+  // One layout now serves both token routes — the donor share view and the
+  // diligence response page — so one case covers what two pathnames used to.
+  it("leaves the token routes anonymous — the token is the credential", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-    render(<TestRoot queryClient={queryClient} />);
+    render(<TestRoot queryClient={queryClient} Layout={TokenLayout} />);
 
     expect(screen.getByText("Signed out")).toBeVisible();
     expect(screen.queryByText("Sign in to access nonprofit research")).not.toBeInTheDocument();

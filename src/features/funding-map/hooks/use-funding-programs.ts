@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
 import { fundingProgramsKeys } from "../constants/query-keys";
 import { fundingProgramsService } from "../services/funding-programs.service";
 import type { FetchFundingProgramsParams } from "../types/funding-program";
@@ -16,7 +17,11 @@ export function useFundingPrograms(params: FetchFundingProgramsParams = {}) {
   return useQuery({
     queryKey: fundingProgramsKeys.list(params),
     queryFn: () => fundingProgramsService.getAll(params),
-    staleTime: 5 * 60 * 1000,
+    // Every consumer of this hook renders above the crawlable content of a
+    // Cache-class route, where DEV-612 forbids the Suspense boundary Next would
+    // otherwise want. See PRERENDER_SAFE_STALE_TIME for the React Query code
+    // path and the refetch trade-off.
+    staleTime: PRERENDER_SAFE_STALE_TIME,
     gcTime: 10 * 60 * 1000,
   });
 }
@@ -29,7 +34,11 @@ export function useFundingProgram(programId: string | null) {
     queryKey: fundingProgramsKeys.detail(programId || ""),
     queryFn: () => fundingProgramsService.getById(programId!),
     enabled: Boolean(programId),
-    staleTime: 5 * 60 * 1000,
+    // Every consumer of this hook renders above the crawlable content of a
+    // Cache-class route, where DEV-612 forbids the Suspense boundary Next would
+    // otherwise want. See PRERENDER_SAFE_STALE_TIME for the React Query code
+    // path and the refetch trade-off.
+    staleTime: PRERENDER_SAFE_STALE_TIME,
   });
 }
 
@@ -45,7 +54,11 @@ export function useFundingProgramByCompositeId(compositeId: string | null) {
     queryKey: fundingProgramsKeys.detail(parsed?.programId || ""),
     queryFn: () => fundingProgramsService.getById(parsed!.programId),
     enabled: Boolean(parsed),
-    staleTime: 5 * 60 * 1000,
+    // Every consumer of this hook renders above the crawlable content of a
+    // Cache-class route, where DEV-612 forbids the Suspense boundary Next would
+    // otherwise want. See PRERENDER_SAFE_STALE_TIME for the React Query code
+    // path and the refetch trade-off.
+    staleTime: PRERENDER_SAFE_STALE_TIME,
   });
 }
 
@@ -56,7 +69,11 @@ export function useTypeCounts(options?: { onlyOnKarma?: boolean }) {
   return useQuery({
     queryKey: fundingProgramsKeys.typeCounts(options),
     queryFn: () => fundingProgramsService.getTypeCounts(options),
-    staleTime: 10 * 60 * 1000,
+    // Every consumer of this hook renders above the crawlable content of a
+    // Cache-class route, where DEV-612 forbids the Suspense boundary Next would
+    // otherwise want. See PRERENDER_SAFE_STALE_TIME for the React Query code
+    // path and the refetch trade-off.
+    staleTime: PRERENDER_SAFE_STALE_TIME,
     gcTime: 30 * 60 * 1000,
   });
 }

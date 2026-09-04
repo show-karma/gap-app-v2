@@ -1,9 +1,7 @@
+import { cacheLife } from "next/cache";
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/utilities/meta";
 import { WELL_KNOWN_CORS_HEADERS, WELL_KNOWN_PREFLIGHT_HEADERS } from "@/utilities/wellKnown";
-
-export const dynamic = "force-static";
-export const revalidate = 3600;
 
 /**
  * Generic agent discovery aggregator.
@@ -15,7 +13,10 @@ export const revalidate = 3600;
  * A2A, OAuth metadata, and the LLM-friendly text references.
  */
 
-export function GET() {
+async function buildBody() {
+  "use cache";
+  cacheLife("hours");
+
   const body = {
     name: "Karma",
     description:
@@ -32,7 +33,11 @@ export function GET() {
     contact: "info@karmahq.xyz",
   };
 
-  return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });
+  return body;
+}
+
+export async function GET() {
+  return NextResponse.json(await buildBody(), { headers: WELL_KNOWN_CORS_HEADERS });
 }
 
 export async function OPTIONS() {

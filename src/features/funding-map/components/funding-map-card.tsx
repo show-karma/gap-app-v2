@@ -2,7 +2,7 @@
 
 import { Calendar, Coins } from "lucide-react";
 import Image from "next/image";
-import type { KeyboardEvent } from "react";
+import { type KeyboardEvent, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import Link from "@/src/components/navigation/Link";
@@ -36,10 +36,17 @@ interface FundingMapCardProps {
  * Determines if the program needs a pending review indicator (ring).
  * Shows ring for programs that are pending validation and still active.
  */
-function isPendingReview(program: FundingProgramResponse): boolean {
+/**
+ * `nowMs` is passed in rather than read here: `new Date()` during render is an
+ * unstable value and cacheComponents rejects it. `null` means the clock is not
+ * known yet (prerender, and the first client render), and the ring simply does
+ * not show until it is.
+ */
+function isPendingReview(program: FundingProgramResponse, nowMs: number | null): boolean {
   const isValidated = program.isValid;
   const isInactive = program.metadata?.status === "inactive";
-  const hasEnded = program.metadata?.endsAt && program.metadata.endsAt < new Date().toISOString();
+  const endsAt = program.metadata?.endsAt;
+  const hasEnded = endsAt !== undefined && nowMs !== null && new Date(endsAt).getTime() < nowMs;
 
   // Show ring only for programs that are not validated, not inactive, and not ended
   return !isValidated && !isInactive && !hasEnded;
@@ -64,7 +71,17 @@ export function FundingMapCard({
   const grantTypes = metadata?.grantTypes;
   const organizations = metadata?.organizations;
   const endsAt = formatDate(metadata?.endsAt, "UTC", "MMM D, YYYY");
-  const hasEnded = metadata?.endsAt && new Date(metadata.endsAt) < new Date();
+  // `new Date()` during render is an unstable value and cacheComponents rejects
+  // it (blocking-prerender-current-time-client). This card sits above the
+  // crawlable list, so it cannot go behind a boundary — the comparison moves to
+  // after hydration, which is also when "has it ended" becomes a question about
+  // the reader's clock rather than the build's.
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => {
+    setNowMs(Date.now());
+  }, []);
+  const endsAtMs = metadata?.endsAt ? new Date(metadata.endsAt).getTime() : null;
+  const hasEnded = endsAtMs !== null && nowMs !== null && endsAtMs < nowMs;
 
   // Check if we have valid communities with names
   const validCommunities = communities?.filter((c) => c.name && c.name.trim().length > 0) ?? [];
@@ -99,7 +116,7 @@ export function FundingMapCard({
   const cardClassName = cn(
     "flex flex-col justify-between border-border p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
     "h-full",
-    isPendingReview(program) && "ring-1 ring-gray-200",
+    isPendingReview(program, nowMs) && "ring-1 ring-gray-200",
     className
   );
 

@@ -50,6 +50,10 @@ import { WHITELABEL_ROUTE_ALIASES } from "@/utilities/whitelabel-routes";
 export const ROUTE_TEMPLATES: readonly string[] = [
   "/admin/studio/:tool*",
   "/blog/:slug",
+  // Editor-only draft twin of `/blog/:slug`. Without a template the slug reads
+  // as words, not as a token, so the heuristic would not redact it and the raw
+  // slug would reach analytics — which is the leak this table exists to stop.
+  "/blog/preview/:slug",
   "/community/:communityId",
   "/community/:communityId/admin/kyc-settings",
   "/community/:communityId/applications",

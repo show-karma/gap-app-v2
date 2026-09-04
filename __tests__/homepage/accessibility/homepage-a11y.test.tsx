@@ -10,7 +10,7 @@
  */
 
 import { axe, toHaveNoViolations } from "jest-axe";
-import HomePage from "@/app/for-projects/page";
+import HomePage from "@/app/t/[tenant]/(chrome)/for-projects/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
