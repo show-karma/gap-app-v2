@@ -328,9 +328,36 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
 // COMMUNITY_NAV_LABELS (neither is mocked here — the real maps are what is
 // under test), so a rename in one place cannot drift from the other.
 describe("BrowseApplicationsClient - page heading tracks the explorer tab label", () => {
+  const DEFAULT_HEADING_PROGRAMS = [
+    {
+      programId: "program-abc",
+      chainID: 1,
+      name: "Test Grant Program",
+      applicationConfig: { formSchema: { fields: [] } },
+    },
+    {
+      programId: "program-xyz",
+      chainID: 1,
+      name: "Another Program",
+      applicationConfig: { formSchema: { fields: [] } },
+    },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
     urlStore.clear();
+    // clearAllMocks keeps implementations, so restore the empty defaults or a
+    // per-test override leaks into every test after it.
+    vi.mocked(api.get).mockResolvedValue({
+      applications: [],
+      pagination: { total: 0, page: 1, limit: 100, totalPages: 0 },
+    });
+    vi.mocked(useProgramsWithConfig).mockReturnValue({
+      programs: DEFAULT_HEADING_PROGRAMS,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useProgramsWithConfig>);
   });
 
   /** Renders as the tenant host would, where the override applies. */
@@ -383,6 +410,24 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
   // "Browse Projects" over a count of "applications" is the drift this guards.
   it("counts the noun the heading names, not always 'applications'", async () => {
     const user = userEvent.setup();
+    // A real count is needed to assert the noun beside it — the subtitle drops
+    // the number entirely when it is zero or still unknown.
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url.includes("/projects")) {
+        return Promise.resolve({ payload: [{ uid: "0xkernel" }], pagination: { totalPages: 1 } });
+      }
+      return Promise.resolve({
+        applications: [
+          {
+            referenceNumber: "APP-KERNEL",
+            status: "approved",
+            projectUID: "0xkernel",
+            applicationData: { "Pod Name": "A Kernel project" },
+          },
+        ],
+        pagination: { total: 1, page: 1, limit: 100, totalPages: 1 },
+      });
+    });
     renderWhitelabel("filecoin");
 
     // A track is picked from its own dropdown now, but the noun in the count
@@ -427,13 +472,39 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
 
   it("keeps counting applications where the heading is the default", async () => {
     const user = userEvent.setup();
+    // One program, so the aggregate landing count is unambiguous; its metrics
+    // are what program mode counts once it is selected.
+    vi.mocked(useProgramsWithConfig).mockReturnValue({
+      programs: [
+        {
+          programId: "program-abc",
+          chainID: 1,
+          name: "Test Grant Program",
+          applicationConfig: { formSchema: { fields: [] } },
+          metrics: { totalApplications: 3 },
+        },
+      ],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useProgramsWithConfig>);
+    vi.mocked(api.get).mockResolvedValue({
+      applications: [
+        {
+          referenceNumber: "APP-1",
+          status: "approved",
+          projectUID: "0xproject",
+          applicationData: { "Pod Name": "A project" },
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 100, totalPages: 1 },
+    });
     render(<BrowseApplicationsClient communityId="test-community" />, {
       wrapper: createWrapper(),
     });
 
-    // There is always a list now, so the subtitle is a count from the start —
-    // never a "choose a program" prompt.
-    expect(await screen.findByText("0 applications")).toBeInTheDocument();
+    // There is always a list now — never a "choose a program" prompt.
+    expect(await screen.findByText("1 application")).toBeInTheDocument();
     expect(
       screen.queryByText("Choose a program to browse public applications.")
     ).not.toBeInTheDocument();
@@ -532,13 +603,34 @@ describe("BrowseApplicationsClient - program and track filters", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof useTracksForCommunity>);
 
+  const DEFAULT_FILTER_PROGRAMS = [
+    {
+      programId: "program-abc",
+      chainID: 1,
+      name: "Test Grant Program",
+      applicationConfig: { formSchema: { fields: [] } },
+    },
+    {
+      programId: "program-xyz",
+      chainID: 1,
+      name: "Another Program",
+      applicationConfig: { formSchema: { fields: [] } },
+    },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
     urlStore.clear();
     mockApiByUrl();
-    // clearAllMocks keeps implementations, so an override in one test would
-    // otherwise leak into the next.
+    // clearAllMocks keeps implementations, so an override in one test — or in
+    // an earlier describe — would otherwise leak into the next.
     mockTracks(DEFAULT_TRACKS);
+    vi.mocked(useProgramsWithConfig).mockReturnValue({
+      programs: DEFAULT_FILTER_PROGRAMS,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useProgramsWithConfig>);
   });
 
   // 1. The bug this fixes: tracks were listed as though they were programs.
@@ -764,6 +856,15 @@ describe("BrowseApplicationsClient - loading and mode boundaries", () => {
     vi.clearAllMocks();
     urlStore.clear();
     mockPrograms(DEFAULT_PROGRAMS, false);
+    // An earlier describe's api implementation would otherwise leak in.
+    vi.mocked(api.get).mockResolvedValue({
+      applications: [],
+      pagination: { total: 0, page: 1, limit: 100, totalPages: 0 },
+    });
+    vi.mocked(useTracksForCommunity).mockReturnValue({
+      data: [{ id: "6a8cb595f1aaee1af87b80c2", name: "Kernel" }],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useTracksForCommunity>);
   });
 
   // The aggregate query stays disabled until the programs it reads arrive, and
@@ -839,6 +940,41 @@ describe("BrowseApplicationsClient - loading and mode boundaries", () => {
 
     expect(screen.queryByLabelText("Choose Track")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Choose Program")).toBeInTheDocument();
+  });
+
+  // A count of zero above a skeleton states something the page does not yet
+  // know. The guide's rule is that "0 …" copy is not rendered at all.
+  it("prints no count in the subtitle while the list is loading", () => {
+    mockPrograms([], true);
+
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    expect(screen.queryByText(/^0 applications/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^0 projects/)).not.toBeInTheDocument();
+  });
+
+  it("prints no count when the community really has none", async () => {
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    // The empty state is what says there is nothing; the subtitle stays quiet.
+    expect(await screen.findByText("No applications yet")).toBeInTheDocument();
+    expect(screen.queryByText(/^0 applications/)).not.toBeInTheDocument();
+  });
+
+  // The names are known even before the count is, so they still get shown.
+  it("keeps the program name in the subtitle without a count", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<BrowseApplicationsClient communityId="filecoin" />, {
+      wrapper: createWrapper(),
+    });
+
+    await selectProgram(user, "Test Grant Program");
+
+    // Scoped to the header, since the dropdown trigger carries the name too.
+    await waitFor(() => {
+      expect(container.querySelector("header")).toHaveTextContent("Test Grant Program");
+    });
+    expect(container.querySelector("header")).not.toHaveTextContent("0 application");
   });
 
   it("settles to the program dropdown alone for a community with no tracks", async () => {

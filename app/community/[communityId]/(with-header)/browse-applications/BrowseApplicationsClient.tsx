@@ -386,11 +386,22 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   // Program metrics are the whole program's, so they can only be the count in
   // the mode that shows the whole program.
   const applicationCount = isAggregate ? totalCount : (programMetrics?.totalApplications ?? 0);
-  const selectionSuffix = [selectedProgram?.name, selectedTrack?.name]
+  /**
+   * The subtitle's parts, in order: the count, then what it was narrowed by.
+   *
+   * The count is dropped while the list is loading — it would read "0" for a
+   * number that is merely unknown — and when it really is zero, where the
+   * empty state below already says so and "0 …" copy is not rendered.
+   */
+  const headerSubtitle = [
+    isLoading || applicationCount === 0
+      ? null
+      : `${applicationCount} ${pluralize(itemNoun, applicationCount)}`,
+    selectedProgram?.name,
+    selectedTrack?.name,
+  ]
     .filter(Boolean)
-    .map((name) => ` · ${name}`)
-    .join("");
-  const headerSubtitle = `${applicationCount} ${pluralize(itemNoun, applicationCount)}${selectionSuffix}`;
+    .join(" · ");
 
   return (
     <div
@@ -402,7 +413,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
         <h1 className="text-[26px] md:text-[28px] font-semibold tracking-[-0.02em] text-foreground">
           {pageTitle}
         </h1>
-        <p className="text-sm text-muted-foreground">{headerSubtitle}</p>
+        {headerSubtitle ? <p className="text-sm text-muted-foreground">{headerSubtitle}</p> : null}
       </header>
 
       {/* Filters: program and track, independent and combinable. A community
