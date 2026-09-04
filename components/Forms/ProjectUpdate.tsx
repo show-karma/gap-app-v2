@@ -32,6 +32,7 @@ import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import type { Project as ProjectResponse } from "@/types/v2/project";
+import * as projectEvents from "@/utilities/analytics/emitters/project";
 import { api } from "@/utilities/api/client";
 import { attestWithRetry } from "@/utilities/attestWithRetry";
 import { formatDate } from "@/utilities/formatDate";
@@ -675,6 +676,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
             if (alreadyExists) {
               retries = 0;
+              projectEvents.emitProjectUpdatePosted(projectUid, data.deliverables, data.text);
               showSuccess(
                 isEditMode ? "Activity updated successfully!" : MESSAGES.PROJECT_UPDATE_FORM.SUCCESS
               );
@@ -713,6 +715,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
       })();
     } catch (error) {
+      projectEvents.emitProjectUpdateFailed(project?.uid, error);
       // A wallet-provider conflict is not "try again shortly" — the browser is
       // broken, not the network, and retrying is what this user already did
       // twice before giving up. Name the conflicting extensions and point at a

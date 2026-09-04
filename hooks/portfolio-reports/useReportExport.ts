@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as portfolioService from "@/services/portfolio-reports.service";
 import type { ReportExportDownload, ReportSnapshotSource } from "@/types/portfolio-report";
+import { track } from "@/utilities/analytics/client";
 
 const EXPORT_KEYS = {
   manifest: (slug: string, id: string) => ["portfolio-report-export-manifest", slug, id] as const,
@@ -54,7 +55,10 @@ export function useExportReportSection(communitySlug: string, reportId: string) 
   return useMutation({
     mutationFn: (section: string) =>
       portfolioService.exportReportSection(communitySlug, reportId, section),
-    onSuccess: handleDownload,
+    onSuccess: (download) => {
+      track("report_exported", { report_id: reportId, format: "csv" });
+      handleDownload(download);
+    },
     onError: () => {
       toast.error("Failed to export data");
     },
@@ -65,7 +69,10 @@ export function useExportReportSection(communitySlug: string, reportId: string) 
 export function useExportReportAll(communitySlug: string, reportId: string) {
   return useMutation({
     mutationFn: () => portfolioService.exportReportAll(communitySlug, reportId),
-    onSuccess: handleDownload,
+    onSuccess: (download) => {
+      track("report_exported", { report_id: reportId, format: "json" });
+      handleDownload(download);
+    },
     onError: () => {
       toast.error("Failed to export data");
     },

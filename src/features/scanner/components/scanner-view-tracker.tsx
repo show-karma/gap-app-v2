@@ -2,31 +2,33 @@
 
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { mixpanelEvent } from "@/utilities/mixpanelEvent";
+import { track } from "@/utilities/analytics/client";
 
 interface ScannerViewTrackerProps {
   // 'public' = anonymous-tier /s/[slug] view, 'detail' = logged-in
-  // /scanner/scans/[id] view. Same event family; the variant
-  // distinguishes the funnel step.
+  // /scanner/scans/[id] view. Same event; the variant distinguishes the
+  // funnel step.
   readonly variant: "public" | "detail";
   readonly scanId: string | null;
   readonly slug: string | null;
   readonly grade?: string | null;
   readonly totalScore?: number | null;
-  readonly orgName?: string | null;
   readonly viewerIsOwner?: boolean;
 }
 
-// Fires a single mixpanel event when a viewer lands on a scorecard.
-// Renders nothing. Uses the synchronous mixpanelEvent helper (which
-// initializes Mixpanel on demand) rather than the useMixpanel hook —
-// useMixpanel sets the Mixpanel instance via an effect that races with
-// this component's effect on first mount, so a one-shot tracker that
-// fires on mount would no-op the first event. mixpanelEvent itself is
-// a no-op when NEXT_PUBLIC_MIXPANEL_KEY/ENV are not set.
+/**
+ * Fires a single `scanner_scorecard_viewed` when a viewer lands on a scorecard.
+ * Renders nothing.
+ *
+ * Who the viewer is stays off the event: the identity is already bound to the
+ * Mixpanel profile by `AnalyticsProvider`, and this tracker used to put the
+ * viewer's email on every scorecard view. Only whether they are signed in and
+ * whether they own the scan — the two things the conversion funnel splits on —
+ * are reported.
+ */
 export function ScannerViewTracker(props: ScannerViewTrackerProps) {
-  const { variant, scanId, slug, grade, totalScore, orgName, viewerIsOwner } = props;
-  const { ready, authenticated, user } = useAuth();
+  const { variant, scanId, slug, grade, totalScore, viewerIsOwner } = props;
+  const { ready, authenticated } = useAuth();
   const firedRef = useRef(false);
 
   useEffect(() => {
@@ -34,33 +36,15 @@ export function ScannerViewTracker(props: ScannerViewTrackerProps) {
     if (!ready) return;
     if (!scanId && !slug) return;
     firedRef.current = true;
-    void mixpanelEvent({
-      event: variant === "public" ? "scanner:public-scorecard-view" : "scanner:scan-detail-view",
-      properties: {
-        scanId: scanId ?? null,
-        slug: slug ?? null,
-        grade: grade ?? null,
-        totalScore: totalScore ?? null,
-        orgName: orgName ?? null,
-        viewerIsAuthenticated: authenticated,
-        viewerUserId: authenticated ? (user?.id ?? null) : null,
-        viewerEmail: authenticated ? (user?.email?.address ?? null) : null,
-        viewerIsOwner: viewerIsOwner ?? false,
-      },
+    track("scanner_scorecard_viewed", {
+      variant,
+      scan_id: scanId ?? null,
+      grade: grade ?? null,
+      total_score: totalScore ?? null,
+      viewer_is_owner: viewerIsOwner ?? false,
+      viewer_is_authenticated: authenticated,
     });
-  }, [
-    ready,
-    authenticated,
-    scanId,
-    slug,
-    variant,
-    grade,
-    totalScore,
-    orgName,
-    viewerIsOwner,
-    user?.id,
-    user?.email?.address,
-  ]);
+  }, [ready, authenticated, scanId, slug, variant, grade, totalScore, viewerIsOwner]);
 
   return null;
 }

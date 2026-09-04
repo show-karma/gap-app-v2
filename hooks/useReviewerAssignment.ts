@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { applicationReviewersService } from "@/services/application-reviewers.service";
+import { track } from "@/utilities/analytics/client";
 
 /**
  * Enum for reviewer types
@@ -77,7 +78,14 @@ export const useReviewerAssignment = ({
 
       return applicationReviewersService.assignReviewers(applicationId, request);
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, selectedAddresses) => {
+      // Addresses are the assignment itself, but they are wallets — only how
+      // many were assigned is reportable.
+      track("reviewer_assigned", {
+        application_id: applicationId,
+        reviewer_type: reviewerType,
+        reviewer_count: selectedAddresses.length,
+      });
       // Invalidate application queries using specific query key prefixes
       await queryClient.invalidateQueries({
         predicate: (query) => {

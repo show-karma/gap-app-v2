@@ -7,6 +7,8 @@ import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/ho
 import type { ChainPayoutAddressMap } from "@/src/features/chain-payout-address/types/chain-payout-address";
 import { useDonationCart } from "@/store/donationCart";
 import { DonationType } from "@/types/donations";
+import { track } from "@/utilities/analytics/client";
+import { toErrorCode } from "@/utilities/analytics/error-code";
 import {
   createCompletedDonations,
   type DonationPayment,
@@ -47,6 +49,9 @@ function createPayoutAddressResolver(chainPayoutAddresses: Record<string, ChainP
     return getPayoutAddressForChain(projectAddresses, chainId) || "";
   };
 }
+
+/** Stable surface id for the cart checkout, the only crypto donation entry. */
+const DONATION_ENTRY_POINT = "donation_checkout";
 
 export function useDonationCheckout() {
   const { address, isConnected } = useAccount();
@@ -162,8 +167,19 @@ export function useDonationCheckout() {
       cartState.clear();
 
       if (hasFailures) {
+        track("donation_failed", {
+          project_count: payments.length,
+          used_onramp: false,
+          error_code: "partial_batch_failure",
+        });
         toast.error("Some donations failed. Review the status below.");
       } else {
+        track("donation_completed", {
+          project_count: payments.length,
+          currencies: Array.from(new Set(payments.map((p) => p.token.symbol))),
+          chain_ids: Array.from(new Set(payments.map((p) => p.chainId))),
+          used_onramp: false,
+        });
         const tokensNeedingApproval = approvalInfo.filter((info) => info.needsApproval);
         if (tokensNeedingApproval.length > 0) {
           toast.success("Tokens approved successfully! Batch donation submitted.");
@@ -249,7 +265,14 @@ export function useDonationCheckout() {
         return;
       }
 
-      // Step 4: Execute donations
+      // Step 4: Execute donations. The funnel opens here rather than at the
+      // checkout page mount: everything above is validation the donor can fail
+      // without ever reaching a wallet.
+      track("donation_started", {
+        project_count: payments.length,
+        entry_point: DONATION_ENTRY_POINT,
+        used_onramp: false,
+      });
       try {
         await executeDonationsWithHandling(
           payments,
@@ -259,6 +282,11 @@ export function useDonationCheckout() {
           getFreshWalletClient
         );
       } catch (error) {
+        track("donation_failed", {
+          project_count: payments.length,
+          used_onramp: false,
+          error_code: toErrorCode(error),
+        });
         console.error("Failed to execute donations", error);
         const parsedError = parseDonationError(error);
         toast.error(parsedError.message, {

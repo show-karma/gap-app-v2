@@ -7,6 +7,7 @@ import {
   type DonationStatusApiResponse,
 } from "@/hooks/donation/types";
 import { donationsService } from "@/services/donations.service";
+import { emitDonationOutcomeOnce } from "@/utilities/analytics/emitters/donation";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 const POLLING_INTERVAL_MS = 5000;
@@ -41,10 +42,22 @@ export const useDonationPolling = ({
     queryKey: pollingToken
       ? QUERY_KEYS.DONATIONS.STATUS(donationUid!, chainId)
       : QUERY_KEYS.DONATIONS.POLLING(donationUid!, chainId),
-    queryFn: () =>
-      pollingToken
+    queryFn: async () => {
+      const response = await (pollingToken
         ? donationsService.getDonationStatus(donationUid!, chainId, pollingToken)
-        : donationsService.getDonationByUid(donationUid!, chainId),
+        : donationsService.getDonationByUid(donationUid!, chainId));
+      // Emitted here rather than from an effect: this is the moment the browser
+      // learns the outcome, and the emitter dedupes by uid so the poll's repeat
+      // fetches report once. See `emitters/donation.ts`.
+      const settled = toDonationStatus(response?.status);
+      emitDonationOutcomeOnce({
+        donationUid,
+        chainId,
+        isCompleted: settled === DonationStatus.COMPLETED,
+        isFailed: settled === DonationStatus.FAILED,
+      });
+      return response;
+    },
     enabled: !!donationUid,
     refetchInterval: (q) => (isTerminalStatus(q.state.data?.status) ? false : POLLING_INTERVAL_MS),
     refetchOnWindowFocus: (q) => !isTerminalStatus(q.state.data?.status),

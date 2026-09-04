@@ -1,10 +1,12 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useProjectFilters } from "@/hooks/useProjectFilters";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
+import { isTracksAsPrimaryExplorerFacet } from "@/utilities/community-flags";
 import { parseCommunityProjectsPage } from "@/utilities/queries/v2/communityProjectsRequest";
 import { ProgramFilter } from "../Pages/Communities/Impact/ProgramFilter";
+import { TrackAsProgramFilter } from "../Pages/Communities/Impact/TrackAsProgramFilter";
 import { TrackFilter } from "../Pages/Communities/Impact/TrackFilter";
 import { CategoryFilter } from "./CategoryFilter";
 import type { CommunityProjectFilters } from "./communityProjectFilters";
@@ -68,6 +70,24 @@ export function CommunityGrantsToolbar({
   const searchParams = useSearchParams();
   const page = parseCommunityProjectsPage({ page: searchParams.get("page") ?? undefined });
 
+  const tracksAsPrimaryFacet = isTracksAsPrimaryExplorerFacet(communityId);
+
+  // Under TRACKS_AS_PRIMARY_EXPLORER_FACET the primary dropdown selects a
+  // track directly — write trackIds and make sure no stale programId lingers
+  // (the program/batch dropdown is not rendered for these communities, so
+  // programId should never be set, but a hand-typed or carried-over URL param
+  // could still have one).
+  //
+  // Both writes go through nuqs, so the effect below mirrors the result up to
+  // the grid on the same path as every other filter — one contract, not two.
+  const handleTrackFacetChange = useCallback(
+    async (trackId: string | null) => {
+      await changeProgramId(null);
+      await changeTrackIds(trackId ? [trackId] : null);
+    },
+    [changeProgramId, changeTrackIds]
+  );
+
   useEffect(() => {
     onFiltersChange({
       categories: selectedCategories,
@@ -89,10 +109,18 @@ export function CommunityGrantsToolbar({
 
   return (
     <div className="flex items-stretch sm:items-end gap-x-3 flex-wrap gap-y-3 w-full">
-      <ProgramFilter onChange={changeProgramId} />
+      {tracksAsPrimaryFacet ? (
+        <TrackAsProgramFilter
+          communityUid={communityUid}
+          selectedTrackId={selectedTrackIds?.[0] ?? null}
+          onChange={handleTrackFacetChange}
+        />
+      ) : (
+        <ProgramFilter onChange={changeProgramId} />
+      )}
 
       <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-y-3 gap-x-8 justify-start flex-wrap sm:pb-3">
-        {selectedProgramId && (
+        {!tracksAsPrimaryFacet && selectedProgramId && (
           <TrackFilter
             onChange={changeTrackIds}
             communityUid={communityUid}

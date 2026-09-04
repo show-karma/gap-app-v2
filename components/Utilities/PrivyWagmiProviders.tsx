@@ -1,6 +1,6 @@
 "use client";
 
-import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
+import { PrivyProvider, useLogin, usePrivy, useWallets } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { useSetActiveWallet, WagmiProvider } from "@privy-io/wagmi";
 import { connect as wagmiCoreConnect, disconnect as wagmiCoreDisconnect } from "@wagmi/core";
@@ -10,6 +10,9 @@ import { PROJECT_NAME } from "@/constants/brand";
 import { usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
 import { useEnsureEmbeddedWallet } from "@/hooks/useEnsureEmbeddedWallet";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
+import { toAuthMethod } from "@/utilities/analytics/auth-method";
+import { track } from "@/utilities/analytics/client";
+import { clearPreReadyLoginStart } from "@/utilities/analytics/emitters/auth";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";
@@ -40,6 +43,24 @@ function PrivyBridgeUpdater() {
   const { client: smartWalletClient } = useSmartWallets();
   const { isConnected, chainId } = useAccount();
   const { setActiveWallet } = useSetActiveWallet();
+
+  // The only place the app learns that a login *completed*, and with which
+  // method: `authenticated` flipping true says nothing about whether the user
+  // just signed in or Privy restored a session. Privy's own callback carries
+  // both, so the activation funnel starts here rather than in an effect that
+  // would have to guess.
+  useLogin({
+    onComplete: ({ isNewUser, wasAlreadyAuthenticated, loginMethod }) => {
+      // This funnel is closed, so the pre-`ready` start that opened it must not
+      // suppress the next one — that would be a new activation, not a retry.
+      clearPreReadyLoginStart();
+      track("login_completed", {
+        auth_method: toAuthMethod(loginMethod),
+        is_new_user: isNewUser,
+        was_already_authenticated: wasAlreadyAuthenticated,
+      });
+    },
+  });
 
   // Store latest values in refs so the effect always has fresh data.
   // Depend on primitives only (stable across renders when unchanged).

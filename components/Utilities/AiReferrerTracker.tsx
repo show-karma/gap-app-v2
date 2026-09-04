@@ -3,9 +3,8 @@
 import { sendGAEvent } from "@next/third-parties/google";
 import { useEffect, useRef } from "react";
 import { captureAiFirstTouch, getAiFirstTouchProps } from "@/utilities/aiReferrer";
-import { mixpanelEvent } from "@/utilities/mixpanelEvent";
+import { track } from "@/utilities/analytics/client";
 
-const MIXPANEL_LANDING_EVENT = "ai-referral-landing";
 const GA_LANDING_EVENT = "ai_referral_landing";
 
 /**
@@ -25,10 +24,9 @@ const isGoogleAnalyticsActive = (): boolean =>
  * client navigations never re-run the capture — and `captureAiFirstTouch` is
  * write-once anyway, so a hard navigation cannot overwrite the original source.
  *
- * Uses the `mixpanelEvent` helper rather than the `useMixpanel` hook for the
- * same reason as `scanner-view-tracker`: the hook sets its Mixpanel instance in
- * an effect that races a one-shot mount effect, so the first event would no-op.
- * Both helpers are already no-ops outside production.
+ * Mixpanel goes through `track` from the analytics client, which initializes
+ * the SDK synchronously on first use — so a one-shot mount effect like this one
+ * cannot race the init the way the old `useMixpanel` hook did.
  */
 export function AiReferrerTracker() {
   const capturedRef = useRef(false);
@@ -63,10 +61,7 @@ export function AiReferrerTracker() {
       ai_landing_path: firstTouch.landingPath,
     };
 
-    void mixpanelEvent({ event: MIXPANEL_LANDING_EVENT, properties })?.catch(() => {
-      // SUPPRESSED: a dropped analytics beacon must never surface to the user
-      // or to Sentry. Mixpanel already retries its own queue.
-    });
+    track("ai_referral_landing", properties);
 
     if (googleAnalyticsActive) {
       sendGAEvent("event", GA_LANDING_EVENT, properties);

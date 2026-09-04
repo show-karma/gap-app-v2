@@ -2,10 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { FundingMapCard } from "@/src/features/funding-map/components/funding-map-card";
 import { getProgramDetailHref } from "@/src/features/funding-map/components/funding-map-list";
 import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
+import { track } from "@/utilities/analytics/client";
 
-vi.mock("@/hooks/useMixpanel", () => ({
-  useMixpanel: () => ({ mixpanel: { reportEvent: vi.fn() } }),
-}));
+vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
 function createMockProgram(
   overrides: Partial<FundingProgramResponse> = {}
@@ -79,5 +78,46 @@ describe("FundingMapCard with href + onClick (funding-map list)", () => {
     const clickEvent = new MouseEvent("click", { bubbles: true, cancelable: true });
     if (anchor) fireEvent(anchor, clickEvent);
     expect(clickEvent.defaultPrevented).toBe(false);
+  });
+});
+
+describe("FundingMapCard analytics", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reports the click with the program and its position in the list", () => {
+    render(
+      <FundingMapCard
+        program={createMockProgram()}
+        href="/community/optimism/programs/961"
+        onClick={vi.fn()}
+        cardPosition={3}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: /view funding program: optimism asp/i }));
+
+    expect(track).toHaveBeenCalledWith("funding_map_card_clicked", {
+      program_id: "961",
+      position: 3,
+    });
+  });
+
+  it("reports an unknown position when the card is not rendered in a ranked list", () => {
+    render(
+      <FundingMapCard
+        program={createMockProgram()}
+        href="/community/optimism/programs/961"
+        onClick={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: /view funding program: optimism asp/i }));
+
+    expect(track).toHaveBeenCalledWith("funding_map_card_clicked", {
+      program_id: "961",
+      position: null,
+    });
   });
 });

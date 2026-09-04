@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/t/[tenant]/(chrome)/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
+import { api } from "@/utilities/api/client";
 import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
@@ -101,6 +102,23 @@ vi.mock("@/utilities/api/client", () => ({
       })
     ),
   },
+}));
+
+// TrackAsProgramFilter resolves the community's tracks; the component resolves
+// the community UID it needs to ask for them.
+vi.mock("@/hooks/useTracks", () => ({
+  useTracksForCommunity: vi.fn(() => ({
+    data: [
+      { id: "6a8cb595f1aaee1af87b80c2", name: "Kernel" },
+      { id: "6a8cb5a1f1aaee1af87b80c4", name: "R&D" },
+      { id: "6a8cb59af1aaee1af87b80c3", name: "Revenue Development" },
+    ],
+    isLoading: false,
+  })),
+}));
+
+vi.mock("@/hooks/v2/useCommunityDetails", () => ({
+  useCommunityDetails: vi.fn(() => ({ community: { uid: "0xcommunity" }, isLoading: false })),
 }));
 
 vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
@@ -334,14 +352,14 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
     const user = userEvent.setup();
     renderWhitelabel("filecoin");
 
-    expect(screen.getByText("Choose a program to browse public projects.")).toBeInTheDocument();
-
-    await selectProgram(user, "Test Grant Program");
+    // filecoin browses this tab by track, so the selection is a track — the
+    // noun in the count still has to follow the heading.
+    await selectProgram(user, "Kernel");
 
     await waitFor(() => {
-      expect(screen.getByText(/project(s)? · Test Grant Program/)).toBeInTheDocument();
+      expect(screen.getByText(/project(s)? · Kernel/)).toBeInTheDocument();
     });
-    expect(screen.queryByText(/application(s)? · Test Grant Program/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/application(s)? · Kernel/)).not.toBeInTheDocument();
   });
 
   it("keeps counting applications where the heading is the default", async () => {
@@ -357,5 +375,149 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
     await waitFor(() => {
       expect(screen.getByText(/application(s)? · Test Grant Program/)).toBeInTheDocument();
     });
+  });
+});
+
+// Filecoin browses this tab by track (TRACKS_AS_PRIMARY_EXPLORER_FACET). An
+// application carries no track of its own, so the list is the applications whose
+// funded project sits in the selected track.
+describe("BrowseApplicationsClient - browsing by track", () => {
+  const KERNEL = "6a8cb595f1aaee1af87b80c2";
+
+  function mockApiByUrl() {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url.includes("/projects")) {
+        // Only the Kernel project comes back for this track.
+        return Promise.resolve({ payload: [{ uid: "0xkernel" }] });
+      }
+      const secondPage = [
+        {
+          referenceNumber: "APP-KERNEL-PAGE-2",
+          status: "approved",
+          projectUID: "0xkernel",
+          applicationData: { "Pod Name": "A Kernel project on page two" },
+        },
+      ];
+      const perProgram: Record<string, unknown[]> = {
+        "program-abc": [
+          {
+            referenceNumber: "APP-KERNEL",
+            status: "approved",
+            projectUID: "0xkernel",
+            applicationData: { "Pod Name": "A Kernel project" },
+          },
+          {
+            referenceNumber: "APP-UNFUNDED",
+            status: "rejected",
+            projectUID: null,
+            applicationData: { "Pod Name": "Never funded" },
+          },
+        ],
+        "program-xyz": [
+          {
+            referenceNumber: "APP-OTHER",
+            status: "approved",
+            projectUID: "0xsomething-else",
+            applicationData: { "Pod Name": "Not in this track" },
+          },
+        ],
+      };
+      const programId = url.match(/program\/([^?]+)/)?.[1] ?? "";
+      const page = Number(url.match(/[?&]page=(\d+)/)?.[1] ?? 1);
+      // program-abc spills onto a second page: the API caps limit at 100, and a
+      // track must not lose whatever sits past the first page.
+      const pages =
+        programId === "program-abc"
+          ? [perProgram["program-abc"], secondPage]
+          : [perProgram[programId] ?? []];
+      const applications = pages[page - 1] ?? [];
+      return Promise.resolve({
+        applications,
+        pagination: {
+          total: pages.flat().length,
+          page,
+          limit: 100,
+          totalPages: pages.length,
+        },
+      });
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    urlStore.clear();
+    mockApiByUrl();
+  });
+
+  it("offers tracks instead of programs in the dropdown", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByLabelText("Choose Program"));
+
+    expect(await screen.findByRole("button", { name: "Kernel" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Test Grant Program" })).not.toBeInTheDocument();
+  });
+
+  it("lists only applications whose project is in the selected track", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByLabelText("Choose Program"));
+    await user.click(await screen.findByRole("button", { name: "Kernel" }));
+
+    expect(await screen.findByText("A Kernel project")).toBeInTheDocument();
+    expect(await screen.findByText("A Kernel project on page two")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Not in this track")).not.toBeInTheDocument();
+      expect(screen.queryByText("Never funded")).not.toBeInTheDocument();
+    });
+  });
+
+  it("lists every public application when no track is picked", async () => {
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    // "All Programs" is the dropdown's no-track state, and it is where the page
+    // lands — it must show the whole catalog, not the "choose a program" prompt.
+    expect(await screen.findByText("A Kernel project")).toBeInTheDocument();
+    expect(await screen.findByText("A Kernel project on page two")).toBeInTheDocument();
+    expect(await screen.findByText("Not in this track")).toBeInTheDocument();
+    // An application whose project was never funded carries no track, so this
+    // is the only view it can appear in.
+    expect(await screen.findByText("Never funded")).toBeInTheDocument();
+  });
+
+  it("goes back to the whole catalog when the track is cleared", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByLabelText("Choose Program"));
+    await user.click(await screen.findByRole("button", { name: "Kernel" }));
+    await waitFor(() => expect(screen.queryByText("Not in this track")).not.toBeInTheDocument());
+
+    // The dropdown stays open after a pick, so "All Programs" is still there.
+    await user.click(await screen.findByRole("button", { name: "All Programs" }));
+
+    expect(await screen.findByText("Not in this track")).toBeInTheDocument();
+  });
+
+  it("puts the track in the URL as trackIds, the same param the explorer uses", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByLabelText("Choose Program"));
+    await user.click(await screen.findByRole("button", { name: "Kernel" }));
+
+    await waitFor(() => expect(currentUrl()).toContain(`trackIds=${KERNEL}`));
+  });
+
+  it("leaves other communities on the program dropdown", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="test-community" />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByLabelText("Choose Program"));
+
+    expect(await screen.findByRole("button", { name: "Test Grant Program" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Kernel" })).not.toBeInTheDocument();
   });
 });

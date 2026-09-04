@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { track } from "@/utilities/analytics/client";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { CommentsService } from "../api/comments-service";
 import type { ApplicationComment, UsePublicCommentingReturn } from "../types";
@@ -51,6 +52,7 @@ export function usePublicCommenting({
   const addCommentMutation = useMutation({
     mutationFn: (content: string) => CommentsService.createPublicComment(referenceNumber, content),
     onSuccess: (newComment) => {
+      track("comment_posted", { target_type: "application", is_public: true, is_reply: false });
       queryClient.setQueryData<ApplicationComment[]>(queryKey, (old) => [
         ...(old ?? []),
         newComment,

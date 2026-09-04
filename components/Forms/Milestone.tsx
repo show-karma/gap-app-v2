@@ -23,6 +23,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Grant } from "@/types/v2/grant";
+import { track } from "@/utilities/analytics/client";
 import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -180,6 +181,11 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             );
             if (milestoneExists) {
               retries = 0;
+              track("milestone_created", {
+                grant_id: uid,
+                project_id: project?.uid ?? "",
+                has_due_date: Boolean(data.dates.endsAt),
+              });
               showSuccess(MESSAGES.MILESTONES.CREATE.SUCCESS);
               router.push(
                 PAGES.PROJECT.SCREENS.SELECTED_SCREEN(

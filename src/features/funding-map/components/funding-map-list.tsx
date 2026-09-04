@@ -2,7 +2,7 @@
 
 import { AlertCircle, Search } from "lucide-react";
 import { Suspense, useEffect, useRef } from "react";
-import { useMixpanel } from "@/hooks/useMixpanel";
+import { track } from "@/utilities/analytics/client";
 import { PAGES } from "@/utilities/pages";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import { useFundingFiltersValue } from "../context/funding-filters-context";
@@ -52,27 +52,17 @@ export function FundingMapList() {
   // after hydration.
   const { apiParams, filters, openProgram } = useFundingFiltersValue();
   const { data, isLoading, isError, error } = useFundingPrograms(apiParams);
-  const { mixpanel } = useMixpanel("karma");
   const hasTrackedPageView = useRef(false);
 
-  // Page-view tracking (fires once on mount)
+  // Page-view tracking (fires once on mount). The result count is not known
+  // yet — the query is still in flight — so it is reported as unknown rather
+  // than as zero, which would read as "no results" in the funnel.
   useEffect(() => {
     if (hasTrackedPageView.current) return;
     hasTrackedPageView.current = true;
-    const urlParams = new URLSearchParams(window.location.search);
-    mixpanel.reportEvent({
-      event: "funding-map:page-view",
-      properties: {
-        referrer: document.referrer,
-        hasFiltersInUrl: urlParams.toString().length > 0,
-        initialFilters: {
-          search: filters?.search,
-          status: filters?.status,
-          categories: filters?.categories,
-          grantTypes: filters?.grantTypes,
-          onlyOnKarma: filters?.onlyOnKarma,
-        },
-      },
+    track("funding_map_viewed", {
+      has_filters: new URLSearchParams(window.location.search).toString().length > 0,
+      results_count: null,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -92,17 +82,11 @@ export function FundingMapList() {
   // Track empty results
   useEffect(() => {
     if (!isLoading && !isError && programs.length === 0) {
-      mixpanel.reportEvent({
-        event: "funding-map:empty-results",
-        properties: {
-          activeFilters: {
-            searchLength: filters?.search.length,
-            status: filters?.status,
-            categories: filters?.categories,
-            grantTypes: filters?.grantTypes,
-            onlyOnKarma: filters?.onlyOnKarma,
-          },
-        },
+      track("funding_map_empty_results", {
+        has_filters: filters ? hasActiveFilters(filters) : false,
+        // `filters` is null until the URL leaf publishes; before that there is
+        // no query, which is a length of 0 rather than an absent measurement.
+        query_length: filters?.search.length ?? 0,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,19 +95,7 @@ export function FundingMapList() {
   // Track load errors
   useEffect(() => {
     if (isError && error) {
-      mixpanel.reportEvent({
-        event: "funding-map:load-error",
-        properties: {
-          errorType: error.name,
-          activeFilters: {
-            searchLength: filters?.search.length,
-            status: filters?.status,
-            categories: filters?.categories,
-            grantTypes: filters?.grantTypes,
-            onlyOnKarma: filters?.onlyOnKarma,
-          },
-        },
-      });
+      track("funding_map_load_error", { error_code: error.name });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isError, error, filters]);
@@ -154,7 +126,6 @@ export function FundingMapList() {
                 onClick={() => handleProgramClick(program)}
                 href={getProgramDetailHref(program)}
                 cardPosition={index}
-                page={filters?.page ?? 1}
               />
             ))}
           </div>
