@@ -62,8 +62,18 @@ const nextConfig: NextConfig = {
   // Standalone output produces a self-contained server.js bundle in
   // .next/standalone with traced node_modules. Cuts CI artifact size
   // from ~200MB to ~30-50MB and boots in ~2s vs ~25s for `pnpm start`.
-  // Vercel ignores this setting (it uses its own Lambda format).
-  output: "standalone",
+  //
+  // Deliberately NOT set on Vercel. Vercel ignores the setting -- it builds
+  // its own Lambda format from the adapter's onBuildComplete hook, which runs
+  // to completion before this step -- so assembling a standalone bundle there
+  // was always pure waste on the build container. Since 16.3 it is worse than
+  // waste: it fails the build outright. Next skips collectBuildTraces when the
+  // bundler is Turbopack (build/index.js "#region NFT"), so
+  // .next/next-server.js.nft.json is never written, and the standalone copy
+  // step (copyTracedFiles) opens that exact path and dies with ENOENT.
+  // CI still gets the bundle: VERCEL is unset on GitHub Actions, which is
+  // where build-main.yml and e2e-tests.yml pack .next/standalone.
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   turbopack: {
     resolveAlias: {
       // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
