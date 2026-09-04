@@ -7,6 +7,15 @@ on:
         description: 'Optional PR number to comment results back to'
         required: false
         type: string
+      base_url:
+        description: 'Deployment to test against, e.g. https://staging.karmahq.org. Only used by the instant-navigations job.'
+        required: false
+        type: string
+      instant_nav:
+        description: 'Run the instant-navigations suite against base_url (needs a cacheComponents deployment)'
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: '0 4 * * *'  # Nightly at 4 AM UTC
 
@@ -21,6 +30,12 @@ jobs:
   # run inline before a single ~11-min Playwright pass; splitting them halves
   # the wall-clock and lets shards start from a prebuilt standalone bundle.
   build:
+    # An instant_nav dispatch targets a deployment that already exists, so
+    # building a bundle and running the full sharded suite against localhost
+    # would be ~35 minutes of CI answering a question nobody asked — and a
+    # second, unrelated red/green for Argus to disambiguate while gating a tag.
+    # Empty on the nightly schedule, so that path is unchanged.
+    if: github.event.inputs.instant_nav != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -199,6 +214,94 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: playwright-screenshots-shard-${{ matrix.shard }}
+          path: e2e/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The instant() suite is the one gate that cannot run against a locally built
+  # bundle: `instant()` holds a navigation lock and asserts what the CDN already
+  # had prefetched, so it needs a real deployment with cacheComponents and
+  # partialPrefetching on. It therefore targets `base_url` and never builds.
+  # `playwright.config.ts` already drops its local `webServer` when BASE_URL
+  # points at a remote host, so no application or config change is needed here.
+  #
+  # Deliberately unsharded and on the list reporter (html alongside it, so the
+  # uploaded artifact is not empty): the bar Slice D set is
+  # 10/10 with 0 skipped, and a skip count split across four shards is exactly
+  # the number people misread. Every case in the suite skips rather than fails
+  # when its data is missing, so a green run with skips is NOT a pass.
+  instant-navigations:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.instant_nav == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Require a target deployment
+        # instant() against a local build would pass or fail for the wrong
+        # reason, so an empty base_url is an error rather than a fallback.
+        if: github.event.inputs.base_url == ''
+        run: |
+          echo "base_url is required when instant_nav is true."
+          exit 1
+
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers (cache miss)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Run instant-navigations suite against ${{ github.event.inputs.base_url }}
+        run: |
+          pnpm exec playwright test \
+            --config e2e/playwright.config.ts \
+            --project=chromium \
+            --reporter=list,html \
+            e2e/tests/instant
+        env:
+          CI: true
+          BASE_URL: ${{ github.event.inputs.base_url }}
+          INSTANT_NAV_E2E: '1'
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report-instant
+          path: e2e/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload Playwright traces
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-traces-instant
           path: e2e/test-results
           retention-days: 7
           if-no-files-found: ignore
