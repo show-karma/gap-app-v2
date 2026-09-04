@@ -17,6 +17,7 @@ import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { PAGES } from "@/utilities/pages";
+import { FALLBACK_PROJECT_SLUGS, withPrerenderFallback } from "@/utilities/prerender-samples";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 
@@ -45,13 +46,22 @@ export async function generateStaticParams(): Promise<Array<{ projectId: string 
       limit: PRERENDERED_PROJECT_SAMPLE,
     });
 
-    return payload
+    const found = payload
       .map((project) => project.details?.slug ?? project.uid)
       .filter((slug): slug is string => Boolean(slug))
       .slice(0, PRERENDERED_PROJECT_SAMPLE)
       .map((projectId) => ({ projectId }));
+
+    return withPrerenderFallback(
+      found,
+      FALLBACK_PROJECT_SLUGS.slice(0, PRERENDERED_PROJECT_SAMPLE).map((projectId) => ({
+        projectId,
+      }))
+    );
   } catch {
-    return [];
+    return FALLBACK_PROJECT_SLUGS.slice(0, PRERENDERED_PROJECT_SAMPLE).map((projectId) => ({
+      projectId,
+    }));
   }
 }
 

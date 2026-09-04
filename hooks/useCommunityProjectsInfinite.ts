@@ -2,6 +2,7 @@
 import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import type { CommunityProjects } from "@/types/v2/community";
+import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
 import {
   COMMUNITY_PROJECTS_PAGE_SIZE,
   getStatusFromMaturityStage,
@@ -20,6 +21,13 @@ interface UseInfiniteCommunityProjectsOptions {
   enabled?: boolean;
   /** SSR seed: the server-rendered page wrapped as InfiniteData. */
   initialData?: InfiniteData<CommunityProjects, number>;
+  /**
+   * When the seed was produced (`useRenderedAt()`). Required alongside
+   * `initialData`: without it React Query stamps the entry with `Date.now()`
+   * as the query is created, and that clock read aborts a cacheComponents
+   * prerender of the crawlable grid.
+   */
+  initialDataUpdatedAt?: number;
   /** Page the seed (and any client retry) starts from. Defaults to 1. */
   initialPage?: number;
 }
@@ -34,6 +42,7 @@ export function useCommunityProjectsInfinite({
   limit = COMMUNITY_PROJECTS_PAGE_SIZE,
   enabled = true,
   initialData,
+  initialDataUpdatedAt,
   initialPage = 1,
 }: UseInfiniteCommunityProjectsOptions) {
   // initialPage is part of the key so a ?page=2 seed can never bleed into the
@@ -74,9 +83,18 @@ export function useCommunityProjectsInfinite({
       return lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined;
     },
     initialData,
+    initialDataUpdatedAt,
     initialPageParam: initialPage,
     enabled: enabled && !!communityId,
-    staleTime: 0, // Always consider data stale when filters change
+    // Always consider data stale when filters change — on the client. The
+    // server never fetches for this query (no effects run in a prerender or
+    // under renderToString), but the observer still computes `isStale` for
+    // its first result, and that goes through `timeUntilStale` → `Date.now()`,
+    // which cacheComponents rejects above the hub's crawlable grid. `"static"`
+    // is the one value that returns before the clock is touched (see
+    // PRERENDER_SAFE_STALE_TIME); applied server-side only, so the client
+    // keeps the mount revalidation below.
+    staleTime: typeof window === "undefined" ? PRERENDER_SAFE_STALE_TIME : 0,
     gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
     refetchOnMount: "always", // Always refetch when component mounts
   });

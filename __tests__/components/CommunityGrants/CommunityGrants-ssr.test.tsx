@@ -229,15 +229,36 @@ describe("CommunityGrants server-rendered project entities", () => {
     expect(html).not.toContain('rel="prev"');
   });
 
-  it("drops the seed when the URL carries a non-default filter", () => {
+  it("server-renders the unfiltered page 1 even when the URL carries a filter", () => {
+    // The grid never reads the URL on the server: that read is what blocked the
+    // cacheComponents prerender of the hub, and the seeded page 1 is the page a
+    // crawler should index anyway. The filter is applied after hydration.
     urlState.set("categories", "DeFi");
 
     const html = renderServerHtml(
       <CommunityGrants {...defaultProps} initialProjects={makeServerPage()} />
     );
 
-    expect(html).not.toContain("Seeded Project 1");
-    expect(html).toContain("project-block-skeleton");
+    expect(html).toContain("Seeded Project 1");
+    expect(html).not.toContain("project-block-skeleton");
+  });
+
+  it("applies the URL filter after mount: drops the seed and fetches the filtered list", async () => {
+    urlState.set("categories", "DeFi");
+
+    renderWithProviders(<CommunityGrants {...defaultProps} initialProjects={makeServerPage()} />);
+
+    // The toolbar mirrors the URL up to the grid once it mounts; the seeded
+    // page belongs to the unfiltered view, so it goes and the filtered fetch
+    // is issued with the URL's categories.
+    await waitFor(() =>
+      expect(mockGetCommunityProjects).toHaveBeenCalledWith(
+        COMMUNITY_ID,
+        expect.objectContaining({ categories: "DeFi" })
+      )
+    );
+    expect(screen.queryByText("Seeded Project 1")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("project-block-skeleton").length).toBeGreaterThan(0);
   });
 
   it("does not seed an empty server payload (a swallowed fetch error stays a skeleton)", () => {

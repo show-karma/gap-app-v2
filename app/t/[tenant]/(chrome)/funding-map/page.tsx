@@ -1,9 +1,11 @@
 import { HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
 import { FundingMapSearch } from "@/src/features/funding-map/components/funding-map-search";
 import { FundingMapSidebar } from "@/src/features/funding-map/components/funding-map-sidebar";
+import { FundingFiltersProvider } from "@/src/features/funding-map/context/funding-filters-context";
 import { getFundingMapSeedCached } from "@/src/features/funding-map/services/funding-programs.cached";
 import { customMetadata } from "@/utilities/meta";
 
@@ -30,34 +32,39 @@ const FundingMapPage = async () => {
   const dehydratedState = await getFundingMapSeedCached();
 
   return (
-    <main className="flex w-full flex-col">
-      <CollectionPageJsonLd
-        name="Funding Map — Browse Open Grants, Hackathons & Accelerators"
-        description={PAGE_DESCRIPTION}
-        url="/funding-map"
-      />
-      {/* No Suspense boundaries here (DEV-612): this route is
+    <FundingFiltersProvider>
+      <main className="flex w-full flex-col">
+        <CollectionPageJsonLd
+          name="Funding Map — Browse Open Grants, Hackathons & Accelerators"
+          description={PAGE_DESCRIPTION}
+          url="/funding-map"
+        />
+        {/* No Suspense boundaries here (DEV-612): this route is
           sitemap-crawlable and renders dynamically, so a boundary made the
           search block and the prefetched program cards stream as hidden late
           chunks that no-JS readers never see. The heading and the hydrated
           card grid all land in the initially visible HTML. */}
-      <section className="flex w-full justify-center my-16">
-        <div className="flex w-full max-w-xl flex-col gap-8">
-          <div className="flex flex-col items-center justify-center gap-4">
-            <h1 className="text-center text-3xl font-semibold tracking-tight lg:text-4xl">
-              Find funding opportunities
-            </h1>
-            <FundingMapSearch />
+        <section className="flex w-full justify-center my-16">
+          <div className="flex w-full max-w-xl flex-col gap-8">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <h1 className="text-center text-3xl font-semibold tracking-tight lg:text-4xl">
+                Find funding opportunities
+              </h1>
+              {/* The search box reads the URL; it is a control, not content. */}
+              <Suspense fallback={null}>
+                <FundingMapSearch />
+              </Suspense>
+            </div>
           </div>
+        </section>
+        <div className="flex w-full flex-col gap-6 px-6 py-8 lg:flex-row lg:px-8">
+          <HydrationBoundary state={dehydratedState}>
+            <FundingMapList />
+          </HydrationBoundary>
+          <FundingMapSidebar />
         </div>
-      </section>
-      <div className="flex w-full flex-col gap-6 px-6 py-8 lg:flex-row lg:px-8">
-        <HydrationBoundary state={dehydratedState}>
-          <FundingMapList />
-        </HydrationBoundary>
-        <FundingMapSidebar />
-      </div>
-    </main>
+      </main>
+    </FundingFiltersProvider>
   );
 };
 

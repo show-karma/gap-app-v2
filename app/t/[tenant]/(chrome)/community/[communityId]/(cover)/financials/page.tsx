@@ -12,8 +12,8 @@ import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import Loading from "./loading";
 import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
+import Loading from "./loading";
 
 type Params = Promise<{ communityId: string }>;
 

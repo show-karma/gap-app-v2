@@ -5,6 +5,7 @@ import { BlogPostArticle } from "@/src/components/blog/BlogPostArticle";
 import { resolveOgImage } from "@/src/components/blog/blog-og-image";
 import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
+import { FALLBACK_BLOG_SLUGS, withPrerenderFallback } from "@/utilities/prerender-samples";
 
 // This route is sitemap-crawlable, so it must prerender: DEV-612 forbids a
 // Suspense boundary above its content, which leaves `"use cache"` as the only
@@ -34,14 +35,18 @@ interface PageProps {
  * and keep the newest posts warm, not to bake every post into every deploy.
  * Any other slug renders on its first request and is then persisted.
  *
- * `getPublishedSlugs()` already backs the sitemap, so these are real slugs; it
- * returns an empty list when Sanity is unconfigured, which yields a build with
- * no prerendered posts rather than a failed one.
+ * `getPublishedSlugs()` already backs the sitemap, so these are real slugs. It
+ * returns an empty list when Sanity is unconfigured — a preview build without
+ * CMS credentials — and under cacheComponents that empty list would fail the
+ * build, so the checked-in slugs cover it.
  */
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
   const slugs = await getPublishedSlugs();
 
-  return slugs.slice(0, PRERENDERED_POST_SAMPLE).map((entry) => ({ slug: entry.slug }));
+  return withPrerenderFallback(
+    slugs.slice(0, PRERENDERED_POST_SAMPLE).map((entry) => ({ slug: entry.slug })),
+    FALLBACK_BLOG_SLUGS.slice(0, PRERENDERED_POST_SAMPLE).map((slug) => ({ slug }))
+  );
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

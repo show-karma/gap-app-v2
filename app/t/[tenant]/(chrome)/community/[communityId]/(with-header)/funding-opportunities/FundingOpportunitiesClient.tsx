@@ -15,6 +15,7 @@ import { ProgramCardSkeleton } from "@/src/features/programs/components/ProgramC
 import { usePrograms } from "@/src/features/programs/hooks/use-programs";
 import type { ProgramStatus } from "@/types/whitelabel-entities";
 import formatCurrency from "@/utilities/formatCurrency";
+import { useRenderNow } from "@/utilities/render-clock-context";
 import { cn } from "@/utilities/tailwind";
 
 const STATUS_TABS: Array<{ key: ProgramStatus | "all"; label: string }> = [
@@ -155,22 +156,33 @@ function FundingOpportunitiesFilteredEmptySlot({
 
 export default function FundingOpportunitiesClient() {
   const { communityId } = useParams<{ communityId: string }>();
-  const { programs, loading, error, filters, setFilters, refetch } = usePrograms(communityId);
+  // `prerenderSafe`: this list renders above the crawlable content of a
+  // Cache-class route, where DEV-612 forbids the boundary Next would want for
+  // React Query's clock read. (An earlier version of this opt-in was replaced
+  // when #2102's toolbar split landed on this line.)
+  const { programs, loading, error, filters, setFilters, refetch } = usePrograms(
+    communityId,
+    undefined,
+    { prerenderSafe: true }
+  );
 
+  // The KPI strip judges deadlines during render, above the crawlable
+  // directory — so it reads the render clock, never `new Date()`.
+  const now = useRenderNow();
   const stats = useMemo(() => {
     let totalPool = 0;
     let openCount = 0;
     let closingNow = 0;
     let applicants = 0;
     for (const p of programs) {
-      const v = computeProgramView(p);
+      const v = computeProgramView(p, now);
       totalPool += v.pool;
       applicants += v.applicants;
       if (v.status === "open") openCount += 1;
       if (v.urgency === "urgent" || v.urgency === "closing") closingNow += 1;
     }
     return { totalPool, openCount, closingNow, applicants };
-  }, [programs]);
+  }, [programs, now]);
 
   const featured = programs[0];
   const others = programs.slice(1);

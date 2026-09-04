@@ -177,7 +177,17 @@ export const getCommunityCategoriesOrThrow = async (communityId: string): Promis
     // TODO(#1775): add zod schema — Category nests optional impact_segments/
     // outputs arrays (see types/impactMeasurement.ts) not safe to re-derive
     // strictly here.
-    data = await api.get<Category[]>(INDEXER.COMMUNITY.CATEGORIES(communityId));
+    // publicReadOptions(), not the authorized default. This is reachable from
+    // getCommunityCategoriesCached, and the build caught it there:
+    //
+    //   Route /t/[tenant]/community/[communityId] used `cookies()` inside "use cache"
+    //
+    // Nothing inside a cache scope may reach the token — a cached response
+    // built with someone's credentials is served to everyone.
+    data = await api.get<Category[]>(
+      INDEXER.COMMUNITY.CATEGORIES(communityId),
+      publicReadOptions()
+    );
   } catch (error) {
     errorManager(`Error fetching categories for community ${communityId}`, error);
     throw error;
