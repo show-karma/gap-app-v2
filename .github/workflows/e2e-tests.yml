@@ -16,6 +16,10 @@ on:
         required: false
         default: false
         type: boolean
+      instant_grep:
+        description: 'Optional -g title filter for a DIAGNOSTIC loop on one navigation, e.g. "6. funding opportunities". Empty runs all ten.'
+        required: false
+        type: string
   schedule:
     - cron: '0 4 * * *'  # Nightly at 4 AM UTC
 
@@ -293,16 +297,29 @@ jobs:
       # never retries and so would never trigger on-first-retry at all.
       - name: Run instant-navigations suite against ${{ github.event.inputs.base_url }}
         run: |
-          pnpm exec playwright test \
-            --config e2e/playwright.config.ts \
-            --project=chromium \
-            --reporter=list,html,json \
-            --trace retain-on-failure \
-            e2e/tests/instant
+          ARGS=(
+            --config e2e/playwright.config.ts
+            --project=chromium
+            --reporter=list,html,json
+            --trace retain-on-failure
+          )
+          # A title filter narrows the run to one navigation so an intermittent
+          # failure can be hunted without paying for the other nine each time.
+          # It makes this a DIAGNOSTIC run, not a gate run: the bar step below
+          # will correctly report "expected exactly 10" and fail. That is the
+          # honest answer for a partial run — read the Playwright line instead,
+          # and never widen SUITE_SIZE to make a diagnostic loop go green.
+          if [ -n "$INSTANT_GREP" ]; then
+            echo "DIAGNOSTIC RUN — title filter: $INSTANT_GREP"
+            echo "The bar step will fail on the count. That is expected here."
+            ARGS+=(-g "$INSTANT_GREP")
+          fi
+          pnpm exec playwright test "${ARGS[@]}" e2e/tests/instant
         env:
           CI: true
           BASE_URL: ${{ github.event.inputs.base_url }}
           INSTANT_NAV_E2E: '1'
+          INSTANT_GREP: ${{ github.event.inputs.instant_grep }}
           # ABSOLUTE, deliberately. Playwright resolves reporter output relative
           # to the CONFIG directory (e2e/), not the workspace root, so a bare
           # filename here lands somewhere the gate below and the upload steps do
