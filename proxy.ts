@@ -4,7 +4,11 @@ import { getDomainInfo } from "./src/infrastructure/config/domain-constants";
 import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
 import { CANONICAL_ORIGIN, canonicalUrl, isAliasHost, STAGING_ORIGIN } from "./utilities/domains";
-import { COMMUNITY_SUB_ROUTE_SEGMENTS, PAGES } from "./utilities/pages";
+import {
+  COMMUNITY_SUB_ROUTE_SEGMENTS,
+  PAGES,
+  resolveWhitelabelRouteAlias,
+} from "./utilities/pages";
 import {
   classifyProjectQuery,
   parseProjectIndexabilityRequest,
@@ -81,7 +85,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const normalizedPath = path;
+    // Clean-URL aliases resolve here, before anything routes on the path: the
+    // alias is the URL the visitor keeps (this is a rewrite, not a redirect)
+    // and the route it names is what renders. See WHITELABEL_ROUTE_ALIASES.
+    const normalizedPath = resolveWhitelabelRouteAlias(path);
     const normalizedIsRoot = normalizedPath === "/" || normalizedPath === "";
 
     // /programs (listing) → homepage (which shows funding opportunities)
