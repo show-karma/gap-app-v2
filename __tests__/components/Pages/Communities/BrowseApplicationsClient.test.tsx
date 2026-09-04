@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
+import { useTracksForCommunity } from "@/hooks/useTracks";
 import { api } from "@/utilities/api/client";
 import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
@@ -30,11 +31,21 @@ vi.mock("nuqs", async () => {
   return {
     useQueryState: (
       key: string,
-      options?: { defaultValue?: unknown; clearOnDefault?: boolean }
+      options?: {
+        defaultValue?: unknown;
+        clearOnDefault?: boolean;
+        parse?: (raw: string) => unknown;
+        serialize?: (value: unknown) => string;
+      }
     ) => {
-      const [value, setValue] = useState<unknown>(
-        () => urlStore.get(key) ?? options?.defaultValue ?? null
-      );
+      // `parse` and `serialize` are honoured the way real nuqs honours them:
+      // the browse page relies on them to read a comma-joined `trackIds` handed
+      // over by the explorer's multi-select filter.
+      const [value, setValue] = useState<unknown>(() => {
+        const raw = urlStore.get(key);
+        if (raw == null) return options?.defaultValue ?? null;
+        return options?.parse ? options.parse(raw) : raw;
+      });
       const set = (next: unknown) => {
         const resolved =
           typeof next === "function" ? (next as (p: unknown) => unknown)(value) : next;
@@ -42,7 +53,9 @@ vi.mock("nuqs", async () => {
         if (resolved == null || resolved === "" || isDefault) {
           urlStore.delete(key);
         } else {
-          urlStore.set(key, String(resolved));
+          const raw = options?.serialize ? options.serialize(resolved) : String(resolved);
+          if (raw === "") urlStore.delete(key);
+          else urlStore.set(key, raw);
         }
         setValue(resolved);
         return Promise.resolve(new URLSearchParams());
@@ -104,8 +117,8 @@ vi.mock("@/utilities/api/client", () => ({
   },
 }));
 
-// TrackAsProgramFilter resolves the community's tracks; the component resolves
-// the community UID it needs to ask for them.
+// The component resolves the community UID, then its tracks; the track
+// dropdown is rendered only when that list is non-empty.
 vi.mock("@/hooks/useTracks", () => ({
   useTracksForCommunity: vi.fn(() => ({
     data: [
@@ -171,15 +184,35 @@ function createWrapper() {
   };
 }
 
-// The program selector is the shared SearchWithValueDropdown: a Radix Popover
-// trigger opening a portalled cmdk list whose entries are plain buttons.
-async function selectProgram(user: ReturnType<typeof userEvent.setup>, name: string) {
-  // The <label> makes "Choose Program" the trigger's accessible name, whatever
-  // program is currently selected.
-  await user.click(screen.getByLabelText("Choose Program"));
+/**
+ * Open one of the two dropdowns and pick an option.
+ *
+ * Both are the shared SearchWithValueDropdown: a Radix Popover trigger opening
+ * a portalled cmdk list whose entries are plain buttons.
+ *
+ * The popover stays open after a pick, and clicking a trigger while one is open
+ * closes it — so any open popover is dismissed first. That makes picking a
+ * program and then a track work the same way it does for a real user.
+ */
+async function selectFromDropdown(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+  name: string
+) {
+  await user.keyboard("{Escape}");
+  // The <label> makes the label text the trigger's accessible name, whatever is
+  // currently selected.
+  await user.click(screen.getByLabelText(label));
   const option = await screen.findByRole("button", { name });
   await user.click(option);
 }
+
+const selectProgram = (user: ReturnType<typeof userEvent.setup>, name: string) =>
+  selectFromDropdown(user, "Choose Program", name);
+
+/** The sibling dropdown, which lists the community's tracks. */
+const selectTrack = (user: ReturnType<typeof userEvent.setup>, name: string) =>
+  selectFromDropdown(user, "Choose Track", name);
 
 // Status filters are chip buttons inside a "Filter by status" fieldset.
 async function clickStatusChip(user: ReturnType<typeof userEvent.setup>, label: string) {
@@ -350,9 +383,9 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
     const user = userEvent.setup();
     renderWhitelabel("filecoin");
 
-    // filecoin browses this tab by track, so the selection is a track — the
-    // noun in the count still has to follow the heading.
-    await selectProgram(user, "Kernel");
+    // A track is picked from its own dropdown now, but the noun in the count
+    // still has to follow the heading.
+    await selectTrack(user, "Kernel");
 
     await waitFor(() => {
       expect(screen.getByText(/project(s)? · Kernel/)).toBeInTheDocument();
@@ -363,6 +396,8 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
   // The empty state is the first thing a visitor arriving from "Projects
   // Explorer" reads, and "No applications yet" under a "Browse Projects"
   // heading is the same contradiction the count already guards against.
+  // With no program selected the list is the whole community's, so the empty
+  // state speaks for the community rather than for a program.
   it("names the same noun in the empty state as in the heading", async () => {
     renderWhitelabel("filecoin");
 
@@ -370,21 +405,22 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
       expect(screen.getByText("No projects yet")).toBeInTheDocument();
     });
     expect(
-      screen.getByText("This program doesn't have any public projects yet.")
+      screen.getByText("This community doesn't have any public projects yet.")
     ).toBeInTheDocument();
     expect(screen.queryByText("No applications yet")).not.toBeInTheDocument();
   });
 
-  it("keeps the default noun where the heading is the default", () => {
-    render(<BrowseApplicationsClient communityId="test-community" />, {
-      wrapper: createWrapper(),
-    });
+  it("attributes the empty state to the program once one is selected", async () => {
+    const user = userEvent.setup();
+    renderWhitelabel("filecoin");
 
-    expect(
-      screen.getByText(
-        "Pick a funding program from the selector above to browse its public applications."
-      )
-    ).toBeInTheDocument();
+    await selectProgram(user, "Test Grant Program");
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("This program doesn't have any public projects yet.")
+      ).toBeInTheDocument();
+    });
   });
 
   it("keeps counting applications where the heading is the default", async () => {
@@ -393,7 +429,12 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
       wrapper: createWrapper(),
     });
 
-    expect(screen.getByText("Choose a program to browse public applications.")).toBeInTheDocument();
+    // There is always a list now, so the subtitle is a count from the start —
+    // never a "choose a program" prompt.
+    expect(await screen.findByText("0 applications")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Choose a program to browse public applications.")
+    ).not.toBeInTheDocument();
 
     await selectProgram(user, "Test Grant Program");
 
@@ -403,17 +444,22 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
   });
 });
 
-// Filecoin browses this tab by track (TRACKS_AS_PRIMARY_EXPLORER_FACET). An
-// application carries no track of its own, so the list is the applications whose
-// funded project sits in the selected track.
-describe("BrowseApplicationsClient - browsing by track", () => {
+// Programs and tracks are two independent filters. "Choose Program" lists
+// programs for every community — Kernel and R&D are tracks, and listing them as
+// programs is the confusion this replaced. An application carries no track of
+// its own, so a track narrows the list to the applications whose funded project
+// sits in it.
+describe("BrowseApplicationsClient - program and track filters", () => {
   const KERNEL = "6a8cb595f1aaee1af87b80c2";
 
   function mockApiByUrl() {
     vi.mocked(api.get).mockImplementation((url: string) => {
       if (url.includes("/projects")) {
         // Only the Kernel project comes back for this track.
-        return Promise.resolve({ payload: [{ uid: "0xkernel" }] });
+        return Promise.resolve({
+          payload: [{ uid: "0xkernel" }],
+          pagination: { totalPages: 1 },
+        });
       }
       const secondPage = [
         {
@@ -468,42 +514,69 @@ describe("BrowseApplicationsClient - browsing by track", () => {
     });
   }
 
+  /** Every URL the component asked the API for. */
+  const requestedUrls = () => vi.mocked(api.get).mock.calls.map(([url]) => url as string);
+
+  const DEFAULT_TRACKS = [
+    { id: KERNEL, name: "Kernel" },
+    { id: "6a8cb5a1f1aaee1af87b80c4", name: "R&D" },
+    { id: "6a8cb59af1aaee1af87b80c3", name: "Revenue Development" },
+  ];
+
+  /** Point the tracks hook at a given catalog for one test. */
+  const mockTracks = (tracks: Array<{ id: string; name: string }>) =>
+    vi.mocked(useTracksForCommunity).mockReturnValue({
+      data: tracks,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useTracksForCommunity>);
+
   beforeEach(() => {
     vi.clearAllMocks();
     urlStore.clear();
     mockApiByUrl();
+    // clearAllMocks keeps implementations, so an override in one test would
+    // otherwise leak into the next.
+    mockTracks(DEFAULT_TRACKS);
   });
 
-  it("offers tracks instead of programs in the dropdown", async () => {
+  // 1. The bug this fixes: tracks were listed as though they were programs.
+  it("lists programs in 'Choose Program', never tracks", async () => {
     const user = userEvent.setup();
     render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
 
     await user.click(screen.getByLabelText("Choose Program"));
+
+    expect(await screen.findByRole("button", { name: "Test Grant Program" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Another Program" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Kernel" })).not.toBeInTheDocument();
+  });
+
+  // 2. Tracks get their own control.
+  it("lists the community's tracks in 'Choose Track'", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByLabelText("Choose Track"));
 
     expect(await screen.findByRole("button", { name: "Kernel" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Test Grant Program" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "R&D" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Revenue Development" })).toBeInTheDocument();
   });
 
-  it("lists only applications whose project is in the selected track", async () => {
-    const user = userEvent.setup();
-    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+  // A community with no tracks must look exactly as it did before this feature.
+  it("hides 'Choose Track' entirely for a community with no tracks", async () => {
+    mockTracks([]);
 
-    await user.click(screen.getByLabelText("Choose Program"));
-    await user.click(await screen.findByRole("button", { name: "Kernel" }));
+    render(<BrowseApplicationsClient communityId="test-community" />, { wrapper: createWrapper() });
 
-    expect(await screen.findByText("A Kernel project")).toBeInTheDocument();
-    expect(await screen.findByText("A Kernel project on page two")).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.queryByText("Not in this track")).not.toBeInTheDocument();
-      expect(screen.queryByText("Never funded")).not.toBeInTheDocument();
-    });
+    expect(await screen.findByLabelText("Choose Program")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Choose Track")).not.toBeInTheDocument();
   });
 
-  it("lists every public application when no track is picked", async () => {
+  // 3. Landing on the page shows everything, for any community.
+  it("lists every public application on landing, with no program or track", async () => {
     render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
 
-    // "All Programs" is the dropdown's no-track state, and it is where the page
-    // lands — it must show the whole catalog, not the "choose a program" prompt.
     expect(await screen.findByText("A Kernel project")).toBeInTheDocument();
     expect(await screen.findByText("A Kernel project on page two")).toBeInTheDocument();
     expect(await screen.findByText("Not in this track")).toBeInTheDocument();
@@ -512,30 +585,141 @@ describe("BrowseApplicationsClient - browsing by track", () => {
     expect(await screen.findByText("Never funded")).toBeInTheDocument();
   });
 
+  it("lists every public application on landing for a community without an override", async () => {
+    render(<BrowseApplicationsClient communityId="test-community" />, { wrapper: createWrapper() });
+
+    expect(await screen.findByText("A Kernel project")).toBeInTheDocument();
+    expect(await screen.findByText("Not in this track")).toBeInTheDocument();
+    expect(await screen.findByText("Never funded")).toBeInTheDocument();
+  });
+
+  // 4. A track alone narrows across every program.
+  it("narrows to the track's applications with all programs still selected", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await selectTrack(user, "Kernel");
+
+    expect(await screen.findByText("A Kernel project")).toBeInTheDocument();
+    expect(await screen.findByText("A Kernel project on page two")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Not in this track")).not.toBeInTheDocument();
+      expect(screen.queryByText("Never funded")).not.toBeInTheDocument();
+    });
+
+    const projectsUrl = requestedUrls().find((url) => url.includes("/projects"));
+    expect(projectsUrl).toContain(`trackIds=${KERNEL}`);
+    expect(projectsUrl).toContain("limit=1000");
+  });
+
+  // 5. The two combine: the intersection, not one or the other.
+  it("intersects program and track when both are chosen", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await selectProgram(user, "Test Grant Program");
+    await waitFor(() =>
+      expect(requestedUrls().some((url) => url.includes("/program/program-abc"))).toBe(true)
+    );
+
+    // Landing reads every program, which is the point of "All Programs" — so
+    // only the requests made once both filters are set are interesting here.
+    vi.mocked(api.get).mockClear();
+    await selectTrack(user, "Kernel");
+
+    expect(await screen.findByText("A Kernel project")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Not in this track")).not.toBeInTheDocument();
+    });
+    // The program narrows the applications themselves, so the other program is
+    // never read once one is chosen.
+    expect(requestedUrls().some((url) => url.includes("/program/program-xyz"))).toBe(false);
+    expect(requestedUrls().some((url) => url.includes("/program/program-abc"))).toBe(true);
+  });
+
+  // 6. A program on its own keeps the server-side path it always had.
+  it("uses the per-program endpoint when only a program is chosen", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await selectProgram(user, "Test Grant Program");
+
+    await waitFor(() => {
+      expect(
+        requestedUrls().some((url) => url.includes("/program/program-abc?page=1&limit=100"))
+      ).toBe(true);
+    });
+    // No track means no project resolution at all on this path.
+    expect(requestedUrls().some((url) => url.includes("/projects"))).toBe(false);
+  });
+
+  // 7. Clearing a track puts the whole catalog back.
   it("goes back to the whole catalog when the track is cleared", async () => {
     const user = userEvent.setup();
     render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
 
-    await user.click(screen.getByLabelText("Choose Program"));
-    await user.click(await screen.findByRole("button", { name: "Kernel" }));
+    await selectTrack(user, "Kernel");
     await waitFor(() => expect(screen.queryByText("Not in this track")).not.toBeInTheDocument());
 
-    // The dropdown stays open after a pick, so "All Programs" is still there.
-    await user.click(await screen.findByRole("button", { name: "All Programs" }));
+    await selectTrack(user, "All Tracks");
 
     expect(await screen.findByText("Not in this track")).toBeInTheDocument();
   });
 
+  it("drops the track when the Clear button is used, keeping the program", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await selectProgram(user, "Test Grant Program");
+    await selectTrack(user, "Kernel");
+    await waitFor(() => expect(currentUrl()).toContain(`trackIds=${KERNEL}`));
+
+    await user.click(await screen.findByRole("button", { name: /Clear/ }));
+
+    await waitFor(() => expect(currentUrl()).not.toContain("trackIds="));
+    expect(currentUrl()).toContain("programId=program-abc");
+  });
+
+  // 8. Both filters are deep-linkable, on the same param the explorer uses.
   it("puts the track in the URL as trackIds, the same param the explorer uses", async () => {
     const user = userEvent.setup();
     render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
 
-    await user.click(screen.getByLabelText("Choose Program"));
-    await user.click(await screen.findByRole("button", { name: "Kernel" }));
+    await selectTrack(user, "Kernel");
 
     await waitFor(() => expect(currentUrl()).toContain(`trackIds=${KERNEL}`));
   });
 
+  it("carries both filters in the URL at once", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await selectProgram(user, "Test Grant Program");
+    await selectTrack(user, "Kernel");
+
+    await waitFor(() => {
+      const url = currentUrl();
+      expect(url).toContain("programId=program-abc");
+      expect(url).toContain(`trackIds=${KERNEL}`);
+    });
+  });
+
+  // The explorer's track filter is multi-select and writes a comma-joined list;
+  // this page is single-select and reads the first id rather than choking.
+  it("reads the first id when the explorer hands over a comma-joined trackIds", async () => {
+    urlStore.set("trackIds", `${KERNEL},6a8cb5a1f1aaee1af87b80c4`);
+
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Choose Track")).toHaveTextContent("Kernel");
+    });
+    const projectsUrl = requestedUrls().find((url) => url.includes("/projects"));
+    expect(projectsUrl).toContain(`trackIds=${KERNEL}`);
+    expect(projectsUrl).not.toContain("6a8cb5a1f1aaee1af87b80c4");
+  });
+
+  // 9. Other communities keep the program dropdown they always had.
   it("leaves other communities on the program dropdown", async () => {
     const user = userEvent.setup();
     render(<BrowseApplicationsClient communityId="test-community" />, { wrapper: createWrapper() });
