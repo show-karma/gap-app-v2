@@ -1,9 +1,27 @@
 import { render, screen } from "@testing-library/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ServerFeedSlot } from "@/components/Pages/Project/v2/MainContent/ServerFeedSlot";
+import { __resetServerFeedTakeoverForTests } from "@/components/Pages/Project/v2/MainContent/serverFeedTakeover";
 import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { UpdatesContent } from "../UpdatesContent";
+
+/**
+ * The page composition, in the same order: the twin renders as a SIBLING above
+ * the client component, not as one of its props — that split is what keeps the
+ * feed in the prerendered HTML (E-7b), so these cases exercise it rather than
+ * the prop that used to stand in for it.
+ */
+const renderWithServerFeed = () =>
+  render(
+    <>
+      <ServerFeedSlot>
+        <div data-testid="server-feed">Server feed</div>
+      </ServerFeedSlot>
+      <UpdatesContent hasServerFeed />
+    </>
+  );
 
 // Mock dependencies
 vi.mock("next/navigation", () => ({
@@ -85,6 +103,7 @@ describe("UpdatesContent — authorization", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetServerFeedTakeoverForTests();
     capturedFiltersProps = {};
     (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
     (useRouter as vi.Mock).mockReturnValue(mockRouter);
@@ -137,6 +156,7 @@ describe("UpdatesContent — reads URL params and passes to ActivityFilters", ()
 
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetServerFeedTakeoverForTests();
     capturedFiltersProps = {};
     (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
     (useRouter as vi.Mock).mockReturnValue(mockRouter);
@@ -202,6 +222,7 @@ describe("UpdatesContent — onDateRangeChange updates URL", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetServerFeedTakeoverForTests();
     capturedFiltersProps = {};
     (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
     (useRouter as vi.Mock).mockReturnValue({ replace: mockReplace });
@@ -258,6 +279,7 @@ describe("UpdatesContent — onAIFilterChange updates URL", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetServerFeedTakeoverForTests();
     capturedFiltersProps = {};
     (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
     (useRouter as vi.Mock).mockReturnValue({ replace: mockReplace });
@@ -356,6 +378,7 @@ describe("UpdatesContent — onAIFilterChange updates URL", () => {
 describe("UpdatesContent — feed resilience", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetServerFeedTakeoverForTests();
     capturedFiltersProps = {};
     (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
     (useRouter as vi.Mock).mockReturnValue({ replace: vi.fn() });
@@ -367,7 +390,7 @@ describe("UpdatesContent — feed resilience", () => {
   it("keeps the server-rendered feed while the client updates query is still in flight", () => {
     mockProjectProfile({ allUpdates: [], isUpdating: true, hasUpdatesData: false });
 
-    render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
+    renderWithServerFeed();
 
     // The real content stays on screen instead of being replaced by a skeleton
     // that a hanging request would never clear.
@@ -391,7 +414,7 @@ describe("UpdatesContent — feed resilience", () => {
   it("shows the error affordance alongside the server feed rather than hiding either", () => {
     mockProjectProfile({ allUpdates: [], isUpdatesError: true, hasUpdatesData: false });
 
-    render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
+    renderWithServerFeed();
 
     // Content stays readable AND the failure is visible with a way to recover.
     expect(screen.getByTestId("server-feed")).toBeInTheDocument();
@@ -414,7 +437,7 @@ describe("UpdatesContent — feed resilience", () => {
   it("shows the interactive feed once the client query returns data", () => {
     mockProjectProfile({ allUpdates: [{ uid: "1" }], isUpdating: false });
 
-    render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
+    renderWithServerFeed();
 
     expect(screen.getByTestId("activity-feed")).toBeInTheDocument();
     expect(screen.queryByTestId("server-feed")).not.toBeInTheDocument();
@@ -429,6 +452,7 @@ describe("UpdatesContent — feed resilience", () => {
 describe("UpdatesContent — successful empty filtered query", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetServerFeedTakeoverForTests();
     capturedFiltersProps = {};
     (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
     (useRouter as vi.Mock).mockReturnValue({ replace: vi.fn() });
@@ -440,7 +464,7 @@ describe("UpdatesContent — successful empty filtered query", () => {
   it("drops the server feed once the filtered query returns, even with zero items", () => {
     mockProjectProfile({ allUpdates: [], isUpdating: false, hasUpdatesData: true });
 
-    render(<UpdatesContent serverFeed={<div data-testid="server-feed">Server feed</div>} />);
+    renderWithServerFeed();
 
     expect(screen.queryByTestId("server-feed")).not.toBeInTheDocument();
     expect(screen.getByTestId("activity-feed")).toBeInTheDocument();
