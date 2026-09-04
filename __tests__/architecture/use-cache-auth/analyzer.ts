@@ -1,6 +1,22 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve as resolvePath } from "node:path";
 import ts from "typescript";
+import {
+  argumentsPassAnonymous,
+  classifyOptionsArgument,
+  hasUseCacheDirective,
+  unwrapToFunction,
+} from "./directives";
+import { collectFacts } from "./facts";
+import { namedOwner } from "./reporting";
+import type { AnalysisResult, AnalyzerOptions, ApiCallSite, FileFacts, Offender } from "./types";
+import {
+  API_METHOD_OPTIONS_INDEX,
+  DEFAULT_SOURCE_DIRS,
+  SKIP_DIRECTORIES,
+  SOURCE_EXTENSIONS,
+  toPosix,
+} from "./types";
 
 /**
  * Static analysis behind the D2 cache-poisoning guard.
@@ -29,277 +45,21 @@ import ts from "typescript";
  * that errs toward silence is worth nothing.
  */
 
-/** Which argument carries `RequestOptions` for each method on the client. */
-const API_METHOD_OPTIONS_INDEX: Readonly<Record<string, number>> = {
-  get: 1,
-  delete: 1,
-  getPaginated: 1,
-  post: 2,
-  put: 2,
-  patch: 2,
-};
-
-const SOURCE_EXTENSIONS = [".ts", ".tsx"] as const;
-
-/** Directories that hold shippable source. Tests, mocks and build output are not walked. */
-export const DEFAULT_SOURCE_DIRS = [
-  "app",
-  "components",
-  "hooks",
-  "services",
-  "src",
-  "utilities",
-  "sanity",
-] as const;
-
-const SKIP_DIRECTORIES = new Set([
-  "node_modules",
-  ".next",
-  "__tests__",
-  "__mocks__",
-  "e2e",
-  "artifacts",
-  "storybook-static",
-]);
-
-export interface ApiCallSite {
-  /** Repo-relative file holding the unguarded call. */
-  file: string;
-  line: number;
-  method: string;
-  /** Why it is reported — a missing options argument reads differently from an opaque one. */
-  reason: "no-options" | "not-statically-guarded";
-  snippet: string;
-}
-
-export interface Offender {
-  /** The `"use cache"` function the walk started from. */
-  entry: string;
-  entryFile: string;
-  /** Call chain from the entry point down to the offending call. */
-  path: string[];
-  call: ApiCallSite;
-}
-
-export interface AnalysisResult {
-  entryPoints: Array<{ name: string; file: string; line: number }>;
-  offenders: Offender[];
-  /** Files the walk parsed — a sanity number, and a cheap way to spot a broken resolver. */
-  filesParsed: number;
-}
-
-interface FileFacts {
-  path: string;
-  source: ts.SourceFile;
-  /** Local function-like declarations by exported/declared name. */
-  functions: Map<string, ts.SignatureDeclarationBase & { body?: ts.Node }>;
-  /** Local object literals assigned to a const, for `service.method()` calls. */
-  objects: Map<string, ts.ObjectLiteralExpression>;
-  /** Imported binding name -> where it came from. */
-  imports: Map<string, { module: string; imported: string }>;
-  /** `export { a } from "./b"` and `export * from "./b"`. */
-  reExports: Array<{ module: string; imported: string; local: string }>;
-}
-
-export interface AnalyzerOptions {
-  rootDir: string;
-  sourceDirs?: readonly string[];
-  /** Injected for fixture tests; defaults to the real filesystem. */
-  readFile?: (path: string) => string;
-  fileExists?: (path: string) => boolean;
-  listDir?: (path: string) => Array<{ name: string; isDirectory: boolean }>;
-  maxDepth?: number;
-}
-
-const toPosix = (value: string) => value.split("\\").join("/");
-
-/** True when the first statements of a body carry the `"use cache"` directive. */
-export function hasUseCacheDirective(body: ts.Node | undefined): boolean {
-  if (!body || !ts.isBlock(body)) return false;
-  for (const statement of body.statements) {
-    if (!ts.isExpressionStatement(statement)) break;
-    const expression = statement.expression;
-    if (!ts.isStringLiteral(expression) && !ts.isNoSubstitutionTemplateLiteral(expression)) break;
-    if (expression.text === "use cache") return true;
-  }
-  return false;
-}
-
 /**
- * The options argument of an `api.*` call, judged statically.
- *
- * Guarded means one of exactly two shapes, both of which are provably
- * anonymous on the server: `publicReadOptions()` (which returns
- * `isAuthorized: typeof window !== "undefined"`), or a literal
- * `{ isAuthorized: false }`.
- *
- * There is one more accepted shape, and it is the common one in this repo:
- * `{ isAuthorized, signal }` where `isAuthorized` is forwarded from the
- * function's own options parameter. That is only anonymous if the caller made
- * it so, which is why it is judged with `anonymousFromCaller` — true when the
- * call that led here passed a literal `isAuthorized: false` down. So
- * `getProjectGrants(id, { isAuthorized: false })` is accepted and
- * `getProjectGrants(id)` (whose default is `true`) is not.
- *
- * Anything else — a spread, a bare variable, a conditional — is reported. Not
- * because it is necessarily wrong, but because this gate exists to make the
- * auth posture of a cached read obvious, and a posture that needs a human to
- * trace is exactly what let the hub regression through.
+ * The module surface is unchanged: `use-cache-auth.test.ts` imports
+ * `hasUseCacheDirective`, `classifyOptionsArgument`, `createAnalyzer` and
+ * `offenderKey` from this path and does not know the implementation moved.
+ * The split exists because this file crossed the 600-line limit for
+ * non-test `.ts` files; the walk below is what stayed.
  */
-export function classifyOptionsArgument(
-  argument: ts.Expression | undefined,
-  { anonymousFromCaller = false }: { anonymousFromCaller?: boolean } = {}
-): {
-  guarded: boolean;
-  reason: ApiCallSite["reason"];
-} {
-  if (!argument) return { guarded: false, reason: "no-options" };
-
-  if (ts.isCallExpression(argument)) {
-    const callee = argument.expression;
-    if (ts.isIdentifier(callee) && callee.text === "publicReadOptions") {
-      return { guarded: true, reason: "no-options" };
-    }
-  }
-
-  if (ts.isObjectLiteralExpression(argument)) {
-    for (const property of argument.properties) {
-      if (!ts.isPropertyAssignment(property)) continue;
-      const name = property.name;
-      const key = ts.isIdentifier(name) || ts.isStringLiteral(name) ? name.text : null;
-      if (key === "isAuthorized" && property.initializer.kind === ts.SyntaxKind.FalseKeyword) {
-        return { guarded: true, reason: "no-options" };
-      }
-      // `{ isAuthorized: isAuthorized }` — the long form of the forward below.
-      if (
-        key === "isAuthorized" &&
-        ts.isIdentifier(property.initializer) &&
-        property.initializer.text === "isAuthorized" &&
-        anonymousFromCaller
-      ) {
-        return { guarded: true, reason: "no-options" };
-      }
-    }
-    for (const property of argument.properties) {
-      if (!ts.isShorthandPropertyAssignment(property)) continue;
-      if (property.name.text === "isAuthorized" && anonymousFromCaller) {
-        return { guarded: true, reason: "no-options" };
-      }
-    }
-  }
-
-  return { guarded: false, reason: "not-statically-guarded" };
-}
-
-/**
- * True when a call passes a literal `{ isAuthorized: false }` in any argument.
- *
- * That is how the cached wrappers in `services/project.cached.ts` make an
- * otherwise caller-dependent loader anonymous, so the walk has to carry the
- * fact down or it reports safe code as debt.
- */
-export function argumentsPassAnonymous(args: ts.NodeArray<ts.Expression>): boolean {
-  for (const argument of args) {
-    if (!ts.isObjectLiteralExpression(argument)) continue;
-    for (const property of argument.properties) {
-      if (!ts.isPropertyAssignment(property)) continue;
-      const name = property.name;
-      const key = ts.isIdentifier(name) || ts.isStringLiteral(name) ? name.text : null;
-      if (key === "isAuthorized" && property.initializer.kind === ts.SyntaxKind.FalseKeyword) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function unwrapToFunction(node: ts.Node | undefined): ts.Node | undefined {
-  if (!node) return undefined;
-  if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isArrowFunction(node)) {
-    return node;
-  }
-  // `cache(async () => {})`, `memo(fn)`, and friends: look one level in.
-  if (ts.isCallExpression(node)) {
-    for (const argument of node.arguments) {
-      const inner = unwrapToFunction(argument);
-      if (inner) return inner;
-    }
-  }
-  if (ts.isAsExpression(node) || ts.isParenthesizedExpression(node)) {
-    return unwrapToFunction(node.expression);
-  }
-  return undefined;
-}
-
-function collectFacts(path: string, text: string): FileFacts {
-  const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const facts: FileFacts = {
-    path,
-    source,
-    functions: new Map(),
-    objects: new Map(),
-    imports: new Map(),
-    reExports: [],
-  };
-
-  for (const statement of source.statements) {
-    if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)) {
-      const module = statement.moduleSpecifier.text;
-      const bindings = statement.importClause?.namedBindings;
-      if (statement.importClause?.name) {
-        facts.imports.set(statement.importClause.name.text, { module, imported: "default" });
-      }
-      if (bindings && ts.isNamedImports(bindings)) {
-        for (const element of bindings.elements) {
-          facts.imports.set(element.name.text, {
-            module,
-            imported: (element.propertyName ?? element.name).text,
-          });
-        }
-      }
-      continue;
-    }
-
-    if (ts.isExportDeclaration(statement) && statement.moduleSpecifier) {
-      if (ts.isStringLiteral(statement.moduleSpecifier) && statement.exportClause) {
-        if (ts.isNamedExports(statement.exportClause)) {
-          for (const element of statement.exportClause.elements) {
-            facts.reExports.push({
-              module: statement.moduleSpecifier.text,
-              imported: (element.propertyName ?? element.name).text,
-              local: element.name.text,
-            });
-          }
-        }
-      }
-      continue;
-    }
-
-    if (ts.isFunctionDeclaration(statement) && statement.name) {
-      facts.functions.set(statement.name.text, statement);
-      continue;
-    }
-
-    if (ts.isVariableStatement(statement)) {
-      for (const declaration of statement.declarationList.declarations) {
-        if (!ts.isIdentifier(declaration.name)) continue;
-        const fn = unwrapToFunction(declaration.initializer);
-        if (fn) {
-          facts.functions.set(
-            declaration.name.text,
-            fn as FileFacts["functions"] extends Map<string, infer V> ? V : never
-          );
-          continue;
-        }
-        if (declaration.initializer && ts.isObjectLiteralExpression(declaration.initializer)) {
-          facts.objects.set(declaration.name.text, declaration.initializer);
-        }
-      }
-    }
-  }
-
-  return facts;
-}
+export {
+  argumentsPassAnonymous,
+  classifyOptionsArgument,
+  hasUseCacheDirective,
+} from "./directives";
+export { namedOwner, offenderKey } from "./reporting";
+export type { AnalysisResult, AnalyzerOptions, ApiCallSite, Offender } from "./types";
+export { DEFAULT_SOURCE_DIRS } from "./types";
 
 export function createAnalyzer(options: AnalyzerOptions) {
   const {
@@ -612,31 +372,4 @@ export function createAnalyzer(options: AnalyzerOptions) {
   }
 
   return { analyze, listSourceFiles, resolveModule, lookupFunction };
-}
-
-/** Best-effort name for a function-like node: its own, or the const/property it is assigned to. */
-export function namedOwner(node: ts.Node): string | null {
-  const fn = node as ts.FunctionLikeDeclaration;
-  if (fn.name && ts.isIdentifier(fn.name)) return fn.name.text;
-
-  let parent: ts.Node | undefined = node.parent;
-  while (parent) {
-    if (ts.isVariableDeclaration(parent) && ts.isIdentifier(parent.name)) return parent.name.text;
-    if (ts.isPropertyAssignment(parent) && ts.isIdentifier(parent.name)) return parent.name.text;
-    if (
-      ts.isCallExpression(parent) ||
-      ts.isAsExpression(parent) ||
-      ts.isParenthesizedExpression(parent)
-    ) {
-      parent = parent.parent;
-      continue;
-    }
-    break;
-  }
-  return null;
-}
-
-/** Stable, human-readable key for the ratchet allowlist. */
-export function offenderKey(offender: Offender): string {
-  return `${offender.entryFile}#${offender.entry} -> ${offender.call.file}:${offender.call.method}`;
 }
