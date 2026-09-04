@@ -1,7 +1,7 @@
 import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
 import { layoutTheme } from "@/src/helper/theme";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 import { cn } from "@/utilities/tailwind";
 import { CommunityCoverBar } from "./CommunityCoverBar";
 
@@ -27,7 +27,13 @@ export default async function CoverLayout(props: { children: React.ReactNode; pa
     return undefined;
   }
 
-  const community = await getCommunityDetails(communityId);
+  // The cached twin, not the raw loader. api.* loaders are axios
+  // (utilities/api/client.ts), so they never reach Next's patched fetch and no
+  // fetch-cache option can ever apply to them -- "use cache" is the only lever.
+  // Uncached, this read is the runtime access that stopped every (cover) route
+  // from prerendering: --debug-prerender named this component, and the params
+  // read above it resolves from a build-time sample.
+  const community = await getCommunityDetailsCached(communityId);
 
   if (!community) {
     return <CommunityNotFound communityId={communityId} />;

@@ -40,7 +40,7 @@ export default async function ProfileLayout({
   }
 
   return (
-    <ProjectProfileLayout serverSidePanel={serverSidePanel}>
+    <ProjectProfileLayout serverSidePanel={serverSidePanel} projectId={projectId}>
       <Suspense fallback={<ProjectTabContentSkeleton />}>{children}</Suspense>
     </ProjectProfileLayout>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useContext } from "react";
+import { createContext, use } from "react";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import type { WhitelabelDomain } from "./whitelabel-config";
 
@@ -51,5 +51,7 @@ export function WhitelabelProvider({
 }
 
 export function useWhitelabel(): WhitelabelContextValue {
-  return useContext(WhitelabelCtx);
+  // Unconditional by construction: `use()` may be called conditionally, but a
+  // context read that a branch can skip is a different hook on every path.
+  return use(WhitelabelCtx);
 }

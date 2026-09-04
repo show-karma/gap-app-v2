@@ -5,6 +5,7 @@ import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { getExplorerProjectsPaginated } from "@/services/projects-explorer.service";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
+import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface UseProjectsExplorerInfiniteOptions {
@@ -86,7 +87,11 @@ export const useProjectsExplorerInfinite = (options: UseProjectsExplorerInfinite
     initialData,
     initialPageParam: initialPage,
     enabled,
-    staleTime: PROJECTS_EXPLORER_CONSTANTS.STALE_TIME_MS,
+    // Every consumer of this hook renders above the crawlable content of a
+    // Cache-class route, where DEV-612 forbids the Suspense boundary Next would
+    // otherwise want. See PRERENDER_SAFE_STALE_TIME for the React Query code
+    // path and the refetch trade-off.
+    staleTime: PRERENDER_SAFE_STALE_TIME,
     gcTime: 1000 * 60 * 10, // 10 minutes
     // A server seed is already fresh — don't refetch it on mount; without a seed
     // keep the previous always-refetch behavior.

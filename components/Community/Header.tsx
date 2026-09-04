@@ -2,7 +2,6 @@
 import { ChevronLeftIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CHAT_COMPOSER_SELECTOR } from "@/components/AgentChat/panel-dom";
 import { HeaderStatsCards } from "@/components/Community/HeaderStatsCards";
@@ -54,9 +53,13 @@ function hexToRgba(hex: string, alpha: number): string | null {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-const NormalCommunityHeader = ({ community }: { community: Community }) => {
-  const params = useParams();
-  const communityId = (params?.communityId as string) || community?.details?.slug || "";
+const NormalCommunityHeader = ({
+  community,
+  communityId,
+}: {
+  community: Community;
+  communityId: string;
+}) => {
   const [isMac, setIsMac] = useState(false);
   const setChatOpen = useAgentChatStore((s) => s.setOpen);
   const setAgentContext = useAgentChatStore((s) => s.setAgentContext);
@@ -269,7 +272,7 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
         </div>
       </div>
       <div className="relative w-full animate-fade-in-up" style={{ animationDelay: "320ms" }}>
-        <CommunityPageNavigator />
+        <CommunityPageNavigator communityId={communityId} />
       </div>
     </div>
   );
@@ -284,6 +287,24 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
  * dropped the header for it. Which routes get this header is a question the
  * route tree already answers.
  */
-export default function CommunityHeader({ community }: { community: Community }) {
-  return <NormalCommunityHeader community={community} />;
+export default function CommunityHeader({
+  community,
+  communityId,
+}: {
+  community: Community;
+  communityId: string;
+}) {
+  // `communityId` arrives from the server layout rather than `useParams()`.
+  // The build named that read directly:
+  //
+  //   at NormalCommunityHeader (components/Community/Header.tsx:58:27)
+  //   at WithHeaderLayout ((with-header)/layout.tsx:37:7)
+  //   digest: 'CLIENT_HOOK_DYNAMIC'
+  //
+  // `useParams()` goes through Next's `useDynamicRouteParams`, which aborts the
+  // prerender whenever a param is not known at build time — which is why the
+  // sampled community routes passed and `browse-applications/[referenceNumber]`
+  // did not. The layout already awaits the param, so passing it removes the
+  // read entirely instead of only for the sampled routes.
+  return <NormalCommunityHeader community={community} communityId={communityId} />;
 }

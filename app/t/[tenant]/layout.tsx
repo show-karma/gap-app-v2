@@ -47,6 +47,8 @@ import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantJsonLd, TenantThemeStyle } from "@/src/components/layout/tenant-chrome";
 import { TenantStoreSync } from "@/src/components/layout/tenant-store-sync";
+import { RenderClockProvider } from "@/utilities/render-clock-context";
+import { getRenderClock } from "@/utilities/render-clock-server";
 import { isKnownTenantParam, KARMA_TENANT_PARAM } from "@/utilities/tenant-param";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
@@ -66,18 +68,15 @@ export function generateStaticParams(): Array<{ tenant: string }> {
   return [{ tenant: KARMA_TENANT_PARAM }];
 }
 
-// Keeps the rendering mode exactly as it was before the tenant moved into the
-// URL. Until this PR every route was dynamic as a side effect of the root
-// layout awaiting `headers()`; with that read gone Next would start
-// prerendering several hundred pages at build time, which is a far bigger
-// change than this refactor is allowed to make — 47 modules call
-// `useSearchParams()` and each unguarded one fails the export outright.
-//
-// Route-by-route triage (Stream / Cache / Block) is Phase 2 of the Instant
-// Navigations plan; this line is what Phase 2 deletes, one segment at a time.
-// It does NOT affect the cacheComponents readiness proof, which is measured on
-// a throwaway build with this export removed.
-export const dynamic = "force-dynamic";
+// `export const dynamic = "force-dynamic"` used to sit here. It pinned every
+// route to dynamic rendering after the tenant moved out of `headers()` and
+// into the `[tenant]` root param, and its own comment said Phase 2 would
+// delete it one segment at a time. This is that deletion, and it is not
+// incremental because cacheComponents replaces the question the export was
+// holding open: a segment prerenders what it can and streams the rest, rather
+// than the whole tree being forced into one mode. Nothing takes its place — a
+// route that must stay dynamic now says so itself, with `connection()` or an
+// uncached read.
 
 export async function generateMetadata(): Promise<Metadata> {
   const { isWhitelabel, config, tenantConfig } = await getWhitelabelContext();
@@ -123,8 +122,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // `themeColor` is serialised into a <meta name="theme-color"> tag the browser
+  // reads before any stylesheet, so it takes a literal colour: a Tailwind class
+  // or a var(--token) reference would render as that string.
   themeColor: [
+    // design-check-ignore: DS002 meta theme-color takes a literal, not a token.
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    // design-check-ignore: DS002 meta theme-color takes a literal, not a token.
     { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
@@ -173,7 +177,7 @@ const toasterConfig = {
 // cacheComponents and partialPrefetching are still OFF. This layout is the
 // prerequisite they were waiting on, not the flip itself.
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // The only await in here. `/t/<tenant>` is an internal prefix the proxy
+  // The only request-derived await in here. `/t/<tenant>` is an internal prefix the proxy
   // writes and the browser never sees, so a value the proxy would not have
   // produced means a hand-crafted URL: 404 rather than a silent fall back to
   // karma. Unlike the old `headers()` read this resolves from the matched
@@ -183,6 +187,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (!isKnownTenantParam(tenantParam)) notFound();
 
   const whitelabel = getWhitelabelContext();
+
+  // The one clock read the shell makes, and it is a cached one: `Date.now()`
+  // in a Client Component aborts a cacheComponents prerender, so every
+  // component that needs "now" during render reads it from this provider
+  // (`useRenderNow()`) instead. Cached with `cacheLife("minutes")`, it does
+  // not make the shell dynamic; it is prerendered like any other cached value.
+  const renderedAt = await getRenderClock();
 
   return (
     <html
@@ -207,21 +218,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <TenantThemeStyle whitelabel={whitelabel} />
           <PrivyProviderWrapper whitelabel={whitelabel}>
             <WhitelabelProvider value={whitelabel}>
-              <TenantStoreSync />
-              <PermissionsProvider />
-              <DeferredLayoutComponents toasterConfig={toasterConfig} />
-              {/* The page column. Navbar and footer are supplied by the
+              <RenderClockProvider renderedAt={renderedAt}>
+                <TenantStoreSync />
+                <PermissionsProvider />
+                <DeferredLayoutComponents toasterConfig={toasterConfig} />
+                {/* The page column. Navbar and footer are supplied by the
                   `(chrome)` group's layout, which renders inside here; the
                   `(bare)` group's layout renders the same column without
                   them. This wrapper stays at the root because the embed
                   stylesheet targets `[data-app-content]` on every route,
                   chrome or not. */}
-              <div
-                data-app-content
-                className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
-              >
-                {children}
-              </div>
+                <div
+                  data-app-content
+                  className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white"
+                >
+                  {children}
+                </div>
+              </RenderClockProvider>
             </WhitelabelProvider>
           </PrivyProviderWrapper>
           <TenantJsonLd whitelabel={whitelabel} />

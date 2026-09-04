@@ -202,15 +202,25 @@ describe("community hub — ItemList JSON-LD (DEV-596)", () => {
     expect(itemList?.itemListElement.map((item) => item.position)).toEqual([1, 2, 3]);
   });
 
-  it("ships no ItemList when the URL carries a filter (the server renders a skeleton)", async () => {
+  it("renders and claims the unfiltered page 1 even when the URL carries a filter", async () => {
     urlState.set("categories", "DeFi");
 
     const html = await renderPageToHtml({ categories: "DeFi" });
 
-    // The filtered view is fetched client-side; the unfiltered server payload
-    // is neither rendered nor claimed.
-    expect(html).not.toContain("Seeded Project 1");
-    expect(extractJsonLd(html).find((schema) => schema["@type"] === "ItemList")).toBeUndefined();
+    // The server no longer reads searchParams: doing so at the top level of this
+    // crawlable route blocked the prerender outright. It always renders the
+    // unfiltered first page, so there is no longer a filtered "skeleton" state
+    // for the schema to suppress — and the entities it claims are always the
+    // ones on the page, which is what DEV-596 actually asks for. Filtering
+    // happens client-side after hydration, which crawlers never see.
+    expect(html).toContain("Seeded Project 1");
+
+    const itemList = extractJsonLd(html).find((schema) => schema["@type"] === "ItemList");
+    expect(itemList?.itemListElement.map((item) => item.name)).toEqual([
+      "Seeded Project 1",
+      "Seeded Project 2",
+      "Seeded Project 3",
+    ]);
   });
 
   it("ships no ItemList when the server payload is empty (swallowed fetch error)", async () => {

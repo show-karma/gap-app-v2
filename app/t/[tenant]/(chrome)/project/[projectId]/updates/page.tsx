@@ -1,11 +1,9 @@
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
-import { getProjectUpdates } from "@/services/project-updates.service";
+import { getProjectUpdatesSeedCached } from "@/services/project.cached";
 import { generateProjectUpdatesMetadata } from "@/utilities/metadata/projectMetadata";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 type Params = Promise<{
   projectId: string;
@@ -44,19 +42,12 @@ export default async function RoadmapPage(props: { params: Promise<{ projectId: 
     return null;
   }
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: defaultQueryOptions,
-    },
-  });
-
-  await queryClient.prefetchQuery({
-    queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
-    queryFn: () => getProjectUpdates(projectId),
-  });
+  // The seed is built inside `"use cache"`: React Query stamps entries with
+  // `Date.now()`, which cacheComponents rejects during prerender.
+  const dehydratedState = await getProjectUpdatesSeedCached(projectId);
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary state={dehydratedState}>
       <ProjectRoadmap project={projectInfo} />
     </HydrationBoundary>
   );

@@ -13,7 +13,7 @@ describe("/.well-known/agent.json route handler", () => {
 
   it("returns the Karma agent identity with a contact email", async () => {
     const { GET } = await import("@/app/.well-known/agent.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.name).toBe("Karma");
     expect(typeof body.description).toBe("string");
@@ -23,7 +23,7 @@ describe("/.well-known/agent.json route handler", () => {
 
   it("aggregates all other discovery surfaces under .discovery", async () => {
     const { GET } = await import("@/app/.well-known/agent.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.discovery).toEqual({
       openapi: `${SITE_URL}/openapi.json`,
@@ -38,7 +38,7 @@ describe("/.well-known/agent.json route handler", () => {
 
   it("only references URLs on the marketing apex (no indexer URLs)", async () => {
     const { GET } = await import("@/app/.well-known/agent.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     for (const url of Object.values(body.discovery)) {
       expect(typeof url).toBe("string");
@@ -48,7 +48,7 @@ describe("/.well-known/agent.json route handler", () => {
 
   it("sets wide-open CORS headers", async () => {
     const { GET } = await import("@/app/.well-known/agent.json/route");
-    const res = GET();
+    const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });

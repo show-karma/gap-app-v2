@@ -7,8 +7,13 @@ import {
   WELL_KNOWN_PREFLIGHT_HEADERS,
 } from "@/utilities/wellKnown";
 
-export const dynamic = "force-static";
-export const revalidate = 3600;
+// The 3600s cache lives on the upstream fetch below (`next: { revalidate:
+// 3600 }`), not on a segment config. `dynamic = "force-static"` +
+// `revalidate = 3600` were redundant with it and cacheComponents rejects
+// both. This handler is deliberately NOT wrapped in `"use cache"`: it
+// returns 502 with different headers on upstream failure, and a cached
+// function can only return one serializable value, so caching it would
+// have to cache the failure too.
 
 /**
  * Serves the indexer's OpenAPI spec from the marketing-domain apex so

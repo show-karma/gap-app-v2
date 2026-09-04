@@ -141,7 +141,7 @@ describe("CommunityPageNavigator", () => {
 
   describe("Rendering", () => {
     it("should render all navigation items", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
       expect(screen.getByText("Browse applications")).toBeInTheDocument();
@@ -152,7 +152,7 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should render all icons", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
       expect(screen.getByTestId("file-search-icon")).toBeInTheDocument();
@@ -163,7 +163,7 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should render links with correct hrefs", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const fundingLink = screen.getByText("Funding opportunities").closest("a");
       const grantsLink = screen.getByText("View funded projects").closest("a");
@@ -186,7 +186,7 @@ describe("CommunityPageNavigator", () => {
     it("should apply active styles to funding opportunities link", () => {
       mockUsePathname.mockReturnValue("/community/test-community/funding-opportunities");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("Funding opportunities").closest("a");
       expect(link?.className).toContain("text-gray-900");
@@ -197,7 +197,7 @@ describe("CommunityPageNavigator", () => {
     it("should apply active styles to community projects link when on main page", () => {
       mockUsePathname.mockReturnValue("/community/test-community");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-900");
@@ -206,7 +206,7 @@ describe("CommunityPageNavigator", () => {
     it("should apply active styles to updates link", () => {
       mockUsePathname.mockReturnValue("/community/test-community/updates");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("Milestone updates").closest("a");
       expect(link?.className).toContain("text-gray-900");
@@ -215,7 +215,7 @@ describe("CommunityPageNavigator", () => {
     it("should apply active styles to impact link", () => {
       mockUsePathname.mockReturnValue("/community/test-community/impact");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("Impact").closest("a");
       expect(link?.className).toContain("text-gray-900");
@@ -224,7 +224,7 @@ describe("CommunityPageNavigator", () => {
     it("should apply inactive styles to non-active links", () => {
       mockUsePathname.mockReturnValue("/community/test-community/funding-opportunities");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const impactLink = screen.getByText("Impact").closest("a");
       expect(impactLink?.className).toContain("text-gray-500");
@@ -236,7 +236,9 @@ describe("CommunityPageNavigator", () => {
     it("should return null when on admin page", () => {
       mockUsePathname.mockReturnValue("/community/test-community/manage");
 
-      const { container } = render(<CommunityPageNavigator />, { wrapper });
+      const { container } = render(<CommunityPageNavigator communityId="test-community" />, {
+        wrapper,
+      });
 
       expect(container.firstChild).toBeNull();
     });
@@ -244,7 +246,9 @@ describe("CommunityPageNavigator", () => {
     it("should return null when on admin subpage", () => {
       mockUsePathname.mockReturnValue("/community/test-community/manage/project/milestones");
 
-      const { container } = render(<CommunityPageNavigator />, { wrapper });
+      const { container } = render(<CommunityPageNavigator communityId="test-community" />, {
+        wrapper,
+      });
 
       expect(container.firstChild).toBeNull();
     });
@@ -262,7 +266,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       expect(screen.getByText("View funded projects")).toBeInTheDocument();
       expect(screen.queryByText(/Optimism/)).not.toBeInTheDocument();
@@ -274,7 +278,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       expect(screen.getByText("View funded projects")).toBeInTheDocument();
     });
@@ -286,7 +290,7 @@ describe("CommunityPageNavigator", () => {
         get: (key: string) => (key === "programId" ? "program-123" : null),
       });
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const fundingLink = screen.getByText("Funding opportunities").closest("a");
       expect(fundingLink).toHaveAttribute(
@@ -306,7 +310,7 @@ describe("CommunityPageNavigator", () => {
         get: () => null,
       });
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const fundingLink = screen.getByText("Funding opportunities").closest("a");
       expect(fundingLink).toHaveAttribute(
@@ -318,7 +322,9 @@ describe("CommunityPageNavigator", () => {
 
   describe("Styling", () => {
     it("should have container with correct classes", () => {
-      const { container } = render(<CommunityPageNavigator />, { wrapper });
+      const { container } = render(<CommunityPageNavigator communityId="test-community" />, {
+        wrapper,
+      });
 
       const nav = container.firstChild;
       expect(nav).toHaveClass("flex");
@@ -328,7 +334,9 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should have horizontal scroll classes for mobile", () => {
-      const { container } = render(<CommunityPageNavigator />, { wrapper });
+      const { container } = render(<CommunityPageNavigator communityId="test-community" />, {
+        wrapper,
+      });
 
       const nav = container.firstChild;
       expect(nav).toHaveClass("overflow-x-auto");
@@ -337,14 +345,14 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should have links with gap between icon and text", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("Funding opportunities").closest("a");
       expect(link?.className).toContain("gap-3");
     });
 
     it("should have icons with correct size", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const icon = screen.getByTestId("dollar-sign-icon");
       expect(icon).toHaveClass("w-6");
@@ -352,14 +360,16 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should have dark mode classes on container", () => {
-      const { container } = render(<CommunityPageNavigator />, { wrapper });
+      const { container } = render(<CommunityPageNavigator communityId="test-community" />, {
+        wrapper,
+      });
 
       const nav = container.firstChild;
       expect(nav).toHaveClass("dark:border-zinc-700");
     });
 
     it("should have dark mode classes on links", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("Funding opportunities").closest("a");
       // Inactive links have dark:text-zinc-400
@@ -371,7 +381,7 @@ describe("CommunityPageNavigator", () => {
     it("should mark funding opportunities as active when path includes /funding-opportunities", () => {
       mockUsePathname.mockReturnValue("/community/test-community/funding-opportunities");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("Funding opportunities").closest("a");
       expect(link?.className).toContain("text-gray-900");
@@ -380,7 +390,7 @@ describe("CommunityPageNavigator", () => {
     it("should mark community projects as active when on main page (not impact, updates, donate, funding-opportunities, or project-discovery)", () => {
       mockUsePathname.mockReturnValue("/community/test-community");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-900");
@@ -389,7 +399,7 @@ describe("CommunityPageNavigator", () => {
     it("should not mark community projects as active on impact page", () => {
       mockUsePathname.mockReturnValue("/community/test-community/impact");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
@@ -398,7 +408,7 @@ describe("CommunityPageNavigator", () => {
     it("should not mark community projects as active on updates page", () => {
       mockUsePathname.mockReturnValue("/community/test-community/updates");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
@@ -407,7 +417,7 @@ describe("CommunityPageNavigator", () => {
 
   describe("Transition Effects", () => {
     it("should have transition classes on links", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const link = screen.getByText("Funding opportunities").closest("a");
       expect(link?.className).toContain("transition-colors");
@@ -415,7 +425,7 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should have transition classes on icons", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       const icon = screen.getByTestId("dollar-sign-icon");
       expect(icon).toHaveClass("transition-colors");
@@ -430,7 +440,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       expect(screen.queryByText("Funding opportunities")).not.toBeInTheDocument();
       expect(screen.queryByTestId("dollar-sign-icon")).not.toBeInTheDocument();
@@ -442,7 +452,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
       expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
@@ -459,7 +469,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
     });
@@ -470,7 +480,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: true,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
 
       // Tab is hidden while loading because programs?.length ?? 0 evaluates to 0 when undefined
       expect(screen.queryByText("Funding opportunities")).not.toBeInTheDocument();

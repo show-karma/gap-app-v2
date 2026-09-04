@@ -1,5 +1,6 @@
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { type DehydratedState, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { cacheLife, cacheTag } from "next/cache";
 import { cache } from "react";
 import { GrantJsonLd } from "@/components/Seo/GrantJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
@@ -7,11 +8,14 @@ import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
+import { buildDehydratedState } from "@/utilities/cache/hydration-seed";
+import { programTag } from "@/utilities/cache/tags";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { DEFAULT_DESCRIPTION, SITE_URL, twitterMeta } from "@/utilities/meta";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { FALLBACK_PROGRAM_PAIRS, withPrerenderFallback } from "@/utilities/prerender-samples";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 import ProgramDetailClient from "./ProgramDetailClient";
 
@@ -35,7 +39,15 @@ type Params = Promise<{
 // program resolves to null (the client renders its not-found empty state),
 // anything else throws so a transient indexer 5xx is never hydrated into the
 // client cache as a false "Program not found".
-const getProgramDetails = cache(async (programId: string): Promise<FundingProgram | null> => {
+// `"use cache"` needs a named declaration; React's `cache()` still wraps it for
+// per-request dedup. The rethrow above 404 is deliberate and survives caching:
+// a thrown error is not a cached value, so a transient indexer 5xx is retried
+// on the next request instead of being frozen in as a false "not found".
+async function fetchProgramDetails(programId: string): Promise<FundingProgram | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(programTag(programId));
+
   try {
     // TODO(#1775): add zod schema
     return await api.get<FundingProgram>(
@@ -48,7 +60,40 @@ const getProgramDetails = cache(async (programId: string): Promise<FundingProgra
     }
     throw err;
   }
-});
+}
+
+const getProgramDetails = cache(fetchProgramDetails);
+
+/**
+ * The program page's hydration seed, cached whole.
+ *
+ * `dehydrate()` stamps entries with `Date.now()`, which cacheComponents rejects
+ * during prerender, so the seed is built inside the cache rather than at render
+ * time. Same `cacheLife` and `cacheTag` as the fetch it seeds from.
+ */
+async function getProgramSeedCached(
+  programId: string
+): Promise<{ state: DehydratedState; program: FundingProgram | null | undefined }> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(programTag(programId));
+
+  const program = await getProgramDetails(programId).catch(
+    // SUPPRESSED: a transient indexer failure degrades to the client fetch.
+    (): undefined => undefined
+  );
+
+  const state = await buildDehydratedState(async (queryClient) => {
+    if (program !== undefined) {
+      queryClient.setQueryData(wlQueryKeys.programs.detail(programId), program);
+    }
+  });
+
+  // The program comes back with the seed rather than being re-read by the page:
+  // one indexer round-trip feeds both the hydrated entry and the JSON-LD, which
+  // is the property program-detail-ssr.test.tsx pins.
+  return { state, program };
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId, programId } = await params;
@@ -110,27 +155,63 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 // today's behaviour: the client fetches and shows the skeleton, then retries
 // under its own defaults. A 404 resolves to null and IS hydrated — the client
 // renders its not-found state from the cache without refetching.
+const PRERENDERED_PROGRAM_SAMPLE = 2;
+
+/**
+ * A small sample of real programs, prerendered at build.
+ *
+ * The build named this page's `await params` directly:
+ *
+ *   at ProgramDetailPage (.../programs/[programId]/page.tsx:126:38)
+ * > 126 |   const { communityId, programId } = await params;
+ *
+ * Same class as the community and project layouts before they had samples: a
+ * top-level params read on a segment with no build-time value. This route is
+ * Cache-class, so a Suspense boundary is not available — `generateStaticParams`
+ * is the lever, and it is the one that already worked twice.
+ *
+ * The ids are read from the registry for the sampled communities rather than
+ * hard-coded. An empty result falls back to the checked-in pairs, because under
+ * cacheComponents an empty list fails the build outright — and the sampled
+ * community can genuinely have no programs.
+ */
+export async function generateStaticParams(): Promise<
+  Array<{ communityId: string; programId: string }>
+> {
+  const communities = chosenCommunities().slice(0, 1);
+
+  const perCommunity = await Promise.all(
+    communities.map(async (community) => {
+      try {
+        const programs = await api.get<FundingProgram[]>(
+          INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(encodeURIComponent(community.slug)),
+          { isAuthorized: false }
+        );
+
+        return (programs ?? [])
+          .slice(0, PRERENDERED_PROGRAM_SAMPLE)
+          .map((program) => ({ communityId: community.slug, programId: program.programId }));
+      } catch {
+        return [];
+      }
+    })
+  );
+
+  return withPrerenderFallback(perCommunity.flat(), FALLBACK_PROGRAM_PAIRS);
+}
+
 export default async function ProgramDetailPage({ params }: { params: Params }) {
   const { communityId, programId } = await params;
-
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: defaultQueryOptions },
-  });
 
   // One server-side fetch (deduped with generateMetadata by React.cache) feeds
   // both the hydrated React Query entry and the Grant JSON-LD below. The
   // schema only ships when the page body renders the program, and it only
   // carries facts that body states — the title (h1), the description, and the
   // "by <community>" byline as funder.
-  const program = await getProgramDetails(programId).catch(
-    // SUPPRESSED: a transient indexer failure must degrade to the client fetch
-    // path, not fail the whole route; the client surfaces the error state.
-    (): undefined => undefined
-  );
-
-  if (program !== undefined) {
-    queryClient.setQueryData(wlQueryKeys.programs.detail(programId), program);
-  }
+  // One server-side fetch feeds both the hydrated React Query entry and the
+  // Grant JSON-LD below. The seed is built inside `"use cache"` because
+  // dehydrate() stamps entries with `Date.now()`, which cacheComponents rejects.
+  const { state: dehydratedState, program } = await getProgramSeedCached(programId);
 
   const { isWhitelabel, config: wlConfig } = await getWhitelabelContext();
   const siteUrl = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : SITE_URL;
@@ -143,7 +224,7 @@ export default async function ProgramDetailPage({ params }: { params: Params }) 
   const grantName = program?.metadata?.title || program?.name || "";
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary state={dehydratedState}>
       {program && grantName ? (
         <GrantJsonLd
           name={grantName}

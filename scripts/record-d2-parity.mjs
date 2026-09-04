@@ -87,6 +87,11 @@ const ENDPOINTS = [
     name: "community projects",
     path: "/v2/communities/gitcoin/projects?limit=3",
   },
+  {
+    loader: "community-programs",
+    name: "community programs",
+    path: "/v2/communities/gitcoin/programs",
+  },
 ];
 
 const results = [];

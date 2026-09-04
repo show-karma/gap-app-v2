@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 
 const GrantDetailLayout = dynamic(
   () =>
@@ -21,12 +22,27 @@ const GrantDetailLayout = dynamic(
 
 interface GrantDetailLayoutClientProps {
   children: React.ReactNode;
+  projectId: string;
+  grantUid: string;
 }
 
 /**
  * Client-side grant detail layout.
  * Provides back button, grant title with actions, and tab navigation.
  */
-export function GrantDetailLayoutClient({ children }: GrantDetailLayoutClientProps) {
-  return <GrantDetailLayout>{children}</GrantDetailLayout>;
+export function GrantDetailLayoutClient({
+  children,
+  projectId,
+  grantUid,
+}: GrantDetailLayoutClientProps) {
+  // A boundary is allowed here: the grant routes are Stream-class, not
+  // sitemap-crawlable, so DEV-612 does not apply. It covers the `usePathname()`
+  // the tab strip needs — a URL read that genuinely belongs on the client.
+  return (
+    <Suspense fallback={null}>
+      <GrantDetailLayout projectId={projectId} grantUid={grantUid}>
+        {children}
+      </GrantDetailLayout>
+    </Suspense>
+  );
 }

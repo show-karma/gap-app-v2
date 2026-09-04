@@ -160,10 +160,10 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
   "knowledge/why-grantees-need-project-profiles",
   "mcp/connect",
   "nonprofits",
-  "nonprofits/find-funders",
-  "nonprofits/find-funders/connect",
-  "nonprofits/find-funders/connect/chatgpt",
-  "nonprofits/find-funders/connect/claude",
+  "nonprofits/find-funders/(landing-nav)",
+  "nonprofits/find-funders/(workbench-nav)/connect",
+  "nonprofits/find-funders/(workbench-nav)/connect/chatgpt",
+  "nonprofits/find-funders/(workbench-nav)/connect/claude",
   "privacy-policy",
   "project/[projectId]/(profile)",
   "projects",
@@ -179,10 +179,10 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
 // leaves `(chrome)` fails here, and an entry whose route stops being crawlable
 // fails as stale.
 const SITEMAP_BARE_ROUTES: ReadonlySet<string> = new Set([
-  "nonprofits/find-funders",
-  "nonprofits/find-funders/connect",
-  "nonprofits/find-funders/connect/chatgpt",
-  "nonprofits/find-funders/connect/claude",
+  "nonprofits/find-funders/(landing-nav)",
+  "nonprofits/find-funders/(workbench-nav)/connect",
+  "nonprofits/find-funders/(workbench-nav)/connect/chatgpt",
+  "nonprofits/find-funders/(workbench-nav)/connect/claude",
 ]);
 
 // Routes known to be missing loading.tsx at the time this ratchet was added.
@@ -279,7 +279,12 @@ const ERROR_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
 /**
  * Every directory holding a page.tsx, keyed by its path relative to the group
  * it lives in — i.e. the public route, with the `(chrome)`/`(bare)` segment
- * dropped.
+ * dropped. Route groups BELOW that level are kept in the key: they are still
+ * invisible in the URL, but they are how a route is addressed on disk, and
+ * keeping them is what makes an entry go stale when a route moves between
+ * groups instead of silently matching the wrong directory. Hence
+ * `project/[projectId]/(profile)` and the find-funders `(landing-nav)` /
+ * `(workbench-nav)` entries above.
  */
 function collectPageDirs(): string[] {
   const dirs: string[] = [];

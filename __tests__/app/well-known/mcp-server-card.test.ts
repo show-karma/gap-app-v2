@@ -15,7 +15,7 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
 
   it("declares a stable name with the canonical indexer URL and HTTP transport", async () => {
     const { GET } = await import("@/app/.well-known/mcp/server-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.name).toBe("gap-tools");
     expect(body.alternateNames).toEqual(expect.arrayContaining(["karma-gap-tools"]));
@@ -27,7 +27,7 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
 
   it("exposes a top-level description so AEO crawlers (Ora) can index it", async () => {
     const { GET } = await import("@/app/.well-known/mcp/server-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(typeof body.description).toBe("string");
     expect(body.description.length).toBeGreaterThan(0);
@@ -35,7 +35,7 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
 
   it("references human docs and OpenAPI on the apex marketing domain", async () => {
     const { GET } = await import("@/app/.well-known/mcp/server-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.documentation).toBe(`${SITE_URL}/mcp/connect`);
     expect(body.openapi).toBe(`${SITE_URL}/openapi.json`);
@@ -43,7 +43,7 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
 
   it("advertises oauth2 metadata at the apex protected-resource path and apiKey via x-api-key", async () => {
     const { GET } = await import("@/app/.well-known/mcp/server-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.authentication.oauth2.metadata).toBe(
       `${SITE_URL}/.well-known/oauth-protected-resource`
@@ -53,7 +53,7 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
 
   it("includes a publisher block with name, url, and contact email", async () => {
     const { GET } = await import("@/app/.well-known/mcp/server-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.publisher.name).toBe("Karma");
     expect(body.publisher.url).toBe(SITE_URL);
@@ -62,7 +62,7 @@ describe("/.well-known/mcp/server-card.json route handler", () => {
 
   it("sets wide-open CORS headers", async () => {
     const { GET } = await import("@/app/.well-known/mcp/server-card.json/route");
-    const res = GET();
+    const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
   });
