@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
+import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { useTracksForCommunity } from "@/hooks/useTracks";
 import { api } from "@/utilities/api/client";
 import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
@@ -118,7 +119,8 @@ vi.mock("@/utilities/api/client", () => ({
 }));
 
 // The component resolves the community UID, then its tracks; the track
-// dropdown is rendered only when that list is non-empty.
+// dropdown holds a slot while that is in flight and keeps it only if the
+// community turns out to have tracks.
 vi.mock("@/hooks/useTracks", () => ({
   useTracksForCommunity: vi.fn(() => ({
     data: [
@@ -728,5 +730,126 @@ describe("BrowseApplicationsClient - program and track filters", () => {
 
     expect(await screen.findByRole("button", { name: "Test Grant Program" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Kernel" })).not.toBeInTheDocument();
+  });
+});
+
+// Three states, on the path that has no explicit selection. Removing the
+// "Choose a program" placeholder made the loading frame reachable for the
+// first time, and a wrong answer there is the first thing every visitor sees.
+describe("BrowseApplicationsClient - loading and mode boundaries", () => {
+  const DEFAULT_PROGRAMS = [
+    {
+      programId: "program-abc",
+      chainID: 1,
+      name: "Test Grant Program",
+      applicationConfig: { formSchema: { fields: [] } },
+    },
+    {
+      programId: "program-xyz",
+      chainID: 1,
+      name: "Another Program",
+      applicationConfig: { formSchema: { fields: [] } },
+    },
+  ];
+
+  const mockPrograms = (programs: unknown[], isLoading: boolean) =>
+    vi.mocked(useProgramsWithConfig).mockReturnValue({
+      programs,
+      isLoading,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useProgramsWithConfig>);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    urlStore.clear();
+    mockPrograms(DEFAULT_PROGRAMS, false);
+  });
+
+  // The aggregate query stays disabled until the programs it reads arrive, and
+  // a disabled query reports isLoading false — so the empty state would claim
+  // a well-stocked community has nothing.
+  it("shows the skeleton, not the empty state, while the programs load", () => {
+    mockPrograms([], true);
+
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    expect(screen.queryByText("No applications yet")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("This community doesn't have any public applications yet.")
+    ).not.toBeInTheDocument();
+    // The skeleton is the six placeholder rows the table renders while loading.
+    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+  });
+
+  it("still reaches the empty state once the programs resolve to none", async () => {
+    mockPrograms([], false);
+
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    expect(await screen.findByText("No applications yet")).toBeInTheDocument();
+  });
+
+  // hasNextPage is computed from the infinite query's cached pages and ignores
+  // `enabled`, so a multi-page program would keep its sentinel — and fetch
+  // another page — after a track moved the page onto the aggregate path.
+  it("drops the infinite-scroll sentinel once a track moves it off program mode", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url.includes("/projects")) {
+        return Promise.resolve({ payload: [{ uid: "0xkernel" }], pagination: { totalPages: 1 } });
+      }
+      const page = Number(url.match(/[?&]page=(\d+)/)?.[1] ?? 1);
+      return Promise.resolve({
+        applications: [
+          {
+            referenceNumber: `APP-${page}`,
+            status: "approved",
+            projectUID: "0xkernel",
+            applicationData: { "Pod Name": `A project on page ${page}` },
+          },
+        ],
+        // Two pages, so program mode legitimately has more to load.
+        pagination: { total: 2, page, limit: 100, totalPages: 2 },
+      });
+    });
+
+    const { container } = render(<BrowseApplicationsClient communityId="filecoin" />, {
+      wrapper: createWrapper(),
+    });
+
+    await selectProgram(user, "Test Grant Program");
+    // Program mode: the spinner under the table is the load-more sentinel.
+    await waitFor(() => expect(container.querySelector(".animate-spin")).toBeInTheDocument());
+
+    await selectTrack(user, "Kernel");
+
+    await waitFor(() => expect(container.querySelector(".animate-spin")).not.toBeInTheDocument());
+  });
+
+  // The community UID has to resolve before the tracks can be asked for, so the
+  // control holds a slot across both round trips rather than popping in late.
+  it("shows the track dropdown in a loading state before the tracks arrive", () => {
+    vi.mocked(useTracksForCommunity).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as unknown as ReturnType<typeof useTracksForCommunity>);
+
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    expect(screen.getByLabelText("Choose Track")).toBeInTheDocument();
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
+  });
+
+  it("settles to the program dropdown alone for a community with no tracks", async () => {
+    vi.mocked(useTracksForCommunity).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useTracksForCommunity>);
+
+    render(<BrowseApplicationsClient communityId="test-community" />, { wrapper: createWrapper() });
+
+    expect(await screen.findByLabelText("Choose Program")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Choose Track")).not.toBeInTheDocument();
   });
 });

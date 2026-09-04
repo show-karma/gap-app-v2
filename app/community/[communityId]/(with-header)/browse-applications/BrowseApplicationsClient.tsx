@@ -187,7 +187,7 @@ function StatStrip({ items }: { items: StatCardItem[] }) {
 export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClientProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const { programs } = useProgramsWithConfig(communityId);
+  const { programs, isLoading: programsLoading } = useProgramsWithConfig(communityId);
   const { isWhitelabel } = useWhitelabel();
 
   const { title: pageTitle, noun: itemNoun } = resolveHeading(communityId, isWhitelabel);
@@ -211,8 +211,20 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   // the route slug.
   const { community } = useCommunityDetails(communityId);
   const communityUid = community?.uid ?? "";
-  const { data: tracksData, isLoading: tracksLoading } = useTracksForCommunity(communityUid);
+  const { data: tracksData, isLoading: tracksQueryLoading } = useTracksForCommunity(communityUid);
+  // The community's UID has to be resolved before its tracks can even be
+  // asked for, so the control is "still loading" across both round trips.
+  const tracksLoading = !communityUid || tracksQueryLoading;
   const tracks = useMemo(() => tracksData ?? [], [tracksData]);
+  /**
+   * Whether to give the track dropdown a slot at all.
+   *
+   * Held open while the tracks are still resolving so a community that has
+   * them shows a loading control beside the program dropdown rather than
+   * popping one in two round trips later. A community with none settles back
+   * to the single program dropdown it has always shown.
+   */
+  const showTrackFilter = tracks.length > 0 || tracksLoading;
 
   /**
    * Which query serves the list. A program on its own is the one combination
@@ -338,7 +350,11 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     : data?.pages.flatMap((page) => page.applications) || [];
   const totalCount = isAggregate ? aggregate.totalCount : (data?.pages[0]?.pagination.total ?? 0);
 
-  const isLoading = isAggregate ? aggregate.isLoading : isProgramLoading;
+  // The aggregate query is disabled until the programs it reads have arrived,
+  // and a disabled query reports isLoading false — so without the programs'
+  // own loading flag the first paint of every visit is the empty state,
+  // claiming the community has nothing.
+  const isLoading = isAggregate ? programsLoading || aggregate.isLoading : isProgramLoading;
   const error = isAggregate ? aggregate.error : programError;
   const refetch = isAggregate ? aggregate.refetch : refetchProgram;
 
@@ -354,9 +370,15 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   const hasActiveFilters =
     statusFilter !== "all" || searchInput.length > 0 || Boolean(selectedTrackId);
 
+  // Infinite scroll belongs to program mode alone. `hasNextPage` is computed
+  // from the infinite query's cached pages and ignores `enabled`, so without
+  // the mode check a program with more than one page keeps its sentinel after
+  // a track is picked and fetches a page the aggregate render then discards.
+  const canLoadMore = !isAggregate && hasNextPage;
+
   useEffect(() => {
     const currentRef = loadMoreRef.current;
-    if (!currentRef || !hasNextPage || isFetchingNextPage) return;
+    if (!currentRef || !canLoadMore || isFetchingNextPage) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -371,7 +393,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     return () => {
       observer.unobserve(currentRef);
     };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [canLoadMore, isFetchingNextPage, fetchNextPage]);
 
   // Program metrics are the whole program's, so they can only be the count in
   // the mode that shows the whole program.
@@ -396,8 +418,9 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
       </header>
 
       {/* Filters: program and track, independent and combinable. A community
-          with no tracks renders the program dropdown alone, as before. */}
-      {programs.length > 0 || tracks.length > 0 ? (
+          with no tracks settles into the single program dropdown it has
+          always shown. */}
+      {programs.length > 0 || showTrackFilter ? (
         <div className="flex flex-wrap gap-3">
           {programs.length > 0 ? (
             <div className="flex w-[260px] flex-col gap-1.5 max-lg:w-full">
@@ -421,7 +444,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
             </div>
           ) : null}
 
-          {tracks.length > 0 ? (
+          {showTrackFilter ? (
             <div className="w-[260px] max-lg:w-full">
               <CommunityTrackFilter
                 tracks={tracks}
@@ -592,7 +615,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
                 </table>
               </div>
 
-              {hasNextPage ? (
+              {canLoadMore ? (
                 <div ref={loadMoreRef} className="flex justify-center py-8">
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
