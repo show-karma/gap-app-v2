@@ -19,6 +19,10 @@ import { getCommunityProjects } from "@/utilities/queries/v2/getCommunityData";
 const COMMUNITY_ID = "test-community";
 const BASE_PATH = PAGES.COMMUNITY.ALL_GRANTS(COMMUNITY_ID);
 
+// Route param the mocked `useParams` answers with — read lazily at render time
+// so a test can point the explorer at another community.
+let routeCommunityId = COMMUNITY_ID;
+
 vi.mock("@/utilities/queries/v2/getCommunityData", () => ({
   getCommunityProjects: vi.fn(),
 }));
@@ -49,7 +53,7 @@ vi.mock("nuqs", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useParams: () => ({ communityId: COMMUNITY_ID }),
+  useParams: () => ({ communityId: routeCommunityId }),
   useSearchParams: () => new URLSearchParams(),
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
   usePathname: () => BASE_PATH,
@@ -159,6 +163,7 @@ const renderServerHtml = (ui: ReactNode) => {
 
 beforeEach(() => {
   urlState.clear();
+  routeCommunityId = COMMUNITY_ID;
   vi.clearAllMocks();
   // Never resolves: the mount revalidation stays in flight, which is precisely
   // the state that used to blank the grid to a skeleton.
@@ -299,5 +304,33 @@ describe("CommunityGrants server-rendered project entities", () => {
     );
 
     expect(await screen.findByText("No projects found")).toBeInTheDocument();
+  });
+});
+
+// The explorer's primary dropdown is the Program filter for every community —
+// tracks are a secondary facet that only appears once a program is chosen.
+// Pinned for filecoin, which once swapped the program dropdown for a track one.
+describe("CommunityGrants explorer filters", () => {
+  it("renders the program filter for filecoin, with no track filter until a program is chosen", () => {
+    routeCommunityId = "filecoin";
+
+    const html = renderServerHtml(
+      <CommunityGrants {...defaultProps} initialProjects={makeServerPage()} />
+    );
+
+    expect(html).toContain('data-testid="program-filter"');
+    expect(html).not.toContain('data-testid="track-filter"');
+  });
+
+  it("renders the track filter beside the program filter once a program is selected", () => {
+    routeCommunityId = "filecoin";
+    urlState.set("programId", "program-abc_1");
+
+    const html = renderServerHtml(
+      <CommunityGrants {...defaultProps} initialProjects={makeServerPage()} />
+    );
+
+    expect(html).toContain('data-testid="program-filter"');
+    expect(html).toContain('data-testid="track-filter"');
   });
 });
