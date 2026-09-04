@@ -3,6 +3,7 @@ import { proxy } from "@/proxy";
 import { tenantNavigation } from "@/src/infrastructure/config/tenant-navigation-config";
 import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
 import { CANONICAL_HOST } from "@/utilities/domains";
+import { KARMA_TENANT_PARAM, TENANT_ROUTE_PREFIX } from "@/utilities/tenant-param";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
 /**
@@ -72,11 +73,21 @@ describe("whitelabel route aliases", () => {
   const respond = (pathWithQuery: string, requestHost = host) =>
     proxy(createRequest(pathWithQuery, requestHost));
 
+  /**
+   * Every page request is rewritten into the internal `/t/<tenant>/` tree
+   * before anything routes on the path (see `middleware-tenant-param.test.ts`),
+   * and a whitelabel tenant is keyed by its own host. The alias resolves inside
+   * that tree, so these expectations are built from the same constants the
+   * proxy builds with rather than restating the prefix by hand — a rewrite
+   * prefix typed into a test is a second source of truth for it.
+   */
+  const tenantMount = `${TENANT_ROUTE_PREFIX}/${host}`;
+
   it("serves /browse-projects from the browse-applications route", async () => {
     const response = await respond("/browse-projects");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}/community/${slug}/browse-applications`
+      `https://${host}${tenantMount}/community/${slug}/browse-applications`
     );
   });
 
@@ -90,7 +101,7 @@ describe("whitelabel route aliases", () => {
     const response = await respond("/browse-projects?trackIds=track-1,track-2&status=approved");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}/community/${slug}/browse-applications?trackIds=track-1,track-2&status=approved`
+      `https://${host}${tenantMount}/community/${slug}/browse-applications?trackIds=track-1,track-2&status=approved`
     );
   });
 
@@ -98,7 +109,7 @@ describe("whitelabel route aliases", () => {
     const response = await respond("/browse-projects/APP-1AB2CD3E-XY45");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}/community/${slug}/browse-applications/APP-1AB2CD3E-XY45`
+      `https://${host}${tenantMount}/community/${slug}/browse-applications/APP-1AB2CD3E-XY45`
     );
   });
 
@@ -106,7 +117,7 @@ describe("whitelabel route aliases", () => {
     const response = await respond("/browse-applications");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}/community/${slug}/browse-applications`
+      `https://${host}${tenantMount}/community/${slug}/browse-applications`
     );
   });
 
@@ -116,7 +127,7 @@ describe("whitelabel route aliases", () => {
     const response = await respond("/projects");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}/community/${slug}/projects`
+      `https://${host}${tenantMount}/community/${slug}/projects`
     );
   });
 
@@ -126,7 +137,13 @@ describe("whitelabel route aliases", () => {
   it("does not exist on the canonical host", async () => {
     const response = await respond("/browse-projects", CANONICAL_HOST);
 
-    expect(response?.headers.get("x-middleware-rewrite")).toBeNull();
+    // The tenant rewrite fires for every page request, here as anywhere, so the
+    // claim is not "no rewrite" but "not THAT rewrite": the path it lands on is
+    // still /browse-projects and never browse-applications.
+    expect(response?.headers.get("x-middleware-rewrite")).toBe(
+      `https://${CANONICAL_HOST}${TENANT_ROUTE_PREFIX}/${KARMA_TENANT_PARAM}/browse-projects`
+    );
+    expect(response?.headers.get("x-middleware-rewrite")).not.toContain("browse-applications");
     expect(response?.headers.get("location")).toBeNull();
   });
 
@@ -151,9 +168,13 @@ describe("whitelabel route aliases", () => {
 
     const response = await respond("/browse-projects", other.domain);
 
-    // Not a community sub-route segment there, so it passes through untouched
-    // and the app answers its own 404 — no rewrite onto browse-applications.
-    expect(response?.headers.get("x-middleware-rewrite")).toBeNull();
+    // Not a community sub-route segment there, so it takes only that tenant's
+    // own mount and keeps the path it arrived on — no rewrite onto
+    // browse-applications, and the app answers its own 404.
+    expect(response?.headers.get("x-middleware-rewrite")).toBe(
+      `https://${other.domain}${TENANT_ROUTE_PREFIX}/${other.domain}/browse-projects`
+    );
+    expect(response?.headers.get("x-middleware-rewrite")).not.toContain("browse-applications");
     expect(response?.headers.get("location")).toBeNull();
   });
 });
