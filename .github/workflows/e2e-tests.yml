@@ -231,7 +231,9 @@ jobs:
   # shards is exactly the number people misread. Every case in the suite skips
   # rather than fails when its data is missing, so a green run with skips is NOT
   # a pass — and because Playwright exits 0 on skips, that bar is ENFORCED by a
-  # step below rather than left to whoever reads the log.
+  # step below rather than left to whoever reads the log. The step pins the
+  # suite size rather than accepting any non-zero count, so a case removed from
+  # the suite cannot quietly lower the bar it is measured against.
   instant-navigations:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.instant_nav == 'true'
     runs-on: ubuntu-latest
@@ -289,7 +291,14 @@ jobs:
           CI: true
           BASE_URL: ${{ github.event.inputs.base_url }}
           INSTANT_NAV_E2E: '1'
-          PLAYWRIGHT_JSON_OUTPUT_NAME: instant-results.json
+          # ABSOLUTE, deliberately. Playwright resolves reporter output relative
+          # to the CONFIG directory (e2e/), not the workspace root, so a bare
+          # filename here lands somewhere the gate below and the upload steps do
+          # not look — which reads as "the suite did not run at all" for a suite
+          # that ran fine. Observed on run 33925367208.
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ github.workspace }}/instant-results.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: ${{ github.workspace }}/playwright-report-instant
+          PLAYWRIGHT_HTML_REPORT: ${{ github.workspace }}/playwright-report-instant
 
       # Playwright exits 0 when every test SKIPS, and every case in this suite
       # skips rather than fails when it cannot find its link — an empty or
@@ -297,12 +306,18 @@ jobs:
       # that never ran. That is the one failure that would make a tag decision
       # unsafe, so the bar is enforced here instead of being left to whoever
       # reads the log: zero skipped, zero failed, and at least one test run.
-      - name: Enforce the bar — 0 skipped, 0 failed
+      - name: Enforce the bar — 10/10, 0 skipped, 0 failed
         if: always()
         run: |
           node -e "
             const fs = require('fs');
-            const path = 'instant-results.json';
+            // The size of e2e/tests/instant. Pinned, not counted: 'at least one
+            // test passed' cannot tell the suite passing from the suite
+            // shrinking, so a dropped case would silently move the bar. If you
+            // add or remove a navigation, change this number in the same
+            // commit — that is a deliberate act, not a maintenance detail.
+            const SUITE_SIZE = 10;
+            const path = process.env.INSTANT_JSON;
             if (!fs.existsSync(path)) {
               console.error('FAIL: no JSON report at ' + path + ' — the suite did not run at all.');
               process.exit(1);
@@ -312,9 +327,9 @@ jobs:
             const skipped = stats.skipped || 0;
             const unexpected = stats.unexpected || 0;
             const flaky = stats.flaky || 0;
-            console.log('instant(): ' + expected + ' passed, ' + skipped + ' skipped, ' + unexpected + ' failed, ' + flaky + ' flaky');
+            console.log('instant(): ' + expected + ' passed, ' + skipped + ' skipped, ' + unexpected + ' failed, ' + flaky + ' flaky (bar: ' + SUITE_SIZE + '/' + SUITE_SIZE + ', 0 skipped)');
             const problems = [];
-            if (expected === 0) problems.push('no test ran');
+            if (expected !== SUITE_SIZE) problems.push(expected + ' passed, expected exactly ' + SUITE_SIZE);
             if (skipped > 0) problems.push(skipped + ' skipped (a skip is not a pass)');
             if (unexpected > 0) problems.push(unexpected + ' failed');
             if (flaky > 0) problems.push(flaky + ' flaky');
@@ -322,15 +337,17 @@ jobs:
               console.error('FAIL: ' + problems.join('; '));
               process.exit(1);
             }
-            console.log('PASS: ' + expected + '/' + expected + ' with 0 skipped.');
+            console.log('PASS: ' + SUITE_SIZE + '/' + SUITE_SIZE + ' with 0 skipped.');
           "
+        env:
+          INSTANT_JSON: ${{ github.workspace }}/instant-results.json
 
       - name: Upload instant() JSON report
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: playwright-json-instant
-          path: instant-results.json
+          path: ${{ github.workspace }}/instant-results.json
           retention-days: 7
           if-no-files-found: ignore
 
@@ -339,7 +356,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: playwright-report-instant
-          path: e2e/playwright-report
+          path: ${{ github.workspace }}/playwright-report-instant
           retention-days: 7
           if-no-files-found: ignore
 
