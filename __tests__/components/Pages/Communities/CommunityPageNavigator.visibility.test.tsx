@@ -47,6 +47,7 @@ vi.mock("@/utilities/community-flags", () => ({
     filecoin: {
       hiddenTabs: ["community-projects", "reports", "financials"],
       tabLabels: { "browse-applications": "Browse Projects" },
+      tabPaths: { "browse-applications": "/browse-projects" },
     },
   },
 }));
@@ -186,12 +187,33 @@ describe("CommunityPageNavigator", () => {
 
         expect(screen.getByText("Browse Projects")).toBeInTheDocument();
         expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
+      });
+
+      // A renamed tab that lands on /browse-applications contradicts itself in
+      // the address bar, and that URL is what gets shared. The tenant's own
+      // name for the listing is the URL too — the whitelabel rewrite resolves
+      // /browse-projects back onto the same route (WHITELABEL_ROUTE_ALIASES).
+      it("should send the renamed tab to the tenant's own URL for the listing", () => {
+        renderFilecoin();
+
         // Bare path: the whitelabel-aware Link strips the /community/<slug>
         // prefix on the tenant host, so the tab costs no redirect hop.
         expect(screen.getByText("Browse Projects").closest("a")).toHaveAttribute(
           "href",
-          "/browse-applications"
+          "/browse-projects"
         );
+      });
+
+      it("should keep the renamed tab highlighted on the aliased path", () => {
+        renderFilecoin({ pathname: "/browse-projects" });
+
+        expect(activeTabLabels()).toEqual(["Browse Projects"]);
+      });
+
+      it("should keep the renamed tab highlighted on the underlying path", () => {
+        renderFilecoin({ pathname: "/browse-applications" });
+
+        expect(activeTabLabels()).toEqual(["Browse Projects"]);
       });
 
       it("should skip the published-reports query when the reports tab is hidden", () => {
@@ -215,6 +237,17 @@ describe("CommunityPageNavigator", () => {
 
         expect(screen.getByText("Browse applications")).toBeInTheDocument();
         expect(screen.queryByText("Browse Projects")).not.toBeInTheDocument();
+      });
+
+      // The alias only resolves on a tenant host, so linking it from karmahq.org
+      // would be a 404 with a tab bar around it.
+      it("should keep the default browse-applications destination", () => {
+        renderFilecoin({ isWhitelabel: false });
+
+        expect(screen.getByText("Browse applications").closest("a")).toHaveAttribute(
+          "href",
+          "/community/filecoin/browse-applications"
+        );
       });
 
       it("should still run the published-reports query", () => {

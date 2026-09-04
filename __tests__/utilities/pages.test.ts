@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
 import { PAGES } from "@/utilities/pages";
 
 describe("PAGES constants", () => {

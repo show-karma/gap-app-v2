@@ -13,6 +13,7 @@ import { fetchProjectIndexabilityDecision } from "./utilities/project-indexabili
 import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
+import { resolveWhitelabelRouteAlias } from "./utilities/whitelabel-routes";
 
 // --- Canonical host policy (ADR 0001) ---
 // One host serves 200s; every duplicate host (the apex, the legacy GAP
@@ -81,7 +82,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const normalizedPath = path;
+    // Clean-URL aliases resolve here, before anything routes on the path: the
+    // alias is the URL the visitor keeps (this is a rewrite, not a redirect)
+    // and the route it names is what renders. See WHITELABEL_ROUTE_ALIASES.
+    const normalizedPath = resolveWhitelabelRouteAlias(path, communitySlug);
     const normalizedIsRoot = normalizedPath === "/" || normalizedPath === "";
 
     // /programs (listing) → homepage (which shows funding opportunities)
