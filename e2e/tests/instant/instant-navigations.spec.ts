@@ -63,7 +63,8 @@ const SENTINEL_KEY = "__instantNavSentinel";
 /** How long to let a prefetch land before clicking anyway. */
 const PREFETCH_GRACE_MS = 2_000;
 
-/** How long to let a dropdown's modal state lift after the click that closes it. */
+/** How long to let a dropdown open, and to let its modal state lift again. */
+const MENU_OPEN_TIMEOUT_MS = 2_000;
 const MENU_CLOSE_TIMEOUT_MS = 5_000;
 
 /**
@@ -168,6 +169,19 @@ async function findLink(page: Page, pattern: RegExp): Promise<Locator | null> {
   const triggerCount = await triggers.count();
   for (let index = 0; index < triggerCount; index++) {
     await triggers.nth(index).click();
+
+    // Wait for the menu to actually render before scanning it. Radix mounts the
+    // content asynchronously, and the scan only counts anchors that have client
+    // rects — so scanning too early finds nothing and the case skips with "no
+    // link matching …", which the suite reserves for an environment genuinely
+    // missing the data. Observed once as a spurious skip of test 3. A trigger
+    // that opens nothing simply falls through to the next one.
+    await page
+      .locator('[role="menu"]')
+      .first()
+      .waitFor({ state: "visible", timeout: MENU_OPEN_TIMEOUT_MS })
+      .catch(() => undefined);
+
     const inMenu = await scan();
     if (inMenu !== null) {
       // Scope to the open menu. The same href can appear both in the menu and
