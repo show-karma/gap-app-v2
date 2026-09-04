@@ -3,7 +3,7 @@
 import { Bot, CircleUser, Copy } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useMixpanel } from "@/hooks/useMixpanel";
+import { track } from "@/utilities/analytics/client";
 import { cn } from "@/utilities/tailwind";
 
 const SKILLS_URL = "https://github.com/show-karma/skills";
@@ -23,22 +23,24 @@ const stepNumberClass = cn(
 
 export function FundingMapAgentCard() {
   const [, copyToClipboard] = useCopyToClipboard();
-  const { mixpanel } = useMixpanel("karma");
 
-  const handleCopy = async (tab: string) => {
-    let success = true;
+  const handleCopy = async () => {
+    let copied = true;
     try {
       await copyToClipboard(AGENT_PROMPT);
     } catch {
-      success = false;
+      // SUPPRESSED: the clipboard API rejects when the document is not focused
+      // or permission is denied. Neither is actionable, and the visible prompt
+      // is still on screen for the user to copy by hand — but the failure is
+      // reported below so it does not read as a successful copy.
+      copied = false;
     }
-    mixpanel.reportEvent({
-      event: "funding-map:agent-prompt-copy",
-      properties: { tab, success },
-    });
+    // The card is the sidebar's, not a program's, so there is no program to
+    // attribute the copy to.
+    track("funding_map_agent_prompt_copied", { program_id: null, copied });
   };
 
-  const codeBlock = (tab: string) => (
+  const codeBlock = () => (
     <div className="flex items-start justify-between gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5">
       <code className="break-words font-mono text-sm leading-relaxed text-emerald-400">
         Read{" "}
@@ -54,7 +56,7 @@ export function FundingMapAgentCard() {
       </code>
       <button
         type="button"
-        onClick={() => handleCopy(tab)}
+        onClick={handleCopy}
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-zinc-200"
         aria-label="Copy to clipboard"
       >
@@ -68,10 +70,7 @@ export function FundingMapAgentCard() {
       <Tabs
         defaultValue="human"
         onValueChange={(tab) => {
-          mixpanel.reportEvent({
-            event: "funding-map:agent-tab-click",
-            properties: { tab },
-          });
+          track("funding_map_agent_tab_clicked", { tab });
         }}
       >
         <TabsList className="grid w-full grid-cols-2 gap-1 rounded-full bg-muted p-1">
@@ -88,7 +87,7 @@ export function FundingMapAgentCard() {
         <TabsContent value="human" className="mt-4">
           <div className="flex flex-col gap-4">
             <h3 className="text-sm font-semibold text-foreground">Send Your AI Agent to Karma</h3>
-            {codeBlock("human")}
+            {codeBlock()}
             <ol className="flex flex-col gap-2.5">
               <li className="flex items-start gap-2.5">
                 <span className={stepNumberClass}>1</span>
@@ -115,7 +114,7 @@ export function FundingMapAgentCard() {
         <TabsContent value="agent" className="mt-4">
           <div className="flex flex-col gap-4">
             <h3 className="text-sm font-semibold text-foreground">Find Funding with Karma</h3>
-            {codeBlock("agent")}
+            {codeBlock()}
             <ol className="flex flex-col gap-2.5">
               <li className="flex items-start gap-2.5">
                 <span className={stepNumberClass}>1</span>

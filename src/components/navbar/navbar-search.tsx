@@ -6,7 +6,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { type UnifiedSearchResponse, unifiedSearch } from "@/services/unified-search.service";
+import { track } from "@/utilities/analytics/client";
 import { PAGES } from "@/utilities/pages";
+
+/** Stable surface id for the global navbar search. */
+const SEARCH_SURFACE = "navbar";
 
 interface NavbarSearchProps {
   onSelectItem?: () => void;
@@ -56,8 +60,20 @@ export function NavbarSearch({ onSelectItem, placeholder }: NavbarSearchProps = 
         try {
           const result = await unifiedSearch(value);
           setResults(result);
+          // Length, never the query itself — what people search for is their
+          // own business, and a zero-result search is the signal that matters.
+          track("search_performed", {
+            query_length: value.length,
+            results_count: result.communities.length + result.projects.length,
+            surface: SEARCH_SURFACE,
+          });
         } catch {
           setResults({ communities: [], projects: [] });
+          track("search_performed", {
+            query_length: value.length,
+            results_count: null,
+            surface: SEARCH_SURFACE,
+          });
         } finally {
           setIsLoading(false);
         }

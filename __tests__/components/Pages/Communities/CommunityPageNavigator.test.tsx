@@ -320,6 +320,60 @@ describe("CommunityPageNavigator", () => {
     });
   });
 
+  describe("Track IDs", () => {
+    it("should append trackIds to links when present", () => {
+      mockUseSearchParams.mockReturnValue({
+        get: (key: string) => (key === "trackIds" ? "track-123" : null),
+      });
+
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
+
+      const fundingLink = screen.getByText("Funding opportunities").closest("a");
+      expect(fundingLink).toHaveAttribute(
+        "href",
+        "/community/test-community/funding-opportunities?trackIds=track-123"
+      );
+
+      const impactLink = screen.getByText("Impact").closest("a");
+      expect(impactLink).toHaveAttribute(
+        "href",
+        "/community/test-community/impact?trackIds=track-123"
+      );
+    });
+
+    it("should append both programId and trackIds when both are present", () => {
+      mockUseSearchParams.mockReturnValue({
+        get: (key: string) => {
+          if (key === "programId") return "program-123";
+          if (key === "trackIds") return "track-123,track-456";
+          return null;
+        },
+      });
+
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
+
+      const fundingLink = screen.getByText("Funding opportunities").closest("a");
+      expect(fundingLink).toHaveAttribute(
+        "href",
+        "/community/test-community/funding-opportunities?programId=program-123&trackIds=track-123%2Ctrack-456"
+      );
+    });
+
+    it("should not append trackIds when not present", () => {
+      mockUseSearchParams.mockReturnValue({
+        get: () => null,
+      });
+
+      render(<CommunityPageNavigator communityId="test-community" />, { wrapper });
+
+      const fundingLink = screen.getByText("Funding opportunities").closest("a");
+      expect(fundingLink).toHaveAttribute(
+        "href",
+        "/community/test-community/funding-opportunities"
+      );
+    });
+  });
+
   describe("Styling", () => {
     it("should have container with correct classes", () => {
       const { container } = render(<CommunityPageNavigator communityId="test-community" />, {

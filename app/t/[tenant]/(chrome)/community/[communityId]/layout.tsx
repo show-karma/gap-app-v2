@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cache } from "react";
 import { WhitelabelJsonLd } from "@/components/Seo/WhitelabelJsonLd";
+import { CommunityAnalyticsGroup } from "@/components/Utilities/CommunityAnalyticsGroup";
 import { PROJECT_NAME } from "@/constants/brand";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { envVars } from "@/utilities/enviromentVars";
@@ -140,8 +141,26 @@ export default async function Layout(props: { children: React.ReactNode; params:
 
   const canonicalUrl = isWhitelabel && config ? `https://${config.domain}` : undefined;
 
+  // Free, but not for the reason a request-cached loader would be: this is the
+  // `"use cache"` twin, so the entry is keyed on the segment and shared across
+  // requests for its `cacheLife("minutes")` window and invalidated by
+  // `communityTag`. `generateMetadata` above reads the same key, so this is a
+  // second read of one cache entry rather than a second fetch — and it stays
+  // free for the next visitor too, which request scoping never was.
+  //
+  // Analytics groups on the UID rather than on the URL segment, which may be
+  // either a slug or a uid — the same community would otherwise reach Mixpanel
+  // as two different groups. The slug comes from the same resolved entity for
+  // the same reason: it is the readable label, and reading it off the URL would
+  // sometimes yield a uid.
+  const community = await getCommunityDetailsCached(communityId);
+
   return (
     <>
+      <CommunityAnalyticsGroup
+        uid={community?.uid ?? null}
+        slug={community?.details?.slug ?? null}
+      />
       {isWhitelabel && tenantConfig && canonicalUrl && (
         <WhitelabelJsonLd tenant={tenantConfig} url={canonicalUrl} />
       )}

@@ -18,6 +18,7 @@ import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { track } from "@/utilities/analytics/client";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
@@ -46,6 +47,15 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   // guaranteed 403 here (which nulled `contactsInfo` anyway), so dropping the
   // override removes the console/Sentry noise without changing behavior.
   const { data: contactsInfo } = useContactInfo(project?.uid);
+
+  // An endorsement from the project's own team is a different signal from an
+  // outsider's, and the attestation itself does not record which it was.
+  const endorserAddress = (smartWalletAddress || address)?.toLowerCase();
+  const isEndorserOnTheTeam = Boolean(
+    endorserAddress &&
+      (project?.owner?.toLowerCase() === endorserAddress ||
+        project?.members?.some((member) => member.address?.toLowerCase() === endorserAddress))
+  );
 
   function closeModal() {
     setIsOpen(false);
@@ -132,6 +142,13 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
 
             await notifyProjectOwner(endorsement);
 
+            // A member endorsing their own project is a different signal from
+            // an outsider doing it, so the two are distinguished here rather
+            // than being read back out of the attestation later.
+            track("project_endorsed", {
+              project_id: project.uid,
+              endorser_is_member: isEndorserOnTheTeam,
+            });
             showSuccess("Endorsement added!");
             setTimeout(() => {
               const targetPath = PAGES.PROJECT.OVERVIEW(

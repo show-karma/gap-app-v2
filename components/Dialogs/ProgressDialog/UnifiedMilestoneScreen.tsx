@@ -23,6 +23,7 @@ import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Grant } from "@/types/v2/grant";
+import * as milestoneEvents from "@/utilities/analytics/emitters/milestone";
 import { api } from "@/utilities/api/client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { INDEXER } from "@/utilities/indexer";
@@ -145,6 +146,7 @@ export const UnifiedMilestoneScreen = () => {
           // Poll until milestone is indexed
           const indexed = await pollForRoadmapMilestone(newObjective.uid);
 
+          milestoneEvents.emitRoadmapMilestoneCreated(project.uid, data.dates?.endsAt);
           if (indexed) {
             changeStepperStep("indexed");
             showSuccess("Roadmap milestone created!");
@@ -390,6 +392,7 @@ export const UnifiedMilestoneScreen = () => {
         );
       }
 
+      milestoneEvents.emitGrantMilestonesCreated(project.uid, data.dates?.endsAt, grantsByChain);
       if (indexed) {
         changeStepperStep("indexed");
         showSuccess("Milestones created!");

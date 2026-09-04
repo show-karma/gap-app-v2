@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { track } from "@/utilities/analytics/client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { GrantCommentsService } from "../api/grant-comments-service";
 import type { GrantComment } from "../types";
@@ -52,6 +53,9 @@ export function useGrantComments({ projectUID, programId }: UseGrantCommentsOpti
         },
       ]);
       return { previous };
+    },
+    onSuccess: () => {
+      track("comment_posted", { target_type: "grant", is_public: false, is_reply: false });
     },
     onError: (_err, _content, context) => {
       if (context?.previous) {

@@ -12,6 +12,8 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entities";
+import { track } from "@/utilities/analytics/client";
+import { toErrorCode } from "@/utilities/analytics/error-code";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { isCompletedMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
@@ -210,6 +212,17 @@ export function useSubmitMilestoneCompletion() {
           return;
         }
 
+        // Reported once the attestation is on-chain, whether or not the
+        // indexer has caught up — the completion itself has happened either way.
+        track("milestone_completed", {
+          milestone_id: params.milestoneUID,
+          grant_id: grantUID || null,
+          // The completion editor does not carry the milestone's due date, so
+          // schedule adherence is computed from indexed data, not from here.
+          days_vs_due_date: null,
+          has_proof: Boolean(params.invoiceFile),
+        });
+
         toast.success(
           indexerCaughtUp
             ? "Milestone marked as completed"
@@ -256,15 +269,21 @@ export function useSubmitMilestoneCompletion() {
         });
       }
     },
-    onError: (error: Error) => {
+    onError: (error: Error, params) => {
       if (isAbortError(error)) {
         // Component unmounted mid-mutation — silent. No toast, no Sentry.
         return;
       }
       if (isUserCancellationError(error)) {
+        // The user closing the wallet popup is a decision, not a failure, and
+        // counting it as one would make the completion funnel unreadable.
         toast.error("Completion cancelled");
         return;
       }
+      track("milestone_completion_failed", {
+        milestone_id: params.milestoneUID,
+        error_code: toErrorCode(error),
+      });
       toast.error(error?.message || "Failed to submit milestone completion");
       errorManager("Error submitting milestone completion", error);
     },

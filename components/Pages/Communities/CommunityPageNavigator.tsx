@@ -99,8 +99,22 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   },
 ] as const;
 
-const getPathWithProgramId = (program: string | null, basePath: string) => {
-  return program ? `${basePath}?programId=${program}` : basePath;
+/**
+ * Appends the active `programId`/`trackIds` filter to a tab's link so it
+ * survives switching tabs (Explorer -> Impact -> Reports -> ...). `trackIds`
+ * is forwarded as-is — it is already the comma-joined string nuqs stores in
+ * the URL (see `useProjectFilters`'s `trackIds` serializer).
+ */
+const getPathWithFilterParams = (
+  programId: string | null,
+  trackIds: string | null,
+  basePath: string
+) => {
+  const filterParams = new URLSearchParams();
+  if (programId) filterParams.set("programId", programId);
+  if (trackIds) filterParams.set("trackIds", trackIds);
+  const query = filterParams.toString();
+  return query ? `${basePath}?${query}` : basePath;
 };
 
 /**
@@ -115,19 +129,30 @@ const resolveSubSegment = (pathname: string): string => {
   return segments[0] ?? "";
 };
 
+/** The filter params the tab links carry, as the URL spells them. */
+interface TabFilterParams {
+  programId: string | null;
+  trackIds: string | null;
+}
+
 /**
- * Reads `?programId=` and hands it up. Renders nothing — no links, no content —
- * so the leaf `<Suspense>` around it never covers anything crawlable. The tab
- * links render immediately with their bare hrefs and gain the `programId`
- * suffix on hydration.
+ * Reads `?programId=` and `?trackIds=` and hands them up. Renders nothing — no
+ * links, no content — so the leaf `<Suspense>` around it never covers anything
+ * crawlable. The tab links render immediately with their bare hrefs and gain
+ * the filter suffix on hydration.
+ *
+ * Both reads live here rather than in the tab bar for the reason the tab bar's
+ * own docblock gives: `useSearchParams()` aborts a prerender unconditionally,
+ * so one read in the bar blocks every route in the group.
  */
-function ProgramIdFromUrl({ onChange }: { onChange: (value: string | null) => void }) {
+function FilterParamsFromUrl({ onChange }: { onChange: (value: TabFilterParams) => void }) {
   const searchParams = useSearchParams();
-  const value = searchParams.get("programId");
+  const programId = searchParams.get("programId");
+  const trackIds = searchParams.get("trackIds");
 
   useEffect(() => {
-    onChange(value);
-  }, [value, onChange]);
+    onChange({ programId, trackIds });
+  }, [programId, trackIds, onChange]);
 
   return null;
 }
@@ -147,11 +172,14 @@ function ProgramIdFromUrl({ onChange }: { onChange: (value: string | null) => vo
  * blocked every route in the group, sampled params or not.
  *
  * `communityId` is therefore a prop (the server layout has it), and the
- * `programId` search-param read moves into ProgramIdFromUrl below: a leaf that
+ * `programId`/`trackIds` search-param reads move into FilterParamsFromUrl: a leaf that
  * renders no links, so the crawlable tab graph stays outside the boundary.
  */
 export const CommunityPageNavigator = ({ communityId }: { communityId: string }) => {
-  const [programId, setProgramId] = useState<string | null>(null);
+  const [{ programId, trackIds }, setFilterParams] = useState<TabFilterParams>({
+    programId: null,
+    trackIds: null,
+  });
   const rawPathname = usePathname();
   const { isWhitelabel } = useWhitelabel();
   // In whitelabel mode, the middleware rewrites the root to /community/<slug>/funding-opportunities
@@ -233,7 +261,7 @@ export const CommunityPageNavigator = ({ communityId }: { communityId: string })
       {/* Link-free leaf: it renders null, so the tab links below stay outside
           the boundary and remain part of the prerendered link graph. */}
       <Suspense fallback={null}>
-        <ProgramIdFromUrl onChange={setProgramId} />
+        <FilterParamsFromUrl onChange={setFilterParams} />
       </Suspense>
       {visibleNavigationItems.map(({ id, path, Icon, showNewTag }) => {
         const href = path(communityId);
@@ -242,7 +270,7 @@ export const CommunityPageNavigator = ({ communityId }: { communityId: string })
           <Link
             key={id}
             ref={active ? activeLinkRef : undefined}
-            href={getPathWithProgramId(programId, href)}
+            href={getPathWithFilterParams(programId, trackIds, href)}
             className={cn(baseLinkStyle, active ? activeLinkStyle : inactiveLinkStyle)}
           >
             <Icon

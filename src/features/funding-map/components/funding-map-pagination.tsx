@@ -3,8 +3,8 @@
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { useMixpanel } from "@/hooks/useMixpanel";
 import { DOTS, usePagination } from "@/hooks/usePagination";
+import { track } from "@/utilities/analytics/client";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import { useFundingFilters } from "../hooks/use-funding-filters";
 
@@ -14,34 +14,21 @@ interface FundingMapPaginationProps {
 
 export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) {
   const { filters, setPage, setOnlyOnKarma } = useFundingFilters();
-  const { mixpanel } = useMixpanel("karma");
   const currentPage = filters.page;
   const totalPages = Math.ceil(totalCount / FUNDING_MAP_PAGE_SIZE);
 
   const trackPagination = useCallback(
-    (action: "prev" | "next" | "goto", toPage: number) => {
-      mixpanel.reportEvent({
-        event: "funding-map:pagination",
-        properties: {
-          action,
-          fromPage: currentPage,
-          toPage,
-          totalPages,
-          totalResults: totalCount,
-        },
-      });
+    (toPage: number) => {
+      track("funding_map_page_changed", { page: toPage });
       setPage(toPage);
     },
-    [mixpanel, currentPage, totalPages, totalCount, setPage]
+    [setPage]
   );
 
   const handleShowAll = useCallback(() => {
-    mixpanel.reportEvent({
-      event: "funding-map:show-all-programs",
-      properties: { previousResultCount: totalCount },
-    });
+    track("funding_map_show_all_clicked", {});
     setOnlyOnKarma(false);
-  }, [mixpanel, totalCount, setOnlyOnKarma]);
+  }, [setOnlyOnKarma]);
 
   const paginationRange = usePagination({
     currentPage,
@@ -80,7 +67,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
           size="sm"
           className="h-8 gap-1 px-2"
           disabled={currentPage === 1}
-          onClick={() => trackPagination("prev", currentPage - 1)}
+          onClick={() => trackPagination(currentPage - 1)}
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="max-sm:hidden">Previous</span>
@@ -106,7 +93,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
               key={pageNumber}
               page={pageNumber}
               isActive={currentPage === pageNumber}
-              onClick={() => trackPagination("goto", pageNumber)}
+              onClick={() => trackPagination(pageNumber)}
             />
           );
         })}
@@ -116,7 +103,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
           size="sm"
           className="h-8 gap-1 px-2"
           disabled={currentPage === totalPages}
-          onClick={() => trackPagination("next", currentPage + 1)}
+          onClick={() => trackPagination(currentPage + 1)}
         >
           <span className="max-sm:hidden">Next</span>
           <ChevronRight className="h-4 w-4" />

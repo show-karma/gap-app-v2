@@ -1,14 +1,27 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
+import { emitLoginStarted } from "@/utilities/analytics/emitters/auth";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
-import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
+import { watchCrossTabSession } from "@/utilities/auth/cross-tab-session";
+import { E2E_MOCK_USER_ID, getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 import { hasNonWalletIdentity } from "@/utilities/auth/has-non-wallet-identity";
+import { hasPersistedPrivySession } from "@/utilities/auth/persisted-privy-session";
 import { selectPrimaryWallet } from "@/utilities/auth/select-primary-wallet";
+import {
+  __resetUserSwitchGuardForTests,
+  claimUserSwitchTeardown,
+  clearPendingUserSwitch,
+  createRunLogout,
+  ignoreLogoutFailure,
+  recordUserSwitch,
+  runUserSwitchTeardown,
+} from "@/utilities/auth/session-teardown";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { queryClient } from "@/utilities/query-client";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
@@ -28,6 +41,9 @@ let authReadyBarrierAddress: Hex | undefined;
 // timer), so there is no SSR request bleed.
 let walletDisconnectLogoutFired = false;
 
+/** Re-exported so tests keep resetting the guard through the hook they drive. */
+export { __resetUserSwitchGuardForTests };
+
 /**
  * How long the wallet list must stay empty before a wallet-only session is
  * logged out. Privy can briefly report zero wallets while re-hydrating even
@@ -36,36 +52,6 @@ let walletDisconnectLogoutFired = false;
  */
 const WALLET_DISCONNECT_LOGOUT_DELAY_MS = 1000;
 
-/**
- * Initial delay (in ms) before first auth status check.
- * Gives Privy a moment to initialize before we start checking.
- */
-const AUTH_INIT_DELAY_MS = 500;
-
-/**
- * Interval (in ms) for periodic auth status checks.
- * Used for cross-tab logout synchronization.
- *
- * The interval can be short because TokenManager caches tokens for 30s,
- * so most checks are cache hits (no Privy API call). Only ~2 actual API
- * calls/min regardless of interval. Storage events provide instant detection.
- */
-const AUTH_CHECK_INTERVAL_MS = 10_000;
-
-/**
- * Number of consecutive failures (no token AND no session) required before logging out.
- * This prevents false logouts during temporary network issues or slow token refresh.
- * With a 500ms initial delay and checks every 10s, 3 failures = ~20s of no auth state.
- * Storage events provide faster detection for cross-tab logouts.
- */
-const AUTH_FAILURE_THRESHOLD = 3;
-
-/**
- * Cookie name used by Privy for session persistence in HttpOnly mode.
- * This is an implementation detail of Privy - if Privy changes this, the check may need updating.
- * @see https://docs.privy.io/guide/react/configuration/cookies
- */
-const PRIVY_SESSION_COOKIE_NAME = "privy-session";
 const POST_LOGIN_REDIRECT_KEY = "postLoginRedirect";
 
 export const setPostLoginRedirect = (url: string) => {
@@ -81,21 +67,6 @@ const getPostLoginRedirect = (): string | null => {
 const clearPostLoginRedirect = () => {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
-};
-
-/**
- * Check if privy-session cookie exists using proper cookie parsing.
- * If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
- */
-// Note: privy-session is a JS-readable indicator cookie, NOT HttpOnly.
-// Privy's HttpOnly cookies are separate and used for token refresh.
-// If this cookie is ever made HttpOnly, the check degrades gracefully —
-// the failure threshold alone still prevents false logouts.
-const hasPrivySession = () => {
-  if (typeof document === "undefined") return false;
-  return document.cookie
-    .split(";")
-    .some((c) => c.trim().startsWith(`${PRIVY_SESSION_COOKIE_NAME}=`));
 };
 
 /**
@@ -133,6 +104,7 @@ const clearWagmiState = () => {
  * the SDK loads, the bridge returns safe defaults (ready=false, authenticated=false).
  */
 export const useAuth = () => {
+  const bridge = usePrivyBridge();
   const {
     ready,
     authenticated,
@@ -144,7 +116,7 @@ export const useAuth = () => {
     wallets,
     walletsReady,
     isConnected,
-  } = usePrivyBridge();
+  } = bridge;
 
   const router = useRouter();
   const { isWhitelabel } = useWhitelabel();
@@ -162,6 +134,17 @@ export const useAuth = () => {
   const e2eMockAuthState = useMemo(() => getE2EMockAuthState(), [ready, authenticated, isClient]);
   const isE2EMockAuthenticated = Boolean(e2eMockAuthState?.authenticated);
   const e2eMockAddress = e2eMockAuthState?.user?.wallet?.address as Hex | undefined;
+  // Privy produces no `user` under the bypass, so analytics had no distinct id
+  // to identify and silenced every authenticated emission. Structurally a Privy
+  // `User` for the fields anything reads off it (`id`, `wallet`); the cast is
+  // confined to this seam and only reachable when the bypass is on.
+  const effectiveUser = useMemo(
+    () =>
+      isE2EMockAuthenticated && !user
+        ? ({ id: E2E_MOCK_USER_ID, wallet: { address: e2eMockAddress } } as unknown as typeof user)
+        : user,
+    [isE2EMockAuthenticated, user, e2eMockAddress]
+  );
   const address = (primaryWallet?.address as Hex | undefined) || e2eMockAddress;
   // Does the session outlive losing every wallet? Derived as a boolean so the
   // disconnect effect below doesn't re-run on every new Privy `user` identity.
@@ -170,6 +153,33 @@ export const useAuth = () => {
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
   const prevUserIdRef = useRef<string | undefined>(user?.id);
+  /**
+   * The identity as of the last render, readable from timers, intervals and
+   * stable callbacks. Depending on the id directly in those would tear down and
+   * reschedule the wallet-disconnect timer and the cross-tab interval every
+   * time Privy hands back a new user object, which is exactly what they are
+   * built not to do.
+   */
+  const currentUserIdRef = useRef<string | null>(user?.id ?? null);
+  /**
+   * The bridge itself, so the session can be read AFTER an `await` rather than
+   * as whatever a render happened to capture.
+   *
+   * This is what tells a `logout()` that ended a session apart from one that
+   * RESOLVED and ended nothing — Privy ignored the call, or the session was
+   * already gone. The second kind records a cause that describes nothing, and
+   * it has to be retracted rather than left to label whichever transition
+   * happens next. Reading a destructured boolean out of a closure could not
+   * answer that: it is the value from before the logout.
+   */
+  const bridgeRef = useRef(bridge);
+  bridgeRef.current = bridge;
+  /**
+   * Bumped when a forced switch teardown ends nothing, purely to bring the
+   * effect below back. Nothing about Privy's state changes when a teardown
+   * fails, so without a dependency that does, the retry would never run.
+   */
+  const [userSwitchAttempt, setUserSwitchAttempt] = useState(0);
   const authFailureCount = useRef(0);
   // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
   const walletsSnapshotRef = useRef<string[]>([]);
@@ -178,6 +188,11 @@ export const useAuth = () => {
   // Tracks the wallet address across renders to detect the undefined→defined
   // transition once Privy/Wagmi finish hydrating after auth (see refetch barrier).
   const prevAddressRef = useRef<Hex | undefined>(address);
+
+  const runLogout = useMemo(
+    () => createRunLogout(logout, () => bridgeRef.current.authenticated),
+    [logout]
+  );
 
   /**
    * AUTH STATE CHANGE DETECTION
@@ -229,29 +244,44 @@ export const useAuth = () => {
       // Clear previous user ID so re-login with a different wallet
       // is not mistaken for a cross-tab user switch.
       prevUserIdRef.current = undefined;
+      // The teardown landed (or the session ended some other way), so there is
+      // nothing left to retry.
+      clearPendingUserSwitch();
     }
 
-    // Detect user switch: different user.id while *continuously* authenticated.
-    // This happens with Privy shared auth when a different user logs in
-    // on another subdomain — Privy seamlessly transitions without logout.
-    // Force logout to ensure full re-initialization with the new user's state.
-    // Only triggers when prevAuthRef is true (no logout happened in between).
+    // Detect user switch: a different user.id while *continuously* authenticated.
+    // Privy shared auth transitions seamlessly when someone signs in on another
+    // subdomain, so the handed-over session has to be torn down for the app to
+    // re-initialise with the new user's state. `session-teardown.ts` holds the
+    // guard that keeps ~100 mounted instances to one teardown, and explains why
+    // detection is separate from the attempt.
     if (
       prevAuthRef.current &&
       authenticated &&
       user?.id &&
       prevUserIdRef.current &&
-      user.id !== prevUserIdRef.current
+      user.id !== prevUserIdRef.current &&
+      recordUserSwitch(prevUserIdRef.current, user.id)
     ) {
+      // Once per switch, not once per attempt: a retry is tearing down the
+      // same session, and these are already clear.
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
-      logout();
+    }
+
+    const activeSwitch = authenticated ? claimUserSwitchTeardown(user?.id) : null;
+    if (activeSwitch) {
+      // Re-running this effect is the only way a retry can happen — no Privy
+      // state changed, so nothing else would bring it back.
+      runUserSwitchTeardown(activeSwitch, runLogout, () =>
+        setUserSwitchAttempt((attempt) => attempt + 1)
+      );
     }
 
     prevAuthRef.current = authenticated;
     prevUserIdRef.current = user?.id;
-  }, [authenticated, user?.id, logout]);
+  }, [authenticated, user?.id, runLogout, userSwitchAttempt]);
 
   // Snapshot wallet addresses at auth time for secure wallet-switch detection (P2-06)
   useEffect(() => {
@@ -340,11 +370,15 @@ export const useAuth = () => {
     const timer = setTimeout(() => {
       if (walletDisconnectLogoutFired) return;
       walletDisconnectLogoutFired = true;
-      logout();
+      void runLogout("wallet_disconnect", currentUserIdRef.current).catch(ignoreLogoutFailure);
     }, WALLET_DISCONNECT_LOGOUT_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, logout]);
+  }, [ready, walletsReady, authenticated, wallets.length, hasSurvivingIdentity, runLogout]);
+
+  useEffect(() => {
+    currentUserIdRef.current = user?.id ?? null;
+  }, [user?.id]);
 
   // Auto-login after logout completes
   useEffect(() => {
@@ -354,74 +388,17 @@ export const useAuth = () => {
     }
   }, [authenticated, ready, login]);
 
-  // Cross-tab logout synchronization
-  // Compatible with both localStorage (default) and HttpOnly cookies
+  // Cross-tab logout synchronization. The watcher itself lives in
+  // `cross-tab-session.ts`; the failure counter is a ref here so it survives
+  // the effect's re-runs and can be reset by the logout path above.
   useEffect(() => {
     if (!ready || !authenticated) return;
-
-    const handleAuthFailure = () => {
-      authFailureCount.current += 1;
-      if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
-        authFailureCount.current = 0;
-        logout();
-      }
-    };
-
-    const checkAuthStatus = async () => {
-      try {
-        const hasToken = await TokenManager.getToken();
-        const hasSession = hasPrivySession();
-
-        // If we have either a token or session, auth is valid - reset failure counter
-        if (hasToken || hasSession) {
-          authFailureCount.current = 0;
-          return;
-        }
-
-        // No token AND no session - increment failure counter
-        // Only logout after multiple consecutive failures to handle:
-        // - Slow network during token refresh
-        // - Temporary network hiccups
-        // - Privy initialization timing
-        handleAuthFailure();
-      } catch {
-        // SUPPRESSED: not swallowed — a failed token check (network error, etc.)
-        // is deliberately routed into the consecutive-failure counter below, so
-        // a transient hiccup can't log the user out on its own.
-        handleAuthFailure();
-      }
-    };
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "privy:token") {
-        // Token removed → cross-tab logout
-        // Token replaced → possible user switch (shared auth)
-        if (!e.newValue || (e.oldValue && e.newValue !== e.oldValue)) {
-          checkAuthStatus();
-        }
-      }
-      // User identity changed in another tab (e.g., shared auth login)
-      if (e.key === "privy:user" && e.oldValue !== e.newValue) {
-        checkAuthStatus();
-      }
-    };
-
-    // Don't check immediately on mount - give time for token refresh.
-    // This prevents false logouts when using HttpOnly cookies.
-    // Note: Privy's `ready` state doesn't guarantee token refresh is complete,
-    // so we use a grace period as a workaround.
-    const initialCheckTimeout = setTimeout(checkAuthStatus, AUTH_INIT_DELAY_MS);
-
-    const intervalId = setInterval(checkAuthStatus, AUTH_CHECK_INTERVAL_MS);
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      clearTimeout(initialCheckTimeout);
-      clearInterval(intervalId);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [ready, authenticated, logout]);
+    return watchCrossTabSession({
+      failureCount: authFailureCount,
+      onSessionGone: () =>
+        void runLogout("cross_tab", currentUserIdRef.current).catch(ignoreLogoutFailure),
+    });
+  }, [ready, authenticated, runLogout]);
 
   // Handle wallet switching: logout if switched to non-linked wallet
   // Using wagmi's watchAccount as recommended by Privy docs
@@ -445,8 +422,8 @@ export const useAuth = () => {
     let unwatch: (() => void) | undefined;
     let cancelled = false;
 
-    Promise.all([import("@wagmi/core"), import("@/utilities/wagmi/privy-config")]).then(
-      ([{ watchAccount }, { privyConfig }]) => {
+    Promise.all([import("@wagmi/core"), import("@/utilities/wagmi/privy-config")])
+      .then(([{ watchAccount }, { privyConfig }]) => {
         if (cancelled) return;
         unwatch = watchAccount(privyConfig, {
           onChange(account) {
@@ -459,47 +436,127 @@ export const useAuth = () => {
             if (!newAddress) return;
 
             if (user && !compareAllWallets(user, newAddress)) {
-              logout();
+              // A different wallet at the browser level is a different identity,
+              // which is the same session boundary as Privy's own user switch.
+              void runLogout("user_switch", user.id).catch(ignoreLogoutFailure);
             }
           },
         });
-      }
-    );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        // The wagmi chunk failed to load, or `watchAccount` rejected the config
+        // it was handed. Nothing user-facing has broken, but wallet-switch
+        // detection is now OFF for this session — a different wallet at the
+        // browser level will no longer end the session — so it is reported
+        // rather than swallowed.
+        //
+        // Un-caught, this rejected into the void: it does not fail a render, so
+        // it surfaced as an unhandled rejection that failed whichever unrelated
+        // test happened to be running when it landed.
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
+          tags: { hook: "useAuth", operation: "watch_account_setup" },
+        });
+      });
 
     return () => {
       cancelled = true;
       unwatch?.();
     };
-  }, [ready, authenticated, hasExternalWallet, user, logout]);
+  }, [ready, authenticated, hasExternalWallet, user, runLogout]);
 
-  const adaptedLogin = useCallback(async () => {
-    if (typeof window !== "undefined" && !authenticated) {
-      const existingRedirect = getPostLoginRedirect();
-      if (!existingRedirect) {
-        setPostLoginRedirect(`${window.location.pathname}${window.location.hash}`);
+  // Whether an authenticated session has to be torn down and re-established
+  // because wagmi lost the external wallet (see the branch that uses it below).
+  const needsWalletReconnect =
+    !isConnected &&
+    authenticated &&
+    wallets.length > 0 &&
+    !wallets.some((w) => w.walletClientType === "privy");
+
+  /**
+   * Opens the sign-in flow.
+   *
+   * `entryPoint` names the surface the user clicked from (`"navbar"`,
+   * `"project_page_cta"`); see `emitters/auth.ts` for how it is resolved.
+   */
+  const adaptedLogin = useCallback(
+    async (entryPoint?: unknown) => {
+      // Both branches below end in Privy's login() — the reconnect one by way
+      // of the auto-login effect — so the funnel opens here rather than at
+      // either call site. Calling adaptedLogin on an already-signed-in user is
+      // a no-op and must not open a funnel it will never close.
+      //
+      // Before Privy resolves, `authenticated` is false for everyone, so it
+      // alone cannot tell a signed-out visitor from a signed-in one whose
+      // session has not hydrated yet. The persisted token settles it: for an
+      // anonymous visitor the SDK is deliberately deferred (idle callback, up
+      // to 5s, or this very click — see `PrivyProviderWrapper`), so the click
+      // that OPENS the funnel almost always lands while `ready` is false. A
+      // plain `ready` gate therefore dropped nearly every start while the
+      // matching `login_completed` — emitted once the SDK is up — still fired,
+      // which is why production showed completions against ~zero starts.
+      //
+      // With no persisted token there is no session to hydrate and the visitor
+      // is certainly signed out, so the start is real. With a token present we
+      // still say nothing: that session may be about to restore, and a start
+      // reported for it would open a funnel nothing closes.
+      //
+      // The two branches are told apart for the emitter: before the SDK loads
+      // the bridge's `login` is a noop and nothing replays the click, so the
+      // visitor sees nothing happen and clicks again once Privy is ready. That
+      // is one funnel opening reached by two clicks, and `emitLoginStarted`
+      // drops the second.
+      //
+      // The path is read from `window.location` rather than `usePathname()`,
+      // for the same reason the redirect effect above does: it is only ever
+      // consumed inside this callback, never rendered, so the hook bought
+      // nothing — and it is the last URL read in `useAuth`, which the navbar
+      // calls on every route, so unguarded it opts the whole app out of
+      // prerendering. Read at click time it is also the more accurate value
+      // for a funnel event than the path of whichever render created the
+      // callback.
+      const pathname = typeof window === "undefined" ? "" : window.location.pathname;
+
+      if (ready && (!authenticated || needsWalletReconnect)) {
+        emitLoginStarted(entryPoint, pathname);
+      } else if (!ready && !hasPersistedPrivySession()) {
+        emitLoginStarted(entryPoint, pathname, { beforePrivyReady: true });
       }
-    }
 
-    // If authenticated but wallet not connected via wagmi, force re-login only when
-    // the user has external wallets (not embedded). Embedded wallets (from Privy)
-    // may not register with wagmi, so treat wallets.length > 0 as effectively connected.
-    if (
-      !isConnected &&
-      authenticated &&
-      wallets.length > 0 &&
-      !wallets.some((w) => w.walletClientType === "privy")
-    ) {
-      shouldLoginAfterLogout.current = true;
-      await logout();
-      return;
-    }
-    // Don't call Privy's login() when already authenticated (e.g. Farcaster users
-    // with no wallet). Calling login() on an authenticated user triggers a
-    // "already logged in" warning and does nothing useful.
-    if (!authenticated) {
-      login();
-    }
-  }, [isConnected, authenticated, wallets.length, logout, login]);
+      if (typeof window !== "undefined" && !authenticated) {
+        const existingRedirect = getPostLoginRedirect();
+        if (!existingRedirect) {
+          setPostLoginRedirect(`${window.location.pathname}${window.location.hash}`);
+        }
+      }
+
+      // If authenticated but wallet not connected via wagmi, force re-login only when
+      // the user has external wallets (not embedded). Embedded wallets (from Privy)
+      // may not register with wagmi, so treat wallets.length > 0 as effectively connected.
+      if (needsWalletReconnect) {
+        shouldLoginAfterLogout.current = true;
+        // Not the user signing out: the session is torn down so wagmi can
+        // re-attach the external wallet, and the auto-login effect signs them
+        // straight back in.
+        await runLogout("wallet_reconnect", currentUserIdRef.current);
+        return;
+      }
+      // Don't call Privy's login() when already authenticated (e.g. Farcaster users
+      // with no wallet). Calling login() on an authenticated user triggers a
+      // "already logged in" warning and does nothing useful.
+      if (!authenticated) {
+        login();
+      }
+    },
+    [ready, authenticated, needsWalletReconnect, runLogout, login]
+  );
+
+  /**
+   * The logout handed to product code. Every *internal* logout above records
+   * its own reason; anything a component calls is the user asking to sign out.
+   * The event itself is emitted once, by `AnalyticsProvider`.
+   */
+  const trackedLogout = useCallback(() => runLogout("user", currentUserIdRef.current), [runLogout]);
 
   const connectedAndAuth = useMemo(() => {
     if (isE2EMockAuthenticated) {
@@ -518,13 +575,13 @@ export const useAuth = () => {
   return {
     // Core authentication (Privy handles everything)
     authenticate: adaptedLogin, // Just use Privy's login
-    disconnect: logout, // Just use Privy's logout
+    disconnect: trackedLogout,
 
     // State from Privy
     ready: effectiveReady,
     authenticated: connectedAndAuth,
     isConnected: effectiveIsConnected,
-    user,
+    user: effectiveUser,
     address,
     primaryWallet,
     wallets,
@@ -532,7 +589,7 @@ export const useAuth = () => {
 
     // Privy methods
     login: adaptedLogin,
-    logout,
+    logout: trackedLogout,
     getAccessToken,
     connectWallet, // Connect wallet without full login
 

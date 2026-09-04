@@ -1,4 +1,4 @@
-import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
+import { E2E_MOCK_USER_ID, getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 
 const STORAGE_KEY = "privy:auth_state";
 
@@ -62,7 +62,13 @@ describe("getE2EMockAuthState", () => {
 
     const result = getE2EMockAuthState();
 
-    expect(result).toEqual(authState);
+    // The DID is stamped on by the module, not taken from the fixture: without
+    // one, `AnalyticsProvider` has no id to identify and gates off every
+    // authenticated emission.
+    expect(result).toEqual({
+      ...authState,
+      user: { ...authState.user, id: E2E_MOCK_USER_ID },
+    });
   });
 
   // ── Playwright detected ─────────────────────────────────────────────────────
@@ -77,7 +83,13 @@ describe("getE2EMockAuthState", () => {
 
     const result = getE2EMockAuthState();
 
-    expect(result).toEqual(authState);
+    // The DID is stamped on by the module, not taken from the fixture: without
+    // one, `AnalyticsProvider` has no id to identify and gates off every
+    // authenticated emission.
+    expect(result).toEqual({
+      ...authState,
+      user: { ...authState.user, id: E2E_MOCK_USER_ID },
+    });
   });
 
   // ── Not authenticated ───────────────────────────────────────────────────────

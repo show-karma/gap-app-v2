@@ -16,6 +16,7 @@ import {
   type GrantMilestoneWithCompletion,
   type ProjectGrantMilestonesResponse,
 } from "@/services/milestones";
+import * as milestoneEvents from "@/utilities/analytics/emitters/milestone";
 import { isApiError } from "@/utilities/api/errors";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
 import { notifyIndexer } from "@/utilities/indexer-notification";
@@ -545,6 +546,7 @@ export const useMilestoneCompletionVerification = ({
         throw new Error("On-chain attestation was not confirmed");
       }
 
+      milestoneEvents.emitMilestoneVerified(milestone.uid);
       // Success callback - backend will sync to off-chain database automatically
       onSuccess?.();
     } catch (error: unknown) {
