@@ -280,12 +280,24 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
+      # --trace retain-on-failure, overriding the config's on-first-retry for
+      # this job only. on-first-retry captures the RETRY, and for a flaky test
+      # the retry is the attempt that PASSED — so the failure that we actually
+      # need to explain leaves no trace behind, only a screenshot. That is why
+      # run 33925367208's flake in test 6 could not be diagnosed.
+      # retain-on-failure records every attempt and keeps only the ones that
+      # failed, so the first reproduction is the one we get to read.
+      # Deliberately here and not in playwright.config.ts: scoped to this job,
+      # so no other suite's behaviour or artifact volume changes. The config
+      # already does the mirror-image override for the setup project, which
+      # never retries and so would never trigger on-first-retry at all.
       - name: Run instant-navigations suite against ${{ github.event.inputs.base_url }}
         run: |
           pnpm exec playwright test \
             --config e2e/playwright.config.ts \
             --project=chromium \
             --reporter=list,html,json \
+            --trace retain-on-failure \
             e2e/tests/instant
         env:
           CI: true
