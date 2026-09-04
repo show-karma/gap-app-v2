@@ -205,7 +205,7 @@ vi.mock("@/utilities/tailwind", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@/constants/brand", () => ({ PROJECT_NAME: "Karma GAP" }));
+vi.mock("@/constants/brand", () => ({ PROJECT_NAME: "Karma" }));
 
 describe("ContributorProfileDialog", () => {
   beforeEach(() => {

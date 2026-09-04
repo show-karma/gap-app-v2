@@ -12,7 +12,7 @@ export interface Nonprofit {
   tagline: string;
   cause: CauseId;
   emoji: string;
-  /** Karma GAP verified impact reporting */
+  /** Karma verified impact reporting */
   verified: boolean;
   impactNote: string;
   suggestedAmounts: number[];
