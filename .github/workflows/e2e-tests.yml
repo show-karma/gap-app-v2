@@ -231,7 +231,9 @@ jobs:
   # shards is exactly the number people misread. Every case in the suite skips
   # rather than fails when its data is missing, so a green run with skips is NOT
   # a pass — and because Playwright exits 0 on skips, that bar is ENFORCED by a
-  # step below rather than left to whoever reads the log.
+  # step below rather than left to whoever reads the log. The step pins the
+  # suite size rather than accepting any non-zero count, so a case removed from
+  # the suite cannot quietly lower the bar it is measured against.
   instant-navigations:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.instant_nav == 'true'
     runs-on: ubuntu-latest
@@ -297,11 +299,17 @@ jobs:
       # that never ran. That is the one failure that would make a tag decision
       # unsafe, so the bar is enforced here instead of being left to whoever
       # reads the log: zero skipped, zero failed, and at least one test run.
-      - name: Enforce the bar — 0 skipped, 0 failed
+      - name: Enforce the bar — 10/10, 0 skipped, 0 failed
         if: always()
         run: |
           node -e "
             const fs = require('fs');
+            // The size of e2e/tests/instant. Pinned, not counted: 'at least one
+            // test passed' cannot tell the suite passing from the suite
+            // shrinking, so a dropped case would silently move the bar. If you
+            // add or remove a navigation, change this number in the same
+            // commit — that is a deliberate act, not a maintenance detail.
+            const SUITE_SIZE = 10;
             const path = 'instant-results.json';
             if (!fs.existsSync(path)) {
               console.error('FAIL: no JSON report at ' + path + ' — the suite did not run at all.');
@@ -312,9 +320,9 @@ jobs:
             const skipped = stats.skipped || 0;
             const unexpected = stats.unexpected || 0;
             const flaky = stats.flaky || 0;
-            console.log('instant(): ' + expected + ' passed, ' + skipped + ' skipped, ' + unexpected + ' failed, ' + flaky + ' flaky');
+            console.log('instant(): ' + expected + ' passed, ' + skipped + ' skipped, ' + unexpected + ' failed, ' + flaky + ' flaky (bar: ' + SUITE_SIZE + '/' + SUITE_SIZE + ', 0 skipped)');
             const problems = [];
-            if (expected === 0) problems.push('no test ran');
+            if (expected !== SUITE_SIZE) problems.push(expected + ' passed, expected exactly ' + SUITE_SIZE);
             if (skipped > 0) problems.push(skipped + ' skipped (a skip is not a pass)');
             if (unexpected > 0) problems.push(unexpected + ' failed');
             if (flaky > 0) problems.push(flaky + ' flaky');
@@ -322,7 +330,7 @@ jobs:
               console.error('FAIL: ' + problems.join('; '));
               process.exit(1);
             }
-            console.log('PASS: ' + expected + '/' + expected + ' with 0 skipped.');
+            console.log('PASS: ' + SUITE_SIZE + '/' + SUITE_SIZE + ' with 0 skipped.');
           "
 
       - name: Upload instant() JSON report
