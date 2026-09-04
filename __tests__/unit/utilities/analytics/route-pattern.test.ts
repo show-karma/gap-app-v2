@@ -148,6 +148,35 @@ describe("toRoutePattern", () => {
   });
 });
 
+// A tenant that renames a section renames its URL, and usePathname reports the
+// URL the visitor sees. Left alone, one product screen would report under two
+// names split by tenant vocabulary, and every saved report on the old one would
+// quietly lose that tenant on deploy day.
+describe("whitelabel aliases, which name one screen twice", () => {
+  it("reports the alias as the route that serves it", () => {
+    expect(toRoutePattern("/browse-projects")).toBe("/browse-applications");
+  });
+
+  it("reports its sub-paths the same way", () => {
+    expect(toRoutePattern("/browse-projects/APP-1AB2CD3E-XY45")).toBe(
+      "/browse-applications/APP-1AB2CD3E-XY45"
+    );
+  });
+
+  it("keeps the trailing-slash form of the served route", () => {
+    expect(toRoutePattern("/browse-projects/")).toBe("/browse-applications");
+  });
+
+  it("groups the alias with the page it is an alias of", () => {
+    expect(toPageGroup("/browse-projects")).toBe("browse-applications");
+    expect(toPageGroup("/browse-projects")).toBe(toPageGroup("/browse-applications"));
+  });
+
+  it("leaves a path that merely starts the same alone", () => {
+    expect(toRoutePattern("/browse-projects-archive")).toBe("/browse-projects-archive");
+  });
+});
+
 describe("toPageGroup", () => {
   it.each([
     ["/", "home"],
