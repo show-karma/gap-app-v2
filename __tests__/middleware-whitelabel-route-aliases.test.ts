@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
+import { tenantNavigation } from "@/src/infrastructure/config/tenant-navigation-config";
+import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
 import { CANONICAL_HOST } from "@/utilities/domains";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
@@ -108,12 +110,49 @@ describe("whitelabel route aliases", () => {
     );
   });
 
+  // The route the alias sits next to, and the one a careless alias key would
+  // swallow: /projects is the funded-grants listing, a different page.
+  it("leaves /projects rewriting to the funded-projects listing", async () => {
+    const response = await respond("/projects");
+
+    expect(response?.headers.get("x-middleware-rewrite")).toBe(
+      `https://${host}/community/${slug}/projects`
+    );
+  });
+
   // The alias is a tenant's own name for the listing. On the canonical host the
   // same page is reached at /community/<slug>/browse-applications, and adding a
   // second URL for it there would be a duplicate for every community at once.
   it("does not exist on the canonical host", async () => {
     const response = await respond("/browse-projects", CANONICAL_HOST);
 
+    expect(response?.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(response?.headers.get("location")).toBeNull();
+  });
+
+  // The navbar entry and the tab have to name the same URL — that agreement is
+  // the whole point of the change, and a navbar href is exactly the kind of
+  // line an unrelated navigation edit retypes.
+  it("is where the tenant navbar's Projects Explorer points", () => {
+    const funding = tenantNavigation.filecoin?.items?.find((item) => item.label === "Funding");
+    const explorer = funding?.items?.find((item) => item.label === "Projects Explorer");
+
+    expect(explorer?.href).toBe("/browse-projects");
+    expect(EXPLORER_NAV_OVERRIDES.filecoin?.tabPaths?.["browse-applications"]).toBe(explorer?.href);
+  });
+
+  // Nor on another tenant's host: this is one community's word for the listing,
+  // not a second URL every whitelabel host quietly grows.
+  it("does not exist on a whitelabel host for another community", async () => {
+    const other = WHITELABEL_DOMAINS.find((entry) => entry.communitySlug !== slug);
+    if (!other) {
+      throw new Error("Expected a second community among WHITELABEL_DOMAINS.");
+    }
+
+    const response = await respond("/browse-projects", other.domain);
+
+    // Not a community sub-route segment there, so it passes through untouched
+    // and the app answers its own 404 — no rewrite onto browse-applications.
     expect(response?.headers.get("x-middleware-rewrite")).toBeNull();
     expect(response?.headers.get("location")).toBeNull();
   });

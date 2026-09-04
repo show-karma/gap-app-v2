@@ -218,7 +218,7 @@ export const CommunityPageNavigator = () => {
   return (
     <div className="flex flex-row flex-nowrap overflow-x-auto scrollbar-none pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max w-full">
       {visibleNavigationItems.map(({ id, path, Icon, showNewTag }) => {
-        const href = (override?.tabPaths?.[id] ?? path)(communityId);
+        const href = override?.tabPaths?.[id] ?? path(communityId);
         const active = id === activeItemId;
         return (
           <Link

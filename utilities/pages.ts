@@ -36,14 +36,6 @@ export const PAGES = {
     APPLICATION_SUCCESS: (community: string, applicationId: string) =>
       `/community/${community}/applications/${applicationId}/success`,
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
-    /**
-     * The same listing as {@link BROWSE_APPLICATIONS}, under the name a tenant
-     * that calls its applicants "projects" uses for it. Nothing renders here:
-     * the whitelabel rewrite resolves it back to `browse-applications` (see
-     * {@link WHITELABEL_ROUTE_ALIASES}), which is why the URL only exists on a
-     * whitelabel host.
-     */
-    BROWSE_PROJECTS: (community: string) => `/community/${community}/browse-projects`,
     CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
     REPORTS: (community: string) => `/community/${community}/reports`,
     /**
@@ -258,39 +250,6 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   "ask-karma",
   "manage",
 ]);
-
-/**
- * Clean-URL aliases on whitelabel hosts: the path a visitor sees on the left is
- * served by the community sub-route on the right, with no redirect and no
- * second copy of the page.
- *
- * A tenant whose vocabulary differs from the product's needs its own URL, not
- * only its own tab label — a link to "Projects Explorer" that lands on
- * `/browse-applications` reads as the wrong page before it has finished
- * loading. Aliasing keeps one route, one component and one set of tests, and
- * leaves `/browse-applications` working for everyone who already has the link.
- *
- * Whitelabel only, deliberately: on karmahq.org the same alias would put a
- * second URL in front of one page for every community at once, which is a
- * duplicate for search engines and a second answer to "where does this live".
- */
-export const WHITELABEL_ROUTE_ALIASES: ReadonlyMap<string, string> = new Map([
-  ["/browse-projects", "/browse-applications"],
-]);
-
-/**
- * Resolves a whitelabel clean path through {@link WHITELABEL_ROUTE_ALIASES},
- * sub-paths included (`/browse-projects/APP-1` -> `/browse-applications/APP-1`),
- * so an alias covers a section rather than a single URL. Returns the path
- * unchanged when nothing matches.
- */
-export function resolveWhitelabelRouteAlias(path: string): string {
-  for (const [alias, target] of WHITELABEL_ROUTE_ALIASES) {
-    if (path === alias || path === `${alias}/`) return target;
-    if (path.startsWith(`${alias}/`)) return `${target}${path.slice(alias.length)}`;
-  }
-  return path;
-}
 
 export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
   const sharedDomain = envVars.isDev

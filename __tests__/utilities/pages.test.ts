@@ -1,11 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import {
-  COMMUNITY_SUB_ROUTE_SEGMENTS,
-  PAGES,
-  resolveWhitelabelRouteAlias,
-  WHITELABEL_ROUTE_ALIASES,
-} from "@/utilities/pages";
+import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
+import { PAGES } from "@/utilities/pages";
 
 describe("PAGES constants", () => {
   describe("COMMUNITY.REPORT_DETAIL", () => {
@@ -25,45 +21,6 @@ describe("PAGES constants", () => {
       expect(PAGES.COMMUNITY.REPORT_DETAIL("filpgf", "2026-07-06", null)).toBe(
         "/community/filpgf/reports/2026-07-06"
       );
-    });
-  });
-
-  describe("whitelabel route aliases", () => {
-    it("resolves an alias to the route that serves it", () => {
-      expect(resolveWhitelabelRouteAlias("/browse-projects")).toBe("/browse-applications");
-    });
-
-    it("resolves the trailing-slash form too", () => {
-      expect(resolveWhitelabelRouteAlias("/browse-projects/")).toBe("/browse-applications");
-    });
-
-    it("carries sub-paths across, so an alias covers a section", () => {
-      expect(resolveWhitelabelRouteAlias("/browse-projects/APP-1AB2CD3E-XY45")).toBe(
-        "/browse-applications/APP-1AB2CD3E-XY45"
-      );
-    });
-
-    it("leaves a path that only starts with the alias alone", () => {
-      // A route named /browse-projects-archive is a different route, not a
-      // sub-path of the alias.
-      expect(resolveWhitelabelRouteAlias("/browse-projects-archive")).toBe(
-        "/browse-projects-archive"
-      );
-    });
-
-    it("leaves an unaliased path untouched", () => {
-      expect(resolveWhitelabelRouteAlias("/browse-applications")).toBe("/browse-applications");
-      expect(resolveWhitelabelRouteAlias("/impact")).toBe("/impact");
-      expect(resolveWhitelabelRouteAlias("/")).toBe("/");
-    });
-
-    // The rewrite prepends /community/<slug> only to a known sub-route segment,
-    // so an alias whose target is not one would resolve and then fall through
-    // to a 404 on the tenant host.
-    it("targets a real community sub-route", () => {
-      for (const target of WHITELABEL_ROUTE_ALIASES.values()) {
-        expect(COMMUNITY_SUB_ROUTE_SEGMENTS.has(target.split("/")[1] ?? "")).toBe(true);
-      }
     });
   });
 

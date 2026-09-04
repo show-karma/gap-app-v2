@@ -36,7 +36,6 @@ vi.mock("@/utilities/pages", () => ({
       REPORTS: (id: string) => `/community/${id}/reports`,
       FINANCIALS: (id: string) => `/community/${id}/financials`,
       BROWSE_APPLICATIONS: (id: string) => `/community/${id}/browse-applications`,
-      BROWSE_PROJECTS: (id: string) => `/community/${id}/browse-projects`,
     },
   },
 }));
@@ -48,9 +47,7 @@ vi.mock("@/utilities/community-flags", () => ({
     filecoin: {
       hiddenTabs: ["community-projects", "reports", "financials"],
       tabLabels: { "browse-applications": "Browse Projects" },
-      tabPaths: {
-        "browse-applications": (id: string) => `/community/${id}/browse-projects`,
-      },
+      tabPaths: { "browse-applications": "/browse-projects" },
     },
   },
 }));

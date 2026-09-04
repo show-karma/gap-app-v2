@@ -1,3 +1,5 @@
+import { WHITELABEL_ROUTE_ALIASES } from "@/utilities/whitelabel-routes";
+
 /**
  * Turns a concrete pathname into a low-cardinality route template.
  *
@@ -223,7 +225,32 @@ const isOpaqueSegment = (segment: string): boolean => {
 const ID_PLACEHOLDER = ":id";
 
 /** First path segment — the route family (`project`, `community`, …). */
-export const toPageGroup = (pathname: string): string => pathname.split("/")[1] || "home";
+/**
+ * Collapses a whitelabel alias onto the route that serves it, before anything
+ * else reads the path.
+ *
+ * A tenant that renames a section renames its URL (WHITELABEL_ROUTE_ALIASES),
+ * and `usePathname` returns the URL the visitor sees — the alias, because it is
+ * served by a rewrite. Without this, one product screen reports under two names
+ * split by tenant vocabulary, and every saved report filtering on the old one
+ * silently loses that tenant on deploy day.
+ *
+ * Deliberately blind to which community it is: a route report is about the
+ * screen, and the tenant is already its own property.
+ *
+ * The alias cannot simply be added to {@link ROUTE_TEMPLATES} instead — that
+ * table is checked against the `app/` tree, and an alias has no route file.
+ */
+const canonicalizeAlias = (pathname: string): string => {
+  for (const { from, to } of WHITELABEL_ROUTE_ALIASES) {
+    if (pathname === from || pathname === `${from}/`) return to;
+    if (pathname.startsWith(`${from}/`)) return `${to}${pathname.slice(from.length)}`;
+  }
+  return pathname;
+};
+
+export const toPageGroup = (pathname: string): string =>
+  canonicalizeAlias(pathname).split("/")[1] || "home";
 
 /**
  * The community id on `/community/[communityId]/...`, and only there. Community
@@ -243,8 +270,9 @@ export const toCommunityId = (pathname: string): string | null => {
  * redacted out of a route the table knows about.
  */
 export const toRoutePattern = (pathname: string): string => {
-  const trailingSlash = pathname.length > 1 && pathname.endsWith("/");
-  const segments = pathname.split("/").filter(Boolean);
+  const aliased = canonicalizeAlias(pathname);
+  const trailingSlash = aliased.length > 1 && aliased.endsWith("/");
+  const segments = aliased.split("/").filter(Boolean);
   const templated: string[] = [];
   let node: TemplateNode | null = TEMPLATE_TRIE;
 
