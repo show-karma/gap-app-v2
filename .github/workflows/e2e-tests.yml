@@ -291,7 +291,14 @@ jobs:
           CI: true
           BASE_URL: ${{ github.event.inputs.base_url }}
           INSTANT_NAV_E2E: '1'
-          PLAYWRIGHT_JSON_OUTPUT_NAME: instant-results.json
+          # ABSOLUTE, deliberately. Playwright resolves reporter output relative
+          # to the CONFIG directory (e2e/), not the workspace root, so a bare
+          # filename here lands somewhere the gate below and the upload steps do
+          # not look — which reads as "the suite did not run at all" for a suite
+          # that ran fine. Observed on run 33925367208.
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ github.workspace }}/instant-results.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: ${{ github.workspace }}/playwright-report-instant
+          PLAYWRIGHT_HTML_REPORT: ${{ github.workspace }}/playwright-report-instant
 
       # Playwright exits 0 when every test SKIPS, and every case in this suite
       # skips rather than fails when it cannot find its link — an empty or
@@ -310,7 +317,7 @@ jobs:
             // add or remove a navigation, change this number in the same
             // commit — that is a deliberate act, not a maintenance detail.
             const SUITE_SIZE = 10;
-            const path = 'instant-results.json';
+            const path = process.env.INSTANT_JSON;
             if (!fs.existsSync(path)) {
               console.error('FAIL: no JSON report at ' + path + ' — the suite did not run at all.');
               process.exit(1);
@@ -332,13 +339,15 @@ jobs:
             }
             console.log('PASS: ' + SUITE_SIZE + '/' + SUITE_SIZE + ' with 0 skipped.');
           "
+        env:
+          INSTANT_JSON: ${{ github.workspace }}/instant-results.json
 
       - name: Upload instant() JSON report
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: playwright-json-instant
-          path: instant-results.json
+          path: ${{ github.workspace }}/instant-results.json
           retention-days: 7
           if-no-files-found: ignore
 
@@ -347,7 +356,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: playwright-report-instant
-          path: e2e/playwright-report
+          path: ${{ github.workspace }}/playwright-report-instant
           retention-days: 7
           if-no-files-found: ignore
 
