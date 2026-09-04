@@ -6,6 +6,7 @@ import pluralize from "pluralize";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
+import { useRenderNow } from "@/utilities/render-clock-context";
 import { cn } from "@/utilities/tailwind";
 import { computeProgramView } from "./EditorialProgramCard";
 
@@ -32,7 +33,8 @@ export function FeaturedProgram({
   program: FundingProgram;
   communityId: string;
 }) {
-  const view = computeProgramView(program);
+  const now = useRenderNow();
+  const view = computeProgramView(program, now);
   const title = program.metadata?.title ?? program.name ?? "Featured program";
   const summary = program.metadata?.shortDescription ?? program.metadata?.description ?? "";
   const href = PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, program.programId);

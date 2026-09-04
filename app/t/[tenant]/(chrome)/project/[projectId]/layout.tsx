@@ -1,26 +1,69 @@
-/** ISR: revalidate project pages every 60 seconds for CDN caching */
-export const revalidate = 60;
+// `export const revalidate = 60` lived here — 60s CDN ISR for every project
+// page — until cacheComponents rejected the segment config. The caching now
+// sits on the loaders this layout and its pages read, as `"use cache"` +
+// `cacheLife("minutes")` (revalidate 60, the same ceiling) tagged per project:
+// see `services/project.cached.ts`. The React Query seed below is cached the
+// same way, because dehydrate() stamps entries with `Date.now()`.
 
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { unstable_rethrow } from "next/navigation";
 import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShareDialogMount";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { ProjectJsonLd } from "@/components/Seo/ProjectJsonLd";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
-import { projectUpdatesQueryKey } from "@/hooks/v2/useProjectUpdates";
-import { getProjectUpdates } from "@/services/project-updates.service";
+import { getProjectSeedCached } from "@/services/project.cached";
+import { getExplorerProjectsPaginatedCached } from "@/services/projects-explorer.cached";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { PAGES } from "@/utilities/pages";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { FALLBACK_PROJECT_SLUGS, withPrerenderFallback } from "@/utilities/prerender-samples";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 
 type Params = Promise<{
   projectId: string;
 }>;
+
+const PRERENDERED_PROJECT_SAMPLE = 3;
+
+/**
+ * A small sample of real projects, prerendered at build.
+ *
+ * With `generateStaticParams` present the layout may keep its top-level
+ * `await params`: the sample values are known at build time, and any other
+ * project renders on first request and is then persisted.
+ *
+ * The slugs are read from the explorer rather than hard-coded, so they are
+ * real on whichever environment is building instead of a list that silently
+ * rots when a project is renamed. A failure here degrades to prerendering no
+ * projects — never to a failed build, and never to a fabricated slug.
+ */
+export async function generateStaticParams(): Promise<Array<{ projectId: string }>> {
+  try {
+    const { payload } = await getExplorerProjectsPaginatedCached({
+      page: 1,
+      limit: PRERENDERED_PROJECT_SAMPLE,
+    });
+
+    const found = payload
+      .map((project) => project.details?.slug ?? project.uid)
+      .filter((slug): slug is string => Boolean(slug))
+      .slice(0, PRERENDERED_PROJECT_SAMPLE)
+      .map((projectId) => ({ projectId }));
+
+    return withPrerenderFallback(
+      found,
+      FALLBACK_PROJECT_SLUGS.slice(0, PRERENDERED_PROJECT_SAMPLE).map((projectId) => ({
+        projectId,
+      }))
+    );
+  } catch {
+    return FALLBACK_PROJECT_SLUGS.slice(0, PRERENDERED_PROJECT_SAMPLE).map((projectId) => ({
+      projectId,
+    }));
+  }
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   // Skip server-side API calls during E2E tests — the staging API may be
@@ -48,38 +91,6 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return generateProjectOverviewMetadata(projectInfo, projectId);
 }
 
-/**
- * Prefetch what the first paint needs: the project record (the client shell
- * drops `children` without it) and the default Updates feed.
- *
- * Grants and impacts stay off the critical path — they render only in
- * client-only tab bodies and produce no server HTML. Failures are swallowed;
- * client hooks refetch.
- */
-async function safePrefetchProjectData(queryClient: QueryClient, projectId: string): Promise<void> {
-  try {
-    await Promise.all([
-      queryClient.prefetchQuery({
-        queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
-        queryFn: () => getProjectCachedData(projectId),
-      }),
-      queryClient.prefetchQuery({
-        // Same key factory the hook uses — a hand-written key silently misses
-        // (that is exactly how the previous updates prefetch became a no-op).
-        queryKey: projectUpdatesQueryKey(projectId),
-        queryFn: () => getProjectUpdates(projectId),
-        staleTime: 5 * 60 * 1000,
-      }),
-    ]);
-  } catch (error) {
-    // Catch any unexpected errors to prevent page from breaking
-    if (process.env.NODE_ENV === "development") {
-      console.error(`[ProjectLayout] Unexpected error during prefetch for ${projectId}:`, error);
-    }
-    // Continue without prefetched data - client-side hooks will fetch as fallback
-  }
-}
-
 export default async function RootLayout(props: {
   children: React.ReactNode;
   params: Promise<{ projectId: string }>;
@@ -89,21 +100,15 @@ export default async function RootLayout(props: {
 
   const { children } = props;
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: defaultQueryOptions,
-    },
-  });
-
   // Prefetch the project record and the default Updates feed.
   // Failures are logged but don't break the page - client hooks will fetch as fallback
   // Skip prefetch during E2E tests — the staging API may be behind Cloudflare,
   // and a server-side prefetch failure gets cached by React Query, preventing
   // client-side refetch (which Cypress CAN intercept).
+  // The seed is built inside `"use cache"` — React Query stamps its entries
+  // with `Date.now()`, which cacheComponents rejects during prerender.
   const isE2E = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true";
-  if (!isE2E) {
-    await safePrefetchProjectData(queryClient, projectId);
-  }
+  const dehydratedState = isE2E ? undefined : await getProjectSeedCached(projectId);
 
   // Structured data for crawlers. `getProjectCachedData` is memoized (react
   // `cache`) and already resolved during `generateMetadata`, so this reuses the
@@ -125,7 +130,7 @@ export default async function RootLayout(props: {
   const canonicalSlug = projectInfo?.details?.slug || projectId;
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary state={dehydratedState}>
       {projectInfo?.details?.title ? (
         <>
           <ProjectJsonLd project={projectInfo} slug={canonicalSlug} />

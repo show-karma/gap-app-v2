@@ -1,9 +1,7 @@
+import { cacheLife } from "next/cache";
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/utilities/meta";
 import { WELL_KNOWN_CORS_HEADERS, WELL_KNOWN_PREFLIGHT_HEADERS } from "@/utilities/wellKnown";
-
-export const dynamic = "force-static";
-export const revalidate = 3600;
 
 /**
  * A2A (Agent-to-Agent) Agent Card discovery document.
@@ -20,7 +18,10 @@ export const revalidate = 3600;
  * a hand-curated list that drifts from reality.
  */
 
-export function GET() {
+async function buildBody() {
+  "use cache";
+  cacheLife("hours");
+
   // Ora and similar AEO crawlers look at the root for `name` and
   // `description`, while A2A consumers expect the nested `agent` envelope.
   // We expose both — same values, no drift.
@@ -58,7 +59,11 @@ export function GET() {
     },
   };
 
-  return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });
+  return body;
+}
+
+export async function GET() {
+  return NextResponse.json(await buildBody(), { headers: WELL_KNOWN_CORS_HEADERS });
 }
 
 export async function OPTIONS() {

@@ -198,7 +198,9 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
    * as a hidden `<div hidden id="S:n">` chunk.
    */
   async function renderFindFunders(): Promise<{ pageHtml: string }> {
-    const { default: Page } = await import("@/app/t/[tenant]/(bare)/nonprofits/find-funders/page");
+    const { default: Page } = await import(
+      "@/app/t/[tenant]/(bare)/nonprofits/find-funders/(landing-nav)/page"
+    );
     return { pageHtml: renderToString(Page()) };
   }
 
@@ -234,7 +236,9 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
   });
 
   it("self-canonicals at its own path", async () => {
-    const { metadata } = await import("@/app/t/[tenant]/(bare)/nonprofits/find-funders/page");
+    const { metadata } = await import(
+      "@/app/t/[tenant]/(bare)/nonprofits/find-funders/(landing-nav)/page"
+    );
 
     expect(canonicalOf(metadata)).toBe("/nonprofits/find-funders");
   });
@@ -342,18 +346,20 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
 
     for (const forbidden of [
       "loading.tsx",
-      "connect/loading.tsx",
-      "connect/claude/loading.tsx",
-      "connect/chatgpt/loading.tsx",
+      "(landing-nav)/loading.tsx",
+      "(workbench-nav)/loading.tsx",
+      "(workbench-nav)/connect/loading.tsx",
+      "(workbench-nav)/connect/claude/loading.tsx",
+      "(workbench-nav)/connect/chatgpt/loading.tsx",
     ]) {
       expect(fs.existsSync(path.join(segment, forbidden)), forbidden).toBe(false);
     }
 
     for (const subroute of [
-      "search/[id]/loading.tsx",
-      "foundations/[id]/loading.tsx",
-      "grants/[id]/loading.tsx",
-      "nonprofits/[id]/loading.tsx",
+      "(workbench-nav)/search/[id]/loading.tsx",
+      "(workbench-nav)/foundations/[id]/loading.tsx",
+      "(workbench-nav)/grants/[id]/loading.tsx",
+      "(workbench-nav)/nonprofits/[id]/loading.tsx",
     ]) {
       expect(fs.existsSync(path.join(segment, subroute)), subroute).toBe(true);
     }

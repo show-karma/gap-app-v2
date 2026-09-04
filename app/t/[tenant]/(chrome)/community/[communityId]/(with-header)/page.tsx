@@ -12,13 +12,12 @@ import {
   type CommunityProjectsSearchParams,
   DEFAULT_COMMUNITY_SORT,
   mapSortToApiValue,
-  parseCommunityProjectsPage,
 } from "@/utilities/queries/v2/communityProjectsRequest";
 import {
-  getCommunityCategories,
-  getCommunityDetails,
-  getCommunityProjects,
-} from "@/utilities/queries/v2/getCommunityData";
+  getCommunityCategoriesCached,
+  getCommunityDetailsCached,
+  getCommunityProjectsCached,
+} from "@/utilities/queries/v2/getCommunityData.cached";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 type Props = {
@@ -30,7 +29,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { communityId } = await params;
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   return {
@@ -39,18 +38,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// Filter query params the client hub reads through nuqs. When any is present
-// the server payload (fetched unfiltered) is not what the page renders — the
-// client refetches with the filters applied — so the JSON-LD ItemList below
-// must not describe it (DEV-596).
-const FILTER_SEARCH_PARAMS = [
-  "categories",
-  "sortBy",
-  "maturityStage",
-  "programId",
-  "trackIds",
-] as const;
-
 export default async function Page(props: Props) {
   const { communityId } = await props.params;
 
@@ -58,16 +45,17 @@ export default async function Page(props: Props) {
     return undefined;
   }
 
-  // Fetch the exact request the client's first query would issue (page + explicit
-  // sort) so the server payload can seed React Query instead of being replaced by
-  // a differently-ordered refetch.
-  const searchParams = (await props.searchParams) ?? {};
-  const page = parseCommunityProjectsPage(searchParams);
+  // `searchParams` is deliberately NOT read. It is runtime data, and reading it
+  // at the top level of this crawlable route blocks the prerender outright —
+  // the build named this exact line. The page-1 grid is what a crawler should
+  // index anyway; `?page` is handled client-side after hydration, the same
+  // shape /projects uses.
+  const page = 1;
 
   const [communityDetails, categories, initialProjects] = await Promise.all([
-    getCommunityDetails(communityId),
-    getCommunityCategories(communityId),
-    getCommunityProjects(communityId, {
+    getCommunityDetailsCached(communityId),
+    getCommunityCategoriesCached(communityId),
+    getCommunityProjectsCached(communityId, {
       page,
       limit: COMMUNITY_PROJECTS_PAGE_SIZE,
       sortBy: mapSortToApiValue(DEFAULT_COMMUNITY_SORT),
@@ -88,13 +76,16 @@ export default async function Page(props: Props) {
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
   // JSON-LD ItemList of exactly the project entities the server renders
-  // (DEV-596): the seeded page of the hub, in its rendered order. With filter
-  // params in the URL the server ships a skeleton (the seed is rejected), so
-  // no schema ships either.
-  const hasFilterParams = FILTER_SEARCH_PARAMS.some((key) => searchParams[key] !== undefined);
-  const listedProjects = hasFilterParams
-    ? []
-    : (initialProjects?.payload ?? []).filter((project) => Boolean(project.details?.title));
+  // (DEV-596): the seeded page of the hub, in its rendered order.
+  //
+  // The old filter check read `searchParams` to decide whether a seed was
+  // rejected. The server no longer reads the URL at all — it always renders the
+  // unfiltered page 1 — so the entities it renders are always the seeded ones
+  // and the schema always describes what is on the page. Filtering happens
+  // client-side after hydration, which crawlers do not see.
+  const listedProjects = (initialProjects?.payload ?? []).filter((project) =>
+    Boolean(project.details?.title)
+  );
 
   // On a tenant domain the schema must describe the tenant's own URLs, not the
   // Karma-branded ones these PAGES helpers build.

@@ -32,14 +32,18 @@ async function fetchGrantForSeo(id: string): Promise<GrantSeoData | null> {
   }
 }
 
+// Hoisted: constructing an Intl formatter is the expensive part, and this one
+// never varies by argument.
+const USD_WHOLE = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
 function formatCurrencySimple(amount: number | null | undefined): string {
   if (amount == null) return "";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return USD_WHOLE.format(amount);
 }
 
 export async function generateMetadata({

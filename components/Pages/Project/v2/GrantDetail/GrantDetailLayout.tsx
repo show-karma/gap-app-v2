@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
@@ -17,6 +17,9 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 interface GrantDetailLayoutProps {
+  /** From the server segment; see the note in the component. */
+  projectId: string;
+  grantUid: string;
   children: React.ReactNode;
 }
 
@@ -32,13 +35,16 @@ function getActiveTab(pathname: string): GrantTab {
   return "overview";
 }
 
-export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
-  const params = useParams();
+export function GrantDetailLayout({ children, projectId, grantUid }: GrantDetailLayoutProps) {
+  // `projectId` and `grantUid` arrive as props from the server segment rather
+  // than from `useParams()`. Under cacheComponents a client-side URL read is
+  // runtime data — `digest: CLIENT_HOOK_DYNAMIC` — and the server layout
+  // already has both values, so reading them again on the client bought
+  // nothing and cost the prerender.
   const pathname = usePathname();
   const router = useRouter();
 
-  const projectIdFromUrl = params.projectId as string;
-  const grantUid = params.grantUid as string;
+  const projectIdFromUrl = projectId;
 
   const grant = useGrantStore((state) => state.grant);
   const setGrant = useGrantStore((state) => state.setGrant);

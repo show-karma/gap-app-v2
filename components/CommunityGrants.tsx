@@ -1,21 +1,24 @@
 "use client";
 import type { InfiniteData } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useCommunityProjectsInfinite } from "@/hooks/useCommunityProjectsInfinite";
-import { useProjectFilters } from "@/hooks/useProjectFilters";
 import { useCommunityStore } from "@/store/community";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import type { CommunityProjects } from "@/types/v2/community";
-import { CategoryFilter } from "./CommunityGrants/CategoryFilter";
+import { useRenderedAt } from "@/utilities/render-clock-context";
+import {
+  CommunityGrantsToolbar,
+  CommunityGrantsToolbarSkeleton,
+} from "./CommunityGrants/CommunityGrantsToolbar";
 import { CrawlableCommunityPagination } from "./CommunityGrants/CrawlableCommunityPagination";
-import { MaturityStageFilter } from "./CommunityGrants/MaturityStageFilter";
+import {
+  type CommunityProjectFilters,
+  sameCommunityProjectFilters,
+} from "./CommunityGrants/communityProjectFilters";
 import { ProjectsGrid } from "./CommunityGrants/ProjectsGrid";
 import { ProjectsGridSkeleton } from "./CommunityGrants/ProjectsGridSkeleton";
-import { SortFilter } from "./CommunityGrants/SortFilter";
-import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
-import { TrackFilter } from "./Pages/Communities/Impact/TrackFilter";
 import { ProgramBanner } from "./ProgramBanner";
 import { errorManager } from "./Utilities/errorManager";
 
@@ -32,9 +35,15 @@ interface CommunityGrantsProps {
   paginationBasePath: string;
 }
 
-const sameStringList = (a: readonly string[], b: readonly string[]) =>
-  a.length === b.length && a.every((value, index) => value === b[index]);
-
+/**
+ * The community hub's project grid.
+ *
+ * The grid is the crawlable content of a Cache-class route, so it renders from
+ * the server's defaults without reading the URL: every URL read lives in
+ * `CommunityGrantsToolbar` behind a Suspense boundary, and reaches the grid as
+ * state after hydration. Until then the seeded page 1 is what the reader sees
+ * — which is also exactly what a crawler and a no-JS reader see.
+ */
 export const CommunityGrants = ({
   categoriesOptions,
   defaultSelectedCategories,
@@ -49,32 +58,36 @@ export const CommunityGrants = ({
   const communityId = params.communityId as string;
   const { setFilteredStats, setIsLoadingFilters } = useCommunityStore();
 
-  const {
-    selectedCategories,
-    selectedSort,
-    selectedMaturityStage,
-    selectedProgramId,
-    selectedTrackIds,
-    changeCategories,
-    changeSort,
-    changeMaturityStage,
-    changeProgramId,
-    changeTrackIds,
-  } = useProjectFilters({
-    defaultSelectedCategories,
-    defaultSortBy,
-    defaultSelectedMaturityStage,
-  });
+  const defaultFilters = useMemo<CommunityProjectFilters>(
+    () => ({
+      categories: defaultSelectedCategories,
+      sortBy: defaultSortBy,
+      maturityStage: defaultSelectedMaturityStage,
+      programId: null,
+      trackIds: null,
+      page: initialPage,
+    }),
+    [defaultSelectedCategories, defaultSortBy, defaultSelectedMaturityStage, initialPage]
+  );
+
+  const [filters, setFilters] = useState<CommunityProjectFilters>(defaultFilters);
+  // Stable by construction, and it swallows no-op updates so the toolbar's
+  // mount effect cannot re-render the grid for a URL that says nothing new.
+  const handleFiltersChange = useCallback((next: CommunityProjectFilters) => {
+    setFilters((prev) => (sameCommunityProjectFilters(prev, next) ? prev : next));
+  }, []);
 
   // The server renders the hub with the filters at their defaults. Only seed the
-  // cache while the live URL state still matches, otherwise a filtered view
+  // cache while the live filter state still matches, otherwise a filtered view
   // would show the unfiltered server payload.
-  const matchesInitialState =
-    selectedSort === defaultSortBy &&
-    selectedMaturityStage === defaultSelectedMaturityStage &&
-    !selectedProgramId &&
-    !selectedTrackIds?.length &&
-    sameStringList(selectedCategories, defaultSelectedCategories);
+  const matchesInitialState = sameCommunityProjectFilters(filters, defaultFilters);
+  // Crawlable Previous/Next is only meaningful for the unfiltered view —
+  // filtered views stay client-only. `page` is not a filter for this purpose:
+  // a deep page is still the unfiltered list.
+  const isUnfiltered = sameCommunityProjectFilters(
+    { ...filters, page: defaultFilters.page },
+    defaultFilters
+  );
 
   // `getCommunityProjects` swallows every failure into an empty page, so an
   // empty payload is indistinguishable from an indexer blip — don't seed it, and
@@ -86,18 +99,20 @@ export const CommunityGrants = ({
         : undefined,
     [matchesInitialState, initialProjects, initialPage]
   );
+  const seededAt = useRenderedAt();
 
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isRefetching } =
     useCommunityProjectsInfinite({
       communityId,
-      sortBy: selectedSort,
-      categories: selectedCategories,
-      maturityStage: selectedMaturityStage,
-      programId: selectedProgramId,
-      trackIds: selectedTrackIds,
+      sortBy: filters.sortBy,
+      categories: filters.categories,
+      maturityStage: filters.maturityStage,
+      programId: filters.programId,
+      trackIds: filters.trackIds,
       enabled: !!communityId,
       initialData: seededData,
-      initialPage: matchesInitialState ? initialPage : 1,
+      initialDataUpdatedAt: seededAt,
+      initialPage: filters.page,
     });
 
   // Check if we're loading due to filter changes. Every filter is part of the
@@ -127,11 +142,9 @@ export const CommunityGrants = ({
     return data.pages[0].pagination.totalCount;
   }, [data?.pages, initialProjects.pagination.totalCount]);
 
-  // Crawlable Previous/Next is only meaningful for the unfiltered, server-rendered
-  // view — filtered views stay client-only.
   const totalPages =
     data?.pages?.[0]?.pagination.totalPages ?? initialProjects.pagination.totalPages;
-  const showCrawlablePagination = matchesInitialState && projects.length > 0;
+  const showCrawlablePagination = isUnfiltered && projects.length > 0;
 
   useEffect(() => {
     // Update loading state in the store
@@ -152,13 +165,13 @@ export const CommunityGrants = ({
   useEffect(() => {
     if (error) {
       errorManager("Error while fetching community projects", error, {
-        sortBy: selectedSort,
-        categories: selectedCategories,
-        selectedProgramId: selectedProgramId || undefined,
-        selectedTrackIds: selectedTrackIds || undefined,
+        sortBy: filters.sortBy,
+        categories: filters.categories,
+        selectedProgramId: filters.programId || undefined,
+        selectedTrackIds: filters.trackIds || undefined,
       });
     }
-  }, [error, selectedSort, selectedCategories, selectedProgramId, selectedTrackIds]);
+  }, [error, filters.sortBy, filters.categories, filters.programId, filters.trackIds]);
 
   const loadMore = useCallback(() => {
     if (!isFetchingNextPage && hasNextPage) {
@@ -182,75 +195,27 @@ export const CommunityGrants = ({
     return () => clearTimeout(timeoutId);
   }, [hasNextPage, loadMore, isFilterLoading, isFetchingNextPage]);
 
-  const handleCategoryChange = useCallback(
-    (categories: string[]) => {
-      changeCategories(categories);
-    },
-    [changeCategories]
-  );
-
-  const handleSortChange = useCallback(
-    (sort: SortByOptions) => {
-      changeSort(sort);
-    },
-    [changeSort]
-  );
-
-  const handleMaturityStageChange = useCallback(
-    (stage: MaturityStageOptions) => {
-      changeMaturityStage(stage);
-    },
-    [changeMaturityStage]
-  );
-
-  const handleProgramChange = useCallback(
-    (programId: string | null) => {
-      changeProgramId(programId);
-    },
-    [changeProgramId]
-  );
-
-  const handleTrackChange = useCallback(
-    (trackIds: string[] | null) => {
-      changeTrackIds(trackIds);
-    },
-    [changeTrackIds]
-  );
-
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
-        <div className="flex items-stretch sm:items-end gap-x-3 flex-wrap gap-y-3 w-full">
-          <ProgramFilter onChange={handleProgramChange} />
-
-          <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-y-3 gap-x-8 justify-start flex-wrap sm:pb-3">
-            {selectedProgramId && (
-              <TrackFilter
-                onChange={handleTrackChange}
-                communityUid={communityUid}
-                selectedTrackIds={selectedTrackIds || []}
-              />
-            )}
-
-            <CategoryFilter
-              categories={categoriesOptions}
-              selectedCategories={selectedCategories}
-              onChange={handleCategoryChange}
-            />
-
-            <SortFilter selectedSort={selectedSort} onChange={handleSortChange} />
-
-            {communityId === "celo" && (
-              <MaturityStageFilter
-                selectedMaturityStage={selectedMaturityStage}
-                onChange={handleMaturityStageChange}
-              />
-            )}
-          </div>
-        </div>
+        {/* The toolbar and the program banner are the URL readers; they stream
+            in behind their own boundaries so the grid below does not. */}
+        <Suspense fallback={<CommunityGrantsToolbarSkeleton />}>
+          <CommunityGrantsToolbar
+            categoriesOptions={categoriesOptions}
+            communityId={communityId}
+            communityUid={communityUid}
+            defaultSelectedCategories={defaultSelectedCategories}
+            defaultSortBy={defaultSortBy}
+            defaultSelectedMaturityStage={defaultSelectedMaturityStage}
+            onFiltersChange={handleFiltersChange}
+          />
+        </Suspense>
       </div>
 
-      <ProgramBanner />
+      <Suspense fallback={null}>
+        <ProgramBanner />
+      </Suspense>
 
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">
@@ -272,9 +237,9 @@ export const CommunityGrants = ({
           {showCrawlablePagination && (
             <CrawlableCommunityPagination
               basePath={paginationBasePath}
-              currentPage={initialPage}
-              hasPrev={initialPage > 1}
-              hasNext={initialPage < totalPages}
+              currentPage={filters.page}
+              hasPrev={filters.page > 1}
+              hasNext={filters.page < totalPages}
             />
           )}
 

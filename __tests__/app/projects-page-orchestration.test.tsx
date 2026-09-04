@@ -37,11 +37,13 @@ vi.mock("@/components/Pages/Projects", () => ({
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-const runPage = async (params: SearchParams): Promise<ReactElement> => {
-  const pageFn = Projects as unknown as (props: {
-    searchParams: Promise<SearchParams>;
-  }) => Promise<ReactElement>;
-  return pageFn({ searchParams: Promise.resolve(params) });
+// The page takes no props any more: reading `searchParams` at the top level of a
+// crawlable route is runtime data and blocks the prerender under
+// cacheComponents. `params` is still accepted here so the callers below read as
+// before, and is deliberately ignored — that it has no effect is the point.
+const runPage = async (_params: SearchParams = {}): Promise<ReactElement> => {
+  const pageFn = Projects as unknown as () => ReactElement | Promise<ReactElement>;
+  return pageFn();
 };
 
 /**
@@ -112,10 +114,13 @@ describe("app/projects/page.tsx server orchestration", () => {
     vi.clearAllMocks();
   });
 
-  it("awaits searchParams, fetches page 3 exactly once in the deferred child, and seeds the explorer", async () => {
+  it("ignores searchParams and seeds the explorer with the default, unfiltered list", async () => {
     const response = buildResponse();
     getExplorerProjectsPaginatedMock.mockResolvedValueOnce(response);
 
+    // Filters in the URL must not change what the server renders: this route is
+    // crawlable, so it prerenders the default list and the client swaps in the
+    // filtered one after hydration.
     const page = await runPage({
       page: "3",
       q: "dao",
@@ -125,26 +130,25 @@ describe("app/projects/page.tsx server orchestration", () => {
     });
     const explorer = await resolveExplorer(page);
 
-    // Exactly one server-side fetch, with the effective first-page request.
     expect(getExplorerProjectsPaginatedMock).toHaveBeenCalledTimes(1);
     expect(getExplorerProjectsPaginatedMock).toHaveBeenCalledWith({
-      search: "dao",
-      page: 3,
+      search: "",
+      page: 1,
       limit: PROJECTS_EXPLORER_CONSTANTS.RESULT_LIMIT,
-      sortBy: "title",
-      sortOrder: "asc",
+      sortBy: "updatedAt",
+      sortOrder: "desc",
       includeStats: true,
-      hasPayoutAddress: true,
+      hasPayoutAddress: false,
     });
 
     const props = explorer.props as Record<string, unknown>;
     expect(props.initialData).toEqual(response);
     expect(props.initialState).toEqual({
-      page: 3,
-      q: "dao",
-      sortBy: "title",
-      sortOrder: "asc",
-      raisingFunds: true,
+      page: 1,
+      q: "",
+      sortBy: "updatedAt",
+      sortOrder: "desc",
+      raisingFunds: false,
     });
   });
 

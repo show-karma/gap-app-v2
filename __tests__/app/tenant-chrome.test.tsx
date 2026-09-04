@@ -111,10 +111,7 @@ describe("TenantThemeStyle", () => {
    * colour back in dark mode, silently.
    */
   it("stays winnable: globals.css declares --primary only at :root and .dark", () => {
-    const css = readFileSync(
-      path.resolve(__dirname, "..", "..", "styles", "globals.css"),
-      "utf8"
-    );
+    const css = readFileSync(path.resolve(__dirname, "..", "..", "styles", "globals.css"), "utf8");
 
     // `{` counts as a delimiter too: the :root block opens inside `@layer base{`.
     const selectors = [...css.matchAll(/(^|[{}])\s*([^{}]+?)\s*\{[^{}]*--primary\s*:/g)].map((m) =>

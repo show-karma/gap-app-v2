@@ -5,6 +5,12 @@ import { getPublicScorecardBySlug } from "@/src/features/scanner/services/scanne
 import type { PublicScorecardPayload } from "@/src/features/scanner/types";
 import { PAGES } from "@/utilities/pages";
 
+// Block class. A public scorecard is addressed by an opaque slug that acts as
+// the capability to view it, so the segment is opted out of instant navigation
+// rather than painted from a prefetched shell. Only legal with
+// `cacheComponents` enabled.
+export const instant = false;
+
 interface PageProps {
   readonly params: Promise<{ slug: string }>;
 }

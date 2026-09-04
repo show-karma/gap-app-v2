@@ -157,8 +157,11 @@ describe("PublicControlCenter", () => {
 
     render(<PublicControlCenter />, { wrapper });
 
-    // Table should still render — community details don't block it
-    expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
+    // Table should still render — community details don't block it. The KPI
+    // strip stands in for the page heading here: the heading moved up to the
+    // route's server component so it prerenders, and this component now owns
+    // only the data-derived half of what the hero used to show.
+    expect(screen.getByText("Tracked grants")).toBeInTheDocument();
     expect(screen.queryByTestId("control-center-table")).toBeInTheDocument();
   });
 
@@ -203,15 +206,23 @@ describe("PublicControlCenter", () => {
     expect(screen.getByText("Retry")).toBeInTheDocument();
   });
 
-  it("renders 'Commitments & Disbursements' title and subtitle", () => {
+  // The 'Commitments & Disbursements' heading and its subtitle are NOT asserted
+  // here any more: they moved into the route's server component so the <h1>
+  // lands in the prerendered shell instead of a streamed chunk, and
+  // community-cover-group.test.tsx asserts them there — including that the page
+  // still owns exactly one <h1>. What stayed behind is the KPI strip, whose
+  // four counts are derived from the payouts this component loads.
+  it("renders the four KPI counts the heading used to carry", () => {
     render(<PublicControlCenter />, { wrapper });
 
-    expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Overview of grants, agreements, milestones, and disbursements made through programs in this community."
-      )
-    ).toBeInTheDocument();
+    for (const label of [
+      "Tracked grants",
+      "Signed agreements",
+      "Disbursements",
+      "Awaiting action",
+    ]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
   });
 
   it("renders FilterToolbar", () => {

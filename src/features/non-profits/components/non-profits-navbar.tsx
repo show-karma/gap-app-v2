@@ -7,7 +7,7 @@
  * karmagrants.org). Adaptations for gap-app-v2:
  * - Brand: "Karma Find Funders" — the Karma logo (next/image) sits in for the original mark.
  * - Router/links: TanStack Router → next/link + NON_PROFITS_PAGES constants.
- * - Homepage detection: useMatch → usePathname.
+ * - Homepage detection: useMatch → an `isHomepage` prop from the route tree.
  * - Theme: grant-atlas ThemeProvider → next-themes.
  * - Auth: grant-atlas useAuth → gap-app-v2 @/hooks/useAuth (Privy).
  * - Bookmarks: research-tray store → useResearchTray React Query hook.
@@ -20,7 +20,6 @@ import { Bookmark, HelpCircle, Moon, Sun } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,7 +28,7 @@ import {
   useNavbarPermissions,
 } from "@/src/components/navbar/navbar-permissions-context";
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
-import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
+import { PAGES } from "@/utilities/pages";
 import { useResearchTray } from "../hooks/use-research-tray";
 import { FILINGS_STATS } from "../lib/stats";
 import { BookmarksDrawer } from "./bookmarks-drawer";
@@ -100,11 +99,20 @@ function AuthArea({ onLogin }: { onLogin: () => void }) {
 
 // ── Navbar ────────────────────────────────────────────────────────────────────
 
-export function NonProfitsNavbar() {
+/**
+ * `isHomepage` is a prop, not a `usePathname()` test.
+ *
+ * This navbar renders above the page on every find-funders route, so a URL
+ * read here is runtime data outside a boundary and no route below it can
+ * prerender (CLIENT_HOOK_DYNAMIC) -- which is what kept the four detail
+ * routes under this section off the prerender list. The answer is static per
+ * route, so the route tree supplies it: `(landing-nav)` passes it,
+ * `(workbench-nav)` does not. Defaulting to false keeps every other caller
+ * (the deep-research section) on the non-landing variant it already had.
+ */
+export function NonProfitsNavbar({ isHomepage = false }: { isHomepage?: boolean }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const { authenticated, login } = useAuth();
-  const pathname = usePathname();
-  const isHomepage = pathname === NON_PROFITS_PAGES.HOME;
   const { data: bookmarks = [] } = useResearchTray();
   const bookmarkCount = bookmarks.length;
   const [drawerOpen, setDrawerOpen] = useState(false);
