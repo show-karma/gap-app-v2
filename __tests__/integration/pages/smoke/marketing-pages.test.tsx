@@ -217,7 +217,7 @@ beforeEach(() => {
 
 describe("/foundations marketing page", () => {
   it("renders all foundation sections", async () => {
-    await renderPage(() => import("@/app/foundations/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/foundations/page"));
     [
       "foundations-hero",
       "home-pain-points",
@@ -239,7 +239,7 @@ describe("/foundations marketing page", () => {
 
 describe("/ marketing page (funder workflow)", () => {
   it("renders hero and the workflow section", async () => {
-    await renderPage(() => import("@/app/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/page"));
     expect(screen.getByTestId("home-hero")).toBeInTheDocument();
     expect(screen.getByTestId("home-workflow")).toBeInTheDocument();
   });
@@ -247,7 +247,7 @@ describe("/ marketing page (funder workflow)", () => {
 
 describe("/nonprofits marketing page", () => {
   it("renders hero, profile preview, features, free tools, cta", async () => {
-    await renderPage(() => import("@/app/nonprofits/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/nonprofits/page"));
     [
       "nonprofits-hero",
       "nonprofits-profile-preview",
@@ -262,7 +262,7 @@ describe("/nonprofits marketing page", () => {
 
 describe("/donor-advisors marketing page", () => {
   it("renders hero, features, cta", async () => {
-    await renderPage(() => import("@/app/donor-advisors/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/donor-advisors/page"));
     ["donor-advisors-hero", "donor-advisors-features", "donor-advisors-cta"].forEach((id) => {
       expect(screen.getByTestId(id)).toBeInTheDocument();
     });
@@ -271,7 +271,7 @@ describe("/donor-advisors marketing page", () => {
 
 describe("/funders marketing page", () => {
   it("renders all funder sections", async () => {
-    await renderPage(() => import("@/app/funders/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/funders/page"));
     [
       "funders-hero",
       "funders-numbers",
@@ -289,7 +289,7 @@ describe("/funders marketing page", () => {
 
 describe("/for-projects marketing page", () => {
   it("renders core homepage feature sections", async () => {
-    await renderPage(() => import("@/app/for-projects/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/for-projects/page"));
     expect(screen.getByTestId("homepage-hero")).toBeInTheDocument();
     expect(screen.getByTestId("homepage-platform-features")).toBeInTheDocument();
     expect(screen.getByTestId("homepage-faq")).toBeInTheDocument();
@@ -298,7 +298,7 @@ describe("/for-projects marketing page", () => {
 
 describe("/seeds marketing pages", () => {
   it("/seeds renders all launch sections", async () => {
-    await renderPage(() => import("@/app/seeds/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/seeds/page"));
     [
       "seeds-launch-hero",
       "seeds-launch-problem",
@@ -312,7 +312,7 @@ describe("/seeds marketing pages", () => {
   });
 
   it("/seeds/fund renders all fund sections", async () => {
-    await renderPage(() => import("@/app/seeds/fund/page"));
+    await renderPage(() => import("@/app/t/[tenant]/(chrome)/seeds/fund/page"));
     [
       "seeds-hero",
       "seeds-how-it-works",
@@ -338,7 +338,7 @@ describe("/projects explorer page", () => {
     // because it streamed the project list into a hidden chunk on a sitemap
     // route. The loader is now a direct child, so it is identified by the
     // `initialState` prop only it receives rather than by its wrapper.
-    const { default: ProjectsPage } = await import("@/app/projects/page");
+    const { default: ProjectsPage } = await import("@/app/t/[tenant]/(chrome)/projects/page");
     const runAsyncPage = ProjectsPage as unknown as (props: {
       searchParams: Promise<Record<string, string | string[] | undefined>>;
     }) => Promise<ReactElement>;

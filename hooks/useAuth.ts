@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
@@ -119,7 +119,6 @@ export const useAuth = () => {
   } = bridge;
 
   const router = useRouter();
-  const pathname = usePathname();
   const { isWhitelabel } = useWhitelabel();
 
   // Resolve the wallet representing the authenticated user's identity. See
@@ -220,7 +219,14 @@ export const useAuth = () => {
       // In whitelabel mode, "/" is the community homepage — don't redirect.
       // Skip redirect if create project modal is open (user triggered login from the modal).
       const isCreateModalOpen = useProjectCreateModalStore.getState().isProjectCreateModalOpen;
-      if (pathname === "/" && !isWhitelabel && !isCreateModalOpen) {
+      // Read the path here rather than from `usePathname()`. The value is only
+      // ever consumed inside this effect, and this effect does not list it as
+      // a dependency — it fires on the authenticated transition and closes
+      // over whatever render it was created in. `window.location.pathname` is
+      // the same string at the moment that matters, and dropping the hook
+      // takes the last URL read out of `useAuth`, which the navbar calls on
+      // every route: unguarded it opts the whole app out of prerendering.
+      if (window.location.pathname === "/" && !isWhitelabel && !isCreateModalOpen) {
         const redirectUrl = getPostLoginRedirect();
         if (redirectUrl) {
           router.push(redirectUrl);
@@ -500,6 +506,17 @@ export const useAuth = () => {
       // visitor sees nothing happen and clicks again once Privy is ready. That
       // is one funnel opening reached by two clicks, and `emitLoginStarted`
       // drops the second.
+      //
+      // The path is read from `window.location` rather than `usePathname()`,
+      // for the same reason the redirect effect above does: it is only ever
+      // consumed inside this callback, never rendered, so the hook bought
+      // nothing — and it is the last URL read in `useAuth`, which the navbar
+      // calls on every route, so unguarded it opts the whole app out of
+      // prerendering. Read at click time it is also the more accurate value
+      // for a funnel event than the path of whichever render created the
+      // callback.
+      const pathname = typeof window === "undefined" ? "" : window.location.pathname;
+
       if (ready && (!authenticated || needsWalletReconnect)) {
         emitLoginStarted(entryPoint, pathname);
       } else if (!ready && !hasPersistedPrivySession()) {
@@ -531,7 +548,7 @@ export const useAuth = () => {
         login();
       }
     },
-    [ready, authenticated, needsWalletReconnect, pathname, runLogout, login]
+    [ready, authenticated, needsWalletReconnect, runLogout, login]
   );
 
   /**

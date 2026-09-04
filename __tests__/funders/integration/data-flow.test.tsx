@@ -9,7 +9,7 @@
  */
 
 import { screen } from "@testing-library/react";
-import FundersPage from "@/app/funders/page";
+import FundersPage from "@/app/t/[tenant]/(chrome)/funders/page";
 import { mockCommunities } from "../fixtures/communities";
 import { mockChosenCommunities } from "../setup";
 import { renderWithProviders } from "../utils/test-helpers";

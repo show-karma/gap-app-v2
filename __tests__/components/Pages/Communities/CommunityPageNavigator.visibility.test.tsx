@@ -159,7 +159,7 @@ describe("CommunityPageNavigator", () => {
       } as any);
       mockUseParams.mockReturnValue({ communityId: "filecoin" });
       mockUsePathname.mockReturnValue(pathname);
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
     };
 
     describe("on a whitelabel host", () => {
@@ -268,7 +268,10 @@ describe("CommunityPageNavigator", () => {
         "Reports",
       ];
 
-      const { unmount } = render(<CommunityPageNavigator />, { wrapper });
+      const { unmount } = render(
+        <CommunityPageNavigator communityId={mockUseParams().communityId} />,
+        { wrapper }
+      );
       expect(screen.getAllByRole("link").map((link) => link.textContent?.trim())).toEqual(
         defaultTabs
       );
@@ -279,7 +282,7 @@ describe("CommunityPageNavigator", () => {
         communitySlug: "test-community",
         config: null,
       } as any);
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
       expect(screen.getAllByRole("link").map((link) => link.textContent?.trim())).toEqual(
         defaultTabs
       );
@@ -290,11 +293,11 @@ describe("CommunityPageNavigator", () => {
     const renderFilecoinOnKarma = (pathname = "/community/filecoin") => {
       mockUseParams.mockReturnValue({ communityId: "filecoin" });
       mockUsePathname.mockReturnValue(pathname);
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
     };
 
     it("should hide the tab when the community is not in FINANCIALS_ENABLED_COMMUNITIES", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(screen.queryByText("Commitments & Disbursements")).not.toBeInTheDocument();
       expect(screen.queryByTestId("wallet-icon")).not.toBeInTheDocument();
@@ -379,7 +382,7 @@ describe("CommunityPageNavigator", () => {
         mockUseParams.mockReturnValue({ communityId: "filecoin" });
         mockUsePathname.mockReturnValue(pathname);
 
-        render(<CommunityPageNavigator />, { wrapper });
+        render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
         expect(activeTabLabels()).toEqual([]);
       }
@@ -394,7 +397,7 @@ describe("CommunityPageNavigator", () => {
       mockUseParams.mockReturnValue({ communityId: "filecoin" });
       mockUsePathname.mockReturnValue("/community/filecoin/impact");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(activeTabLabels()).toEqual(["Impact"]);
     });
@@ -408,7 +411,7 @@ describe("CommunityPageNavigator", () => {
         data: { uid: "0xabc", details: { name: "Reports DAO", slug } },
         isLoading: false,
       } as any);
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
     };
 
     // The pre-move matcher was `pathname.includes("/reports")`, so
@@ -443,14 +446,14 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(screen.queryByText("Reports")).not.toBeInTheDocument();
       expect(screen.queryByTestId("file-text-icon")).not.toBeInTheDocument();
     });
 
     it("should show reports tab when published reports exist", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(screen.getByText("Reports")).toBeInTheDocument();
       expect(screen.getByTestId("file-text-icon")).toBeInTheDocument();
@@ -462,7 +465,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: true,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(screen.queryByText("Reports")).not.toBeInTheDocument();
     });
@@ -472,7 +475,7 @@ describe("CommunityPageNavigator", () => {
         get: (key: string) => (key === "programId" ? "program-123" : null),
       });
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       const reportsLink = screen.getByText("Reports").closest("a");
       expect(reportsLink).toHaveAttribute(
@@ -493,7 +496,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       // Hook must receive the canonical slug, never the URL param
       expect(mockUsePublishedReports).toHaveBeenCalledWith("test-community");
@@ -507,7 +510,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: true,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       // Empty string disables the query via the hook's `enabled: Boolean(slug)` guard,
       // preventing a wasted request with the URL param before the slug is known
@@ -517,7 +520,7 @@ describe("CommunityPageNavigator", () => {
     it("should call usePublishedReports with empty string on admin pages to suppress the query", () => {
       mockUsePathname.mockReturnValue("/community/test-community/manage");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(mockUsePublishedReports).toHaveBeenCalledWith("");
     });
@@ -530,7 +533,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(screen.getByText("Browse applications")).toBeInTheDocument();
       expect(screen.getByTestId("file-search-icon")).toBeInTheDocument();
@@ -542,7 +545,7 @@ describe("CommunityPageNavigator", () => {
         isLoading: false,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
       expect(screen.queryByTestId("file-search-icon")).not.toBeInTheDocument();
@@ -554,13 +557,13 @@ describe("CommunityPageNavigator", () => {
         isLoading: true,
       } as any);
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
     });
 
     it("should render browse applications link with correct href", () => {
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       const link = screen.getByText("Browse applications").closest("a");
       expect(link).toHaveAttribute("href", "/community/test-community/browse-applications");
@@ -569,7 +572,7 @@ describe("CommunityPageNavigator", () => {
     it("should apply active styles to browse applications link", () => {
       mockUsePathname.mockReturnValue("/community/test-community/browse-applications");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       const link = screen.getByText("Browse applications").closest("a");
       expect(link?.className).toContain("text-gray-900");
@@ -578,7 +581,7 @@ describe("CommunityPageNavigator", () => {
     it("should not mark community projects as active on browse-applications page", () => {
       mockUsePathname.mockReturnValue("/community/test-community/browse-applications");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
@@ -589,7 +592,7 @@ describe("CommunityPageNavigator", () => {
     it("should scroll active tab into view on mount", () => {
       mockUsePathname.mockReturnValue("/community/test-community/impact");
 
-      render(<CommunityPageNavigator />, { wrapper });
+      render(<CommunityPageNavigator communityId={mockUseParams().communityId} />, { wrapper });
 
       expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
         behavior: "smooth",

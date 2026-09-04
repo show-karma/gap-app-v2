@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import {
@@ -12,14 +12,21 @@ import { getActivityFilterType } from "@/services/project-profile.service";
 import type { UpdatesFeedFilters } from "@/types/v2/project-profile.types";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
 import { ActivityFilters, type ActivityFilterType } from "../MainContent/ActivityFilters";
+import { usePublishServerFeedTakeover } from "../MainContent/serverFeedTakeover";
 import { ActivityFeedSkeleton } from "../Skeletons";
 
 interface UpdatesContentProps {
   className?: string;
-  /** Server-rendered read-only twin of the feed (ActivityFeedStatic), shown in
-   *  the initial HTML and until this client component mounts — then the
-   *  interactive feed replaces it. Lets crawlers see the real feed content. */
-  serverFeed?: ReactNode;
+  /**
+   * Whether a server-rendered twin (`ActivityFeedStatic`) is on screen ABOVE
+   * this component, in `ServerFeedSlot`. A boolean, not the node itself: the
+   * twin used to be passed here as `serverFeed`, which put the crawlable feed
+   * inside this component's `useSearchParams()` prerender abort and kept it out
+   * of the HTML entirely (E-7b). This component only needs to know that
+   * something is already showing the feed, so it renders no second copy and no
+   * skeleton over the top of it.
+   */
+  hasServerFeed?: boolean;
 }
 
 /**
@@ -35,17 +42,17 @@ function parseIntParam(value: string | null): number | undefined {
  * UpdatesContent displays the activity feed and filters for the Updates tab.
  * Filter state is synced with URL for shareable links.
  */
-export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
+export function UpdatesContent({ className, hasServerFeed = false }: UpdatesContentProps) {
   const { projectId } = useParams();
   const { isAuthorized } = useProjectAuthorization();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Keep the server-rendered feed twin in place through the client's first
-  // render so SSR and hydration match, then swap to the interactive feed after
-  // mount. Without this gate the server (serverFeed) and client (ActivityFeed)
-  // markup would differ on hydration and React would throw a mismatch.
+  // Leave the twin in place through this component's first render, then take
+  // over. The gate is still needed with the twin outside: its slot renders from
+  // the same store, so publishing during the first render would change what the
+  // slot emits between the server's markup and the client's first pass.
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 
@@ -233,7 +240,15 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
   // made real content vanish into a skeleton that never cleared; keying on item
   // count instead would keep the unfiltered server feed on screen when a filter
   // legitimately matches nothing.
-  const showServerFeed = Boolean(serverFeed) && !hasUpdatesData;
+  const hasTakenOver = hydrated && hasUpdatesData;
+  usePublishServerFeedTakeover(hasTakenOver);
+
+  // The twin is rendered by `ServerFeedSlot` above this component and is still
+  // on screen until the takeover publishes. Render nothing in the feed area
+  // while it is: a skeleton stacked under real content is the same "content
+  // vanished into a spinner" the gate above exists to prevent, and a second
+  // copy of the feed is worse.
+  const twinOnScreen = hasServerFeed && !hasTakenOver;
 
   // Skeleton while a fetch is genuinely in flight (initial load or a filter
   // change). Distinct from the error branch below, which is terminal.
@@ -259,9 +274,9 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
         onAIFilterChange={handleAIFilterChange}
       />
 
-      {/* Activity Feed with Suspense boundary. Before hydration we render the
-          server-rendered twin (serverFeed) so SSR and the client's first render
-          match; after mount the interactive feed takes over. */}
+      {/* Activity Feed. The server-rendered twin sits above this component in
+          `ServerFeedSlot`; this area stays empty until the takeover publishes,
+          then the interactive feed replaces it. */}
       {/* Always shown when the query fails, even with stale data on screen:
           suppressing it made a blocked request look like an ordinary page. */}
       {isUpdatesError ? (
@@ -288,9 +303,7 @@ export function UpdatesContent({ className, serverFeed }: UpdatesContentProps) {
       ) : null}
 
       <div className="mt-6">
-        {(!hydrated || showServerFeed) && serverFeed ? (
-          serverFeed
-        ) : isUpdatesError && !hasUpdates ? (
+        {twinOnScreen ? null : isUpdatesError && !hasUpdates ? (
           <div
             className="flex flex-col items-center gap-3 rounded-xl border border-border p-8 text-center"
             data-testid="updates-content-empty-after-error"

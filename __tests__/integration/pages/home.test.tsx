@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import Index from "@/app/page";
+import Index from "@/app/t/[tenant]/(chrome)/page";
 import "@testing-library/jest-dom";
 
 vi.mock("@/src/features/home/components/hero", () => ({

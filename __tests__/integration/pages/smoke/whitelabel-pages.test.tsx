@@ -136,7 +136,7 @@ vi.mock("@/src/components/navigation/Link", () => ({
 }));
 
 vi.mock(
-  "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/ApplicationPageClient",
+  "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/ApplicationPageClient",
   () => ({
     ApplicationPageClient: ({ communityId }: { communityId: string }) => (
       <div data-testid="application-page-client">{communityId}</div>
@@ -145,14 +145,14 @@ vi.mock(
 );
 
 vi.mock(
-  "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/edit/ApplicationEditClient",
+  "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/edit/ApplicationEditClient",
   () => ({
     ApplicationEditClient: () => <div data-testid="application-edit-client">EditClient</div>,
   })
 );
 
 vi.mock(
-  "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/success/WhatHappensNext",
+  "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/success/WhatHappensNext",
   () => ({
     WhatHappensNext: () => <div data-testid="what-happens-next">WhatHappensNext</div>,
     extractApplicantName: (d: Record<string, unknown> | undefined) =>
@@ -161,14 +161,14 @@ vi.mock(
 );
 
 vi.mock(
-  "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/success/WhatHappensNextSkeleton",
+  "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/success/WhatHappensNextSkeleton",
   () => ({
     WhatHappensNextSkeleton: () => <div data-testid="what-happens-next-skeleton">Loading</div>,
   })
 );
 
 vi.mock(
-  "@/app/community/[communityId]/(whitelabel)/programs/[programId]/apply/ApplicationFormClient",
+  "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/programs/[programId]/apply/ApplicationFormClient",
   () => ({
     ApplicationFormClient: () => <div data-testid="application-form-client">ApplicationForm</div>,
   })
@@ -196,7 +196,7 @@ beforeEach(() => {
 describe("Whitelabel application detail page", () => {
   it("/applications/[applicationId] renders ApplicationPageClient", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/page"
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/page"
     );
     const result = await Page({
       params: Promise.resolve({ communityId: "c1", applicationId: "app-1" }),
@@ -209,7 +209,7 @@ describe("Whitelabel application detail page", () => {
     const { api } = await import("@/utilities/api/client");
     vi.mocked(api.get).mockResolvedValueOnce(null);
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/page"
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/page"
     );
     const result = await Page({
       params: Promise.resolve({ communityId: "c1", applicationId: "missing" }),
@@ -222,7 +222,7 @@ describe("Whitelabel application detail page", () => {
 describe("Whitelabel application edit page", () => {
   it("/applications/[applicationId]/edit renders ApplicationEditClient", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/edit/page"
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/edit/page"
     );
     const result = await Page({
       params: Promise.resolve({ communityId: "c1", applicationId: "app-1" }),
@@ -235,7 +235,7 @@ describe("Whitelabel application edit page", () => {
     const { api } = await import("@/utilities/api/client");
     vi.mocked(api.get).mockResolvedValueOnce(null);
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/edit/page"
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/edit/page"
     );
     const result = await Page({
       params: Promise.resolve({ communityId: "c1", applicationId: "missing" }),
@@ -248,7 +248,7 @@ describe("Whitelabel application edit page", () => {
 describe("Whitelabel application success page", () => {
   it("/applications/[applicationId]/success renders thanks message and reference", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/success/page"
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/applications/[applicationId]/success/page"
     );
     const result = await Page({
       params: Promise.resolve({ communityId: "c1", applicationId: "app-1" }),
@@ -263,7 +263,7 @@ describe("Whitelabel application success page", () => {
 describe("Whitelabel programs/[programId]/apply page", () => {
   it("renders ApplicationFormClient with full schema", async () => {
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/programs/[programId]/apply/page"
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/programs/[programId]/apply/page"
     );
     const result = await Page({
       params: Promise.resolve({ communityId: "c1", programId: "prog-1" }),
@@ -279,7 +279,7 @@ describe("Whitelabel programs/[programId]/apply page", () => {
       applicationConfig: { ...mockProgram.applicationConfig, formSchema: { fields: [] } },
     });
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(whitelabel)/programs/[programId]/apply/page"
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/programs/[programId]/apply/page"
     );
     const result = await Page({
       params: Promise.resolve({ communityId: "c1", programId: "prog-1" }),
@@ -300,7 +300,9 @@ describe("Whitelabel programs/[programId] page", () => {
       useParams: () => ({ communityId: "c1", programId: "prog-1" }),
     }));
     vi.resetModules();
-    return import("@/app/community/[communityId]/(whitelabel)/programs/[programId]/page");
+    return import(
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(whitelabel)/programs/[programId]/page"
+    );
   };
 
   afterEach(() => {
@@ -338,10 +340,22 @@ describe("Whitelabel programs/[programId] page", () => {
 });
 
 describe("/(cover)/financials page", () => {
-  it("renders PublicControlCenter for enabled community", async () => {
-    const { default: Page } = await import("@/app/community/[communityId]/(cover)/financials/page");
+  // PublicControlCenter is no longer in the page's synchronous output: it sits
+  // behind a Suspense boundary with the React Query seed, because both the seed
+  // (uncached api.* reads) and the component itself (useSearchParams) are runtime
+  // data that stopped the route prerendering. What the shell must still render on
+  // its own is the heading -- that is the point of the split, and
+  // community-cover-group.test.tsx asserts it is the page's only <h1>.
+  it("renders the heading in the shell and streams the control center", async () => {
+    const { default: Page } = await import(
+      "@/app/t/[tenant]/(chrome)/community/[communityId]/(cover)/financials/page"
+    );
     const result = await Page({ params: Promise.resolve({ communityId: "c1" }) });
-    renderInQueryClient(result);
-    expect(screen.getByTestId("public-control-center")).toBeInTheDocument();
+    const { container } = renderInQueryClient(result);
+
+    expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
+    // The boundary's fallback is the route's own loading.tsx skeleton.
+    expect(container.querySelector(".animate-pulse")).not.toBeNull();
+    expect(screen.queryByTestId("public-control-center")).not.toBeInTheDocument();
   });
 });

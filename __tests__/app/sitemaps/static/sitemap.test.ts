@@ -109,12 +109,22 @@ describe("app/sitemaps/static/sitemap.ts", () => {
   });
 
   it("revalidates hourly as a backstop for missed blog webhooks", async () => {
-    // Without this export the route is fully static and only picks up new
+    // Without an hourly cadence the route is fully static and only picks up new
     // posts on deploy — a missed/unconfigured webhook, a scheduled post
     // crossing its publish date, or a Sanity blip that cached an empty post
     // list would all silently keep posts out of the sitemap.
+    //
+    // The cadence moved from `export const revalidate = 3600`, which
+    // cacheComponents rejects, to cacheLife("hours") — the "hours" profile IS
+    // revalidate: 3600, so this pins the same hour, just at its new home.
+    getPublishedSlugsMock.mockResolvedValue([]);
+    const { cacheLife } = await import("next/cache");
     const sitemapModule = await import("@/app/sitemaps/static/sitemap");
-    expect(sitemapModule.revalidate).toBe(3600);
+
+    await sitemapModule.default();
+
+    expect(cacheLife).toHaveBeenCalledWith("hours");
+    expect(sitemapModule).not.toHaveProperty("revalidate");
   });
 
   it("falls back to just the static pages when the gateway errors", async () => {

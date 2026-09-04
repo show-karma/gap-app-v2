@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 import { isAskKarmaPathname } from "@/utilities/pages";
 
 const Toaster = dynamic(() => import("react-hot-toast").then((mod) => mod.Toaster), { ssr: false });
@@ -68,6 +69,21 @@ interface DeferredLayoutComponentsProps {
   };
 }
 
+/**
+ * The one URL-dependent thing in this cluster, kept in its own leaf so the
+ * `usePathname()` read cannot reach the rest of it.
+ *
+ * The ask-karma page is itself a full-screen chat surface; the floating bubble
+ * would be a redundant second entry point sharing the same Zustand store, and
+ * would mirror whatever conversation is happening on the page. Hide it on
+ * ask-karma routes only.
+ */
+function AgentChatBubbleSlot() {
+  const isAskKarmaRoute = isAskKarmaPathname(usePathname() ?? "");
+
+  return isAskKarmaRoute ? null : <AgentChatBubble />;
+}
+
 export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutComponentsProps) {
   // Every dialog below subscribes to a Zustand store and is opened by
   // navbar UI that renders on every domain (whitelabel and non-whitelabel).
@@ -75,12 +91,14 @@ export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutCompon
   // is what caused the profile-modal bug at app.filpgf.io (see issue
   // "fix-profile-on-app-filpgf"). The dialogs are loaded via next/dynamic
   // with ssr:false, so the chunk cost is paid only when first rendered.
-  // The ask-karma page is itself a full-screen chat surface; the floating
-  // bubble would be a redundant second entry point that shares the same
-  // Zustand store and would mirror whatever conversation is happening on
-  // the page. Hide it on ask-karma routes only.
-  const isAskKarmaRoute = isAskKarmaPathname(usePathname() ?? "");
-
+  //
+  // The bubble slot is the only member that reads the URL, and it sits behind
+  // its own <Suspense> boundary: an unguarded `usePathname()` here is a URL
+  // read in the App Shell, which under cacheComponents makes every route
+  // dynamic. Everything in this cluster is `ssr: false`, so the boundary hides
+  // nothing from a crawler and DEV-612's no-JS visibility rule does not apply —
+  // the fallback is `null` because the bubble renders nothing on the server
+  // either way.
   return (
     <>
       <Toaster {...toasterConfig} />
@@ -93,7 +111,9 @@ export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutCompon
       <ContributorProfileDialog />
       <ApiKeyManagementModal />
       <OnboardingDialog />
-      {!isAskKarmaRoute && <AgentChatBubble />}
+      <Suspense fallback={null}>
+        <AgentChatBubbleSlot />
+      </Suspense>
     </>
   );
 }

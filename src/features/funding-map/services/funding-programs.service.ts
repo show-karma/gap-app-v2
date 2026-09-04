@@ -1,4 +1,5 @@
 import { api } from "@/utilities/api/client";
+import { publicReadOptions } from "@/utilities/api/public-read";
 import { INDEXER } from "@/utilities/indexer";
 import { FUNDING_MAP_DEFAULT_CHAIN_ID, FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import type {
@@ -30,7 +31,8 @@ export const fundingProgramsService = {
 
     // TODO(#1775): add zod schema
     const response = await api.get<PaginatedFundingProgramsResponse>(
-      `${INDEXER.V2.REGISTRY.GET_ALL}${queryString}`
+      `${INDEXER.V2.REGISTRY.GET_ALL}${queryString}`,
+      publicReadOptions()
     );
 
     if (!response) {
@@ -54,7 +56,10 @@ export const fundingProgramsService = {
   async getById(programId: string): Promise<FundingProgramResponse | null> {
     try {
       // TODO(#1775): add zod schema
-      const data = await api.get<FundingProgramResponse>(INDEXER.V2.REGISTRY.GET_BY_ID(programId));
+      const data = await api.get<FundingProgramResponse>(
+        INDEXER.V2.REGISTRY.GET_BY_ID(programId),
+        publicReadOptions()
+      );
       return data ?? null;
     } catch {
       // Preserves legacy fetchData behavior: any fetch failure (network,
@@ -105,7 +110,10 @@ export const fundingProgramsService = {
     const url = qs ? `${INDEXER.V2.REGISTRY.GET_TYPES}?${qs}` : INDEXER.V2.REGISTRY.GET_TYPES;
 
     // TODO(#1775): add zod schema
-    const response = await api.get<TypeCount[]>(url);
+    // publicReadOptions() even though no cached scope reaches this today: it is
+    // public registry data, and the cost of the authorized default is a
+    // server-side cookies() read plus a trap for whoever caches this next.
+    const response = await api.get<TypeCount[]>(url, publicReadOptions());
 
     if (!response) {
       throw new Error("Failed to fetch type counts");
@@ -120,7 +128,10 @@ export const fundingProgramsService = {
    */
   async getOrganizationFilters(): Promise<OrganizationFiltersResponse> {
     // TODO(#1775): add zod schema
-    const response = await api.get<OrganizationFiltersResponse>(INDEXER.V2.REGISTRY.GET_FILTERS);
+    const response = await api.get<OrganizationFiltersResponse>(
+      INDEXER.V2.REGISTRY.GET_FILTERS,
+      publicReadOptions()
+    );
 
     return response || { options: [] };
   },

@@ -23,7 +23,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { permanentRedirect } from "next/navigation";
-import CommunityPayoutsPage from "@/app/community/[communityId]/manage/payouts/page";
+import CommunityPayoutsPage from "@/app/t/[tenant]/(chrome)/community/[communityId]/manage/payouts/page";
 import { PAGES } from "@/utilities/pages";
 
 const mockedRedirect = vi.mocked(permanentRedirect);

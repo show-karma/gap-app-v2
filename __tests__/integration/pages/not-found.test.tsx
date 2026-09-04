@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import NotFoundPage from "@/app/not-found";
+import NotFoundPage from "@/app/t/[tenant]/(chrome)/not-found";
 import "@testing-library/jest-dom";
 
 describe("NotFoundPage", () => {
