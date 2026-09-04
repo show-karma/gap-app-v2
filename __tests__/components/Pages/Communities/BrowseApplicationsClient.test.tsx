@@ -362,6 +362,33 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
     expect(screen.queryByText(/application(s)? · Kernel/)).not.toBeInTheDocument();
   });
 
+  // The empty state is the first thing a visitor arriving from "Projects
+  // Explorer" reads, and "No applications yet" under a "Browse Projects"
+  // heading is the same contradiction the count already guards against.
+  it("names the same noun in the empty state as in the heading", async () => {
+    renderWhitelabel("filecoin");
+
+    await waitFor(() => {
+      expect(screen.getByText("No projects yet")).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText("This program doesn't have any public projects yet.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No applications yet")).not.toBeInTheDocument();
+  });
+
+  it("keeps the default noun where the heading is the default", () => {
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    expect(
+      screen.getByText(
+        "Pick a funding program from the selector above to browse its public applications."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("keeps counting applications where the heading is the default", async () => {
     const user = userEvent.setup();
     render(<BrowseApplicationsClient communityId="test-community" />, {

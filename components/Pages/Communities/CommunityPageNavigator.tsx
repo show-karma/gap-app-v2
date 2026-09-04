@@ -63,7 +63,11 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     id: "browse-applications",
     path: (communityId: string) => PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId),
     Icon: FileSearch,
-    isActive: (segment: string) => segment === "browse-applications",
+    // "browse-projects" is the same page under a tenant's own name for it (see
+    // EXPLORER_NAV_OVERRIDES.tabPaths); without it the tab a visitor just
+    // followed goes dark on arrival.
+    isActive: (segment: string) =>
+      segment === "browse-applications" || segment === "browse-projects",
   },
   {
     id: "community-projects",
@@ -264,7 +268,7 @@ export const CommunityPageNavigator = ({ communityId }: { communityId: string })
         <FilterParamsFromUrl onChange={setFilterParams} />
       </Suspense>
       {visibleNavigationItems.map(({ id, path, Icon, showNewTag }) => {
-        const href = path(communityId);
+        const href = override?.tabPaths?.[id] ?? path(communityId);
         const active = id === activeItemId;
         return (
           <Link

@@ -47,6 +47,7 @@ vi.mock("@/utilities/community-flags", () => ({
     filecoin: {
       hiddenTabs: ["community-projects", "reports", "financials"],
       tabLabels: { "browse-applications": "Browse Projects" },
+      tabPaths: { "browse-applications": "/browse-projects" },
     },
   },
 }));

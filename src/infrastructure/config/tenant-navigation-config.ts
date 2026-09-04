@@ -198,8 +198,8 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
            *
            * A funding programme opens its cover page on the landing site, not a
            * pre-filtered listing here: the programme is read as its own story
-           * first. Browsing every funded project is the separate "Projects
-           * Explorer" entry below (DEV-647).
+           * first. Browsing every project across the programmes is the separate
+           * "Projects Explorer" entry below (DEV-647).
            */
           {
             label: "Funding Programs",
@@ -219,7 +219,14 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
           // new RFP opens.
           // Whitelabel-only navbar, so the clean paths below are safe and save
           // the /community/filecoin/* -> / redirect hop.
-          { label: "Projects Explorer", href: "/projects" },
+          //
+          // "Projects Explorer" is the explorer tab this tenant calls "Browse
+          // Projects" — one listing, reached by the same URL from the landing
+          // site's header, this menu and that tab. /browse-projects is a
+          // whitelabel alias of /browse-applications (WHITELABEL_ROUTE_ALIASES);
+          // it is NOT /projects, which is the funded-projects listing this
+          // tenant hides from its tab bar.
+          { label: "Projects Explorer", href: "/browse-projects" },
           { label: COMMITMENTS_AND_DISBURSEMENTS, href: "/financials" },
           {
             label: "RetroPGF - Paused",
