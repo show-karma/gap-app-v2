@@ -44,6 +44,24 @@ const parseAsCommaSeparatedArray = createParser({
 });
 
 /**
+ * Parsers live at module level so each `withDefault` value is one stable
+ * reference. nuqs returns the parser's default when the key is absent, so a
+ * default created inside the hook body (`withDefault([])`) is a new array on
+ * every render, which defeats every memo built on it and makes the leaf
+ * publish into the filters context on every render, looping React.
+ */
+const PAGE_PARSER = parseAsInteger.withDefault(1).withOptions({ clearOnDefault: true });
+const SEARCH_PARSER = parseAsString
+  .withDefault("")
+  .withOptions({ throttleMs: 300, clearOnDefault: true });
+const STATUS_PARSER = parseAsString.withDefault("Active").withOptions({ clearOnDefault: true });
+const TEXT_PARSER = parseAsString.withDefault("").withOptions({ clearOnDefault: true });
+const BOOLEAN_PARSER = parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true });
+const LIST_PARSER = parseAsCommaSeparatedArray
+  .withDefault([])
+  .withOptions({ clearOnDefault: true });
+
+/**
  * Parsed organization filter value
  */
 export interface OrganizationFilterValue {
@@ -74,62 +92,17 @@ export interface FundingFilters {
  * Uses nuqs for URL state management
  */
 export function useFundingFilters() {
-  const [page, setPage] = useQueryState(
-    "page",
-    parseAsInteger.withDefault(1).withOptions({ clearOnDefault: true })
-  );
-
-  const [search, setSearch] = useQueryState(
-    "search",
-    parseAsString.withDefault("").withOptions({ throttleMs: 300, clearOnDefault: true })
-  );
-
-  const [status, setStatus] = useQueryState(
-    "status",
-    parseAsString.withDefault("Active").withOptions({ clearOnDefault: true })
-  );
-
-  const [categories, setCategories] = useQueryState(
-    "categories",
-    parseAsCommaSeparatedArray.withDefault([]).withOptions({ clearOnDefault: true })
-  );
-
-  const [ecosystems, setEcosystems] = useQueryState(
-    "ecosystems",
-    parseAsCommaSeparatedArray.withDefault([]).withOptions({ clearOnDefault: true })
-  );
-
-  const [networks, setNetworks] = useQueryState(
-    "networks",
-    parseAsCommaSeparatedArray.withDefault([]).withOptions({ clearOnDefault: true })
-  );
-
-  const [grantTypes, setGrantTypes] = useQueryState(
-    "grantTypes",
-    parseAsCommaSeparatedArray.withDefault([]).withOptions({ clearOnDefault: true })
-  );
-
-  const [onlyOnKarma, setOnlyOnKarma] = useQueryState(
-    "onlyOnKarma",
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
-  );
-
-  const [selectedTypes, setSelectedTypesRaw] = useQueryState(
-    "type",
-    parseAsCommaSeparatedArray.withDefault([]).withOptions({ clearOnDefault: true })
-  );
-
-  // Organization filter - stores as "community:uid" or "organization:name"
-  const [organizationFilterRaw, setOrganizationFilterRaw] = useQueryState(
-    "org",
-    parseAsString.withDefault("").withOptions({ clearOnDefault: true })
-  );
-
-  // Program ID for opening the details dialog - format: "programId" (preferred) or "programId_chainId" (legacy)
-  const [programId, setProgramId] = useQueryState(
-    "programId",
-    parseAsString.withDefault("").withOptions({ clearOnDefault: true })
-  );
+  const [page, setPage] = useQueryState("page", PAGE_PARSER);
+  const [search, setSearch] = useQueryState("search", SEARCH_PARSER);
+  const [status, setStatus] = useQueryState("status", STATUS_PARSER);
+  const [categories, setCategories] = useQueryState("categories", LIST_PARSER);
+  const [ecosystems, setEcosystems] = useQueryState("ecosystems", LIST_PARSER);
+  const [networks, setNetworks] = useQueryState("networks", LIST_PARSER);
+  const [grantTypes, setGrantTypes] = useQueryState("grantTypes", LIST_PARSER);
+  const [onlyOnKarma, setOnlyOnKarma] = useQueryState("onlyOnKarma", BOOLEAN_PARSER);
+  const [selectedTypes, setSelectedTypesRaw] = useQueryState("type", LIST_PARSER);
+  const [organizationFilterRaw, setOrganizationFilterRaw] = useQueryState("org", TEXT_PARSER);
+  const [programId, setProgramId] = useQueryState("programId", TEXT_PARSER);
 
   // Parse organization filter value
   // The ID is URL-encoded to preserve special characters like newlines
