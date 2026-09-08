@@ -31,7 +31,7 @@ export interface ApplicationProgram {
   } | null;
 }
 
-export type ApplicationChipCounts = Record<ApplicationStatus | "all", number>;
+type ApplicationChipCounts = Record<ApplicationStatus | "all", number>;
 
 const emptyChipCounts = (): ApplicationChipCounts => ({
   all: 0,
@@ -44,7 +44,7 @@ const emptyChipCounts = (): ApplicationChipCounts => ({
   draft: 0,
 });
 
-export interface UseAggregatedApplicationsOptions {
+interface UseAggregatedApplicationsOptions {
   /** Route slug of the community. */
   communityId: string;
   /** Off on the per-program path; nothing is fetched. */
@@ -61,7 +61,7 @@ export interface UseAggregatedApplicationsOptions {
   getTitle: (application: Application) => string;
 }
 
-export interface UseAggregatedApplicationsResult {
+interface UseAggregatedApplicationsResult {
   /** Status and search already applied, client-side. */
   applications: Application[];
   /** `applications.length`. */

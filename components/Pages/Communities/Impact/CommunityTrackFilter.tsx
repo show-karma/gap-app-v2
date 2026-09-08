@@ -11,7 +11,7 @@ const LABEL_CLASSNAME =
   // design-check-ignore: DS006 matches the ProgramFilter label beside it
   "text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
 
-export interface CommunityTrackFilterProps {
+interface CommunityTrackFilterProps {
   /**
    * The community's tracks. The parent fetches them and decides whether to
    * render this control at all (only when `tracks.length > 0`).
