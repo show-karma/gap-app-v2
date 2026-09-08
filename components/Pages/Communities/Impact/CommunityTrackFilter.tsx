@@ -1,7 +1,7 @@
 "use client";
 
+import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import type { Track } from "@/services/tracks";
-import { SearchWithValueDropdown } from "./SearchWithValueDropdown";
 
 // Copied verbatim from ProgramFilter's label: this control sits beside it, so
 // the two must be pixel-identical. The 11px / 0.06em pair has no equivalent on
