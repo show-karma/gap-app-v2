@@ -160,6 +160,33 @@ describe("SimocracyConfigCard", () => {
       });
     });
 
+    it("derives the AT-URI from a Simocracy gathering URL and saves it", async () => {
+      mockUseProgramConfig.mockReturnValue(createConfigResult());
+      mockUpdateProgramConfiguration.mockResolvedValue({});
+
+      renderCard();
+
+      fireEvent.click(await screen.findByRole("button", { name: /change/i }));
+      fireEvent.change(screen.getByLabelText("Gathering AT-URI"), {
+        target: {
+          value: "https://www.simocracy.org/c/did%3Aplc%3A3s3lgrhmpp26jzirn5ck46lw/3mtwpbrpjof2g",
+        },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(mockUpdateProgramConfiguration).toHaveBeenCalledWith("simo-test-1", {
+          integrations: {
+            simocracy: {
+              gatheringUri:
+                "at://did:plc:3s3lgrhmpp26jzirn5ck46lw/org.simocracy.gathering/3mtwpbrpjof2g",
+              enabled: true,
+            },
+          },
+        });
+      });
+    });
+
     it("saves the flipped toggle immediately when a gathering is configured", async () => {
       mockUseProgramConfig.mockReturnValue(createConfigResult());
       mockUpdateProgramConfiguration.mockResolvedValue({});
