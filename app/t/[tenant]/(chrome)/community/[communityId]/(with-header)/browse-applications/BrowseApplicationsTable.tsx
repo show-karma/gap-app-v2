@@ -51,7 +51,7 @@ const STATUS_STYLES: Record<ApplicationStatus, StatusStyle> = {
   },
 };
 
-export function StatusPill({ status }: { status: ApplicationStatus }) {
+function StatusPill({ status }: { status: ApplicationStatus }) {
   const style = STATUS_STYLES[status] ?? STATUS_STYLES.draft;
   return (
     <span
