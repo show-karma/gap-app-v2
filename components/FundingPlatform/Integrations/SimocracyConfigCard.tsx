@@ -14,12 +14,31 @@ import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { cn } from "@/utilities/tailwind";
 import { SimocracyCredentialSection } from "./SimocracyCredentialSection";
 
+const GATHERING_AT_URI =
+  /^at:\/\/did:[a-z]+:[a-zA-Z0-9._:%-]+\/org\.simocracy\.gathering\/[^/\s]+$/;
+const SIMOCRACY_GATHERING_URL = /^https?:\/\/(?:www\.)?simocracy\.org\/c\/([^/\s]+)\/([^/\s?#]+)/i;
+
+// Accept the Simocracy gathering URL an operator copies from the site and derive
+// the AT-URI from it, so they don't have to hand-build it:
+//   https://www.simocracy.org/c/<url-encoded-did>/<rkey> → at://<did>/org.simocracy.gathering/<rkey>
+// A correct AT-URI passes through unchanged.
+function normalizeGatheringUri(input: string): string {
+  const trimmed = input.trim();
+  const match = SIMOCRACY_GATHERING_URL.exec(trimmed);
+  if (!match) return trimmed;
+  return `at://${decodeURIComponent(match[1])}/org.simocracy.gathering/${match[2]}`;
+}
+
 const gatheringUriSchema = z
   .string()
   .trim()
   .min(1, "Gathering AT-URI is required")
   .max(512, "AT-URI is too long")
-  .regex(/^at:\/\//, "Must be an AT-URI starting with at://");
+  .transform(normalizeGatheringUri)
+  .refine((uri) => GATHERING_AT_URI.test(uri), {
+    message:
+      "Paste the gathering AT-URI (at://did:…/org.simocracy.gathering/<id>) or the Simocracy gathering URL (simocracy.org/c/<did>/<id>)",
+  });
 
 export interface SimocracyConfigCardProps {
   programId: string;
