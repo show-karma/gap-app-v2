@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
 import type { FundingProgram } from "@/types/whitelabel-entities";
+import { useRenderNow } from "@/utilities/render-clock-context";
 import { useCanBypassClosedProgram } from "../hooks/use-can-bypass-closed-program";
 import { ProgramDetailsCard } from "./ProgramDetailsCard";
 
@@ -12,11 +13,11 @@ interface ProgramDetailsSidebarProps {
   isEnabled: boolean;
 }
 
-function getProgramDisabledReason(program: FundingProgram): string {
+function getProgramDisabledReason(program: FundingProgram, now: Date): string {
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
   const isDeadlinePassed = program.metadata?.endsAt
-    ? new Date(program.metadata.endsAt) < new Date()
+    ? new Date(program.metadata.endsAt) < now
     : false;
 
   if (!hasFormConfig) return "Applications not yet available";
@@ -37,6 +38,9 @@ export function ProgramDetailsSidebar({
   // Admins keep access to the apply form after a program closes (matches the
   // backend bypass the submit endpoint enforces).
   const { canBypass } = useCanBypassClosedProgram();
+  // Judged during render on the prerendered program page: read the render
+  // clock, never `new Date()`.
+  const now = useRenderNow();
   const canApply = isEnabled || canBypass;
   const isAdminOverride = !isEnabled && canBypass;
 
@@ -77,7 +81,7 @@ export function ProgramDetailsSidebar({
             </Link>
           ) : (
             <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground opacity-50">
-              {getProgramDisabledReason(program) || "Application closed"}
+              {getProgramDisabledReason(program, now) || "Application closed"}
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </span>
           )}
@@ -93,7 +97,7 @@ export function ProgramDetailsSidebar({
 
         {isAdminOverride ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            {getProgramDisabledReason(program)} — you can still submit as an admin.
+            {getProgramDisabledReason(program, now)} — you can still submit as an admin.
           </p>
         ) : null}
 

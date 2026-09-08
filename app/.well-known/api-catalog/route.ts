@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/utilities/meta";
 import {
@@ -5,9 +6,6 @@ import {
   WELL_KNOWN_CORS_HEADERS,
   WELL_KNOWN_PREFLIGHT_HEADERS,
 } from "@/utilities/wellKnown";
-
-export const dynamic = "force-static";
-export const revalidate = 3600;
 
 /**
  * RFC 9727 API Catalog — a linkset of the APIs Karma publishes, with
@@ -20,7 +18,10 @@ export const revalidate = 3600;
  * consumers that probe-by-path both succeed.
  */
 
-export function GET() {
+async function buildBody() {
+  "use cache";
+  cacheLife("hours");
+
   const apiUrl = getIndexerBaseUrl();
 
   const body = {
@@ -67,7 +68,11 @@ export function GET() {
     ],
   };
 
-  return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });
+  return body;
+}
+
+export async function GET() {
+  return NextResponse.json(await buildBody(), { headers: WELL_KNOWN_CORS_HEADERS });
 }
 
 export async function OPTIONS() {

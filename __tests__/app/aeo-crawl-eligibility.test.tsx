@@ -94,13 +94,13 @@ const MIN_MEANINGFUL_CHARS = 200;
 
 describe("/seeds — canonical", () => {
   it("self-canonicals instead of inheriting the root layout's '/'", async () => {
-    const { metadata } = await import("@/app/seeds/page");
+    const { metadata } = await import("@/app/t/[tenant]/(chrome)/seeds/page");
 
     expect(canonicalOf(metadata)).toBe("/seeds");
   });
 
   it("keeps its bespoke openGraph and twitter copy", async () => {
-    const { metadata } = await import("@/app/seeds/page");
+    const { metadata } = await import("@/app/t/[tenant]/(chrome)/seeds/page");
 
     expect(metadata.openGraph?.title).toBe("Karma Seeds - Accept Support Without a Token");
     expect(metadata.twitter?.title).toBe("Karma Seeds - Raise Funds for Your Project");
@@ -180,7 +180,7 @@ describe("/communities — heading survives every query state", () => {
   });
 
   it("self-canonicals at /communities", async () => {
-    const { metadata } = await import("@/app/communities/page");
+    const { metadata } = await import("@/app/t/[tenant]/(chrome)/communities/page");
 
     expect(canonicalOf(metadata)).toBe("/communities");
   });
@@ -198,7 +198,9 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
    * as a hidden `<div hidden id="S:n">` chunk.
    */
   async function renderFindFunders(): Promise<{ pageHtml: string }> {
-    const { default: Page } = await import("@/app/nonprofits/find-funders/page");
+    const { default: Page } = await import(
+      "@/app/t/[tenant]/(bare)/nonprofits/find-funders/(landing-nav)/page"
+    );
     return { pageHtml: renderToString(Page()) };
   }
 
@@ -234,7 +236,9 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
   });
 
   it("self-canonicals at its own path", async () => {
-    const { metadata } = await import("@/app/nonprofits/find-funders/page");
+    const { metadata } = await import(
+      "@/app/t/[tenant]/(bare)/nonprofits/find-funders/(landing-nav)/page"
+    );
 
     expect(canonicalOf(metadata)).toBe("/nonprofits/find-funders");
   });
@@ -338,22 +342,24 @@ describe("/nonprofits/find-funders — server-rendered landing page", () => {
    * find-funders keeps its instant loading state.
    */
   it("keeps loading boundaries off the sitemap routes and on the workbench subroutes", () => {
-    const segment = path.join(process.cwd(), "app/nonprofits/find-funders");
+    const segment = path.join(process.cwd(), "app/t/[tenant]/(bare)/nonprofits/find-funders");
 
     for (const forbidden of [
       "loading.tsx",
-      "connect/loading.tsx",
-      "connect/claude/loading.tsx",
-      "connect/chatgpt/loading.tsx",
+      "(landing-nav)/loading.tsx",
+      "(workbench-nav)/loading.tsx",
+      "(workbench-nav)/connect/loading.tsx",
+      "(workbench-nav)/connect/claude/loading.tsx",
+      "(workbench-nav)/connect/chatgpt/loading.tsx",
     ]) {
       expect(fs.existsSync(path.join(segment, forbidden)), forbidden).toBe(false);
     }
 
     for (const subroute of [
-      "search/[id]/loading.tsx",
-      "foundations/[id]/loading.tsx",
-      "grants/[id]/loading.tsx",
-      "nonprofits/[id]/loading.tsx",
+      "(workbench-nav)/search/[id]/loading.tsx",
+      "(workbench-nav)/foundations/[id]/loading.tsx",
+      "(workbench-nav)/grants/[id]/loading.tsx",
+      "(workbench-nav)/nonprofits/[id]/loading.tsx",
     ]) {
       expect(fs.existsSync(path.join(segment, subroute)), subroute).toBe(true);
     }

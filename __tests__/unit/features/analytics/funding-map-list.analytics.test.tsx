@@ -39,6 +39,23 @@ const programs = vi.hoisted(() => ({
   result: { data: undefined as unknown, isLoading: false, isError: false, error: null as unknown },
 }));
 
+// The list reads the context, not the hook — that split is the frame fix for
+// `/funding-map` (`funding-map-list.tsx:48` -> `use-funding-filters.ts:77`
+// aborted the prerender). The raw-hook mock below is still live: it feeds
+// `FundingMapUrlState`, the leaf that reads the URL and publishes into this
+// context, which the list renders and this suite does not stub.
+vi.mock("@/src/features/funding-map/context/funding-filters-context", () => ({
+  useFundingFiltersValue: () => ({
+    apiParams: {},
+    filters: filters.state,
+    openProgram: () => {},
+  }),
+  useFundingFiltersPublisher: () => ({
+    publish: () => {},
+    publishOpenProgram: () => {},
+  }),
+}));
+
 vi.mock("@/src/features/funding-map/hooks/use-funding-filters", () => ({
   useFundingFilters: () => ({
     apiParams: {},

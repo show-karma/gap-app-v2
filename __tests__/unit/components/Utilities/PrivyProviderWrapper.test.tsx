@@ -58,7 +58,7 @@ describe("PrivyProviderWrapper", () => {
 
     await act(async () => {
       render(
-        <PrivyProviderWrapper>
+        <PrivyProviderWrapper whitelabel={{ isWhitelabel: false, tenantConfig: null }}>
           <div>child</div>
         </PrivyProviderWrapper>
       );
@@ -82,7 +82,7 @@ describe("PrivyProviderWrapper", () => {
     let rendered: ReturnType<typeof render> | undefined;
     await act(async () => {
       rendered = render(
-        <PrivyProviderWrapper>
+        <PrivyProviderWrapper whitelabel={{ isWhitelabel: false, tenantConfig: null }}>
           <div>child-under-blocked-storage</div>
         </PrivyProviderWrapper>
       );
@@ -111,7 +111,7 @@ describe("PrivyProviderWrapper", () => {
 
     await act(async () => {
       render(
-        <PrivyProviderWrapper>
+        <PrivyProviderWrapper whitelabel={{ isWhitelabel: false, tenantConfig: null }}>
           <div>child</div>
         </PrivyProviderWrapper>
       );

@@ -10,7 +10,7 @@ describe("/.well-known/oauth-protected-resource route handler", () => {
 
   it("returns 200 with a static RFC 9728 metadata document", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toBeDefined();
@@ -18,42 +18,42 @@ describe("/.well-known/oauth-protected-resource route handler", () => {
 
   it("sets resource to the indexer's MCP endpoint", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.resource).toBe(`${INDEXER_URL}/mcp`);
   });
 
   it("advertises NEXT_PUBLIC_GAP_OAUTH_URL as the authorization server", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.authorization_servers).toEqual([OAUTH_ISSUER]);
   });
 
   it("advertises the mcp scope", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.scopes_supported).toEqual(["mcp"]);
   });
 
   it("advertises header-based bearer auth", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.bearer_methods_supported).toEqual(["header"]);
   });
 
   it("advertises RS256 signing algorithm", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.resource_signing_alg_values_supported).toEqual(["RS256"]);
   });
 
   it("points resource_documentation at the authorization-server metadata path", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.resource_documentation).toBe(
       `${OAUTH_ISSUER}/.well-known/oauth-authorization-server`
@@ -62,7 +62,7 @@ describe("/.well-known/oauth-protected-resource route handler", () => {
 
   it("sets wide-open CORS headers so agent crawlers can read it", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("GET");
     expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
@@ -70,7 +70,7 @@ describe("/.well-known/oauth-protected-resource route handler", () => {
 
   it("sets long-lived Cache-Control on success", async () => {
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
-    const res = GET();
+    const res = await GET();
     expect(res.headers.get("Cache-Control")).toBe("public, max-age=3600");
   });
 
@@ -110,7 +110,7 @@ describe("/.well-known/oauth-protected-resource route handler — missing env", 
 
     const { GET } = await import("@/app/.well-known/oauth-protected-resource/route");
 
-    expect(() => GET()).toThrow(/NEXT_PUBLIC_GAP_OAUTH_URL is not set/);
+    await expect(GET()).rejects.toThrow(/NEXT_PUBLIC_GAP_OAUTH_URL is not set/);
     expect(captureSpy).toHaveBeenCalledWith(
       expect.any(Error),
       expect.objectContaining({

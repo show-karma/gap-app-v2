@@ -9,7 +9,7 @@
  */
 
 import { readdirSync } from "node:fs";
-import { join, sep } from "node:path";
+import { join, relative, sep } from "node:path";
 import {
   ROUTE_TEMPLATES,
   toCommunityId,
@@ -228,6 +228,22 @@ describe("template coverage of app/", () => {
   const isUrlSegment = (segment: string): boolean =>
     !segment.startsWith("(") && !segment.startsWith("@") && !segment.startsWith("_");
 
+  /**
+   * The tenant mount, `app/t/[tenant]`, is a REWRITE TARGET: middleware rewrites
+   * every public URL into it, so `/t/karma` is never a browser path segment and
+   * never reaches `toRoutePattern`, which reads `location.pathname`. A page at
+   * `app/t/[tenant]/project/[projectId]/page.tsx` answers `/project/:projectId`.
+   * So the mount is dropped from the derived URL, exactly as a route group is.
+   *
+   * Anchored to the mount itself — the two `app/`-relative paths below, not any
+   * directory named `t` anywhere in the tree. A blanket skip would silently
+   * swallow a real `/t/...` route if one is ever added, and that failure would
+   * be invisible in precisely the way the tenant move's was.
+   */
+  const TENANT_MOUNT_DIRS: ReadonlySet<string> = new Set([join("t"), join("t", "[tenant]")]);
+
+  const isTenantMount = (dir: string): boolean => TENANT_MOUNT_DIRS.has(relative(APP_DIR, dir));
+
   const isPageFile = (name: string): boolean => /^page\.(?:t|j)sx?$/.test(name);
 
   /**
@@ -246,10 +262,13 @@ describe("template coverage of app/", () => {
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
       if (urlSegments.length === 0 && EXCLUDED_TOP_LEVEL.has(entry.name)) continue;
+      const child = join(dir, entry.name);
       routes.push(
         ...collectPageRoutes(
-          join(dir, entry.name),
-          isUrlSegment(entry.name) ? [...urlSegments, entry.name] : urlSegments
+          child,
+          isUrlSegment(entry.name) && !isTenantMount(child)
+            ? [...urlSegments, entry.name]
+            : urlSegments
         )
       );
     }

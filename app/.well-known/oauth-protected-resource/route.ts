@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { cacheLife } from "next/cache";
 import { NextResponse } from "next/server";
 import { envVars } from "@/utilities/enviromentVars";
 import {
@@ -6,9 +7,6 @@ import {
   WELL_KNOWN_CORS_HEADERS,
   WELL_KNOWN_PREFLIGHT_HEADERS,
 } from "@/utilities/wellKnown";
-
-export const dynamic = "force-static";
-export const revalidate = 3600;
 
 /**
  * RFC 9728 OAuth Protected Resource Metadata at the apex.
@@ -25,7 +23,10 @@ export const revalidate = 3600;
  * Resource URL is the MCP endpoint on the indexer.
  */
 
-export function GET() {
+async function buildBody() {
+  "use cache";
+  cacheLife("hours");
+
   const issuer = envVars.NEXT_PUBLIC_GAP_OAUTH_URL;
   if (!issuer || issuer.trim() === "") {
     // Capture explicitly so Sentry alerts carry the route tag. The
@@ -52,7 +53,11 @@ export function GET() {
     resource_documentation: `${issuer}/.well-known/oauth-authorization-server`,
   };
 
-  return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });
+  return body;
+}
+
+export async function GET() {
+  return NextResponse.json(await buildBody(), { headers: WELL_KNOWN_CORS_HEADERS });
 }
 
 export async function OPTIONS() {

@@ -62,15 +62,46 @@ const nextConfig: NextConfig = {
   // Standalone output produces a self-contained server.js bundle in
   // .next/standalone with traced node_modules. Cuts CI artifact size
   // from ~200MB to ~30-50MB and boots in ~2s vs ~25s for `pnpm start`.
-  // Vercel ignores this setting (it uses its own Lambda format).
-  output: "standalone",
+  //
+  // Deliberately NOT set on Vercel. Vercel ignores the setting -- it builds
+  // its own Lambda format from the adapter's onBuildComplete hook, which runs
+  // to completion before this step -- so assembling a standalone bundle there
+  // was always pure waste on the build container. Since 16.3 it is worse than
+  // waste: it fails the build outright. Next skips collectBuildTraces when the
+  // bundler is Turbopack (build/index.js "#region NFT"), so
+  // .next/next-server.js.nft.json is never written, and the standalone copy
+  // step (copyTracedFiles) opens that exact path and dies with ENOENT.
+  // CI still gets the bundle: VERCEL is unset on GitHub Actions, which is
+  // where build-main.yml and e2e-tests.yml pack .next/standalone.
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   turbopack: {
     resolveAlias: {
       // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
       "markdown-it": "markdown-it/dist/index.cjs.js",
     },
   },
+  // Cache Components. A route now combines a prerendered shell with dynamic
+  // content streamed into it, and `"use cache"` / `cacheLife` / `cacheTag`
+  // become available, instead of every route being either fully static or
+  // fully dynamic.
+  //
+  // Top-level in 16.3.3, not experimental, and it subsumes
+  // `experimental.useCache`: `server/config.js` backfills useCache from this
+  // option and warns "no longer needed" when both are set, so the old flag is
+  // removed rather than left to warn on every build. Removing it is NOT the
+  // same as setting it to false — an explicit `useCache: false` alongside
+  // cacheComponents throws E1465.
+  cacheComponents: true,
+  // Opts the whole app into Partial Prefetching: `<Link prefetch>` fetches
+  // only a route's static part, never its dynamic data, and the default
+  // segment-level prefetch becomes 'partial'. Per-segment `prefetch` exports
+  // still win. Requires cacheComponents and does nothing without it.
+  partialPrefetching: true,
   experimental: {
+    // app/global-not-found.tsx is the 404 for everything the router cannot
+    // match. The flag still exists in 16.3.3 and defaults to false; without it
+    // the file is ignored and Next serves its own unbranded 404.
+    globalNotFound: true,
     optimizePackageImports: [
       "@tremor/react",
       "lucide-react",

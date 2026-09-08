@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TableRow } from "@/components/Pages/Admin/ControlCenter/ControlCenterTable";
 import { ControlCenterTable } from "@/components/Pages/Admin/ControlCenter/ControlCenterTable";
 import { FilterToolbar } from "@/components/Pages/Admin/ControlCenter/FilterToolbar";
-import { PageHero } from "@/components/Pages/Communities/PageHero";
+import { KpiStrip } from "@/components/Pages/Communities/PageHero";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
@@ -24,7 +24,6 @@ import type {
   PayoutGrantConfig,
   TokenTotal,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
-import { COMMITMENTS_AND_DISBURSEMENTS } from "@/utilities/community-nav";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PublicProjectDetailsModal } from "./PublicProjectDetailsModal";
@@ -333,17 +332,19 @@ export function PublicControlCenter() {
     );
   }
 
-  // ─── Progressive render: header + toolbar always visible ───────────────
+  // ─── Progressive render: KPIs + toolbar always visible ───────────────
+  //
+  // The page heading is NOT here any more. It is a `PageHero` in the route's
+  // server component, above the Suspense boundary this whole component now sits
+  // behind, so the <h1> is in the prerendered shell rather than a streamed chunk
+  // (the (cover) group guards exactly one <h1> per page). What is left here is
+  // the half of that hero that cannot prerender: the four counts, which are
+  // derived from the payouts the boundary is waiting on.
   return (
     <div className="my-4 flex flex-col gap-6 w-full">
-      {/* Page Header — renders immediately */}
       <div className="px-4">
-        <PageHero
-          compact
-          eyebrow="Treasury"
-          title={COMMITMENTS_AND_DISBURSEMENTS}
-          description="Overview of grants, agreements, milestones, and disbursements made through programs in this community."
-          kpis={[
+        <KpiStrip
+          items={[
             {
               label: "Tracked grants",
               value: totalItems,

@@ -24,7 +24,7 @@ export interface SanityRevalidatePayload {
 
 const SITEMAP_PATH = "/sitemaps/static/sitemap.xml";
 
-function extractSlug(payload: SanityRevalidatePayload): string | null {
+export function extractSlug(payload: SanityRevalidatePayload): string | null {
   const { slug } = payload;
   if (typeof slug === "string") return slug || null;
   if (slug && typeof slug === "object") return slug.current || null;

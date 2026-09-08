@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import {
   buildUrlsetXml,
   countForKind,
@@ -16,7 +16,6 @@ import {
 // large kind like projects — already ~10s to assemble — 504s, which is exactly
 // what Search Console reports as "Couldn't fetch". The warmer keeps the Data
 // Cache hot so this full duration is only ever spent off the crawler path.
-export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // Consolidated per-kind child sitemap (/sitemaps/projects/sitemap.xml, …): the
@@ -31,6 +30,12 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ kind: string }> }
 ): Promise<NextResponse> {
+  // Runtime-only. Replaces `export const dynamic = "force-dynamic"`, which
+  // cacheComponents rejects — and simply dropping that export is NOT
+  // equivalent: verified on a production build the route flips to `○`
+  // (statically prerendered), baking the response at build time.
+  await connection();
+
   const { kind } = await params;
 
   const meta = KIND_META.get(kind as SitemapKind);

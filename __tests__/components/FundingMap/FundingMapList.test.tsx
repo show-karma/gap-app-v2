@@ -55,6 +55,24 @@ const defaultFilters = {
   },
 };
 
+// The list no longer reads the URL: it reads the context that the leaf publishes
+// into (nuqs calls useSearchParams(), which aborts the prerender of this
+// crawlable route). These two mocks keep the existing `mockUseFundingFilters`
+// fixtures as the single source of truth for what the list sees.
+vi.mock("../../../src/features/funding-map/context/funding-filters-context", () => ({
+  FundingFiltersProvider: ({ children }: { children: React.ReactNode }) => children,
+  useFundingFiltersValue: () => {
+    const { apiParams, filters } = mockUseFundingFilters();
+    return { apiParams, filters, openProgram: vi.fn() };
+  },
+  useFundingFiltersPublisher: () => ({ publish: vi.fn(), publishOpenProgram: vi.fn() }),
+}));
+
+// Owns the URL reads and the dialog; irrelevant to the list's own rendering.
+vi.mock("../../../src/features/funding-map/components/funding-map-url-state", () => ({
+  FundingMapUrlState: () => null,
+}));
+
 vi.mock("../../../src/features/funding-map/hooks/use-funding-filters", () => ({
   useFundingFilters: vi.fn(() => ({
     apiParams: {},

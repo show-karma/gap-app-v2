@@ -89,7 +89,7 @@ describe("GET /api/blog/preview", () => {
 
     expect(enableMock).toHaveBeenCalledTimes(1);
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/blog/hello-world");
+    expect(response.headers.get("location")).toBe("http://localhost/blog/preview/hello-world");
   });
 });
 

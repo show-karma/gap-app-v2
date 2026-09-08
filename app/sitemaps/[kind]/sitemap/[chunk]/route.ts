@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import {
   buildUrlsetXml,
   fetchSitemapKindPage,
@@ -11,7 +11,6 @@ import {
 // Render on demand and allow the cold indexer fetch the same headroom as the
 // consolidated route, so a slow chunk fetch never 504s the way the platform
 // default (~10s) would. See ../../sitemap.xml/route.ts.
-export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // LEGACY per-kind child sitemap chunk (1,000 URLs per file). The index now
@@ -29,6 +28,12 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ kind: string; chunk: string }> }
 ): Promise<NextResponse> {
+  // Runtime-only. Replaces `export const dynamic = "force-dynamic"`, which
+  // cacheComponents rejects — and simply dropping that export is NOT
+  // equivalent: verified on a production build the route flips to `○`
+  // (statically prerendered), baking the response at build time.
+  await connection();
+
   const { kind, chunk } = await params;
 
   const meta = KIND_META.get(kind as SitemapKind);

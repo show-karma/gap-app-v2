@@ -67,6 +67,7 @@ import {
 } from "@/services/projects-explorer.service";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
+import { publicReadOptions } from "@/utilities/api/public-read";
 
 const mockApiGet = api.get as ReturnType<typeof vi.fn>;
 
@@ -133,8 +134,14 @@ describe("projects-explorer service trust tests", () => {
 
       await getExplorerProjects({});
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("/v2/projects"));
-      expect(mockApiGet).toHaveBeenCalledWith(expect.not.stringContaining("search"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("/v2/projects"),
+        publicReadOptions()
+      );
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.not.stringContaining("search"),
+        publicReadOptions()
+      );
     });
 
     it("uses SEARCH endpoint when query length >= 3", async () => {
@@ -142,7 +149,10 @@ describe("projects-explorer service trust tests", () => {
 
       await getExplorerProjects({ search: "test" });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("search"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("search"),
+        publicReadOptions()
+      );
     });
 
     it("uses LIST endpoint when query length < 3", async () => {
@@ -150,7 +160,10 @@ describe("projects-explorer service trust tests", () => {
 
       await getExplorerProjects({ search: "ab" });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.not.stringContaining("search"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.not.stringContaining("search"),
+        publicReadOptions()
+      );
     });
 
     it("filters out test projects from results", async () => {
@@ -207,8 +220,14 @@ describe("projects-explorer service trust tests", () => {
 
       await getExplorerProjectsPaginated({ page: 2, limit: 10 });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("page=2"));
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("limit=10"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("page=2"),
+        publicReadOptions()
+      );
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("limit=10"),
+        publicReadOptions()
+      );
     });
 
     it("passes sortBy and sortOrder params", async () => {
@@ -220,8 +239,14 @@ describe("projects-explorer service trust tests", () => {
         sortOrder: "desc" as any,
       });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("sortBy=updatedAt"));
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("sortOrder=desc"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("sortBy=updatedAt"),
+        publicReadOptions()
+      );
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("sortOrder=desc"),
+        publicReadOptions()
+      );
     });
 
     it("throws on error (unlike getExplorerProjects which returns [])", async () => {
@@ -251,7 +276,10 @@ describe("projects-explorer service trust tests", () => {
 
       await getExplorerProjectsPaginated({ page: 1 });
 
-      expect(mockApiGet).toHaveBeenCalledWith(expect.stringContaining("excludeTestProjects=true"));
+      expect(mockApiGet).toHaveBeenCalledWith(
+        expect.stringContaining("excludeTestProjects=true"),
+        publicReadOptions()
+      );
     });
   });
 });

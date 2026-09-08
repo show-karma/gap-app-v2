@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/utilities/meta";
 import {
@@ -6,10 +7,10 @@ import {
   WELL_KNOWN_PREFLIGHT_HEADERS,
 } from "@/utilities/wellKnown";
 
-export const dynamic = "force-static";
-export const revalidate = 3600;
+async function buildBody() {
+  "use cache";
+  cacheLife("hours");
 
-export function GET() {
   const apiUrl = getIndexerBaseUrl();
 
   const body = {
@@ -34,7 +35,11 @@ export function GET() {
     legal_info_url: `${SITE_URL}/terms-and-conditions`,
   };
 
-  return NextResponse.json(body, { headers: WELL_KNOWN_CORS_HEADERS });
+  return body;
+}
+
+export async function GET() {
+  return NextResponse.json(await buildBody(), { headers: WELL_KNOWN_CORS_HEADERS });
 }
 
 export async function OPTIONS() {

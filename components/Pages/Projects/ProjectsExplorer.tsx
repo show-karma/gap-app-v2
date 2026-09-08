@@ -1,39 +1,18 @@
 "use client";
 
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import type { InfiniteData } from "@tanstack/react-query";
-import debounce from "lodash.debounce";
-import { useQueryState } from "nuqs";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Suspense, useRef, useState } from "react";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite";
-import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import type { PaginatedProjectsResponse } from "@/types/v2/project";
 import {
   type ProjectsExplorerState,
   parseProjectsExplorerRequest,
 } from "@/utilities/projects-explorer-request";
-import { queryClient } from "@/utilities/query-client";
 import { CrawlableProjectsPagination } from "./CrawlablePagination";
 import { ProjectsLoading } from "./Loading";
 import { ProjectCard } from "./ProjectCard";
-
-const sortOptions: Record<ExplorerSortByOptions, string> = {
-  createdAt: "Recently Added",
-  updatedAt: "Recently Updated",
-  title: "Title",
-  noOfGrants: "No. of Grants",
-  noOfProjectMilestones: "No. of Roadmap items",
-  noOfGrantMilestones: "No. of Milestones",
-};
+import { ProjectsExplorerControls } from "./ProjectsExplorerControls";
 
 interface ProjectsExplorerProps {
   /** Server-rendered first page for the initial (matching) request. */
@@ -44,99 +23,16 @@ interface ProjectsExplorerProps {
 
 export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorerProps = {}) => {
   const sectionRef = useRef<HTMLElement>(null);
-  const hasScrolledRef = useRef(false);
 
-  // URL state for search
-  const [searchQuery, setSearchQuery] = useQueryState("q", {
-    defaultValue: "",
-    serialize: (value) => value || "",
-    parse: (value) => value || "",
-  });
+  // No URL read here: nuqs calls useSearchParams(), which aborts the prerender
+  // of this crawlable route. The controls own the reads and publish the live
+  // state back; until they do, the server's default state is what renders — and
+  // that default is what a crawler should index.
+  const [urlState, setUrlState] = useState<ProjectsExplorerState | null>(null);
 
-  // URL state for sorting
-  const [selectedSort, setSelectedSort] = useQueryState("sortBy", {
-    defaultValue: "updatedAt",
-    serialize: (value) => value,
-    parse: (value) => (value as ExplorerSortByOptions) || "updatedAt",
-  });
-
-  const [selectedSortOrder, setSelectedSortOrder] = useQueryState("sortOrder", {
-    defaultValue: "desc",
-    serialize: (value) => value,
-    parse: (value) => (value as ExplorerSortOrder) || "desc",
-  });
-
-  // URL state for raisingFunds filter
-  const [hasPayoutAddress, setHasPayoutAddress] = useQueryState("raisingFunds", {
-    defaultValue: "",
-    serialize: (value) => value || "",
-    parse: (value) => value || "",
-  });
-
-  const isPayoutAddressFilterActive = hasPayoutAddress === "true";
-
-  // Auto-scroll to project list when navigated with filter/sort params from navbar
-  useEffect(() => {
-    if (hasScrolledRef.current) return;
-
-    const hasFilterParams =
-      isPayoutAddressFilterActive || selectedSort !== "updatedAt" || selectedSortOrder !== "desc";
-
-    if (hasFilterParams) {
-      hasScrolledRef.current = true;
-      requestAnimationFrame(() => {
-        sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-  }, [isPayoutAddressFilterActive, selectedSort, selectedSortOrder]);
-
-  // Internal search state for debouncing
-  const [inputValue, setInputValue] = useState(searchQuery || "");
-
-  // Debounce search to avoid too many API calls
-  const debouncedSetSearch = useMemo(
-    () =>
-      debounce((value: string) => {
-        setSearchQuery(value || null);
-      }, PROJECTS_EXPLORER_CONSTANTS.DEBOUNCE_DELAY_MS),
-    [setSearchQuery]
-  );
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedSetSearch.cancel();
-    };
-  }, [debouncedSetSearch]);
-
-  // Sync input value when URL changes (e.g., back/forward navigation)
-  useEffect(() => {
-    setInputValue(searchQuery || "");
-  }, [searchQuery]);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-    if (value === "") {
-      // Clearing must take effect immediately. Cancel any pending debounced write
-      // and clear the URL synchronously, otherwise the next render or the
-      // debounce-cleanup effect can cancel the queued clear and leave a stale ?q
-      // (and stale results) behind.
-      debouncedSetSearch.cancel();
-      setSearchQuery(null);
-      return;
-    }
-    debouncedSetSearch(value);
-  };
-
-  // Normalize the live URL filters with the shared policy so the seed decision
-  // matches exactly what the server parsed.
-  const normalizedState = parseProjectsExplorerRequest({
-    q: searchQuery,
-    sortBy: selectedSort,
-    sortOrder: selectedSortOrder,
-    raisingFunds: hasPayoutAddress,
-  });
+  // The live filters, normalised by the controls with the same shared policy the
+  // server used, so the seed decision matches exactly what it parsed.
+  const normalizedState = urlState ?? initialState ?? parseProjectsExplorerRequest({});
 
   const matchesInitialState =
     initialState !== undefined &&
@@ -184,19 +80,6 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
   const hasCrawlablePrev = showCrawlablePagination && effectivePage > 1;
   const hasCrawlableNext = showCrawlablePagination && effectivePage < totalPages;
 
-  // Handle sort change
-  const changeSort = async (newValue: ExplorerSortByOptions) => {
-    if (newValue !== selectedSort) {
-      setSelectedSort(newValue);
-      setSelectedSortOrder("desc");
-
-      // Clear query cache to force refetch with new sort
-      queryClient.removeQueries({
-        predicate: (query) => query.queryKey[0] === "projects-explorer-infinite",
-      });
-    }
-  };
-
   return (
     <section
       ref={sectionRef}
@@ -214,97 +97,13 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
           )}
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6">
-          {/* Search Input */}
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              aria-label="Search projects"
-              placeholder="Search projects…"
-              value={inputValue}
-              onChange={handleSearchChange}
-              className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
-
-          {/* Raising Funds Filter */}
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              aria-label="Filter to projects raising funds"
-              checked={isPayoutAddressFilterActive}
-              onChange={() => setHasPayoutAddress(isPayoutAddressFilterActive ? null : "true")}
-              className="sr-only peer"
-            />
-            <span
-              className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${
-                isPayoutAddressFilterActive ? "bg-blue-600" : "bg-gray-300 dark:bg-zinc-600"
-              } peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
-                  isPayoutAddressFilterActive ? "translate-x-4" : "translate-x-0"
-                }`}
-              />
-            </span>
-            <span className="text-sm font-medium text-gray-700 dark:text-zinc-300 whitespace-nowrap">
-              Raising Funds
-            </span>
-          </label>
-
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-x-2">
-            <label
-              htmlFor="sort-by-select"
-              className="text-sm font-medium text-gray-700 dark:text-zinc-300 whitespace-nowrap"
-            >
-              Sort by
-            </label>
-            <div className="flex items-center gap-1">
-              <Select
-                value={normalizedState.sortBy}
-                onValueChange={(value) => {
-                  changeSort(value as ExplorerSortByOptions);
-                }}
-              >
-                <SelectTrigger
-                  id="sort-by-select"
-                  aria-label="Sort projects by"
-                  className="w-48 bg-white dark:bg-zinc-800 dark:text-zinc-200 border-gray-300 dark:border-zinc-700"
-                >
-                  <SelectValue>{sortOptions[normalizedState.sortBy]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-zinc-800">
-                  {Object.keys(sortOptions).map((sortOption) => (
-                    <SelectItem
-                      key={sortOption}
-                      value={sortOption}
-                      className="text-gray-900 dark:text-gray-200 focus:bg-gray-100 dark:focus:bg-zinc-700"
-                    >
-                      {sortOptions[sortOption as ExplorerSortByOptions]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedSortOrder(normalizedState.sortOrder === "asc" ? "desc" : "asc")
-                }
-                aria-label={`Sort ${normalizedState.sortOrder === "asc" ? "descending" : "ascending"}`}
-                className="p-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-              >
-                {normalizedState.sortOrder === "asc" ? (
-                  <ArrowUpIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                ) : (
-                  <ArrowDownIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* Controls read the URL; the grid below does not. nuqs calls
+            useSearchParams(), which aborts the prerender of this crawlable
+            route unconditionally, so the reads live behind a leaf and the
+            grid renders from the server-provided default. */}
+        <Suspense fallback={null}>
+          <ProjectsExplorerControls onStateChange={setUrlState} />
+        </Suspense>
       </div>
 
       {/* Grid */}
@@ -316,9 +115,9 @@ export const ProjectsExplorer = ({ initialData, initialState }: ProjectsExplorer
         </div>
       ) : projects.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          {searchQuery
-            ? `No projects found for "${searchQuery}"`
-            : isPayoutAddressFilterActive
+          {normalizedState.q
+            ? `No projects found for "${normalizedState.q}"`
+            : normalizedState.raisingFunds
               ? "No projects are currently raising funds"
               : "No projects available"}
         </div>

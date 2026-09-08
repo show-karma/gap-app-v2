@@ -1,18 +1,29 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore } from "@/store/owner";
 import { ManageBreadcrumbs } from "./ManageBreadcrumbs";
+import { ManageChromeBoundary } from "./ManageChromeBoundary";
 import { ManageDeniedView } from "./ManageDeniedView";
 import { ManageSidebar } from "./ManageSidebar";
 
-export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
-  const params = useParams();
-  const communityId = params.communityId as string;
+/**
+ * `communityId` is a prop for the same reason it is one on ManageLayoutClient:
+ * `useParams()` here read the whole matched route, unknown nested segment
+ * included. This component renders above `children` on every manage route, so
+ * the read had to go too -- fixing only the client layout would have moved the
+ * CLIENT_HOOK_DYNAMIC failure one component down rather than removing it.
+ */
+export function ManageLayoutShell({
+  communityId,
+  children,
+}: {
+  communityId: string;
+  children: React.ReactNode;
+}) {
   const { data: community, isLoading, isError } = useCommunityDetails(communityId);
   const {
     isCommunityAdmin,
@@ -92,11 +103,29 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
     // `relative` anchors the rail's absolute positioning (see
     // SIDEBAR_BELOW_NAVBAR_CLASSES) so the body-level footer stays clear.
     <SidebarProvider className="relative">
-      <ManageSidebar communityId={communityId} community={community} />
+      {/* Both pieces of chrome read usePathname(); the boundary is what keeps
+          that read from making every manage route dynamic. Fallbacks mirror
+          each one's footprint so nothing shifts when they stream in. */}
+      <ManageChromeBoundary
+        fallback={
+          <div className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 dark:border-zinc-700 p-4">
+            <Skeleton className="h-12 w-full rounded-lg mb-6" />
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-9 w-full rounded-lg" />
+              ))}
+            </div>
+          </div>
+        }
+      >
+        <ManageSidebar communityId={communityId} community={community} />
+      </ManageChromeBoundary>
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
-          <ManageBreadcrumbs communitySlug={slug} />
+          <ManageChromeBoundary fallback={<Skeleton className="h-4 w-48 rounded" />}>
+            <ManageBreadcrumbs communitySlug={slug} />
+          </ManageChromeBoundary>
         </header>
         <div className="flex-1 p-6 lg:p-8">{children}</div>
       </SidebarInset>

@@ -7,7 +7,7 @@
  * which is the seam product code is allowed to depend on.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { render } from "@testing-library/react";
 import { StrictMode } from "react";
@@ -476,8 +476,23 @@ describe("AnalyticsProvider — the authenticated-but-unresolved gap", () => {
  * neither answers the other's question.
  */
 describe("AnalyticsProvider mounting (layout nesting)", () => {
-  const readSource = (relativePath: string) =>
-    readFileSync(join(process.cwd(), relativePath), "utf-8");
+  /**
+   * The root layout, at the tenant mount: middleware rewrites every public URL
+   * into `app/t/[tenant]`, so that is where the root layout lives and there is
+   * no `app/layout.tsx`.
+   */
+  const ROOT_LAYOUT = "app/t/[tenant]/layout.tsx";
+
+  const readSource = (relativePath: string) => {
+    const absolute = join(process.cwd(), relativePath);
+    if (!existsSync(absolute)) {
+      // Named rather than left as an ENOENT from readFileSync: when a layout
+      // moves, "this file is gone" is the finding, and a raw ENOENT deep in a
+      // helper reads as a broken test rather than as a moved subject.
+      throw new Error(`${relativePath} does not exist — has it moved?`);
+    }
+    return readFileSync(absolute, "utf-8");
+  };
 
   it("is rendered by DeferredLayoutComponents", () => {
     const source = readSource("components/DeferredLayoutComponents.tsx");
@@ -487,7 +502,7 @@ describe("AnalyticsProvider mounting (layout nesting)", () => {
   });
 
   it("mounts DeferredLayoutComponents inside WhitelabelProvider in the root layout", () => {
-    const source = readSource("app/layout.tsx");
+    const source = readSource(ROOT_LAYOUT);
 
     const open = source.indexOf("<WhitelabelProvider");
     const close = source.indexOf("</WhitelabelProvider>");

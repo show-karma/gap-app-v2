@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
 import { getDomainInfo } from "@/src/infrastructure/config/domain-constants";
 import { CANONICAL_HOST, CANONICAL_ORIGIN, STAGING_ORIGIN } from "@/utilities/domains";
+import { tenantRewritePathname } from "@/utilities/tenant-param";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
 vi.mock("next/server", async (importOriginal) => {
@@ -89,7 +90,7 @@ describe("middleware dashboard redirects", () => {
     expect(response?.headers.get("location")).toBeNull();
   });
 
-  it("passes through whitelabel /project routes without rewrite", async () => {
+  it("passes whitelabel /project routes through without the community prefix", async () => {
     if (!primaryWhitelabel) {
       throw new Error("No whitelabel domain configured for middleware tests.");
     }
@@ -98,12 +99,18 @@ describe("middleware dashboard redirects", () => {
       createRequestWithHost("/project/test-project", primaryWhitelabel.domain)
     );
 
-    // /project is a top-level route, not a community sub-route — no rewrite needed
-    expect(response?.headers.get("x-middleware-rewrite")).toBeNull();
+    // /project is a top-level route, not a community sub-route — the path keeps
+    // its shape and only picks up the internal tenant prefix.
+    expect(response?.headers.get("x-middleware-rewrite")).toBe(
+      `http://${primaryWhitelabel.domain}${tenantRewritePathname(
+        primaryWhitelabel.domain,
+        "/project/test-project"
+      )}`
+    );
     expect(response?.headers.get("location")).toBeNull();
   });
 
-  it("passes through the Sanity Studio route on a whitelabel domain without rewrite", async () => {
+  it("keeps the Sanity Studio route top-level on a whitelabel domain", async () => {
     if (!primaryWhitelabel) {
       throw new Error("No whitelabel domain configured for middleware tests.");
     }
@@ -113,8 +120,14 @@ describe("middleware dashboard redirects", () => {
     );
 
     // /admin/studio must stay top-level even though "admin" is otherwise a
-    // community sub-route segment (see the /admin/settings rewrite test below).
-    expect(response?.headers.get("x-middleware-rewrite")).toBeNull();
+    // community sub-route segment (see the /admin/settings rewrite test below):
+    // the tenant prefix is added, the community prefix is not.
+    expect(response?.headers.get("x-middleware-rewrite")).toBe(
+      `http://${primaryWhitelabel.domain}${tenantRewritePathname(
+        primaryWhitelabel.domain,
+        "/admin/studio/structure"
+      )}`
+    );
     expect(response?.headers.get("location")).toBeNull();
   });
 
@@ -128,7 +141,10 @@ describe("middleware dashboard redirects", () => {
     );
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `http://${primaryWhitelabel.domain}/community/${primaryWhitelabel.communitySlug}/admin/settings`
+      `http://${primaryWhitelabel.domain}${tenantRewritePathname(
+        primaryWhitelabel.domain,
+        `/community/${primaryWhitelabel.communitySlug}/admin/settings`
+      )}`
     );
     expect(response?.headers.get("location")).toBeNull();
   });

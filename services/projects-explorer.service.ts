@@ -3,6 +3,7 @@ import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import type { PaginatedProjectsResponse, Project as ProjectResponse } from "@/types/v2/project";
 import { api } from "@/utilities/api/client";
+import { publicReadOptions } from "@/utilities/api/public-read";
 import { INDEXER } from "@/utilities/indexer";
 
 interface ExplorerProjectsParams {
@@ -51,7 +52,7 @@ export const getExplorerProjects = async (
 
   try {
     // TODO(#1775): add zod schema
-    const data = await api.get<ProjectResponse[]>(endpoint);
+    const data = await api.get<ProjectResponse[]>(endpoint, publicReadOptions());
     if (!data) {
       errorManager("Failed to fetch explorer projects", undefined, {
         context: "projects-explorer.service",
@@ -108,7 +109,7 @@ export const getExplorerProjectsPaginated = async (
 
   try {
     // TODO(#1775): add zod schema
-    const data = await api.get<PaginatedProjectsResponse>(endpoint);
+    const data = await api.get<PaginatedProjectsResponse>(endpoint, publicReadOptions());
     if (!data) {
       throw new Error("Failed to fetch explorer projects (paginated)");
     }

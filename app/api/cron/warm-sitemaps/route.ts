@@ -1,8 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import { SITE_URL } from "@/utilities/meta";
 
-export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // Per-fetch cap so one hung upstream fails fast and is reported instead of
@@ -16,6 +15,12 @@ const FETCH_TIMEOUT_MS = 15_000;
 // fast responses — including right after a deploy, when the CDN cache is cold
 // but the Data Cache (which persists across deployments) is not.
 export async function GET(request: Request): Promise<NextResponse> {
+  // Runtime-only. Replaces `export const dynamic = "force-dynamic"`, which
+  // cacheComponents rejects — and simply dropping that export is NOT
+  // equivalent: verified on a production build the route flips to `○`
+  // (statically prerendered), baking the response at build time.
+  await connection();
+
   const secret = process.env.CRON_SECRET;
   if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

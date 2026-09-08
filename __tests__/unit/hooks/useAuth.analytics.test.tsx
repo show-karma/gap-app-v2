@@ -25,7 +25,37 @@ vi.unmock("@/hooks/useAuth");
 
 vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
-const mockPathname = vi.fn(() => "/funding-map");
+/**
+ * `useAuth` reads the path from `window.location`, not from `usePathname()`:
+ * the value is only consumed inside the login callback and never rendered, and
+ * the hook is called by the navbar on every route, so a `usePathname()` there
+ * would abort the prerender of the whole app. Drive it the same way.
+ */
+const originalLocation = window.location;
+
+const setPathname = (pathname: string) => {
+  // `Location.pathname` is a non-configurable accessor in jsdom, so it cannot
+  // be redefined in place — `window.location` itself is what gets replaced.
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    writable: true,
+    value: {
+      href: `${originalLocation.origin}${pathname}`,
+      origin: originalLocation.origin,
+      pathname,
+      search: "",
+      hash: "",
+    },
+  });
+};
+
+afterAll(() => {
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    writable: true,
+    value: originalLocation,
+  });
+});
 
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(() => ({
@@ -35,7 +65,6 @@ vi.mock("next/navigation", () => ({
     prefetch: vi.fn(),
     refresh: vi.fn(),
   })),
-  usePathname: () => mockPathname(),
   useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
@@ -119,7 +148,7 @@ describe("useAuth analytics", () => {
     vi.clearAllMocks();
     __resetPendingLogoutReasonForTests();
     __resetUserSwitchGuardForTests();
-    mockPathname.mockReturnValue("/funding-map");
+    setPathname("/funding-map");
     resetBridge();
     // A persisted Privy token now changes what the pre-`ready` emit gate does,
     // so it must not leak between cases.
@@ -140,7 +169,7 @@ describe("useAuth analytics", () => {
     });
 
     it("falls back to the route family, never the raw pathname", async () => {
-      mockPathname.mockReturnValue("/project/0xabc/updates");
+      setPathname("/project/0xabc/updates");
       const { result } = renderHook(() => useAuth());
 
       await act(async () => {
@@ -215,12 +244,13 @@ describe("useAuth analytics", () => {
       // the post-login redirect, and that read is unguarded, so throwing for
       // every key would fail the case on an unrelated line.
       const realGetItem = Storage.prototype.getItem;
-      const getItem = vi
-        .spyOn(Storage.prototype, "getItem")
-        .mockImplementation(function (this: Storage, key: string) {
-          if (key === "privy:token") throw new Error("storage unavailable");
-          return realGetItem.call(this, key);
-        });
+      const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (
+        this: Storage,
+        key: string
+      ) {
+        if (key === "privy:token") throw new Error("storage unavailable");
+        return realGetItem.call(this, key);
+      });
 
       try {
         const { result } = renderHook(() => useAuth());

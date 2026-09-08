@@ -7,8 +7,9 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { createMockBlogPost } from "../../factories/blogPost.factory";
 
-const { getPostBySlugMock, draftModeMock } = vi.hoisted(() => ({
+const { getPostBySlugMock, getPublishedPostBySlugMock, draftModeMock } = vi.hoisted(() => ({
   getPostBySlugMock: vi.fn(),
+  getPublishedPostBySlugMock: vi.fn(),
   draftModeMock: vi.fn(),
 }));
 
@@ -20,6 +21,7 @@ const notFoundMock = vi.fn(() => {
 
 vi.mock("@/sanity/lib/gateway", () => ({
   getPostBySlug: getPostBySlugMock,
+  getPublishedPostBySlug: getPublishedPostBySlugMock,
 }));
 
 vi.mock("next/navigation", async () => {
@@ -46,9 +48,9 @@ beforeEach(() => {
 describe("/blog/[slug] page", () => {
   it("renders the post title, body, and author for a known slug", async () => {
     const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
-    getPostBySlugMock.mockResolvedValue(post);
+    getPublishedPostBySlugMock.mockResolvedValue(post);
 
-    const { default: BlogPostPage } = await import("@/app/blog/[slug]/page");
+    const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
     const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
     render(result);
 
@@ -59,9 +61,9 @@ describe("/blog/[slug] page", () => {
 
   it("renders ArticleJsonLd and BreadcrumbJsonLd for a known slug", async () => {
     const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
-    getPostBySlugMock.mockResolvedValue(post);
+    getPublishedPostBySlugMock.mockResolvedValue(post);
 
-    const { default: BlogPostPage } = await import("@/app/blog/[slug]/page");
+    const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
     const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
     const { container } = render(result);
 
@@ -76,9 +78,9 @@ describe("/blog/[slug] page", () => {
   });
 
   it("calls notFound() for an unknown slug", async () => {
-    getPostBySlugMock.mockResolvedValue(null);
+    getPublishedPostBySlugMock.mockResolvedValue(null);
 
-    const { default: BlogPostPage } = await import("@/app/blog/[slug]/page");
+    const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
 
     await expect(
       BlogPostPage({ params: Promise.resolve({ slug: "does-not-exist" }) })
@@ -88,9 +90,9 @@ describe("/blog/[slug] page", () => {
 
   it("generateMetadata uses the post title/excerpt for a known slug", async () => {
     const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
-    getPostBySlugMock.mockResolvedValue(post);
+    getPublishedPostBySlugMock.mockResolvedValue(post);
 
-    const { generateMetadata } = await import("@/app/blog/[slug]/page");
+    const { generateMetadata } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
     const metadata = await generateMetadata({ params: Promise.resolve({ slug: "hello-world" }) });
 
     expect(metadata.title).toBe("Hello World");
@@ -98,9 +100,9 @@ describe("/blog/[slug] page", () => {
   });
 
   it("generateMetadata falls back to a noindex title for an unknown slug", async () => {
-    getPostBySlugMock.mockResolvedValue(null);
+    getPublishedPostBySlugMock.mockResolvedValue(null);
 
-    const { generateMetadata } = await import("@/app/blog/[slug]/page");
+    const { generateMetadata } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
     const metadata = await generateMetadata({
       params: Promise.resolve({ slug: "does-not-exist" }),
     });
@@ -108,47 +110,30 @@ describe("/blog/[slug] page", () => {
     expect(metadata.robots).toEqual({ index: false, follow: true });
   });
 
-  describe("draft mode preview", () => {
-    it("reads the draft post and renders the preview banner with an exit link when draft mode is enabled", async () => {
-      draftModeMock.mockResolvedValue({ isEnabled: true });
+  describe("draft mode", () => {
+    it("never reads draft mode — that is what keeps this route prerenderable", async () => {
       const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
-      getPostBySlugMock.mockResolvedValue(post);
+      getPublishedPostBySlugMock.mockResolvedValue(post);
 
-      const { default: BlogPostPage } = await import("@/app/blog/[slug]/page");
-      const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
-      render(result);
+      const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
+      render(await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) }));
 
-      expect(getPostBySlugMock).toHaveBeenCalledWith("hello-world", { draft: true });
-      expect(screen.getByRole("status")).toHaveTextContent(/preview mode/i);
-      const exitLink = screen.getByRole("link", { name: /exit preview/i });
-      expect(exitLink).toHaveAttribute("href", expect.stringContaining("/api/blog/preview/exit"));
-      expect(exitLink).toHaveAttribute("href", expect.stringContaining("slug=hello-world"));
-    });
-
-    it("does not render the preview banner when draft mode is disabled", async () => {
-      draftModeMock.mockResolvedValue({ isEnabled: false });
-      const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
-      getPostBySlugMock.mockResolvedValue(post);
-
-      const { default: BlogPostPage } = await import("@/app/blog/[slug]/page");
-      const result = await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
-      render(result);
-
-      expect(getPostBySlugMock).toHaveBeenCalledWith("hello-world", { draft: false });
+      // `draftMode()` is a request read; one here would hold a sitemap-crawlable
+      // route out of the prerender, which is the whole reason preview moved to
+      // its own route.
+      expect(draftModeMock).not.toHaveBeenCalled();
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
-    it("generateMetadata marks a draft preview noindex even for a known slug", async () => {
-      draftModeMock.mockResolvedValue({ isEnabled: true });
+    it("reads only published content, never the draft variant", async () => {
       const post = createMockBlogPost({ slug: "hello-world", title: "Hello World" });
-      getPostBySlugMock.mockResolvedValue(post);
+      getPublishedPostBySlugMock.mockResolvedValue(post);
 
-      const { generateMetadata } = await import("@/app/blog/[slug]/page");
-      const metadata = await generateMetadata({
-        params: Promise.resolve({ slug: "hello-world" }),
-      });
+      const { default: BlogPostPage } = await import("@/app/t/[tenant]/(chrome)/blog/[slug]/page");
+      await BlogPostPage({ params: Promise.resolve({ slug: "hello-world" }) });
 
-      expect(metadata.robots).toEqual({ index: false, follow: true });
+      expect(getPublishedPostBySlugMock).toHaveBeenCalledWith("hello-world");
+      expect(getPostBySlugMock).not.toHaveBeenCalled();
     });
   });
 });

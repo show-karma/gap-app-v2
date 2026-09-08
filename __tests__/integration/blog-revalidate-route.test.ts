@@ -7,14 +7,19 @@
 import type { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
 
-const { parseBodyMock, revalidatePathMock, getServerEnvMock, sentryCaptureMock } = vi.hoisted(
-  () => ({
-    parseBodyMock: vi.fn(),
-    revalidatePathMock: vi.fn(),
-    getServerEnvMock: vi.fn(),
-    sentryCaptureMock: vi.fn(),
-  })
-);
+const {
+  parseBodyMock,
+  revalidatePathMock,
+  revalidateTagMock,
+  getServerEnvMock,
+  sentryCaptureMock,
+} = vi.hoisted(() => ({
+  parseBodyMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
+  revalidateTagMock: vi.fn(),
+  getServerEnvMock: vi.fn(),
+  sentryCaptureMock: vi.fn(),
+}));
 
 vi.mock("next-sanity/webhook", () => ({
   parseBody: parseBodyMock,
@@ -22,6 +27,7 @@ vi.mock("next-sanity/webhook", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
+  revalidateTag: revalidateTagMock,
 }));
 
 vi.mock("@/utilities/env", () => ({
@@ -83,6 +89,12 @@ describe("POST /api/blog/revalidate", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith("/blog/hello-world");
     expect(revalidatePathMock).toHaveBeenCalledWith("/sitemaps/static/sitemap.xml");
     expect(revalidatePathMock).toHaveBeenCalledTimes(3);
+
+    // revalidatePath does not reach `"use cache"` entries, so the cached post
+    // body has to be purged by tag too or the webhook reports success while the
+    // page keeps serving the old copy.
+    expect(revalidateTagMock).toHaveBeenCalledWith("blog-list", "max");
+    expect(revalidateTagMock).toHaveBeenCalledWith("blog-post:hello-world", "max");
   });
 
   it("returns 200 with no revalidated paths for a valid signature on a non-post document", async () => {

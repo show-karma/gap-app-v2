@@ -12,6 +12,13 @@ import {
 import { fetchProjectIndexabilityDecision } from "./utilities/project-indexability-client";
 import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
+import {
+  isTenantExemptPath,
+  isTenantRoutePath,
+  resolveTenantParam,
+  tenantNotFoundPathname,
+  tenantRewritePathname,
+} from "./utilities/tenant-param";
 import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
 import { resolveWhitelabelRouteAlias } from "./utilities/whitelabel-routes";
 
@@ -27,8 +34,57 @@ function withRobots(response: Response, value: string): Response {
   return response;
 }
 
+/**
+ * Serve a page request from the tenant-scoped route tree.
+ *
+ * Every page lives under `app/t/[tenant]/`, so the tenant is a URL segment the
+ * prerenderer can see instead of a `headers()` read that forces the whole shell
+ * dynamic. This is a rewrite, never a redirect: the browser URL, the `PAGES`
+ * constants and every emitted href stay exactly as they are.
+ *
+ * Route handlers, metadata routes and `public/` assets keep their own URLs —
+ * `isTenantExemptPath()` is the single list, and this is the single place every
+ * pass-through in the proxy funnels through, so a new one cannot miss it.
+ */
+function tenantRewrite(
+  request: NextRequest,
+  options: { pathname?: string; requestHeaders?: Headers } = {}
+): NextResponse {
+  const pathname = options.pathname ?? request.nextUrl.pathname;
+  const init = options.requestHeaders
+    ? { request: { headers: options.requestHeaders } }
+    : undefined;
+
+  if (isTenantExemptPath(pathname)) {
+    return NextResponse.next(init);
+  }
+
+  // clone() carries the query; the pathname is the only thing reassigned.
+  const url = request.nextUrl.clone();
+  url.pathname = tenantRewritePathname(
+    resolveTenantParam(request.headers.get("host") || ""),
+    pathname
+  );
+
+  return NextResponse.rewrite(url, init);
+}
+
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // --- The tenant prefix is internal only ---
+  // Every page request is rewritten to /t/<tenant>/... below. A request that
+  // arrives already carrying the prefix would serve the same page at a second
+  // URL (www.karmahq.org/t/karma/about) — duplicate indexable content — so it
+  // is answered with the branded 404 before any other rule can rewrite or
+  // redirect it. Rewriting to an unmatchable segment (rather than returning a
+  // bodyless 404) gets the real not-found page with a real 404 status; the
+  // browser URL is untouched either way.
+  if (isTenantRoutePath(path)) {
+    const url = request.nextUrl.clone();
+    url.pathname = tenantNotFoundPathname(resolveTenantParam(request.headers.get("host") || ""));
+    return withRobots(NextResponse.rewrite(url), NOINDEX_FOLLOW);
+  }
 
   // --- Whitelabel domain handling (must run before all other logic) ---
   const hostname = request.headers.get("host") || "";
@@ -47,7 +103,7 @@ export async function proxy(request: NextRequest) {
     // (for /community/<slug>/admin/*), so without this guard the rewrite
     // below would send it to /community/<slug>/admin/studio instead.
     if (path === PAGES.ADMIN_STUDIO || path.startsWith(`${PAGES.ADMIN_STUDIO}/`)) {
-      return NextResponse.next();
+      return tenantRewrite(request);
     }
 
     const { communitySlug, tenantId } = whitelabel;
@@ -116,7 +172,7 @@ export async function proxy(request: NextRequest) {
       requestHeaders.set("x-community-slug", communitySlug);
       requestHeaders.set("x-tenant-id", tenantId || communitySlug);
       requestHeaders.set("x-whitelabel-domain", whitelabel.domain);
-      return NextResponse.next({ request: { headers: requestHeaders } });
+      return tenantRewrite(request, { requestHeaders });
     }
 
     // Rewrite community sub-routes — prepend /community/<slug>
@@ -124,18 +180,15 @@ export async function proxy(request: NextRequest) {
       ? `/community/${communitySlug}/funding-opportunities`
       : `/community/${communitySlug}${normalizedPath}`;
 
-    const url = request.nextUrl.clone();
-    url.pathname = rewrittenPath;
-
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-is-whitelabel", "true");
     requestHeaders.set("x-community-slug", communitySlug);
     requestHeaders.set("x-tenant-id", tenantId || communitySlug);
     requestHeaders.set("x-whitelabel-domain", whitelabel.domain);
 
-    return NextResponse.rewrite(url, {
-      request: { headers: requestHeaders },
-    });
+    // The community rewrite composes with the tenant prefix:
+    // /programs/1 -> /t/<domain>/community/<slug>/programs/1.
+    return tenantRewrite(request, { pathname: rewrittenPath, requestHeaders });
   }
 
   // --- Legacy umbrella domain redirect (app.karmahq.xyz/<slug>/...) ---
@@ -284,7 +337,7 @@ export async function proxy(request: NextRequest) {
   // the clean listing, so mark it noindex,follow; clean or tracking-only stays
   // indexable. Alias hosts already 308'd above, so this only runs on www.
   if (path === "/projects" || path === "/projects/") {
-    const response = NextResponse.next();
+    const response = tenantRewrite(request);
     return classifyProjectQuery(request.nextUrl.searchParams) === "stateful"
       ? withRobots(response, NOINDEX_FOLLOW)
       : response;
@@ -294,7 +347,7 @@ export async function proxy(request: NextRequest) {
     return handleProjectIndexability(request, path, isAlias);
   }
 
-  return NextResponse.next();
+  return tenantRewrite(request);
 }
 
 /**
@@ -323,7 +376,7 @@ async function handleProjectIndexability(
     if (isAlias) {
       return NextResponse.redirect(new URL(canonicalUrl(path, request.nextUrl.search)), 308);
     }
-    return withRobots(NextResponse.next(), NOINDEX_FOLLOW);
+    return withRobots(tenantRewrite(request), NOINDEX_FOLLOW);
   }
 
   const isStatefulQuery = classifyProjectQuery(request.nextUrl.searchParams) === "stateful";
@@ -369,7 +422,7 @@ async function handleProjectIndexability(
   // query suppresses indexing; canonical-indexable / duplicate-alias with a
   // clean or tracking-only query stay indexable.
   const shouldNoindex = decision.outcome === "noindex-follow" || isStatefulQuery;
-  const response = NextResponse.next();
+  const response = tenantRewrite(request);
   return shouldNoindex ? withRobots(response, NOINDEX_FOLLOW) : response;
 }
 

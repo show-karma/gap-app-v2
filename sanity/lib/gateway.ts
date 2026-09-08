@@ -1,6 +1,7 @@
 import "server-only";
 
 import * as Sentry from "@sentry/nextjs";
+import { cacheLife, cacheTag } from "next/cache";
 
 import { projectId } from "@/sanity/env";
 import { client } from "@/sanity/lib/client";
@@ -100,6 +101,44 @@ export async function getPostBySlug(
     });
     return null;
   }
+}
+
+/**
+ * Cache tags for the blog. Kept here rather than in a shared module so this
+ * change stays self-contained; if the loader-caching PR lands too, both should
+ * move to `utilities/cache/tags.ts`.
+ */
+export const blogListTag = (): string => "blog-list";
+export const blogPostTag = (slug: string): string => `blog-post:${slug}`;
+
+/**
+ * Cached twins of the two published reads, for the crawlable blog routes.
+ *
+ * Published-only on purpose: the draft path takes a viewer token and returns
+ * content that was never published, and caching that — in a store shared by
+ * every reader — is exactly the leak the plan forbids. `getPostBySlug(slug,
+ * { draft: true })` therefore stays uncached and is reachable only from the
+ * preview route.
+ *
+ * `cacheLife("minutes")` is `{ stale: 300, revalidate: 60, expire: 3600 }` —
+ * the same 60s ceiling the two pages carried as `export const revalidate = 60`,
+ * so the self-healing fallback is unchanged if the webhook is ever
+ * unreachable.
+ */
+export async function getPublishedPostsCached(): Promise<BlogPostSummary[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(blogListTag());
+
+  return getPublishedPosts();
+}
+
+export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(blogPostTag(slug), blogListTag());
+
+  return getPostBySlug(slug);
 }
 
 /** Slug + `publishedAt` pairs for every published post, for the sitemap. */

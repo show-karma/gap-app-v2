@@ -13,7 +13,7 @@ describe("/.well-known/agent-card.json route handler", () => {
 
   it("returns an A2A agent card under the top-level 'agent' envelope", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.agent).toBeDefined();
     expect(body.agent.name).toBe("Karma");
@@ -24,7 +24,7 @@ describe("/.well-known/agent-card.json route handler", () => {
 
   it("also exposes name and description at the root for AEO crawlers (Ora)", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.name).toBe("Karma");
     expect(typeof body.description).toBe("string");
@@ -33,7 +33,7 @@ describe("/.well-known/agent-card.json route handler", () => {
 
   it("keeps root-level and nested name/description in lockstep", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.name).toBe(body.agent.name);
     expect(body.description).toBe(body.agent.description);
@@ -41,7 +41,7 @@ describe("/.well-known/agent-card.json route handler", () => {
 
   it("points url and documentationUrl at the apex marketing domain", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.agent.url).toBe(SITE_URL);
     expect(body.agent.documentationUrl).toBe(`${SITE_URL}/mcp/connect`);
@@ -51,7 +51,7 @@ describe("/.well-known/agent-card.json route handler", () => {
 
   it("advertises capability flags as explicit booleans (no streaming yet)", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.agent.capabilities).toEqual({
       streaming: false,
@@ -62,14 +62,14 @@ describe("/.well-known/agent-card.json route handler", () => {
 
   it("supports both oauth2 and apiKey authentication schemes", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.agent.authentication.schemes).toEqual(expect.arrayContaining(["oauth2", "apiKey"]));
   });
 
   it("points skillsDiscovery at the live mcp-tools.json catalog (no hardcoded skills)", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.agent.skillsDiscovery).toBeDefined();
     expect(body.agent.skillsDiscovery.url).toBe(`${SITE_URL}/.well-known/mcp-tools.json`);
@@ -79,14 +79,14 @@ describe("/.well-known/agent-card.json route handler", () => {
 
   it("does NOT enumerate a static skills array (single source of truth is the indexer)", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     const body = await res.json();
     expect(body.agent.skills).toBeUndefined();
   });
 
   it("sets wide-open CORS headers so agent crawlers can read it", async () => {
     const { GET } = await import("@/app/.well-known/agent-card.json/route");
-    const res = GET();
+    const res = await GET();
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("GET");
     expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");

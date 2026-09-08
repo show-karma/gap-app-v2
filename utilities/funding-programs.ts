@@ -53,10 +53,13 @@ const statusConfig: Record<ProgramStatusType, Omit<ProgramStatusInfo, "status" |
  * @param endsAt - Program end date
  * @returns true if current date is within the date range
  */
-export function isProgramOpen(startsAt: string | undefined, endsAt: string | undefined): boolean {
+export function isProgramOpen(
+  startsAt: string | undefined,
+  endsAt: string | undefined,
+  now: Date = new Date()
+): boolean {
   if (!startsAt || !endsAt) return true;
 
-  const now = new Date();
   const start = new Date(startsAt);
   const end = new Date(endsAt);
 
@@ -69,18 +72,21 @@ export function isProgramOpen(startsAt: string | undefined, endsAt: string | und
  * Rules aligned with gap-whitelabel-app for consistency across apps.
  *
  * @param program - The funding program to check
+ * @param now - The clock to judge the deadline against. Client Components on a
+ *   prerendered route must pass `useRenderNow()`: reading the clock during
+ *   render is what `cacheComponents` rejects.
  * @returns true if the program is accepting applications
  */
-export function isProgramEnabled(program: ProgramLike): boolean {
+export function isProgramEnabled(program: ProgramLike, now: Date = new Date()): boolean {
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
   const isApplicationDeadlinePassed = program.metadata?.endsAt
-    ? new Date(program.metadata.endsAt) < new Date()
+    ? new Date(program.metadata.endsAt) < now
     : false;
 
   const isOpen =
     program.metadata?.startsAt && program.metadata?.endsAt
-      ? isProgramOpen(program.metadata?.startsAt, program.metadata?.endsAt)
+      ? isProgramOpen(program.metadata?.startsAt, program.metadata?.endsAt, now)
       : true;
 
   return hasFormConfig && isEnabled && isOpen && !isApplicationDeadlinePassed;
@@ -91,16 +97,19 @@ export function isProgramEnabled(program: ProgramLike): boolean {
  * Returns status type, label, color, dot color, and endsSoon flag for UI display.
  * Rules aligned with gap-whitelabel-app for consistency across apps.
  */
-export function getProgramStatusInfo(program: ProgramLike): ProgramStatusInfo {
+export function getProgramStatusInfo(
+  program: ProgramLike,
+  now: Date = new Date()
+): ProgramStatusInfo {
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
   const isApplicationDeadlinePassed = program.metadata?.endsAt
-    ? new Date(program.metadata.endsAt) < new Date()
+    ? new Date(program.metadata.endsAt) < now
     : false;
 
   const isOpen =
     program.metadata?.startsAt && program.metadata?.endsAt
-      ? isProgramOpen(program.metadata?.startsAt, program.metadata?.endsAt)
+      ? isProgramOpen(program.metadata?.startsAt, program.metadata?.endsAt, now)
       : true;
 
   let status: ProgramStatusType;
@@ -111,7 +120,7 @@ export function getProgramStatusInfo(program: ProgramLike): ProgramStatusInfo {
   } else if (isApplicationDeadlinePassed) {
     status = "deadline-passed";
   } else if (!isOpen) {
-    if (program.metadata?.startsAt && new Date(program.metadata.startsAt) > new Date()) {
+    if (program.metadata?.startsAt && new Date(program.metadata.startsAt) > now) {
       status = "coming-soon";
     } else {
       status = "closed";
@@ -121,7 +130,7 @@ export function getProgramStatusInfo(program: ProgramLike): ProgramStatusInfo {
     const endsAt = program.metadata?.endsAt;
     if (endsAt) {
       const daysUntilEnd = Math.ceil(
-        (new Date(endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (new Date(endsAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
       );
       if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
         endsSoon = true;

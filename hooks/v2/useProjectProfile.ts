@@ -55,6 +55,8 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
  * @returns Aggregated project profile data with loading/error states
  */
 interface UseProjectProfileOptions {
+  /** Opt into clock-free staleTime; see PRERENDER_SAFE_STALE_TIME. */
+  prerenderSafe?: boolean;
   /**
    * Whether secondary data fetches (grants/updates/impacts) should attach
    * a Privy bearer token. Defaults to `true`. Public profile callers MUST
@@ -69,17 +71,22 @@ export function useProjectProfile(
   filters?: UpdatesFeedFilters,
   options: UseProjectProfileOptions = {}
 ): UseProjectProfileResult {
-  const { isAuthorized = true } = options;
+  const { isAuthorized = true, prerenderSafe = false } = options;
 
   // Fetch core project data
-  const { project, isLoading: isProjectLoading, isError, error } = useProject(projectId);
+  const {
+    project,
+    isLoading: isProjectLoading,
+    isError,
+    error,
+  } = useProject(projectId, { prerenderSafe });
 
   // Fetch grants using project UID or fallback to projectId
   const {
     grants,
     isLoading: isGrantsLoading,
     refetch: refetchGrants,
-  } = useProjectGrants(project?.uid || projectId, { isAuthorized });
+  } = useProjectGrants(project?.uid || projectId, { isAuthorized, prerenderSafe });
 
   // Fetch updates and milestones (pass milestoneStatus and extra filters for server-side filtering)
   const {
@@ -89,7 +96,7 @@ export function useProjectProfile(
     isFetching: isUpdatesFetching,
     error: updatesError,
     refetch: refetchUpdates,
-  } = useProjectUpdates(projectId, milestoneStatus, filters, { isAuthorized });
+  } = useProjectUpdates(projectId, milestoneStatus, filters, { isAuthorized, prerenderSafe });
 
   // Fetch impacts
   const {

@@ -1,12 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
-import { getProject } from "@/services/project.service";
+import { getProjectCached } from "@/services/project.cached";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { zeroUID } from "@/utilities/commons";
 import { PAGES } from "../pages";
 
 export const getProjectCachedData = cache(async (projectId: string): Promise<ProjectResponse> => {
-  const project = await getProject(projectId);
+  const project = await getProjectCached(projectId);
 
   if (!project || project.uid === zeroUID) {
     notFound();
@@ -24,7 +24,7 @@ export const getProjectCachedData = cache(async (projectId: string): Promise<Pro
     project.pointers[0]?.originalProjectUID &&
     project.pointers[0].originalProjectUID !== project.uid
   ) {
-    const original = await getProject(project.pointers[0].originalProjectUID);
+    const original = await getProjectCached(project.pointers[0].originalProjectUID);
     if (original?.details?.slug && original.details.slug !== projectId) {
       redirect(PAGES.PROJECT.OVERVIEW(original.details.slug));
     }

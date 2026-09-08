@@ -3,6 +3,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { api } from "@/utilities/api/client";
 import { ContractViolationError, HttpError } from "@/utilities/api/errors";
+import { publicReadOptions } from "@/utilities/api/public-read";
 import { INDEXER } from "@/utilities/indexer";
 
 const SlugAvailabilityResultSchema = z
@@ -65,7 +66,10 @@ export const checkSlugExists = async (slug: string): Promise<boolean> => {
 export const getProject = async (projectIdOrSlug: string): Promise<ProjectResponse | null> => {
   try {
     // TODO(#1775): add zod schema
-    return await api.get<ProjectResponse>(INDEXER.V2.PROJECTS.GET(projectIdOrSlug));
+    return await api.get<ProjectResponse>(
+      INDEXER.V2.PROJECTS.GET(projectIdOrSlug),
+      publicReadOptions()
+    );
   } catch (error) {
     // Unknown slugs are expected on public routes and should not create Sentry noise.
     if (error instanceof HttpError && error.status === 404) {

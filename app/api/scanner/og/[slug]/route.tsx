@@ -9,8 +9,6 @@ import { envVars } from "@/utilities/enviromentVars";
 // next/og renders via wasm in the edge runtime. nodejs runtime silently
 // fails with empty responses under turbopack dev when sharp is not
 // installed; edge is the canonical (and only well-supported) target.
-export const runtime = "edge";
-
 // Fetch the scorecard directly with fetch() rather than going through the
 // shared axios-based fetchData. The app's fetchData has heavy dependencies
 // (axios interceptors, error manager, toast) that fail silently inside
