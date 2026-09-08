@@ -19,7 +19,7 @@ const isFilterableStatus = (value: string | null): value is ApplicationStatus =>
 interface BrowseApplicationFiltersState {
   programId: string;
   setProgramId: (value: string) => void;
-  /** Single track id, for communities that browse by track instead of by program. */
+  /** Single track id; "" is the dropdown's "All Tracks" option. */
   trackId: string;
   setTrackId: (value: string) => void;
   status: BrowseApplicationStatusFilter;
@@ -31,8 +31,9 @@ interface BrowseApplicationFiltersState {
 /**
  * URL-backed filter state for the community browse-applications view.
  *
- * The query string is the single source of truth for the `programId`, `status`
- * and `search` filters, so deep links pre-apply and the back button steps
+ * The query string is the single source of truth for the `programId`,
+ * `trackIds`, `status` and `search` filters, so deep links pre-apply and the
+ * back button steps
  * cleanly. nuqs writes through `history.replaceState`, which never dispatches an
  * App Router navigation — so updating a filter cannot race or cancel a Link
  * click (issue #1547). Mirrors `useFundingProgramFilters`.
@@ -44,10 +45,14 @@ export function useBrowseApplicationFilters(): BrowseApplicationFiltersState {
   });
 
   // Named `trackIds` to match the explorer, so a track carried across tabs by
-  // CommunityPageNavigator lands on the same param here.
+  // CommunityPageNavigator lands on the same param here. The explorer's filter
+  // is multi-select and writes a comma-joined list; this page is single-select,
+  // so it reads the first id and writes exactly one.
   const [trackId, setTrackId] = useQueryState("trackIds", {
     defaultValue: "",
     clearOnDefault: true,
+    parse: (value) => value.split(",")[0] ?? "",
+    serialize: (value) => value,
   });
 
   const [statusRaw, setStatus] = useQueryState<BrowseApplicationStatusFilter>("status", {

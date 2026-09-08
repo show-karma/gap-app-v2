@@ -3,25 +3,30 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Lock, RefreshCw, Search, X } from "lucide-react";
 import pluralize from "pluralize";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
+import { CommunityTrackFilter } from "@/components/Pages/Communities/Impact/CommunityTrackFilter";
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import { TrackAsProgramFilter } from "@/components/Pages/Communities/Impact/TrackAsProgramFilter";
+import { Button } from "@/components/ui/button";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
-import { useApplicationsByTrack } from "@/hooks/useApplicationsByTrack";
+import { useAggregatedApplications } from "@/hooks/useAggregatedApplications";
 import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters";
-import { Link } from "@/src/components/navigation/Link";
+import { useTracksForCommunity } from "@/hooks/useTracks";
+import { useCommunityDetails } from "@/hooks/v2/useCommunityDetails";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
 import { api } from "@/utilities/api/client";
-import {
-  EXPLORER_NAV_OVERRIDES,
-  isTracksAsPrimaryExplorerFacet,
-} from "@/utilities/community-flags";
+import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
-import { renderRelativeTime } from "@/utilities/formatRelativeTime";
+import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
-import { StatusPill } from "./BrowseApplicationsTable";
+import {
+  ApplicationRowMemo,
+  LoadingSkeleton,
+  type StatCardItem,
+  StatStrip,
+} from "./BrowseApplicationsTable";
+import { statusOptions } from "./browseApplicationStatusOptions";
 
 interface BrowseApplicationsClientProps {
   communityId: string;
@@ -52,18 +57,6 @@ const resolveHeading = (communityId: string, isWhitelabel: boolean) => {
   return { title, noun: pluralize.singular(title.split(" ").pop() ?? "").toLowerCase() };
 };
 
-const statusOptions: Array<{
-  value: ApplicationStatus | "all";
-  label: string;
-}> = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "under_review", label: "Under review" },
-  { value: "revision_requested", label: "Needs info" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Declined" },
-];
-
 interface ApplicationsPageData {
   applications: Application[];
   pagination: {
@@ -74,121 +67,15 @@ interface ApplicationsPageData {
   };
 }
 
-const ApplicationRowMemo = memo(function ApplicationRowInner({
-  application,
-  communityId,
-}: {
-  application: Application;
-  communityId: string;
-}) {
-  const projectName = getProjectTitle(application);
-  const submitted = application.createdAt;
-  const href = `/community/${communityId}/browse-applications/${application.referenceNumber}`;
-
-  return (
-    <tr className="border-b border-border transition-colors hover:bg-muted/40 last:border-b-0">
-      <td className="px-4 py-3.5 align-middle">
-        <Link
-          href={href}
-          className="block font-semibold tracking-[-0.01em] text-foreground hover:underline"
-        >
-          {projectName}
-        </Link>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="font-mono text-[11px]">{application.referenceNumber}</span>
-          {submitted ? (
-            <>
-              <span aria-hidden>·</span>
-              <span>submitted {renderRelativeTime(submitted, "")}</span>
-            </>
-          ) : null}
-        </div>
-      </td>
-      <td className="px-4 py-3.5 align-middle">
-        <StatusPill status={application.status} />
-      </td>
-      <td className="px-4 py-3.5 align-middle text-right">
-        <Link
-          href={href}
-          className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
-        >
-          View
-          <span aria-hidden>→</span>
-        </Link>
-      </td>
-    </tr>
-  );
-});
-
-function LoadingSkeleton() {
-  const skeletonKeys = ["bsk-1", "bsk-2", "bsk-3", "bsk-4", "bsk-5", "bsk-6"];
-  return (
-    <div className="overflow-hidden rounded-xl border border-border">
-      <table className="w-full">
-        <thead className="bg-muted/40">
-          <tr className="border-b border-border">
-            <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-              Project
-            </th>
-            <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-              Status
-            </th>
-            <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground" />
-          </tr>
-        </thead>
-        <tbody>
-          {skeletonKeys.map((key) => (
-            <tr key={key} className="border-b border-border last:border-b-0">
-              <td className="px-4 py-3.5">
-                <div className="h-4 w-3/5 animate-pulse rounded bg-muted" />
-                <div className="mt-2 h-3 w-2/5 animate-pulse rounded bg-muted/60" />
-              </td>
-              <td className="px-4 py-3.5">
-                <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />
-              </td>
-              <td className="px-4 py-3.5 text-right">
-                <div className="ml-auto h-4 w-12 animate-pulse rounded bg-muted" />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-interface StatCardItem {
-  label: string;
-  value: number;
-  accentClass: string;
-}
-
-function StatStrip({ items }: { items: StatCardItem[] }) {
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-      {items.map((item) => (
-        <div key={item.label} className="rounded-xl border border-border bg-background px-4 py-3.5">
-          <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
-            {item.label}
-          </div>
-          <div
-            className={cn(
-              "mt-0.5 text-2xl font-semibold tracking-[-0.02em] tabular-nums",
-              item.accentClass
-            )}
-          >
-            {item.value}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClientProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const { programs } = useProgramsWithConfig(communityId);
+  const {
+    programs,
+    isLoading: programsLoading,
+    error: programsError,
+    refetch: refetchPrograms,
+  } = useProgramsWithConfig(communityId);
   const { isWhitelabel } = useWhitelabel();
 
   const { title: pageTitle, noun: itemNoun } = resolveHeading(communityId, isWhitelabel);
@@ -207,11 +94,26 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     setSearch: setSearchInput,
   } = useBrowseApplicationFilters();
 
-  // Filecoin browses this tab by track, matching its projects explorer. An
-  // application has no track of its own — it inherits the one its funded
-  // project carries, so the two queries below resolve the track's projects and
-  // keep the applications pointing at them.
-  const tracksAsPrimaryFacet = isTracksAsPrimaryExplorerFacet(communityId);
+  // Tracks are a community-level catalog, so the dropdown lists all of them and
+  // a track can be browsed across programs. The tracks API keys on the UID, not
+  // the route slug.
+  const { community } = useCommunityDetails(communityId);
+  const communityUid = community?.uid ?? "";
+  const {
+    data: tracksData,
+    error: tracksError,
+    refetch: refetchTracks,
+  } = useTracksForCommunity(communityUid);
+  const tracks = useMemo(() => tracksData ?? [], [tracksData]);
+
+  /**
+   * Which query serves the list. A program on its own is the one combination
+   * the per-program endpoint can answer whole, so it keeps the server-side
+   * status/search and infinite scroll. Everything else — no program, or any
+   * track — is loaded and filtered client-side, because an application carries
+   * no track of its own (see useAggregatedApplications).
+   */
+  const mode = selectedProgramId && !selectedTrackId ? "program" : "aggregate";
 
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
 
@@ -222,19 +124,25 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const byTrack = useApplicationsByTrack({
+  const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
+  const selectedTrack = tracks.find((track) => track.id === selectedTrackId);
+
+  // A private program stays private whichever mode is showing it, so this is
+  // read off the program itself rather than off the active query.
+  const showPrivateNotice = Boolean(
+    selectedProgram?.applicationConfig?.formSchema?.settings?.privateApplications
+  );
+
+  const aggregate = useAggregatedApplications({
     communityId,
-    enabled: tracksAsPrimaryFacet,
-    trackId: selectedTrackId,
+    enabled: mode === "aggregate",
+    programId: selectedProgramId || null,
+    trackId: selectedTrackId || null,
     programs,
     status: statusFilter,
     search: debouncedSearch,
     getTitle: getProjectTitle,
   });
-
-  const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
-  const hasPrivateApplicationsSetting =
-    selectedProgram?.applicationConfig?.formSchema?.settings?.privateApplications;
 
   const programMetrics = selectedProgram?.metrics;
 
@@ -298,7 +206,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
 
       // TODO(#1775): add zod schema
       return await api.get<ApplicationsPageData>(
-        `/v2/funding-applications/program/${selectedProgramId}?page=${page}&limit=100${statusParam}${searchParam}`,
+        `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(selectedProgramId)}?page=${page}&limit=100${statusParam}${searchParam}`,
         { isAuthorized: false }
       );
     },
@@ -309,45 +217,57 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
       }
       return undefined;
     },
-    enabled: !tracksAsPrimaryFacet && !!selectedProgramId && !hasPrivateApplicationsSetting,
+    enabled: mode === "program" && !showPrivateNotice,
     // Re-selecting a status chip you already viewed serves the cached page
     // instead of re-hitting the API on every toggle.
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
-  const applications = tracksAsPrimaryFacet
-    ? byTrack.applications
+  const isAggregate = mode === "aggregate";
+
+  const applications = isAggregate
+    ? aggregate.applications
     : data?.pages.flatMap((page) => page.applications) || [];
-  const totalCount = tracksAsPrimaryFacet
-    ? byTrack.totalCount
-    : (data?.pages[0]?.pagination.total ?? 0);
+  const totalCount = isAggregate ? aggregate.totalCount : (data?.pages[0]?.pagination.total ?? 0);
 
-  const isLoading = tracksAsPrimaryFacet ? byTrack.isLoading : isProgramLoading;
-  const error = tracksAsPrimaryFacet ? byTrack.error : programError;
-  const refetch = tracksAsPrimaryFacet ? byTrack.refetch : refetchProgram;
-  /**
-   * Whether there is a list to show. Browsing by track always has one: no track
-   * selected is the dropdown's "All Programs" option, which lists every public
-   * application. Browsing by program still needs a program — that dropdown has
-   * no "all" option and each program is a separate API call.
-   */
-  const hasSelection = tracksAsPrimaryFacet || !!selectedProgramId;
-  const showPrivateNotice = !tracksAsPrimaryFacet && Boolean(hasPrivateApplicationsSetting);
-  const selectedTrackName = byTrack.trackName;
+  // The aggregate query is disabled until the programs it reads have arrived,
+  // and a disabled query reports isLoading false — so without the programs'
+  // own loading flag the first paint of every visit is the empty state,
+  // claiming the community has nothing.
+  const isLoading = isAggregate ? programsLoading || aggregate.isLoading : isProgramLoading;
+  // The aggregate list is read out of the programs list, so a failed programs
+  // query is its failure too — otherwise it would surface as "nothing here".
+  const error = isAggregate ? (programsError ?? aggregate.error) : programError;
+  const refetch = useCallback(() => {
+    if (!isAggregate) {
+      refetchProgram();
+      return;
+    }
+    if (programsError) refetchPrograms();
+    aggregate.refetch();
+  }, [isAggregate, programsError, refetchPrograms, refetchProgram, aggregate.refetch]);
 
-  const chipCounts = tracksAsPrimaryFacet ? byTrack.chipCounts : programChipCounts;
+  const chipCounts = isAggregate ? aggregate.chipCounts : programChipCounts;
 
   const handleClearFilters = useCallback(() => {
     setSearchInput("");
     setDebouncedSearch("");
     setStatusFilter("all");
-  }, []);
+    setSelectedTrackId("");
+  }, [setSearchInput, setStatusFilter, setSelectedTrackId]);
 
-  const hasActiveFilters = statusFilter !== "all" || searchInput.length > 0;
+  const hasActiveFilters =
+    statusFilter !== "all" || searchInput.length > 0 || Boolean(selectedTrackId);
+
+  // Infinite scroll belongs to program mode alone. `hasNextPage` is computed
+  // from the infinite query's cached pages and ignores `enabled`, so without
+  // the mode check a program with more than one page keeps its sentinel after
+  // a track is picked and fetches a page the aggregate render then discards.
+  const canLoadMore = !isAggregate && hasNextPage;
 
   useEffect(() => {
     const currentRef = loadMoreRef.current;
-    if (!currentRef || !hasNextPage || isFetchingNextPage) return;
+    if (!currentRef || !canLoadMore || isFetchingNextPage) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -362,19 +282,27 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     return () => {
       observer.unobserve(currentRef);
     };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [canLoadMore, isFetchingNextPage, fetchNextPage]);
 
-  // In track mode the count is the loaded track, not a program's metrics, and
-  // the trailing name is the track the user picked.
-  const applicationCount = tracksAsPrimaryFacet
-    ? totalCount
-    : (programMetrics?.totalApplications ?? 0);
-  const selectionName = tracksAsPrimaryFacet ? selectedTrackName : selectedProgram?.name;
-  const headerSubtitle = hasSelection
-    ? `${applicationCount} ${pluralize(itemNoun, applicationCount)}${
-        selectionName ? ` · ${selectionName}` : ""
-      }`
-    : `Choose a program to browse public ${pluralize(itemNoun, 2)}.`;
+  // Program metrics are the whole program's, so they can only be the count in
+  // the mode that shows the whole program.
+  const applicationCount = isAggregate ? totalCount : (programMetrics?.totalApplications ?? 0);
+  /**
+   * The subtitle's parts, in order: the count, then what it was narrowed by.
+   *
+   * The count is dropped while the list is loading — it would read "0" for a
+   * number that is merely unknown — and when it really is zero, where the
+   * empty state below already says so and "0 …" copy is not rendered.
+   */
+  const headerSubtitle = [
+    isLoading || applicationCount === 0
+      ? null
+      : `${applicationCount} ${pluralize(itemNoun, applicationCount)}`,
+    selectedProgram?.name,
+    selectedTrack?.name,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div
@@ -386,43 +314,74 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
         <h1 className="text-[26px] md:text-[28px] font-semibold tracking-[-0.02em] text-foreground">
           {pageTitle}
         </h1>
-        <p className="text-sm text-muted-foreground">{headerSubtitle}</p>
+        {headerSubtitle ? <p className="text-sm text-muted-foreground">{headerSubtitle}</p> : null}
       </header>
 
-      {/* Program selector: same labeled dropdown used on projects/updates/financials */}
-      {tracksAsPrimaryFacet ? (
-        <div className="w-[260px] max-lg:w-full">
-          <TrackAsProgramFilter
-            communityUid={byTrack.communityUid}
-            selectedTrackId={selectedTrackId || null}
-            onChange={(trackId) => setSelectedTrackId(trackId ?? "")}
-          />
-        </div>
-      ) : programs.length > 0 ? (
-        <div className="flex w-[260px] flex-col gap-1.5 max-lg:w-full">
-          <label
-            htmlFor="browse-applications-program"
-            className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-          >
-            Choose Program
-          </label>
-          <SearchWithValueDropdown
-            id="browse-applications-program"
-            list={programs.map((p) => ({ title: p.name, value: p.programId }))}
-            onSelectFunction={(value: string) => setSelectedProgramId(value)}
-            type="Program"
-            selected={selectedProgram ? [selectedProgram.name] : []}
-            prefixUnselected="Select"
-            buttonClassname="w-full max-w-full"
-            isMultiple={false}
-          />
+      {/* Filters: program and track, independent and combinable. A community
+          with no tracks renders the program dropdown alone, as before. */}
+      {programs.length > 0 || tracks.length > 0 || tracksError ? (
+        <div className="flex flex-wrap gap-3">
+          {programs.length > 0 ? (
+            <div className="flex w-[260px] flex-col gap-1.5 max-lg:w-full">
+              <label
+                htmlFor="browse-applications-program"
+                className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+              >
+                Choose Program
+              </label>
+              <SearchWithValueDropdown
+                id="browse-applications-program"
+                list={programs.map((p) => ({ title: p.name, value: p.programId }))}
+                onSelectFunction={(value: string) => setSelectedProgramId(value)}
+                type="Programs"
+                selected={selectedProgram ? [selectedProgram.name] : []}
+                prefixUnselected="All"
+                buttonClassname="w-full max-w-full"
+                isMultiple={false}
+                cleanFunction={() => setSelectedProgramId("")}
+              />
+            </div>
+          ) : null}
+
+          {tracks.length > 0 ? (
+            <div className="w-[260px] max-lg:w-full">
+              <CommunityTrackFilter
+                tracks={tracks}
+                selectedTrackId={selectedTrackId || null}
+                onChange={(trackId) => setSelectedTrackId(trackId ?? "")}
+              />
+            </div>
+          ) : null}
+
+          {/* A failed tracks query is not a community without tracks: say so,
+              and let the reader retry, instead of silently dropping the filter. */}
+          {tracksError && tracks.length === 0 ? (
+            <div
+              role="alert"
+              className="flex w-[260px] flex-col justify-end gap-1.5 text-sm text-muted-foreground max-lg:w-full"
+            >
+              <span>Couldn&apos;t load tracks.</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() => refetchTracks()}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Retry
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
-      {hasSelection && statItems ? <StatStrip items={statItems} /> : null}
+      {/* Program metrics describe the whole program, so they would contradict a
+          track-narrowed list. */}
+      {!isAggregate && statItems ? <StatStrip items={statItems} /> : null}
 
       {/* Filters: search + status chips inline */}
-      {hasSelection && !showPrivateNotice ? (
+      {!showPrivateNotice ? (
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search
@@ -496,103 +455,92 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
       ) : null}
 
       {/* Applications table / empty / error / private */}
-      {hasSelection ? (
-        showPrivateNotice ? (
-          <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
-            <Lock className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-            <h3 className="mb-2 text-xl font-semibold text-foreground">Private applications</h3>
-            <p className="mx-auto max-w-md text-muted-foreground">
-              {selectedProgram?.name || "This program"} has configured their applications to be
-              private. Application details are only visible to program administrators and
-              applicants.
-            </p>
+      {showPrivateNotice ? (
+        <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
+          <Lock className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+          <h3 className="mb-2 text-xl font-semibold text-foreground">Private applications</h3>
+          <p className="mx-auto max-w-md text-muted-foreground">
+            {selectedProgram?.name || "This program"} has configured their applications to be
+            private. Application details are only visible to program administrators and applicants.
+          </p>
+        </div>
+      ) : (
+        <div>
+          <div className="mb-4 flex items-baseline justify-between">
+            <h2 className="text-xl font-semibold tracking-[-0.015em] text-foreground">
+              Public applications
+            </h2>
+            {!isLoading && totalCount > 0 ? (
+              <span className="text-sm tabular-nums text-muted-foreground">{totalCount} total</span>
+            ) : null}
           </div>
-        ) : (
-          <div>
-            <div className="mb-4 flex items-baseline justify-between">
-              <h2 className="text-xl font-semibold tracking-[-0.015em] text-foreground">
-                Public applications
-              </h2>
-              {!isLoading && totalCount > 0 ? (
-                <span className="text-sm tabular-nums text-muted-foreground">
-                  {totalCount} total
-                </span>
+
+          {isLoading ? (
+            <LoadingSkeleton />
+          ) : error ? (
+            <div className="rounded-xl border border-border p-8 text-center">
+              <p className="mb-4 text-red-600 dark:text-red-400">
+                Something went wrong while loading applications. Please try again.
+              </p>
+              {/* design-check-ignore: DS005 pre-existing retry control, only re-indented here */}
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="mx-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Try Again
+              </button>
+            </div>
+          ) : applications.length === 0 && !hasActiveFilters ? (
+            <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
+              <h3 className="mb-2 text-xl font-semibold text-foreground">
+                No {pluralize(itemNoun, 2)} yet
+              </h3>
+              <p className="text-muted-foreground">
+                {selectedProgram ? "This program" : "This community"} doesn&apos;t have any public{" "}
+                {pluralize(itemNoun, 2)} yet.
+              </p>
+            </div>
+          ) : applications.length === 0 ? (
+            <div className="rounded-xl border border-border py-12 text-center text-muted-foreground">
+              No {pluralize(itemNoun, 2)} match the current filters — try adjusting your search,
+              status or track.
+            </div>
+          ) : (
+            <div>
+              <div className="overflow-hidden rounded-xl border border-border bg-background">
+                <table className="w-full">
+                  <thead className="bg-muted/40">
+                    <tr className="border-b border-border">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                        Project
+                      </th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {applications.map((application) => (
+                      <ApplicationRowMemo
+                        key={application.referenceNumber}
+                        application={application}
+                        communityId={communityId}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {canLoadMore ? (
+                <div ref={loadMoreRef} className="flex justify-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
               ) : null}
             </div>
-
-            {isLoading ? (
-              <LoadingSkeleton />
-            ) : error ? (
-              <div className="rounded-xl border border-border p-8 text-center">
-                <p className="mb-4 text-red-600 dark:text-red-400">
-                  Something went wrong while loading applications. Please try again.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => refetch()}
-                  className="mx-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Try Again
-                </button>
-              </div>
-            ) : applications.length === 0 && !hasActiveFilters ? (
-              <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
-                <h3 className="mb-2 text-xl font-semibold text-foreground">
-                  No {pluralize(itemNoun, 2)} yet
-                </h3>
-                <p className="text-muted-foreground">
-                  This program doesn&apos;t have any public {pluralize(itemNoun, 2)} yet.
-                </p>
-              </div>
-            ) : applications.length === 0 ? (
-              <div className="rounded-xl border border-border py-12 text-center text-muted-foreground">
-                No {pluralize(itemNoun, 2)} match the current filters — try adjusting your search or
-                status.
-              </div>
-            ) : (
-              <div>
-                <div className="overflow-hidden rounded-xl border border-border bg-background">
-                  <table className="w-full">
-                    <thead className="bg-muted/40">
-                      <tr className="border-b border-border">
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                          Project
-                        </th>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                          Status
-                        </th>
-                        <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {applications.map((application) => (
-                        <ApplicationRowMemo
-                          key={application.referenceNumber}
-                          application={application}
-                          communityId={communityId}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {hasNextPage ? (
-                  <div ref={loadMoreRef} className="flex justify-center py-8">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </div>
-        )
-      ) : (
-        <div className="rounded-xl border-2 border-dashed border-border py-10 text-center">
-          <h3 className="mb-2 text-xl font-semibold text-foreground">Choose a program</h3>
-          <p className="text-muted-foreground">
-            Pick a funding program from the selector above to browse its public{" "}
-            {pluralize(itemNoun, 2)}.
-          </p>
+          )}
         </div>
       )}
     </div>
