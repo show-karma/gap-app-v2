@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
 import { CommunityTrackFilter } from "@/components/Pages/Communities/Impact/CommunityTrackFilter";
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+import { Button } from "@/components/ui/button";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { useAggregatedApplications } from "@/hooks/useAggregatedApplications";
 import { useBrowseApplicationFilters } from "@/hooks/useBrowseApplicationFilters";
@@ -69,7 +70,12 @@ interface ApplicationsPageData {
 export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClientProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const { programs, isLoading: programsLoading } = useProgramsWithConfig(communityId);
+  const {
+    programs,
+    isLoading: programsLoading,
+    error: programsError,
+    refetch: refetchPrograms,
+  } = useProgramsWithConfig(communityId);
   const { isWhitelabel } = useWhitelabel();
 
   const { title: pageTitle, noun: itemNoun } = resolveHeading(communityId, isWhitelabel);
@@ -93,7 +99,11 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   // the route slug.
   const { community } = useCommunityDetails(communityId);
   const communityUid = community?.uid ?? "";
-  const { data: tracksData } = useTracksForCommunity(communityUid);
+  const {
+    data: tracksData,
+    error: tracksError,
+    refetch: refetchTracks,
+  } = useTracksForCommunity(communityUid);
   const tracks = useMemo(() => tracksData ?? [], [tracksData]);
 
   /**
@@ -225,8 +235,17 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
   // own loading flag the first paint of every visit is the empty state,
   // claiming the community has nothing.
   const isLoading = isAggregate ? programsLoading || aggregate.isLoading : isProgramLoading;
-  const error = isAggregate ? aggregate.error : programError;
-  const refetch = isAggregate ? aggregate.refetch : refetchProgram;
+  // The aggregate list is read out of the programs list, so a failed programs
+  // query is its failure too — otherwise it would surface as "nothing here".
+  const error = isAggregate ? (programsError ?? aggregate.error) : programError;
+  const refetch = useCallback(() => {
+    if (!isAggregate) {
+      refetchProgram();
+      return;
+    }
+    if (programsError) refetchPrograms();
+    aggregate.refetch();
+  }, [isAggregate, programsError, refetchPrograms, refetchProgram, aggregate.refetch]);
 
   const chipCounts = isAggregate ? aggregate.chipCounts : programChipCounts;
 
@@ -300,7 +319,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
 
       {/* Filters: program and track, independent and combinable. A community
           with no tracks renders the program dropdown alone, as before. */}
-      {programs.length > 0 || tracks.length > 0 ? (
+      {programs.length > 0 || tracks.length > 0 || tracksError ? (
         <div className="flex flex-wrap gap-3">
           {programs.length > 0 ? (
             <div className="flex w-[260px] flex-col gap-1.5 max-lg:w-full">
@@ -331,6 +350,27 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
                 selectedTrackId={selectedTrackId || null}
                 onChange={(trackId) => setSelectedTrackId(trackId ?? "")}
               />
+            </div>
+          ) : null}
+
+          {/* A failed tracks query is not a community without tracks: say so,
+              and let the reader retry, instead of silently dropping the filter. */}
+          {tracksError && tracks.length === 0 ? (
+            <div
+              role="alert"
+              className="flex w-[260px] flex-col justify-end gap-1.5 text-sm text-muted-foreground max-lg:w-full"
+            >
+              <span>Couldn&apos;t load tracks.</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() => refetchTracks()}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Retry
+              </Button>
             </div>
           ) : null}
         </div>

@@ -583,6 +583,48 @@ describe("BrowseApplicationsClient - loading and mode boundaries", () => {
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
   });
 
+  // A failed programs query leaves `programs` empty, which would otherwise
+  // read as a community with nothing to show.
+  it("shows the error state, not the empty state, when the programs query fails", async () => {
+    const user = userEvent.setup();
+    const refetchPrograms = vi.fn();
+    vi.mocked(useProgramsWithConfig).mockReturnValue({
+      programs: [],
+      isLoading: false,
+      error: new Error("programs down"),
+      refetch: refetchPrograms,
+    } as unknown as ReturnType<typeof useProgramsWithConfig>);
+
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    expect(
+      await screen.findByText("Something went wrong while loading applications. Please try again.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No applications yet")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Try Again" }));
+    expect(refetchPrograms).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers a retry instead of hiding the track filter when the tracks query fails", async () => {
+    const user = userEvent.setup();
+    const refetchTracks = vi.fn();
+    vi.mocked(useTracksForCommunity).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error("tracks down"),
+      refetch: refetchTracks,
+    } as unknown as ReturnType<typeof useTracksForCommunity>);
+
+    render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't load tracks.");
+    expect(screen.queryByLabelText("Choose Track")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(refetchTracks).toHaveBeenCalledTimes(1);
+  });
+
   it("still reaches the empty state once the programs resolve to none", async () => {
     mockPrograms([], false);
 
