@@ -18,6 +18,7 @@ import { api } from "@/utilities/api/client";
 import { EXPLORER_NAV_OVERRIDES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
 import { renderRelativeTime } from "@/utilities/formatRelativeTime";
+import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { StatusPill } from "./BrowseApplicationsTable";
@@ -314,7 +315,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
 
       // TODO(#1775): add zod schema
       return await api.get<ApplicationsPageData>(
-        `/v2/funding-applications/program/${selectedProgramId}?page=${page}&limit=100${statusParam}${searchParam}`,
+        `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(selectedProgramId)}?page=${page}&limit=100${statusParam}${searchParam}`,
         { isAuthorized: false }
       );
     },

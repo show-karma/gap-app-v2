@@ -165,7 +165,7 @@ export function useAggregatedApplications({
       // silently drops applications off the end of the list.
       const fetchPage = (scopedProgramId: string, page: number) =>
         api.get<ApplicationsPage>(
-          `/v2/funding-applications/program/${scopedProgramId}?page=${page}&limit=${APPLICATIONS_PAGE_LIMIT}`,
+          `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(scopedProgramId)}?page=${page}&limit=${APPLICATIONS_PAGE_LIMIT}`,
           { isAuthorized: false }
         );
 
