@@ -66,18 +66,6 @@ export function StatusPill({ status }: { status: ApplicationStatus }) {
   );
 }
 
-export const statusOptions: Array<{
-  value: ApplicationStatus | "all";
-  label: string;
-}> = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "under_review", label: "Under review" },
-  { value: "revision_requested", label: "Needs info" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Declined" },
-];
-
 export const ApplicationRowMemo = memo(function ApplicationRowInner({
   application,
   communityId,

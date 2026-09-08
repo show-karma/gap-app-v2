@@ -24,8 +24,8 @@ import {
   LoadingSkeleton,
   type StatCardItem,
   StatStrip,
-  statusOptions,
 } from "./BrowseApplicationsTable";
+import { statusOptions } from "./browseApplicationStatusOptions";
 
 interface BrowseApplicationsClientProps {
   communityId: string;
@@ -235,7 +235,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     setDebouncedSearch("");
     setStatusFilter("all");
     setSelectedTrackId("");
-  }, []);
+  }, [setSearchInput, setStatusFilter, setSelectedTrackId]);
 
   const hasActiveFilters =
     statusFilter !== "all" || searchInput.length > 0 || Boolean(selectedTrackId);
