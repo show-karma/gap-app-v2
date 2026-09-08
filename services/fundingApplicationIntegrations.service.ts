@@ -1,6 +1,13 @@
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
+
+const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
+// Blob-capable authenticated client for the CSV download (the shared `api`
+// client parses JSON); mirrors the applications-export path.
+const blobApiClient = createAuthenticatedApiClient(API_BASE, 30000);
 
 export interface IntegrationSummary {
   key: string;
@@ -278,6 +285,34 @@ export async function fetchSimocracyFeedback(
       `${INDEXER.V2.FUNDING_APPLICATIONS.SIMOCRACY_FEEDBACK(referenceNumber)}?runId=${encodeURIComponent(runId)}`
     );
     return data?.feedback ?? [];
+  } catch (error) {
+    throw new Error(httpErrorMessage(error));
+  }
+}
+
+export interface SimocracyFeedbackExport {
+  blob: Blob;
+  filename: string;
+}
+
+// Downloads the program's Sim evaluations + reviewer feedback as CSV. The
+// endpoint is community-admin/staff only (enforced on the backend).
+export async function exportSimocracyFeedbackCsv(
+  programId: string
+): Promise<SimocracyFeedbackExport> {
+  try {
+    const response = await blobApiClient.get<Blob>(
+      INDEXER.V2.FUNDING_PROGRAMS.SIMOCRACY_FEEDBACK_EXPORT(programId),
+      { responseType: "blob" }
+    );
+    const disposition = response.headers?.["content-disposition"] as string | undefined;
+    const match = disposition?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    const filename = match?.[1]
+      ? match[1].replace(/['"]/g, "")
+      : `simocracy_feedback_${programId}.csv`;
+    const data = response.data;
+    const blob = data instanceof Blob ? data : new Blob([data], { type: "text/csv" });
+    return { blob, filename };
   } catch (error) {
     throw new Error(httpErrorMessage(error));
   }
