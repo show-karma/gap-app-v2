@@ -148,6 +148,8 @@ export const INDEXER = {
         `/v2/funding-programs/${programId}/integrations/simocracy/sim-links`,
       SIMOCRACY_CREDENTIAL: (programId: string) =>
         `/v2/funding-programs/${programId}/integrations/simocracy/credential`,
+      SIMOCRACY_FEEDBACK_EXPORT: (programId: string) =>
+        `/v2/funding-programs/${programId}/integrations/simocracy/feedback/export`,
       PROMPTS: {
         GET: (programId: string) => `/v2/funding-program-configs/${programId}/prompts`,
         SAVE: (programId: string, promptType: "external" | "internal") =>

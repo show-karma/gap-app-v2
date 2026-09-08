@@ -1,11 +1,17 @@
 "use client";
 
-import { ArrowPathIcon, CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowDownTrayIcon,
+  ArrowPathIcon,
+  CheckIcon,
+  ClipboardDocumentIcon,
+} from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, useEffect, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import {
+  useExportSimocracyFeedback,
   useSimocracyCouncil,
   useUpdateSimocracyIntegration,
 } from "@/hooks/useApplicationIntegrations";
@@ -59,6 +65,26 @@ const ConfigSkeleton: FC = () => (
     <div className="h-9 w-full rounded bg-gray-100 dark:bg-zinc-700" />
   </div>
 );
+
+const FeedbackExportRow: FC<{ programId: string }> = ({ programId }) => {
+  const exportFeedback = useExportSimocracyFeedback(programId);
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3.5 dark:border-gray-700">
+      <p className="max-w-[48ch] text-xs text-gray-500 dark:text-gray-400">
+        Download the Sim evaluations and reviewer feedback for this program as a CSV.
+      </p>
+      <button
+        type="button"
+        onClick={() => exportFeedback.mutate()}
+        disabled={exportFeedback.isPending}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-zinc-800 dark:text-gray-200 dark:hover:bg-zinc-700"
+      >
+        <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+        {exportFeedback.isPending ? "Exporting…" : "Export feedback (CSV)"}
+      </button>
+    </div>
+  );
+};
 
 export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, canEdit }) => {
   const { data: program, isLoading, error, refetch } = useProgramConfig(programId);
@@ -274,7 +300,10 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
           </div>
 
           {canEdit && savedUri.length > 0 && (
-            <SimocracyCredentialSection programId={programId} config={saved} />
+            <>
+              <SimocracyCredentialSection programId={programId} config={saved} />
+              <FeedbackExportRow programId={programId} />
+            </>
           )}
         </>
       )}

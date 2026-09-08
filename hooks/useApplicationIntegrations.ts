@@ -5,6 +5,7 @@ import {
   addSimocracySimLink,
   deleteSimocracyCredential,
   deleteSimocracySimLink,
+  exportSimocracyFeedbackCsv,
   fetchApplicationIntegrations,
   fetchSimocracyCouncil,
   fetchSimocracyEvaluations,
@@ -253,6 +254,24 @@ export function useSubmitSimocracyFeedback(referenceNumber: string, runId: strin
       });
       toast.success("Feedback saved");
     },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function useExportSimocracyFeedback(programId: string) {
+  return useMutation({
+    mutationFn: async () => {
+      const { blob, filename } = await exportSimocracyFeedbackCsv(programId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    },
+    onSuccess: () => toast.success("Feedback exported"),
     onError: (error: Error) => toast.error(error.message),
   });
 }
