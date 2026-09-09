@@ -3519,9 +3519,7 @@
       "url": null,
       "pathnameEndsWith": "/funding-opportunities",
       "pathnameStartsWith": null,
-      "classifications": [
-        "thin"
-      ],
+      "classifications": ["thin"],
       "minTextLength": 120
     }
   ],

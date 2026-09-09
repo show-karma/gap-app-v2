@@ -3,65 +3,58 @@ import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-const DEFAULT_MODELS = ["gpt-5.2"] as const;
 const API_ENDPOINT = "/v2/settings/available-ai-models";
 
 const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL, 30000);
 
-interface ApiResponse {
-  data?: {
-    models?: string[];
-  };
+export type AIModelSelection = "programPrompt" | "portfolioReport";
+
+interface AvailableAIModelsPayload {
   models?: string[];
+  selections?: Partial<Record<AIModelSelection, string[]>>;
+}
+
+interface ApiResponse {
+  data?: AvailableAIModelsPayload;
+  models?: AvailableAIModelsPayload["models"];
+  selections?: AvailableAIModelsPayload["selections"];
 }
 
 /**
- * Extracts models array from API response
- * Handles both wrapped { data: { models: [...] } } and direct { models: [...] } responses
+ * Extracts a selection-specific model list from wrapped and direct responses.
+ * The all-model list remains a rollout fallback for older backend responses.
  */
-function extractModelsFromResponse(response: ApiResponse): string[] | null {
-  // Wrapped response: { data: { models: [...] } }
-  if (response.data?.models && Array.isArray(response.data.models)) {
-    return response.data.models;
+export function extractModelsFromResponse(
+  response: ApiResponse,
+  selection: AIModelSelection
+): string[] | null {
+  const payload = response.data ?? response;
+  const selectedModels = payload.selections?.[selection];
+
+  if (Array.isArray(selectedModels)) {
+    return selectedModels;
   }
 
-  // Direct response: { models: [...] }
-  if (Array.isArray(response.models)) {
-    return response.models;
+  if (Array.isArray(payload.models)) {
+    return payload.models;
   }
 
   return null;
 }
 
-async function fetchAvailableAIModels(): Promise<string[]> {
-  try {
-    const response = await apiClient.get<ApiResponse>(API_ENDPOINT);
-    const models = extractModelsFromResponse(response.data);
-
-    if (models && models.length > 0) {
-      return models;
-    }
-
-    // Fallback to default if no valid models found
-    return [...DEFAULT_MODELS];
-  } catch (error) {
-    // Log error in development only
-    if (process.env.NODE_ENV === "development") {
-      console.error("Error fetching available AI models:", error);
-    }
-    // Fallback to default on error
-    return [...DEFAULT_MODELS];
-  }
+async function fetchAvailableAIModels(selection: AIModelSelection): Promise<string[]> {
+  const response = await apiClient.get<ApiResponse>(API_ENDPOINT);
+  return extractModelsFromResponse(response.data, selection) ?? [];
 }
 
 /**
  * Hook to fetch available AI models from backend settings
  * @returns Query result with models array, loading state, and error state
  */
-export function useAvailableAIModels() {
+export function useAvailableAIModels(selection: AIModelSelection = "programPrompt") {
   return useQuery({
-    queryKey: QUERY_KEYS.SETTINGS.AVAILABLE_AI_MODELS,
-    queryFn: fetchAvailableAIModels,
+    queryKey: [...QUERY_KEYS.SETTINGS.AVAILABLE_AI_MODELS, selection],
+    queryFn: () => fetchAvailableAIModels(selection),
     staleTime: 1000 * 60 * 60, // 1 hour - models don't change frequently
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
     retry: 2,

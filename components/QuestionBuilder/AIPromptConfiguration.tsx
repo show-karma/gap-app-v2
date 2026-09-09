@@ -9,12 +9,11 @@ import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/Pa
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import { MigrationBanner, PromptEditor, useProgramPrompts } from "@/src/features/prompt-management";
 import type { FormSchema } from "@/types/question-builder";
+import { cn } from "@/utilities/tailwind";
 import { TabContent } from "../Utilities/Tabs/TabContent";
 import { Tabs } from "../Utilities/Tabs/Tabs";
 import { TabTrigger } from "../Utilities/Tabs/TabTrigger";
 import { ProgramAIInsightsConfiguration } from "./ProgramAIInsightsConfiguration";
-
-const DEFAULT_AI_MODEL = "gpt-4o";
 
 const aiConfigSchema = z.object({
   aiModel: z.string().min(1, "AI model is required"),
@@ -32,6 +31,23 @@ interface AIPromptConfigurationProps {
   programId?: string;
   chainId?: number;
   readOnly?: boolean;
+}
+
+interface AIModelOptionsProps {
+  models: string[];
+  isLoading: boolean;
+  isError: boolean;
+}
+
+function AIModelOptions({ models, isLoading, isError }: AIModelOptionsProps) {
+  if (isLoading) return <option value="">Loading models...</option>;
+  if (isError) return <option value="">Models unavailable</option>;
+  if (models.length === 0) return <option value="">No models configured</option>;
+  return models.map((model) => (
+    <option key={model} value={model}>
+      {model}
+    </option>
+  ));
 }
 
 function PromptTabs({ programId, readOnly }: { programId: string; readOnly: boolean }) {
@@ -61,6 +77,7 @@ function PromptTabs({ programId, readOnly }: { programId: string; readOnly: bool
           Failed to load prompts: {error?.message || "Unknown error"}
         </p>
         <button
+          type="button"
           onClick={() => refetch()}
           className="text-red-600 dark:text-red-400 underline text-sm hover:no-underline"
         >
@@ -115,22 +132,22 @@ export function AIPromptConfiguration({
   onUpdate,
   className = "",
   programId,
-  chainId,
   readOnly = false,
 }: AIPromptConfigurationProps) {
   // Fetch available AI models from backend
-  const { data: availableModels = [DEFAULT_AI_MODEL], isLoading: isLoadingModels } =
-    useAvailableAIModels();
+  const {
+    data: availableModels = [],
+    isLoading: isLoadingModels,
+    isError: isModelsError,
+    refetch: refetchModels,
+  } = useAvailableAIModels();
 
   const defaultLangfusePromptId = schema.aiConfig?.langfusePromptId || "";
 
-  // Get default model - use schema value if valid, otherwise use first available model
+  // Preserve persisted models so opening the editor never silently changes configuration.
   const defaultModel = useMemo(() => {
     const schemaModel = schema.aiConfig?.aiModel;
-    if (schemaModel && availableModels.includes(schemaModel)) {
-      return schemaModel;
-    }
-    return availableModels[0] || DEFAULT_AI_MODEL;
+    return schemaModel || availableModels[0] || "";
   }, [schema.aiConfig?.aiModel, availableModels]);
 
   const {
@@ -149,17 +166,17 @@ export function AIPromptConfiguration({
     },
   });
 
-  // Update form value when availableModels loads and current value is invalid
+  // New configurations can adopt the first permitted model once the catalog loads.
+  // Existing values stay untouched even when they are no longer permitted.
   useEffect(() => {
     if (!isLoadingModels && availableModels.length > 0) {
       const currentValue = getValues("aiModel");
-      const isCurrentValueInvalid = !currentValue || !availableModels.includes(currentValue);
 
-      if (isCurrentValueInvalid) {
-        setValue("aiModel", defaultModel, { shouldValidate: false });
+      if (!currentValue) {
+        setValue("aiModel", availableModels[0], { shouldValidate: false });
       }
     }
-  }, [availableModels, isLoadingModels, defaultModel, getValues, setValue]);
+  }, [availableModels, isLoadingModels, getValues, setValue]);
 
   // Refs to hold latest values without causing stale closures in watch subscription
   const schemaRef = useRef(schema);
@@ -186,7 +203,11 @@ export function AIPromptConfiguration({
       const updatedSchema: FormSchema = {
         ...schemaRef.current,
         aiConfig: {
-          aiModel: data.aiModel || availableModelsRef.current[0] || DEFAULT_AI_MODEL,
+          aiModel:
+            data.aiModel ||
+            schemaRef.current.aiConfig?.aiModel ||
+            availableModelsRef.current[0] ||
+            "",
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
           langfusePromptId: data.langfusePromptId || "",
           internalLangfusePromptId: data.internalLangfusePromptId || "",
@@ -197,6 +218,16 @@ export function AIPromptConfiguration({
 
     return () => subscription.unsubscribe();
   }, [watch, readOnly]);
+
+  const selectedModel = watch("aiModel");
+  const hasUnavailableModel =
+    !isLoadingModels &&
+    !isModelsError &&
+    Boolean(selectedModel) &&
+    !availableModels.includes(selectedModel);
+  const handleRetryModels = () => {
+    void refetchModels();
+  };
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -233,19 +264,33 @@ export function AIPromptConfiguration({
               <select
                 id="ai-model"
                 {...register("aiModel")}
-                disabled={readOnly || isLoadingModels}
-                className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly || isLoadingModels ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                {isLoadingModels ? (
-                  <option value="">Loading models...</option>
-                ) : (
-                  availableModels.map((model) => (
-                    <option key={model} value={model}>
-                      {model}
-                    </option>
-                  ))
+                disabled={
+                  readOnly || isLoadingModels || isModelsError || availableModels.length === 0
+                }
+                className={cn(
+                  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100",
+                  (readOnly || isLoadingModels || isModelsError || availableModels.length === 0) &&
+                    "opacity-50 cursor-not-allowed"
                 )}
+              >
+                {hasUnavailableModel && (
+                  <option value={selectedModel}>{selectedModel} (not currently permitted)</option>
+                )}
+                <AIModelOptions
+                  models={availableModels}
+                  isLoading={isLoadingModels}
+                  isError={isModelsError}
+                />
               </select>
+              {isModelsError && (
+                <button
+                  type="button"
+                  onClick={handleRetryModels}
+                  className="mt-2 text-sm text-blue-600 underline hover:no-underline dark:text-blue-400"
+                >
+                  Retry loading models
+                </button>
+              )}
               {errors.aiModel && (
                 <p className="text-red-500 text-sm mt-1">{errors.aiModel.message}</p>
               )}
