@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { NotebookConfig } from "@/services/notebooks.service";
 import { Link } from "@/src/components/navigation/Link";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
-import { NOTEBOOK_EMBED_ENABLED } from "@/utilities/notebooks-gate";
+import { isNotebookArtifactUrl } from "@/utilities/domains";
 import { PAGES } from "@/utilities/pages";
 import { NotebookFrame } from "./NotebookFrame";
 
@@ -12,15 +12,19 @@ interface NotebookViewerProps {
 }
 
 /**
- * A single notebook page: header, then either the sandboxed frame or the
- * deployment-gate placeholder.
+ * A single notebook page: header, then either the sandboxed frame or an
+ * explicit "not live yet" state.
  *
- * The frame is withheld while {@link NOTEBOOK_EMBED_ENABLED} is false — see
- * that module for what has to be true first. Everything around it (routing,
- * the data fetch, not-found behaviour, the version line) is live regardless,
- * so flipping the gate is the only change needed to ship the embed.
+ * The frame is rendered only when the stored artifact URL is on the notebooks
+ * origin (`isNotebookArtifactUrl`, exact-origin match). That check is the
+ * gate: a deploy with no notebooks origin configured, or a config row pointing
+ * anywhere else, withholds the frame rather than framing an unknown host.
+ * Routing, the data fetch, not-found behaviour and the version line are live
+ * either way.
  */
 export function NotebookViewer({ communityId, notebook }: NotebookViewerProps) {
+  const canEmbed = isNotebookArtifactUrl(notebook.artifactUrl);
+
   return (
     <div className="flex flex-col gap-6 py-6 animate-fade-in-up">
       <div className="flex flex-col gap-3">
@@ -38,7 +42,7 @@ export function NotebookViewer({ communityId, notebook }: NotebookViewerProps) {
         <p className="text-xs text-muted-foreground">Version {notebook.artifactVersion}</p>
       </div>
 
-      {NOTEBOOK_EMBED_ENABLED ? (
+      {canEmbed ? (
         <NotebookFrame src={notebook.artifactUrl} title={notebook.name} />
       ) : (
         <NotebookPending />

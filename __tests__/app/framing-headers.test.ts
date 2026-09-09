@@ -13,8 +13,8 @@
  * browsers enforce the intersection, silently restoring the stricter policy.
  */
 
+import { afterEach, describe, expect, it, vi } from "vitest";
 import nextConfig from "@/next.config";
-import { NOTEBOOK_ASSET_PATH_PREFIX, NOTEBOOK_ASSET_SOURCE } from "@/utilities/notebooks/csp";
 import {
   TOKEN_BRIDGE_ORIGINS,
   TOKEN_BRIDGE_PATH,
@@ -39,7 +39,7 @@ const framingRules = (rules: HeaderRule[]) =>
   rules.filter((rule) => cspOf(rule).includes("frame-ancestors"));
 
 /** Routes that carry their own CSP instead of the catch-all's. */
-const CARVE_OUT_SOURCES = new Set<string>([TOKEN_BRIDGE_PATH, NOTEBOOK_ASSET_SOURCE]);
+const CARVE_OUT_SOURCES = new Set<string>([TOKEN_BRIDGE_PATH]);
 
 describe("framing headers", () => {
   it("keeps every route but the bridge same-origin only", async () => {
@@ -51,16 +51,13 @@ describe("framing headers", () => {
     expect(xfoOf(catchAll!)).toBe("SAMEORIGIN");
   });
 
-  it("excludes exactly the bridge path and the notebook prefix from the catch-all", async () => {
+  it("excludes exactly the bridge path from the catch-all", async () => {
     const rules = await getHeaderRules();
     const catchAll = framingRules(rules).find((rule) => !CARVE_OUT_SOURCES.has(rule.source))!;
 
-    // Two carve-outs, both spelled out: the bridge path exactly (`$`), and the
-    // notebook asset prefix (`/`). Neither is a loose prefix that could grow to
-    // cover a sibling route.
-    expect(catchAll.source).toBe(
-      `/((?!${TOKEN_BRIDGE_PATH.slice(1)}$|${NOTEBOOK_ASSET_PATH_PREFIX.slice(1)}/).*)`
-    );
+    // One carve-out, spelled out as the bridge path exactly (`$`) — not a
+    // loose prefix that could grow to cover a sibling route.
+    expect(catchAll.source).toBe(`/((?!${TOKEN_BRIDGE_PATH.slice(1)}$).*)`);
   });
 
   it("lets only the configured embedders frame the bridge", async () => {
@@ -97,60 +94,75 @@ describe("framing headers", () => {
     }
   });
 
-  it("has exactly three framing rules: the catch-all, the bridge and the notebooks", async () => {
+  it("has exactly two framing rules: the catch-all and the bridge", async () => {
     const rules = await getHeaderRules();
     const sources = framingRules(rules).map((rule) => rule.source);
 
-    expect(sources).toHaveLength(3);
+    expect(sources).toHaveLength(2);
     expect(sources).toContain(TOKEN_BRIDGE_PATH);
-    expect(sources).toContain(NOTEBOOK_ASSET_SOURCE);
   });
 
   /**
-   * The notebook carve-out exists to ADD directives the bundle needs
-   * (wasm-unsafe-eval, blob: workers) and to CONSTRAIN where a running notebook
-   * may connect — never to widen who may frame this app. Its framing posture
-   * must stay identical to the catch-all's.
+   * Notebook bundles are not served by this app at all. They live on their
+   * own origin and are framed from there, so the only thing this config says
+   * about them is which origin `frame-src` admits — and it says nothing when
+   * no origin is configured. The bundle's own CSP (connect-src to the GAP API
+   * only, no package hosts) ships with the bundle, from the notebooks repo.
    */
   describe("notebook bundles", () => {
-    it("stays same-origin-only, exactly like every other route", async () => {
-      const rules = await getHeaderRules();
-      const notebooks = framingRules(rules).find((rule) => rule.source === NOTEBOOK_ASSET_SOURCE);
+    const ORIGIN = "https://gap-notebooks.vercel.app";
 
-      expect(notebooks).toBeDefined();
-      expect(cspOf(notebooks!)).toContain("frame-ancestors 'self'");
-      expect(xfoOf(notebooks!)).toBe("SAMEORIGIN");
-    });
-
-    // The directive that makes same-origin hosting survivable: a script inside
-    // the frame can reach the GAP API and nothing else. A CDN or package host
-    // here would let it fetch and execute arbitrary code on this origin.
-    it("confines the frame to self and the GAP API", async () => {
-      const rules = await getHeaderRules();
-      const csp = cspOf(framingRules(rules).find((rule) => rule.source === NOTEBOOK_ASSET_SOURCE)!);
-      const connectSrc = csp
+    const frameSrcOf = (csp: string) =>
+      csp
         .split(";")
         .map((part) => part.trim())
-        .find((part) => part.startsWith("connect-src"))!;
+        .find((part) => part.startsWith("frame-src"))!;
 
-      expect(connectSrc).toBeDefined();
-      for (const forbidden of [
-        "pypi.org",
-        "files.pythonhosted.org",
-        "cdn.jsdelivr.net",
-        "unpkg.com",
-        "*",
-      ]) {
-        expect(connectSrc).not.toContain(forbidden);
+    async function freshHeaderRules(): Promise<HeaderRule[]> {
+      vi.resetModules();
+      const fresh = (await import("@/next.config")).default;
+      return (await fresh.headers!()) as HeaderRule[];
+    }
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    });
+
+    it("serves no bundle route of its own", async () => {
+      const rules = await getHeaderRules();
+
+      expect(rules.map((rule) => rule.source)).not.toContain("/notebooks/:path*");
+    });
+
+    it("admits the configured notebooks origin in frame-src, on every framing rule", async () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", ORIGIN);
+      const rules = await freshHeaderRules();
+
+      for (const rule of framingRules(rules)) {
+        expect(frameSrcOf(cspOf(rule)).split(/\s+/)).toContain(ORIGIN);
       }
     });
 
-    it("forbids the notebook from framing anything itself", async () => {
-      const rules = await getHeaderRules();
-      const csp = cspOf(framingRules(rules).find((rule) => rule.source === NOTEBOOK_ASSET_SOURCE)!);
+    it("admits no notebook host when none is configured", async () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", "");
+      const rules = await freshHeaderRules();
 
-      expect(csp).toContain("frame-src 'none'");
-      expect(csp).toContain("object-src 'none'");
+      for (const rule of framingRules(rules)) {
+        expect(frameSrcOf(cspOf(rule))).not.toContain("notebooks");
+      }
+    });
+
+    it("never widens frame-src to a wildcard for notebooks", async () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", ORIGIN);
+      const rules = await freshHeaderRules();
+
+      for (const rule of framingRules(rules)) {
+        const sources = frameSrcOf(cspOf(rule)).split(/\s+/);
+        expect(sources).not.toContain("*");
+        expect(sources).not.toContain("https:");
+        expect(sources.filter((source) => source.includes("vercel.app"))).toEqual([ORIGIN]);
+      }
     });
   });
 });

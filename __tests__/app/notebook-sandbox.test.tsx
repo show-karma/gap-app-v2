@@ -5,29 +5,29 @@ import {
   NOTEBOOK_SANDBOX,
   NotebookFrame,
 } from "@/components/Pages/Communities/Notebooks/NotebookFrame";
+import { useIntersectingObserver } from "../helpers/intersection-observer";
 
 /**
  * BLOCKING topology invariant for the notebook embed.
  *
- * Notebook bundles are served from gap-app-v2's OWN origin. `allow-same-origin`
- * would therefore return the frame to this app's real origin — full DOM access,
- * cookies, the Privy session — turning tenant-authored JavaScript into stored
- * XSS on an authenticated origin. Under same-origin hosting there is no
- * configuration in which that token is acceptable; it is a sandbox escape, not
- * a fallback.
+ * Notebook bundles run tenant-authored code. They are served from their own
+ * origin, and `allow-scripts` alone is what keeps the document opaque there:
+ * no cookies, no storage, no ambient credentials. `allow-same-origin` would
+ * hand that origin back to the bundle, and the whole point of the separate
+ * host is that nothing about it is ever trusted. There is no configuration in
+ * which that token is acceptable; it is a sandbox escape, not a fallback.
  *
  * These assertions run against the RENDERED attribute rather than the source
  * string, so a wrapper component, a sanitiser, or a prop that widened the value
  * at runtime cannot slip past. Mutation-checked: changing the rendered sandbox
  * to include `allow-same-origin` fails these tests.
  *
- * If this file is ever deleted or relaxed, the change must be justified against
- * the P2 exit condition — client self-service authoring requires moving to a
- * separate registrable origin FIRST, at which point the topology assertion
- * changes shape rather than disappearing.
+ * If this file is ever deleted or relaxed, the change must be justified
+ * against the P2 exit condition: tenant self-service authoring rests on this
+ * sandbox plus the separate origin, and neither may be traded for the other.
  */
 
-const SRC = "https://app.karmahq.org/notebooks/filecoin/grants-overview/index.html";
+const SRC = "https://gap-notebooks.vercel.app/filecoin/grants-overview/";
 
 function renderFrame() {
   render(<NotebookFrame src={SRC} title="Grants overview" />);
@@ -37,6 +37,8 @@ function renderFrame() {
 }
 
 describe("notebook iframe sandbox (blocking invariant)", () => {
+  useIntersectingObserver();
+
   it("renders a sandbox attribute at all", () => {
     const frame = renderFrame();
 

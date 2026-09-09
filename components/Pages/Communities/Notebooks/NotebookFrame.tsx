@@ -5,15 +5,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /**
  * The ONLY sandbox token this frame may ever carry.
  *
- * The notebook bundle is served from gap-app-v2's own origin, so
- * `allow-same-origin` would hand tenant-authored JavaScript the app's real
- * origin — full DOM access, cookies, the Privy session. There is no
- * configuration in which adding it is acceptable under same-origin hosting;
- * it is not a fallback, it is a sandbox escape.
+ * The notebook bundle runs tenant-authored code. It is served from its own
+ * origin (`utilities/domains.ts`, notebooksOrigin()), and `allow-scripts`
+ * alone keeps the document on an opaque origin regardless: no cookies, no
+ * storage, no parent DOM, no ambient credentials on any host. Adding
+ * `allow-same-origin` would give the bundle its real origin back — and with
+ * it whatever that host is allowed to reach. It is a sandbox escape, not a
+ * fallback, and there is no configuration in which it is acceptable.
  *
- * `allow-scripts` alone leaves the frame on an opaque origin: no cookies, no
- * storage, no parent DOM. Two consequences the rest of this file works around:
- * `localStorage` *throws* inside the frame, and messages it posts arrive with
+ * Two consequences the rest of this file works around: `localStorage`
+ * *throws* inside the frame, and messages it posts arrive with
  * `event.origin === "null"`, which makes an origin check useless — identity
  * has to come from `event.source` instead.
  *
@@ -48,9 +49,18 @@ const MAX_HEIGHT_PX = 20000;
  * inside the frame — and an opaque origin makes the frame's own state
  * unreadable from here. A timeout is the only failure signal the host actually
  * has. 15s matches the mid-tier-mobile cold-start budget, so a slow-but-working
- * notebook is not called broken.
+ * notebook is not called broken. The clock starts when the frame is mounted,
+ * not when the page renders, because the frame is mounted lazily.
  */
 const LOAD_TIMEOUT_MS = 15_000;
+
+/**
+ * How far below the viewport the frame starts loading. The bundle's static
+ * preview paints within a couple of seconds, but Pyodide then boots for ten
+ * seconds or more of CPU; a notebook below the fold must not spend that while
+ * the page above it is still settling.
+ */
+const MOUNT_ROOT_MARGIN = "600px 0px";
 
 interface NotebookHeightMessage {
   type: "notebook:height";
@@ -68,7 +78,7 @@ function isHeightMessage(data: unknown): data is NotebookHeightMessage {
 }
 
 export interface NotebookFrameProps {
-  /** Absolute https URL of the published bundle. */
+  /** Absolute https URL of the published bundle, already allowlisted by the caller. */
   src: string;
   /** Accessible name for the frame — the notebook's own title. */
   title: string;
@@ -81,10 +91,35 @@ export interface NotebookFrameProps {
  * caller can widen it.
  */
 export function NotebookFrame({ src, title }: NotebookFrameProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   const [height, setHeight] = useState(DEFAULT_HEIGHT_PX);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasErrored, setHasErrored] = useState(false);
+
+  // Mount the frame when its slot comes near the viewport. Without
+  // IntersectionObserver (older browsers, test environments) mount at once:
+  // a notebook that never appears is worse than one that loads early.
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") {
+      setIsMounted(true);
+      return;
+    }
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setIsMounted(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: MOUNT_ROOT_MARGIN }
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -108,10 +143,10 @@ export function NotebookFrame({ src, title }: NotebookFrameProps) {
   // frame — that is not observable from here across an opaque origin, and it is
   // not this component's job.
   useEffect(() => {
-    if (isLoaded) return;
+    if (!isMounted || isLoaded) return;
     const timer = setTimeout(() => setHasErrored(true), LOAD_TIMEOUT_MS);
     return () => clearTimeout(timer);
-  }, [isLoaded]);
+  }, [isMounted, isLoaded]);
 
   const onLoad = useCallback(() => {
     setIsLoaded(true);
@@ -127,7 +162,11 @@ export function NotebookFrame({ src, title }: NotebookFrameProps) {
   }
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl border border-border bg-background">
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-hidden rounded-2xl border border-border bg-background"
+      data-testid="notebook-frame-slot"
+    >
       {!isLoaded ? (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background"
@@ -137,17 +176,21 @@ export function NotebookFrame({ src, title }: NotebookFrameProps) {
           <p className="text-sm text-muted-foreground">Loading notebook…</p>
         </div>
       ) : null}
-      <iframe
-        ref={frameRef}
-        src={src}
-        title={title}
-        sandbox={NOTEBOOK_SANDBOX}
-        onLoad={onLoad}
-        onError={onError}
-        loading="lazy"
-        className="w-full border-0"
-        style={{ height: `${height}px` }}
-      />
+      {isMounted ? (
+        <iframe
+          ref={frameRef}
+          src={src}
+          title={title}
+          sandbox={NOTEBOOK_SANDBOX}
+          onLoad={onLoad}
+          onError={onError}
+          loading="lazy"
+          className="w-full border-0"
+          style={{ height: `${height}px` }}
+        />
+      ) : (
+        <div style={{ height: `${height}px` }} aria-hidden="true" />
+      )}
     </div>
   );
 }

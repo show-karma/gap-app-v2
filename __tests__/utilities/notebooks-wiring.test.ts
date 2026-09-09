@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { tenantNavigation } from "@/src/infrastructure/config/tenant-navigation-config";
 import { EXPLORER_NAV_OVERRIDES, NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
+import { isNotebookArtifactUrl, notebooksOrigin } from "@/utilities/domains";
 import { INDEXER } from "@/utilities/indexer";
-import { NOTEBOOK_EMBED_ENABLED } from "@/utilities/notebooks-gate";
 import { PAGES } from "@/utilities/pages";
 
 describe("notebook feature wiring", () => {
@@ -82,14 +82,65 @@ describe("notebook feature wiring", () => {
     });
   });
 
-  describe("embed gate", () => {
-    // This assertion is intentionally strict. It is the single line that keeps
-    // a live notebook out of every build until WS1 clears the security gate
-    // (render fix, opaque-origin pre-flight, vendored Pyodide + tightened
-    // connect-src). Flipping it is a deliberate, reviewed change — not a
-    // default that can drift open.
-    it("keeps the frame withheld until the security gate clears", () => {
-      expect(NOTEBOOK_EMBED_ENABLED).toBe(false);
+  /**
+   * The gate that keeps a live notebook out of a build is the notebooks
+   * origin: unset, and nothing is framed anywhere. When set, only that exact
+   * origin may be framed — the same anchored-match rule the domain module
+   * applies everywhere else, because `endsWith()` admits a lookalike and
+   * `includes()` admits a host that merely contains ours.
+   */
+  describe("notebooks origin allowlist", () => {
+    const ORIGIN = "https://gap-notebooks.vercel.app";
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("frames nothing when no origin is configured", () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", "");
+
+      expect(notebooksOrigin()).toBeNull();
+      expect(isNotebookArtifactUrl(`${ORIGIN}/filecoin/grants-overview/`)).toBe(false);
+    });
+
+    it("normalises the configured value to a bare origin", () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", ` ${ORIGIN}/some/path/ `);
+
+      expect(notebooksOrigin()).toBe(ORIGIN);
+    });
+
+    it.each([
+      ["a schemeless value", "gap-notebooks.vercel.app"],
+      ["an http origin", "http://gap-notebooks.vercel.app"],
+      ["garbage", "not a url"],
+      ["the canonical app origin", "https://www.karmahq.org"],
+      ["the staging app origin", "https://staging.karmahq.org"],
+    ])("fails closed on %s", (_label, value) => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", value);
+
+      expect(notebooksOrigin()).toBeNull();
+    });
+
+    it("admits an artifact on the exact origin", () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", ORIGIN);
+
+      expect(isNotebookArtifactUrl(`${ORIGIN}/filecoin/grants-overview/`)).toBe(true);
+    });
+
+    it.each([
+      ["a lookalike host", "https://fakegap-notebooks.vercel.app/filecoin/grants-overview/"],
+      ["our host as a prefix of another", "https://gap-notebooks.vercel.app.evil.com/x/"],
+      ["our host in the path", "https://evil.com/gap-notebooks.vercel.app/x/"],
+      ["our host as userinfo", "https://gap-notebooks.vercel.app@evil.com/x/"],
+      ["credentials on the right host", "https://user:pw@gap-notebooks.vercel.app/x/"],
+      ["a non-default port", "https://gap-notebooks.vercel.app:8443/x/"],
+      ["http on the right host", "http://gap-notebooks.vercel.app/x/"],
+      ["a javascript URL", "javascript:alert(1)"],
+      ["a relative path", "/filecoin/grants-overview/"],
+    ])("rejects %s", (_label, value) => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", ORIGIN);
+
+      expect(isNotebookArtifactUrl(value)).toBe(false);
     });
   });
 });

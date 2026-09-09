@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NotebookFrame } from "@/components/Pages/Communities/Notebooks/NotebookFrame";
+import { useIntersectingObserver } from "../../helpers/intersection-observer";
 
-const SRC = "https://app.karmahq.org/notebooks/filecoin/grants-overview/index.html";
+const SRC = "https://gap-notebooks.vercel.app/filecoin/grants-overview/";
 
 function renderFrame() {
   render(<NotebookFrame src={SRC} title="Grants overview" />);
@@ -18,6 +19,8 @@ function postFrom(source: Window | null, data: unknown) {
 }
 
 describe("NotebookFrame", () => {
+  useIntersectingObserver();
+
   it("shows a loading state until the frame loads", () => {
     renderFrame();
 
@@ -72,6 +75,74 @@ describe("NotebookFrame", () => {
 
   it("lazy-loads so the surrounding page is interactive first", () => {
     expect(renderFrame()).toHaveAttribute("loading", "lazy");
+  });
+
+  // Pyodide costs ten seconds or more of CPU once the frame mounts. The slot
+  // is observed and the frame is only mounted when it comes near the
+  // viewport; the load-timeout clock starts then, not at page render.
+  describe("deferred mount", () => {
+    type Callback = (entries: { isIntersecting: boolean }[]) => void;
+    let callbacks: Callback[];
+    let observed: Element[];
+    let disconnected: number;
+
+    beforeEach(() => {
+      callbacks = [];
+      observed = [];
+      disconnected = 0;
+      vi.stubGlobal(
+        "IntersectionObserver",
+        class {
+          constructor(callback: Callback) {
+            callbacks.push(callback);
+          }
+          observe(element: Element) {
+            observed.push(element);
+          }
+          disconnect() {
+            disconnected += 1;
+          }
+          unobserve() {}
+        }
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("renders no iframe until the slot is near the viewport", () => {
+      render(<NotebookFrame src={SRC} title="Grants overview" />);
+
+      expect(document.querySelector("iframe")).toBeNull();
+      expect(observed).toHaveLength(1);
+      expect(observed[0]).toBe(screen.getByTestId("notebook-frame-slot"));
+    });
+
+    it("mounts the sandboxed frame once the slot intersects", async () => {
+      render(<NotebookFrame src={SRC} title="Grants overview" />);
+
+      act(() => {
+        callbacks[0]([{ isIntersecting: true }]);
+      });
+
+      const frame = await screen.findByTitle("Grants overview");
+      expect(frame).toHaveAttribute("src", SRC);
+      expect(frame.getAttribute("sandbox")).toBe("allow-scripts");
+      expect(disconnected).toBeGreaterThan(0);
+    });
+
+    it("does not start the load timeout before the frame is mounted", async () => {
+      vi.useFakeTimers();
+      render(<NotebookFrame src={SRC} title="Grants overview" />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(30_000);
+      });
+
+      expect(screen.queryByText(/could not be loaded/i)).not.toBeInTheDocument();
+      vi.useRealTimers();
+    });
   });
 
   describe("height messages", () => {

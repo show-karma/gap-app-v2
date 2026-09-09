@@ -1,17 +1,19 @@
 import type { NextConfig } from "next";
-import {
-  NOTEBOOK_ASSET_PATH_PREFIX,
-  NOTEBOOK_ASSET_SOURCE,
-  notebookCsp,
-} from "./utilities/notebooks/csp";
+import { notebooksOrigin } from "./utilities/domains";
 import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
-const FRAME_SRC =
-  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com";
+// Notebook bundles are framed from their own origin (`utilities/domains.ts`,
+// notebooksOrigin()). Unset means no notebook is framed, so nothing is added.
+const FRAME_SRC = [
+  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com",
+  notebooksOrigin(),
+]
+  .filter(Boolean)
+  .join(" ");
 
 const securityHeaders = [
   {
@@ -39,24 +41,6 @@ const tokenBridgeHeaders = [
   {
     key: "Content-Security-Policy",
     value: `${FRAME_SRC}; frame-ancestors 'self' ${allTokenBridgeOrigins().join(" ")};`,
-  },
-];
-
-/**
- * Notebook bundles run tenant-authored code on this app's own origin, inside a
- * `sandbox="allow-scripts"` frame. This policy is the other half of that
- * boundary — see `utilities/notebooks/csp.ts` for why `connect-src` is the
- * directive that matters. X-Frame-Options stays SAMEORIGIN alongside
- * `frame-ancestors 'self'`.
- */
-const notebookHeaders = [
-  {
-    key: "X-Frame-Options",
-    value: "SAMEORIGIN",
-  },
-  {
-    key: "Content-Security-Policy",
-    value: notebookCsp(),
   },
 ];
 
@@ -181,21 +165,12 @@ const nextConfig: NextConfig = {
     // frame-ancestors and silently block the frame.
     const headerRules = [
       {
-        source: `/((?!${TOKEN_BRIDGE_PATH.slice(1)}$|${NOTEBOOK_ASSET_PATH_PREFIX.slice(1)}/).*)`,
+        source: `/((?!${TOKEN_BRIDGE_PATH.slice(1)}$).*)`,
         headers: securityHeaders,
       },
       {
         source: TOKEN_BRIDGE_PATH,
         headers: tokenBridgeHeaders,
-      },
-      // Notebook bundles get their own policy for the same reason the bridge
-      // does: two rules on one path emit Content-Security-Policy twice and
-      // browsers enforce the intersection, which would drop the directives the
-      // notebook needs (wasm-unsafe-eval, blob: workers) while keeping none of
-      // the ones that matter. The catch-all above excludes this prefix.
-      {
-        source: NOTEBOOK_ASSET_SOURCE,
-        headers: notebookHeaders,
       },
     ];
     // Content-hashed build assets are safe to cache forever: a new deploy emits
