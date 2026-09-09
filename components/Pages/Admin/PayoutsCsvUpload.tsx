@@ -46,7 +46,7 @@ export function PayoutsCsvUpload({
   const extractProjectSlug = (url: string): string | null => {
     if (!url || typeof url !== "string") return null;
 
-    // Match various KarmaGAP URL patterns
+    // Match various Karma URL patterns
     const patterns = [/\/project\/([^/\s?#]+)/, /\/projects\/([^/\s?#]+)/];
 
     for (const pattern of patterns) {

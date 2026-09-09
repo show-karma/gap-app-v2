@@ -18,7 +18,7 @@ const DEFAULT_CONFIG: AskKarmaConfig = {
   ],
   exampleQuestionsByPersona: {
     visitor: [
-      "What is Karma GAP?",
+      "What is Karma?",
       "What types of projects receive funding?",
       "How do I apply or get involved?",
       "When does the next funding round open?",
