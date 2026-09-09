@@ -35,7 +35,7 @@ export function NotebookViewer({ communityId, notebook }: NotebookViewerProps) {
           <ArrowLeft className="h-4 w-4" />
           All {COMMUNITY_NAV_LABELS.notebooks.toLowerCase()}
         </Link>
-        <h1 className="text-2xl font-bold text-foreground">{notebook.name}</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{notebook.name}</h1>
         {notebook.description ? (
           <p className="max-w-2xl text-sm text-muted-foreground">{notebook.description}</p>
         ) : null}

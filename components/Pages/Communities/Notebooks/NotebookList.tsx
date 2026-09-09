@@ -20,7 +20,7 @@ export function NotebookList({ communityId, notebooks }: NotebookListProps) {
   return (
     <div className="flex flex-col gap-6 py-6 animate-fade-in-up">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-foreground">{COMMUNITY_NAV_LABELS.notebooks}</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{COMMUNITY_NAV_LABELS.notebooks}</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
           Interactive data notebooks published by this community. Each one runs in your browser
           against live grant data.

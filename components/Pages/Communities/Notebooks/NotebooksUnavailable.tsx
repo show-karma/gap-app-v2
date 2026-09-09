@@ -17,7 +17,7 @@ interface NotebooksUnavailableProps {
 export function NotebooksUnavailable({ communityId, communityName }: NotebooksUnavailableProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-      <h1 className="text-2xl font-bold">{COMMUNITY_NAV_LABELS.notebooks} not available</h1>
+      <h1 className="text-2xl font-semibold">{COMMUNITY_NAV_LABELS.notebooks} not available</h1>
       <p className="max-w-md text-muted-foreground">
         {communityName} hasn&apos;t enabled notebooks.
       </p>

@@ -77,12 +77,16 @@ export function NotebookFrame({ src, title }: NotebookFrameProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasErrored, setHasErrored] = useState(false);
 
+  const mountFrame = useCallback(() => setIsMounted(true), []);
+
   // Mount the frame when its slot comes near the viewport. Without
   // IntersectionObserver (older browsers, test environments) mount at once:
-  // a notebook that never appears is worse than one that loads early.
+  // a notebook that never appears is worse than one that loads early. The
+  // state starts false on purpose so server and client render the same
+  // empty slot; the decision is made here, after hydration.
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") {
-      setIsMounted(true);
+      mountFrame();
       return;
     }
     const container = containerRef.current;
@@ -90,7 +94,7 @@ export function NotebookFrame({ src, title }: NotebookFrameProps) {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          setIsMounted(true);
+          mountFrame();
           observer.disconnect();
         }
       },
@@ -98,7 +102,7 @@ export function NotebookFrame({ src, title }: NotebookFrameProps) {
     );
     observer.observe(container);
     return () => observer.disconnect();
-  }, []);
+  }, [mountFrame]);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
