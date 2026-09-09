@@ -3,7 +3,7 @@ import { tenantNavigation } from "@/src/infrastructure/config/tenant-navigation-
 import { EXPLORER_NAV_OVERRIDES, NOTEBOOKS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { COMMUNITY_NAV_LABELS } from "@/utilities/community-nav";
 import { isNotebookArtifactUrl, notebooksOrigin } from "@/utilities/domains";
-import { INDEXER } from "@/utilities/indexer";
+import { NOTEBOOK_ENDPOINTS } from "@/utilities/notebooks/endpoints";
 import { PAGES } from "@/utilities/pages";
 
 describe("notebook feature wiring", () => {
@@ -44,13 +44,11 @@ describe("notebook feature wiring", () => {
 
   describe("api endpoints", () => {
     it("targets the community-scoped list endpoint", () => {
-      expect(INDEXER.V2.NOTEBOOK_CONFIGS.LIST("filecoin")).toBe(
-        "/v2/communities/filecoin/notebook-configs"
-      );
+      expect(NOTEBOOK_ENDPOINTS.LIST("filecoin")).toBe("/v2/communities/filecoin/notebook-configs");
     });
 
     it("targets the community-scoped page endpoint", () => {
-      expect(INDEXER.V2.NOTEBOOK_CONFIGS.GET("filecoin", "grants-overview")).toBe(
+      expect(NOTEBOOK_ENDPOINTS.GET("filecoin", "grants-overview")).toBe(
         "/v2/communities/filecoin/notebook-configs/grants-overview"
       );
     });

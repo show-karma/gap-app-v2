@@ -9,7 +9,7 @@ vi.mock("@/utilities/api/client", () => ({
 }));
 
 import { api } from "@/utilities/api/client";
-import { INDEXER } from "@/utilities/indexer";
+import { NOTEBOOK_ENDPOINTS } from "@/utilities/notebooks/endpoints";
 import {
   getPublishedNotebook,
   getPublishedNotebooks,
@@ -47,7 +47,7 @@ describe("notebooks.service", () => {
       await getPublishedNotebooks("filecoin");
 
       expect(mockApiGet).toHaveBeenCalledWith(
-        INDEXER.V2.NOTEBOOK_CONFIGS.LIST("filecoin"),
+        NOTEBOOK_ENDPOINTS.LIST("filecoin"),
         expect.objectContaining({ isAuthorized: false })
       );
     });
@@ -107,7 +107,7 @@ describe("notebooks.service", () => {
       await getPublishedNotebook("filecoin", "grants-overview");
 
       expect(mockApiGet).toHaveBeenCalledWith(
-        INDEXER.V2.NOTEBOOK_CONFIGS.GET("filecoin", "grants-overview"),
+        NOTEBOOK_ENDPOINTS.GET("filecoin", "grants-overview"),
         expect.objectContaining({ isAuthorized: false })
       );
     });

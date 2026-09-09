@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { api } from "@/utilities/api/client";
-import { INDEXER } from "@/utilities/indexer";
+import { NOTEBOOK_ENDPOINTS } from "@/utilities/notebooks/endpoints";
 
 /**
  * Notebook pages — the read half of the wire contract in gap-indexer PR #2411.
@@ -11,52 +11,50 @@ import { INDEXER } from "@/utilities/indexer";
  * "no such page", never as "not published yet".
  */
 
-export const NOTEBOOK_STATUSES = ["draft", "published"] as const;
+const NOTEBOOK_STATUSES = ["draft", "published"] as const;
 
 /**
  * The API narrows to this closed set. It is mirrored rather than widened to
  * `string` so an unexpected value fails Zod parsing at the boundary instead of
  * flowing into the UI.
  */
-export const NotebookStatusSchema = z.enum(NOTEBOOK_STATUSES);
-
-export type NotebookStatus = z.infer<typeof NotebookStatusSchema>;
+const NotebookStatusSchema = z.enum(NOTEBOOK_STATUSES);
 
 /**
- * `passthrough()` keeps the client forward-compatible: a field added by the
- * API must not fail an existing page. Every field the UI reads is declared.
+ * Unknown fields are stripped (Zod's default), so a field added by the API
+ * neither fails an existing page nor leaks through untyped. Every field the UI
+ * reads is declared.
  *
  * `artifactUrl` is validated as an absolute https URL here as well as
  * server-side — this value ends up as an iframe `src`, so a non-https or
  * `javascript:` value must never reach a component even if the API regressed.
+ * Which origin may be framed is decided later, by `isNotebookArtifactUrl`.
  */
-export const NotebookConfigSchema = z
-  .object({
-    id: z.string().optional(),
-    communityId: z.string(),
-    slug: z.string(),
-    name: z.string(),
-    description: z.string().nullable(),
-    artifactUrl: z.string().refine(
-      (value) => {
-        try {
-          return new URL(value).protocol === "https:";
-        } catch {
-          return false;
-        }
-      },
-      { message: "artifactUrl must be an absolute https:// URL" }
-    ),
-    artifactVersion: z.string(),
-    status: NotebookStatusSchema,
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  })
-  .passthrough();
+export const NotebookConfigSchema = z.object({
+  id: z.string().optional(),
+  communityId: z.string(),
+  slug: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  artifactUrl: z.string().refine(
+    (value) => {
+      try {
+        return new URL(value).protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "artifactUrl must be an absolute https:// URL" }
+  ),
+  artifactVersion: z.string(),
+  status: NotebookStatusSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
 export type NotebookConfig = z.infer<typeof NotebookConfigSchema>;
 
-export const NotebookConfigListSchema = z.array(NotebookConfigSchema);
+const NotebookConfigListSchema = z.array(NotebookConfigSchema);
 
 /**
  * Published notebook pages for a community, newest first (the API orders by
@@ -64,7 +62,7 @@ export const NotebookConfigListSchema = z.array(NotebookConfigSchema);
  * an empty list is a state to render, not an error.
  */
 export async function getPublishedNotebooks(communitySlug: string): Promise<NotebookConfig[]> {
-  const data = await api.get<NotebookConfig[]>(INDEXER.V2.NOTEBOOK_CONFIGS.LIST(communitySlug), {
+  const data = await api.get<NotebookConfig[]>(NOTEBOOK_ENDPOINTS.LIST(communitySlug), {
     schema: NotebookConfigListSchema,
     isAuthorized: false,
   });
@@ -80,7 +78,7 @@ export async function getPublishedNotebook(
   communitySlug: string,
   slug: string
 ): Promise<NotebookConfig> {
-  return api.get<NotebookConfig>(INDEXER.V2.NOTEBOOK_CONFIGS.GET(communitySlug, slug), {
+  return api.get<NotebookConfig>(NOTEBOOK_ENDPOINTS.GET(communitySlug, slug), {
     schema: NotebookConfigSchema,
     isAuthorized: false,
   });

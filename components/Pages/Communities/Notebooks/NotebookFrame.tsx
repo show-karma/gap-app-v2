@@ -1,36 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { NOTEBOOK_SANDBOX } from "@/utilities/notebooks/sandbox";
 
 /**
- * The ONLY sandbox token this frame may ever carry.
- *
- * The notebook bundle runs tenant-authored code. It is served from its own
- * origin (`utilities/domains.ts`, notebooksOrigin()), and `allow-scripts`
- * alone keeps the document on an opaque origin regardless: no cookies, no
- * storage, no parent DOM, no ambient credentials on any host. Adding
- * `allow-same-origin` would give the bundle its real origin back — and with
- * it whatever that host is allowed to reach. It is a sandbox escape, not a
- * fallback, and there is no configuration in which it is acceptable.
- *
- * Two consequences the rest of this file works around: `localStorage`
- * *throws* inside the frame, and messages it posts arrive with
- * `event.origin === "null"`, which makes an origin check useless — identity
- * has to come from `event.source` instead.
- *
- * Exported so the invariant test asserts the same constant the component
- * renders. `__tests__/app/notebook-sandbox.test.tsx` additionally asserts the
- * RENDERED attribute, so a wrapper or sanitizer that rewrote it could not slip
- * past a source-level check.
+ * The sandbox attribute is a constant (`utilities/notebooks/sandbox.ts`), not
+ * a prop, so no caller can widen it. Two consequences of `allow-scripts` alone
+ * that this file works around: `localStorage` *throws* inside the frame, and
+ * messages it posts arrive with `event.origin === "null"`, which makes an
+ * origin check useless — identity has to come from `event.source` instead.
  */
-export const NOTEBOOK_SANDBOX = "allow-scripts" as const;
-
-/** Forbidden tokens, named so the failure message says why. */
-export const FORBIDDEN_SANDBOX_TOKENS = [
-  "allow-same-origin",
-  "allow-top-navigation",
-  "allow-popups-to-escape-sandbox",
-] as const;
 
 /**
  * Fallback height until the notebook reports its own. Tall enough that a
@@ -77,7 +56,7 @@ function isHeightMessage(data: unknown): data is NotebookHeightMessage {
   );
 }
 
-export interface NotebookFrameProps {
+interface NotebookFrameProps {
   /** Absolute https URL of the published bundle, already allowlisted by the caller. */
   src: string;
   /** Accessible name for the frame — the notebook's own title. */

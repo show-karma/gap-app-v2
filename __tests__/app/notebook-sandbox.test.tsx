@@ -1,10 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import {
-  FORBIDDEN_SANDBOX_TOKENS,
-  NOTEBOOK_SANDBOX,
-  NotebookFrame,
-} from "@/components/Pages/Communities/Notebooks/NotebookFrame";
+import { NotebookFrame } from "@/components/Pages/Communities/Notebooks/NotebookFrame";
+import { FORBIDDEN_SANDBOX_TOKENS, NOTEBOOK_SANDBOX } from "@/utilities/notebooks/sandbox";
 import { useIntersectingObserver } from "../helpers/intersection-observer";
 
 /**
