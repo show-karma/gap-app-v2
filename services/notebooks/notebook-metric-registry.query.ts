@@ -23,7 +23,13 @@ import {
 } from "./notebook-metric-registry.types";
 
 const METRIC_QUERY_SHAPE_VERSION = "v1";
-const METRIC_REVALIDATE_SECONDS = 3600;
+/**
+ * Exported so that everything cached ALONGSIDE a metric query expires with it.
+ *
+ * The chart compiled from a result is one such thing: an SVG that outlived the
+ * figures it draws would be a picture of numbers the page no longer shows.
+ */
+export const METRIC_REVALIDATE_SECONDS = 3600;
 const CommunityIdSchema = z.string().trim().min(1).max(200);
 const FilterValuesSchema = z.array(z.string().trim().min(1).max(200)).max(100);
 const QueryInputSchema = z

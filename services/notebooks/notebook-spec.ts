@@ -394,6 +394,171 @@ export type NotebookQueryWindow = (typeof NOTEBOOK_QUERY_WINDOWS)[number];
 const queryFilterValues = (max: number) =>
   z.array(z.string().trim().min(1).max(200)).max(max).optional();
 
+/**
+ * How a query's answer may be DRAWN.
+ *
+ * The object is presentation and nothing else: a mark, and two hints about how
+ * to order and how large. It carries no `data`, no `encoding`, no `transform`,
+ * no colour and no dimensions, and the schema is `.strict()`, so a stored spec
+ * can neither name a resource for the renderer to fetch nor compute a figure
+ * the metrics layer did not produce. That is the same rule the rest of this
+ * module lives by — a spec SELECTS and LABELS — applied to a chart.
+ *
+ * WHAT HAPPENS WHEN THE DATA WILL NOT DRAW. Nothing is thrown and nothing is
+ * blanked: the renderer returns no SVG and the section falls back to the table
+ * it would have been without a `chart`. That is stated product behaviour, not
+ * a failure path — an empty result, a result past the row cap, a donut over
+ * percentages and a donut over negative values all read better as figures than
+ * as a misleading picture.
+ */
+export const NOTEBOOK_QUERY_CHART_MARKS = ["bar", "hbar", "donut", "line"] as const;
+export const NOTEBOOK_QUERY_CHART_SORTS = [
+  "value-desc",
+  "value-asc",
+  "label-asc",
+  "source",
+] as const;
+export const NOTEBOOK_QUERY_CHART_SIZES = ["sm", "md", "lg"] as const;
+
+export type NotebookQueryChartMark = (typeof NOTEBOOK_QUERY_CHART_MARKS)[number];
+export type NotebookQueryChartSort = (typeof NOTEBOOK_QUERY_CHART_SORTS)[number];
+export type NotebookQueryChartSize = (typeof NOTEBOOK_QUERY_CHART_SIZES)[number];
+
+/** Whether a shape reads a scale as a sequence or as a set of names. */
+export type NotebookQueryChartGrouping = "categorical" | "temporal";
+
+/**
+ * WHICH GROUPING EACH MARK CAN HONESTLY DRAW.
+ *
+ * A mark is not valid globally, it is valid for a grouping. A line asserts a
+ * trend between neighbouring points, which is true of dates and false of
+ * programs: drawn over an unordered set of categories it produces a slope that
+ * means nothing and that a reader will read anyway. A donut asserts parts of a
+ * whole, and one part is not a whole — hence `requiresGrouping`.
+ *
+ * The table is DATA rather than a chain of conditions so that adding a mark is
+ * adding a row, and so that a test can assert its totality against the
+ * vocabulary. A `Record` over a widened key set still type-checks, so a mark
+ * added without a ruling here is a runtime `undefined`, not a compile error;
+ * the totality test is what catches that.
+ */
+export const NOTEBOOK_QUERY_CHART_MARK_GROUPING: Readonly<
+  Record<
+    NotebookQueryChartMark,
+    { grouping: NotebookQueryChartGrouping; requiresGrouping: boolean }
+  >
+> = {
+  bar: { grouping: "categorical", requiresGrouping: false },
+  hbar: { grouping: "categorical", requiresGrouping: false },
+  donut: { grouping: "categorical", requiresGrouping: true },
+  line: { grouping: "temporal", requiresGrouping: false },
+};
+
+/**
+ * Which grouping each dimension produces.
+ *
+ * `date` is the only ordered one, and it is ordered because the metrics layer
+ * makes it so: the date branch of the indicator resolver buckets by day and
+ * sorts ascending before it emits rows. Every other dimension is a set of
+ * names in whatever order the resolver happened to produce.
+ */
+export const NOTEBOOK_QUERY_DIMENSION_GROUPING: Readonly<
+  Record<NotebookQueryDimension, NotebookQueryChartGrouping>
+> = {
+  none: "categorical",
+  program: "categorical",
+  project: "categorical",
+  tier: "categorical",
+  function: "categorical",
+  date: "temporal",
+};
+
+export function isNotebookChartMarkValidForGrouping(
+  mark: NotebookQueryChartMark,
+  groupBy: NotebookQueryDimension
+): boolean {
+  const rule = NOTEBOOK_QUERY_CHART_MARK_GROUPING[mark];
+  if (rule.grouping !== NOTEBOOK_QUERY_DIMENSION_GROUPING[groupBy]) return false;
+  return !rule.requiresGrouping || groupBy !== "none";
+}
+
+/**
+ * Whether a mark can honour this row order.
+ *
+ * Stated over the mark's GROUPING rather than over the mark itself, for the
+ * same reason the law above is: a mark whose x axis carries time has exactly
+ * one honest order and a mark whose x axis carries names has several. Adding a
+ * second temporal mark inherits the rule instead of needing a new clause.
+ */
+export function isNotebookChartSortValidForMark(
+  mark: NotebookQueryChartMark,
+  sort: NotebookQueryChartSort
+): boolean {
+  if (NOTEBOOK_QUERY_CHART_MARK_GROUPING[mark].grouping === "temporal") {
+    return sort === NOTEBOOK_TEMPORAL_QUERY_CHART_SORT;
+  }
+  return true;
+}
+
+/**
+ * `.optional()` AND NEVER `.default()`.
+ *
+ * The indexer publishes this schema as JSON Schema on its response contracts,
+ * and Ajv in strict mode refuses a `default` keyword inside one — the failure
+ * is `app.ready()`, so the whole server stops booting rather than one route
+ * misbehaving. The stored document therefore genuinely omits the key, and the
+ * reader supplies the value through the resolvers below.
+ */
+export const NotebookQueryChartSchema = z
+  .object({
+    mark: z.enum(NOTEBOOK_QUERY_CHART_MARKS),
+    sort: z.enum(NOTEBOOK_QUERY_CHART_SORTS).optional(),
+    size: z.enum(NOTEBOOK_QUERY_CHART_SIZES).optional(),
+  })
+  .strict();
+
+export const NOTEBOOK_QUERY_CHART_DEFAULT_SORT: NotebookQueryChartSort = "value-desc";
+export const NOTEBOOK_QUERY_CHART_DEFAULT_SIZE: NotebookQueryChartSize = "md";
+
+/**
+ * The only row order a temporal mark may state.
+ *
+ * `source` preserves the resolver's own order, which for a date grouping is
+ * already sorted ascending — and that order IS the line's meaning. Every other
+ * member of the sort vocabulary is refused for such a mark rather than stored
+ * and ignored: the renderer draws a line in source order whatever the document
+ * says, so a persisted `value-desc` would be an assertion about the figure
+ * that nothing ever honours, offered as a live choice by the builder and
+ * carried in the cache key of a chart it does not describe. A claim the
+ * drawing never makes is still a claim the document makes.
+ */
+export const NOTEBOOK_TEMPORAL_QUERY_CHART_SORT: NotebookQueryChartSort = "source";
+
+/**
+ * The row order a query section's chart asks for, with the absent case
+ * resolved.
+ *
+ * MARK FIRST AND REQUIRED: the mark decides, not the stored value. A temporal
+ * mark has exactly one honest order and the schema refuses any other, so
+ * answering the categorical default here would be the resolver itself stating
+ * an ordering the drawing never uses.
+ */
+export function resolveNotebookChartSort(
+  mark: NotebookQueryChartMark,
+  sort?: NotebookQueryChartSort
+): NotebookQueryChartSort {
+  if (NOTEBOOK_QUERY_CHART_MARK_GROUPING[mark].grouping === "temporal") {
+    return NOTEBOOK_TEMPORAL_QUERY_CHART_SORT;
+  }
+  return sort ?? NOTEBOOK_QUERY_CHART_DEFAULT_SORT;
+}
+
+export function resolveNotebookChartSize(chart: {
+  size?: NotebookQueryChartSize;
+}): NotebookQueryChartSize {
+  return chart.size ?? NOTEBOOK_QUERY_CHART_DEFAULT_SIZE;
+}
+
 export const NotebookQuerySectionSchema = z
   .object({
     ...sectionIdentityFields,
@@ -418,10 +583,32 @@ export const NotebookQuerySectionSchema = z
       })
       .strict()
       .optional(),
+    chart: NotebookQueryChartSchema.optional(),
     title: sectionTitleSchema,
     description: sectionDescriptionSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (section) =>
+      !section.chart || isNotebookChartMarkValidForGrouping(section.chart.mark, section.groupBy),
+    { message: "chart.mark cannot draw this groupBy", path: ["chart", "mark"] }
+  )
+  // `sort` stays OPTIONAL — absent means the author did not choose and the
+  // resolver answers — but a sort that IS present must be one the mark can
+  // act on. Refusing at the boundary is the only place this can be caught:
+  // once stored, a temporal section carrying `value-desc` renders identically
+  // to one carrying `source`, so no reader and no test of the drawing can
+  // ever tell that the document is asserting something untrue.
+  .refine(
+    (section) =>
+      !section.chart ||
+      section.chart.sort === undefined ||
+      isNotebookChartSortValidForMark(section.chart.mark, section.chart.sort),
+    {
+      message: `chart.sort must be '${NOTEBOOK_TEMPORAL_QUERY_CHART_SORT}' for a temporal mark`,
+      path: ["chart", "sort"],
+    }
+  );
 
 /**
  * The kernel tier rollup.
@@ -763,6 +950,7 @@ export type NotebookNarrativeSection = z.infer<typeof NotebookNarrativeSectionSc
 export type NotebookTableSection = z.infer<typeof NotebookTableSectionSchema>;
 export type NotebookTiersSection = z.infer<typeof NotebookTiersSectionSchema>;
 export type NotebookQuerySection = z.infer<typeof NotebookQuerySectionSchema>;
+export type NotebookQueryChart = z.infer<typeof NotebookQueryChartSchema>;
 export type NotebookTextSection = z.infer<typeof NotebookTextSectionSchema>;
 export type NotebookCustomHtmlSection = z.infer<typeof NotebookCustomHtmlSectionSchema>;
 export type NotebookTimeseriesSection = z.infer<typeof NotebookTimeseriesSectionSchema>;

@@ -16,8 +16,12 @@ import type {
   NotebookMetricFilterDefinition,
 } from "@/services/notebooks/notebook-metric-registry.types";
 import {
+  isNotebookChartMarkValidForGrouping,
+  NOTEBOOK_QUERY_CHART_MARKS,
   NOTEBOOK_SECTION_DESCRIPTION_MAX,
   NOTEBOOK_SECTION_TITLE_MAX,
+  type NotebookQueryChart,
+  type NotebookQueryChartMark,
   type NotebookQueryDimension,
   type NotebookQuerySection,
   type NotebookQueryWindow,
@@ -45,6 +49,53 @@ const DIMENSION_LABELS: Partial<Record<NotebookQueryDimension, string>> = {
 const WINDOW_LABELS: Partial<Record<NotebookQueryWindow, string>> = {
   all: "All time",
 };
+
+const MARK_LABELS: Readonly<Record<NotebookQueryChartMark, string>> = {
+  bar: "Bar chart",
+  hbar: "Horizontal bar chart",
+  donut: "Donut chart",
+  line: "Line chart",
+};
+
+/**
+ * Whether this mark can be OFFERED for this metric at this grouping.
+ *
+ * Two rules, from two places, and both are needed. The grouping law is the
+ * indexer's — a line asserts a trend between neighbours, which is true of
+ * dates and false of programs, and the boundary schema refuses to store the
+ * combination — so offering it would only produce a save that fails. The value
+ * kind is the catalogue's: a percentage is already a share of something else,
+ * and arcs summing shares produce a denominator that exists nowhere.
+ */
+function isChartMarkOfferable(
+  mark: NotebookQueryChartMark,
+  groupBy: NotebookQueryDimension,
+  metric: NotebookMetricDefinition | undefined
+): boolean {
+  if (!isNotebookChartMarkValidForGrouping(mark, groupBy)) return false;
+  return !(mark === "donut" && metric?.valueKind === "percent");
+}
+
+/**
+ * The chart to carry forward, or none.
+ *
+ * SHARED BY BOTH CONTROLS THAT CAN STRAND ONE. `chooseGrouping` is the obvious
+ * caller; `chooseMetric` is the one that gets missed, because it RESETS the
+ * grouping to the new metric's first dimension — so a donut that was valid a
+ * moment ago can be stranded by a control that never mentions charts, and the
+ * page would then be unsavable for a reason the author cannot see.
+ *
+ * Pruning happens on an author's ACTION, never on render: a stored chart the
+ * current grouping cannot draw stays visible and stays theirs.
+ */
+function pruneChart(
+  chart: NotebookQueryChart | undefined,
+  groupBy: NotebookQueryDimension,
+  metric: NotebookMetricDefinition | undefined
+): NotebookQueryChart | undefined {
+  if (!chart) return undefined;
+  return isChartMarkOfferable(chart.mark, groupBy, metric) ? chart : undefined;
+}
 
 /** The filters this metric offers for the chosen grouping. */
 function offerableFilters(
@@ -90,14 +141,17 @@ export function QueryFields({
 
   const chooseMetric = (metricId: string) => {
     const next = catalog.items.find((item) => item.id === metricId);
+    const groupBy = next?.dimensions[0] ?? "none";
     // Grouping, window and filters all belonged to the previous metric. Carried
-    // across they would store a question this metric cannot be asked.
+    // across they would store a question this metric cannot be asked — and the
+    // chart follows the grouping this reset just changed underneath it.
     onFieldChange({
       ...section,
       metricId,
-      groupBy: next?.dimensions[0] ?? "none",
+      groupBy,
       window: (next?.windows.default as NotebookQueryWindow) ?? "90d",
       filters: undefined,
+      chart: pruneChart(section.chart, groupBy, next),
     });
   };
 
@@ -114,8 +168,30 @@ export function QueryFields({
       ...section,
       groupBy,
       filters: filters && Object.keys(filters).length > 0 ? filters : undefined,
+      chart: pruneChart(section.chart, groupBy, metric),
     });
   };
+
+  const choosePresentation = (value: string) => {
+    if (value === "table") {
+      onFieldChange({ ...section, chart: undefined });
+      return;
+    }
+    // Sort and size are the author's, not the mark's: re-picking a shape must
+    // not quietly discard how they asked it to be ordered or sized.
+    onFieldChange({
+      ...section,
+      chart: { ...section.chart, mark: value as NotebookQueryChartMark },
+    });
+  };
+
+  const offerableMarks = NOTEBOOK_QUERY_CHART_MARKS.filter((mark) =>
+    isChartMarkOfferable(mark, section.groupBy, metric)
+  );
+  const storedMark = section.chart?.mark;
+  // Shown rather than dropped, exactly as an unknown metric is: a stored
+  // choice the current grouping cannot draw is the author's to change.
+  const strandedMark = storedMark && !offerableMarks.includes(storedMark) ? storedMark : undefined;
 
   const toggleValue = (id: "programIds" | "tier" | "category", value: string) => {
     const selected = section.filters?.[id] ?? [];
@@ -277,6 +353,31 @@ export function QueryFields({
             );
           })
         : null}
+
+      <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-query-presentation`}>
+        <span className="font-medium text-foreground">Presentation</span>
+        <Select value={storedMark ?? "table"} onValueChange={choosePresentation}>
+          <SelectTrigger id={`${fieldId}-query-presentation`} aria-label="Presentation">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="table">Table</SelectItem>
+            {strandedMark ? (
+              <SelectItem value={strandedMark}>
+                {MARK_LABELS[strandedMark] ?? strandedMark} (not valid for this grouping)
+              </SelectItem>
+            ) : null}
+            {offerableMarks.map((mark) => (
+              <SelectItem key={mark} value={mark}>
+                {MARK_LABELS[mark]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground">
+          A chart the figures cannot honestly carry falls back to the table.
+        </span>
+      </label>
 
       <label className="flex flex-col gap-1 text-sm" htmlFor={`${fieldId}-query-title`}>
         <span className="font-medium text-foreground">Heading</span>

@@ -5,7 +5,11 @@ import type {
 } from "@/services/notebook-overview.service";
 import { NOTEBOOK_ABSENT_VALUE } from "@/services/notebooks/notebook-metrics.types";
 import type { NotebookPageData } from "@/services/notebooks/notebook-page-data.types";
-import { querySectionKey, seriesKey } from "@/services/notebooks/notebook-page-data.types";
+import {
+  queryChartKey,
+  querySectionKey,
+  seriesKey,
+} from "@/services/notebooks/notebook-page-data.types";
 import type {
   NotebookBarsSection,
   NotebookComposedSpec,
@@ -34,6 +38,7 @@ import {
   sectionAnchorId,
 } from "./NotebookEditorial";
 import { NotebookKernelTable } from "./NotebookKernelTable";
+import { NotebookQueryChart } from "./NotebookQueryChart";
 import { NotebookQueryTable } from "./NotebookQueryTable";
 import { NotebookTierTable } from "./NotebookTierTable";
 import { NotebookTimeSeries } from "./NotebookTimeSeries";
@@ -262,6 +267,7 @@ function QuerySection({
 }) {
   const result = data?.queries?.[querySectionKey(section)];
   if (!result) return <SectionUnavailable title={section.title} />;
+  const svg = section.chart ? data?.queryCharts?.[queryChartKey(section)] : undefined;
 
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-5 md:p-6">
@@ -271,7 +277,11 @@ function QuerySection({
           <p className="text-sm text-muted-foreground">{section.description}</p>
         ) : null}
       </div>
-      <NotebookQueryTable result={result} />
+      {svg ? (
+        <NotebookQueryChart svg={svg} section={section} result={result} />
+      ) : (
+        <NotebookQueryTable result={result} />
+      )}
     </section>
   );
 }
