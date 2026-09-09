@@ -46,6 +46,18 @@ export interface NotebookPageData {
    * section having asked.
    */
   queries?: Record<string, NotebookMetricQueryResult | null>;
+  /**
+   * Compiled chart SVG by chart key, for the query sections that asked to be
+   * drawn.
+   *
+   * Absent when no section on the page asked for a picture, so a page of
+   * tables carries no chart field at all. Present-with-null means a section
+   * asked and the answer is "render the table instead" — an empty result, a
+   * result past the row cap, a mark that cannot draw these figures, or a
+   * render that failed. Every one of those is a complete answer, which is why
+   * the renderer has no other failure vocabulary.
+   */
+  queryCharts?: Record<string, string | null>;
 }
 
 /**
@@ -72,6 +84,32 @@ export function querySectionKey(section: {
       return accumulator;
     }, {});
   return `${section.metricId}|${section.groupBy}|${section.window}|${JSON.stringify(canonical)}`;
+}
+
+/**
+ * Lookup key for one composed query's PICTURE.
+ *
+ * `querySectionKey` deliberately ignores presentation, because two sections
+ * asking the same question are one fetch. Two sections asking the same
+ * question and drawing it differently are NOT one picture, so the mark and the
+ * two presentation hints are appended: without them a bar and a donut over the
+ * same figures would collide on one key and the second section would render
+ * the first section's chart.
+ *
+ * `chart` is optional in the signature so that a caller can hand over the
+ * section it already has — TypeScript narrows `section.chart`, not `section` —
+ * and both the loader and the renderer call this only for a section that has
+ * one.
+ */
+export function queryChartKey(section: {
+  metricId: string;
+  groupBy: string;
+  window: string;
+  filters?: Record<string, unknown>;
+  chart?: { mark: string; sort?: string; size?: string };
+}): string {
+  const chart = section.chart;
+  return `${querySectionKey(section)}#${chart?.mark ?? ""}|${chart?.sort ?? ""}|${chart?.size ?? ""}`;
 }
 
 /** Lookup key for one indicator at one window. */

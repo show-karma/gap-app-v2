@@ -188,10 +188,101 @@ const FULL_LENGTH_GENERATED_PAGE = {
   })),
 };
 
+/**
+ * A charted query over a CATEGORICAL grouping, with both presentation keys set.
+ *
+ * Quoted from the accept matrix in
+ * `gap-indexer/test/unit/v2/api/controllers/notebook-config/dto/notebook-config.schemas.test.ts`.
+ *
+ * `chart` is the newest optional field on a query section, which makes it the
+ * next `id`: the indexer accepts the write, stores it, serves it, and a build
+ * whose `NotebookQuerySectionSchema` has not grown the key refuses the whole
+ * document on read because every section object is `.strict()`. The fixture
+ * carries `sort` and `size` as well as `mark`, because an optional key that no
+ * fixture ever sets is an optional key nothing proves this side can read.
+ */
+const CHARTED_QUERY_CATEGORICAL = {
+  version: 1,
+  sections: [
+    {
+      id: "disbursed-by-program",
+      type: "query",
+      metricId: "funding.disbursed",
+      groupBy: "program",
+      window: "90d",
+      filters: { programIds: ["1013"], aggregation: "sum" },
+      chart: { mark: "bar", sort: "value-desc", size: "md" },
+      title: "Disbursed by program",
+    },
+  ],
+} as const;
+
+/**
+ * A charted query over the TEMPORAL grouping, with neither presentation key.
+ *
+ * Quoted from the same accept matrix. It is a separate fixture rather than a
+ * second section on the one above because it exercises the other half of the
+ * mark/grouping law: `line` is the only mark whose grouping is `temporal`, and
+ * `date` is the only dimension it may draw, so a `.refine()` that drifted on
+ * either side rejects exactly this document and nothing else.
+ *
+ * `sort` and `size` are absent on purpose. They are `.optional()` and never
+ * `.default()` on both sides — a default would be written into the JSON Schema
+ * the indexer serves, and Ajv in strict mode refuses a `default` inside a
+ * response schema at `app.ready()`. So the stored document really does arrive
+ * without them, and the resolvers supply the values at render time.
+ */
+const CHARTED_QUERY_TEMPORAL = {
+  version: 1,
+  sections: [
+    {
+      id: "disbursed-over-time",
+      type: "query",
+      metricId: "funding.disbursed",
+      groupBy: "date",
+      window: "12m",
+      chart: { mark: "line" },
+      title: "Disbursed over time",
+    },
+  ],
+} as const;
+
+/**
+ * A charted query over the TEMPORAL grouping with the sort STATED, not
+ * absent.
+ *
+ * Quoted from the "a line over a date grouping" case in
+ * `gap-indexer/test/unit/v2/api/controllers/notebook-config/dto/notebook-config.schemas.test.ts`.
+ * The indexer just grew a second `.refine()` that rejects any stored `sort`
+ * a temporal mark cannot honour — `source` is the only value it accepts, and
+ * this is the fixture proving the accepted value round-trips rather than
+ * only the absent case above.
+ */
+const CHARTED_QUERY_TEMPORAL_WITH_SORT = {
+  version: 1,
+  sections: [
+    {
+      id: "readings-over-time",
+      type: "query",
+      metricId: "indicator.d1e5e000-0000-4000-8000-000000000001",
+      groupBy: "date",
+      window: "90d",
+      chart: { mark: "line", sort: "source" },
+      title: "Readings over time",
+    },
+  ],
+} as const;
+
 const SPEC_CORPUS = [
   ["the indexer's sample generator output", GENERATOR_SAMPLE_SPEC],
   ["one section of every type, each with an id", EVERY_SECTION_TYPE_WITH_AN_ID],
   ["a full-length generated page", FULL_LENGTH_GENERATED_PAGE],
+  ["a charted query over a categorical grouping", CHARTED_QUERY_CATEGORICAL],
+  ["a charted query over the temporal grouping", CHARTED_QUERY_TEMPORAL],
+  [
+    "a charted query over the temporal grouping with the sort stated",
+    CHARTED_QUERY_TEMPORAL_WITH_SORT,
+  ],
 ] as const;
 
 describe("specs the indexer accepts", () => {
