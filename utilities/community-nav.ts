@@ -31,6 +31,7 @@ export const COMMUNITY_NAV_LABELS = {
   "milestone-updates": "Milestone updates",
   impact: "Impact",
   reports: "Reports",
+  notebooks: "Notebooks",
   financials: COMMITMENTS_AND_DISBURSEMENTS,
 } as const;
 
