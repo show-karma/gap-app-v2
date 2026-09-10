@@ -318,6 +318,40 @@ export async function exportSimocracyFeedbackCsv(
   }
 }
 
+export interface SimocracyCommentRow {
+  commentUri: string;
+  authorDid: string;
+  authorName: string | null;
+  text: string;
+  referenceNumber: string;
+  proposalUri: string;
+  parentCommentUri: string | null;
+  createdAt: string | null;
+}
+
+export interface SimocracyCommentsResult {
+  comments: SimocracyCommentRow[];
+  // The viewer lacks reviewer/admin/staff access — the section stays hidden.
+  forbidden: boolean;
+}
+
+export async function fetchSimocracyComments(
+  referenceNumber: string
+): Promise<SimocracyCommentsResult> {
+  try {
+    const data = await api.get<{ comments: SimocracyCommentRow[] }>(
+      INDEXER.V2.FUNDING_APPLICATIONS.SIMOCRACY_COMMENTS(referenceNumber)
+    );
+    return { comments: data?.comments ?? [], forbidden: false };
+  } catch (error) {
+    // Comments are reviewer/admin/staff-only; a denial is data, not an error.
+    if (error instanceof HttpError && (error.status === 403 || error.status === 401)) {
+      return { comments: [], forbidden: true };
+    }
+    throw new Error(httpErrorMessage(error));
+  }
+}
+
 export async function submitSimocracyFeedback(
   referenceNumber: string,
   input: { runId: string; simUri: string; verdict: SimocracyFeedbackVerdict; comment?: string }

@@ -201,6 +201,8 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/integrations/simocracy`,
       SIMOCRACY_FEEDBACK: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/integrations/simocracy/feedback`,
+      SIMOCRACY_COMMENTS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/integrations/simocracy/comments`,
     },
     // Admin milestone queue detail: lifecycle timeline + follow-up action items.
     MILESTONE_ACTION_ITEMS: {

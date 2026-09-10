@@ -14,6 +14,7 @@ vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useSimocracySimLinks: () => ({ data: [] }),
   useSimocracyFeedback: () => ({ data: [] }),
   useSubmitSimocracyFeedback: () => ({ mutate: vi.fn(), isPending: false }),
+  useSimocracyComments: () => ({ data: { comments: [], forbidden: false } }),
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
