@@ -201,6 +201,8 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/integrations/simocracy`,
       SIMOCRACY_FEEDBACK: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/integrations/simocracy/feedback`,
+      SIMOCRACY_COMMENTS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/integrations/simocracy/comments`,
     },
     AUTH: {
       PERMISSIONS: (params?: {

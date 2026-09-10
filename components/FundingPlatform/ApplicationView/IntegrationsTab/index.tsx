@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isIntegrationEnabled } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { CouncilEvaluations } from "./CouncilEvaluations";
+import { SimComments } from "./SimComments";
 
 export interface IntegrationsTabProps {
   referenceNumber: string;
@@ -141,6 +142,7 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
             : undefined
         }
       />
+      <SimComments referenceNumber={referenceNumber} />
     </div>
   );
 };

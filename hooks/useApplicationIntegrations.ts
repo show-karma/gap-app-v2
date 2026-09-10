@@ -7,6 +7,7 @@ import {
   deleteSimocracySimLink,
   exportSimocracyFeedbackCsv,
   fetchApplicationIntegrations,
+  fetchSimocracyComments,
   fetchSimocracyCouncil,
   fetchSimocracyEvaluations,
   fetchSimocracyFeedback,
@@ -227,6 +228,15 @@ export function useDeleteSimocracyCredential(programId: string) {
       toast.success("Simocracy credential removed");
     },
     onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function useSimocracyComments(referenceNumber: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: QUERY_KEYS.simocracyComments(referenceNumber),
+    queryFn: () => fetchSimocracyComments(referenceNumber),
+    enabled: (options?.enabled ?? true) && !!referenceNumber,
+    staleTime: INTEGRATIONS_STALE_TIME_MS,
   });
 }
 
