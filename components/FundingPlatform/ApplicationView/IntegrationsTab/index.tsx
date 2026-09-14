@@ -2,13 +2,12 @@
 
 import { ArrowPathIcon, PuzzlePieceIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
-import type { FC } from "react";
+import { type FC, useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
 import {
   useApplicationIntegrations,
   useSimocracyEvaluations,
   useSimocracyProgramSummary,
-  useSimocracySimLinks,
 } from "@/hooks/useApplicationIntegrations";
 import { useAuth } from "@/hooks/useAuth";
 import { isIntegrationEnabled } from "@/services/fundingApplicationIntegrations.service";
@@ -74,9 +73,20 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
   const { data, isLoading, isError, error, refetch } = useSimocracyEvaluations(referenceNumber);
   const { data: summary } = useSimocracyProgramSummary(data?.programId ?? "");
   const { address } = useAuth();
-  const { data: simLinks } = useSimocracySimLinks(data?.programId ?? "", {
-    enabled: !!feedbackAdmin && !!data?.programId,
-  });
+
+  // Stable across renders so CouncilEvaluations' memoized rows aren't defeated.
+  // Only built in the admin/staff/reviewer manage view (feedbackAdmin), where
+  // the viewer may leave feedback on any sim.
+  const runId = data?.runId ?? null;
+  const feedbackConfig = useMemo(() => {
+    if (!feedbackAdmin || !runId) return undefined;
+    return {
+      referenceNumber,
+      runId,
+      viewerAddresses: new Set(address ? [address.toLowerCase()] : []),
+      canGiveFeedback: () => true,
+    };
+  }, [feedbackAdmin, runId, referenceNumber, address]);
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -123,24 +133,7 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
       <CouncilEvaluations
         evaluations={data.evaluations}
         linkedSims={summary?.sims}
-        feedback={
-          feedbackAdmin && data.runId
-            ? {
-                referenceNumber,
-                runId: data.runId,
-                viewerAddresses: new Set(address ? [address.toLowerCase()] : []),
-                canGiveFeedback: (simUri: string) => {
-                  if (feedbackAdmin) return true;
-                  const link = (simLinks ?? []).find((l) => l.simUri === simUri);
-                  return (
-                    !!link &&
-                    !!address &&
-                    link.publicAddress.toLowerCase() === address.toLowerCase()
-                  );
-                },
-              }
-            : undefined
-        }
+        feedback={feedbackConfig}
       />
       <SimComments referenceNumber={referenceNumber} />
     </div>

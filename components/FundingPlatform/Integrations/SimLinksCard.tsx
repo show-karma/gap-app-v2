@@ -9,7 +9,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
-import { type FC, memo, useMemo, useState } from "react";
+import { type FC, memo, useCallback, useMemo, useState } from "react";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
@@ -112,11 +112,11 @@ const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
   const [, copy] = useCopyToClipboard();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [personaOpen, setPersonaOpen] = useState(false);
-  const { data: persona, isLoading: isPersonaLoading } = useSimocracySimPersona(
-    programId,
-    link.simUri,
-    { enabled: personaOpen }
-  );
+  const {
+    data: persona,
+    isLoading: isPersonaLoading,
+    isError: isPersonaError,
+  } = useSimocracySimPersona(programId, link.simUri, { enabled: personaOpen });
   const name = sim?.simName ?? null;
 
   return (
@@ -214,6 +214,10 @@ const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
         <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
           {isPersonaLoading ? (
             <p className="text-xs text-gray-400 dark:text-gray-500">Loading…</p>
+          ) : isPersonaError ? (
+            <p className="text-xs text-red-500 dark:text-red-400">
+              Couldn&apos;t load the persona from Simocracy.
+            </p>
           ) : (
             <>
               <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900/40">
@@ -259,6 +263,14 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
     programConfig?.applicationConfig?.integrations?.simocracy?.enabled === false;
   const { addSimLinkAsync, isAdding, deleteSimLinkAsync, isDeleting, deletingSimUri } =
     useSimocracySimLinkMutations(programId);
+  // Stable reference so SimLinkRow's React.memo isn't defeated by a new closure
+  // on every render of the list.
+  const handleDeleteSimLink = useCallback(
+    async (simUri: string) => {
+      await deleteSimLinkAsync(simUri);
+    },
+    [deleteSimLinkAsync]
+  );
 
   const [selectedSim, setSelectedSim] = useState<string>("");
   const [customSimUri, setCustomSimUri] = useState("");
@@ -487,9 +499,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                   link.publicAddress.toLowerCase() === normalizedViewer)
               }
               isDeleting={isDeleting && deletingSimUri === link.simUri}
-              onDelete={async (simUri) => {
-                await deleteSimLinkAsync(simUri);
-              }}
+              onDelete={handleDeleteSimLink}
             />
           ))}
         </ul>
