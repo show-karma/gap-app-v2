@@ -86,11 +86,13 @@ describe("instrumentation-client", () => {
     expect(mockAddIntegration).not.toHaveBeenCalled();
   });
 
-  it("exports onRequestError and onRouterTransitionStart", async () => {
+  it("exports onRouterTransitionStart but leaves onRequestError to instrumentation.ts", async () => {
     const exports = await import("@/instrumentation-client");
 
-    expect(exports.onRequestError).toBe(mockCaptureRequestError);
     expect(exports.onRouterTransitionStart).toBe(mockCaptureRouterTransitionStart);
+    // Next only reads onRequestError from the server instrumentation file; an
+    // export here is dead code that hid every server-render 500 from Sentry.
+    expect(exports).not.toHaveProperty("onRequestError");
   });
 
   describe("beforeSend — chunk load error gating (GAP-FRONTEND-20T)", () => {

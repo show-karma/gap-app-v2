@@ -122,6 +122,68 @@ describe("SidebarProfileCardStatic", () => {
       expect(fallback).toBeInTheDocument();
     });
 
+    it("skips link entries that have a type but no url", () => {
+      // The shape older on-chain payloads still carry (e.g. tally, gitcoin).
+      const projectPartialLinks: Project = {
+        ...mockProject,
+        details: {
+          ...mockProject.details,
+          links: [
+            { type: "website" },
+            { type: "twitter", url: "" },
+            { type: "github", url: "github.com/test" },
+          ] as NonNullable<Project["details"]>["links"],
+        },
+      };
+
+      expect(() =>
+        render(<SidebarProfileCardStatic project={projectPartialLinks} />)
+      ).not.toThrow();
+
+      const socialLinks = screen.getAllByTestId("sidebar-social-link");
+      expect(socialLinks).toHaveLength(1);
+      expect(socialLinks[0]).toHaveAttribute("href", "https://github.com/test");
+    });
+
+    it("ignores unsupported types before touching their url, and blank-string urls", () => {
+      // On main an unsupported type was dropped before its url was read; a
+      // non-string url on such an entry must stay harmless. A whitespace-only
+      // url is not a link either.
+      const projectOddLinks: Project = {
+        ...mockProject,
+        details: {
+          ...mockProject.details,
+          links: [
+            { type: "unknown", url: 123 },
+            { type: "website", url: "   " },
+            { type: "twitter", url: "https://twitter.com/test" },
+          ] as unknown as NonNullable<Project["details"]>["links"],
+        },
+      };
+
+      expect(() => render(<SidebarProfileCardStatic project={projectOddLinks} />)).not.toThrow();
+
+      const socialLinks = screen.getAllByTestId("sidebar-social-link");
+      expect(socialLinks).toHaveLength(1);
+      expect(socialLinks[0]).toHaveAttribute("href", "https://twitter.com/test");
+    });
+
+    it("should not render social links when every link is url-less", () => {
+      const projectBareLinks: Project = {
+        ...mockProject,
+        details: {
+          ...mockProject.details,
+          links: [{ type: "website" }, { type: "twitter" }, { type: "github" }] as NonNullable<
+            Project["details"]
+          >["links"],
+        },
+      };
+
+      render(<SidebarProfileCardStatic project={projectBareLinks} />);
+
+      expect(screen.queryByTestId("sidebar-social-link")).not.toBeInTheDocument();
+    });
+
     it("should not render social links when no links provided", () => {
       const projectNoLinks: Project = {
         ...mockProject,
