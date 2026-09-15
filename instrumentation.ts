@@ -13,5 +13,6 @@ export async function register() {
 
 // Next calls this hook from the server instrumentation file only. It was
 // previously exported from instrumentation-client.ts, where Next never reads
-// it, so server-render errors (every 500 on an RSC page) never reached Sentry.
+// it, so the errors Next reports through this hook (a server render that ends
+// in a 500, with no client boundary left to report it) never reached Sentry.
 export const onRequestError = Sentry.captureRequestError;
