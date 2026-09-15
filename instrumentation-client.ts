@@ -135,5 +135,4 @@ if (typeof window !== "undefined") {
     });
 }
 
-export const onRequestError = Sentry.captureRequestError;
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
