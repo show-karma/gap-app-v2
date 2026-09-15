@@ -13,7 +13,7 @@ interface SidebarProfileCardStaticProps {
  * Mirrors the logic in useProjectSocials but without React.useMemo.
  */
 function getProjectSocials(
-  links?: Array<{ url: string; type: string }>
+  links?: Array<{ url?: string | null; type?: string | null }>
 ): Array<{ name: string; url: string; iconPath: string }> {
   if (!links) return [];
 
@@ -49,13 +49,17 @@ function getProjectSocials(
     },
   };
 
-  return links
-    .filter((link) => link.type && typeMap[link.type])
-    .map((link) => {
-      const config = typeMap[link.type];
-      const url = link.url.startsWith("http") ? link.url : `https://${link.url}`;
-      return { name: config.name, url, iconPath: config.iconPath };
-    });
+  // Older on-chain payloads carry link entries with a type but no url
+  // (`{ type: "website" }`), and newer ones carry `url: ""` for every unused
+  // type. Neither is a link; skipping them mirrors useProjectSocials, which
+  // only renders a type whose url is truthy.
+  return links.flatMap((link) => {
+    const config = link.type ? typeMap[link.type] : undefined;
+    const rawUrl = link.url?.trim();
+    if (!config || !rawUrl) return [];
+    const url = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
+    return [{ name: config.name, url, iconPath: config.iconPath }];
+  });
 }
 
 /**

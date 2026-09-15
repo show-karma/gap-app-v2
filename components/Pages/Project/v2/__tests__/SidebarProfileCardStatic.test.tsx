@@ -122,6 +122,45 @@ describe("SidebarProfileCardStatic", () => {
       expect(fallback).toBeInTheDocument();
     });
 
+    it("skips link entries that have a type but no url", () => {
+      // The shape older on-chain payloads still carry (e.g. tally, gitcoin).
+      const projectPartialLinks: Project = {
+        ...mockProject,
+        details: {
+          ...mockProject.details,
+          links: [
+            { type: "website" },
+            { type: "twitter", url: "" },
+            { type: "github", url: "github.com/test" },
+          ] as NonNullable<Project["details"]>["links"],
+        },
+      };
+
+      expect(() =>
+        render(<SidebarProfileCardStatic project={projectPartialLinks} />)
+      ).not.toThrow();
+
+      const socialLinks = screen.getAllByTestId("sidebar-social-link");
+      expect(socialLinks).toHaveLength(1);
+      expect(socialLinks[0]).toHaveAttribute("href", "https://github.com/test");
+    });
+
+    it("should not render social links when every link is url-less", () => {
+      const projectBareLinks: Project = {
+        ...mockProject,
+        details: {
+          ...mockProject.details,
+          links: [{ type: "website" }, { type: "twitter" }, { type: "github" }] as NonNullable<
+            Project["details"]
+          >["links"],
+        },
+      };
+
+      render(<SidebarProfileCardStatic project={projectBareLinks} />);
+
+      expect(screen.queryByTestId("sidebar-social-link")).not.toBeInTheDocument();
+    });
+
     it("should not render social links when no links provided", () => {
       const projectNoLinks: Project = {
         ...mockProject,
