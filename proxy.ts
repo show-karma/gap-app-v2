@@ -69,8 +69,36 @@ function tenantRewrite(
   return NextResponse.rewrite(url, init);
 }
 
+/**
+ * Whether a POST to a page can be nothing but a 405.
+ *
+ * A page answers POST only for a Server Action: a fetch action carries the
+ * `next-action` header, and a no-JS form submission is multipart. Anything else
+ * (a url-encoded form, an empty or text body) ends in a 405 from Next anyway —
+ * but only after it renders the page. For crawlers that match Next's
+ * html-limited bot list (`AppEngine-Google`, `Slackbot`…) that render resumes
+ * the prerendered PPR shell, built for streaming metadata, with blocking
+ * metadata, and React throws "Expected the resume to render <div> in this slot
+ * but instead it rendered <__next_metadata_boundary__>" (Sentry
+ * GAP-FRONTEND-27P). Answering here returns the same 405 without the render.
+ */
+function isNonActionPagePost(request: NextRequest, path: string): boolean {
+  if (request.method !== "POST" || isTenantExemptPath(path)) {
+    return false;
+  }
+  if (request.headers.has("next-action")) {
+    return false;
+  }
+  const contentType = request.headers.get("content-type") ?? "";
+  return !contentType.toLowerCase().startsWith("multipart/form-data");
+}
+
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  if (isNonActionPagePost(request, path)) {
+    return new NextResponse(null, { status: 405, headers: { Allow: "GET, HEAD" } });
+  }
 
   // --- The tenant prefix is internal only ---
   // Every page request is rewritten to /t/<tenant>/... below. A request that
