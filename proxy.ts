@@ -70,34 +70,39 @@ function tenantRewrite(
 }
 
 /**
- * Whether a POST to a page can be nothing but a 405.
+ * Whether a request is a POST to a page, which nothing here serves.
  *
- * A page answers POST only for a Server Action: a fetch action carries the
- * `next-action` header, and a no-JS form submission is multipart. Anything else
- * (a url-encoded form, an empty or text body) ends in a 405 from Next anyway —
- * but only after it renders the page. For crawlers that match Next's
- * html-limited bot list (`AppEngine-Google`, `Slackbot`…) that render resumes
- * the prerendered PPR shell, built for streaming metadata, with blocking
- * metadata, and React throws "Expected the resume to render <div> in this slot
- * but instead it rendered <__next_metadata_boundary__>" (Sentry
- * GAP-FRONTEND-27P). Answering here returns the same 405 without the render.
+ * App Router pages answer POST only for a Server Action, and no callable server
+ * function exists today (`__tests__/proxy-no-server-actions.test.ts` is the
+ * tripwire for all three ways one could appear). So every POST reaching a page
+ * is a crawler or a probe, and Next still renders the page before failing it:
+ *
+ * - A url-encoded POST (the exact `application/x-www-form-urlencoded`, which is
+ *   what makes Next treat it as a possible action) from a crawler on Next's
+ *   html-limited bot list — `AppEngine-Google`, `Slackbot`… — resumes the
+ *   prerendered PPR shell, built for streaming metadata, with blocking
+ *   metadata. React throws "Expected the resume to render <div> in this slot
+ *   but instead it rendered <__next_metadata_boundary__>" (Sentry
+ *   GAP-FRONTEND-27P, reproduced against production).
+ * - A multipart POST, or one carrying a `next-action` header, looks up an
+ *   action that does not exist and fails the request (Sentry
+ *   GAP-FRONTEND-27R).
+ *
+ * Answering 405 here skips the render. `isTenantExemptPath()` is a rewrite
+ * exemption list doing double duty as the method exemption: every route handler
+ * that takes a POST lives under `/api`, outside this middleware's matcher
+ * entirely. A route handler added anywhere else needs its path added there
+ * before it can receive a POST.
  */
-function isNonActionPagePost(request: NextRequest, path: string): boolean {
-  if (request.method !== "POST" || isTenantExemptPath(path)) {
-    return false;
-  }
-  if (request.headers.has("next-action")) {
-    return false;
-  }
-  const contentType = request.headers.get("content-type") ?? "";
-  return !contentType.toLowerCase().startsWith("multipart/form-data");
+function isPagePost(request: NextRequest, path: string): boolean {
+  return request.method === "POST" && !isTenantExemptPath(path);
 }
 
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  if (isNonActionPagePost(request, path)) {
-    return new NextResponse(null, { status: 405, headers: { Allow: "GET, HEAD" } });
+  if (isPagePost(request, path)) {
+    return new NextResponse(null, { status: 405, headers: { Allow: "GET, HEAD, OPTIONS" } });
   }
 
   // --- The tenant prefix is internal only ---

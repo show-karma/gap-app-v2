@@ -40,7 +40,7 @@ describe("middleware page POST guard", () => {
       );
 
       expect(response.status).toBe(405);
-      expect(response.headers.get("allow")).toBe("GET, HEAD");
+      expect(response.headers.get("allow")).toBe("GET, HEAD, OPTIONS");
       expect(response.headers.get("x-middleware-rewrite")).toBeNull();
     });
 
@@ -61,10 +61,8 @@ describe("middleware page POST guard", () => {
 
       expect(response.status).toBe(405);
     });
-  });
 
-  describe("lets through what a page can actually serve", () => {
-    it("passes a fetch Server Action", async () => {
+    it("rejects a POST carrying a next-action header (GAP-FRONTEND-27R)", async () => {
       const response = await proxy(
         createRequest(PAGE_PATH, {
           method: "POST",
@@ -73,11 +71,11 @@ describe("middleware page POST guard", () => {
         })
       );
 
-      expect(response.status).not.toBe(405);
-      expect(response.headers.get("x-middleware-rewrite")).not.toBeNull();
+      expect(response.status).toBe(405);
+      expect(response.headers.get("x-middleware-rewrite")).toBeNull();
     });
 
-    it("passes a no-JS multipart form submission", async () => {
+    it("rejects a multipart form POST (GAP-FRONTEND-27R)", async () => {
       const response = await proxy(
         createRequest(PAGE_PATH, {
           method: "POST",
@@ -86,10 +84,12 @@ describe("middleware page POST guard", () => {
         })
       );
 
-      expect(response.status).not.toBe(405);
-      expect(response.headers.get("x-middleware-rewrite")).not.toBeNull();
+      expect(response.status).toBe(405);
+      expect(response.headers.get("x-middleware-rewrite")).toBeNull();
     });
+  });
 
+  describe("lets through what is not a page POST", () => {
     it("passes a POST to a route handler path", async () => {
       const response = await proxy(
         createRequest("/.well-known/oauth-protected-resource", {
