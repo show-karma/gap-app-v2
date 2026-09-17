@@ -70,23 +70,29 @@ function tenantRewrite(
 }
 
 /**
- * Whether a request is a POST to a page, which this app never serves.
+ * Whether a request is a POST to a page, which nothing here serves.
  *
- * App Router pages answer POST only for a Server Action, and this app defines
- * none (`__tests__/proxy-no-server-actions.test.ts` holds that line). So every
- * POST reaching a page is a crawler or a probe, and Next still renders the page
- * before failing it:
+ * App Router pages answer POST only for a Server Action, and no callable server
+ * function exists today (`__tests__/proxy-no-server-actions.test.ts` is the
+ * tripwire for all three ways one could appear). So every POST reaching a page
+ * is a crawler or a probe, and Next still renders the page before failing it:
  *
- * - A url-encoded or bodiless POST from a crawler on Next's html-limited bot
- *   list (`AppEngine-Google`, `Slackbot`…) resumes the streaming-metadata PPR
- *   shell with blocking metadata, and React throws "Expected the resume to
- *   render <div> in this slot but instead it rendered
- *   <__next_metadata_boundary__>" (Sentry GAP-FRONTEND-27P).
+ * - A url-encoded POST (the exact `application/x-www-form-urlencoded`, which is
+ *   what makes Next treat it as a possible action) from a crawler on Next's
+ *   html-limited bot list — `AppEngine-Google`, `Slackbot`… — resumes the
+ *   prerendered PPR shell, built for streaming metadata, with blocking
+ *   metadata. React throws "Expected the resume to render <div> in this slot
+ *   but instead it rendered <__next_metadata_boundary__>" (Sentry
+ *   GAP-FRONTEND-27P, reproduced against production).
  * - A multipart POST, or one carrying a `next-action` header, looks up an
- *   action that does not exist and throws "Failed to find Server Action", a
- *   500 (Sentry GAP-FRONTEND-27R).
+ *   action that does not exist and fails the request (Sentry
+ *   GAP-FRONTEND-27R).
  *
- * Answering 405 here skips the render. Route handlers keep their own methods.
+ * Answering 405 here skips the render. `isTenantExemptPath()` is a rewrite
+ * exemption list doing double duty as the method exemption: every route handler
+ * that takes a POST lives under `/api`, outside this middleware's matcher
+ * entirely. A route handler added anywhere else needs its path added there
+ * before it can receive a POST.
  */
 function isPagePost(request: NextRequest, path: string): boolean {
   return request.method === "POST" && !isTenantExemptPath(path);
@@ -96,7 +102,7 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   if (isPagePost(request, path)) {
-    return new NextResponse(null, { status: 405, headers: { Allow: "GET, HEAD" } });
+    return new NextResponse(null, { status: 405, headers: { Allow: "GET, HEAD, OPTIONS" } });
   }
 
   // --- The tenant prefix is internal only ---

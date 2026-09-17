@@ -40,7 +40,7 @@ describe("middleware page POST guard", () => {
       );
 
       expect(response.status).toBe(405);
-      expect(response.headers.get("allow")).toBe("GET, HEAD");
+      expect(response.headers.get("allow")).toBe("GET, HEAD, OPTIONS");
       expect(response.headers.get("x-middleware-rewrite")).toBeNull();
     });
 
