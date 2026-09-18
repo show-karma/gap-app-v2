@@ -9,6 +9,18 @@ export interface ReportSchedule {
   ends: ScheduleEnds;
 }
 
+/**
+ * Who produced a report (and the config it hangs off).
+ *
+ * - `karma`: Karma's own scheduler ran the config's prompt through the agentic
+ *   generator. The output is house-styled and can be regenerated at will.
+ * - `external`: an admin's own agent (Claude, Cursor, ...) produced the HTML
+ *   and saved it through the MCP endpoint. Karma stores it verbatim, renders
+ *   it verbatim, and never regenerates it — the prompt on the config is kept
+ *   only as a record of how the report was made.
+ */
+export type ReportSource = "karma" | "external";
+
 export interface ReportConfig {
   id: string;
   communityId: string;
@@ -19,6 +31,8 @@ export interface ReportConfig {
   chartIndicatorIds: string[];
   schedule: ReportSchedule;
   isActive: boolean;
+  /** See {@link ReportSource}. Older API payloads omit it — read as `karma`. */
+  source: ReportSource;
   createdAt: string;
   updatedAt: string;
   createdBy: string;
@@ -103,6 +117,13 @@ export interface PortfolioReport {
   dataSnapshot: Record<string, unknown>;
   modelId: string;
   tokenUsage: TokenUsage | null;
+  /** See {@link ReportSource}. Older API payloads omit it — read as `karma`. */
+  source: ReportSource;
+  /**
+   * Free-form label of the agent that produced an `external` report (e.g.
+   * "claude-code"). `null`/absent for Karma-generated reports.
+   */
+  generatedBy?: string | null;
   generatedAt: string;
   generationError: string | null;
   publishedAt: string | null;
@@ -143,6 +164,18 @@ export interface UpdateReportConfigRequest {
 
 export interface GenerateReportRequest {
   configId: string;
+}
+
+/**
+ * Body for `POST /reports/external` — saves a report an admin's own agent
+ * produced. `content` is the full HTML document and is stored verbatim.
+ */
+export interface SaveExternalReportRequest {
+  configId: string;
+  runDate: string;
+  content: string;
+  title?: string | null;
+  generatedBy?: string | null;
 }
 
 // ── Data export ──────────────────────────────────────────────

@@ -7,6 +7,7 @@ import type {
   ReportExportDownload,
   ReportExportManifest,
   ReportSnapshotSource,
+  SaveExternalReportRequest,
   UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
@@ -132,6 +133,18 @@ export async function regenerateReport(
   const { data } = await apiClient.post(
     `/v2/communities/${communitySlug}/reports/${reportId}/regenerate`
   );
+  return data;
+}
+
+/**
+ * Save a report produced by an admin's own agent. The backend stores
+ * `content` verbatim and marks the report `source: "external"`.
+ */
+export async function saveExternalReport(
+  communitySlug: string,
+  body: SaveExternalReportRequest
+): Promise<PortfolioReport> {
+  const { data } = await apiClient.post(`/v2/communities/${communitySlug}/reports/external`, body);
   return data;
 }
 
