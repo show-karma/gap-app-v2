@@ -1,12 +1,19 @@
 import type { NextConfig } from "next";
+import { notebooksOrigin } from "./utilities/domains";
 import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
-const FRAME_SRC =
-  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com";
+// Notebook bundles are framed from their own origin (`utilities/domains.ts`,
+// notebooksOrigin()). Unset means no notebook is framed, so nothing is added.
+const FRAME_SRC = [
+  "frame-src 'self' https://auth.privy.io https://*.privy.io https://privy.karmahq.xyz https://privy.karmahq.org https://paragraph.com https://*.paragraph.com https://js.stripe.com https://crypto-js.stripe.com",
+  notebooksOrigin(),
+]
+  .filter(Boolean)
+  .join(" ");
 
 const securityHeaders = [
   {
