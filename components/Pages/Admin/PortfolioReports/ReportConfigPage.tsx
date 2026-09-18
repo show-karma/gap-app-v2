@@ -3,7 +3,7 @@
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type UseFormRegisterReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -21,6 +21,7 @@ import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdow
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   useCreateReportConfig,
@@ -42,7 +43,10 @@ import {
   RUN_DATE_REGEX,
   type SchedulePresetKey,
 } from "@/utilities/portfolio-reports/period";
+import { isExternalConfig } from "@/utilities/portfolio-reports/source";
+import { cn } from "@/utilities/tailwind";
 import { zodResolver } from "@/utilities/zodResolver";
+import { ReportSourceBadge } from "./ReportSourceBadge";
 
 interface Props {
   community: Community;
@@ -74,6 +78,8 @@ const PRESET_LIST: ReadonlyArray<{
 ];
 
 const INTERVAL_UNITS: ScheduleIntervalUnit[] = ["days", "weeks", "months"];
+
+const PROMPT_TEXTAREA_ID = "prompt";
 
 const isoDate = z
   .string()
@@ -149,6 +155,55 @@ function buildProgramOptions(grantPrograms: CommunityProgram[]): ProgramOption[]
     });
   }
   return options.sort((a, b) => a.label.localeCompare(b.label));
+}
+
+interface ReportPromptFieldProps {
+  registration: UseFormRegisterReturn<"prompt">;
+  error?: string;
+  /**
+   * External configs carry a prompt the admin's own agent wrote. Karma never
+   * runs it, so it is shown read-only as a record of how the report was made.
+   */
+  isExternal: boolean;
+}
+
+function ReportPromptField({ registration, error, isExternal }: ReportPromptFieldProps) {
+  return (
+    <div>
+      <label
+        htmlFor={PROMPT_TEXTAREA_ID}
+        className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+      >
+        Report Prompt
+      </label>
+      {isExternal ? (
+        <p className="mb-2 rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 dark:border-zinc-600 dark:bg-zinc-900/50 dark:text-zinc-300">
+          This prompt was saved from an external agent. Karma does not run it, it is kept as a
+          record of how the report was produced.
+        </p>
+      ) : (
+        <p className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          <strong>Tip:</strong> specify the time window in your prompt (e.g. &quot;summarize the
+          last 30 days&quot; or &quot;past quarter&quot;). If you don&apos;t, the agent defaults to
+          the last 30 days.
+        </p>
+      )}
+      <Textarea
+        id={PROMPT_TEXTAREA_ID}
+        rows={12}
+        placeholder={isExternal ? undefined : PROMPT_PLACEHOLDER}
+        readOnly={isExternal}
+        aria-readonly={isExternal || undefined}
+        className={cn(
+          "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100",
+          isExternal &&
+            "cursor-default bg-zinc-50 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+        )}
+        {...registration}
+      />
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+    </div>
+  );
 }
 
 export function ReportConfigPage({ community, grantPrograms }: Props) {
@@ -398,6 +453,9 @@ function ReportConfigPageLoaded({
 
   const isSaving = createMutation.isPending || updateMutation.isPending || isSubmitting;
   const isFormOpen = editingId !== null;
+  // An external config's prompt was written by the admin's own agent. Karma
+  // never runs it, so it is shown as a read-only record rather than a field.
+  const isEditingExternal = editingConfig !== null && isExternalConfig(editingConfig);
   const formTitle =
     editingId === "new"
       ? "New Report"
@@ -474,7 +532,10 @@ function ReportConfigPageLoaded({
               {configs.map((cfg: ReportConfig) => (
                 <tr key={cfg.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                   <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                    {cfg.name}
+                    <span className="inline-flex flex-wrap items-center gap-2">
+                      {cfg.name}
+                      <ReportSourceBadge source={cfg.source} />
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
                     {formatScheduleLabel(cfg.schedule)}
@@ -524,7 +585,10 @@ function ReportConfigPageLoaded({
           className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800"
         >
           <div className="flex items-start justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{formTitle}</h2>
+            <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              {formTitle}
+              <ReportSourceBadge source={editingConfig?.source} />
+            </h2>
             <Button
               variant="ghost"
               size="sm"
@@ -606,27 +670,11 @@ function ReportConfigPageLoaded({
           </div>
 
           {/* Prompt */}
-          <div>
-            <label
-              htmlFor="prompt"
-              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Report Prompt
-            </label>
-            <p className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-              <strong>Tip:</strong> specify the time window in your prompt (e.g. &quot;summarize the
-              last 30 days&quot; or &quot;past quarter&quot;). If you don&apos;t, the agent defaults
-              to the last 30 days.
-            </p>
-            <textarea
-              id="prompt"
-              rows={12}
-              placeholder={PROMPT_PLACEHOLDER}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-              {...register("prompt")}
-            />
-            {errors.prompt && <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>}
-          </div>
+          <ReportPromptField
+            registration={register("prompt")}
+            error={errors.prompt?.message}
+            isExternal={isEditingExternal}
+          />
 
           {/* Metrics */}
           <div>

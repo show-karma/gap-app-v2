@@ -6,8 +6,10 @@ import { Link } from "@/src/components/navigation/Link";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
+import { isExternalReport } from "@/utilities/portfolio-reports/source";
 import { BackToTop } from "./BackToTop";
 import { ExportDataMenu } from "./ExportDataMenu";
+import { ExternalReportFrame } from "./ExternalReportFrame";
 import { HtmlReportFrame } from "./HtmlReportFrame";
 import { ReadingProgress } from "./ReadingProgress";
 import { ReportChartsSection } from "./ReportChartsSection";
@@ -53,6 +55,10 @@ export function PortfolioReportDocumentView({
   canExportData = false,
 }: Props) {
   const runDateLabel = formatRunDate(runDate).label;
+  const frameTitle = `Portfolio report — ${runDateLabel}`;
+  // External reports render verbatim, full-bleed: no Karma card padding or
+  // background around them, so the page shows exactly what the agent produced.
+  const external = isExternalReport(report);
 
   return (
     <>
@@ -100,20 +106,26 @@ export function PortfolioReportDocumentView({
           </div>
         </div>
 
-        <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
-          <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+        {external ? (
+          <div className="report-print-area">
+            <ExternalReportFrame html={report.content} title={frameTitle} />
+          </div>
+        ) : (
+          <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-zinc-100 dark:bg-zinc-900 p-4 sm:p-6">
+            <HtmlReportFrame html={report.content} title={frameTitle} />
 
-          <ReportChartsSection
-            communitySlug={community.details.slug}
-            reportId={report.id}
-            authenticated={isAdmin}
-          />
-        </div>
+            <ReportChartsSection
+              communitySlug={community.details.slug}
+              reportId={report.id}
+              authenticated={isAdmin}
+            />
+          </div>
+        )}
 
         <footer className="report-print-hide mt-12 border-t border-zinc-200 pt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
           <span>Generated {formatDate(report.generatedAt)}</span>
           <span className="mx-2">·</span>
-          <span>{report.modelId}</span>
+          <span>{external ? (report.generatedBy ?? "External agent") : report.modelId}</span>
           {report.publishedAt ? (
             <>
               <span className="mx-2">·</span>

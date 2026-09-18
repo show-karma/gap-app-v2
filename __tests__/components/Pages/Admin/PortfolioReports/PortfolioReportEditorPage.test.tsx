@@ -23,6 +23,12 @@ vi.mock("@/components/Pages/Community/PortfolioReports/HtmlReportFrame", () => (
   HtmlReportFrame: ({ html }: { html?: string }) => <div data-testid="report-frame">{html}</div>,
 }));
 
+vi.mock("@/components/Pages/Community/PortfolioReports/ExternalReportFrame", () => ({
+  ExternalReportFrame: ({ html }: { html?: string }) => (
+    <div data-testid="external-report-frame">{html}</div>
+  ),
+}));
+
 vi.mock("@/components/Pages/Community/PortfolioReports/ReportChartsSection", () => ({
   ReportChartsSection: () => <div data-testid="report-charts-section" />,
 }));
@@ -60,6 +66,8 @@ const baseReport = {
   dataSnapshot: {},
   modelId: "gpt-4.1",
   tokenUsage: null,
+  source: "karma",
+  generatedBy: null,
   generatedAt: "2026-04-01T00:00:00.000Z",
   generationError: null,
   publishedAt: null,
@@ -79,6 +87,39 @@ describe("PortfolioReportEditorPage", () => {
     mockUseUnpublishReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseRegenerateReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseUpdateReportContent.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
+  });
+
+  describe("external reports", () => {
+    const externalReport = { ...baseReport, source: "external", generatedBy: "claude-code" };
+
+    it("hides Regenerate, shows the External badge and renders the verbatim frame", async () => {
+      const user = userEvent.setup();
+      mockUsePortfolioReport.mockReturnValue({ data: externalReport, isLoading: false } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+
+      expect(screen.getByText("External")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /regenerate/i })).not.toBeInTheDocument();
+      expect(screen.getByTestId("external-report-frame")).toHaveTextContent(
+        "<p>Server content</p>"
+      );
+      expect(screen.queryByTestId("report-frame")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("report-charts-section")).not.toBeInTheDocument();
+
+      // Editing the stored HTML stays available.
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+      expect(screen.getByLabelText(/report html content/i)).toBeInTheDocument();
+    });
+
+    it("keeps Regenerate and the Karma renderer for karma reports", () => {
+      mockUsePortfolioReport.mockReturnValue({ data: baseReport, isLoading: false } as any);
+
+      render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+
+      expect(screen.queryByText("External")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /regenerate/i })).toBeInTheDocument();
+      expect(screen.getByTestId("report-frame")).toBeInTheDocument();
+    });
   });
 
   describe("data export", () => {
