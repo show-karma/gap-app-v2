@@ -8,6 +8,7 @@ import {
   type GenerateReportRequest,
   type PortfolioReport,
   reportPollIntervalMs,
+  type SaveExternalReportRequest,
   type UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
 
@@ -193,6 +194,20 @@ export function useRegenerateReport(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (reportId: string) => portfolioService.regenerateReport(communitySlug, reportId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.reports(communitySlug),
+      });
+    },
+  });
+}
+
+export function useSaveExternalReport(communitySlug: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: SaveExternalReportRequest) =>
+      portfolioService.saveExternalReport(communitySlug, body),
     onSuccess: (data) => {
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       queryClient.invalidateQueries({

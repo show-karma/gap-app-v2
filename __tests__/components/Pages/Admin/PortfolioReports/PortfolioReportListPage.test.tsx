@@ -90,6 +90,8 @@ function reportFixture(overrides: Record<string, unknown> = {}) {
     dataSnapshot: {},
     modelId: "gpt-4.1",
     tokenUsage: null,
+    source: "karma",
+    generatedBy: null,
     generatedAt: "2026-04-01T00:00:00.000Z",
     generationError: null,
     publishedAt: null,
@@ -260,6 +262,47 @@ describe("PortfolioReportListPage", () => {
     render(<PortfolioReportListPage community={filecoinCommunity} />);
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+  });
+
+  describe("external reports", () => {
+    it("shows an External badge and hides the working Regenerate action", async () => {
+      const user = userEvent.setup();
+      const regenerateMutateAsync = vi.fn();
+      mockUseRegenerateReport.mockReturnValue({
+        isPending: false,
+        mutateAsync: regenerateMutateAsync,
+      } as any);
+      mockUsePortfolioReports.mockReturnValue({
+        data: [reportFixture({ id: "ext-report", source: "external", generatedBy: "claude-code" })],
+        isLoading: false,
+      } as any);
+
+      render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+      expect(screen.getByText("External")).toBeInTheDocument();
+      expect(screen.getByText("claude-code")).toBeInTheDocument();
+      // The Regen control is replaced by an inert hint; nothing regenerates.
+      const hint = screen.getByRole("button", {
+        name: "Saved from an external agent, regenerate is unavailable",
+      });
+      expect(hint).toHaveAttribute("aria-disabled", "true");
+      await user.click(hint);
+      expect(regenerateMutateAsync).not.toHaveBeenCalled();
+    });
+
+    it("keeps the Regenerate action for karma reports", () => {
+      mockUsePortfolioReports.mockReturnValue({
+        data: [reportFixture({ id: "karma-report", source: "karma" })],
+        isLoading: false,
+      } as any);
+
+      render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+      expect(screen.queryByText("External")).not.toBeInTheDocument();
+      const regen = screen.getByRole("button", { name: /^regen$/i });
+      expect(regen).toBeEnabled();
+      expect(regen).not.toHaveAttribute("aria-disabled");
+    });
   });
 
   it("does not show a Delete action for published reports", () => {

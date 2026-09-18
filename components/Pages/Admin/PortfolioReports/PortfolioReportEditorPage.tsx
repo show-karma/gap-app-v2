@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { ExportDataMenu } from "@/components/Pages/Community/PortfolioReports/ExportDataMenu";
+import { ExternalReportFrame } from "@/components/Pages/Community/PortfolioReports/ExternalReportFrame";
 import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
 import { ReportChartsSection } from "@/components/Pages/Community/PortfolioReports/ReportChartsSection";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -31,7 +32,9 @@ import { isReportGenerating } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
+import { isExternalReport } from "@/utilities/portfolio-reports/source";
 import { GenerationStatusBadge } from "./GenerationStatusBadge";
+import { ReportSourceBadge } from "./ReportSourceBadge";
 
 interface Props {
   community: Community;
@@ -129,6 +132,9 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const generating = isReportGenerating(report);
   const failed = report.status === "failed";
+  // External reports were produced by an admin's own agent: Karma never
+  // regenerates them, so the Regenerate affordance (and its dialog) is hidden.
+  const external = isExternalReport(report);
 
   // Drafts are compared against the snapshot taken when the dialog opened, not
   // against live `report` — so a background refresh is never mistaken for a
@@ -220,7 +226,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   return (
     <div className="flex h-full flex-col">
-      <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+      <Dialog open={showRegenerateDialog && !external} onOpenChange={setShowRegenerateDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -265,8 +271,9 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           <DialogHeader>
             <DialogTitle>Edit report</DialogTitle>
             <DialogDescription>
-              Edits the rendered HTML directly. Regenerating the report will overwrite the content,
-              but keeps the title.
+              {external
+                ? "Edits the HTML saved by the external agent directly. It is rendered exactly as stored."
+                : "Edits the rendered HTML directly. Regenerating the report will overwrite the content, but keeps the title."}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-1.5">
@@ -334,8 +341,13 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
             </h1>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
               <GenerationStatusBadge status={report.status} />
+              <ReportSourceBadge source={report.source} />
               {report.title && <span>{runDateLabel}</span>}
-              <span>Model: {report.modelId}</span>
+              <span>
+                {external
+                  ? `Agent: ${report.generatedBy ?? "external"}`
+                  : `Model: ${report.modelId}`}
+              </span>
               {report.tokenUsage && (
                 <span>{report.tokenUsage.totalTokens.toLocaleString()} tokens</span>
               )}
@@ -363,21 +375,23 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
             <Download className="mr-1 h-3 w-3" />
             Export PDF
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowRegenerateDialog(true)}
-            disabled={regenerateMutation.isPending || generating}
-          >
-            <RefreshCw className="mr-1 h-3 w-3" />
-            {regenerateMutation.isPending
-              ? "Starting…"
-              : generating
-                ? "Generating…"
-                : failed
-                  ? "Retry"
-                  : "Regenerate"}
-          </Button>
+          {external ? null : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowRegenerateDialog(true)}
+              disabled={regenerateMutation.isPending || generating}
+            >
+              <RefreshCw className="mr-1 h-3 w-3" />
+              {regenerateMutation.isPending
+                ? "Starting…"
+                : generating
+                  ? "Generating…"
+                  : failed
+                    ? "Retry"
+                    : "Regenerate"}
+            </Button>
+          )}
           {report.status === "draft" ? (
             <Button size="sm" onClick={handlePublish} disabled={publishMutation.isPending}>
               <Eye className="mr-1 h-3 w-3" />
@@ -419,13 +433,24 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       {/* Preview */}
       <div className="flex-1 p-4">
         {report.content ? (
-          <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
-            <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
-            <ReportChartsSection communitySlug={slug} reportId={report.id} authenticated />
-          </div>
+          external ? (
+            <div className="report-print-area">
+              <ExternalReportFrame
+                html={report.content}
+                title={`Portfolio report — ${runDateLabel}`}
+              />
+            </div>
+          ) : (
+            <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-zinc-100 dark:bg-zinc-900 p-4 sm:p-6">
+              <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+              <ReportChartsSection communitySlug={slug} reportId={report.id} authenticated />
+            </div>
+          )
         ) : (
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
-            No content yet. Regenerate to produce the report body.
+            {external
+              ? "No content yet. Save the report again from your agent to add a body."
+              : "No content yet. Regenerate to produce the report body."}
           </div>
         )}
       </div>
