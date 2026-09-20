@@ -11,9 +11,11 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
+import type { MilestoneQueueFilter } from "@/types/funding-platform";
 import type { Community } from "@/types/v2/community";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import ApplicationDetailView from "../FundingPlatform/ApplicationView/ApplicationDetailView";
+import { InboxAttentionFilter } from "./InboxAttentionFilter";
 import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
@@ -48,28 +50,69 @@ interface ReviewerInboxPageProps {
   syncSelectionToHash?: boolean;
 }
 
-export function ReviewerInboxPage({
-  community,
-  loadingSlot,
-  syncSelectionToHash = true,
-}: ReviewerInboxPageProps) {
-  const communityId = community?.details?.slug || community?.uid || "";
+interface InboxAccess {
+  /** Fetch the application review stream. */
+  includeApplications: boolean;
+  /** Fetch the milestone stream. */
+  includeMilestones: boolean;
+  /** The caller may see this page at all. */
+  isAuthorized: boolean;
+  /** Permission resolution is still in flight — render a placeholder. */
+  isCheckingPermissions: boolean;
+  /**
+   * RESOLVED community-admin access. Distinct from a bare `hasAccess`, which is
+   * false while the check is in flight — gating the admin UI on the raw flag
+   * would flash the reviewer layout in before the admin one.
+   */
+  isCommunityAdmin: boolean;
+}
+
+/**
+ * Resolves what this caller may see in the inbox. Extracted from the page
+ * component so the tri-state permission logic lives in one place and reads
+ * independently of the rendering.
+ */
+function useInboxAccess(community: Community): InboxAccess {
   const { authenticated, ready } = useAuth();
   const { isLoading: isRbacLoading } = usePermissionContext();
   const { hasAccess, isLoading: isAdminLoading } = useCommunityAdminAccess(community?.uid);
   const isProgramReviewer = useIsReviewerType(ReviewerType.PROGRAM);
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
 
-  const includeApplications = hasAccess || isProgramReviewer;
-  const includeMilestones = hasAccess || isMilestoneReviewer;
-  const isAuthorized = authenticated && (hasAccess || isProgramReviewer || isMilestoneReviewer);
+  return {
+    includeApplications: hasAccess || isProgramReviewer,
+    includeMilestones: hasAccess || isMilestoneReviewer,
+    isAuthorized: authenticated && (hasAccess || isProgramReviewer || isMilestoneReviewer),
+    isCheckingPermissions: !ready || isRbacLoading || isAdminLoading,
+    isCommunityAdmin: hasAccess && !isAdminLoading,
+  };
+}
 
-  const isCheckingPermissions = !ready || isRbacLoading || isAdminLoading;
+export function ReviewerInboxPage({
+  community,
+  loadingSlot,
+  syncSelectionToHash = true,
+}: ReviewerInboxPageProps) {
+  const communityId = community?.details?.slug || community?.uid || "";
+  const {
+    includeApplications,
+    includeMilestones,
+    isAuthorized,
+    isCheckingPermissions,
+    isCommunityAdmin,
+  } = useInboxAccess(community);
+
+  // Community admins get the community-wide milestone queue in the SAME list,
+  // with a stage filter. The server decides scope from the authenticated
+  // caller — this flag only drives what the page renders, never what it is
+  // allowed to see.
+  const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
 
   const { items, stats, isLoading, error, refetch } = useInboxFeed({
     communityId,
     includeApplications,
     includeMilestones,
+    attention: attentionFilter,
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
@@ -163,7 +206,16 @@ export function ReviewerInboxPage({
 
   return (
     <div className="w-full space-y-4">
-      <InboxHeader stats={stats} />
+      <InboxHeader stats={stats} isCommunityAdmin={isCommunityAdmin} />
+
+      {isCommunityAdmin && (
+        <InboxAttentionFilter
+          stats={stats}
+          value={attentionFilter}
+          onChange={setAttentionFilter}
+          totalMilestones={stats.milestones}
+        />
+      )}
 
       {error ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
@@ -193,6 +245,7 @@ export function ReviewerInboxPage({
                 selectedId={selectedId ?? undefined}
                 onSelect={handleSelect}
                 hasBothRoles={hasBothRoles}
+                isCommunityAdmin={isCommunityAdmin}
                 kindFilter={kindFilter}
                 onKindFilterChange={setKindFilter}
               />

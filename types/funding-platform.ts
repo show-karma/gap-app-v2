@@ -289,6 +289,19 @@ export interface IPaginatedApplicationsResponse {
  * GET /v2/funding-applications/community/:communityId/reviewer-inbox.
  * The indexer merges, buckets and sorts both review streams server-side.
  */
+/**
+ * Why a milestone sits in the community admin queue. Mirrors the indexer's
+ * MilestoneAttentionReasonEnum.
+ */
+export type MilestoneAttentionReason =
+  | "past_due"
+  | "awaiting_review"
+  | "awaiting_invoice"
+  | "invoice_unpaid";
+
+/** Queue filter values: the four reasons plus the follow-up pseudo-filter. */
+export type MilestoneQueueFilter = MilestoneAttentionReason | "followup_due";
+
 export interface IReviewerInboxItem {
   id: string;
   kind: "application" | "milestone";
@@ -309,6 +322,18 @@ export interface IReviewerInboxItem {
   grantUid?: string;
   projectSlug?: string;
   milestoneUid?: string;
+
+  /**
+   * Admin queue fields. Present only on milestone items in a community-admin
+   * scoped feed — a reviewer's payload omits them entirely.
+   */
+  attentionReason?: MilestoneAttentionReason;
+  /** Whole days spent in the current attention stage. */
+  stageAgeDays?: number;
+  openActionItems?: number;
+  /** ISO earliest follow-up date among open action items. */
+  nextFollowUpAt?: string;
+  followUpOverdue?: boolean;
 }
 
 export interface IReviewerInboxStats {
@@ -318,6 +343,85 @@ export interface IReviewerInboxStats {
   overdue: number;
   applications: number;
   milestones: number;
+
+  /** Admin queue counters, over the full feed. Absent for reviewer scope. */
+  pastDue?: number;
+  awaitingReview?: number;
+  awaitingInvoice?: number;
+  invoiceUnpaid?: number;
+  followUpDue?: number;
+}
+
+/** One action item logged by an admin against a milestone. */
+export interface IMilestoneActionItem {
+  id: string;
+  milestoneUID: string;
+  grantUID: string;
+  communityUID: string;
+  programId: string | null;
+  content: string;
+  followUpAt: string | null;
+  /** Stamped server-side when the item is marked done. */
+  completedAt: string | null;
+  completedByAddress: string | null;
+  createdByAddress: string;
+  createdByName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type MilestoneTimelineEventType =
+  | "created"
+  | "due"
+  | "completed"
+  | "verified"
+  | "rejected"
+  | "cancelled"
+  | "invoice_sent"
+  | "invoice_received"
+  | "payment_disbursed";
+
+export interface IMilestoneTimelineEvent {
+  type: MilestoneTimelineEventType;
+  at: string;
+  actor?: string;
+  reason?: string;
+}
+
+export interface IMilestoneStageDurations {
+  toDeliveryDays: number | null;
+  inReviewDays: number | null;
+  toInvoiceDays: number | null;
+  toPaymentDays: number | null;
+}
+
+export interface IMilestoneInvoiceSnapshot {
+  status: string | null;
+  sentAt: string | null;
+  receivedAt: string | null;
+  receivedBy: string | null;
+  fileUrl: string | null;
+  paymentStatusOverride: string | null;
+  paymentStatusOverrideDate: string | null;
+  paymentStatusOverrideBy: string | null;
+}
+
+export interface IMilestoneTimeline {
+  milestoneUid: string;
+  milestoneTitle: string;
+  grantUid: string;
+  grantTitle: string;
+  projectUid: string;
+  projectTitle: string;
+  projectSlug: string;
+  programId: string | null;
+  currentStatus: string | null;
+  dueDate: string | null;
+  attentionReason: MilestoneAttentionReason | null;
+  stageAgeDays: number | null;
+  events: IMilestoneTimelineEvent[];
+  stageDurations: IMilestoneStageDurations;
+  invoice: IMilestoneInvoiceSnapshot | null;
 }
 
 export interface IReviewerInboxResponse {

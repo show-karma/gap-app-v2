@@ -4,6 +4,8 @@ import { ChatBubbleLeftRightIcon, DocumentTextIcon, SparklesIcon } from "@heroic
 import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { memo, useCallback, useMemo, useState } from "react";
+import { MilestoneActionItems } from "@/components/Inbox/MilestoneActionItems";
+import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
 import { GrantCommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/GrantCommentsAndActivity";
 import { MilestoneCard } from "@/components/Pages/Admin/MilestonesReview/MilestoneCard";
@@ -436,6 +438,12 @@ export function InboxMilestoneDetail({
               quietSurface
             />
             <InlineAIEvaluation milestone={selectedMilestone} />
+            {isCommunityAdmin && !isLoadingPermissions && (
+              <>
+                <MilestoneTimeline communityId={communityId} milestoneUid={milestoneUid} />
+                <MilestoneActionItems communityId={communityId} milestoneUid={milestoneUid} />
+              </>
+            )}
           </div>
         ) : (
           <MilestoneCommentsTab

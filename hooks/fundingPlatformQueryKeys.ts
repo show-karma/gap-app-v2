@@ -22,6 +22,18 @@ export const QUERY_KEYS = {
     communityId,
     filters,
   ],
+  // Admin milestone queue detail. The leading `[name, communityId]` segments
+  // act as invalidation prefixes, matching the reviewerInbox convention above.
+  milestoneTimeline: (communityId: string, milestoneUid: string) => [
+    "milestone-timeline",
+    communityId,
+    milestoneUid,
+  ],
+  milestoneActionItems: (communityId: string, milestoneUid: string) => [
+    "milestone-action-items",
+    communityId,
+    milestoneUid,
+  ],
   application: (applicationId: string) => ["funding-application", applicationId],
   applicationByReference: (referenceNumber: string) => [
     "application-by-reference",

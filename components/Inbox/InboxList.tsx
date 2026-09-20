@@ -16,6 +16,11 @@ interface InboxListProps {
   onSelect: (id: string) => void;
   /** When true, render the Applications|Milestones segmented toggle. */
   hasBothRoles: boolean;
+  /**
+   * Community admins see the whole community's queue, not a personal
+   * assignment list — "Assigned to you" would be a lie there.
+   */
+  isCommunityAdmin?: boolean;
   kindFilter: InboxKindFilter;
   onKindFilterChange: (filter: InboxKindFilter) => void;
 }
@@ -29,6 +34,16 @@ const BUCKET_DOT: Record<ReviewBucket, string> = {
 const ORDERED_BUCKETS: ReviewBucket[] = (Object.keys(BUCKET_META) as ReviewBucket[]).sort(
   (a, b) => BUCKET_RANK[a] - BUCKET_RANK[b]
 );
+
+/**
+ * Heading above the master list. An admin's feed spans the whole community, so
+ * it must not claim the items are assigned to them.
+ */
+function getListHeading(args: { hasBothRoles: boolean; isCommunityAdmin?: boolean }): string {
+  if (args.hasBothRoles) return "Filter";
+  if (args.isCommunityAdmin) return "Needs attention";
+  return "Assigned to you";
+}
 
 /* ------------------------------------------------------------------ */
 /* Bucket section label                                                */
@@ -89,6 +104,7 @@ const InboxListComponent: FC<InboxListProps> = ({
   selectedId,
   onSelect,
   hasBothRoles,
+  isCommunityAdmin = false,
   kindFilter,
   onKindFilterChange,
 }) => {
@@ -118,7 +134,7 @@ const InboxListComponent: FC<InboxListProps> = ({
     <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          {hasBothRoles ? "Filter" : "Assigned to you"}
+          {getListHeading({ hasBothRoles, isCommunityAdmin })}
         </h2>
         <span className="text-xs text-gray-400 dark:text-zinc-500">
           {shown.length} {pluralize("item", shown.length)}

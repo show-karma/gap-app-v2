@@ -19,6 +19,10 @@ export async function getReviewerInbox(
   if (filters.page) params.append("page", filters.page.toString());
   if (filters.limit) params.append("limit", filters.limit.toString());
   if (filters.reviewerAddress) params.append("reviewerAddress", filters.reviewerAddress);
+  // Admin-queue stage filter. Inert for reviewer-scoped callers: the indexer
+  // resolves scope from the authenticated caller, so this cannot widen a
+  // reviewer's feed.
+  if (filters.attention) params.append("attention", filters.attention);
 
   // TODO(#1775): add zod schema
   const data = await api.get<IReviewerInboxResponse>(
@@ -37,6 +41,9 @@ export async function getReviewerInbox(
       total: 0,
       totalPages: 0,
     },
+    // Fallback when the server sends no stats block at all. Mirrors the
+    // loading-state defaults in `useReviewerInbox` so the header renders the
+    // same shape whichever path produced it.
     stats: data.stats ?? {
       action: 0,
       waiting: 0,
@@ -44,6 +51,11 @@ export async function getReviewerInbox(
       overdue: 0,
       applications: 0,
       milestones: 0,
+      pastDue: 0,
+      awaitingReview: 0,
+      awaitingInvoice: 0,
+      invoiceUnpaid: 0,
+      followUpDue: 0,
     },
   };
 }

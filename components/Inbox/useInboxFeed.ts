@@ -1,5 +1,6 @@
 import { useReviewerInbox } from "@/hooks/useReviewerInbox";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import type { MilestoneQueueFilter } from "@/types/funding-platform";
 import type { InboxItem, InboxStats } from "./types";
 
 export interface UseInboxFeedOptions {
@@ -10,6 +11,11 @@ export interface UseInboxFeedOptions {
   includeMilestones: boolean;
   /** Server-side filters for the inbox (page/limit/status/search/sort/reviewerAddress). */
   applicationFilters?: IApplicationFilters;
+  /**
+   * Admin milestone-queue stage filter. Applied server-side; the header stats
+   * still cover the FULL feed so counts don't collapse as you filter.
+   */
+  attention?: MilestoneQueueFilter | null;
 }
 
 interface UseInboxFeedResult {
@@ -29,11 +35,17 @@ interface UseInboxFeedResult {
  * and surfaces the server payload.
  */
 export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
-  const { communityId, includeApplications, includeMilestones, applicationFilters = {} } = options;
+  const {
+    communityId,
+    includeApplications,
+    includeMilestones,
+    applicationFilters = {},
+    attention = null,
+  } = options;
 
   const { items, stats, isLoading, error, refetch } = useReviewerInbox(
     communityId,
-    applicationFilters,
+    { ...applicationFilters, ...(attention ? { attention } : {}) },
     {
       enabled: includeApplications || includeMilestones,
     }
