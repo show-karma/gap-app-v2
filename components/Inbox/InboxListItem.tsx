@@ -57,7 +57,7 @@ const FollowUpLine: FC<{ item: InboxItem }> = ({ item }) => {
 const ApplicationDates: FC<{ item: InboxItem }> = ({ item }) => {
   if (!item.submittedAt && !item.updatedAt) return null;
   return (
-    <span className="truncate text-[11px] text-gray-500 dark:text-zinc-400">
+    <span className="truncate text-xs text-gray-500 dark:text-zinc-400">
       {item.submittedAt && `Submitted ${formatDate(item.submittedAt)}`}
       {item.submittedAt && item.updatedAt && " · "}
       {item.updatedAt && `Updated ${formatDate(item.updatedAt)}`}

@@ -38,6 +38,30 @@ const PANEL_TABS = [
   { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
 ];
 
+type PanelTabKey = (typeof PANEL_TABS)[number]["key"];
+
+/** Roving-tabindex keyboard pattern for the detail tabs (arrows, Home, End). */
+function moveTabFocus(
+  event: React.KeyboardEvent<HTMLButtonElement>,
+  activate: (next: PanelTabKey) => void
+): void {
+  const keys = PANEL_TABS.map((tab) => tab.key);
+  const current = keys.indexOf(event.currentTarget.id.replace("inbox-ms-tab-", "") as PanelTabKey);
+  if (current < 0) return;
+  const steps: Record<string, number> = {
+    ArrowRight: 1,
+    ArrowLeft: -1,
+    Home: -current,
+    End: keys.length - 1 - current,
+  };
+  const step = steps[event.key];
+  if (step === undefined || step === 0) return;
+  event.preventDefault();
+  const next = keys[(current + step + keys.length) % keys.length];
+  activate(next);
+  document.getElementById(`inbox-ms-tab-${next}`)?.focus();
+}
+
 /** Strip the optional chainId suffix from program IDs (e.g. "959_42161" -> "959"). */
 function parseProgramId(programId: string): string {
   if (programId.includes("_")) {
@@ -264,30 +288,12 @@ export function InboxMilestoneDetail({
 }: InboxMilestoneDetailProps) {
   const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
   const queryClient = useQueryClient();
-  const [activePanelTab, setActivePanelTab] =
-    useState<(typeof PANEL_TABS)[number]["key"]>("details");
-  const handleTabKeyDown = useCallback((event: React.KeyboardEvent<HTMLButtonElement>) => {
-    const keys = PANEL_TABS.map((tab) => tab.key);
-    const current = keys.indexOf(
-      event.currentTarget.id.replace("inbox-ms-tab-", "") as (typeof keys)[number]
-    );
-    if (current < 0) return;
-    const step =
-      event.key === "ArrowRight"
-        ? 1
-        : event.key === "ArrowLeft"
-          ? -1
-          : event.key === "Home"
-            ? -current
-            : event.key === "End"
-              ? keys.length - 1 - current
-              : 0;
-    if (step === 0) return;
-    event.preventDefault();
-    const next = keys[(current + step + keys.length) % keys.length];
-    setActivePanelTab(next);
-    document.getElementById(`inbox-ms-tab-${next}`)?.focus();
-  }, []);
+  const [activePanelTab, setActivePanelTab] = useState<PanelTabKey>("details");
+  const handleTabKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>) =>
+      moveTabFocus(event, (next) => setActivePanelTab(next)),
+    []
+  );
 
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectUid, programId);
 
@@ -439,7 +445,7 @@ export function InboxMilestoneDetail({
         id={`inbox-ms-panel-${activePanelTab}`}
         aria-labelledby={`inbox-ms-tab-${activePanelTab}`}
       >
-        {activePanelTab === "details" ? (
+        {activePanelTab === "details" && (
           <div className="space-y-4">
             <MilestoneCard
               key={selectedMilestone.uid}
@@ -476,9 +482,9 @@ export function InboxMilestoneDetail({
               </>
             )}
           </div>
-        ) : activePanelTab === "ai" ? (
-          <InlineAIEvaluation milestone={selectedMilestone} />
-        ) : (
+        )}
+        {activePanelTab === "ai" && <InlineAIEvaluation milestone={selectedMilestone} />}
+        {activePanelTab === "comments" && (
           <MilestoneCommentsTab
             projectUID={project?.uid ?? projectUid}
             programId={parsedProgramId}

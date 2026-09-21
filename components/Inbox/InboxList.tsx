@@ -88,7 +88,7 @@ const KindToggle: FC<{
             onClick={() => onChange(option.key)}
             aria-pressed={active}
             className={cn(
-              "min-h-11 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 xl:min-h-8",
+              "min-h-11 rounded-md px-3 py-1.5 text-sm font-medium transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 xl:min-h-8",
               active
                 ? "bg-white text-primary-700 shadow-sm dark:bg-zinc-900 dark:text-primary-300"
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
