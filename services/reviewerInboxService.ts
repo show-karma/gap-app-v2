@@ -9,7 +9,7 @@ import { buildApplicationQueryParams } from "./fundingApplicationParams";
  * pending application reviews and milestone verifications across every
  * program in a community. The indexer buckets, sorts and paginates
  * server-side. Admins may pass `reviewerAddress` to view another reviewer's
- * queue. No `programId` — the endpoint spans the whole community.
+ * queue. `programId` narrows the feed to one program.
  */
 export async function getReviewerInbox(
   communityId: string,
@@ -23,6 +23,7 @@ export async function getReviewerInbox(
   // resolves scope from the authenticated caller, so this cannot widen a
   // reviewer's feed.
   if (filters.attention) params.append("attention", filters.attention);
+  if (filters.programId) params.append("programId", filters.programId);
 
   // TODO(#1775): add zod schema
   const data = await api.get<IReviewerInboxResponse>(

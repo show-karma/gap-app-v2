@@ -5,6 +5,15 @@ import type { InboxItem, InboxStats } from "@/components/Inbox/types";
 import type { Community } from "@/types/v2/community";
 
 // --- Dependency mocks: keep the test focused on the selection/history logic ---
+vi.mock("nuqs", () => ({
+  useQueryState: (_key: string, options?: { defaultValue?: string }) =>
+    [options?.defaultValue ?? null, vi.fn()] as const,
+}));
+
+vi.mock("@/components/Inbox/InboxProgramFilter", () => ({
+  InboxProgramFilter: () => null,
+}));
+
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ authenticated: true, ready: true }),
 }));

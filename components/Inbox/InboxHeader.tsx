@@ -9,7 +9,7 @@ import {
   FireIcon,
   InboxIcon,
 } from "@heroicons/react/24/outline";
-import React, { type FC } from "react";
+import React, { type FC, useCallback } from "react";
 import { InboxStatPill } from "@/components/Inbox/InboxStatPill";
 import type { InboxStats } from "@/components/Inbox/types";
 import type { MilestoneAttentionReason, MilestoneQueueFilter } from "@/types/funding-platform";
@@ -34,17 +34,19 @@ const InboxHeaderComponent: FC<InboxHeaderProps> = ({
   attentionFilter = null,
   onAttentionChange,
 }) => {
+  const toggle = useCallback(
+    (reason: MilestoneAttentionReason) =>
+      onAttentionChange?.(attentionFilter === reason ? null : reason),
+    [onAttentionChange, attentionFilter]
+  );
   const pill = (reason: MilestoneAttentionReason) =>
     onAttentionChange
-      ? {
-          active: attentionFilter === reason,
-          onClick: () => onAttentionChange(attentionFilter === reason ? null : reason),
-        }
+      ? { active: attentionFilter === reason, filterKey: reason, onToggle: toggle }
       : {};
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-300">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
           <InboxIcon className="h-6 w-6" aria-hidden="true" />
         </div>
         <div>

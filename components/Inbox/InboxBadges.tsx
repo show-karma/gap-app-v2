@@ -89,10 +89,10 @@ export const KindTag: FC<{ kind: InboxItem["kind"]; className?: string }> = ({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide",
+        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide",
         isApp
           ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
-          : "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
+          : "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300",
         className
       )}
     >
@@ -127,7 +127,7 @@ export const DueChip: FC<{ item: InboxItem; className?: string }> = ({ item, cla
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 text-[11px] font-medium text-gray-400 dark:text-zinc-500",
+          "inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-zinc-400",
           className
         )}
       >
@@ -140,7 +140,7 @@ export const DueChip: FC<{ item: InboxItem; className?: string }> = ({ item, cla
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-300",
+          "inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300",
           className
         )}
       >
@@ -158,7 +158,7 @@ export const DueChip: FC<{ item: InboxItem; className?: string }> = ({ item, cla
         className
       )}
     >
-      <ClockIcon className="h-3 w-3" aria-hidden="true" /> Due {formatDate(item.dueLabel)}
+      <ClockIcon className="h-3 w-3" aria-hidden="true" /> Due {formatDate(item.dueLabel, "UTC")}
     </span>
   );
 };

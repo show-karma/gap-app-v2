@@ -28,7 +28,7 @@ interface InboxListProps {
 }
 
 const BUCKET_DOT: Record<ReviewBucket, string> = {
-  action: "bg-teal-500",
+  action: "bg-primary-500",
   waiting: "bg-amber-500",
   done: "bg-green-500",
 };
@@ -60,7 +60,7 @@ const BucketHeader: FC<{ bucket: ReviewBucket; count: number; isCommunityAdmin: 
     <h3 className="text-[13px] font-semibold text-gray-700 dark:text-gray-200">
       {isCommunityAdmin ? ADMIN_BUCKET_LABEL[bucket] : BUCKET_META[bucket].label}
     </h3>
-    <span className="text-xs font-medium text-gray-400 dark:text-zinc-500">{count}</span>
+    <span className="text-xs font-medium text-gray-500 dark:text-zinc-400">{count}</span>
   </div>
 );
 
@@ -88,9 +88,9 @@ const KindToggle: FC<{
             onClick={() => onChange(option.key)}
             aria-pressed={active}
             className={cn(
-              "rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors",
+              "min-h-11 rounded-md px-3 py-1.5 text-sm font-medium transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 xl:min-h-8",
               active
-                ? "bg-white text-brand-blue shadow-sm dark:bg-zinc-900"
+                ? "bg-white text-primary-700 shadow-sm dark:bg-zinc-900 dark:text-primary-300"
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             )}
           >
@@ -143,7 +143,7 @@ const InboxListComponent: FC<InboxListProps> = ({
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
           {getListHeading({ hasBothRoles, isCommunityAdmin })}
         </h2>
-        <span className="text-xs text-gray-400 dark:text-zinc-500">
+        <span className="text-xs text-gray-500 dark:text-zinc-400">
           {totalCount != null && totalCount > items.length && kindFilter === "all"
             ? `${shown.length} of ${totalCount} ${pluralize("item", totalCount)}`
             : `${shown.length} ${pluralize("item", shown.length)}`}
