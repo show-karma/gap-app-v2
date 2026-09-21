@@ -2,7 +2,7 @@
 
 import pluralize from "pluralize";
 import React, { type FC } from "react";
-import { STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
+import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
 import { AiScore, DueChip, KindTag, StatusBadge } from "@/components/Inbox/InboxBadges";
 import type { InboxItem } from "@/components/Inbox/types";
 import { formatDate } from "@/utilities/formatDate";
@@ -10,7 +10,7 @@ import { cn } from "@/utilities/tailwind";
 
 /**
  * How long this milestone has been stuck in its current stage. The stage
- * itself is already shown by the status badge, so only the age is rendered.
+ * itself is the row's badge, so only the age is rendered here.
  * Renders nothing for reviewer-scoped items, which carry no attention reason.
  */
 const AttentionLine: FC<{ item: InboxItem }> = ({ item }) => {
@@ -93,7 +93,18 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({ item, selected, onSele
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <KindTag kind={item.kind} />
-        <StatusBadge status={item.status} className="shrink-0" />
+        {item.attentionReason ? (
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+              ATTENTION_META[item.attentionReason].badgeClass
+            )}
+          >
+            {ATTENTION_META[item.attentionReason].label}
+          </span>
+        ) : (
+          <StatusBadge status={item.status} className="shrink-0" />
+        )}
       </div>
 
       <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900 dark:text-white">
