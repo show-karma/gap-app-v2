@@ -18,7 +18,7 @@ const AttentionLine: FC<{ item: InboxItem }> = ({ item }) => {
 
   return (
     <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-      <span className="font-semibold tabular-nums text-gray-800 dark:text-gray-200">
+      <span className="text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
         {item.stageAgeDays}d
       </span>{" "}
       {STAGE_AGE_LABEL[item.attentionReason]}
@@ -57,7 +57,7 @@ const FollowUpLine: FC<{ item: InboxItem }> = ({ item }) => {
 const ApplicationDates: FC<{ item: InboxItem }> = ({ item }) => {
   if (!item.submittedAt && !item.updatedAt) return null;
   return (
-    <span className="truncate text-[11px] text-gray-400 dark:text-zinc-500">
+    <span className="truncate text-xs text-gray-500 dark:text-zinc-400">
       {item.submittedAt && `Submitted ${formatDate(item.submittedAt)}`}
       {item.submittedAt && item.updatedAt && " · "}
       {item.updatedAt && `Updated ${formatDate(item.updatedAt)}`}
@@ -83,11 +83,11 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({ item, selected, onSele
     <button
       type="button"
       onClick={() => onSelect(item.id)}
-      aria-pressed={selected}
+      aria-current={selected ? "true" : undefined}
       className={cn(
-        "group w-full rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue",
+        "group w-full rounded-xl border p-4 text-left transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
         selected
-          ? "border-brand-blue bg-blue-50/70 shadow-sm dark:border-brand-blue dark:bg-blue-950/20"
+          ? "border-primary-500 bg-primary-50/70 shadow-sm dark:border-primary-400 dark:bg-primary-900/20"
           : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/70"
       )}
     >
@@ -107,16 +107,16 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({ item, selected, onSele
         )}
       </div>
 
-      <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900 dark:text-white">
+      <span className="line-clamp-2 block text-sm font-semibold leading-5 text-gray-900 dark:text-white">
         {item.title}
-      </h3>
+      </span>
 
       {secondary && (
         <p className="mt-1.5 truncate text-xs text-gray-500 dark:text-gray-400">{secondary}</p>
       )}
 
       {item.kind === "milestone" && item.subtitle && (
-        <p className="mt-1.5 truncate text-xs text-gray-400 dark:text-zinc-500">{item.subtitle}</p>
+        <p className="mt-1.5 truncate text-xs text-gray-500 dark:text-zinc-400">{item.subtitle}</p>
       )}
 
       <AttentionLine item={item} />

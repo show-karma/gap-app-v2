@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryState } from "nuqs";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -20,6 +21,7 @@ import { InboxAttentionFilter } from "./InboxAttentionFilter";
 import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
+import { InboxProgramFilter } from "./InboxProgramFilter";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -111,6 +113,7 @@ export function ReviewerInboxPage({
   // allowed to see.
   const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
   const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
+  const [programId] = useQueryState("programId");
 
   const { items, stats, isLoading, isFetching, totalCount, error, refetch } = useInboxFeed({
     communityId,
@@ -118,6 +121,7 @@ export function ReviewerInboxPage({
     includeMilestones,
     applicationFilters: { limit },
     attention: attentionFilter,
+    programId,
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
@@ -128,6 +132,9 @@ export function ReviewerInboxPage({
     syncSelectionToHash ? getSelectedIdFromHash() : null
   );
   const [kindFilter, setKindFilter] = useState<InboxKindFilter>("all");
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
+  const detailRef = useRef<HTMLElement>(null);
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -140,15 +147,25 @@ export function ReviewerInboxPage({
         // page entirely. Switching between items replaces the entry so we don't
         // spam the history stack. pushState runs in a click handler (not a
         // useEffect), so it never dispatches an App Router navigation (#1547).
-        if (selectedId == null) {
+        if (selectedIdRef.current == null) {
           window.history.pushState({}, "", url.toString());
         } else {
           window.history.replaceState({}, "", url.toString());
         }
       }
       setSelectedId(id);
+      // Below the two-column breakpoint the detail sits under the whole list.
+      if (!window.matchMedia("(min-width: 1280px)").matches) {
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        requestAnimationFrame(() => {
+          const detail = detailRef.current;
+          if (detail && typeof detail.scrollIntoView === "function") {
+            detail.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+          }
+        });
+      }
     },
-    [syncSelectionToHash, selectedId]
+    [syncSelectionToHash]
   );
 
   // A stage filter is a new list: reset paging and drop a selection the list
@@ -157,7 +174,7 @@ export function ReviewerInboxPage({
     (value: MilestoneQueueFilter | null) => {
       setAttentionFilter(value);
       setLimit(INBOX_PAGE_SIZE);
-      if (selectedId == null) return;
+      if (selectedIdRef.current == null) return;
       if (syncSelectionToHash) {
         const url = new URL(window.location.href);
         url.hash = "";
@@ -165,7 +182,7 @@ export function ReviewerInboxPage({
       }
       setSelectedId(null);
     },
-    [selectedId, syncSelectionToHash]
+    [syncSelectionToHash]
   );
 
   useEffect(() => {
@@ -236,12 +253,19 @@ export function ReviewerInboxPage({
       />
 
       {isCommunityAdmin && (
-        <InboxAttentionFilter
-          stats={stats}
-          value={attentionFilter}
-          onChange={handleAttentionChange}
-          totalMilestones={stats.milestones}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <InboxAttentionFilter
+            stats={stats}
+            value={attentionFilter}
+            onChange={handleAttentionChange}
+            totalMilestones={stats.milestones}
+          />
+          <span
+            className="hidden h-5 w-px bg-gray-200 sm:block dark:bg-zinc-700"
+            aria-hidden="true"
+          />
+          <InboxProgramFilter communityId={communityId} />
+        </div>
       )}
 
       {error ? (
@@ -275,11 +299,16 @@ export function ReviewerInboxPage({
               >
                 {isFetching && (
                   <output className="absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 rounded-t-2xl bg-white/90 py-2 text-xs font-medium text-gray-600 dark:bg-zinc-900/90 dark:text-gray-300">
-                    <Spinner />
+                    <Spinner aria-hidden className="h-4 w-4 border-2" />
                     Updating list…
                   </output>
                 )}
-                <div className={cn("transition-opacity", isFetching && "opacity-40")}>
+                <div
+                  className={cn(
+                    "transition-opacity motion-reduce:transition-none",
+                    isFetching && "opacity-40"
+                  )}
+                >
                   <InboxList
                     items={items}
                     selectedId={selectedId ?? undefined}
@@ -305,7 +334,7 @@ export function ReviewerInboxPage({
             )}
           </aside>
 
-          <section className="min-w-0">
+          <section ref={detailRef} className="min-w-0 scroll-mt-4">
             <InboxDetailPane
               item={selectedItem}
               communityId={communityId}

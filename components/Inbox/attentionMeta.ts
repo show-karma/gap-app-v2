@@ -10,8 +10,6 @@ import type { MilestoneAttentionReason, MilestoneQueueFilter } from "@/types/fun
 
 export interface AttentionMeta {
   label: string;
-  /** Short form for a dense list row. */
-  shortLabel: string;
   badgeClass: string;
   dotClass: string;
 }
@@ -19,25 +17,21 @@ export interface AttentionMeta {
 export const ATTENTION_META: Record<MilestoneAttentionReason, AttentionMeta> = {
   past_due: {
     label: "Past due",
-    shortLabel: "Past due",
     badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
     dotClass: "bg-red-500",
   },
   awaiting_review: {
     label: "Awaiting review",
-    shortLabel: "Review",
-    badgeClass: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
-    dotClass: "bg-teal-500",
+    badgeClass: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300",
+    dotClass: "bg-primary-500",
   },
   awaiting_invoice: {
     label: "Awaiting invoice",
-    shortLabel: "No invoice",
     badgeClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
     dotClass: "bg-amber-500",
   },
   invoice_unpaid: {
     label: "Invoice unpaid",
-    shortLabel: "Unpaid",
     badgeClass: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
     dotClass: "bg-purple-500",
   },

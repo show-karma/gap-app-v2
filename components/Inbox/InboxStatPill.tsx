@@ -2,13 +2,14 @@
 
 import React, { type FC } from "react";
 import { Button } from "@/components/ui/button";
+import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 
 /** Visual tones for the Inbox header stat pills. */
 type StatPillTone = "brand" | "red" | "amber" | "green";
 
 const ICON_WRAP: Record<StatPillTone, string> = {
-  brand: "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-300",
+  brand: "bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300",
   red: "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300",
   amber: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300",
   green: "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-300",
@@ -22,8 +23,9 @@ interface InboxStatPillProps {
   /** Caption under the count. */
   label: string;
   tone: StatPillTone;
-  /** When set, the pill acts as a filter toggle for its stage. */
-  onClick?: () => void;
+  /** When set with `filterKey`, the pill acts as a filter toggle for its stage. */
+  onToggle?: (key: MilestoneAttentionReason) => void;
+  filterKey?: MilestoneAttentionReason;
   active?: boolean;
 }
 
@@ -32,7 +34,8 @@ const InboxStatPillComponent: FC<InboxStatPillProps> = ({
   value,
   label,
   tone,
-  onClick,
+  onToggle,
+  filterKey,
   active = false,
 }) => {
   const content = (
@@ -56,18 +59,22 @@ const InboxStatPillComponent: FC<InboxStatPillProps> = ({
 
   const surface = cn(
     "flex h-auto w-full items-center justify-start gap-2.5 rounded-xl border bg-white px-4 py-3 text-left dark:bg-zinc-900",
-    active ? "border-brand-blue ring-1 ring-brand-blue" : "border-gray-200 dark:border-zinc-700"
+    active ? "border-primary-500 ring-1 ring-primary-500" : "border-gray-200 dark:border-zinc-700"
   );
 
-  if (!onClick) return <div className={surface}>{content}</div>;
+  if (!onToggle || !filterKey || value === 0) {
+    return <div className={cn(surface, value === 0 && onToggle && "opacity-60")}>{content}</div>;
+  }
 
   return (
     <Button
       variant="ghost"
-      onClick={onClick}
-      disabled={value === 0}
+      onClick={() => onToggle(filterKey)}
       aria-pressed={active}
-      className={cn(surface, "disabled:opacity-100 dark:hover:bg-zinc-800/70")}
+      className={cn(
+        surface,
+        "focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:hover:bg-zinc-800/70"
+      )}
     >
       {content}
     </Button>

@@ -46,7 +46,7 @@ const EVENT_META: Record<
   completed: {
     label: "Update submitted",
     icon: CheckCircleIcon,
-    toneClass: "text-teal-600 dark:text-teal-300",
+    toneClass: "text-primary-600 dark:text-primary-300",
   },
   verified: {
     label: "Verified",
@@ -127,7 +127,7 @@ const TimelineEventRow: FC<{ event: IMilestoneTimelineEvent; isLast: boolean }> 
           </time>
         </div>
         {event.actor && (
-          <p className="mt-0.5 truncate text-xs text-gray-400 dark:text-zinc-500">
+          <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-zinc-400">
             by {shortAddress(event.actor)}
           </p>
         )}
@@ -246,7 +246,7 @@ const MilestoneTimelineComponent: FC<MilestoneTimelineProps> = ({
       <ol className="m-0 list-none p-0">
         {timeline.events.map((event, index) => (
           <TimelineEventRow
-            key={`${event.type}-${event.at}`}
+            key={`${event.type}-${event.at}-${index}`}
             event={event}
             isLast={index === timeline.events.length - 1}
           />

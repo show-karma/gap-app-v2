@@ -16,6 +16,8 @@ export interface UseInboxFeedOptions {
    * still cover the FULL feed so counts don't collapse as you filter.
    */
   attention?: MilestoneQueueFilter | null;
+  /** Narrow the feed to one of the community's programs. */
+  programId?: string | null;
 }
 
 interface UseInboxFeedResult {
@@ -45,11 +47,16 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
     includeMilestones,
     applicationFilters = {},
     attention = null,
+    programId = null,
   } = options;
 
   const { items, pagination, stats, isLoading, isFetching, error, refetch } = useReviewerInbox(
     communityId,
-    { ...applicationFilters, ...(attention ? { attention } : {}) },
+    {
+      ...applicationFilters,
+      ...(attention ? { attention } : {}),
+      ...(programId ? { programId } : {}),
+    },
     {
       enabled: includeApplications || includeMilestones,
     }
