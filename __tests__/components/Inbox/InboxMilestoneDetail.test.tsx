@@ -64,6 +64,33 @@ vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ address: "0xreviewer" }),
 }));
 
+// The admin operations block (timeline + action items) mounts only for
+// community admins and does its own fetching. Stubbed here so this suite keeps
+// asserting the detail pane itself; those components have their own tests.
+vi.mock("@/hooks/useMilestoneAdminTimeline", () => ({
+  useMilestoneAdminTimeline: () => ({
+    timeline: null,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
+
+vi.mock("@/hooks/useMilestoneActionItems", () => ({
+  useMilestoneActionItems: () => ({
+    items: [],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+    createItem: vi.fn(),
+    updateItem: vi.fn(),
+    deleteItem: vi.fn(),
+    isCreating: false,
+    isUpdating: false,
+    isDeleting: false,
+  }),
+}));
+
 vi.mock("@/hooks/useFundingApplicationByProjectUID", () => ({
   useFundingApplicationByProjectUID: (...args: unknown[]) =>
     mockUseFundingApplicationByProjectUID(...args),

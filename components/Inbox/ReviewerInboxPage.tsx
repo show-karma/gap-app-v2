@@ -11,15 +11,20 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
+import type { MilestoneQueueFilter } from "@/types/funding-platform";
 import type { Community } from "@/types/v2/community";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
+import { cn } from "@/utilities/tailwind";
 import ApplicationDetailView from "../FundingPlatform/ApplicationView/ApplicationDetailView";
+import { InboxAttentionFilter } from "./InboxAttentionFilter";
 import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
+
+const INBOX_PAGE_SIZE = 25;
 
 const HASH_PREFIX = "#review-";
 
@@ -48,28 +53,71 @@ interface ReviewerInboxPageProps {
   syncSelectionToHash?: boolean;
 }
 
-export function ReviewerInboxPage({
-  community,
-  loadingSlot,
-  syncSelectionToHash = true,
-}: ReviewerInboxPageProps) {
-  const communityId = community?.details?.slug || community?.uid || "";
+interface InboxAccess {
+  /** Fetch the application review stream. */
+  includeApplications: boolean;
+  /** Fetch the milestone stream. */
+  includeMilestones: boolean;
+  /** The caller may see this page at all. */
+  isAuthorized: boolean;
+  /** Permission resolution is still in flight — render a placeholder. */
+  isCheckingPermissions: boolean;
+  /**
+   * RESOLVED community-admin access. Distinct from a bare `hasAccess`, which is
+   * false while the check is in flight — gating the admin UI on the raw flag
+   * would flash the reviewer layout in before the admin one.
+   */
+  isCommunityAdmin: boolean;
+}
+
+/**
+ * Resolves what this caller may see in the inbox. Extracted from the page
+ * component so the tri-state permission logic lives in one place and reads
+ * independently of the rendering.
+ */
+function useInboxAccess(community: Community): InboxAccess {
   const { authenticated, ready } = useAuth();
   const { isLoading: isRbacLoading } = usePermissionContext();
   const { hasAccess, isLoading: isAdminLoading } = useCommunityAdminAccess(community?.uid);
   const isProgramReviewer = useIsReviewerType(ReviewerType.PROGRAM);
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
 
-  const includeApplications = hasAccess || isProgramReviewer;
-  const includeMilestones = hasAccess || isMilestoneReviewer;
-  const isAuthorized = authenticated && (hasAccess || isProgramReviewer || isMilestoneReviewer);
+  return {
+    includeApplications: hasAccess || isProgramReviewer,
+    includeMilestones: hasAccess || isMilestoneReviewer,
+    isAuthorized: authenticated && (hasAccess || isProgramReviewer || isMilestoneReviewer),
+    isCheckingPermissions: !ready || isRbacLoading || isAdminLoading,
+    isCommunityAdmin: hasAccess && !isAdminLoading,
+  };
+}
 
-  const isCheckingPermissions = !ready || isRbacLoading || isAdminLoading;
+export function ReviewerInboxPage({
+  community,
+  loadingSlot,
+  syncSelectionToHash = true,
+}: ReviewerInboxPageProps) {
+  const communityId = community?.details?.slug || community?.uid || "";
+  const {
+    includeApplications,
+    includeMilestones,
+    isAuthorized,
+    isCheckingPermissions,
+    isCommunityAdmin,
+  } = useInboxAccess(community);
 
-  const { items, stats, isLoading, error, refetch } = useInboxFeed({
+  // Community admins get the community-wide milestone queue in the SAME list,
+  // with a stage filter. The server decides scope from the authenticated
+  // caller — this flag only drives what the page renders, never what it is
+  // allowed to see.
+  const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
+  const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
+
+  const { items, stats, isLoading, isFetching, totalCount, error, refetch } = useInboxFeed({
     communityId,
     includeApplications,
     includeMilestones,
+    applicationFilters: { limit },
+    attention: attentionFilter,
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
@@ -101,6 +149,23 @@ export function ReviewerInboxPage({
       setSelectedId(id);
     },
     [syncSelectionToHash, selectedId]
+  );
+
+  // A stage filter is a new list: reset paging and drop a selection the list
+  // may no longer contain, so the URL hash never points at a hidden item.
+  const handleAttentionChange = useCallback(
+    (value: MilestoneQueueFilter | null) => {
+      setAttentionFilter(value);
+      setLimit(INBOX_PAGE_SIZE);
+      if (selectedId == null) return;
+      if (syncSelectionToHash) {
+        const url = new URL(window.location.href);
+        url.hash = "";
+        window.history.replaceState({}, "", url.toString());
+      }
+      setSelectedId(null);
+    },
+    [selectedId, syncSelectionToHash]
   );
 
   useEffect(() => {
@@ -163,7 +228,21 @@ export function ReviewerInboxPage({
 
   return (
     <div className="w-full space-y-4">
-      <InboxHeader stats={stats} />
+      <InboxHeader
+        stats={stats}
+        isCommunityAdmin={isCommunityAdmin}
+        attentionFilter={attentionFilter}
+        onAttentionChange={isCommunityAdmin ? handleAttentionChange : undefined}
+      />
+
+      {isCommunityAdmin && (
+        <InboxAttentionFilter
+          stats={stats}
+          value={attentionFilter}
+          onChange={handleAttentionChange}
+          totalMilestones={stats.milestones}
+        />
+      )}
 
       {error ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
@@ -176,7 +255,7 @@ export function ReviewerInboxPage({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(320px,400px)_minmax(0,1fr)]">
-          <aside className="min-w-0 xl:sticky xl:top-4 xl:self-start">
+          <aside className="min-w-0 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:self-start xl:overflow-y-auto">
             {isLoading && items.length === 0 ? (
               <div className="flex items-center justify-center rounded-2xl border border-gray-200 bg-white py-16 dark:border-zinc-700 dark:bg-zinc-900">
                 <Spinner />
@@ -184,23 +263,54 @@ export function ReviewerInboxPage({
             ) : items.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
                 <p className="text-gray-500 dark:text-gray-400">
-                  Nothing assigned to you yet. New reviews will appear here.
+                  {isCommunityAdmin
+                    ? "Nothing needs attention right now."
+                    : "Nothing assigned to you yet. New reviews will appear here."}
                 </p>
               </div>
             ) : (
-              <InboxList
-                items={items}
-                selectedId={selectedId ?? undefined}
-                onSelect={handleSelect}
-                hasBothRoles={hasBothRoles}
-                kindFilter={kindFilter}
-                onKindFilterChange={setKindFilter}
-              />
+              <div
+                className={cn("relative", isFetching && "pointer-events-none")}
+                aria-busy={isFetching}
+              >
+                {isFetching && (
+                  <output className="absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 rounded-t-2xl bg-white/90 py-2 text-xs font-medium text-gray-600 dark:bg-zinc-900/90 dark:text-gray-300">
+                    <Spinner />
+                    Updating list…
+                  </output>
+                )}
+                <div className={cn("transition-opacity", isFetching && "opacity-40")}>
+                  <InboxList
+                    items={items}
+                    selectedId={selectedId ?? undefined}
+                    onSelect={handleSelect}
+                    hasBothRoles={hasBothRoles}
+                    isCommunityAdmin={isCommunityAdmin}
+                    kindFilter={kindFilter}
+                    onKindFilterChange={setKindFilter}
+                    totalCount={totalCount}
+                  />
+                </div>
+                {totalCount != null && totalCount > items.length && (
+                  <Button
+                    variant="secondary"
+                    className="mt-3 w-full"
+                    onClick={() => setLimit((current) => current + INBOX_PAGE_SIZE)}
+                    disabled={isFetching}
+                  >
+                    Show more ({items.length} of {totalCount})
+                  </Button>
+                )}
+              </div>
             )}
           </aside>
 
           <section className="min-w-0">
-            <InboxDetailPane item={selectedItem} communityId={communityId} />
+            <InboxDetailPane
+              item={selectedItem}
+              communityId={communityId}
+              isCommunityAdmin={isCommunityAdmin}
+            />
           </section>
         </div>
       )}
@@ -211,9 +321,10 @@ export function ReviewerInboxPage({
 interface InboxDetailPaneProps {
   item: InboxItem | undefined;
   communityId: string;
+  isCommunityAdmin: boolean;
 }
 
-function InboxDetailPane({ item, communityId }: InboxDetailPaneProps) {
+function InboxDetailPane({ item, communityId, isCommunityAdmin }: InboxDetailPaneProps) {
   if (!item) {
     return (
       <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
@@ -268,6 +379,7 @@ function InboxDetailPane({ item, communityId }: InboxDetailPaneProps) {
     return (
       <InboxMilestoneDetail
         key={item.id}
+        showAdminTools={isCommunityAdmin}
         projectUid={item.projectUid}
         programId={item.programId}
         grantUid={item.grantUid}

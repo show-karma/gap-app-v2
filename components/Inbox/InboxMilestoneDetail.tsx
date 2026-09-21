@@ -4,6 +4,8 @@ import { ChatBubbleLeftRightIcon, DocumentTextIcon, SparklesIcon } from "@heroic
 import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { memo, useCallback, useMemo, useState } from "react";
+import { MilestoneActionItems } from "@/components/Inbox/MilestoneActionItems";
+import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
 import { GrantCommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/GrantCommentsAndActivity";
 import { MilestoneCard } from "@/components/Pages/Admin/MilestonesReview/MilestoneCard";
@@ -245,6 +247,8 @@ interface InboxMilestoneDetailProps {
   milestoneUid: string;
   /** Community id — scopes the comments/activity thread. */
   communityId: string;
+  /** Render the admin-only timeline and follow-up log. Decided by the page. */
+  showAdminTools?: boolean;
 }
 
 export function InboxMilestoneDetail({
@@ -255,6 +259,7 @@ export function InboxMilestoneDetail({
   projectTitle,
   milestoneUid,
   communityId,
+  showAdminTools = false,
 }: InboxMilestoneDetailProps) {
   const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
   const queryClient = useQueryClient();
@@ -436,6 +441,12 @@ export function InboxMilestoneDetail({
               quietSurface
             />
             <InlineAIEvaluation milestone={selectedMilestone} />
+            {showAdminTools && (
+              <>
+                <MilestoneTimeline communityId={communityId} milestoneUid={milestoneUid} />
+                <MilestoneActionItems communityId={communityId} milestoneUid={milestoneUid} />
+              </>
+            )}
           </div>
         ) : (
           <MilestoneCommentsTab

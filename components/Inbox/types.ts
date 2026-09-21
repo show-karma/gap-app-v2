@@ -1,3 +1,5 @@
+import type { MilestoneAttentionReason } from "@/types/funding-platform";
+
 /** The two review streams a Reviewer Inbox unifies. */
 export type InboxKind = "application" | "milestone";
 
@@ -51,6 +53,17 @@ export interface InboxItem {
   grantUid?: string;
   projectSlug?: string;
   milestoneUid?: string;
+
+  /**
+   * ADMIN QUEUE (community admins only). Absent on a reviewer-scoped feed, so
+   * every consumer must treat these as optional rather than defaulting them.
+   */
+  attentionReason?: MilestoneAttentionReason;
+  /** Whole days spent in the current attention stage. */
+  stageAgeDays?: number;
+  openActionItems?: number;
+  nextFollowUpAt?: string;
+  followUpOverdue?: boolean;
 }
 
 /** The 3 stat counters shown in the Inbox header. */
@@ -61,4 +74,11 @@ export interface InboxStats {
   overdue: number;
   applications: number;
   milestones: number;
+
+  /** Admin queue counters over the full feed. Absent for reviewer scope. */
+  pastDue?: number;
+  awaitingReview?: number;
+  awaitingInvoice?: number;
+  invoiceUnpaid?: number;
+  followUpDue?: number;
 }
