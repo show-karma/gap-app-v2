@@ -270,19 +270,27 @@ export function ReviewerInboxPage({
               </div>
             ) : (
               <div
-                className={cn("transition-opacity", isFetching && "pointer-events-none opacity-50")}
+                className={cn("relative", isFetching && "pointer-events-none")}
                 aria-busy={isFetching}
               >
-                <InboxList
-                  items={items}
-                  selectedId={selectedId ?? undefined}
-                  onSelect={handleSelect}
-                  hasBothRoles={hasBothRoles}
-                  isCommunityAdmin={isCommunityAdmin}
-                  kindFilter={kindFilter}
-                  onKindFilterChange={setKindFilter}
-                  totalCount={totalCount}
-                />
+                {isFetching && (
+                  <output className="absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 rounded-t-2xl bg-white/90 py-2 text-xs font-medium text-gray-600 dark:bg-zinc-900/90 dark:text-gray-300">
+                    <Spinner />
+                    Updating list…
+                  </output>
+                )}
+                <div className={cn("transition-opacity", isFetching && "opacity-40")}>
+                  <InboxList
+                    items={items}
+                    selectedId={selectedId ?? undefined}
+                    onSelect={handleSelect}
+                    hasBothRoles={hasBothRoles}
+                    isCommunityAdmin={isCommunityAdmin}
+                    kindFilter={kindFilter}
+                    onKindFilterChange={setKindFilter}
+                    totalCount={totalCount}
+                  />
+                </div>
                 {totalCount != null && totalCount > items.length && (
                   <Button
                     variant="secondary"
