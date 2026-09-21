@@ -24,6 +24,8 @@ import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
 
+const INBOX_PAGE_SIZE = 25;
+
 const HASH_PREFIX = "#review-";
 
 function getSelectedIdFromHash(): string | null {
@@ -108,11 +110,13 @@ export function ReviewerInboxPage({
   // caller — this flag only drives what the page renders, never what it is
   // allowed to see.
   const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
+  const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
 
-  const { items, stats, isLoading, isFetching, error, refetch } = useInboxFeed({
+  const { items, stats, isLoading, isFetching, totalCount, error, refetch } = useInboxFeed({
     communityId,
     includeApplications,
     includeMilestones,
+    applicationFilters: { limit },
     attention: attentionFilter,
   });
 
@@ -145,6 +149,23 @@ export function ReviewerInboxPage({
       setSelectedId(id);
     },
     [syncSelectionToHash, selectedId]
+  );
+
+  // A stage filter is a new list: reset paging and drop a selection the list
+  // may no longer contain, so the URL hash never points at a hidden item.
+  const handleAttentionChange = useCallback(
+    (value: MilestoneQueueFilter | null) => {
+      setAttentionFilter(value);
+      setLimit(INBOX_PAGE_SIZE);
+      if (selectedId == null) return;
+      if (syncSelectionToHash) {
+        const url = new URL(window.location.href);
+        url.hash = "";
+        window.history.replaceState({}, "", url.toString());
+      }
+      setSelectedId(null);
+    },
+    [selectedId, syncSelectionToHash]
   );
 
   useEffect(() => {
@@ -207,13 +228,18 @@ export function ReviewerInboxPage({
 
   return (
     <div className="w-full space-y-4">
-      <InboxHeader stats={stats} isCommunityAdmin={isCommunityAdmin} />
+      <InboxHeader
+        stats={stats}
+        isCommunityAdmin={isCommunityAdmin}
+        attentionFilter={attentionFilter}
+        onAttentionChange={isCommunityAdmin ? handleAttentionChange : undefined}
+      />
 
       {isCommunityAdmin && (
         <InboxAttentionFilter
           stats={stats}
           value={attentionFilter}
-          onChange={setAttentionFilter}
+          onChange={handleAttentionChange}
           totalMilestones={stats.milestones}
         />
       )}
@@ -255,7 +281,18 @@ export function ReviewerInboxPage({
                   isCommunityAdmin={isCommunityAdmin}
                   kindFilter={kindFilter}
                   onKindFilterChange={setKindFilter}
+                  totalCount={totalCount}
                 />
+                {totalCount != null && totalCount > items.length && (
+                  <Button
+                    variant="secondary"
+                    className="mt-3 w-full"
+                    onClick={() => setLimit((current) => current + INBOX_PAGE_SIZE)}
+                    disabled={isFetching}
+                  >
+                    Show more ({items.length} of {totalCount})
+                  </Button>
+                )}
               </div>
             )}
           </aside>

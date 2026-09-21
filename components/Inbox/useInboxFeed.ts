@@ -24,6 +24,8 @@ interface UseInboxFeedResult {
   isLoading: boolean;
   /** A refetch is in flight while previous data stays on screen (e.g. a filter change). */
   isFetching: boolean;
+  /** Total items in the feed before pagination, when the server reports it. */
+  totalCount: number | null;
   error: Error | null;
   /** Re-runs the inbox query — wired to the error card's "Try again" action. */
   refetch: () => void;
@@ -45,7 +47,7 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
     attention = null,
   } = options;
 
-  const { items, stats, isLoading, isFetching, error, refetch } = useReviewerInbox(
+  const { items, pagination, stats, isLoading, isFetching, error, refetch } = useReviewerInbox(
     communityId,
     { ...applicationFilters, ...(attention ? { attention } : {}) },
     {
@@ -58,6 +60,7 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
     stats,
     isLoading,
     isFetching,
+    totalCount: pagination?.total ?? null,
     error: (error as Error | null) ?? null,
     refetch,
   };

@@ -18,7 +18,10 @@ const AttentionLine: FC<{ item: InboxItem }> = ({ item }) => {
 
   return (
     <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-      {item.stageAgeDays}d {STAGE_AGE_LABEL[item.attentionReason]}
+      <span className="font-semibold tabular-nums text-gray-800 dark:text-gray-200">
+        {item.stageAgeDays}d
+      </span>{" "}
+      {STAGE_AGE_LABEL[item.attentionReason]}
     </p>
   );
 };

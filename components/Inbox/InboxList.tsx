@@ -21,6 +21,8 @@ interface InboxListProps {
    * assignment list — "Assigned to you" would be a lie there.
    */
   isCommunityAdmin?: boolean;
+  /** Feed total before pagination; when larger than the list, the label says "x of y". */
+  totalCount?: number | null;
   kindFilter: InboxKindFilter;
   onKindFilterChange: (filter: InboxKindFilter) => void;
 }
@@ -109,6 +111,7 @@ const InboxListComponent: FC<InboxListProps> = ({
   onSelect,
   hasBothRoles,
   isCommunityAdmin = false,
+  totalCount = null,
   kindFilter,
   onKindFilterChange,
 }) => {
@@ -141,7 +144,9 @@ const InboxListComponent: FC<InboxListProps> = ({
           {getListHeading({ hasBothRoles, isCommunityAdmin })}
         </h2>
         <span className="text-xs text-gray-400 dark:text-zinc-500">
-          {shown.length} {pluralize("item", shown.length)}
+          {totalCount != null && totalCount > items.length && kindFilter === "all"
+            ? `${shown.length} of ${totalCount} ${pluralize("item", totalCount)}`
+            : `${shown.length} ${pluralize("item", shown.length)}`}
         </span>
       </div>
 

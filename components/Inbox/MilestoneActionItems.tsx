@@ -15,6 +15,24 @@ import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
+const MS_PER_DAY = 86_400_000;
+
+/** Today's calendar day in UTC, the same basis the follow-up date is stored in. */
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** "today", "in 3 days" or "2 days ago", on UTC calendar days. */
+function relativeDay(iso: string): string {
+  const target = Date.parse(iso.slice(0, 10));
+  const today = Date.parse(todayIsoDate());
+  const delta = Math.round((target - today) / MS_PER_DAY);
+  if (delta === 0) return "today";
+  if (delta === 1) return "tomorrow";
+  if (delta === -1) return "yesterday";
+  return delta > 0 ? `in ${delta} days` : `${-delta} days ago`;
+}
+
 /** True when an open item's follow-up date has already passed. */
 function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
   if (item.completedAt || !item.followUpAt) return false;
@@ -36,6 +54,7 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
 }) => {
   const done = Boolean(item.completedAt);
   const overdue = isFollowUpOverdue(item);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <li className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
@@ -70,7 +89,7 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
                 UTC midnight. Local rendering shows the day before west of UTC.
               */}
               {overdue ? "Follow-up overdue" : "Next follow-up"} ·{" "}
-              {formatDate(item.followUpAt, "UTC")}
+              {formatDate(item.followUpAt, "UTC")} ({relativeDay(item.followUpAt)})
             </span>
           )}
           {done && item.completedAt && (
@@ -85,16 +104,21 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
         </div>
       </div>
 
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        aria-label="Delete action item"
+        onClick={() => setConfirmDelete(true)}
+        className="text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
+      >
+        <TrashIcon className="h-4 w-4" aria-hidden="true" />
+      </Button>
       <DeleteDialog
         title="Delete this action item?"
         deleteFunction={() => onDelete(item)}
         isLoading={isDeleting}
-        buttonElement={{
-          text: "",
-          icon: <TrashIcon className="h-4 w-4" aria-hidden="true" />,
-          styleClass:
-            "text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400 bg-transparent p-1",
-        }}
+        externalIsOpen={confirmDelete}
+        externalSetIsOpen={setConfirmDelete}
       />
     </li>
   );
@@ -180,6 +204,7 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
           Action items
           {openCount > 0 && (
             <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+              <span className="sr-only">, </span>
               {openCount} open {pluralize("item", openCount)}
             </span>
           )}
@@ -211,6 +236,7 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
             <Input
               id="action-item-follow-up"
               type="date"
+              min={todayIsoDate()}
               value={draftFollowUp}
               onChange={(event) => setDraftFollowUp(event.target.value)}
               className="h-8 w-auto"
