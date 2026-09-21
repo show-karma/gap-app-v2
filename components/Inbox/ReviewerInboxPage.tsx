@@ -2,7 +2,6 @@
 
 import { useQueryState } from "nuqs";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -22,6 +21,7 @@ import { InboxAttentionFilter } from "./InboxAttentionFilter";
 import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
+import { InboxProgramFilter } from "./InboxProgramFilter";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -240,14 +240,18 @@ export function ReviewerInboxPage({
       />
 
       {isCommunityAdmin && (
-        <div className="flex flex-wrap items-end gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           <InboxAttentionFilter
             stats={stats}
             value={attentionFilter}
             onChange={handleAttentionChange}
             totalMilestones={stats.milestones}
           />
-          <ProgramFilter />
+          <span
+            className="hidden h-5 w-px bg-gray-200 sm:block dark:bg-zinc-700"
+            aria-hidden="true"
+          />
+          <InboxProgramFilter communityId={communityId} />
         </div>
       )}
 

@@ -10,8 +10,8 @@ vi.mock("nuqs", () => ({
     [options?.defaultValue ?? null, vi.fn()] as const,
 }));
 
-vi.mock("@/components/Pages/Communities/Impact/ProgramFilter", () => ({
-  ProgramFilter: () => null,
+vi.mock("@/components/Inbox/InboxProgramFilter", () => ({
+  InboxProgramFilter: () => null,
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
