@@ -22,6 +22,7 @@ import type {
   MilestoneTimelineEventType,
 } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
+import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
 /**
@@ -89,12 +90,6 @@ const DURATION_LABELS: {
   { key: "toPaymentDays", label: "To payment" },
 ];
 
-/** Shortens a wallet address for display next to an event. */
-function shortenAddress(address: string): string {
-  if (address.length <= 12) return address;
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-
 const TimelineEventRow: FC<{ event: IMilestoneTimelineEvent; isLast: boolean }> = ({
   event,
   isLast,
@@ -133,7 +128,7 @@ const TimelineEventRow: FC<{ event: IMilestoneTimelineEvent; isLast: boolean }> 
         </div>
         {event.actor && (
           <p className="mt-0.5 truncate text-xs text-gray-400 dark:text-zinc-500">
-            by {shortenAddress(event.actor)}
+            by {shortAddress(event.actor)}
           </p>
         )}
         {event.reason && (

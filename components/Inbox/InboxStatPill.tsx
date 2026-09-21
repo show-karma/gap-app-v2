@@ -1,6 +1,7 @@
 "use client";
 
 import React, { type FC } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
 
 /** Visual tones for the Inbox header stat pills. */
@@ -34,22 +35,8 @@ const InboxStatPillComponent: FC<InboxStatPillProps> = ({
   onClick,
   active = false,
 }) => {
-  const Wrapper = onClick ? "button" : "div";
-  return (
-    <Wrapper
-      type={onClick ? "button" : undefined}
-      onClick={onClick}
-      disabled={onClick ? value === 0 : undefined}
-      aria-pressed={onClick ? active : undefined}
-      className={cn(
-        "flex w-full items-center gap-2.5 rounded-xl border bg-white px-4 py-3 text-left dark:bg-zinc-900",
-        active
-          ? "border-brand-blue ring-1 ring-brand-blue"
-          : "border-gray-200 dark:border-zinc-700",
-        onClick &&
-          "transition-colors enabled:hover:border-gray-300 enabled:hover:bg-gray-50 disabled:cursor-default dark:enabled:hover:border-zinc-600 dark:enabled:hover:bg-zinc-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
-      )}
-    >
+  const content = (
+    <>
       <div
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
@@ -64,7 +51,26 @@ const InboxStatPillComponent: FC<InboxStatPillProps> = ({
         </div>
         <div className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{label}</div>
       </div>
-    </Wrapper>
+    </>
+  );
+
+  const surface = cn(
+    "flex h-auto w-full items-center justify-start gap-2.5 rounded-xl border bg-white px-4 py-3 text-left dark:bg-zinc-900",
+    active ? "border-brand-blue ring-1 ring-brand-blue" : "border-gray-200 dark:border-zinc-700"
+  );
+
+  if (!onClick) return <div className={surface}>{content}</div>;
+
+  return (
+    <Button
+      variant="ghost"
+      onClick={onClick}
+      disabled={value === 0}
+      aria-pressed={active}
+      className={cn(surface, "disabled:opacity-100 dark:hover:bg-zinc-800/70")}
+    >
+      {content}
+    </Button>
   );
 };
 

@@ -298,7 +298,11 @@ export function ReviewerInboxPage({
           </aside>
 
           <section className="min-w-0">
-            <InboxDetailPane item={selectedItem} communityId={communityId} />
+            <InboxDetailPane
+              item={selectedItem}
+              communityId={communityId}
+              isCommunityAdmin={isCommunityAdmin}
+            />
           </section>
         </div>
       )}
@@ -309,9 +313,10 @@ export function ReviewerInboxPage({
 interface InboxDetailPaneProps {
   item: InboxItem | undefined;
   communityId: string;
+  isCommunityAdmin: boolean;
 }
 
-function InboxDetailPane({ item, communityId }: InboxDetailPaneProps) {
+function InboxDetailPane({ item, communityId, isCommunityAdmin }: InboxDetailPaneProps) {
   if (!item) {
     return (
       <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
@@ -366,6 +371,7 @@ function InboxDetailPane({ item, communityId }: InboxDetailPaneProps) {
     return (
       <InboxMilestoneDetail
         key={item.id}
+        showAdminTools={isCommunityAdmin}
         projectUid={item.projectUid}
         programId={item.programId}
         grantUid={item.grantUid}

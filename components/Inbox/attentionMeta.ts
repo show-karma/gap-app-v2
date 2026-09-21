@@ -66,16 +66,3 @@ export const STAGE_AGE_LABEL: Record<MilestoneAttentionReason, string> = {
 export const FOLLOW_UP_FILTER: MilestoneQueueFilter = "followup_due";
 
 export const FOLLOW_UP_FILTER_LABEL = "Follow-up due";
-
-/** Human-readable label for any queue filter value. */
-export function getFilterLabel(filter: MilestoneQueueFilter): string {
-  if (filter === "followup_due") return FOLLOW_UP_FILTER_LABEL;
-  return ATTENTION_META[filter].label;
-}
-
-/** Narrows a queue filter to an attention reason, excluding the pseudo-filter. */
-export function isAttentionReason(
-  filter: MilestoneQueueFilter
-): filter is MilestoneAttentionReason {
-  return filter !== FOLLOW_UP_FILTER;
-}

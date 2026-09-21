@@ -33,10 +33,10 @@ function relativeDay(iso: string): string {
   return delta > 0 ? `in ${delta} days` : `${-delta} days ago`;
 }
 
-/** True when an open item's follow-up date has already passed. */
+/** True when an open item's follow-up day is before today (UTC calendar days). */
 function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
   if (item.completedAt || !item.followUpAt) return false;
-  return new Date(item.followUpAt).getTime() < Date.now();
+  return Date.parse(item.followUpAt.slice(0, 10)) < Date.parse(todayIsoDate());
 }
 
 interface ActionItemRowProps {

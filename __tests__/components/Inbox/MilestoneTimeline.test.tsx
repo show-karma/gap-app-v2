@@ -164,7 +164,7 @@ describe("MilestoneTimeline", () => {
 
     render(<MilestoneTimeline {...baseProps} />);
 
-    expect(screen.getByText(/0x1234…5678/)).toBeInTheDocument();
+    expect(screen.getByText(/0x1234\.\.\.345678/)).toBeInTheDocument();
   });
 });
 

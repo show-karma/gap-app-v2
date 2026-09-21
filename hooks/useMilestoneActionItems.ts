@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import {
   type CreateMilestoneActionItemInput,
@@ -19,10 +19,6 @@ interface UseMilestoneActionItemsOptions {
 /** Placeholder id for an item that exists only in the optimistic cache. */
 const OPTIMISTIC_ID_PREFIX = "optimistic-";
 
-export function isOptimisticActionItem(item: IMilestoneActionItem): boolean {
-  return item.id.startsWith(OPTIMISTIC_ID_PREFIX);
-}
-
 /**
  * Reads and mutates the admin follow-up log on a milestone.
  *
@@ -40,7 +36,10 @@ export function useMilestoneActionItems(
   const { enabled = true } = options;
   const queryClient = useQueryClient();
 
-  const queryKey = QUERY_KEYS.milestoneActionItems(communityId, milestoneUid ?? "");
+  const queryKey = useMemo(
+    () => QUERY_KEYS.milestoneActionItems(communityId, milestoneUid ?? ""),
+    [communityId, milestoneUid]
+  );
 
   const query = useQuery<IMilestoneActionItem[]>({
     queryKey,
