@@ -34,6 +34,7 @@ const MarkdownPreview = dynamic(
 /** Detail-pane tabs, mirroring the milestone-review page. */
 const PANEL_TABS = [
   { key: "details" as const, label: "Details", icon: DocumentTextIcon },
+  { key: "ai" as const, label: "AI Review", icon: SparklesIcon },
   { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
 ];
 
@@ -263,7 +264,8 @@ export function InboxMilestoneDetail({
 }: InboxMilestoneDetailProps) {
   const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
   const queryClient = useQueryClient();
-  const [activePanelTab, setActivePanelTab] = useState<"details" | "comments">("details");
+  const [activePanelTab, setActivePanelTab] =
+    useState<(typeof PANEL_TABS)[number]["key"]>("details");
 
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectUid, programId);
 
@@ -440,7 +442,6 @@ export function InboxMilestoneDetail({
               showAIEvaluationButton={false}
               quietSurface
             />
-            <InlineAIEvaluation milestone={selectedMilestone} />
             {showAdminTools && (
               <>
                 <MilestoneTimeline communityId={communityId} milestoneUid={milestoneUid} />
@@ -448,6 +449,8 @@ export function InboxMilestoneDetail({
               </>
             )}
           </div>
+        ) : activePanelTab === "ai" ? (
+          <InlineAIEvaluation milestone={selectedMilestone} />
         ) : (
           <MilestoneCommentsTab
             projectUID={project?.uid ?? projectUid}

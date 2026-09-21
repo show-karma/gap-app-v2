@@ -1,6 +1,8 @@
 "use client";
 
+import { useQueryState } from "nuqs";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -111,6 +113,7 @@ export function ReviewerInboxPage({
   // allowed to see.
   const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
   const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
+  const [programId] = useQueryState("programId");
 
   const { items, stats, isLoading, isFetching, totalCount, error, refetch } = useInboxFeed({
     communityId,
@@ -118,6 +121,7 @@ export function ReviewerInboxPage({
     includeMilestones,
     applicationFilters: { limit },
     attention: attentionFilter,
+    programId,
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
@@ -236,12 +240,15 @@ export function ReviewerInboxPage({
       />
 
       {isCommunityAdmin && (
-        <InboxAttentionFilter
-          stats={stats}
-          value={attentionFilter}
-          onChange={handleAttentionChange}
-          totalMilestones={stats.milestones}
-        />
+        <div className="flex flex-wrap items-end gap-4">
+          <InboxAttentionFilter
+            stats={stats}
+            value={attentionFilter}
+            onChange={handleAttentionChange}
+            totalMilestones={stats.milestones}
+          />
+          <ProgramFilter />
+        </div>
       )}
 
       {error ? (

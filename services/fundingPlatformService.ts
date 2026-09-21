@@ -116,6 +116,8 @@ export interface IApplicationFilters {
     | "aiEvaluationScore";
   sortOrder?: "asc" | "desc";
   reviewerAddress?: string;
+  /** Reviewer inbox: narrow the feed to one of the community's programs. */
+  programId?: string;
   reviewerAddresses?: string[];
   /**
    * Reviewer-inbox only: narrows the ADMIN milestone queue to one stage.
