@@ -62,7 +62,7 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
         checked={done}
         onCheckedChange={() => onToggle(item)}
         aria-label={done ? "Reopen action item" : "Mark action item done"}
-        className="mt-0.5"
+        className="mt-0.5 h-5 w-5"
       />
 
       <div className="min-w-0 flex-1">
@@ -93,11 +93,11 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
             </span>
           )}
           {done && item.completedAt && (
-            <span className="text-gray-400 dark:text-zinc-500">
+            <span className="text-gray-500 dark:text-zinc-400">
               Done {formatDate(item.completedAt, "UTC")}
             </span>
           )}
-          <span className="text-gray-400 dark:text-zinc-500">
+          <span className="text-gray-500 dark:text-zinc-400">
             Added {formatDate(item.createdAt, "UTC")} by{" "}
             {item.createdByName || shortAddress(item.createdByAddress)}
           </span>
@@ -106,7 +106,7 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
 
       <Button
         variant="ghost"
-        size="icon-xs"
+        size="icon-sm"
         aria-label="Delete action item"
         onClick={() => setConfirmDelete(true)}
         className="text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"

@@ -45,15 +45,15 @@ const Chip: FC<ChipProps> = ({ label, count, active, onClick, dotClass }) => (
     onClick={onClick}
     aria-pressed={active}
     className={cn(
-      "rounded-full text-[13px] font-medium",
-      active && "border border-brand-blue text-brand-blue dark:text-blue-300"
+      "min-h-11 rounded-full text-[13px] font-medium focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 xl:min-h-8",
+      active && "border border-primary-500 text-primary-700 dark:text-primary-300"
     )}
   >
     {dotClass ? (
       <span className={cn("h-1.5 w-1.5 rounded-full", dotClass)} aria-hidden="true" />
     ) : null}
     <span>{label}</span>
-    <span className="text-xs text-gray-400 dark:text-zinc-500">{count}</span>
+    <span className="text-xs text-gray-500 dark:text-zinc-400">{count}</span>
   </Button>
 );
 

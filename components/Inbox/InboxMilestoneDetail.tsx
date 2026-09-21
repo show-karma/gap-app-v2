@@ -118,8 +118,8 @@ function InlineAIEvaluation({ milestone }: { milestone: GrantMilestoneWithComple
         </p>
       ) : isLoading ? (
         <div className="space-y-3">
-          <div className="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-zinc-800" />
-          <div className="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-zinc-800" />
+          <div className="h-16 animate-pulse motion-reduce:animate-none rounded-lg bg-gray-200 dark:bg-zinc-800" />
+          <div className="h-16 animate-pulse motion-reduce:animate-none rounded-lg bg-gray-200 dark:bg-zinc-800" />
         </div>
       ) : error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/10">
@@ -173,7 +173,7 @@ function MilestoneCommentsTab({
     return (
       <output
         aria-label="Loading comments"
-        className="block animate-pulse space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
+        className="block animate-pulse motion-reduce:animate-none space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
       >
         <span className="block h-5 w-40 rounded bg-gray-200 dark:bg-zinc-700" />
         <span className="block h-4 w-full rounded bg-gray-100 dark:bg-zinc-800" />
@@ -266,6 +266,28 @@ export function InboxMilestoneDetail({
   const queryClient = useQueryClient();
   const [activePanelTab, setActivePanelTab] =
     useState<(typeof PANEL_TABS)[number]["key"]>("details");
+  const handleTabKeyDown = useCallback((event: React.KeyboardEvent<HTMLButtonElement>) => {
+    const keys = PANEL_TABS.map((tab) => tab.key);
+    const current = keys.indexOf(
+      event.currentTarget.id.replace("inbox-ms-tab-", "") as (typeof keys)[number]
+    );
+    if (current < 0) return;
+    const step =
+      event.key === "ArrowRight"
+        ? 1
+        : event.key === "ArrowLeft"
+          ? -1
+          : event.key === "Home"
+            ? -current
+            : event.key === "End"
+              ? keys.length - 1 - current
+              : 0;
+    if (step === 0) return;
+    event.preventDefault();
+    const next = keys[(current + step + keys.length) % keys.length];
+    setActivePanelTab(next);
+    document.getElementById(`inbox-ms-tab-${next}`)?.focus();
+  }, []);
 
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectUid, programId);
 
@@ -337,7 +359,10 @@ export function InboxMilestoneDetail({
 
   if (isLoading || isLoadingPermissions) {
     return (
-      <output aria-label="Loading milestone" className="block animate-pulse space-y-4">
+      <output
+        aria-label="Loading milestone"
+        className="block animate-pulse motion-reduce:animate-none space-y-4"
+      >
         <span className="block h-6 w-1/3 rounded bg-gray-200 dark:bg-zinc-700" />
         <span className="block h-4 w-1/2 rounded bg-gray-200 dark:bg-zinc-700" />
         <span className="block h-40 w-full rounded bg-gray-200 dark:bg-zinc-700" />
@@ -392,9 +417,11 @@ export function InboxMilestoneDetail({
               id={`inbox-ms-tab-${tab.key}`}
               aria-selected={isActive}
               aria-controls={`inbox-ms-panel-${tab.key}`}
+              tabIndex={isActive ? 0 : -1}
               onClick={() => setActivePanelTab(tab.key)}
+              onKeyDown={handleTabKeyDown}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 xl:min-h-8",
                 isActive
                   ? "bg-white text-gray-950 shadow-sm dark:bg-zinc-950 dark:text-white"
                   : "text-gray-600 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
