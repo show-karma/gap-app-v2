@@ -12,6 +12,7 @@ import type {
   IFundingApplication,
   IFundingProgramConfig,
   IPaginatedApplicationsResponse,
+  MilestoneQueueFilter,
 } from "@/types/funding-platform";
 import { emitApplicationStatusChanged } from "@/utilities/analytics/emitters/application";
 import { api } from "@/utilities/api/client";
@@ -116,6 +117,11 @@ export interface IApplicationFilters {
   sortOrder?: "asc" | "desc";
   reviewerAddress?: string;
   reviewerAddresses?: string[];
+  /**
+   * Reviewer-inbox only: narrows the ADMIN milestone queue to one stage.
+   * Ignored by every other endpoint and inert for non-admin callers.
+   */
+  attention?: MilestoneQueueFilter;
 }
 
 export type FundingProgram = {

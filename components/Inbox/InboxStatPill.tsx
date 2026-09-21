@@ -1,6 +1,7 @@
 "use client";
 
 import React, { type FC } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
 
 /** Visual tones for the Inbox header stat pills. */
@@ -21,26 +22,57 @@ interface InboxStatPillProps {
   /** Caption under the count. */
   label: string;
   tone: StatPillTone;
+  /** When set, the pill acts as a filter toggle for its stage. */
+  onClick?: () => void;
+  active?: boolean;
 }
 
-const InboxStatPillComponent: FC<InboxStatPillProps> = ({ icon: Icon, value, label, tone }) => (
-  <div className="flex items-center gap-2.5 rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
-    <div
-      className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-        ICON_WRAP[tone]
-      )}
-    >
-      <Icon className="h-5 w-5" aria-hidden="true" />
-    </div>
-    <div className="min-w-0">
-      <div className="text-xl font-bold leading-none tabular-nums text-gray-900 dark:text-white">
-        {value}
+const InboxStatPillComponent: FC<InboxStatPillProps> = ({
+  icon: Icon,
+  value,
+  label,
+  tone,
+  onClick,
+  active = false,
+}) => {
+  const content = (
+    <>
+      <div
+        className={cn(
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+          ICON_WRAP[tone]
+        )}
+      >
+        <Icon className="h-5 w-5" aria-hidden="true" />
       </div>
-      <div className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{label}</div>
-    </div>
-  </div>
-);
+      <div className="min-w-0">
+        <div className="text-xl font-bold leading-none tabular-nums text-gray-900 dark:text-white">
+          {value}
+        </div>
+        <div className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{label}</div>
+      </div>
+    </>
+  );
+
+  const surface = cn(
+    "flex h-auto w-full items-center justify-start gap-2.5 rounded-xl border bg-white px-4 py-3 text-left dark:bg-zinc-900",
+    active ? "border-brand-blue ring-1 ring-brand-blue" : "border-gray-200 dark:border-zinc-700"
+  );
+
+  if (!onClick) return <div className={surface}>{content}</div>;
+
+  return (
+    <Button
+      variant="ghost"
+      onClick={onClick}
+      disabled={value === 0}
+      aria-pressed={active}
+      className={cn(surface, "disabled:opacity-100 dark:hover:bg-zinc-800/70")}
+    >
+      {content}
+    </Button>
+  );
+};
 
 export const InboxStatPill = React.memo(InboxStatPillComponent);
 InboxStatPill.displayName = "InboxStatPill";

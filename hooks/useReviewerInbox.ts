@@ -9,6 +9,11 @@ interface UseReviewerInboxOptions {
   enabled?: boolean;
 }
 
+/**
+ * Fallback while the feed loads. The admin-queue counters default to 0 so the
+ * header can render its pills without null checks; a reviewer-scoped response
+ * simply never overwrites them and the admin pills are not rendered at all.
+ */
 const EMPTY_STATS: IReviewerInboxResponse["stats"] = {
   action: 0,
   waiting: 0,
@@ -16,6 +21,11 @@ const EMPTY_STATS: IReviewerInboxResponse["stats"] = {
   overdue: 0,
   applications: 0,
   milestones: 0,
+  pastDue: 0,
+  awaitingReview: 0,
+  awaitingInvoice: 0,
+  invoiceUnpaid: 0,
+  followUpDue: 0,
 };
 
 /**

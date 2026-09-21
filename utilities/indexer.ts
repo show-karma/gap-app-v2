@@ -184,6 +184,19 @@ export const INDEXER = {
       REVIEWER_INBOX: (communityId: string, qs?: string) =>
         `/v2/funding-applications/community/${communityId}/reviewer-inbox${qs ? `?${qs}` : ""}`,
     },
+    // Admin milestone queue detail: lifecycle timeline + follow-up action items.
+    MILESTONE_ACTION_ITEMS: {
+      TIMELINE: (communityId: string, milestoneUid: string) =>
+        `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/timeline`,
+      LIST: (communityId: string, milestoneUid: string) =>
+        `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/items`,
+      CREATE: (communityId: string, milestoneUid: string) =>
+        `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/items`,
+      UPDATE: (communityId: string, id: string) =>
+        `/v2/milestone-action-items/${communityId}/items/${id}`,
+      DELETE: (communityId: string, id: string) =>
+        `/v2/milestone-action-items/${communityId}/items/${id}`,
+    },
     AUTH: {
       PERMISSIONS: (params?: {
         communityId?: string;

@@ -18,3 +18,13 @@ export const BUCKET_META: Record<ReviewBucket, { key: ReviewBucket; label: strin
   waiting: { key: "waiting", label: "In progress" },
   done: { key: "done", label: "Cleared" },
 };
+
+/**
+ * Bucket labels for the community-wide admin queue, where "Waiting on you"
+ * would misdescribe items that are waiting on the grantee.
+ */
+export const ADMIN_BUCKET_LABEL: Record<ReviewBucket, string> = {
+  action: "Needs action",
+  waiting: "Waiting on grantee",
+  done: "Cleared",
+};

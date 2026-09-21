@@ -28,6 +28,11 @@ const STATS = {
   applications: 1,
   milestones: 0,
 };
+/**
+ * The hook's loading/fallback stats. Carries the admin-queue counters at 0 so
+ * the header can render its pills without null checks; a reviewer-scoped
+ * response simply never overwrites them.
+ */
 const EMPTY_STATS = {
   action: 0,
   waiting: 0,
@@ -35,6 +40,11 @@ const EMPTY_STATS = {
   overdue: 0,
   applications: 0,
   milestones: 0,
+  pastDue: 0,
+  awaitingReview: 0,
+  awaitingInvoice: 0,
+  invoiceUnpaid: 0,
+  followUpDue: 0,
 };
 
 describe("useReviewerInbox", () => {
