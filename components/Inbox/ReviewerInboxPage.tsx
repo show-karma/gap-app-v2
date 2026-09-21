@@ -14,6 +14,7 @@ import { ReviewerType } from "@/src/core/rbac/types";
 import type { MilestoneQueueFilter } from "@/types/funding-platform";
 import type { Community } from "@/types/v2/community";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
+import { cn } from "@/utilities/tailwind";
 import ApplicationDetailView from "../FundingPlatform/ApplicationView/ApplicationDetailView";
 import { InboxAttentionFilter } from "./InboxAttentionFilter";
 import { InboxHeader } from "./InboxHeader";
@@ -108,7 +109,7 @@ export function ReviewerInboxPage({
   // allowed to see.
   const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
 
-  const { items, stats, isLoading, error, refetch } = useInboxFeed({
+  const { items, stats, isLoading, isFetching, error, refetch } = useInboxFeed({
     communityId,
     includeApplications,
     includeMilestones,
@@ -242,15 +243,20 @@ export function ReviewerInboxPage({
                 </p>
               </div>
             ) : (
-              <InboxList
-                items={items}
-                selectedId={selectedId ?? undefined}
-                onSelect={handleSelect}
-                hasBothRoles={hasBothRoles}
-                isCommunityAdmin={isCommunityAdmin}
-                kindFilter={kindFilter}
-                onKindFilterChange={setKindFilter}
-              />
+              <div
+                className={cn("transition-opacity", isFetching && "pointer-events-none opacity-50")}
+                aria-busy={isFetching}
+              >
+                <InboxList
+                  items={items}
+                  selectedId={selectedId ?? undefined}
+                  onSelect={handleSelect}
+                  hasBothRoles={hasBothRoles}
+                  isCommunityAdmin={isCommunityAdmin}
+                  kindFilter={kindFilter}
+                  onKindFilterChange={setKindFilter}
+                />
+              </div>
             )}
           </aside>
 

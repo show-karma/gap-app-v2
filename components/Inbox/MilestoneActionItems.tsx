@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMilestoneActionItems } from "@/hooks/useMilestoneActionItems";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
+import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
 /** True when an open item's follow-up date has already passed. */
@@ -78,7 +79,8 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
             </span>
           )}
           <span className="text-gray-400 dark:text-zinc-500">
-            Added {formatDate(item.createdAt, "UTC")}
+            Added {formatDate(item.createdAt, "UTC")} by{" "}
+            {item.createdByName || shortAddress(item.createdByAddress)}
           </span>
         </div>
       </div>
