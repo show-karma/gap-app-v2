@@ -228,7 +228,7 @@ export function ReviewerInboxPage({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(320px,400px)_minmax(0,1fr)]">
-          <aside className="min-w-0 xl:sticky xl:top-4 xl:self-start">
+          <aside className="min-w-0 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:self-start xl:overflow-y-auto">
             {isLoading && items.length === 0 ? (
               <div className="flex items-center justify-center rounded-2xl border border-gray-200 bg-white py-16 dark:border-zinc-700 dark:bg-zinc-900">
                 <Spinner />
@@ -236,7 +236,9 @@ export function ReviewerInboxPage({
             ) : items.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
                 <p className="text-gray-500 dark:text-gray-400">
-                  Nothing assigned to you yet. New reviews will appear here.
+                  {isCommunityAdmin
+                    ? "Nothing needs attention right now."
+                    : "Nothing assigned to you yet. New reviews will appear here."}
                 </p>
               </div>
             ) : (

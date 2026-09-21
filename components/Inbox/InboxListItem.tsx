@@ -2,36 +2,24 @@
 
 import pluralize from "pluralize";
 import React, { type FC } from "react";
-import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
+import { STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
 import { AiScore, DueChip, KindTag, StatusBadge } from "@/components/Inbox/InboxBadges";
 import type { InboxItem } from "@/components/Inbox/types";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
 /**
- * Why this milestone is queued, plus how long it has been stuck there.
+ * How long this milestone has been stuck in its current stage. The stage
+ * itself is already shown by the status badge, so only the age is rendered.
  * Renders nothing for reviewer-scoped items, which carry no attention reason.
  */
 const AttentionLine: FC<{ item: InboxItem }> = ({ item }) => {
-  if (!item.attentionReason) return null;
-  const meta = ATTENTION_META[item.attentionReason];
+  if (!item.attentionReason || typeof item.stageAgeDays !== "number") return null;
 
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-      <span
-        className={cn(
-          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-          meta.badgeClass
-        )}
-      >
-        {meta.label}
-      </span>
-      {typeof item.stageAgeDays === "number" && (
-        <span className="text-[11px] text-gray-500 dark:text-gray-400">
-          {item.stageAgeDays}d {STAGE_AGE_LABEL[item.attentionReason]}
-        </span>
-      )}
-    </div>
+    <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+      {item.stageAgeDays}d {STAGE_AGE_LABEL[item.attentionReason]}
+    </p>
   );
 };
 

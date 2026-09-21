@@ -3,7 +3,7 @@
 import pluralize from "pluralize";
 import React, { type FC, useMemo } from "react";
 import { InboxListItem } from "@/components/Inbox/InboxListItem";
-import { BUCKET_META, BUCKET_RANK } from "@/components/Inbox/statusToBucket";
+import { ADMIN_BUCKET_LABEL, BUCKET_META, BUCKET_RANK } from "@/components/Inbox/statusToBucket";
 import type { InboxItem, ReviewBucket } from "@/components/Inbox/types";
 import { cn } from "@/utilities/tailwind";
 
@@ -48,11 +48,15 @@ function getListHeading(args: { hasBothRoles: boolean; isCommunityAdmin?: boolea
 /* ------------------------------------------------------------------ */
 /* Bucket section label                                                */
 /* ------------------------------------------------------------------ */
-const BucketHeader: FC<{ bucket: ReviewBucket; count: number }> = ({ bucket, count }) => (
+const BucketHeader: FC<{ bucket: ReviewBucket; count: number; isCommunityAdmin: boolean }> = ({
+  bucket,
+  count,
+  isCommunityAdmin,
+}) => (
   <div className="flex items-center gap-2 pb-2 pt-1">
     <span className={cn("h-2 w-2 rounded-full", BUCKET_DOT[bucket])} />
     <h3 className="text-[13px] font-semibold text-gray-700 dark:text-gray-200">
-      {BUCKET_META[bucket].label}
+      {isCommunityAdmin ? ADMIN_BUCKET_LABEL[bucket] : BUCKET_META[bucket].label}
     </h3>
     <span className="text-xs font-medium text-gray-400 dark:text-zinc-500">{count}</span>
   </div>
@@ -150,7 +154,11 @@ const InboxListComponent: FC<InboxListProps> = ({
       <div className="space-y-4">
         {groups.map((group) => (
           <div key={group.bucket}>
-            <BucketHeader bucket={group.bucket} count={group.list.length} />
+            <BucketHeader
+              bucket={group.bucket}
+              count={group.list.length}
+              isCommunityAdmin={isCommunityAdmin}
+            />
             <div className="space-y-2.5">
               {group.list.map((item) => (
                 <InboxListItem
