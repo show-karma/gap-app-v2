@@ -147,17 +147,30 @@ describe("DeleteDialog", () => {
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
     });
 
-    it("should call externalSetIsOpen when dialog is opened", async () => {
+    it("should call externalSetIsOpen when its own trigger is clicked", async () => {
       const user = userEvent.setup();
       const mockSetIsOpen = vi.fn();
       render(
-        <DeleteDialog {...defaultProps} externalIsOpen={false} externalSetIsOpen={mockSetIsOpen} />
+        <DeleteDialog
+          {...defaultProps}
+          buttonElement={{ text: "Remove", icon: null, styleClass: "" }}
+          externalIsOpen={false}
+          externalSetIsOpen={mockSetIsOpen}
+        />
       );
 
-      const triggerButton = screen.getByText("Delete Project");
-      await user.click(triggerButton);
+      await user.click(screen.getByText("Remove"));
 
       expect(mockSetIsOpen).toHaveBeenCalledWith(true);
+    });
+
+    it("renders no default trigger in controlled mode", () => {
+      // A controlled caller drives the dialog from its own control. Defaulting
+      // to the built-in trigger put a stray button reading "Delete Project"
+      // beside it, whatever was actually being deleted.
+      render(<DeleteDialog {...defaultProps} externalIsOpen={false} externalSetIsOpen={vi.fn()} />);
+
+      expect(screen.queryByText("Delete Project")).toBeNull();
     });
 
     it("should call externalSetIsOpen when dialog is closed", async () => {
