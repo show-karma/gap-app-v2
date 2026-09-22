@@ -5,6 +5,7 @@ import React, { type FC } from "react";
 import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
 import { AiScore, DueChip, KindTag, StatusBadge } from "@/components/Inbox/InboxBadges";
 import type { InboxItem } from "@/components/Inbox/types";
+import { isBeforeToday } from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
@@ -29,10 +30,19 @@ const AttentionLine: FC<{ item: InboxItem }> = ({ item }) => {
 /**
  * Follow-up state from the admin action-item log. Surfaces an overdue
  * follow-up prominently — a chase date nobody is reminded of is inert.
+ *
+ * `followUpOverdue` arrives from the server, which evaluates it against the
+ * UTC day. That marks a follow-up due TODAY as overdue for every viewer west
+ * of UTC once their evening crosses midnight UTC. When we have the date
+ * itself, re-evaluate it against the viewer's own calendar day so the row
+ * agrees with the detail pane; fall back to the server flag otherwise.
  */
 const FollowUpLine: FC<{ item: InboxItem }> = ({ item }) => {
   const openCount = item.openActionItems ?? 0;
-  if (openCount === 0 && !item.followUpOverdue) return null;
+  const overdue = item.nextFollowUpAt
+    ? isBeforeToday(item.nextFollowUpAt)
+    : Boolean(item.followUpOverdue);
+  if (openCount === 0 && !overdue) return null;
 
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -41,11 +51,11 @@ const FollowUpLine: FC<{ item: InboxItem }> = ({ item }) => {
           {openCount} open {pluralize("action item", openCount)}
         </span>
       )}
-      {item.followUpOverdue && (
+      {overdue && (
         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 dark:text-red-400">
           <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
           Follow-up overdue
-          {/* Calendar day stored as UTC midnight — see MilestoneActionItems. */}
+          {/* Calendar day stored as UTC midnight — see utilities/calendarDay. */}
           {item.nextFollowUpAt ? ` · ${formatDate(item.nextFollowUpAt, "UTC")}` : ""}
         </span>
       )}
@@ -69,6 +79,14 @@ interface InboxListItemProps {
   item: InboxItem;
   selected: boolean;
   onSelect: (id: string) => void;
+  /**
+   * Fields the list has determined carry the same value on EVERY visible row
+   * (e.g. every row is a milestone, every row is the same program). A constant
+   * costs a line of scanning on every row and distinguishes nothing, so the
+   * list suppresses it. See InboxList.
+   */
+  hideKind?: boolean;
+  hideSubtitle?: boolean;
 }
 
 /**
@@ -76,7 +94,13 @@ interface InboxListItemProps {
  * title, who/project line, a due chip (milestones only) and the AI score.
  * Purely presentational — selection state and handling are driven by props.
  */
-const InboxListItemComponent: FC<InboxListItemProps> = ({ item, selected, onSelect }) => {
+const InboxListItemComponent: FC<InboxListItemProps> = ({
+  item,
+  selected,
+  onSelect,
+  hideKind = false,
+  hideSubtitle = false,
+}) => {
   const secondary = item.kind === "milestone" ? item.project : item.who;
 
   return (
@@ -92,18 +116,18 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({ item, selected, onSele
       )}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <KindTag kind={item.kind} />
+        {hideKind ? null : <KindTag kind={item.kind} />}
         {item.attentionReason ? (
           <span
             className={cn(
-              "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+              "ml-auto inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
               ATTENTION_META[item.attentionReason].badgeClass
             )}
           >
             {ATTENTION_META[item.attentionReason].label}
           </span>
         ) : (
-          <StatusBadge status={item.status} className="shrink-0" />
+          <StatusBadge status={item.status} className="ml-auto shrink-0" />
         )}
       </div>
 
@@ -115,7 +139,7 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({ item, selected, onSele
         <p className="mt-1.5 truncate text-xs text-gray-500 dark:text-gray-400">{secondary}</p>
       )}
 
-      {item.kind === "milestone" && item.subtitle && (
+      {item.kind === "milestone" && item.subtitle && !hideSubtitle && (
         <p className="mt-1.5 truncate text-xs text-gray-500 dark:text-zinc-400">{item.subtitle}</p>
       )}
 

@@ -1,4 +1,11 @@
 import { render, screen } from "@testing-library/react";
+
+// The real component reaches for ENS/Privy/contributor stores; this suite only
+// cares that the actor is rendered through it rather than as a raw address.
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
+  default: ({ address }: { address?: string }) => <span data-testid="profile-name">{address}</span>,
+}));
+
 import type { IMilestoneTimeline } from "@/types/funding-platform";
 
 const mockUseMilestoneAdminTimeline = vi.fn();
@@ -164,7 +171,11 @@ describe("MilestoneTimeline", () => {
 
     render(<MilestoneTimeline {...baseProps} />);
 
-    expect(screen.getByText(/0x1234\.\.\.345678/)).toBeInTheDocument();
+    // Rendered through EthereumAddressToProfileName, the same component the
+    // verification card uses, so one person reads the same way in both places.
+    expect(screen.getByTestId("profile-name")).toHaveTextContent(
+      "0x1234567890abcdef1234567890abcdef12345678"
+    );
   });
 });
 

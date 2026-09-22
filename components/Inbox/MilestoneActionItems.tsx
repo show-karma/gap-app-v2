@@ -11,32 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useMilestoneActionItems } from "@/hooks/useMilestoneActionItems";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
+import { describeRelativeDay, isBeforeToday, todayCalendarDay } from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
-const MS_PER_DAY = 86_400_000;
-
-/** Today's calendar day in UTC, the same basis the follow-up date is stored in. */
-function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-/** "today", "in 3 days" or "2 days ago", on UTC calendar days. */
-function relativeDay(iso: string): string {
-  const target = Date.parse(iso.slice(0, 10));
-  const today = Date.parse(todayIsoDate());
-  const delta = Math.round((target - today) / MS_PER_DAY);
-  if (delta === 0) return "today";
-  if (delta === 1) return "tomorrow";
-  if (delta === -1) return "yesterday";
-  return delta > 0 ? `in ${delta} days` : `${-delta} days ago`;
-}
-
-/** True when an open item's follow-up day is before today (UTC calendar days). */
+/** True when an open item's follow-up day falls before the viewer's today. */
 function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
-  if (item.completedAt || !item.followUpAt) return false;
-  return Date.parse(item.followUpAt.slice(0, 10)) < Date.parse(todayIsoDate());
+  if (item.completedAt) return false;
+  return isBeforeToday(item.followUpAt);
 }
 
 interface ActionItemRowProps {
@@ -86,10 +69,12 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
             >
               {/*
                 A follow-up date is a calendar day the admin picked, stored as
-                UTC midnight. Local rendering shows the day before west of UTC.
+                UTC midnight — so it is PRINTED in UTC (rendering it locally
+                would show the day before west of UTC) but COMPARED against the
+                viewer's local day. See utilities/calendarDay.
               */}
               {overdue ? "Follow-up overdue" : "Next follow-up"} ·{" "}
-              {formatDate(item.followUpAt, "UTC")} ({relativeDay(item.followUpAt)})
+              {formatDate(item.followUpAt, "UTC")} ({describeRelativeDay(item.followUpAt)})
             </span>
           )}
           {done && item.completedAt && (
@@ -117,6 +102,9 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
         title="Delete this action item?"
         deleteFunction={() => onDelete(item)}
         isLoading={isDeleting}
+        // The trash button above is the trigger. Without this, DeleteDialog
+        // renders its own default trigger — labelled "Delete Project".
+        buttonElement={null}
         externalIsOpen={confirmDelete}
         externalSetIsOpen={setConfirmDelete}
       />
@@ -236,7 +224,7 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
             <Input
               id="action-item-follow-up"
               type="date"
-              min={todayIsoDate()}
+              min={todayCalendarDay()}
               value={draftFollowUp}
               onChange={(event) => setDraftFollowUp(event.target.value)}
               className="h-8 w-auto"
