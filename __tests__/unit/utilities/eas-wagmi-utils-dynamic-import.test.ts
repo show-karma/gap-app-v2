@@ -74,11 +74,17 @@ describe("eas-wagmi-utils dynamic imports", () => {
 
       const result = await publicClientToProvider(mockClient);
 
-      expect(mockJsonRpcProvider).toHaveBeenCalledWith("https://rpc.optimism.test", {
-        chainId: 10,
-        name: "Optimism",
-        ensAddress: "0xens",
-      });
+      expect(mockJsonRpcProvider).toHaveBeenCalledWith(
+        "https://rpc.optimism.test",
+        {
+          chainId: 10,
+          name: "Optimism",
+          ensAddress: "0xens",
+        },
+        // The chain is already known, so ethers must not probe for it — that
+        // probe retries every second forever against an unreachable RPC.
+        { staticNetwork: true }
+      );
       expect(result).toBeDefined();
     });
 

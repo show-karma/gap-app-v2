@@ -53,7 +53,9 @@ describe("InboxList kind toggle", () => {
     expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Applications (1)" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Milestones (1)" })).toBeInTheDocument();
-    expect(screen.getByText("Filter")).toBeInTheDocument();
+    // The heading names the CONTENT; it used to read "Filter" here.
+    expect(screen.getByText("Assigned to you")).toBeInTheDocument();
+    expect(screen.queryByText("Filter")).toBeNull();
   });
 
   it("should_hide_kind_toggle_when_user_has_a_single_stream", () => {
