@@ -12,7 +12,7 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
-import type { MilestoneQueueFilter } from "@/types/funding-platform";
+import type { MilestoneQueueFilter, ReviewerInboxSort } from "@/types/funding-platform";
 import type { Community } from "@/types/v2/community";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { cn } from "@/utilities/tailwind";
@@ -22,6 +22,7 @@ import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
 import { InboxProgramFilter } from "./InboxProgramFilter";
+import { InboxSortControl } from "./InboxSortControl";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -112,6 +113,7 @@ export function ReviewerInboxPage({
   // caller — this flag only drives what the page renders, never what it is
   // allowed to see.
   const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
+  const [inboxSort, setInboxSort] = useState<ReviewerInboxSort>("priority");
   const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
   const [programId] = useQueryState("programId");
 
@@ -122,6 +124,7 @@ export function ReviewerInboxPage({
     applicationFilters: { limit },
     attention: attentionFilter,
     programId,
+    inboxSort,
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
@@ -204,6 +207,14 @@ export function ReviewerInboxPage({
     [syncSelectionToHash]
   );
 
+  // A different ordering is a different page-one set, so paging resets and the
+  // first item of the incoming list is opened, exactly as for a stage change.
+  const handleSortChange = useCallback((value: ReviewerInboxSort) => {
+    setInboxSort(value);
+    setLimit(INBOX_PAGE_SIZE);
+    autoSelectPending.current = true;
+  }, []);
+
   useEffect(() => {
     if (!syncSelectionToHash) return;
     const sync = () => setSelectedId(getSelectedIdFromHash());
@@ -285,6 +296,11 @@ export function ReviewerInboxPage({
             aria-hidden="true"
           />
           <InboxProgramFilter communityId={communityId} />
+          <span
+            className="hidden h-5 w-px bg-gray-200 sm:block dark:bg-zinc-700"
+            aria-hidden="true"
+          />
+          <InboxSortControl value={inboxSort} onChange={handleSortChange} />
         </div>
       )}
 
