@@ -1,4 +1,4 @@
-import { PAGES } from "./pages";
+import { NON_PROFITS_PAGES, PAGES } from "./pages";
 
 /**
  * App route TEMPLATES (with `:param` placeholders) for the Karma agent backend.
@@ -65,5 +65,7 @@ function collectRoutes(node: unknown, out: Set<string>): void {
 export const APP_ROUTE_TEMPLATES: readonly string[] = (() => {
   const out = new Set<string>();
   collectRoutes(PAGES, out);
+  // NON_PROFITS_PAGES (Find Funders) is exported separately from PAGES.
+  collectRoutes(NON_PROFITS_PAGES, out);
   return Array.from(out).sort();
 })();
