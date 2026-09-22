@@ -41,11 +41,11 @@ const Chip: FC<ChipProps> = ({ label, count, active, onClick, dotClass }) => (
   <Button
     type="button"
     variant={active ? "secondary" : "outline"}
-    size="sm"
+    size="chip"
     onClick={onClick}
     aria-pressed={active}
     className={cn(
-      "min-h-11 rounded-full text-sm font-medium focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 xl:min-h-8",
+      "font-medium focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
       active && "border border-primary-500 text-primary-700 dark:text-primary-300"
     )}
   >

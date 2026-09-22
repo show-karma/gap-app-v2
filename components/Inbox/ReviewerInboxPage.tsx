@@ -31,10 +31,10 @@ const INBOX_PAGE_SIZE = 25;
 const HASH_PREFIX = "#review-";
 
 function getSelectedIdFromHash(): string | null {
-  if (typeof window === "undefined") return null;
-  const { hash } = window.location;
-  if (!hash.startsWith(HASH_PREFIX)) return null;
-  return decodeURIComponent(hash.slice(HASH_PREFIX.length)) || null;
+  const hash = typeof window === "undefined" ? "" : window.location.hash;
+  return hash.startsWith(HASH_PREFIX)
+    ? decodeURIComponent(hash.slice(HASH_PREFIX.length)) || null
+    : null;
 }
 
 interface ReviewerInboxPageProps {
@@ -134,10 +134,18 @@ export function ReviewerInboxPage({
   const [kindFilter, setKindFilter] = useState<InboxKindFilter>("all");
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
+  /** A filter change asked for the first item of the incoming list. */
+  const autoSelectPending = useRef(false);
   const detailRef = useRef<HTMLElement>(null);
 
-  const handleSelect = useCallback(
-    (id: string) => {
+  /**
+   * Mirrors a selection into the URL hash. `replace` forces a history replace
+   * instead of a push — used for selections the user did not click (the
+   * auto-selection after a filter change), so the browser Back button still
+   * leaves the page rather than stepping back through selections.
+   */
+  const selectItem = useCallback(
+    (id: string, options?: { replace?: boolean }) => {
       if (syncSelectionToHash) {
         const url = new URL(window.location.href);
         url.hash = `${HASH_PREFIX}${encodeURIComponent(id)}`;
@@ -147,13 +155,21 @@ export function ReviewerInboxPage({
         // page entirely. Switching between items replaces the entry so we don't
         // spam the history stack. pushState runs in a click handler (not a
         // useEffect), so it never dispatches an App Router navigation (#1547).
-        if (selectedIdRef.current == null) {
-          window.history.pushState({}, "", url.toString());
-        } else {
+        const replace = options?.replace ?? selectedIdRef.current != null;
+        if (replace) {
           window.history.replaceState({}, "", url.toString());
+        } else {
+          window.history.pushState({}, "", url.toString());
         }
       }
       setSelectedId(id);
+    },
+    [syncSelectionToHash]
+  );
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      selectItem(id);
       // Below the two-column breakpoint the detail sits under the whole list.
       if (!window.matchMedia("(min-width: 1280px)").matches) {
         const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -165,7 +181,7 @@ export function ReviewerInboxPage({
         });
       }
     },
-    [syncSelectionToHash]
+    [selectItem]
   );
 
   // A stage filter is a new list: reset paging and drop a selection the list
@@ -174,6 +190,9 @@ export function ReviewerInboxPage({
     (value: MilestoneQueueFilter | null) => {
       setAttentionFilter(value);
       setLimit(INBOX_PAGE_SIZE);
+      // The incoming list is a new set of items; pick its first one rather than
+      // dropping the reader onto the "select an item" placeholder.
+      autoSelectPending.current = true;
       if (selectedIdRef.current == null) return;
       if (syncSelectionToHash) {
         const url = new URL(window.location.href);
@@ -208,16 +227,22 @@ export function ReviewerInboxPage({
   // into a detail, or the surrounding Back gesture would be inert.
   const hasAutoSelected = useRef(false);
   useEffect(() => {
-    if (syncSelectionToHash) return;
-    if (hasAutoSelected.current || selectedId != null || items.length === 0) return;
+    // Embedded drill-in: auto-select once, on first load.
+    // Standalone page: only after a filter change, which queues the flag above.
+    // A fresh load here stays hash-driven so the first CLICK pushes a history
+    // entry and Back returns to the list instead of ejecting off-page.
+    const allowed = syncSelectionToHash ? autoSelectPending.current : !hasAutoSelected.current;
+    if (!allowed || selectedId != null || items.length === 0) return;
     const visible = kindFilter === "all" ? items : items.filter((i) => i.kind === kindFilter);
     if (visible.length === 0) return;
     const first = visible.reduce((best, current) =>
       BUCKET_RANK[current.bucket] < BUCKET_RANK[best.bucket] ? current : best
     );
     hasAutoSelected.current = true;
-    setSelectedId(first.id);
-  }, [items, selectedId, kindFilter, syncSelectionToHash]);
+    autoSelectPending.current = false;
+    // replace, never push: the reader did not click this.
+    selectItem(first.id, { replace: true });
+  }, [items, selectedId, kindFilter, syncSelectionToHash, selectItem]);
 
   const selectedItem: InboxItem | undefined = useMemo(
     () => items.find((i) => i.id === selectedId),
@@ -245,12 +270,7 @@ export function ReviewerInboxPage({
 
   return (
     <div className="w-full space-y-4">
-      <InboxHeader
-        stats={stats}
-        isCommunityAdmin={isCommunityAdmin}
-        attentionFilter={attentionFilter}
-        onAttentionChange={isCommunityAdmin ? handleAttentionChange : undefined}
-      />
+      <InboxHeader stats={stats} isCommunityAdmin={isCommunityAdmin} />
 
       {isCommunityAdmin && (
         <div className="flex flex-wrap items-center gap-2">
@@ -327,7 +347,8 @@ export function ReviewerInboxPage({
                     onClick={() => setLimit((current) => current + INBOX_PAGE_SIZE)}
                     disabled={isFetching}
                   >
-                    Show more ({items.length} of {totalCount})
+                    Show {Math.min(INBOX_PAGE_SIZE, totalCount - items.length)} more (
+                    {totalCount - items.length} remaining)
                   </Button>
                 )}
               </div>
@@ -409,6 +430,8 @@ function InboxDetailPane({ item, communityId, isCommunityAdmin }: InboxDetailPan
       <InboxMilestoneDetail
         key={item.id}
         showAdminTools={isCommunityAdmin}
+        attentionReason={item.attentionReason}
+        stageAgeDays={item.stageAgeDays}
         projectUid={item.projectUid}
         programId={item.programId}
         grantUid={item.grantUid}

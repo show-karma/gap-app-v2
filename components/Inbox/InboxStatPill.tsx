@@ -1,8 +1,6 @@
 "use client";
 
 import React, { type FC } from "react";
-import { Button } from "@/components/ui/button";
-import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 
 /** Visual tones for the Inbox header stat pills. */
@@ -23,63 +21,31 @@ interface InboxStatPillProps {
   /** Caption under the count. */
   label: string;
   tone: StatPillTone;
-  /** When set with `filterKey`, the pill acts as a filter toggle for its stage. */
-  onToggle?: (key: MilestoneAttentionReason) => void;
-  filterKey?: MilestoneAttentionReason;
-  active?: boolean;
 }
 
-const InboxStatPillComponent: FC<InboxStatPillProps> = ({
-  icon: Icon,
-  value,
-  label,
-  tone,
-  onToggle,
-  filterKey,
-  active = false,
-}) => {
-  const content = (
-    <>
-      <div
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-          ICON_WRAP[tone]
-        )}
-      >
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <div className="text-xl font-bold leading-none tabular-nums text-gray-900 dark:text-white">
-          {value}
-        </div>
-        <div className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{label}</div>
-      </div>
-    </>
-  );
-
-  const surface = cn(
-    "flex h-auto w-full items-center justify-start gap-2.5 rounded-xl border bg-white px-4 py-3 text-left dark:bg-zinc-900",
-    active ? "border-primary-500 ring-1 ring-primary-500" : "border-gray-200 dark:border-zinc-700"
-  );
-
-  if (!onToggle || !filterKey || value === 0) {
-    return <div className={cn(surface, value === 0 && onToggle && "opacity-60")}>{content}</div>;
-  }
-
-  return (
-    <Button
-      variant="ghost"
-      onClick={() => onToggle(filterKey)}
-      aria-pressed={active}
+/**
+ * A read-only counter in the reviewer header. These used to double as filter
+ * toggles for the admin queue, duplicating the stage chips below them; the
+ * chips are now the only filter control, so a pill is just a number again.
+ */
+const InboxStatPillComponent: FC<InboxStatPillProps> = ({ icon: Icon, value, label, tone }) => (
+  <div className="flex w-full items-center justify-start gap-2.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left dark:border-zinc-700 dark:bg-zinc-900">
+    <div
       className={cn(
-        surface,
-        "focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:hover:bg-zinc-800/70"
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+        ICON_WRAP[tone]
       )}
     >
-      {content}
-    </Button>
-  );
-};
+      <Icon className="h-5 w-5" aria-hidden="true" />
+    </div>
+    <div className="min-w-0">
+      <div className="text-xl font-bold leading-none tabular-nums text-gray-900 dark:text-white">
+        {value}
+      </div>
+      <div className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{label}</div>
+    </div>
+  </div>
+);
 
 export const InboxStatPill = React.memo(InboxStatPillComponent);
 InboxStatPill.displayName = "InboxStatPill";
