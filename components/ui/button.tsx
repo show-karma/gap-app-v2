@@ -28,6 +28,12 @@ const buttonVariants = cva(
         icon: "h-9 w-9",
         "icon-sm": "h-8 w-8",
         "icon-xs": "h-6 w-6 rounded-[calc(var(--radius)-5px)]",
+        /**
+         * Filter chip. Owns its own geometry — including the 44px touch
+         * target below the two-column breakpoint — so feature code stops
+         * overriding radius and height through `className`.
+         */
+        chip: "min-h-11 gap-1.5 rounded-lg px-3 text-sm xl:min-h-8",
       },
     },
     defaultVariants: {
