@@ -12,6 +12,7 @@ import {
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import React, { type FC } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,6 @@ import type {
   MilestoneTimelineEventType,
 } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
-import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
 /**
@@ -128,7 +128,13 @@ const TimelineEventRow: FC<{ event: IMilestoneTimelineEvent; isLast: boolean }> 
         </div>
         {event.actor && (
           <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-zinc-400">
-            by {shortAddress(event.actor)}
+            {/*
+              Resolve to a display name, the same way the verification card
+              above does. Rendering a raw address here while the card says
+              "Verified by: Erin" made the same person unrecognisable between
+              two adjacent blocks.
+            */}
+            by <EthereumAddressToProfileName address={event.actor} />
           </p>
         )}
         {event.reason && (
@@ -140,6 +146,22 @@ const TimelineEventRow: FC<{ event: IMilestoneTimelineEvent; isLast: boolean }> 
     </li>
   );
 };
+
+/**
+ * True when an event is dated before the milestone was created. Bulk-imported
+ * records routinely carry invoice and due dates from before the row existed;
+ * sorted strictly by date they read as a clean lifecycle, so the impossible
+ * ordering has to be called out rather than smoothed over.
+ */
+function hasEventsBeforeCreation(events: IMilestoneTimelineEvent[]): boolean {
+  const created = events.find((event) => event.type === "created");
+  if (!created) return false;
+  const createdAt = Date.parse(created.at);
+  return (
+    !Number.isNaN(createdAt) &&
+    events.some((event) => event !== created && Date.parse(event.at) < createdAt)
+  );
+}
 
 const StageDurations: FC<{ durations: IMilestoneStageDurations }> = ({ durations }) => {
   const present = DURATION_LABELS.filter((entry) => durations[entry.key] !== null);
@@ -242,6 +264,13 @@ const MilestoneTimelineComponent: FC<MilestoneTimelineProps> = ({
       </div>
 
       <StageDurations durations={timeline.stageDurations} />
+
+      {hasEventsBeforeCreation(timeline.events) && (
+        <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+          Some events are dated before this milestone was created. The record was most likely
+          imported in bulk, so treat the order below as approximate.
+        </p>
+      )}
 
       <ol className="m-0 list-none p-0">
         {timeline.events.map((event, index) => (
