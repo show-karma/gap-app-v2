@@ -85,7 +85,7 @@ describe("IntegrationsTab", () => {
       render(<IntegrationsTab referenceNumber="APP-1" />);
 
       expect(screen.getByText(/no active integrations/i)).toBeInTheDocument();
-      expect(screen.queryByText(/the round hasn't run yet/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/S-Process round hasn't run yet/i)).not.toBeInTheDocument();
     });
   });
 
@@ -95,7 +95,7 @@ describe("IntegrationsTab", () => {
 
       render(<IntegrationsTab referenceNumber="APP-1" />);
 
-      expect(screen.getByText(/the round hasn't run yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/S-Process round hasn't run yet/i)).toBeInTheDocument();
       expect(screen.queryByText(/no active integrations/i)).not.toBeInTheDocument();
     });
   });

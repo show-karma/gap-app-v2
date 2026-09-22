@@ -265,9 +265,27 @@ export async function deleteSimocracyCredential(programId: string): Promise<void
 
 export type SimocracyFeedbackVerdict = "up" | "down";
 
+// Feedback is about one subject: an S-Process run (every run re-judges) or a
+// milestone verdict comment. Exactly one of the two is set.
+export type SimocracyFeedbackSubject = { runId: string } | { commentUri: string };
+
+export function feedbackSubjectKey(subject: SimocracyFeedbackSubject): string {
+  return "runId" in subject ? subject.runId : subject.commentUri;
+}
+
+export function feedbackMatchesSubject(
+  entry: Pick<SimocracyEvaluationFeedback, "runId" | "commentUri">,
+  subject: SimocracyFeedbackSubject
+): boolean {
+  return "runId" in subject
+    ? entry.runId === subject.runId
+    : entry.commentUri === subject.commentUri;
+}
+
 export interface SimocracyEvaluationFeedback {
   referenceNumber: string;
-  runId: string;
+  runId: string | null;
+  commentUri: string | null;
   simUri: string;
   authorAddress: string;
   authorName?: string | null;
@@ -276,13 +294,18 @@ export interface SimocracyEvaluationFeedback {
   updatedAt: string;
 }
 
+// Without a subject, every feedback entry of the application (all runs and
+// milestone verdicts) comes back in one request.
 export async function fetchSimocracyFeedback(
   referenceNumber: string,
-  runId: string
+  subject?: SimocracyFeedbackSubject
 ): Promise<SimocracyEvaluationFeedback[]> {
   try {
+    const query = subject
+      ? `?${"runId" in subject ? "runId" : "commentUri"}=${encodeURIComponent(feedbackSubjectKey(subject))}`
+      : "";
     const data = await api.get<{ feedback: SimocracyEvaluationFeedback[] }>(
-      `${INDEXER.V2.FUNDING_APPLICATIONS.SIMOCRACY_FEEDBACK(referenceNumber)}?runId=${encodeURIComponent(runId)}`
+      `${INDEXER.V2.FUNDING_APPLICATIONS.SIMOCRACY_FEEDBACK(referenceNumber)}${query}`
     );
     return data?.feedback ?? [];
   } catch (error) {
@@ -321,6 +344,8 @@ export async function exportSimocracyFeedbackCsv(
 export interface SimocracyCommentRow {
   commentUri: string;
   authorDid: string;
+  // The Sim the comment is attributed to; null for unattributed comments.
+  authorSimUri: string | null;
   authorName: string | null;
   text: string;
   referenceNumber: string;
@@ -354,7 +379,11 @@ export async function fetchSimocracyComments(
 
 export async function submitSimocracyFeedback(
   referenceNumber: string,
-  input: { runId: string; simUri: string; verdict: SimocracyFeedbackVerdict; comment?: string }
+  input: SimocracyFeedbackSubject & {
+    simUri: string;
+    verdict: SimocracyFeedbackVerdict;
+    comment?: string;
+  }
 ): Promise<SimocracyEvaluationFeedback> {
   try {
     const data = await api.post<{ feedback: SimocracyEvaluationFeedback }>(

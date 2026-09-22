@@ -69,7 +69,8 @@ export const QUERY_KEYS = {
   simocracyCouncil: (programId: string) => ["simocracy-council", programId] as const,
   simocracySimPersona: (programId: string, simUri: string) =>
     ["simocracy-sim-persona", programId, simUri] as const,
-  simocracyFeedback: (referenceNumber: string, runId: string) =>
-    ["simocracy-feedback", referenceNumber, runId] as const,
+  // subjectKey: a runId, a verdict commentUri, or "all" for the whole application
+  simocracyFeedback: (referenceNumber: string, subjectKey: string) =>
+    ["simocracy-feedback", referenceNumber, subjectKey] as const,
   simocracyComments: (referenceNumber: string) => ["simocracy-comments", referenceNumber] as const,
 };

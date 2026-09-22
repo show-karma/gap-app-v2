@@ -6,16 +6,18 @@ import {
   useSimocracyFeedback,
   useSubmitSimocracyFeedback,
 } from "@/hooks/useApplicationIntegrations";
-import type {
-  SimocracyEvaluationFeedback,
-  SimocracyFeedbackVerdict,
+import {
+  feedbackMatchesSubject,
+  type SimocracyEvaluationFeedback,
+  type SimocracyFeedbackSubject,
+  type SimocracyFeedbackVerdict,
 } from "@/services/fundingApplicationIntegrations.service";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
 export interface EvaluationFeedbackProps {
   referenceNumber: string;
-  runId: string;
+  subject: SimocracyFeedbackSubject;
   simUri: string;
   /** True when the viewer owns this sim or is a program admin. */
   canGiveFeedback: boolean;
@@ -31,16 +33,23 @@ function ownFeedback(
 
 export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses: Set<string> }> = ({
   referenceNumber,
-  runId,
+  subject,
   simUri,
   canGiveFeedback,
   viewerAddresses,
 }) => {
-  const { data: feedback } = useSimocracyFeedback(referenceNumber, runId);
-  const submit = useSubmitSimocracyFeedback(referenceNumber, runId);
+  // A run has its own query; verdict comments share the application-wide
+  // one so a long comment list costs a single request.
+  const { data: feedback } = useSimocracyFeedback(
+    referenceNumber,
+    "runId" in subject ? subject : "all"
+  );
+  const submit = useSubmitSimocracyFeedback(referenceNumber, subject);
 
-  const forSim = (feedback ?? []).filter((entry) => entry.simUri === simUri);
-  const mine = ownFeedback(feedback ?? [], simUri, viewerAddresses);
+  const forSim = (feedback ?? []).filter(
+    (entry) => entry.simUri === simUri && feedbackMatchesSubject(entry, subject)
+  );
+  const mine = ownFeedback(forSim, simUri, viewerAddresses);
 
   const [verdict, setVerdict] = useState<SimocracyFeedbackVerdict | null>(null);
   const [comment, setComment] = useState("");

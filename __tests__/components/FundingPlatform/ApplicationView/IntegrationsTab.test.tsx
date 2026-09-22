@@ -11,11 +11,17 @@ import type {
 
 const mockFetchIntegrations = vi.fn();
 const mockFetchSimocracy = vi.fn();
+const mockFetchSimocracyComments = vi.fn();
+const mockFetchSimocracyFeedback = vi.fn();
+const mockSubmitSimocracyFeedback = vi.fn();
 
 vi.mock("@/services/fundingApplicationIntegrations.service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/fundingApplicationIntegrations.service")>()),
   fetchApplicationIntegrations: (...args: unknown[]) => mockFetchIntegrations(...args),
   fetchSimocracyEvaluations: (...args: unknown[]) => mockFetchSimocracy(...args),
+  fetchSimocracyComments: (...args: unknown[]) => mockFetchSimocracyComments(...args),
+  fetchSimocracyFeedback: (...args: unknown[]) => mockFetchSimocracyFeedback(...args),
+  submitSimocracyFeedback: (...args: unknown[]) => mockSubmitSimocracyFeedback(...args),
   fetchSimocracyProgramSummary: () => new Promise(() => {}),
 }));
 
@@ -52,19 +58,20 @@ const simocracyEnabled: IntegrationSummary[] = [{ key: "simocracy", enabled: tru
 
 let queryClient: QueryClient;
 
-function renderTab() {
+function renderTab(props: { feedbackAdmin?: boolean } = {}) {
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return render(<IntegrationsTab referenceNumber="APP-SIMO-0001" />, { wrapper });
+  return render(<IntegrationsTab referenceNumber="APP-SIMO-0001" {...props} />, { wrapper });
 }
 
 describe("IntegrationsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetchSimocracyFeedback.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -122,7 +129,9 @@ describe("IntegrationsTab", () => {
 
       renderTab();
 
-      await waitFor(() => expect(screen.getByText("The round hasn't run yet")).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByText("The S-Process round hasn't run yet")).toBeInTheDocument()
+      );
     });
 
     it("shows the synced-empty copy when a run exists but has no evaluations", async () => {
@@ -132,8 +141,178 @@ describe("IntegrationsTab", () => {
       renderTab();
 
       await waitFor(() =>
-        expect(screen.getByText("No sim evaluations synced yet")).toBeInTheDocument()
+        expect(
+          screen.getByText("No S-Process evaluations for this application")
+        ).toBeInTheDocument()
       );
+    });
+
+    it("still renders deliberation comments when the round hasn't run", async () => {
+      mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
+      mockFetchSimocracy.mockResolvedValue(
+        createSimocracyResponse({ runId: null, evaluations: [] })
+      );
+      mockFetchSimocracyComments.mockResolvedValue({
+        referenceNumber: "APP-SIMO-0001",
+        programId: "simo-test-1",
+        forbidden: false,
+        comments: [
+          {
+            commentUri: "at://did:plc:host/org.impactindexer.review.comment/1",
+            authorDid: "did:plc:host",
+            authorName: "S1",
+            text: "Milestone 1 delivered as promised.",
+            parentCommentUri: null,
+            createdAt: "2026-09-20T10:00:00.000Z",
+          },
+        ],
+      });
+
+      renderTab();
+
+      expect(await screen.findByText("The S-Process round hasn't run yet")).toBeInTheDocument();
+      expect(await screen.findByText("Sim comments")).toBeInTheDocument();
+      expect(screen.getByText("Round deliberation")).toBeInTheDocument();
+      expect(screen.getByText("S1")).toBeInTheDocument();
+    });
+
+    it("groups milestone evaluations under their milestone and keeps deliberation apart", async () => {
+      mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
+      mockFetchSimocracy.mockResolvedValue(createSimocracyResponse({ evaluations: [] }));
+      const comment = (id: string, authorName: string, text: string) => ({
+        commentUri: `at://did:plc:host/org.impactindexer.review.comment/${id}`,
+        authorDid: "did:plc:host",
+        authorName,
+        text,
+        parentCommentUri: null,
+        createdAt: `2026-09-20T10:0${id}:00.000Z`,
+      });
+      mockFetchSimocracyComments.mockResolvedValue({
+        referenceNumber: "APP-SIMO-0001",
+        programId: "simo-test-1",
+        forbidden: false,
+        comments: [
+          comment(
+            "1",
+            "S1",
+            "Milestone: Dashboard MVP\n**Sim milestone evaluation — S1**\n\nDone."
+          ),
+          comment(
+            "2",
+            "S2",
+            "Milestone: Dashboard MVP\n**Sim milestone evaluation — S2**\n\nDone."
+          ),
+          comment("3", "S1", "Milestone: Audit\n**Sim milestone evaluation — S1**\n\nPending."),
+          comment("4", "S3", "I don't ballot from the proposal alone."),
+        ],
+      });
+
+      renderTab();
+
+      expect(
+        await screen.findByRole("heading", { level: 4, name: "Milestone: Dashboard MVP" })
+      ).toBeInTheDocument();
+      expect(screen.getByText("2 comments")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { level: 4, name: "Milestone: Audit" })
+      ).toBeInTheDocument();
+      expect(screen.getAllByText("1 comment")).toHaveLength(2);
+      expect(
+        screen.getByRole("heading", { level: 4, name: "Round deliberation" })
+      ).toBeInTheDocument();
+      // the "Milestone:" line is lifted into the heading, not repeated in the body
+      expect(screen.queryAllByText("Milestone: Dashboard MVP")).toHaveLength(1);
+    });
+
+    it("offers feedback controls on sim-attributed verdicts for admins, one fetch for all", async () => {
+      mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
+      mockFetchSimocracy.mockResolvedValue(
+        createSimocracyResponse({ runId: null, evaluations: [] })
+      );
+      const attributedUri = "at://did:plc:host/org.impactindexer.review.comment/ms-1";
+      mockFetchSimocracyComments.mockResolvedValue({
+        referenceNumber: "APP-SIMO-0001",
+        programId: "simo-test-1",
+        forbidden: false,
+        comments: [
+          {
+            commentUri: attributedUri,
+            authorDid: "did:plc:host",
+            authorSimUri: "at://did:plc:host/org.simocracy.sim/s1",
+            authorName: "S1",
+            text: "Milestone: Dashboard MVP\n**Sim milestone evaluation — S1**\n\nVerdict: Demonstrated",
+            parentCommentUri: null,
+            createdAt: "2026-09-20T10:01:00.000Z",
+          },
+          {
+            commentUri: "at://did:plc:host/org.impactindexer.review.comment/h1",
+            authorDid: "did:plc:human",
+            authorSimUri: null,
+            authorName: null,
+            text: "Human remark.",
+            parentCommentUri: null,
+            createdAt: "2026-09-20T10:02:00.000Z",
+          },
+        ],
+      });
+      mockFetchSimocracyFeedback.mockResolvedValue([
+        {
+          referenceNumber: "APP-SIMO-0001",
+          runId: null,
+          commentUri: attributedUri,
+          simUri: "at://did:plc:host/org.simocracy.sim/s1",
+          authorAddress: "0xabc",
+          authorName: "Reviewer A",
+          verdict: "down",
+          comment: "Too lenient",
+          updatedAt: "2026-09-21T00:00:00.000Z",
+        },
+      ]);
+
+      renderTab({ feedbackAdmin: true });
+
+      // one control set: the attributed verdict, not the human remark
+      expect(await screen.findAllByRole("button", { name: "Represented faithfully" })).toHaveLength(
+        1
+      );
+      expect(await screen.findByText(/Too lenient/)).toBeInTheDocument();
+      await waitFor(() =>
+        expect(mockFetchSimocracyFeedback).toHaveBeenCalledWith("APP-SIMO-0001", undefined)
+      );
+      expect(mockFetchSimocracyFeedback).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides feedback controls on verdicts outside the admin view", async () => {
+      mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
+      mockFetchSimocracy.mockResolvedValue(
+        createSimocracyResponse({ runId: null, evaluations: [] })
+      );
+      mockFetchSimocracyComments.mockResolvedValue({
+        referenceNumber: "APP-SIMO-0001",
+        programId: "simo-test-1",
+        forbidden: false,
+        comments: [
+          {
+            commentUri: "at://did:plc:host/org.impactindexer.review.comment/ms-1",
+            authorDid: "did:plc:host",
+            authorSimUri: "at://did:plc:host/org.simocracy.sim/s1",
+            authorName: "S1",
+            text: "Milestone: Dashboard MVP\n\nVerdict: Demonstrated",
+            parentCommentUri: null,
+            createdAt: "2026-09-20T10:01:00.000Z",
+          },
+        ],
+      });
+
+      renderTab();
+
+      expect(
+        await screen.findByRole("heading", { level: 4, name: "Milestone: Dashboard MVP" })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Represented faithfully" })
+      ).not.toBeInTheDocument();
+      expect(mockFetchSimocracyFeedback).not.toHaveBeenCalled();
     });
   });
 

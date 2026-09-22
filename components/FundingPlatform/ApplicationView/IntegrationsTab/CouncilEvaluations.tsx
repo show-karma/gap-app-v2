@@ -333,7 +333,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
         {feedback && (
           <EvaluationFeedback
             referenceNumber={feedback.referenceNumber}
-            runId={feedback.runId}
+            subject={{ runId: feedback.runId }}
             simUri={evaluation.sim.simUri}
             canGiveFeedback={feedback.canGiveFeedback(evaluation.sim.simUri)}
             viewerAddresses={feedback.viewerAddresses}

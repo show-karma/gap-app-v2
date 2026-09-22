@@ -1,16 +1,24 @@
 "use client";
 
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
-import { type FC, memo, useMemo, useState } from "react";
+import pluralize from "pluralize";
+import { type FC, memo, type ReactNode, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useSimocracyComments } from "@/hooks/useApplicationIntegrations";
 import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
+import { EvaluationFeedback } from "./EvaluationFeedback";
 
 // Long comments collapse to three lines with a Show more/less toggle, matching
 // the sim-evaluation reasoning treatment in CouncilEvaluations.
 const CLAMP_MIN_CHARS = 180;
 const CLAMP_MIN_LINES = 3;
+
+export interface CommentFeedbackContext {
+  referenceNumber: string;
+  viewerAddresses: Set<string>;
+  canGiveFeedback: (simUri: string) => boolean;
+}
 
 interface CommentNode extends SimocracyCommentRow {
   replies: CommentNode[];
@@ -32,6 +40,46 @@ function buildThreads(comments: SimocracyCommentRow[]): CommentNode[] {
   return roots;
 }
 
+// Milestone evaluations open with a "Milestone: <title>" line (Sims post one
+// comment per milestone); everything else is round deliberation. The line is
+// lifted into the section heading and dropped from the body.
+const MILESTONE_LINE = /^Milestone:\s*(.+)$/;
+
+function splitMilestone(text: string): { milestone: string | null; body: string } {
+  const lines = text.split("\n");
+  for (let i = 0; i < Math.min(2, lines.length); i++) {
+    const match = MILESTONE_LINE.exec(lines[i].trim());
+    if (match) {
+      return {
+        milestone: match[1].trim(),
+        body: [...lines.slice(0, i), ...lines.slice(i + 1)].join("\n").trim(),
+      };
+    }
+  }
+  return { milestone: null, body: text };
+}
+
+interface CommentGroup {
+  milestone: string | null;
+  threads: CommentNode[];
+}
+
+function groupByMilestone(threads: CommentNode[]): CommentGroup[] {
+  const groups = new Map<string | null, CommentNode[]>();
+  for (const node of threads) {
+    const { milestone, body } = splitMilestone(node.text);
+    const bucket = groups.get(milestone);
+    const entry = milestone ? { ...node, text: body } : node;
+    if (bucket) bucket.push(entry);
+    else groups.set(milestone, [entry]);
+  }
+  const milestones = [...groups.entries()]
+    .filter(([key]) => key !== null)
+    .map(([milestone, nodes]) => ({ milestone, threads: nodes }));
+  const deliberation = groups.get(null);
+  return deliberation ? [...milestones, { milestone: null, threads: deliberation }] : milestones;
+}
+
 function shortenDid(did: string): string {
   return did.length > 20 ? `${did.slice(0, 12)}…${did.slice(-4)}` : did;
 }
@@ -48,80 +96,142 @@ function formatDate(iso: string | null): string {
       });
 }
 
-const CommentItem: FC<{ node: CommentNode; depth: number }> = memo(({ node, depth }) => {
-  const [expanded, setExpanded] = useState(false);
-  const isLong =
-    node.text.length > CLAMP_MIN_CHARS || node.text.split("\n").length > CLAMP_MIN_LINES;
+const CommentItem: FC<{ node: CommentNode; depth: number; feedback?: CommentFeedbackContext }> =
+  memo(({ node, depth, feedback }) => {
+    const [expanded, setExpanded] = useState(false);
+    const isLong =
+      node.text.length > CLAMP_MIN_CHARS || node.text.split("\n").length > CLAMP_MIN_LINES;
+    const bodyId = `sim-comment-${node.commentUri.split("/").pop()}`;
 
-  return (
-    <div className={depth > 0 ? "mt-3 border-l border-gray-200 pl-4 dark:border-gray-700" : ""}>
-      <div className="rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-700 dark:bg-zinc-800">
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className={
-              node.authorName
-                ? "text-sm font-semibold text-gray-900 dark:text-white"
-                : "font-mono text-xs text-gray-500 dark:text-gray-400"
-            }
-            title={node.authorDid}
-          >
-            {node.authorName ?? shortenDid(node.authorDid)}
-          </span>
-          {node.createdAt && (
-            <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
-              {formatDate(node.createdAt)}
+    return (
+      <div className={depth > 0 ? "mt-3 border-l border-gray-200 pl-4 dark:border-gray-700" : ""}>
+        <div className="rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-700 dark:bg-zinc-800">
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className={
+                node.authorName
+                  ? "text-sm font-semibold text-gray-900 dark:text-white"
+                  : "font-mono text-xs text-gray-500 dark:text-gray-400"
+              }
+              title={node.authorDid}
+            >
+              {node.authorName ?? shortenDid(node.authorDid)}
             </span>
-          )}
-        </div>
-        <div
-          className={cn(
-            "mt-1.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300",
-            !expanded && isLong && "max-h-24 overflow-hidden"
-          )}
-        >
-          <MarkdownPreview variant="inline" source={node.text} />
-        </div>
-        {isLong && (
-          <button
-            type="button"
-            onClick={() => setExpanded((open) => !open)}
-            aria-expanded={expanded}
-            className="mt-2 text-xs font-medium text-gray-500 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            {node.createdAt && (
+              <time
+                dateTime={node.createdAt}
+                className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
+              >
+                {formatDate(node.createdAt)}
+              </time>
+            )}
+          </div>
+          <div
+            id={bodyId}
+            className={cn(
+              "mt-1.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300",
+              !expanded &&
+                isLong &&
+                "max-h-28 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
+            )}
           >
-            {expanded ? "Show less" : "Show more"}
-          </button>
-        )}
+            <MarkdownPreview variant="inline" source={node.text} />
+          </div>
+          {isLong && (
+            <button
+              type="button"
+              onClick={() => setExpanded((open) => !open)}
+              aria-expanded={expanded}
+              aria-controls={bodyId}
+              className="mt-2 text-xs font-medium text-gray-500 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            >
+              {expanded ? "Show less" : "Show more"}
+            </button>
+          )}
+          {feedback && node.authorSimUri && (
+            <EvaluationFeedback
+              referenceNumber={feedback.referenceNumber}
+              subject={{ commentUri: node.commentUri }}
+              simUri={node.authorSimUri}
+              canGiveFeedback={feedback.canGiveFeedback(node.authorSimUri)}
+              viewerAddresses={feedback.viewerAddresses}
+            />
+          )}
+        </div>
+        {node.replies.map((reply) => (
+          <CommentItem key={reply.commentUri} node={reply} depth={depth + 1} feedback={feedback} />
+        ))}
       </div>
-      {node.replies.map((reply) => (
-        <CommentItem key={reply.commentUri} node={reply} depth={depth + 1} />
-      ))}
-    </div>
-  );
-});
+    );
+  });
 CommentItem.displayName = "CommentItem";
 
-export const SimComments: FC<{ referenceNumber: string }> = ({ referenceNumber }) => {
-  const { data } = useSimocracyComments(referenceNumber);
-  const threads = useMemo(() => buildThreads(data?.comments ?? []), [data?.comments]);
+const SectionHeading: FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="flex items-center gap-2">
+    <ChatBubbleLeftRightIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{children}</h3>
+  </div>
+);
 
-  // Hidden entirely when the viewer lacks access or there is nothing to show.
-  if (!data || data.forbidden || threads.length === 0) {
+export const SimComments: FC<{ referenceNumber: string; feedback?: CommentFeedbackContext }> = ({
+  referenceNumber,
+  feedback,
+}) => {
+  const { data, isLoading } = useSimocracyComments(referenceNumber);
+  const groups = useMemo(
+    () => groupByMilestone(buildThreads(data?.comments ?? [])),
+    [data?.comments]
+  );
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3 animate-pulse" data-testid="sim-comments-loading">
+        <div className="h-4 w-32 rounded bg-gray-200 dark:bg-zinc-700" />
+        <div className="h-20 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-800" />
+      </div>
+    );
+  }
+
+  // Hidden when the viewer lacks access to Sim comments.
+  if (!data || data.forbidden) {
     return null;
   }
 
+  if (groups.length === 0) {
+    return (
+      <div className="space-y-2">
+        <SectionHeading>Sim comments</SectionHeading>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          No Sim comments on this application yet.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <ChatBubbleLeftRightIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Deliberation comments
-        </h3>
-      </div>
-      <div className="space-y-3">
-        {threads.map((node) => (
-          <CommentItem key={node.commentUri} node={node} depth={0} />
-        ))}
-      </div>
+    <div className="space-y-4">
+      <SectionHeading>Sim comments</SectionHeading>
+      {groups.map((group) => (
+        <details key={group.milestone ?? "deliberation"} open className="group space-y-3">
+          <summary className="flex cursor-pointer list-none items-baseline gap-2 rounded text-sm font-medium text-gray-900 marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white [&::-webkit-details-marker]:hidden">
+            <span
+              aria-hidden="true"
+              className="text-gray-400 transition-transform duration-150 group-open:rotate-90"
+            >
+              ▸
+            </span>
+            <h4 className="text-sm font-medium">
+              {group.milestone ? `Milestone: ${group.milestone}` : "Round deliberation"}
+            </h4>
+            <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+              {group.threads.length} {pluralize("comment", group.threads.length)}
+            </span>
+          </summary>
+          {group.threads.map((node) => (
+            <CommentItem key={node.commentUri} node={node} depth={0} feedback={feedback} />
+          ))}
+        </details>
+      ))}
     </div>
   );
 };

@@ -78,15 +78,21 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
   // Only built in the admin/staff/reviewer manage view (feedbackAdmin), where
   // the viewer may leave feedback on any sim.
   const runId = data?.runId ?? null;
+  const viewerAddresses = useMemo(() => new Set(address ? [address.toLowerCase()] : []), [address]);
   const feedbackConfig = useMemo(() => {
     if (!feedbackAdmin || !runId) return undefined;
     return {
       referenceNumber,
       runId,
-      viewerAddresses: new Set(address ? [address.toLowerCase()] : []),
+      viewerAddresses,
       canGiveFeedback: () => true,
     };
-  }, [feedbackAdmin, runId, referenceNumber, address]);
+  }, [feedbackAdmin, runId, referenceNumber, viewerAddresses]);
+  // Milestone verdicts take feedback independently of any S-Process run.
+  const commentFeedbackConfig = useMemo(() => {
+    if (!feedbackAdmin) return undefined;
+    return { referenceNumber, viewerAddresses, canGiveFeedback: () => true };
+  }, [feedbackAdmin, referenceNumber, viewerAddresses]);
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -101,41 +107,50 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
     );
   }
 
-  if (data.runId === null) {
-    return (
-      <EmptyState
-        title="The round hasn't run yet"
-        description="Sim evaluations will appear here once a Simocracy round runs for this program."
-      />
-    );
-  }
+  // Deliberation comments are independent of the S-Process round: Sims can
+  // comment on a proposal (e.g. milestone evaluations) before any run exists
+  // or when they recused, so they render regardless of the evaluation state.
+  const renderEvaluations = () => {
+    if (data.runId === null) {
+      return (
+        <EmptyState
+          title="The S-Process round hasn't run yet"
+          description="S-Process sim evaluations will appear here once a Simocracy round runs for this program. Milestone evaluations and deliberation show up in the comments below."
+        />
+      );
+    }
 
-  if (data.evaluations.length === 0) {
-    return (
-      <EmptyState
-        title="No sim evaluations synced yet"
-        description="This application has no sim evaluations in the latest run."
-      />
-    );
-  }
+    if (data.evaluations.length === 0) {
+      return (
+        <EmptyState
+          title="No S-Process evaluations for this application"
+          description="The Sims did not score this application in the latest S-Process run. Milestone evaluations and deliberation show up in the comments below."
+        />
+      );
+    }
 
-  const count = data.evaluations.length;
+    return (
+      <>
+        <SimocracySectionHeader
+          count={data.evaluations.length}
+          linkedCount={summary?.sims?.length}
+          programId={data.programId}
+          runId={data.runId}
+          proposalUri={data.evaluations[0]?.proposalUri}
+        />
+        <CouncilEvaluations
+          evaluations={data.evaluations}
+          linkedSims={summary?.sims}
+          feedback={feedbackConfig}
+        />
+      </>
+    );
+  };
 
   return (
     <div className="space-y-4">
-      <SimocracySectionHeader
-        count={count}
-        linkedCount={summary?.sims?.length}
-        programId={data.programId}
-        runId={data.runId}
-        proposalUri={data.evaluations[0]?.proposalUri}
-      />
-      <CouncilEvaluations
-        evaluations={data.evaluations}
-        linkedSims={summary?.sims}
-        feedback={feedbackConfig}
-      />
-      <SimComments referenceNumber={referenceNumber} />
+      {renderEvaluations()}
+      <SimComments referenceNumber={referenceNumber} feedback={commentFeedbackConfig} />
     </div>
   );
 };

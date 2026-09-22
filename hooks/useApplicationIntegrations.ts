@@ -6,6 +6,7 @@ import {
   deleteSimocracyCredential,
   deleteSimocracySimLink,
   exportSimocracyFeedbackCsv,
+  feedbackSubjectKey,
   fetchApplicationIntegrations,
   fetchSimocracyComments,
   fetchSimocracyCouncil,
@@ -14,6 +15,7 @@ import {
   fetchSimocracyProgramSummary,
   fetchSimocracySimLinks,
   fetchSimocracySimPersona,
+  type SimocracyFeedbackSubject,
   type SimocracyFeedbackVerdict,
   type SimocracySimLink,
   setSimocracyCredential,
@@ -240,27 +242,37 @@ export function useSimocracyComments(referenceNumber: string, options?: { enable
   });
 }
 
+// `subject` narrows to one run or one verdict comment; "all" loads every
+// entry of the application in a single request (used by the comment list).
 export function useSimocracyFeedback(
   referenceNumber: string,
-  runId: string | null,
+  subject: SimocracyFeedbackSubject | "all" | null,
   options?: { enabled?: boolean }
 ) {
+  const narrowed = subject && subject !== "all" ? subject : undefined;
   return useQuery({
-    queryKey: QUERY_KEYS.simocracyFeedback(referenceNumber, runId ?? ""),
-    queryFn: () => fetchSimocracyFeedback(referenceNumber, runId ?? ""),
-    enabled: (options?.enabled ?? true) && !!referenceNumber && !!runId,
+    queryKey: QUERY_KEYS.simocracyFeedback(
+      referenceNumber,
+      narrowed ? feedbackSubjectKey(narrowed) : "all"
+    ),
+    queryFn: () => fetchSimocracyFeedback(referenceNumber, narrowed),
+    enabled: (options?.enabled ?? true) && !!referenceNumber && subject !== null,
     staleTime: INTEGRATIONS_STALE_TIME_MS,
   });
 }
 
-export function useSubmitSimocracyFeedback(referenceNumber: string, runId: string) {
+export function useSubmitSimocracyFeedback(
+  referenceNumber: string,
+  subject: SimocracyFeedbackSubject
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: { simUri: string; verdict: SimocracyFeedbackVerdict; comment?: string }) =>
-      submitSimocracyFeedback(referenceNumber, { runId, ...input }),
+      submitSimocracyFeedback(referenceNumber, { ...subject, ...input }),
     onSuccess: () => {
+      // Drops the narrowed and the "all" caches of this application at once.
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.simocracyFeedback(referenceNumber, runId),
+        queryKey: ["simocracy-feedback", referenceNumber],
       });
       toast.success("Feedback saved");
     },
