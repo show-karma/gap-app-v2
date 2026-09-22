@@ -100,3 +100,46 @@ export function isAliasHost(hostname: string): boolean {
 export function canonicalUrl(path: string, search: string): string {
   return `${CANONICAL_ORIGIN}${path}${search}`;
 }
+
+/** Notebook bundles run tenant-authored code inside a `sandbox="allow-scripts"`
+ *  frame. They are served from their OWN origin, never from an app host: the
+ *  bundle's CSP says `'self'`, and that word must never mean us. The origin is
+ *  a deploy variable rather than a constant so previews can point at a staging
+ *  bucket, and it fails closed: unset, malformed, non-https, or equal to an app
+ *  host all mean "no notebook is framed anywhere". Read at call time, like
+ *  docsOrigin(). */
+export function notebooksOrigin(): string | null {
+  const raw = process.env.NEXT_PUBLIC_NOTEBOOKS_ORIGIN?.trim();
+  if (!raw) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:") return null;
+  // An app host as the notebooks origin would put tenant code one CSP mistake
+  // away from the Privy session. Refuse it rather than trust the deploy.
+  if (parsed.origin === CANONICAL_ORIGIN || parsed.origin === STAGING_ORIGIN) return null;
+  return parsed.origin;
+}
+
+/** Whether a stored artifact URL may be framed. Exact origin equality against
+ *  notebooksOrigin() — never `endsWith()` (admits fake<host>) or `includes()`
+ *  (admits <host>.evil.com) — plus https and no embedded credentials. */
+export function isNotebookArtifactUrl(value: string): boolean {
+  const origin = notebooksOrigin();
+  if (!origin) return false;
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+  return (
+    parsed.protocol === "https:" &&
+    parsed.origin === origin &&
+    parsed.username === "" &&
+    parsed.password === ""
+  );
+}

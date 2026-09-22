@@ -47,6 +47,9 @@ export const PAGES = {
       configSlug
         ? `/community/${community}/reports/${encodeURIComponent(runDate)}/${encodeURIComponent(configSlug)}`
         : `/community/${community}/reports/${encodeURIComponent(runDate)}`,
+    NOTEBOOKS: (community: string) => `/community/${community}/notebooks`,
+    NOTEBOOK_DETAIL: (community: string, slug: string) =>
+      `/community/${community}/notebooks/${encodeURIComponent(slug)}`,
     ASK_KARMA: (community: string) => `/community/${community}/ask-karma`,
   },
   MY_PROJECTS: `/my-projects`,

@@ -13,6 +13,7 @@
  * browsers enforce the intersection, silently restoring the stricter policy.
  */
 
+import { afterEach, describe, expect, it, vi } from "vitest";
 import nextConfig from "@/next.config";
 import {
   TOKEN_BRIDGE_ORIGINS,
@@ -37,10 +38,13 @@ const xfoOf = (rule: HeaderRule) =>
 const framingRules = (rules: HeaderRule[]) =>
   rules.filter((rule) => cspOf(rule).includes("frame-ancestors"));
 
+/** Routes that carry their own CSP instead of the catch-all's. */
+const CARVE_OUT_SOURCES = new Set<string>([TOKEN_BRIDGE_PATH]);
+
 describe("framing headers", () => {
   it("keeps every route but the bridge same-origin only", async () => {
     const rules = await getHeaderRules();
-    const catchAll = framingRules(rules).find((rule) => rule.source !== TOKEN_BRIDGE_PATH);
+    const catchAll = framingRules(rules).find((rule) => !CARVE_OUT_SOURCES.has(rule.source));
 
     expect(catchAll).toBeDefined();
     expect(cspOf(catchAll!)).toContain("frame-ancestors 'self';");
@@ -49,10 +53,10 @@ describe("framing headers", () => {
 
   it("excludes exactly the bridge path from the catch-all", async () => {
     const rules = await getHeaderRules();
-    const catchAll = framingRules(rules).find((rule) => rule.source !== TOKEN_BRIDGE_PATH)!;
+    const catchAll = framingRules(rules).find((rule) => !CARVE_OUT_SOURCES.has(rule.source))!;
 
-    // A negative lookahead on the bridge path alone — not a prefix, not a
-    // pattern that could grow to cover a sibling route.
+    // One carve-out, spelled out as the bridge path exactly (`$`) — not a
+    // loose prefix that could grow to cover a sibling route.
     expect(catchAll.source).toBe(`/((?!${TOKEN_BRIDGE_PATH.slice(1)}$).*)`);
   });
 
@@ -96,5 +100,69 @@ describe("framing headers", () => {
 
     expect(sources).toHaveLength(2);
     expect(sources).toContain(TOKEN_BRIDGE_PATH);
+  });
+
+  /**
+   * Notebook bundles are not served by this app at all. They live on their
+   * own origin and are framed from there, so the only thing this config says
+   * about them is which origin `frame-src` admits — and it says nothing when
+   * no origin is configured. The bundle's own CSP (connect-src to the GAP API
+   * only, no package hosts) ships with the bundle, from the notebooks repo.
+   */
+  describe("notebook bundles", () => {
+    const ORIGIN = "https://gap-notebooks.vercel.app";
+
+    const frameSrcOf = (csp: string) =>
+      csp
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) => part.startsWith("frame-src"))!;
+
+    async function freshHeaderRules(): Promise<HeaderRule[]> {
+      vi.resetModules();
+      const fresh = (await import("@/next.config")).default;
+      return (await fresh.headers!()) as HeaderRule[];
+    }
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    });
+
+    it("serves no bundle route of its own", async () => {
+      const rules = await getHeaderRules();
+
+      expect(rules.map((rule) => rule.source)).not.toContain("/notebooks/:path*");
+    });
+
+    it("admits the configured notebooks origin in frame-src, on every framing rule", async () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", ORIGIN);
+      const rules = await freshHeaderRules();
+
+      for (const rule of framingRules(rules)) {
+        expect(frameSrcOf(cspOf(rule)).split(/\s+/)).toContain(ORIGIN);
+      }
+    });
+
+    it("admits no notebook host when none is configured", async () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", "");
+      const rules = await freshHeaderRules();
+
+      for (const rule of framingRules(rules)) {
+        expect(frameSrcOf(cspOf(rule))).not.toContain("notebooks");
+      }
+    });
+
+    it("never widens frame-src to a wildcard for notebooks", async () => {
+      vi.stubEnv("NEXT_PUBLIC_NOTEBOOKS_ORIGIN", ORIGIN);
+      const rules = await freshHeaderRules();
+
+      for (const rule of framingRules(rules)) {
+        const sources = frameSrcOf(cspOf(rule)).split(/\s+/);
+        expect(sources).not.toContain("*");
+        expect(sources).not.toContain("https:");
+        expect(sources.filter((source) => source.includes("vercel.app"))).toEqual([ORIGIN]);
+      }
+    });
   });
 });
