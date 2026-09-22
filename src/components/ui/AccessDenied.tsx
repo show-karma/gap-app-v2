@@ -162,7 +162,7 @@ function DenialBody({ authenticated, message, customMessage, communityName }: De
 export function AccessDenied({
   title,
   compactTitle = false,
-  variant,
+  variant = "denial",
   message,
   returnUrl = "/",
   requiredRoles,
@@ -245,13 +245,7 @@ export function AccessDenied({
   // render a separate h1 when a caller explicitly passes `title` — e.g.
   // page-specific headings like "Faucet admin access required".
   const resolvedTitle = title ?? null;
-  // A visitor who simply has not signed in has not hit a wall, so the red
-  // alarm glyph is a lie — it sat above copy reading "Glad you're here!".
-  // Derive the variant from the auth state we already read rather than
-  // relying on every caller to remember `variant="signin"`; an explicit
-  // `variant` prop still wins.
-  const resolvedVariant: AccessDeniedVariant = variant ?? (authenticated ? "denial" : "signin");
-  const { Icon, wrapperClassName, iconClassName } = ACCESS_DENIED_VARIANTS[resolvedVariant];
+  const { Icon, wrapperClassName, iconClassName } = ACCESS_DENIED_VARIANTS[variant];
 
   return (
     <div className="w-full mx-auto py-16 flex items-center justify-center min-h-[calc(100vh-8rem)]">

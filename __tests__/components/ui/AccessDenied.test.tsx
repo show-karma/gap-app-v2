@@ -120,27 +120,10 @@ describe("AccessDenied", () => {
       } as ReturnType<typeof useAuth>);
     });
 
-    it("shows the neutral sign-in glyph when the visitor is not signed in", () => {
-      // Not signing in yet is not a failure, so the red alarm glyph would be
-      // a lie — it used to sit above copy reading "Glad you're here!".
-      render(<AccessDenied />);
-      expect(screen.getByTestId("signin-icon")).toBeInTheDocument();
-      expect(screen.queryByTestId("alert-icon")).toBeNull();
-    });
-
-    it("shows the alert glyph when a signed-in user lacks the role", () => {
-      mockUseAuth.mockReturnValue({
-        authenticated: true,
-        login: mockLogin,
-      } as ReturnType<typeof useAuth>);
+    it("shows the alert glyph by default", () => {
       render(<AccessDenied />);
       expect(screen.getByTestId("alert-icon")).toBeInTheDocument();
       expect(screen.queryByTestId("signin-icon")).toBeNull();
-    });
-
-    it("honours an explicit variant over the derived one", () => {
-      render(<AccessDenied variant="denial" />);
-      expect(screen.getByTestId("alert-icon")).toBeInTheDocument();
     });
 
     it("swaps the alert glyph for a neutral mark on the signin variant", () => {
@@ -383,10 +366,9 @@ describe("AccessDenied", () => {
         <AccessDenied title="Admin access required" requiredRoles={["SUPER_ADMIN"]} />
       );
 
-      // Resolved denial shows the glyph + title; not the pulse skeleton.
-      // The visitor is unauthenticated here, so that glyph is the sign-in mark.
+      // Resolved denial shows the alert icon + title; not the pulse skeleton.
       expect(screen.getByText("Admin access required")).toBeInTheDocument();
-      expect(screen.getByTestId("signin-icon")).toBeInTheDocument();
+      expect(screen.getByTestId("alert-icon")).toBeInTheDocument();
       expect(container.querySelector(".animate-pulse")).toBeNull();
     });
 

@@ -24,20 +24,14 @@ type DeleteDialogProps = {
   externalSetIsOpen?: (isOpen: boolean) => void;
 };
 
-/**
- * Trigger rendered when an UNCONTROLLED caller supplies no `buttonElement`.
- * A controlled caller always owns its own trigger, so it never gets this one.
- */
-const DEFAULT_TRIGGER = {
-  icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
-  text: "Delete Project",
-  styleClass: "",
-};
-
 export const DeleteDialog: FC<DeleteDialogProps> = ({
   title = "Are you sure you want to delete?",
   deleteFunction,
-  buttonElement: buttonElementProp,
+  buttonElement = {
+    icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
+    text: "Delete Project",
+    styleClass: "",
+  },
   isLoading,
   afterFunction,
   "data-delete-project-button": dataAttr,
@@ -49,14 +43,6 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   // Use external state if provided, otherwise use internal state
   const isControlled = externalIsOpen !== undefined;
   const isOpen = isControlled ? externalIsOpen : internalIsOpen;
-
-  // Controlled callers drive the dialog from their own control, so defaulting
-  // to the built-in trigger renders a stray second button — one labelled
-  // "Delete Project" regardless of what is actually being deleted. Every
-  // controlled call site had to pass `buttonElement={null}` to suppress it;
-  // defaulting to null when controlled makes that the behaviour, not a ritual.
-  const buttonElement =
-    buttonElementProp !== undefined ? buttonElementProp : isControlled ? null : DEFAULT_TRIGGER;
 
   function closeModal() {
     if (isControlled) {

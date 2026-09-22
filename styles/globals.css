@@ -334,20 +334,12 @@
   }
 
   .dark {
-    /*
-      General - Base colors.
-
-      Not pure black. #000 gives a surface nowhere to sit — a zinc-900 panel on
-      it separated by a contrast ratio of 1.19:1, so cards, rows and page ground
-      collapsed into one field. The ground is a near-black tinted toward the
-      brand hue (228deg), and card/popover sit a measurable step above it, so
-      elevation reads without needing a heavier border.
-    */
-    --background: 228 16% 5%;
+    /* General - Base colors */
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
-    --card: 228 14% 9%;
+    --card: 0 0% 0%;
     --card-foreground: 0 0% 98%;
-    --popover: 228 14% 9%;
+    --popover: 0 0% 0%;
     --popover-foreground: 0 0% 98%;
     --primary: 160 84% 71%;
     --primary-foreground: 0 0% 4%;
@@ -359,9 +351,8 @@
     --accent-foreground: 0 0% 96%;
     --destructive: 357 41% 44%;
     --destructive-foreground: 0 0% 100%;
-    /* Edges carry most of the structure in dark mode; 16% was too dim to read. */
-    --border: 228 9% 22%;
-    --input: 228 9% 22%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
     --ring: 0 0% 98%;
 
     /* General/Unofficial - Extended colors */

@@ -3,8 +3,7 @@
 import { ChatBubbleLeftRightIcon, DocumentTextIcon, SparklesIcon } from "@heroicons/react/20/solid";
 import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
-import { type FC, memo, useCallback, useMemo, useState } from "react";
-import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
+import { memo, useCallback, useMemo, useState } from "react";
 import { MilestoneActionItems } from "@/components/Inbox/MilestoneActionItems";
 import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
@@ -23,7 +22,6 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
-import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
@@ -259,41 +257,6 @@ function MilestoneCommentsTab({
   );
 }
 
-/**
- * Says why this milestone is in the queue.
- *
- * One milestone legitimately carries three statuses at once — a verification
- * state ("Verified"), an application state ("Approved") and a queue stage
- * ("Invoice unpaid") — and the detail pane shows all three in different
- * places. Read cold they look like contradictions, and a reviewer who sees
- * "Verified" concludes there is nothing to do. Naming the queue stage, and the
- * time spent in it, makes the other two read as history rather than conflict.
- */
-const QueueReason: FC<{ reason: MilestoneAttentionReason; stageAgeDays?: number }> = ({
-  reason,
-  stageAgeDays,
-}) => (
-  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-zinc-800/60">
-    <span className="text-gray-500 dark:text-gray-400">In this queue because:</span>
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-        ATTENTION_META[reason].badgeClass
-      )}
-    >
-      {ATTENTION_META[reason].label}
-    </span>
-    {typeof stageAgeDays === "number" && (
-      <span className="text-gray-500 dark:text-gray-400">
-        <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-          {stageAgeDays}d
-        </span>{" "}
-        {STAGE_AGE_LABEL[reason]}
-      </span>
-    )}
-  </div>
-);
-
 interface InboxMilestoneDetailProps {
   /** Project UID (or slug) used to fetch the grant's milestones. */
   projectUid: string;
@@ -311,10 +274,6 @@ interface InboxMilestoneDetailProps {
   communityId: string;
   /** Render the admin-only timeline and follow-up log. Decided by the page. */
   showAdminTools?: boolean;
-  /** Admin queue: the stage that put this milestone in the queue. */
-  attentionReason?: MilestoneAttentionReason;
-  /** Whole days spent in that stage. */
-  stageAgeDays?: number;
 }
 
 export function InboxMilestoneDetail({
@@ -326,8 +285,6 @@ export function InboxMilestoneDetail({
   milestoneUid,
   communityId,
   showAdminTools = false,
-  attentionReason,
-  stageAgeDays,
 }: InboxMilestoneDetailProps) {
   const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
   const queryClient = useQueryClient();
@@ -450,8 +407,6 @@ export function InboxMilestoneDetail({
 
   return (
     <div className="space-y-4">
-      {attentionReason && <QueueReason reason={attentionReason} stageAgeDays={stageAgeDays} />}
-
       <div
         role="tablist"
         aria-label="Milestone detail sections"

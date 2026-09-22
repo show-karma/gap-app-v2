@@ -20,7 +20,8 @@ const ALL_PROGRAMS = "All programs";
 
 /** Program ids may carry a chain suffix ("959_42161"); the filter keys on the bare id. */
 function bareProgramId(value: string | null | undefined): string | null {
-  return value ? (value.split("_")[0] ?? value) : null;
+  if (!value) return null;
+  return value.split("_")[0] ?? value;
 }
 
 interface InboxProgramFilterProps {
@@ -61,12 +62,12 @@ const InboxProgramFilterComponent: FC<InboxProgramFilterProps> = ({ communityId 
         <Button
           type="button"
           variant={active ? "secondary" : "outline"}
-          size="chip"
+          size="sm"
           aria-pressed={active}
           aria-label={selected ? `Program: ${selected.title}` : "Filter by program"}
           disabled={isLoading || options.length === 0}
           className={cn(
-            "max-w-[min(260px,calc(100vw-2rem))] font-medium focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
+            "min-h-11 max-w-[min(260px,calc(100vw-2rem))] rounded-full text-sm font-medium focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 xl:min-h-8",
             active && "border border-primary-500 text-primary-700 dark:text-primary-300"
           )}
         >
