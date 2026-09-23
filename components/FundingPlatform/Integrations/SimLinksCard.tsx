@@ -14,6 +14,8 @@ import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { Button as UiButton } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -161,20 +163,24 @@ const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
               >
                 {truncateMiddle(link.simUri, 18, 10)}
               </span>
-              <button
+              <UiButton
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 aria-label="Copy sim AT-URI"
                 onClick={() => copy(link.simUri, "Sim AT-URI copied")}
-                className="shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-gray-300"
+                className="shrink-0 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               >
                 <ClipboardDocumentIcon className="h-3.5 w-3.5" />
-              </button>
+              </UiButton>
             </div>
-            <button
+            <UiButton
               type="button"
+              variant="link"
+              size="sm"
               onClick={() => setPersonaOpen((open) => !open)}
               aria-expanded={personaOpen}
-              className="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+              className="mt-1 w-fit gap-1 h-auto p-0 text-xs font-medium text-gray-500 hover:text-gray-900 hover:no-underline dark:text-gray-400 dark:hover:text-white"
             >
               <ChevronDownIcon
                 className={cn(
@@ -183,21 +189,23 @@ const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
                 )}
               />
               Constitution &amp; Style
-            </button>
+            </UiButton>
           </div>
         </div>
 
         {canDelete && (
           <>
-            <button
+            <UiButton
               type="button"
+              variant="ghost"
+              size="icon-sm"
               aria-label={`Remove link for ${name ?? link.simUri}`}
               onClick={() => setIsDeleteOpen(true)}
               disabled={isDeleting}
-              className="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              className="shrink-0 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-gray-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
             >
               <TrashIcon className="h-4 w-4" />
-            </button>
+            </UiButton>
             <DeleteDialog
               title={`Remove the link between ${reviewer?.name || shortAddress(link.publicAddress)} and ${name ?? truncateMiddle(link.simUri)}?`}
               deleteFunction={() => onDelete(link.simUri)}
@@ -536,16 +544,18 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                     <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                       {sim.simName ?? truncateMiddle(sim.simUri, 14, 8)}
                     </span>
-                    <button
+                    <UiButton
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setSelectedSim(sim.simUri);
                         if (formError) setFormError(null);
                       }}
-                      className="rounded bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
+                      className="h-6 px-2 text-xs text-blue-600 shadow-none dark:text-blue-400"
                     >
                       Link
-                    </button>
+                    </UiButton>
                   </div>
                 ))}
               </div>
@@ -572,16 +582,18 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                     <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                       {reviewer.name || reviewer.email}
                     </span>
-                    <button
+                    <UiButton
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setSelectedReviewer(reviewer.publicAddress);
                         if (formError) setFormError(null);
                       }}
-                      className="rounded bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-200 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600"
+                      className="h-6 px-2 text-xs shadow-none"
                     >
                       Assign sim
-                    </button>
+                    </UiButton>
                   </div>
                 ))}
               </div>
@@ -661,7 +673,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                     </Select>
                   )}
                   {isCustomAddress && (
-                    <input
+                    <Input
                       type="text"
                       value={address}
                       onChange={(event) => {
@@ -671,12 +683,12 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                       placeholder="0x…"
                       spellCheck={false}
                       aria-label="Reviewer address"
-                      className="block w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+                      className="font-mono"
                     />
                   )}
                 </>
               ) : (
-                <input
+                <Input
                   type="text"
                   value={viewerAddress ?? ""}
                   disabled
@@ -684,7 +696,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                   spellCheck={false}
                   aria-label="Reviewer address"
                   title="Reviewers can only link sims to their own address"
-                  className="block w-full cursor-not-allowed rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 opacity-60 placeholder:text-gray-400 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+                  className="font-mono"
                 />
               )}
             </div>
@@ -730,7 +742,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                 </Select>
               )}
               {isCustom && (
-                <input
+                <Input
                   type="text"
                   value={customSimUri}
                   onChange={(event) => {
@@ -740,7 +752,7 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
                   placeholder="at://did:plc:…/org.simocracy.sim/…"
                   spellCheck={false}
                   aria-label="Sim AT-URI"
-                  className="block w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+                  className="font-mono"
                 />
               )}
             </div>

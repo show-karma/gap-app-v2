@@ -10,6 +10,7 @@ import pluralize from "pluralize";
 import { type FC, useEffect, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
+import { Button as UiButton } from "@/components/ui/button";
 import {
   useExportSimocracyFeedback,
   useSimocracyCouncil,
@@ -73,15 +74,17 @@ const FeedbackExportRow: FC<{ programId: string }> = ({ programId }) => {
       <p className="max-w-[48ch] text-xs text-gray-500 dark:text-gray-400">
         Download the Sim evaluations and reviewer feedback for this program as a CSV.
       </p>
-      <button
+      <UiButton
         type="button"
+        variant="outline"
+        size="sm"
         onClick={() => exportFeedback.mutate()}
         disabled={exportFeedback.isPending}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-zinc-800 dark:text-gray-200 dark:hover:bg-zinc-700"
+        className="shrink-0 gap-1.5 text-xs"
       >
         <ArrowDownTrayIcon className="h-3.5 w-3.5" />
         {exportFeedback.isPending ? "Exporting…" : "Export feedback (CSV)"}
-      </button>
+      </UiButton>
     </div>
   );
 };
@@ -165,6 +168,7 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
             appear on each application.
           </p>
         </div>
+        {/* design-check-ignore: DS005 accessible role="switch" toggle; the repo has no Switch primitive */}
         <button
           type="button"
           role="switch"

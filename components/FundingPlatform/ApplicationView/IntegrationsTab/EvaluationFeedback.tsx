@@ -2,6 +2,8 @@
 
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { type FC, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   useSimocracyFeedback,
   useSubmitSimocracyFeedback,
@@ -82,53 +84,58 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
             <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
               Your feedback
             </span>
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon-sm"
               aria-label="Represented faithfully"
               aria-pressed={verdict === "up"}
               onClick={() => handleSubmit("up")}
               disabled={submit.isPending}
               className={cn(
-                "rounded-md border p-1.5 transition-colors disabled:opacity-50",
+                "h-7 w-7 shadow-none",
                 verdict === "up"
                   ? "border-green-300 bg-green-50 text-green-600 dark:border-green-800/50 dark:bg-green-900/20 dark:text-green-400"
                   : "border-gray-200 text-gray-400 hover:text-gray-600 dark:border-gray-700 dark:text-gray-500 dark:hover:text-gray-300"
               )}
             >
               <HandThumbUpIcon className="h-4 w-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="icon-sm"
               aria-label="Not represented faithfully"
               aria-pressed={verdict === "down"}
               onClick={() => handleSubmit("down")}
               disabled={submit.isPending}
               className={cn(
-                "rounded-md border p-1.5 transition-colors disabled:opacity-50",
+                "h-7 w-7 shadow-none",
                 verdict === "down"
                   ? "border-red-300 bg-red-50 text-red-600 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400"
                   : "border-gray-200 text-gray-400 hover:text-gray-600 dark:border-gray-700 dark:text-gray-500 dark:hover:text-gray-300"
               )}
             >
               <HandThumbDownIcon className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
           <div className="flex gap-2">
-            <input
+            <Input
               type="text"
               value={comment}
               onChange={(event) => setComment(event.target.value)}
               placeholder="Add a note (optional)"
-              className="block w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+              className="h-8 text-xs"
             />
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={() => verdict && handleSubmit(verdict)}
               disabled={!verdict || submit.isPending}
-              className="shrink-0 rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+              className="shrink-0 text-xs"
             >
               Save note
-            </button>
+            </Button>
           </div>
         </div>
       )}

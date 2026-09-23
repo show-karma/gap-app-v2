@@ -3,6 +3,7 @@
 import { ChevronDownIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 import { type FC, memo, useMemo, useState } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { Button } from "@/components/ui/button";
 import type {
   SimocracyEvaluationRow,
   SimocracySim,
@@ -13,6 +14,7 @@ import { EvaluationFeedback } from "./EvaluationFeedback";
 const TOP_PAD_PCT = 10;
 
 // Ordered blue tints, one per sim, legible in both themes.
+// design-check-ignore: DS002 SVG curve strokes, one per sim, need literal colours
 const TINTS = ["#1e40af", "#2563eb", "#93c5fd", "#60a5fa", "#3b82f6", "#1d4ed8"];
 
 function formatValue(marginalValueMilli: number): string {
@@ -284,19 +286,23 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
           {evaluation.reasoning}
         </p>
         <div className="mt-2 flex items-center gap-4">
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="sm"
             onClick={() => setExpanded((open) => !open)}
-            className="text-xs font-medium text-gray-500 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            className="h-auto p-0 text-xs font-medium text-gray-500 hover:text-gray-900 hover:no-underline dark:text-gray-400 dark:hover:text-white"
           >
             {expanded ? "Show less" : "Show more"}
-          </button>
+          </Button>
           {hasSidecar && (
-            <button
+            <Button
               type="button"
+              variant="link"
+              size="sm"
               onClick={() => setSidecarOpen((open) => !open)}
               aria-expanded={sidecarOpen}
-              className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+              className="gap-1 h-auto p-0 text-xs font-medium text-gray-500 hover:text-gray-900 hover:no-underline dark:text-gray-400 dark:hover:text-white"
             >
               <ChevronDownIcon
                 className={cn(
@@ -305,7 +311,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
                 )}
               />
               {sidecarOpen ? "Hide constitution & style" : "Constitution & style"}
-            </button>
+            </Button>
           )}
         </div>
         {sidecarOpen && (
@@ -395,6 +401,7 @@ export const CouncilEvaluations: FC<CouncilEvaluationsProps> = ({
               <ReasoningRow
                 key={evaluation.sim.simUri}
                 evaluation={evaluation}
+                // design-check-ignore: DS002 neutral stroke for a sim with no curve
                 tint={curveIndex >= 0 ? TINTS[curveIndex % TINTS.length] : "#9ca3af"}
                 firstDollarValue={geo?.firstDollarValue ?? null}
                 relPct={geo?.relPct ?? null}
