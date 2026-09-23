@@ -4,6 +4,9 @@ import { SimComments } from "../SimComments";
 const mockUseSimocracyComments = vi.fn();
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useSimocracyComments: (referenceNumber: string) => mockUseSimocracyComments(referenceNumber),
+  useSimocracyCouncil: () => ({ data: undefined }),
+  useSimocracyFeedback: () => ({ data: [] }),
+  useSubmitSimocracyFeedback: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 // The markdown renderer lazy-loads streamdown; render its source verbatim so
@@ -37,12 +40,12 @@ describe("SimComments", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("renders nothing when there are no comments", () => {
+  it("says so when there are no comments yet", () => {
     mockUseSimocracyComments.mockReturnValue({
       data: { comments: [], forbidden: false },
     });
-    const { container } = render(<SimComments referenceNumber="APP-1" />);
-    expect(container).toBeEmptyDOMElement();
+    render(<SimComments referenceNumber="APP-1" />);
+    expect(screen.getByText(/No Sim comments on this application yet/)).toBeInTheDocument();
   });
 
   it("renders the author name and text for an authorized viewer", () => {

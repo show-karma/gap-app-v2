@@ -23,6 +23,7 @@ vi.mock("@/services/fundingApplicationIntegrations.service", async (importOrigin
   fetchSimocracyFeedback: (...args: unknown[]) => mockFetchSimocracyFeedback(...args),
   submitSimocracyFeedback: (...args: unknown[]) => mockSubmitSimocracyFeedback(...args),
   fetchSimocracyProgramSummary: () => new Promise(() => {}),
+  fetchSimocracyCouncil: () => new Promise(() => {}),
 }));
 
 function createEvaluation(overrides: Partial<SimocracyEvaluationRow> = {}): SimocracyEvaluationRow {

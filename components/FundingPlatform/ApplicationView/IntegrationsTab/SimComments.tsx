@@ -1,10 +1,12 @@
 "use client";
 
-import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
+import { ChatBubbleLeftRightIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, memo, type ReactNode, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { useSimocracyComments } from "@/hooks/useApplicationIntegrations";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { Button } from "@/components/ui/button";
+import { useSimocracyComments, useSimocracyCouncil } from "@/hooks/useApplicationIntegrations";
 import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
@@ -13,6 +15,19 @@ import { EvaluationFeedback } from "./EvaluationFeedback";
 // the sim-evaluation reasoning treatment in CouncilEvaluations.
 const CLAMP_MIN_CHARS = 180;
 const CLAMP_MIN_LINES = 3;
+
+export interface MilestoneFilter {
+  uid: string;
+  title: string;
+}
+
+// Verdicts Karma posted carry the milestone uid; comments synced from
+// elsewhere are matched on their "Milestone: <title>" line instead.
+function isAboutMilestone(comment: SimocracyCommentRow, milestone: MilestoneFilter): boolean {
+  if (comment.milestoneUid)
+    return comment.milestoneUid.toLowerCase() === milestone.uid.toLowerCase();
+  return splitMilestone(comment.text).milestone === milestone.title;
+}
 
 export interface CommentFeedbackContext {
   referenceNumber: string;
@@ -96,74 +111,108 @@ function formatDate(iso: string | null): string {
       });
 }
 
-const CommentItem: FC<{ node: CommentNode; depth: number; feedback?: CommentFeedbackContext }> =
-  memo(({ node, depth, feedback }) => {
-    const [expanded, setExpanded] = useState(false);
-    const isLong =
-      node.text.length > CLAMP_MIN_CHARS || node.text.split("\n").length > CLAMP_MIN_LINES;
-    const bodyId = `sim-comment-${node.commentUri.split("/").pop()}`;
+interface CommentItemProps {
+  node: CommentNode;
+  depth: number;
+  feedback?: CommentFeedbackContext;
+  avatars: Map<string, string | null>;
+}
 
-    return (
-      <div className={depth > 0 ? "mt-3 border-l border-gray-200 pl-4 dark:border-gray-700" : ""}>
-        <div className="rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-700 dark:bg-zinc-800">
-          <div className="flex items-center justify-between gap-2">
+const SimAvatar: FC<{ avatar: string | null | undefined; name: string }> = ({ avatar, name }) =>
+  avatar ? (
+    <ProfilePicture
+      imageURL={avatar}
+      name={name}
+      size="32"
+      className="h-8 w-8 shrink-0 rounded-md [image-rendering:pixelated]"
+      alt=""
+    />
+  ) : (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
+      <CpuChipIcon className="h-5 w-5" />
+    </span>
+  );
+
+const CommentItem: FC<CommentItemProps> = memo(({ node, depth, feedback, avatars }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong =
+    node.text.length > CLAMP_MIN_CHARS || node.text.split("\n").length > CLAMP_MIN_LINES;
+  const bodyId = `sim-comment-${node.commentUri.split("/").pop()}`;
+
+  return (
+    <div className={depth > 0 ? "mt-3 border-l border-gray-200 pl-4 dark:border-gray-700" : ""}>
+      <div className="rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-700 dark:bg-zinc-800">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2.5">
+            {node.authorSimUri && (
+              <SimAvatar avatar={avatars.get(node.authorSimUri)} name={node.authorName ?? "Sim"} />
+            )}
             <span
               className={
                 node.authorName
-                  ? "text-sm font-semibold text-gray-900 dark:text-white"
+                  ? "truncate text-sm font-semibold text-gray-900 dark:text-white"
                   : "font-mono text-xs text-gray-500 dark:text-gray-400"
               }
               title={node.authorDid}
             >
               {node.authorName ?? shortenDid(node.authorDid)}
             </span>
-            {node.createdAt && (
-              <time
-                dateTime={node.createdAt}
-                className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
-              >
-                {formatDate(node.createdAt)}
-              </time>
-            )}
           </div>
-          <div
-            id={bodyId}
-            className={cn(
-              "mt-1.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300",
-              !expanded &&
-                isLong &&
-                "max-h-28 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
-            )}
-          >
-            <MarkdownPreview variant="inline" source={node.text} />
-          </div>
-          {isLong && (
-            <button
-              type="button"
-              onClick={() => setExpanded((open) => !open)}
-              aria-expanded={expanded}
-              aria-controls={bodyId}
-              className="mt-2 text-xs font-medium text-gray-500 transition-colors duration-150 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          {node.createdAt && (
+            <time
+              dateTime={node.createdAt}
+              className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
             >
-              {expanded ? "Show less" : "Show more"}
-            </button>
-          )}
-          {feedback && node.authorSimUri && (
-            <EvaluationFeedback
-              referenceNumber={feedback.referenceNumber}
-              subject={{ commentUri: node.commentUri }}
-              simUri={node.authorSimUri}
-              canGiveFeedback={feedback.canGiveFeedback(node.authorSimUri)}
-              viewerAddresses={feedback.viewerAddresses}
-            />
+              {formatDate(node.createdAt)}
+            </time>
           )}
         </div>
-        {node.replies.map((reply) => (
-          <CommentItem key={reply.commentUri} node={reply} depth={depth + 1} feedback={feedback} />
-        ))}
+        <div
+          id={bodyId}
+          className={cn(
+            "mt-1.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300",
+            !expanded &&
+              isLong &&
+              "max-h-28 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
+          )}
+        >
+          <MarkdownPreview variant="inline" source={node.text} />
+        </div>
+        {isLong && (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => setExpanded((open) => !open)}
+            aria-expanded={expanded}
+            aria-controls={bodyId}
+            className="mt-2 h-auto p-0 text-xs font-medium text-gray-500 hover:text-gray-900 hover:no-underline dark:text-gray-400 dark:hover:text-white"
+          >
+            {expanded ? "Show less" : "Show more"}
+          </Button>
+        )}
+        {feedback && node.authorSimUri && (
+          <EvaluationFeedback
+            referenceNumber={feedback.referenceNumber}
+            subject={{ commentUri: node.commentUri }}
+            simUri={node.authorSimUri}
+            canGiveFeedback={feedback.canGiveFeedback(node.authorSimUri)}
+            viewerAddresses={feedback.viewerAddresses}
+          />
+        )}
       </div>
-    );
-  });
+      {node.replies.map((reply) => (
+        <CommentItem
+          key={reply.commentUri}
+          node={reply}
+          depth={depth + 1}
+          feedback={feedback}
+          avatars={avatars}
+        />
+      ))}
+    </div>
+  );
+});
 CommentItem.displayName = "CommentItem";
 
 const SectionHeading: FC<{ children: ReactNode }> = ({ children }) => (
@@ -173,15 +222,30 @@ const SectionHeading: FC<{ children: ReactNode }> = ({ children }) => (
   </div>
 );
 
-export const SimComments: FC<{ referenceNumber: string; feedback?: CommentFeedbackContext }> = ({
-  referenceNumber,
-  feedback,
-}) => {
+export const SimComments: FC<{
+  referenceNumber: string;
+  feedback?: CommentFeedbackContext;
+  /** Narrows the list to one milestone's verdicts, rendered flat without headings. */
+  milestone?: MilestoneFilter;
+}> = ({ referenceNumber, feedback, milestone }) => {
   const { data, isLoading } = useSimocracyComments(referenceNumber);
-  const groups = useMemo(
-    () => groupByMilestone(buildThreads(data?.comments ?? [])),
-    [data?.comments]
+  // The council carries every Sim of the gathering (the program summary only
+  // lists the ones linked to a reviewer), so avatars come from it.
+  const { data: council } = useSimocracyCouncil(data?.programId ?? undefined);
+  const avatars = useMemo(
+    () => new Map<string, string | null>((council ?? []).map((sim) => [sim.simUri, sim.avatar])),
+    [council]
   );
+  const groups = useMemo(() => {
+    const comments = data?.comments ?? [];
+    if (!milestone) return groupByMilestone(buildThreads(comments));
+    const own = comments.filter((comment) => isAboutMilestone(comment, milestone));
+    const threads = buildThreads(own).map((node) => ({
+      ...node,
+      text: splitMilestone(node.text).body,
+    }));
+    return threads.length > 0 ? [{ milestone: milestone.title, threads }] : [];
+  }, [data?.comments, milestone]);
 
   if (isLoading) {
     return (
@@ -200,10 +264,28 @@ export const SimComments: FC<{ referenceNumber: string; feedback?: CommentFeedba
   if (groups.length === 0) {
     return (
       <div className="space-y-2">
-        <SectionHeading>Sim comments</SectionHeading>
+        {!milestone && <SectionHeading>Sim comments</SectionHeading>}
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No Sim comments on this application yet.
+          {milestone
+            ? "No Sim evaluations for this milestone yet."
+            : "No Sim comments on this application yet."}
         </p>
+      </div>
+    );
+  }
+
+  if (milestone) {
+    return (
+      <div className="space-y-3">
+        {groups[0].threads.map((node) => (
+          <CommentItem
+            key={node.commentUri}
+            node={node}
+            depth={0}
+            feedback={feedback}
+            avatars={avatars}
+          />
+        ))}
       </div>
     );
   }
@@ -228,7 +310,13 @@ export const SimComments: FC<{ referenceNumber: string; feedback?: CommentFeedba
             </span>
           </summary>
           {group.threads.map((node) => (
-            <CommentItem key={node.commentUri} node={node} depth={0} feedback={feedback} />
+            <CommentItem
+              key={node.commentUri}
+              node={node}
+              depth={0}
+              feedback={feedback}
+              avatars={avatars}
+            />
           ))}
         </details>
       ))}

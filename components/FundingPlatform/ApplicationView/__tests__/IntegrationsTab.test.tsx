@@ -12,6 +12,7 @@ vi.mock("@/hooks/useApplicationIntegrations", () => ({
     mockUseSimocracyEvaluations(referenceNumber),
   useSimocracyProgramSummary: (programId: string) => mockUseSimocracyProgramSummary(programId),
   useSimocracySimLinks: () => ({ data: [] }),
+  useSimocracyCouncil: () => ({ data: undefined }),
   useSimocracyFeedback: () => ({ data: [] }),
   useSubmitSimocracyFeedback: () => ({ mutate: vi.fn(), isPending: false }),
   useSimocracyComments: () => ({ data: { comments: [], forbidden: false } }),

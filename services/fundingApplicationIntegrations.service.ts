@@ -351,10 +351,14 @@ export interface SimocracyCommentRow {
   referenceNumber: string;
   proposalUri: string;
   parentCommentUri: string | null;
+  // Set when Karma posted the comment as a Sim's milestone verdict.
+  milestoneUid: string | null;
   createdAt: string | null;
 }
 
 export interface SimocracyCommentsResult {
+  // Program the comments belong to; lets the list resolve Sim avatars from the council.
+  programId: string | null;
   comments: SimocracyCommentRow[];
   // The viewer lacks reviewer/admin/staff access — the section stays hidden.
   forbidden: boolean;
@@ -364,14 +368,14 @@ export async function fetchSimocracyComments(
   referenceNumber: string
 ): Promise<SimocracyCommentsResult> {
   try {
-    const data = await api.get<{ comments: SimocracyCommentRow[] }>(
+    const data = await api.get<{ programId?: string; comments: SimocracyCommentRow[] }>(
       INDEXER.V2.FUNDING_APPLICATIONS.SIMOCRACY_COMMENTS(referenceNumber)
     );
-    return { comments: data?.comments ?? [], forbidden: false };
+    return { programId: data?.programId ?? null, comments: data?.comments ?? [], forbidden: false };
   } catch (error) {
     // Comments are reviewer/admin/staff-only; a denial is data, not an error.
     if (error instanceof HttpError && (error.status === 403 || error.status === 401)) {
-      return { comments: [], forbidden: true };
+      return { programId: null, comments: [], forbidden: true };
     }
     throw new Error(httpErrorMessage(error));
   }
