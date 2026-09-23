@@ -11,6 +11,7 @@ import { type FC, useEffect, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { Button as UiButton } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   useExportSimocracyFeedback,
   useSimocracyCouncil,
@@ -218,7 +219,7 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
             </label>
             {showUriInput ? (
               <div className="mt-1 flex gap-2">
-                <input
+                <Input
                   id="simocracy-gathering-uri"
                   type="text"
                   value={gatheringUri}
@@ -231,10 +232,8 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
                   spellCheck={false}
                   aria-invalid={!!validationError}
                   className={cn(
-                    "block w-full min-w-0 flex-1 rounded-md border bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-60",
-                    validationError
-                      ? "border-red-400 dark:border-red-700"
-                      : "border-gray-200 dark:border-gray-700"
+                    "min-w-0 flex-1 font-mono",
+                    validationError && "border-red-400 dark:border-red-700"
                   )}
                 />
                 {canEdit && (
@@ -249,18 +248,19 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
                       Save
                     </Button>
                     {savedUri.length > 0 && (
-                      <button
+                      <UiButton
                         type="button"
+                        variant="outline"
                         onClick={() => {
                           setEditingUri(false);
                           setGatheringUri(savedUri);
                           setValidationError(null);
                         }}
                         disabled={updateMutation.isPending}
-                        className="shrink-0 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+                        className="shrink-0 text-gray-600 dark:text-gray-300"
                       >
                         Cancel
-                      </button>
+                      </UiButton>
                     )}
                   </>
                 )}
@@ -273,22 +273,26 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
                 >
                   {savedUri}
                 </code>
-                <button
+                <UiButton
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   aria-label="Copy gathering AT-URI"
                   onClick={() => copy(savedUri, "Gathering AT-URI copied")}
-                  className="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-gray-300"
+                  className="shrink-0 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                 >
                   <ClipboardDocumentIcon className="h-4 w-4" />
-                </button>
+                </UiButton>
                 {canEdit && (
-                  <button
+                  <UiButton
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => setEditingUri(true)}
-                    className="shrink-0 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+                    className="h-7 shrink-0 text-xs font-medium text-gray-600 dark:text-gray-300"
                   >
                     Change
-                  </button>
+                  </UiButton>
                 )}
               </div>
             )}

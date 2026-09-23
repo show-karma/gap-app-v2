@@ -4,6 +4,8 @@ import { CheckIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
+import { Button as UiButton } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   useDeleteSimocracyCredential,
   useSetSimocracyCredential,
@@ -72,13 +74,15 @@ export const SimocracyCredentialSection: FC<SimocracyCredentialSectionProps> = (
             </code>
           )}
           <span className="min-w-0 flex-1" />
-          <button
+          <UiButton
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => setEditing(true)}
-            className="shrink-0 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+            className="h-7 shrink-0 text-xs font-medium text-gray-600 dark:text-gray-300"
           >
             Replace
-          </button>
+          </UiButton>
           <DeleteDialog
             title="Remove the stored ATProto credential? New applications will stop syncing proposals to Simocracy."
             deleteFunction={() => deleteMutation.mutateAsync()}
@@ -94,7 +98,7 @@ export const SimocracyCredentialSection: FC<SimocracyCredentialSectionProps> = (
       ) : (
         showForm && (
           <div className="mt-2 space-y-2">
-            <input
+            <Input
               type="password"
               value={appPassword}
               onChange={(event) => setAppPassword(event.target.value)}
@@ -102,7 +106,7 @@ export const SimocracyCredentialSection: FC<SimocracyCredentialSectionProps> = (
               spellCheck={false}
               autoComplete="off"
               aria-label="ATProto app password"
-              className="block w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+              className="font-mono"
             />
             <div className="flex items-center gap-2">
               <Button
@@ -114,17 +118,18 @@ export const SimocracyCredentialSection: FC<SimocracyCredentialSectionProps> = (
                 Verify &amp; save
               </Button>
               {configured && (
-                <button
+                <UiButton
                   type="button"
+                  variant="outline"
                   onClick={() => {
                     setEditing(false);
                     setAppPassword("");
                   }}
                   disabled={setMutation.isPending}
-                  className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+                  className="text-gray-600 dark:text-gray-300"
                 >
                   Cancel
-                </button>
+                </UiButton>
               )}
             </div>
           </div>
