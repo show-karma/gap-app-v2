@@ -1,6 +1,6 @@
 import { useReviewerInbox } from "@/hooks/useReviewerInbox";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
-import type { MilestoneQueueFilter } from "@/types/funding-platform";
+import type { MilestoneQueueFilter, ReviewerInboxSort } from "@/types/funding-platform";
 import type { InboxItem, InboxStats } from "./types";
 
 export interface UseInboxFeedOptions {
@@ -18,6 +18,8 @@ export interface UseInboxFeedOptions {
   attention?: MilestoneQueueFilter | null;
   /** Narrow the feed to one of the community's programs. */
   programId?: string | null;
+  /** Ordering mode. The server owns the default, so "priority" is not sent. */
+  inboxSort?: ReviewerInboxSort;
 }
 
 interface UseInboxFeedResult {
@@ -48,6 +50,7 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
     applicationFilters = {},
     attention = null,
     programId = null,
+    inboxSort,
   } = options;
 
   const { items, pagination, stats, isLoading, isFetching, error, refetch } = useReviewerInbox(
@@ -56,6 +59,7 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
       ...applicationFilters,
       ...(attention ? { attention } : {}),
       ...(programId ? { programId } : {}),
+      ...(inboxSort ? { inboxSort } : {}),
     },
     {
       enabled: includeApplications || includeMilestones,

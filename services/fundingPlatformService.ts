@@ -13,6 +13,7 @@ import type {
   IFundingProgramConfig,
   IPaginatedApplicationsResponse,
   MilestoneQueueFilter,
+  ReviewerInboxSort,
 } from "@/types/funding-platform";
 import { emitApplicationStatusChanged } from "@/utilities/analytics/emitters/application";
 import { api } from "@/utilities/api/client";
@@ -124,6 +125,11 @@ export interface IApplicationFilters {
    * Ignored by every other endpoint and inert for non-admin callers.
    */
   attention?: MilestoneQueueFilter;
+  /**
+   * Reviewer-inbox only: how the feed is ordered. Omitted for the default
+   * (`priority`), so the server owns the default rather than the client.
+   */
+  inboxSort?: ReviewerInboxSort;
 }
 
 export type FundingProgram = {

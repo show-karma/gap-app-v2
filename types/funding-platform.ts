@@ -302,6 +302,16 @@ export type MilestoneAttentionReason =
 /** Queue filter values: the four reasons plus the follow-up pseudo-filter. */
 export type MilestoneQueueFilter = MilestoneAttentionReason | "followup_due";
 
+/**
+ * Ordering modes for the reviewer inbox feed. Mirrors `ReviewerInboxSortEnum`
+ * in the indexer; the wire values are the enum's, not these key names.
+ *
+ * `priority` leads with the attention reasons that need a decision;
+ * `follow_up_date` leads with the earliest open follow-up, so overdue chases
+ * come first and milestones with no logged action item sort last.
+ */
+export type ReviewerInboxSort = "priority" | "follow_up_date";
+
 export interface IReviewerInboxItem {
   id: string;
   kind: "application" | "milestone";

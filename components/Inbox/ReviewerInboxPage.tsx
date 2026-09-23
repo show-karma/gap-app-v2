@@ -12,7 +12,7 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
-import type { MilestoneQueueFilter } from "@/types/funding-platform";
+import type { MilestoneQueueFilter, ReviewerInboxSort } from "@/types/funding-platform";
 import type { Community } from "@/types/v2/community";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { cn } from "@/utilities/tailwind";
@@ -22,6 +22,7 @@ import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
 import { InboxProgramFilter } from "./InboxProgramFilter";
+import { InboxSortControl } from "./InboxSortControl";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -112,6 +113,7 @@ export function ReviewerInboxPage({
   // caller — this flag only drives what the page renders, never what it is
   // allowed to see.
   const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
+  const [inboxSort, setInboxSort] = useState<ReviewerInboxSort>("priority");
   const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
   const [programId] = useQueryState("programId");
 
@@ -122,6 +124,7 @@ export function ReviewerInboxPage({
     applicationFilters: { limit },
     attention: attentionFilter,
     programId,
+    inboxSort,
   });
 
   const hasBothRoles = includeApplications && includeMilestones;
@@ -184,24 +187,35 @@ export function ReviewerInboxPage({
     [selectItem]
   );
 
-  // A stage filter is a new list: reset paging and drop a selection the list
-  // may no longer contain, so the URL hash never points at a hidden item.
+  // A stage filter or sort change both yield a new page-one list: drop a
+  // selection the new list may no longer contain, so the URL hash never points
+  // at a hidden item.
+  const resetToNewList = useCallback(() => {
+    setLimit(INBOX_PAGE_SIZE);
+    autoSelectPending.current = true;
+    if (selectedIdRef.current == null) return;
+    if (syncSelectionToHash) {
+      const url = new URL(window.location.href);
+      url.hash = "";
+      window.history.replaceState({}, "", url.toString());
+    }
+    setSelectedId(null);
+  }, [syncSelectionToHash]);
+
   const handleAttentionChange = useCallback(
     (value: MilestoneQueueFilter | null) => {
       setAttentionFilter(value);
-      setLimit(INBOX_PAGE_SIZE);
-      // The incoming list is a new set of items; pick its first one rather than
-      // dropping the reader onto the "select an item" placeholder.
-      autoSelectPending.current = true;
-      if (selectedIdRef.current == null) return;
-      if (syncSelectionToHash) {
-        const url = new URL(window.location.href);
-        url.hash = "";
-        window.history.replaceState({}, "", url.toString());
-      }
-      setSelectedId(null);
+      resetToNewList();
     },
-    [syncSelectionToHash]
+    [resetToNewList]
+  );
+
+  const handleSortChange = useCallback(
+    (value: ReviewerInboxSort) => {
+      setInboxSort(value);
+      resetToNewList();
+    },
+    [resetToNewList]
   );
 
   useEffect(() => {
@@ -285,6 +299,11 @@ export function ReviewerInboxPage({
             aria-hidden="true"
           />
           <InboxProgramFilter communityId={communityId} />
+          <span
+            className="hidden h-5 w-px bg-gray-200 sm:block dark:bg-zinc-700"
+            aria-hidden="true"
+          />
+          <InboxSortControl value={inboxSort} onChange={handleSortChange} />
         </div>
       )}
 
