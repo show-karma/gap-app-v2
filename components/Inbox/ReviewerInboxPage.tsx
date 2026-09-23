@@ -187,33 +187,36 @@ export function ReviewerInboxPage({
     [selectItem]
   );
 
-  // A stage filter is a new list: reset paging and drop a selection the list
-  // may no longer contain, so the URL hash never points at a hidden item.
+  // A stage filter or sort change both yield a new page-one list: drop a
+  // selection the new list may no longer contain, so the URL hash never points
+  // at a hidden item.
+  const resetToNewList = useCallback(() => {
+    setLimit(INBOX_PAGE_SIZE);
+    autoSelectPending.current = true;
+    if (selectedIdRef.current == null) return;
+    if (syncSelectionToHash) {
+      const url = new URL(window.location.href);
+      url.hash = "";
+      window.history.replaceState({}, "", url.toString());
+    }
+    setSelectedId(null);
+  }, [syncSelectionToHash]);
+
   const handleAttentionChange = useCallback(
     (value: MilestoneQueueFilter | null) => {
       setAttentionFilter(value);
-      setLimit(INBOX_PAGE_SIZE);
-      // The incoming list is a new set of items; pick its first one rather than
-      // dropping the reader onto the "select an item" placeholder.
-      autoSelectPending.current = true;
-      if (selectedIdRef.current == null) return;
-      if (syncSelectionToHash) {
-        const url = new URL(window.location.href);
-        url.hash = "";
-        window.history.replaceState({}, "", url.toString());
-      }
-      setSelectedId(null);
+      resetToNewList();
     },
-    [syncSelectionToHash]
+    [resetToNewList]
   );
 
-  // A different ordering is a different page-one set, so paging resets and the
-  // first item of the incoming list is opened, exactly as for a stage change.
-  const handleSortChange = useCallback((value: ReviewerInboxSort) => {
-    setInboxSort(value);
-    setLimit(INBOX_PAGE_SIZE);
-    autoSelectPending.current = true;
-  }, []);
+  const handleSortChange = useCallback(
+    (value: ReviewerInboxSort) => {
+      setInboxSort(value);
+      resetToNewList();
+    },
+    [resetToNewList]
+  );
 
   useEffect(() => {
     if (!syncSelectionToHash) return;

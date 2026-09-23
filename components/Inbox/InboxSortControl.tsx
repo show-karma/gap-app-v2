@@ -23,17 +23,6 @@ const OPTIONS: { key: ReviewerInboxSort; label: string; hint: string }[] = [
   },
 ];
 
-/**
- * Ordering control for the community-admin queue.
- *
- * Deliberately two named modes rather than a field/direction pair: each mode
- * has exactly one meaningful direction (most urgent first, earliest chase
- * first), and offering "follow-up date, descending" would only ever surface
- * the least urgent work.
- *
- * The chosen mode is passed to the server, which owns the ordering. Nothing
- * here re-sorts the feed client-side.
- */
 const InboxSortControlComponent: FC<InboxSortControlProps> = ({ value, onChange }) => (
   <fieldset className="flex flex-wrap items-center gap-2 border-0 p-0">
     <legend className="sr-only">Sort by</legend>
