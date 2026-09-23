@@ -15,6 +15,7 @@ vi.mock("@/hooks/useFundingApplicationByProjectUID", () => ({
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useApplicationIntegrations: (...args: unknown[]) => mockUseApplicationIntegrations(...args),
   useSimocracyComments: (...args: unknown[]) => mockUseSimocracyComments(...args),
+  useSimocracyProgramSummary: () => ({ data: undefined }),
   useSimocracyCouncil: () => ({
     data: [
       {

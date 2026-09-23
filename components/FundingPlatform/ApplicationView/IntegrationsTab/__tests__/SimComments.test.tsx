@@ -5,6 +5,7 @@ const mockUseSimocracyComments = vi.fn();
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useSimocracyComments: (referenceNumber: string) => mockUseSimocracyComments(referenceNumber),
   useSimocracyCouncil: () => ({ data: undefined }),
+  useSimocracyProgramSummary: () => ({ data: undefined }),
   useSimocracyFeedback: () => ({ data: [] }),
   useSubmitSimocracyFeedback: () => ({ mutate: vi.fn(), isPending: false }),
 }));

@@ -6,7 +6,11 @@ import { type FC, memo, type ReactNode, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Button } from "@/components/ui/button";
-import { useSimocracyComments, useSimocracyCouncil } from "@/hooks/useApplicationIntegrations";
+import {
+  useSimocracyComments,
+  useSimocracyCouncil,
+  useSimocracyProgramSummary,
+} from "@/hooks/useApplicationIntegrations";
 import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
@@ -229,13 +233,18 @@ export const SimComments: FC<{
   milestone?: MilestoneFilter;
 }> = ({ referenceNumber, feedback, milestone }) => {
   const { data, isLoading } = useSimocracyComments(referenceNumber);
-  // The council carries every Sim of the gathering (the program summary only
-  // lists the ones linked to a reviewer), so avatars come from it.
+  // The program summary answers instantly but only lists Sims linked to a
+  // reviewer; the council (read live from ATProto, slower) carries every Sim
+  // of the gathering and fills in the rest once it arrives.
+  const { data: summary } = useSimocracyProgramSummary(data?.programId ?? undefined);
   const { data: council } = useSimocracyCouncil(data?.programId ?? undefined);
-  const avatars = useMemo(
-    () => new Map<string, string | null>((council ?? []).map((sim) => [sim.simUri, sim.avatar])),
-    [council]
-  );
+  const avatars = useMemo(() => {
+    const map = new Map<string, string | null>();
+    for (const sim of summary?.sims ?? []) map.set(sim.simUri, sim.avatar);
+    for (const sim of council ?? [])
+      if (sim.avatar || !map.has(sim.simUri)) map.set(sim.simUri, sim.avatar);
+    return map;
+  }, [summary?.sims, council]);
   const groups = useMemo(() => {
     const comments = data?.comments ?? [];
     if (!milestone) return groupByMilestone(buildThreads(comments));
