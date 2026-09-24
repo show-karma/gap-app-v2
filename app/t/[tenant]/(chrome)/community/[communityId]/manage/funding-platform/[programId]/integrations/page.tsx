@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { SimLinksCard } from "@/components/FundingPlatform/Integrations/SimLinksCard";
 import { SimocracyConfigCard } from "@/components/FundingPlatform/Integrations/SimocracyConfigCard";
+import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatform/Sidebar";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
-import { Link } from "@/src/components/navigation/Link";
+import { useKycConfig } from "@/hooks/useKycStatus";
 import { FundingPlatformGuard } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types";
@@ -33,8 +34,19 @@ export default function ProgramIntegrationsPage() {
     error: programsError,
   } = useFundingPrograms(communityId);
   const { address } = useAuth();
+  const { isEnabled: kycEnabled } = useKycConfig(communityId);
+  const { hasAccess: hasCommunityAdminAccess } = useCommunityAdminAccess(communityId);
+  const router = useRouter();
 
   const canEdit = can(Permission.PROGRAM_EDIT);
+  const simocracy = programs.find((p) => p.programId === programId)?.applicationConfig?.integrations
+    ?.simocracy;
+  const hasGathering = Boolean(simocracy?.enabled && simocracy.gatheringUri);
+
+  const openSettingsTab = (tab: SidebarTabKey) => {
+    const base = PAGES.MANAGE.FUNDING_PLATFORM.QUESTION_BUILDER(communityId, combinedProgramId);
+    router.push(tab === "build" ? base : `${base}?tab=${tab}`);
+  };
 
   if (isLoadingPermissions || isLoadingPrograms) {
     return (
@@ -75,30 +87,35 @@ export default function ProgramIntegrationsPage() {
 
   return (
     <FundingPlatformGuard>
-      <div className="sm:px-3 md:px-4 px-6 py-6">
-        <div className="max-w-3xl mx-auto">
-          <Link
-            href={PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId)}
-            className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4"
-          >
-            <ArrowLeftIcon className="w-4 h-4 mr-1" />
-            Back to Programs
-          </Link>
+      <div className="flex min-h-full">
+        <SettingsSidebar
+          activeTab="integrations"
+          onTabChange={openSettingsTab}
+          communityId={communityId}
+          programId={combinedProgramId}
+          programTitle={programName}
+          kycEnabled={kycEnabled}
+          showNotificationConfig={hasCommunityAdminAccess}
+        />
+        <div className="flex-1 p-6">
+          <div className="max-w-3xl">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Integrations</h1>
+            <p className="mt-1 text-gray-600 dark:text-gray-400">
+              Connect &quot;{programName}&quot; to external decision mechanisms.
+            </p>
 
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Integrations</h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">
-            Connect &quot;{programName}&quot; to external decision mechanisms.
-          </p>
-
-          <div className="mt-6 space-y-6">
-            <SimocracyConfigCard programId={programId} canEdit={canEdit} />
-            <SimLinksCard
-              programId={programId}
-              canManage={canEdit}
-              isReviewer={isReviewer}
-              viewerAddress={address}
-              communityUID={program?.communityUID}
-            />
+            <div className="mt-6 space-y-6">
+              <SimocracyConfigCard programId={programId} canEdit={canEdit} />
+              {hasGathering && (
+                <SimLinksCard
+                  programId={programId}
+                  canManage={canEdit}
+                  isReviewer={isReviewer}
+                  viewerAddress={address}
+                  communityUID={program?.communityUID}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

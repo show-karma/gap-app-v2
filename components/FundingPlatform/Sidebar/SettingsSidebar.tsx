@@ -151,7 +151,8 @@ const getSidebarSections = (
 ];
 
 interface SettingsSidebarProps {
-  activeTab: SidebarTabKey;
+  /** A tab key, or "integrations" when rendered on the standalone integrations page. */
+  activeTab: SidebarTabKey | "integrations";
   onTabChange: (tab: SidebarTabKey) => void;
   communityId: string;
   programId: string;
