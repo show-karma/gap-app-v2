@@ -18,9 +18,9 @@ export const CANONICAL_ORIGIN = `https://${CANONICAL_HOST}` as const;
 export const STAGING_HOST = `staging.${ROOT_DOMAIN}` as const;
 export const STAGING_ORIGIN = `https://${STAGING_HOST}` as const;
 
-/** The nonprofits product is a separate app. It replaced the in-app
+/** The nonprofits product (Compass) is a separate app. It replaced the in-app
  *  /nonprofits and /nonprofits/find-funders* surfaces, which now redirect here. */
-const NONPROFITS_HOST = `nonprofits.${ROOT_DOMAIN}` as const;
+const NONPROFITS_HOST = `compass.${ROOT_DOMAIN}` as const;
 export const NONPROFITS_ORIGIN = `https://${NONPROFITS_HOST}` as const;
 
 /** Governance app lives in a separate repo and is NOT flipping in this release. */
