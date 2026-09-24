@@ -59,4 +59,18 @@ export const QUERY_KEYS = {
     "application-versions",
     applicationIdOrReference,
   ],
+  applicationIntegrations: (referenceNumber: string) => [
+    "application-integrations",
+    referenceNumber,
+  ],
+  simocracyEvaluations: (referenceNumber: string) => ["simocracy-evaluations", referenceNumber],
+  simocracyProgramSummary: (programId: string) => ["simocracy-program-summary", programId] as const,
+  simocracySimLinks: (programId: string) => ["simocracy-sim-links", programId] as const,
+  simocracyCouncil: (programId: string) => ["simocracy-council", programId] as const,
+  simocracySimPersona: (programId: string, simUri: string) =>
+    ["simocracy-sim-persona", programId, simUri] as const,
+  // subjectKey: a runId, a verdict commentUri, or "all" for the whole application
+  simocracyFeedback: (referenceNumber: string, subjectKey: string) =>
+    ["simocracy-feedback", referenceNumber, subjectKey] as const,
+  simocracyComments: (referenceNumber: string) => ["simocracy-comments", referenceNumber] as const,
 };

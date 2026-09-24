@@ -5,6 +5,7 @@ import {
   DocumentTextIcon,
   FlagIcon,
   LockClosedIcon,
+  PuzzlePieceIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
@@ -118,6 +119,7 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
 export const TabIcons = {
   Application: DocumentTextIcon,
   AIAnalysis: SparklesIcon,
+  Integrations: PuzzlePieceIcon,
   Discussion: ChatBubbleLeftRightIcon,
   Milestones: FlagIcon,
   Notes: LockClosedIcon,

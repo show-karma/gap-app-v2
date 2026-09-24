@@ -1,6 +1,11 @@
 "use client";
 
-import { ChatBubbleLeftRightIcon, DocumentTextIcon, SparklesIcon } from "@heroicons/react/20/solid";
+import {
+  ChatBubbleLeftRightIcon,
+  DocumentTextIcon,
+  SparklesIcon,
+  UserGroupIcon,
+} from "@heroicons/react/20/solid";
 import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
@@ -26,6 +31,7 @@ import { ReviewerType } from "@/src/core/rbac/types";
 import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
+import { InboxMilestoneSimocracyTab } from "./InboxMilestoneSimocracyTab";
 
 const MarkdownPreview = dynamic(
   () =>
@@ -38,6 +44,7 @@ const PANEL_TABS = [
   { key: "details" as const, label: "Details", icon: DocumentTextIcon },
   { key: "ai" as const, label: "AI Review", icon: SparklesIcon },
   { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
+  { key: "simocracy" as const, label: "Simocracy", icon: UserGroupIcon },
 ];
 
 type PanelTabKey = (typeof PANEL_TABS)[number]["key"];
@@ -534,6 +541,12 @@ export function InboxMilestoneDetail({
             projectUID={project?.uid ?? projectUid}
             programId={parsedProgramId}
             communityId={communityId}
+          />
+        )}
+        {activePanelTab === "simocracy" && (
+          <InboxMilestoneSimocracyTab
+            projectUID={project?.uid ?? projectUid}
+            milestone={{ uid: selectedMilestone.uid, title: selectedMilestone.title }}
           />
         )}
       </div>

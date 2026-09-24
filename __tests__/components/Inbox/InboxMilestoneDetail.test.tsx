@@ -128,6 +128,12 @@ vi.mock("@/components/Pages/Admin/MilestonesReview/MilestoneCard", () => ({
   ),
 }));
 
+vi.mock("@/components/Inbox/InboxMilestoneSimocracyTab", () => ({
+  InboxMilestoneSimocracyTab: (props: { milestone: { uid: string } }) => (
+    <div data-testid="simocracy-tab">{props.milestone.uid}</div>
+  ),
+}));
+
 import { InboxMilestoneDetail } from "@/components/Inbox/InboxMilestoneDetail";
 
 function makeMilestone(
@@ -342,6 +348,21 @@ describe("InboxMilestoneDetail", () => {
     fireEvent.click(commentsTab);
     expect(commentsTab).toHaveAttribute("aria-selected", "true");
     expect(detailsTab).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("shows the Simocracy tab with this milestone's verdicts, mounted only when opened", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    render(<InboxMilestoneDetail {...baseProps} />);
+    expect(screen.queryByTestId("simocracy-tab")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Simocracy/ }));
+    expect(screen.getByTestId("simocracy-tab")).toHaveTextContent("ms-1");
   });
 
   it("does not fetch the funding application until the Comments tab is opened", () => {

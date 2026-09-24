@@ -119,6 +119,21 @@ export interface IStatusHistoryEntry {
 // duplicating the permission matrix on the frontend.
 export type ApplicationReportAction = "review" | "request_revision" | "approve" | "reject";
 
+export interface ISimocracyIntegrationConfig {
+  gatheringUri: string;
+  enabled: boolean;
+  // Non-secret credential summary surfaced by the read API (the encrypted
+  // password never leaves the backend).
+  credentialConfigured?: boolean;
+  credentialIdentifier?: string;
+  credentialDid?: string;
+  credentialVerifiedAt?: string;
+}
+
+export interface IProgramIntegrationsConfig {
+  simocracy?: ISimocracyIntegrationConfig;
+}
+
 // V2 Funding Program Configuration
 export interface IFundingProgramConfig {
   id: string;
@@ -134,6 +149,7 @@ export interface IFundingProgramConfig {
   // Admin-authored guidance surfaced to the Karma AI agent for any response
   // about this program (e.g. a data-quality caveat). null clears it.
   aiInsights?: string | null;
+  integrations?: IProgramIntegrationsConfig | null;
   isEnabled: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;

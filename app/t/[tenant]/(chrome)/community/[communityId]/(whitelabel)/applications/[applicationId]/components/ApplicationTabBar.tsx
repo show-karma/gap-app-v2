@@ -1,9 +1,23 @@
 "use client";
 
-import { CheckCircle2, FileText, Lock, type LucideIcon, MessageSquare, Target } from "lucide-react";
+import {
+  CheckCircle2,
+  FileText,
+  Lock,
+  type LucideIcon,
+  MessageSquare,
+  Puzzle,
+  Target,
+} from "lucide-react";
 import { cn } from "@/utilities/tailwind";
 
-export type ApplicationTabKey = "details" | "milestones" | "post-approval" | "comments" | "notes";
+export type ApplicationTabKey =
+  | "details"
+  | "milestones"
+  | "post-approval"
+  | "comments"
+  | "notes"
+  | "simocracy";
 
 export interface TabDescriptor {
   key: ApplicationTabKey;
@@ -68,4 +82,5 @@ export const TAB_ICONS = {
   "post-approval": CheckCircle2,
   comments: MessageSquare,
   notes: Lock,
+  simocracy: Puzzle,
 } satisfies Record<ApplicationTabKey, LucideIcon>;
