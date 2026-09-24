@@ -7,19 +7,21 @@ import {
   canonicalUrl,
   docsOrigin,
   isAliasHost,
+  NONPROFITS_ORIGIN,
   STAGING_ORIGIN,
 } from "../domains";
 
 describe("domains", () => {
+  describe("NONPROFITS_ORIGIN", () => {
+    it("points at the Compass app on the canonical root", () => {
+      expect(NONPROFITS_ORIGIN).toBe("https://compass.karmahq.org");
+    });
+  });
+
   describe("ALIAS_HOSTS", () => {
     it("should contain exactly the four legacy and non-canonical hosts", () => {
       expect([...ALIAS_HOSTS].sort()).toEqual(
-        [
-          "gap.karmahq.xyz",
-          "karmahq.org",
-          "karmahq.xyz",
-          "www.karmahq.xyz",
-        ].sort()
+        ["gap.karmahq.xyz", "karmahq.org", "karmahq.xyz", "www.karmahq.xyz"].sort()
       );
     });
 
