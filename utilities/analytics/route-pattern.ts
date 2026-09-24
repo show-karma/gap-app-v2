@@ -83,6 +83,7 @@ export const ROUTE_TEMPLATES: readonly string[] = [
   "/community/:communityId/manage/funding-platform/:programId/applications/:applicationId",
   "/community/:communityId/manage/funding-platform/:programId/milestones",
   "/community/:communityId/manage/funding-platform/:programId/milestones/:projectId",
+  "/community/:communityId/manage/funding-platform/:programId/integrations",
   "/community/:communityId/manage/funding-platform/:programId/question-builder",
   "/community/:communityId/manage/funding-platform/:programId/setup",
   "/community/:communityId/manage/impact",

@@ -135,6 +135,13 @@ vi.mock("@/hooks/usePermissions", () => ({
   })),
 }));
 
+vi.mock("@/hooks/useApplicationIntegrations", () => ({
+  useApplicationIntegrations: () => ({ data: [], isLoading: false, isError: false }),
+  useSimocracyEvaluations: () => ({ data: undefined, isLoading: false, isError: false }),
+  useSimocracyProgramSummary: () => ({ data: undefined }),
+  useSimocracyCouncil: () => ({ data: undefined }),
+}));
+
 vi.mock("@/hooks/useKycStatus", () => ({
   useKycStatus: vi.fn(() => ({
     status: null,
@@ -316,6 +323,11 @@ vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationTab", () => ({
 vi.mock("@/components/FundingPlatform/ApplicationView/AIAnalysisTab", () => ({
   AIAnalysisTab: () =>
     React.createElement("div", { "data-testid": "ai-analysis-tab" }, "AI Analysis Tab"),
+}));
+
+vi.mock("@/components/FundingPlatform/ApplicationView/IntegrationsTab", () => ({
+  IntegrationsTab: () =>
+    React.createElement("div", { "data-testid": "integrations-tab" }, "Integrations Tab"),
 }));
 
 vi.mock("@/components/FundingPlatform/ApplicationView/DiscussionTab", () => ({

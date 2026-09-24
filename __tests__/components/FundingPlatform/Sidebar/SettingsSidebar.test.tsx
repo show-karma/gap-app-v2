@@ -269,12 +269,16 @@ describe("SettingsSidebar", () => {
       render(<SettingsSidebar {...defaultProps} />);
 
       const buttons = screen.getAllByRole("button");
-      // 6 navigation items (help tooltips were removed to keep sidebar clean)
+      // 6 in-place tabs; Integrations is a link to its own page
       expect(buttons.length).toBe(6);
 
       // Verify all navigation buttons have proper text content
       const navButtons = buttons.filter((btn) => btn.querySelector(".text-sm"));
       expect(navButtons.length).toBe(6);
+      expect(screen.getByRole("link", { name: /Integrations/ })).toHaveAttribute(
+        "href",
+        expect.stringContaining("/integrations")
+      );
     });
   });
 

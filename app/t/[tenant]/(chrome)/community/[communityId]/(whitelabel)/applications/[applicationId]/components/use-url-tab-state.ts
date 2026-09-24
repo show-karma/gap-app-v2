@@ -4,7 +4,13 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import type { ApplicationTabKey } from "./ApplicationTabBar";
 
-const TAB_KEYS = new Set<ApplicationTabKey>(["details", "milestones", "post-approval", "comments"]);
+const TAB_KEYS = new Set<ApplicationTabKey>([
+  "details",
+  "milestones",
+  "post-approval",
+  "comments",
+  "simocracy",
+]);
 
 /**
  * Holds the active application tab as instant local UI state while mirroring it
