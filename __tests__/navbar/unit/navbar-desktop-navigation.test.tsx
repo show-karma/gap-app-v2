@@ -349,7 +349,7 @@ describe("NavbarDesktopNavigation", () => {
         expect(screen.getByText("Run a grant program")).toBeInTheDocument();
       });
       expect(screen.getByText("Foundations")).toBeInTheDocument();
-      expect(screen.getByText("Donor Advisors")).toBeInTheDocument();
+      expect(screen.queryByText("Donor Advisors")).not.toBeInTheDocument();
     });
 
     it("should render ExploreContent in Explore dropdown", async () => {

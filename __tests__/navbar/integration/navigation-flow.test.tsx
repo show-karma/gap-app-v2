@@ -71,8 +71,8 @@ describe("Navigation Flow Integration Tests", () => {
       // Verify the audience groups and their items
       expect(screen.getByText("Foundations")).toBeInTheDocument();
       expect(screen.getByText("Case studies")).toBeInTheDocument();
-      expect(screen.getByText("Donor Advisors")).toBeInTheDocument();
-      expect(screen.getByText("Nonprofit Deep Research")).toBeInTheDocument();
+      expect(screen.queryByText("Donor Advisors")).not.toBeInTheDocument();
+      expect(screen.queryByText("Nonprofit Deep Research")).not.toBeInTheDocument();
       expect(screen.getByText("Schedule demo")).toBeInTheDocument();
     });
 

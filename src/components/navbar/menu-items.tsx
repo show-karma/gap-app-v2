@@ -13,7 +13,6 @@ import {
   Radio,
   ScrollText,
   UserPlus,
-  UserRoundSearch,
 } from "lucide-react";
 import { karmaLinks } from "@/utilities/karma/karma";
 import { PAGES } from "@/utilities/pages";
@@ -84,16 +83,6 @@ export const forFundersItems: ForFundersItems = {
           icon: GalleryThumbnails,
           title: "Case studies",
           anchor: "case-studies",
-        },
-      ],
-    },
-    {
-      title: "Donor Advisors",
-      items: [
-        {
-          href: PAGES.DONOR_ADVISORS,
-          icon: UserRoundSearch,
-          title: "Nonprofit Deep Research",
         },
       ],
     },

@@ -73,10 +73,7 @@ describe("Menu Items Configuration", () => {
     });
 
     it("should group items by audience", () => {
-      expect(forFundersItems.groups.map((group) => group.title)).toEqual([
-        "Foundations",
-        "Donor Advisors",
-      ]);
+      expect(forFundersItems.groups.map((group) => group.title)).toEqual(["Foundations"]);
     });
 
     it("should have valid items in every group", () => {
@@ -97,16 +94,10 @@ describe("Menu Items Configuration", () => {
       expect(foundations?.items[0].external).toBeUndefined();
     });
 
-    it('should point "Nonprofit Deep Research" at the donor-advisors landing page', () => {
-      const donorAdvisors = forFundersItems.groups.find(
-        (group) => group.title === "Donor Advisors"
-      );
-      const research = donorAdvisors?.items.find(
-        (item) => item.title === "Nonprofit Deep Research"
-      );
-      expect(research).toBeDefined();
-      expect(research?.href).toBe(PAGES.DONOR_ADVISORS);
-      expect(research?.href).not.toBe(PAGES.DONOR_RESEARCH.INDEX);
+    it('should not list "Nonprofit Deep Research" anywhere', () => {
+      expect(
+        allGroupItems.find((item) => item.title === "Nonprofit Deep Research")
+      ).toBeUndefined();
     });
 
     it('should contain "Case studies" item with anchor', () => {
