@@ -3,9 +3,11 @@
 import pluralize from "pluralize";
 import React, { type FC, useMemo } from "react";
 import { InboxListItem } from "@/components/Inbox/InboxListItem";
+import { partitionByFollowUp } from "@/components/Inbox/stageAge";
 import { ADMIN_BUCKET_LABEL, BUCKET_META, BUCKET_RANK } from "@/components/Inbox/statusToBucket";
 import type { InboxItem, ReviewBucket } from "@/components/Inbox/types";
 import { Button } from "@/components/ui/button";
+import type { ReviewerInboxSort } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 
 /** Stream filter for the segmented Applications|Milestones toggle. */
@@ -26,6 +28,12 @@ interface InboxListProps {
   totalCount?: number | null;
   kindFilter: InboxKindFilter;
   onKindFilterChange: (filter: InboxKindFilter) => void;
+  /**
+   * Ordering the server applied. Under `follow_up_date` the list renders FLAT:
+   * re-grouping by bucket would scatter a global date order across three
+   * sections, leaving an order the reader cannot follow.
+   */
+  sort?: ReviewerInboxSort;
 }
 
 const BUCKET_DOT: Record<ReviewBucket, string> = {
@@ -44,9 +52,27 @@ const ORDERED_BUCKETS: ReviewBucket[] = (Object.keys(BUCKET_META) as ReviewBucke
  * every community admin. An admin's feed spans the whole community, so it must
  * also not claim the items are assigned to them.
  */
-function getListHeading(isCommunityAdmin: boolean): string {
-  return isCommunityAdmin ? "Needs attention" : "Assigned to you";
+function getListHeading(isCommunityAdmin: boolean, byFollowUp: boolean): string {
+  if (!isCommunityAdmin) return "Assigned to you";
+  return byFollowUp ? "Overdue follow-ups first" : "Needs attention";
 }
+
+/**
+ * Marks where a follow-up-ordered list runs out of dates.
+ *
+ * Undated items sort last however long they have been stuck, so without this
+ * boundary a milestone stuck 378 days sitting below one stuck 44 days reads as
+ * a broken sort instead of "nobody has scheduled a chase for it".
+ */
+const NoFollowUpDivider: FC<{ count: number }> = ({ count }) => (
+  <div className="flex items-center gap-2 border-y border-gray-100 bg-gray-50 px-4 py-1.5 dark:border-zinc-800 dark:bg-zinc-800/40">
+    <h3 className="text-[13px] font-semibold text-gray-500 dark:text-gray-400">No follow-up set</h3>
+    <span className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" aria-hidden="true" />
+    <span className="text-xs font-medium tabular-nums text-gray-500 dark:text-zinc-400">
+      {count}
+    </span>
+  </div>
+);
 
 /* ------------------------------------------------------------------ */
 /* Bucket section label                                                */
@@ -56,7 +82,7 @@ const BucketHeader: FC<{ bucket: ReviewBucket; count: number; isCommunityAdmin: 
   count,
   isCommunityAdmin,
 }) => (
-  <div className="flex items-center gap-2 pb-2 pt-1">
+  <div className="flex items-center gap-2 border-y border-gray-100 bg-gray-50 px-4 py-1.5 dark:border-zinc-800 dark:bg-zinc-800/40">
     <span className={cn("h-2 w-2 rounded-full", BUCKET_DOT[bucket])} />
     <h3 className="text-[13px] font-semibold text-gray-700 dark:text-gray-200">
       {isCommunityAdmin ? ADMIN_BUCKET_LABEL[bucket] : BUCKET_META[bucket].label}
@@ -138,6 +164,7 @@ const InboxListComponent: FC<InboxListProps> = ({
   totalCount = null,
   kindFilter,
   onKindFilterChange,
+  sort = "priority",
 }) => {
   const counts = useMemo(
     () => ({
@@ -154,6 +181,14 @@ const InboxListComponent: FC<InboxListProps> = ({
 
   const uniform = useMemo(() => findUniformFields(shown), [shown]);
 
+  // Only the admin queue carries follow-up dates, so only it can order by them.
+  const byFollowUp = isCommunityAdmin && sort === "follow_up_date";
+
+  const followUpSplit = useMemo(
+    () => (byFollowUp ? partitionByFollowUp(shown) : null),
+    [byFollowUp, shown]
+  );
+
   const groups = useMemo(
     () =>
       ORDERED_BUCKETS.map((bucket) => ({
@@ -169,10 +204,10 @@ const InboxListComponent: FC<InboxListProps> = ({
   const isTruncated = totalCount != null && totalCount > items.length && kindFilter === "all";
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 dark:border-zinc-700">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          {getListHeading(isCommunityAdmin)}
+          {getListHeading(isCommunityAdmin, byFollowUp)}
         </h2>
         <span className="text-xs tabular-nums text-gray-500 dark:text-zinc-400">
           {isTruncated
@@ -182,13 +217,13 @@ const InboxListComponent: FC<InboxListProps> = ({
       </div>
 
       {showKindToggle && (
-        <div className="mb-3">
+        <div className="border-b border-gray-100 px-4 py-2.5 dark:border-zinc-800">
           <KindToggle value={kindFilter} onChange={onKindFilterChange} counts={counts} />
         </div>
       )}
 
       {shown.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
+        <div className="m-4 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             No {kindFilter === "application" ? "applications" : "milestones"} in this view.
           </p>
@@ -202,16 +237,53 @@ const InboxListComponent: FC<InboxListProps> = ({
             Show all items
           </Button>
         </div>
+      ) : followUpSplit ? (
+        <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+          {followUpSplit.scheduled.map((item) => (
+            <InboxListItem
+              key={item.id}
+              item={item}
+              selected={item.id === selectedId}
+              onSelect={onSelect}
+              hideKind={uniform.kind}
+              hideSubtitle={uniform.subtitle}
+            />
+          ))}
+
+          {followUpSplit.unscheduled.length > 0 && (
+            <>
+              <NoFollowUpDivider count={followUpSplit.unscheduled.length} />
+
+              {followUpSplit.unscheduled.map((item) => (
+                <InboxListItem
+                  key={item.id}
+                  item={item}
+                  selected={item.id === selectedId}
+                  onSelect={onSelect}
+                  hideKind={uniform.kind}
+                  hideSubtitle={uniform.subtitle}
+                />
+              ))}
+            </>
+          )}
+        </div>
       ) : (
-        <div className="space-y-4">
+        <div>
           {groups.map((group) => (
             <div key={group.bucket}>
-              <BucketHeader
-                bucket={group.bucket}
-                count={group.list.length}
-                isCommunityAdmin={isCommunityAdmin}
-              />
-              <div className="space-y-2.5">
+              {/*
+                A section label that names the only section is pure chrome: the
+                list heading and its count already say the same thing two lines
+                above ("Needs attention … 25 of 124" over "Needs action 25").
+              */}
+              {groups.length > 1 && (
+                <BucketHeader
+                  bucket={group.bucket}
+                  count={group.list.length}
+                  isCommunityAdmin={isCommunityAdmin}
+                />
+              )}
+              <div className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {group.list.map((item) => (
                   <InboxListItem
                     key={item.id}
