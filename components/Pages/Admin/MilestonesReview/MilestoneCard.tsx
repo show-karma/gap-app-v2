@@ -661,9 +661,23 @@ export function MilestoneCard({
       {hasCompletion && (
         <>
           {/* Completion Details Box - collapsible */}
-          <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md">
+          <div
+            className={cn(
+              "mb-3 p-3 rounded-md border",
+              quietSurface
+                ? "bg-gray-50 border-gray-200 dark:bg-zinc-800/50 dark:border-zinc-700"
+                : "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+            )}
+          >
             <div className="flex items-center justify-between gap-2 mb-1">
-              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+              <p
+                className={cn(
+                  "text-sm font-semibold",
+                  quietSurface
+                    ? "text-gray-900 dark:text-gray-100"
+                    : "text-blue-900 dark:text-blue-200"
+                )}
+              >
                 Completion Details
               </p>
               {hasLongCompletion && (
@@ -813,8 +827,22 @@ export function MilestoneCard({
           {/* Verification Section */}
           {isVerified && milestone.verificationDetails ? (
             <div className="mb-3">
-              <div className="p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-md">
-                <p className="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
+              <div
+                className={cn(
+                  "p-3 rounded-md border",
+                  quietSurface
+                    ? "bg-gray-50 border-gray-200 dark:bg-zinc-800/50 dark:border-zinc-700"
+                    : "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
+                )}
+              >
+                <p
+                  className={cn(
+                    "text-sm font-semibold mb-2",
+                    quietSurface
+                      ? "text-gray-900 dark:text-gray-100"
+                      : "text-green-900 dark:text-green-200"
+                  )}
+                >
                   Verification (On-chain)
                 </p>
                 <div className="text-sm text-gray-700 dark:text-gray-300">

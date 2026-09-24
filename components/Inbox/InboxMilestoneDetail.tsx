@@ -1,16 +1,20 @@
 "use client";
 
 import { ChatBubbleLeftRightIcon, DocumentTextIcon, SparklesIcon } from "@heroicons/react/20/solid";
+import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
+import pluralize from "pluralize";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
 import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
 import { MilestoneActionItems } from "@/components/Inbox/MilestoneActionItems";
 import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
+import { describeFollowUp, stageAgeTone } from "@/components/Inbox/stageAge";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
 import { GrantCommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/GrantCommentsAndActivity";
 import { MilestoneCard } from "@/components/Pages/Admin/MilestonesReview/MilestoneCard";
 import { Button } from "@/components/Utilities/Button";
+import { Button as UiButton } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
@@ -260,39 +264,58 @@ function MilestoneCommentsTab({
 }
 
 /**
- * Says why this milestone is in the queue.
+ * Pinned header for a queued milestone.
  *
  * One milestone legitimately carries three statuses at once — a verification
  * state ("Verified"), an application state ("Approved") and a queue stage
  * ("Invoice unpaid") — and the detail pane shows all three in different
  * places. Read cold they look like contradictions, and a reviewer who sees
- * "Verified" concludes there is nothing to do. Naming the queue stage, and the
- * time spent in it, makes the other two read as history rather than conflict.
+ * "Verified" concludes there is nothing to do. Leading with the queue stage,
+ * the time spent in it and the next follow-up makes the other two read as
+ * history rather than conflict.
+ *
+ * The follow-up date is here because the queue can be ORDERED by it: the key a
+ * list is sorted on has to be visible on the thing you opened from that list.
  */
-const QueueReason: FC<{ reason: MilestoneAttentionReason; stageAgeDays?: number }> = ({
-  reason,
-  stageAgeDays,
-}) => (
-  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-zinc-800/60">
-    <span className="text-gray-500 dark:text-gray-400">In this queue because:</span>
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-        ATTENTION_META[reason].badgeClass
-      )}
-    >
-      {ATTENTION_META[reason].label}
-    </span>
-    {typeof stageAgeDays === "number" && (
-      <span className="text-gray-500 dark:text-gray-400">
-        <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-          {stageAgeDays}d
-        </span>{" "}
-        {STAGE_AGE_LABEL[reason]}
+const QueueHeader: FC<{
+  reason: MilestoneAttentionReason;
+  stageAgeDays?: number;
+  nextFollowUpAt?: string | null;
+}> = ({ reason, stageAgeDays, nextFollowUpAt }) => {
+  const tone = stageAgeTone(stageAgeDays);
+  const followUp = describeFollowUp(nextFollowUpAt, (iso) => formatDate(iso, "UTC"));
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+      <span
+        className={cn(
+          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+          ATTENTION_META[reason].badgeClass
+        )}
+      >
+        {ATTENTION_META[reason].label}
       </span>
-    )}
-  </div>
-);
+
+      {typeof stageAgeDays === "number" && (
+        <span className={cn("font-semibold tabular-nums", tone.text)}>
+          {stageAgeDays} {pluralize("day", stageAgeDays)} {STAGE_AGE_LABEL[reason]}
+        </span>
+      )}
+
+      <span className="h-3.5 w-px bg-gray-200 dark:bg-zinc-700" aria-hidden="true" />
+
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 text-[13px]",
+          followUp.overdue ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"
+        )}
+      >
+        <CalendarDaysIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+        {followUp.scheduled ? `Follow-up ${followUp.label}` : followUp.label}
+      </span>
+    </div>
+  );
+};
 
 interface InboxMilestoneDetailProps {
   /** Project UID (or slug) used to fetch the grant's milestones. */
@@ -315,6 +338,8 @@ interface InboxMilestoneDetailProps {
   attentionReason?: MilestoneAttentionReason;
   /** Whole days spent in that stage. */
   stageAgeDays?: number;
+  /** Admin queue: next scheduled chase, the key the queue can be sorted on. */
+  nextFollowUpAt?: string | null;
 }
 
 export function InboxMilestoneDetail({
@@ -328,6 +353,7 @@ export function InboxMilestoneDetail({
   showAdminTools = false,
   attentionReason,
   stageAgeDays,
+  nextFollowUpAt,
 }: InboxMilestoneDetailProps) {
   const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
   const queryClient = useQueryClient();
@@ -450,39 +476,55 @@ export function InboxMilestoneDetail({
 
   return (
     <div className="space-y-4">
-      {attentionReason && <QueueReason reason={attentionReason} stageAgeDays={stageAgeDays} />}
+      {/*
+        Queue facts and the section tabs share one sticky band. They used to be
+        two stacked rows above a third carrying the title, so a fifth of the
+        pane was chrome before any content. Merging them also keeps the tabs
+        reachable once the panel scrolls.
+      */}
+      <div className="sticky top-0 z-10 -mx-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-gray-200 bg-white px-1 pb-2.5 pt-1 dark:border-zinc-700 dark:bg-zinc-900">
+        {attentionReason && (
+          <QueueHeader
+            reason={attentionReason}
+            stageAgeDays={stageAgeDays}
+            nextFollowUpAt={nextFollowUpAt}
+          />
+        )}
 
-      <div
-        role="tablist"
-        aria-label="Milestone detail sections"
-        className="inline-flex w-max rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800"
-      >
-        {PANEL_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activePanelTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              role="tab"
-              id={`inbox-ms-tab-${tab.key}`}
-              aria-selected={isActive}
-              aria-controls={`inbox-ms-panel-${tab.key}`}
-              tabIndex={isActive ? 0 : -1}
-              onClick={() => setActivePanelTab(tab.key)}
-              onKeyDown={handleTabKeyDown}
-              className={cn(
-                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 xl:min-h-8",
-                isActive
-                  ? "bg-white text-gray-950 shadow-sm dark:bg-zinc-950 dark:text-white"
-                  : "text-gray-600 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          );
-        })}
+        <div
+          role="tablist"
+          aria-label="Milestone detail sections"
+          className="ml-auto inline-flex w-max shrink-0 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800"
+        >
+          {PANEL_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activePanelTab === tab.key;
+            return (
+              <UiButton
+                key={tab.key}
+                type="button"
+                variant="ghost"
+                size="chip"
+                role="tab"
+                id={`inbox-ms-tab-${tab.key}`}
+                aria-selected={isActive}
+                aria-controls={`inbox-ms-panel-${tab.key}`}
+                tabIndex={isActive ? 0 : -1}
+                onClick={() => setActivePanelTab(tab.key)}
+                onKeyDown={handleTabKeyDown}
+                className={cn(
+                  "rounded-md font-medium focus-visible:ring-2 focus-visible:ring-primary-500",
+                  isActive
+                    ? "bg-white text-gray-950 shadow-sm hover:bg-white dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-950"
+                    : "text-gray-600 hover:bg-transparent hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+              </UiButton>
+            );
+          })}
+        </div>
       </div>
 
       <div

@@ -287,23 +287,17 @@ export function ReviewerInboxPage({
       <InboxHeader stats={stats} isCommunityAdmin={isCommunityAdmin} />
 
       {isCommunityAdmin && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-y border-gray-200 py-2 dark:border-zinc-700">
           <InboxAttentionFilter
             stats={stats}
             value={attentionFilter}
             onChange={handleAttentionChange}
             totalMilestones={stats.milestones}
           />
-          <span
-            className="hidden h-5 w-px bg-gray-200 sm:block dark:bg-zinc-700"
-            aria-hidden="true"
-          />
-          <InboxProgramFilter communityId={communityId} />
-          <span
-            className="hidden h-5 w-px bg-gray-200 sm:block dark:bg-zinc-700"
-            aria-hidden="true"
-          />
-          <InboxSortControl value={inboxSort} onChange={handleSortChange} />
+          <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
+            <InboxProgramFilter communityId={communityId} />
+            <InboxSortControl value={inboxSort} onChange={handleSortChange} />
+          </div>
         </div>
       )}
 
@@ -357,6 +351,7 @@ export function ReviewerInboxPage({
                     kindFilter={kindFilter}
                     onKindFilterChange={setKindFilter}
                     totalCount={totalCount}
+                    sort={inboxSort}
                   />
                 </div>
                 {totalCount != null && totalCount > items.length && (
@@ -451,6 +446,7 @@ function InboxDetailPane({ item, communityId, isCommunityAdmin }: InboxDetailPan
         showAdminTools={isCommunityAdmin}
         attentionReason={item.attentionReason}
         stageAgeDays={item.stageAgeDays}
+        nextFollowUpAt={item.nextFollowUpAt}
         projectUid={item.projectUid}
         programId={item.programId}
         grantUid={item.grantUid}
