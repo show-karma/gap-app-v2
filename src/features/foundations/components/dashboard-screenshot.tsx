@@ -3,8 +3,9 @@ import { cn } from "@/utilities/tailwind";
 
 /**
  * The program manager dashboard (/community/[slug]/manage overview), framed
- * for the homepage hero. Captured from the real UI with Filecoin's program
- * list and illustrative counts; `-drk` variant ships alongside for dark mode.
+ * for the homepage hero. Captured from the real UI with a fictional community
+ * ("Meridian Fund"), invented programs and illustrative counts, so no real
+ * customer appears; `-drk` variant ships alongside for dark mode.
  */
 export function DashboardScreenshot({ className }: { className?: string }) {
   return (
