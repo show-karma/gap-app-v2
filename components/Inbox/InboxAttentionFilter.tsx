@@ -1,6 +1,7 @@
 "use client";
 
-import React, { type FC } from "react";
+import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
+import React, { type FC, useMemo, useState } from "react";
 import {
   ATTENTION_FILTER_ORDER,
   ATTENTION_META,
@@ -8,6 +9,14 @@ import {
   FOLLOW_UP_FILTER_LABEL,
 } from "@/components/Inbox/attentionMeta";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { IReviewerInboxStats, MilestoneQueueFilter } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 
@@ -16,7 +25,7 @@ interface InboxAttentionFilterProps {
   /** `null` = no stage filter (All). */
   value: MilestoneQueueFilter | null;
   onChange: (value: MilestoneQueueFilter | null) => void;
-  /** Total milestones in the queue, for the All chip. */
+  /** Total milestones in the queue, for the All option. */
   totalMilestones: number;
 }
 
@@ -29,40 +38,27 @@ const STAT_KEY: Record<MilestoneQueueFilter, keyof IReviewerInboxStats> = {
   followup_due: "followUpDue",
 };
 
-interface ChipProps {
+const ALL_LABEL = "All items";
+
+interface StageOption {
+  key: MilestoneQueueFilter | null;
   label: string;
   count: number;
-  active: boolean;
-  onClick: () => void;
   dotClass?: string;
 }
-
-const Chip: FC<ChipProps> = ({ label, count, active, onClick, dotClass }) => (
-  <Button
-    type="button"
-    variant={active ? "secondary" : "outline"}
-    size="chip"
-    onClick={onClick}
-    aria-pressed={active}
-    className={cn(
-      "font-medium focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
-      active && "border border-primary-500 text-primary-700 dark:text-primary-300"
-    )}
-  >
-    {dotClass ? (
-      <span className={cn("h-1.5 w-1.5 rounded-full", dotClass)} aria-hidden="true" />
-    ) : null}
-    <span>{label}</span>
-    <span className="text-xs text-gray-500 dark:text-zinc-400">{count}</span>
-  </Button>
-);
 
 /**
  * Stage filter for the community admin milestone queue.
  *
- * Chips with a zero count are hidden: a queue with nothing past due should not
- * advertise a "Past due 0" filter that leads nowhere. "All" always renders so
- * there is a way back from a filtered view.
+ * A dropdown rather than a row of chips: six bordered pills sat next to the
+ * program filter and the sort control and read as one undifferentiated band of
+ * buttons, with no cue as to which narrowed the list and which reordered it.
+ * Collapsed, the control states the current view and its size; opened, every
+ * stage and its count is one click away.
+ *
+ * Options with a zero count are omitted — a queue with nothing past due should
+ * not offer a "Past due 0" filter that leads to an empty list. "All items"
+ * always renders so there is a way back from a filtered view.
  */
 const InboxAttentionFilterComponent: FC<InboxAttentionFilterProps> = ({
   stats,
@@ -70,46 +66,119 @@ const InboxAttentionFilterComponent: FC<InboxAttentionFilterProps> = ({
   onChange,
   totalMilestones,
 }) => {
-  const reasonChips = ATTENTION_FILTER_ORDER.map((reason) => ({
-    key: reason,
-    label: ATTENTION_META[reason].label,
-    dotClass: ATTENTION_META[reason].dotClass,
-    count: stats[STAT_KEY[reason]] ?? 0,
-  })).filter((chip) => chip.count > 0);
+  const [open, setOpen] = useState(false);
 
-  const followUpCount = stats.followUpDue ?? 0;
+  const options = useMemo<StageOption[]>(() => {
+    const stages = ATTENTION_FILTER_ORDER.map((reason) => ({
+      key: reason as MilestoneQueueFilter,
+      label: ATTENTION_META[reason].label,
+      dotClass: ATTENTION_META[reason].dotClass,
+      count: stats[STAT_KEY[reason]] ?? 0,
+    })).filter((option) => option.count > 0);
 
-  // Nothing to filter by — don't render a lone "All" chip.
-  if (reasonChips.length === 0 && followUpCount === 0) return null;
+    const followUpCount = stats.followUpDue ?? 0;
+    if (followUpCount > 0) {
+      stages.push({
+        key: FOLLOW_UP_FILTER,
+        label: FOLLOW_UP_FILTER_LABEL,
+        dotClass: ATTENTION_META.past_due.dotClass,
+        count: followUpCount,
+      });
+    }
+
+    return stages;
+  }, [stats]);
+
+  // Nothing to filter by — don't render a control whose only option is "All".
+  if (options.length === 0) return null;
+
+  const selected = options.find((option) => option.key === value) ?? null;
+  const active = selected !== null;
+  const triggerLabel = selected?.label ?? ALL_LABEL;
+  const triggerCount = selected?.count ?? totalMilestones;
 
   return (
-    <fieldset className="flex flex-wrap items-center gap-2 border-0 p-0">
-      <legend className="sr-only">Filter milestone queue by stage</legend>
-      <Chip
-        label="All"
-        count={totalMilestones}
-        active={value === null}
-        onClick={() => onChange(null)}
-      />
-      {reasonChips.map((chip) => (
-        <Chip
-          key={chip.key}
-          label={chip.label}
-          count={chip.count}
-          dotClass={chip.dotClass}
-          active={value === chip.key}
-          onClick={() => onChange(chip.key)}
-        />
-      ))}
-      {followUpCount > 0 ? (
-        <Chip
-          label={FOLLOW_UP_FILTER_LABEL}
-          count={followUpCount}
-          active={value === FOLLOW_UP_FILTER}
-          onClick={() => onChange(FOLLOW_UP_FILTER)}
-        />
-      ) : null}
-    </fieldset>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant={active ? "secondary" : "outline"}
+          size="chip"
+          aria-label={`Filter by stage: ${triggerLabel}`}
+          className={cn(
+            "min-w-[11rem] max-w-[min(16rem,calc(100vw-2rem))] font-medium focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
+            active && "border border-primary-500 text-primary-700 dark:text-primary-300"
+          )}
+        >
+          {selected?.dotClass ? (
+            <span
+              className={cn("h-1.5 w-1.5 shrink-0 rounded-full", selected.dotClass)}
+              aria-hidden="true"
+            />
+          ) : null}
+          <span className="truncate">{triggerLabel}</span>
+          <span className="ml-auto shrink-0 tabular-nums text-xs text-gray-500 dark:text-zinc-400">
+            {triggerCount}
+          </span>
+          <ChevronDownIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent align="start" className="w-64 p-0">
+        <Command>
+          <CommandList>
+            <CommandEmpty>No stages to filter by.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value={ALL_LABEL}
+                onSelect={() => {
+                  onChange(null);
+                  setOpen(false);
+                }}
+              >
+                <CheckIcon
+                  className={cn("mr-2 h-4 w-4 shrink-0", active ? "opacity-0" : "opacity-100")}
+                  aria-hidden="true"
+                />
+                <span className="truncate">{ALL_LABEL}</span>
+                <span className="ml-auto shrink-0 tabular-nums text-xs text-gray-500 dark:text-zinc-400">
+                  {totalMilestones}
+                </span>
+              </CommandItem>
+
+              {options.map((option) => (
+                <CommandItem
+                  key={option.key}
+                  value={option.label}
+                  onSelect={() => {
+                    onChange(option.key);
+                    setOpen(false);
+                  }}
+                >
+                  <CheckIcon
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      option.key === value ? "opacity-100" : "opacity-0"
+                    )}
+                    aria-hidden="true"
+                  />
+                  {option.dotClass ? (
+                    <span
+                      className={cn("mr-2 h-1.5 w-1.5 shrink-0 rounded-full", option.dotClass)}
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                  <span className="truncate">{option.label}</span>
+                  <span className="ml-auto shrink-0 tabular-nums text-xs text-gray-500 dark:text-zinc-400">
+                    {option.count}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 
