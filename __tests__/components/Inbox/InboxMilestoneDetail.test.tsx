@@ -344,7 +344,7 @@ describe("InboxMilestoneDetail", () => {
     expect(detailsTab).toHaveAttribute("aria-selected", "false");
   });
 
-  it("does not fetch the funding application until the Comments tab is opened", () => {
+  it("fetches the funding application on render, for the milestone header", () => {
     mockUseProjectGrantMilestones.mockReturnValue({
       data: makeData([makeMilestone()]),
       isLoading: false,
@@ -353,10 +353,32 @@ describe("InboxMilestoneDetail", () => {
     });
 
     render(<InboxMilestoneDetail {...baseProps} />);
-    expect(mockUseFundingApplicationByProjectUID).not.toHaveBeenCalled();
+    // The header derives the team name from the application, so it is fetched
+    // up front rather than deferred to the Comments tab.
+    expect(mockUseFundingApplicationByProjectUID).toHaveBeenCalledWith("proj-1");
+  });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Comments/ }));
-    expect(mockUseFundingApplicationByProjectUID).toHaveBeenCalled();
+  it("shows the team name from the application's first team-labelled answer", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+    mockUseFundingApplicationByProjectUID.mockReturnValue({
+      application: {
+        applicationData: {
+          "Project Name": "ProbeLab",
+          "Team Lead/Point of Contact Name": "Yiannis Psarras",
+        },
+      },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(<InboxMilestoneDetail {...baseProps} />);
+    expect(screen.getByText(/Team: Yiannis Psarras/)).toBeInTheDocument();
   });
 
   it("shows the application comments thread on the Comments tab when a reference number exists", () => {
