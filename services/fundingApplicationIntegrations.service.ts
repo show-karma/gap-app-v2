@@ -2,7 +2,7 @@ import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import { INDEXER } from "@/utilities/indexer";
+import { SIMOCRACY_ROUTES } from "@/utilities/indexer-simocracy";
 
 const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 // Blob-capable authenticated client for the CSV download (the shared `api`
@@ -78,7 +78,7 @@ export async function fetchApplicationIntegrations(
 ): Promise<IntegrationSummary[]> {
   try {
     const data = await api.get<IntegrationsIndexResponse>(
-      INDEXER.V2.FUNDING_APPLICATIONS.INTEGRATIONS(referenceNumber)
+      SIMOCRACY_ROUTES.applications.INTEGRATIONS(referenceNumber)
     );
     return data?.integrations ?? [];
   } catch (error) {
@@ -92,7 +92,7 @@ export async function fetchSimocracyEvaluations(
   let data: SimocracyEvaluationsResponse | null;
   try {
     data = await api.get<SimocracyEvaluationsResponse>(
-      INDEXER.V2.FUNDING_APPLICATIONS.INTEGRATION_SIMOCRACY(referenceNumber)
+      SIMOCRACY_ROUTES.applications.INTEGRATION_SIMOCRACY(referenceNumber)
     );
   } catch (error) {
     throw new Error(httpErrorMessage(error));
@@ -117,7 +117,7 @@ export async function fetchSimocracyProgramSummary(
   let data: SimocracyProgramSummary | null;
   try {
     data = await api.get<SimocracyProgramSummary>(
-      INDEXER.V2.FUNDING_PROGRAMS.INTEGRATION_SIMOCRACY(programId)
+      SIMOCRACY_ROUTES.programs.INTEGRATION_SIMOCRACY(programId)
     );
   } catch (error) {
     throw new Error(httpErrorMessage(error));
@@ -152,7 +152,7 @@ interface CouncilResponse {
   sims: SimocracyCouncilSim[];
 }
 
-export interface SimocracySimPersona {
+interface SimocracySimPersona {
   simUri: string;
   constitution: string | null;
   style: string | null;
@@ -164,7 +164,7 @@ export async function fetchSimocracySimPersona(
 ): Promise<SimocracySimPersona> {
   try {
     const data = await api.get<{ persona: SimocracySimPersona }>(
-      INDEXER.V2.FUNDING_PROGRAMS.SIMOCRACY_SIM_PERSONA(programId, simUri)
+      SIMOCRACY_ROUTES.programs.SIMOCRACY_SIM_PERSONA(programId, simUri)
     );
     return data?.persona ?? { simUri, constitution: null, style: null };
   } catch (error) {
@@ -175,7 +175,7 @@ export async function fetchSimocracySimPersona(
 export async function fetchSimocracyCouncil(programId: string): Promise<SimocracyCouncilSim[]> {
   try {
     const data = await api.get<CouncilResponse>(
-      INDEXER.V2.FUNDING_PROGRAMS.SIMOCRACY_COUNCIL(programId)
+      SIMOCRACY_ROUTES.programs.SIMOCRACY_COUNCIL(programId)
     );
     return data?.sims ?? [];
   } catch (error) {
@@ -194,7 +194,7 @@ interface SimLinksResponse {
 
 export async function fetchSimocracySimLinks(programId: string): Promise<SimocracySimLink[]> {
   try {
-    const data = await api.get<SimLinksResponse>(INDEXER.V2.FUNDING_PROGRAMS.SIM_LINKS(programId));
+    const data = await api.get<SimLinksResponse>(SIMOCRACY_ROUTES.programs.SIM_LINKS(programId));
     return data?.links ?? [];
   } catch (error) {
     throw new Error(httpErrorMessage(error));
@@ -206,12 +206,9 @@ export async function addSimocracySimLink(
   link: SimocracySimLink
 ): Promise<SimocracySimLink[]> {
   try {
-    const data = await api.post<SimLinksResponse>(
-      INDEXER.V2.FUNDING_PROGRAMS.SIM_LINKS(programId),
-      {
-        links: [link],
-      }
-    );
+    const data = await api.post<SimLinksResponse>(SIMOCRACY_ROUTES.programs.SIM_LINKS(programId), {
+      links: [link],
+    });
     return data?.links ?? [];
   } catch (error) {
     throw new Error(httpErrorMessage(error));
@@ -220,7 +217,7 @@ export async function addSimocracySimLink(
 
 export async function deleteSimocracySimLink(programId: string, simUri: string): Promise<void> {
   try {
-    await api.delete(INDEXER.V2.FUNDING_PROGRAMS.SIM_LINKS(programId), {
+    await api.delete(SIMOCRACY_ROUTES.programs.SIM_LINKS(programId), {
       params: { simUri },
     });
   } catch (error) {
@@ -228,7 +225,7 @@ export async function deleteSimocracySimLink(programId: string, simUri: string):
   }
 }
 
-export interface SimocracyCredentialSummary {
+interface SimocracyCredentialSummary {
   identifier: string;
   did: string;
   handle: string;
@@ -243,7 +240,7 @@ export async function setSimocracyCredential(
 ): Promise<SimocracyCredentialSummary> {
   try {
     const data = await api.put<{ credential: SimocracyCredentialSummary }>(
-      INDEXER.V2.FUNDING_PROGRAMS.SIMOCRACY_CREDENTIAL(programId),
+      SIMOCRACY_ROUTES.programs.SIMOCRACY_CREDENTIAL(programId),
       { appPassword }
     );
     if (!data?.credential) {
@@ -257,7 +254,7 @@ export async function setSimocracyCredential(
 
 export async function deleteSimocracyCredential(programId: string): Promise<void> {
   try {
-    await api.delete(INDEXER.V2.FUNDING_PROGRAMS.SIMOCRACY_CREDENTIAL(programId));
+    await api.delete(SIMOCRACY_ROUTES.programs.SIMOCRACY_CREDENTIAL(programId));
   } catch (error) {
     throw new Error(httpErrorMessage(error));
   }
@@ -305,7 +302,7 @@ export async function fetchSimocracyFeedback(
       ? `?${"runId" in subject ? "runId" : "commentUri"}=${encodeURIComponent(feedbackSubjectKey(subject))}`
       : "";
     const data = await api.get<{ feedback: SimocracyEvaluationFeedback[] }>(
-      `${INDEXER.V2.FUNDING_APPLICATIONS.SIMOCRACY_FEEDBACK(referenceNumber)}${query}`
+      `${SIMOCRACY_ROUTES.applications.SIMOCRACY_FEEDBACK(referenceNumber)}${query}`
     );
     return data?.feedback ?? [];
   } catch (error) {
@@ -313,7 +310,7 @@ export async function fetchSimocracyFeedback(
   }
 }
 
-export interface SimocracyFeedbackExport {
+interface SimocracyFeedbackExport {
   blob: Blob;
   filename: string;
 }
@@ -325,7 +322,7 @@ export async function exportSimocracyFeedbackCsv(
 ): Promise<SimocracyFeedbackExport> {
   try {
     const response = await blobApiClient.get<Blob>(
-      INDEXER.V2.FUNDING_PROGRAMS.SIMOCRACY_FEEDBACK_EXPORT(programId),
+      SIMOCRACY_ROUTES.programs.SIMOCRACY_FEEDBACK_EXPORT(programId),
       { responseType: "blob" }
     );
     const disposition = response.headers?.["content-disposition"] as string | undefined;
@@ -356,7 +353,7 @@ export interface SimocracyCommentRow {
   createdAt: string | null;
 }
 
-export interface SimocracyCommentsResult {
+interface SimocracyCommentsResult {
   // Program the comments belong to; lets the list resolve Sim avatars from the council.
   programId: string | null;
   comments: SimocracyCommentRow[];
@@ -369,7 +366,7 @@ export async function fetchSimocracyComments(
 ): Promise<SimocracyCommentsResult> {
   try {
     const data = await api.get<{ programId?: string; comments: SimocracyCommentRow[] }>(
-      INDEXER.V2.FUNDING_APPLICATIONS.SIMOCRACY_COMMENTS(referenceNumber)
+      SIMOCRACY_ROUTES.applications.SIMOCRACY_COMMENTS(referenceNumber)
     );
     return { programId: data?.programId ?? null, comments: data?.comments ?? [], forbidden: false };
   } catch (error) {
@@ -391,7 +388,7 @@ export async function submitSimocracyFeedback(
 ): Promise<SimocracyEvaluationFeedback> {
   try {
     const data = await api.post<{ feedback: SimocracyEvaluationFeedback }>(
-      INDEXER.V2.FUNDING_APPLICATIONS.SIMOCRACY_FEEDBACK(referenceNumber),
+      SIMOCRACY_ROUTES.applications.SIMOCRACY_FEEDBACK(referenceNumber),
       input
     );
     if (!data?.feedback) {

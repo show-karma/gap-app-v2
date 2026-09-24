@@ -1,21 +1,8 @@
 "use client";
 
-import { ArrowPathIcon, CpuChipIcon, LinkIcon } from "@heroicons/react/24/outline";
-import pluralize from "pluralize";
-import { type FC, useCallback, useMemo, useState } from "react";
+import { ArrowPathIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { type FC, useCallback, useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { Button as UiButton } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   useSimocracyCouncil,
   useSimocracyProgramSummary,
@@ -26,17 +13,12 @@ import { useCommunityReviewers } from "@/hooks/useCommunityReviewers";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import type { SimocracyCouncilSim } from "@/services/fundingApplicationIntegrations.service";
-import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
-import { type ReviewerOption, SimLinkRow, truncateMiddle } from "./SimLinkRow";
-import {
-  addressSchema,
-  CUSTOM_ADDRESS_VALUE,
-  CUSTOM_SIM_VALUE,
-  simUriSchema,
-} from "./sim-link.schemas";
+import { SimLinkForm } from "./SimLinkForm";
+import { SimLinkRow } from "./SimLinkRow";
+import type { ReviewerOption } from "./sim-link.shared";
 
-export interface SimLinksCardProps {
+interface SimLinksCardProps {
   programId: string;
   /** PROGRAM_EDIT — full management of every link. */
   canManage: boolean;
@@ -89,12 +71,6 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
     [deleteSimLinkAsync]
   );
 
-  const [selectedSim, setSelectedSim] = useState<string>("");
-  const [customSimUri, setCustomSimUri] = useState("");
-  const [selectedReviewer, setSelectedReviewer] = useState<string>("");
-  const [address, setAddress] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
-
   const canAdd = canManage || isReviewer;
   const normalizedViewer = viewerAddress?.toLowerCase();
 
@@ -131,8 +107,6 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
   );
 
   const linkedCouncilCount = (council ?? []).filter((sim) => linkedUris.has(sim.simUri)).length;
-
-  const isCustom = selectedSim === CUSTOM_SIM_VALUE || (!canManage && unlinkedSims.length === 0);
 
   const programReviewerOptions = useMemo<ReviewerOption[]>(
     () =>
@@ -191,8 +165,6 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
   const hasReviewerOptions =
     programReviewerOptions.length > 0 || communityReviewerOptions.length > 0;
   const isLoadingReviewers = isLoadingProgramReviewers || isLoadingCommunityReviewers;
-  const isCustomAddress =
-    selectedReviewer === CUSTOM_ADDRESS_VALUE || (!isLoadingReviewers && !hasReviewerOptions);
 
   if (isLoadingLinks) {
     return <LinksSkeleton />;
@@ -213,42 +185,6 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
   }
 
   const rows = links ?? [];
-
-  const handleAdd = async () => {
-    const rawUri = isCustom ? customSimUri : selectedSim;
-    const parsedUri = simUriSchema.safeParse(rawUri);
-    if (!parsedUri.success) {
-      setFormError(parsedUri.error.issues[0]?.message ?? "Invalid sim AT-URI");
-      return;
-    }
-    const rawAddress = canManage
-      ? isCustomAddress
-        ? address
-        : selectedReviewer
-      : (viewerAddress ?? "");
-    const parsedAddress = addressSchema.safeParse(rawAddress);
-    if (!parsedAddress.success) {
-      setFormError(
-        canManage && !isCustomAddress && !selectedReviewer
-          ? "Select a reviewer"
-          : (parsedAddress.error.issues[0]?.message ?? "Invalid address")
-      );
-      return;
-    }
-    setFormError(null);
-    try {
-      await addSimLinkAsync({ simUri: parsedUri.data, publicAddress: parsedAddress.data });
-      setSelectedSim("");
-      setCustomSimUri("");
-      if (canManage) {
-        setAddress("");
-        setSelectedReviewer("");
-      }
-    } catch {
-      // SUPPRESSED: the mutation's onError owns the failure toast; the form
-      // keeps its values so the user can correct and retry.
-    }
-  };
 
   return (
     <div
@@ -322,271 +258,19 @@ export const SimLinksCard: FC<SimLinksCardProps> = ({
         </ul>
       )}
 
-      {canAdd && (unlinkedSims.length > 0 || simlessReviewers.length > 0) && (
-        <div className="border-t border-gray-100 bg-gray-50 px-5 py-3.5 dark:border-gray-700 dark:bg-zinc-900/40">
-          {unlinkedSims.length > 0 && (
-            <>
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                {unlinkedSims.length} council {pluralize("sim", unlinkedSims.length)}{" "}
-                {unlinkedSims.length === 1 ? "isn't" : "aren't"} linked — their evaluations are
-                dropped from every application.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {unlinkedSims.map((sim) => (
-                  <div
-                    key={sim.simUri}
-                    className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-white py-1 pl-1.5 pr-1 dark:border-gray-700 dark:bg-zinc-800"
-                  >
-                    {sim.avatar ? (
-                      <ProfilePicture
-                        imageURL={sim.avatar}
-                        name={sim.simName ?? sim.simUri}
-                        size="18"
-                        className="h-[18px] w-[18px] rounded [image-rendering:pixelated]"
-                        alt=""
-                      />
-                    ) : (
-                      <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded bg-gray-100 text-gray-400 dark:bg-zinc-700 dark:text-gray-500">
-                        <CpuChipIcon className="h-3 w-3" />
-                      </span>
-                    )}
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      {sim.simName ?? truncateMiddle(sim.simUri, 14, 8)}
-                    </span>
-                    <UiButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedSim(sim.simUri);
-                        if (formError) setFormError(null);
-                      }}
-                      className="h-6 px-2 text-xs text-blue-600 shadow-none dark:text-blue-400"
-                    >
-                      Link
-                    </UiButton>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-          {canManage && simlessReviewers.length > 0 && (
-            <>
-              <p
-                className={cn(
-                  "text-xs font-medium text-gray-700 dark:text-gray-300",
-                  unlinkedSims.length > 0 && "mt-3"
-                )}
-              >
-                {simlessReviewers.length} program {pluralize("reviewer", simlessReviewers.length)}{" "}
-                {simlessReviewers.length === 1 ? "has" : "have"} no sim — they can still review by
-                hand, but won't appear in the council.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {simlessReviewers.map((reviewer) => (
-                  <div
-                    key={reviewer.publicAddress}
-                    className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-white py-1 pl-2 pr-1 dark:border-gray-700 dark:bg-zinc-800"
-                  >
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      {reviewer.name || reviewer.email}
-                    </span>
-                    <UiButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedReviewer(reviewer.publicAddress);
-                        if (formError) setFormError(null);
-                      }}
-                      className="h-6 px-2 text-xs shadow-none"
-                    >
-                      Assign sim
-                    </UiButton>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
       {canAdd && (
-        <div className="border-t border-gray-100 px-5 py-4 dark:border-gray-700">
-          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Add a link</p>
-          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-            <div className="space-y-2 sm:w-64">
-              {canManage ? (
-                <>
-                  {(hasReviewerOptions || isLoadingReviewers) && (
-                    <Select
-                      value={selectedReviewer}
-                      onValueChange={(value) => {
-                        setSelectedReviewer(value);
-                        if (formError) setFormError(null);
-                      }}
-                      disabled={isLoadingReviewers && !hasReviewerOptions}
-                    >
-                      <SelectTrigger aria-label="Select a reviewer">
-                        <SelectValue
-                          placeholder={
-                            isLoadingReviewers && !hasReviewerOptions
-                              ? "Loading reviewers…"
-                              : "Select a reviewer"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {programReviewerOptions.length > 0 && (
-                          <SelectGroup>
-                            <SelectLabel>Program reviewers</SelectLabel>
-                            {programReviewerOptions.map((reviewer) => (
-                              <SelectItem
-                                key={reviewer.publicAddress}
-                                value={reviewer.publicAddress}
-                              >
-                                <span className="flex items-center gap-2">
-                                  <span className="truncate">
-                                    {reviewer.name || reviewer.email}
-                                  </span>
-                                  <span className="shrink-0 font-mono text-xs text-gray-400">
-                                    {shortAddress(reviewer.publicAddress)}
-                                  </span>
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        )}
-                        {communityReviewerOptions.length > 0 && (
-                          <SelectGroup>
-                            <SelectLabel>Community reviewers</SelectLabel>
-                            {communityReviewerOptions.map((reviewer) => (
-                              <SelectItem
-                                key={reviewer.publicAddress}
-                                value={reviewer.publicAddress}
-                              >
-                                <span className="flex items-center gap-2">
-                                  <span className="truncate">
-                                    {reviewer.name || reviewer.email}
-                                  </span>
-                                  <span className="shrink-0 font-mono text-xs text-gray-400">
-                                    {shortAddress(reviewer.publicAddress)}
-                                  </span>
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        )}
-                        <SelectItem value={CUSTOM_ADDRESS_VALUE}>Custom address…</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {isCustomAddress && (
-                    <Input
-                      type="text"
-                      value={address}
-                      onChange={(event) => {
-                        setAddress(event.target.value);
-                        if (formError) setFormError(null);
-                      }}
-                      placeholder="0x…"
-                      spellCheck={false}
-                      aria-label="Reviewer address"
-                      className="font-mono"
-                    />
-                  )}
-                </>
-              ) : (
-                <Input
-                  type="text"
-                  value={viewerAddress ?? ""}
-                  disabled
-                  placeholder="0x…"
-                  spellCheck={false}
-                  aria-label="Reviewer address"
-                  title="Reviewers can only link sims to their own address"
-                  className="font-mono"
-                />
-              )}
-            </div>
-            <div className="flex-1 space-y-2">
-              {(canManage || unlinkedSims.length > 0) && (
-                <Select
-                  value={selectedSim}
-                  onValueChange={(value) => {
-                    setSelectedSim(value);
-                    if (formError) setFormError(null);
-                  }}
-                >
-                  <SelectTrigger aria-label="Select a sim">
-                    <SelectValue
-                      placeholder={
-                        unlinkedSims.length > 0
-                          ? `Select a sim — ${unlinkedSims.length} unlinked`
-                          : "Select a sim — all linked"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {unlinkedSims.map((sim) => (
-                      <SelectItem key={sim.simUri} value={sim.simUri}>
-                        <span className="flex items-center gap-2">
-                          {sim.avatar ? (
-                            <ProfilePicture
-                              imageURL={sim.avatar}
-                              name={sim.simName ?? sim.simUri}
-                              size="20"
-                              className="h-5 w-5 rounded [image-rendering:pixelated]"
-                              alt=""
-                            />
-                          ) : (
-                            <CpuChipIcon className="h-4 w-4 text-gray-400" />
-                          )}
-                          {sim.simName ?? truncateMiddle(sim.simUri, 16, 8)}
-                        </span>
-                      </SelectItem>
-                    ))}
-                    <SelectItem value={CUSTOM_SIM_VALUE}>Custom AT-URI…</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-              {isCustom && (
-                <Input
-                  type="text"
-                  value={customSimUri}
-                  onChange={(event) => {
-                    setCustomSimUri(event.target.value);
-                    if (formError) setFormError(null);
-                  }}
-                  placeholder="at://did:plc:…/org.simocracy.sim/…"
-                  spellCheck={false}
-                  aria-label="Sim AT-URI"
-                  className="font-mono"
-                />
-              )}
-            </div>
-            <Button
-              variant="primary"
-              onClick={handleAdd}
-              disabled={isAdding}
-              isLoading={isAdding}
-              className="shrink-0"
-            >
-              Add link
-            </Button>
-          </div>
-          {formError ? (
-            <p className="mt-1.5 text-xs text-red-600 dark:text-red-400" role="alert">
-              {formError}
-            </p>
-          ) : (
-            !canManage && (
-              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                As a reviewer you can only link a sim to your own connected address.
-              </p>
-            )
-          )}
-        </div>
+        <SimLinkForm
+          canManage={canManage}
+          viewerAddress={viewerAddress}
+          unlinkedSims={unlinkedSims}
+          simlessReviewers={simlessReviewers}
+          programReviewerOptions={programReviewerOptions}
+          communityReviewerOptions={communityReviewerOptions}
+          hasReviewerOptions={hasReviewerOptions}
+          isLoadingReviewers={isLoadingReviewers}
+          addSimLinkAsync={addSimLinkAsync}
+          isAdding={isAdding}
+        />
       )}
     </div>
   );

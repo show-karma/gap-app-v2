@@ -20,7 +20,7 @@ import { EvaluationFeedback } from "./EvaluationFeedback";
 const CLAMP_MIN_CHARS = 180;
 const CLAMP_MIN_LINES = 3;
 
-export interface MilestoneFilter {
+interface MilestoneFilter {
   uid: string;
   title: string;
 }
@@ -33,7 +33,7 @@ function isAboutMilestone(comment: SimocracyCommentRow, milestone: MilestoneFilt
   return splitMilestone(comment.text).milestone === milestone.title;
 }
 
-export interface CommentFeedbackContext {
+interface CommentFeedbackContext {
   referenceNumber: string;
   viewerAddresses: Set<string>;
   canGiveFeedback: (simUri: string) => boolean;
@@ -332,5 +332,3 @@ export const SimComments: FC<{
     </div>
   );
 };
-
-export default SimComments;

@@ -18,17 +18,7 @@ import type {
 } from "@/services/fundingApplicationIntegrations.service";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
-
-export interface ReviewerOption {
-  publicAddress: string;
-  name: string;
-  email: string;
-}
-
-export function truncateMiddle(value: string, head = 24, tail = 12): string {
-  if (value.length <= head + tail + 1) return value;
-  return `${value.slice(0, head)}…${value.slice(-tail)}`;
-}
+import { type ReviewerOption, truncateMiddle } from "./sim-link.shared";
 
 interface SimLinkRowProps {
   programId: string;
@@ -96,7 +86,7 @@ export const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
             )}
             <div className="flex items-center gap-1.5">
               <span
-                className="truncate font-mono text-[11px] text-gray-500 dark:text-gray-400"
+                className="truncate font-mono text-xs text-gray-500 dark:text-gray-400"
                 title={link.simUri}
               >
                 {truncateMiddle(link.simUri, 18, 10)}
@@ -140,7 +130,7 @@ export const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
               aria-label={`Remove link for ${name ?? link.simUri}`}
               onClick={() => setIsDeleteOpen(true)}
               disabled={isDeleting}
-              className="shrink-0 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-gray-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              className="shrink-0 text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400"
             >
               <TrashIcon className="h-4 w-4" />
             </UiButton>
@@ -167,15 +157,13 @@ export const SimLinkRow: FC<SimLinkRowProps> = memo(function SimLinkRow({
           ) : (
             <>
               <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900/40">
-                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                  Constitution
-                </p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Constitution</p>
                 <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-600 dark:text-gray-300">
                   {persona?.constitution ?? "Not set on Simocracy."}
                 </p>
               </div>
               <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900/40">
-                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Style</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Style</p>
                 <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-600 dark:text-gray-300">
                   {persona?.style ?? "Not set on Simocracy."}
                 </p>

@@ -11,7 +11,7 @@ import type { GranteeContact } from "@/hooks/useGranteeContacts";
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
-    asChild ? <>{children}</> : <div>{children}</div>,
+    asChild ? children : <div>{children}</div>,
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="tooltip-content">{children}</div>
   ),

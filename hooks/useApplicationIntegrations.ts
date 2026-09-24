@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import {
@@ -280,9 +281,12 @@ export function useSubmitSimocracyFeedback(
   });
 }
 
+// A download, not a cache write: plain async state instead of a mutation.
 export function useExportSimocracyFeedback(programId: string) {
-  return useMutation({
-    mutationFn: async () => {
+  const [isPending, setIsPending] = useState(false);
+  const mutate = useCallback(async () => {
+    setIsPending(true);
+    try {
       const { blob, filename } = await exportSimocracyFeedbackCsv(programId);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -292,8 +296,12 @@ export function useExportSimocracyFeedback(programId: string) {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    },
-    onSuccess: () => toast.success("Feedback exported"),
-    onError: (error: Error) => toast.error(error.message),
-  });
+      toast.success("Feedback exported");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to export feedback");
+    } finally {
+      setIsPending(false);
+    }
+  }, [programId]);
+  return { mutate, isPending };
 }

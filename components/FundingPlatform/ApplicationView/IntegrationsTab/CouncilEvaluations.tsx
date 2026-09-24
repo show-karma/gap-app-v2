@@ -50,7 +50,7 @@ function computeGeometry(evaluations: SimocracyEvaluationRow[]): CouncilGeometry
   const withCurves = evaluations.filter((row) => row.mvf.length >= 2);
   if (withCurves.length === 0) return null;
 
-  const sorted = withCurves.map((row) => [...row.mvf].sort((a, b) => a.dollars - b.dollars));
+  const sorted = withCurves.map((row) => row.mvf.toSorted((a, b) => a.dollars - b.dollars));
   const total = Math.max(...sorted.map((anchors) => anchors[anchors.length - 1].dollars));
   const peak = Math.max(...sorted.flatMap((anchors) => anchors.map((a) => a.marginalValueMilli)));
   if (total <= 0 || peak <= 0) return null;
@@ -107,7 +107,7 @@ const CouncilCurvesPanel: FC<CouncilCurvesPanelProps> = ({ evaluations, geometry
     <div className="min-w-0 flex-1 px-5 pb-3.5 pt-4">
       <div className="flex items-baseline justify-between gap-4">
         <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Marginal value</p>
-        <span className="whitespace-nowrap text-[11px] tabular-nums text-gray-400 dark:text-gray-500">
+        <span className="whitespace-nowrap text-xs tabular-nums text-gray-400 dark:text-gray-500">
           all sims on one scale
         </span>
       </div>
@@ -141,7 +141,7 @@ const CouncilCurvesPanel: FC<CouncilCurvesPanelProps> = ({ evaluations, geometry
         {geometry.sims.map((sim, index) => (
           <span
             key={evaluations[index].sim.simUri}
-            className="absolute left-[2%] inline-flex -translate-y-1/2 items-center gap-1 bg-white px-1 text-[11px] font-medium dark:bg-zinc-800"
+            className="absolute left-[2%] inline-flex -translate-y-1/2 items-center gap-1 bg-white px-1 text-xs font-medium dark:bg-zinc-800"
             style={{ top: `${sim.labelTopPct}%`, color: TINTS[index % TINTS.length] }}
           >
             <span className="h-0.5 w-2" style={{ background: TINTS[index % TINTS.length] }} />
@@ -149,7 +149,7 @@ const CouncilCurvesPanel: FC<CouncilCurvesPanelProps> = ({ evaluations, geometry
           </span>
         ))}
       </div>
-      <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-gray-500 dark:text-gray-400">
+      <div className="mt-1.5 flex justify-between text-xs tabular-nums text-gray-500 dark:text-gray-400">
         <span>$0</span>
         <span>{formatDollars(geometry.mid)}</span>
         <span>{formatDollars(geometry.total)}</span>
@@ -188,7 +188,7 @@ const CouncilCurvesPanel: FC<CouncilCurvesPanelProps> = ({ evaluations, geometry
           </div>
         ))}
       </div>
-      <p className="mt-3 border-t border-gray-100 pt-3 text-[11px] text-gray-400 dark:border-zinc-700 dark:text-gray-500">
+      <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-400 dark:border-zinc-700 dark:text-gray-500">
         Bars show total value under each curve, relative to the highest sim.
       </p>
     </div>
@@ -254,7 +254,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
         {(firstDollarValue !== null || relPct !== null) && (
           <div className="mt-2.5 flex flex-col gap-1">
             {firstDollarValue !== null && (
-              <div className="flex justify-between gap-2 text-[11px] text-gray-400 dark:text-gray-500">
+              <div className="flex justify-between gap-2 text-xs text-gray-400 dark:text-gray-500">
                 <span>First dollar</span>
                 <span className="font-medium tabular-nums text-gray-600 dark:text-gray-300">
                   {firstDollarValue}
@@ -262,7 +262,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
               </div>
             )}
             {relPct !== null && (
-              <div className="flex justify-between gap-2 text-[11px] text-gray-400 dark:text-gray-500">
+              <div className="flex justify-between gap-2 text-xs text-gray-400 dark:text-gray-500">
                 <span>Total value</span>
                 <span className="font-medium tabular-nums text-gray-600 dark:text-gray-300">
                   {relPct}%
@@ -271,7 +271,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
             )}
           </div>
         )}
-        <code className="mt-2.5 block break-all font-mono text-[11px] leading-snug text-gray-400 dark:text-gray-500">
+        <code className="mt-2.5 block break-all font-mono text-xs leading-snug text-gray-400 dark:text-gray-500">
           {evaluation.model ?? "model not recorded"}
         </code>
       </div>
@@ -318,9 +318,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
           <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
             {evaluation.prompt !== null && (
               <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900/40">
-                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                  Constitution
-                </p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Constitution</p>
                 <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-600 dark:text-gray-300">
                   {evaluation.prompt}
                 </p>
@@ -328,7 +326,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
             )}
             {evaluation.style !== null && (
               <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900/40">
-                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Style</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Style</p>
                 <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-600 dark:text-gray-300">
                   {evaluation.style}
                 </p>
@@ -350,7 +348,7 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
   );
 });
 
-export interface CouncilEvaluationsProps {
+interface CouncilEvaluationsProps {
   evaluations: SimocracyEvaluationRow[];
   /** Linked, role-authorized sims from the program summary. */
   linkedSims?: SimocracySim[];

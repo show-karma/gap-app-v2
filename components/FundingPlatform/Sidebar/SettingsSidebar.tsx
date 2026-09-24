@@ -12,6 +12,7 @@ import {
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
 import { Bell } from "lucide-react";
+import { Button as UiButton } from "@/components/ui/button";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -24,21 +25,32 @@ export type SidebarTabKey =
   | "reviewers"
   | "program-details"
   | "kyc-settings"
-  | "notification-config"
-  | "integrations";
+  | "notification-config";
 
 interface SidebarSection {
   title: string;
   items: SidebarItem[];
 }
 
-interface SidebarItem {
-  key: SidebarTabKey;
+interface SidebarItemBase {
   label: string;
   icon: React.ElementType;
   required?: boolean;
   description?: string;
 }
+
+interface SidebarTabItem extends SidebarItemBase {
+  key: SidebarTabKey;
+  href?: undefined;
+}
+
+/** Navigates to its own page instead of switching a tab in place. */
+interface SidebarLinkItem extends SidebarItemBase {
+  key: "integrations";
+  href: (communityId: string, programId: string) => string;
+}
+
+type SidebarItem = SidebarTabItem | SidebarLinkItem;
 
 // Module-level constant to avoid creating new Set on every render
 const EMPTY_COMPLETED_STEPS = new Set<SidebarTabKey>();
@@ -132,6 +144,7 @@ const getSidebarSections = (
         label: "Integrations",
         icon: PuzzlePieceIcon,
         description: "External evaluation integrations",
+        href: PAGES.MANAGE.FUNDING_PLATFORM.INTEGRATIONS,
       },
     ],
   },
@@ -152,6 +165,37 @@ interface SettingsSidebarProps {
    * non-admins, but hiding the tab keeps the sidebar honest.
    */
   showNotificationConfig?: boolean;
+}
+
+// A tab switches in place; an item with an href leaves the settings page.
+function ItemSurface({
+  href,
+  onClick,
+  className,
+  children,
+}: {
+  href?: string;
+  onClick: () => void;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <UiButton
+      type="button"
+      variant="ghost"
+      onClick={onClick}
+      className={cn("h-auto justify-start whitespace-normal font-normal", className)}
+    >
+      {children}
+    </UiButton>
+  );
 }
 
 export function SettingsSidebar({
@@ -200,13 +244,16 @@ export function SettingsSidebar({
             <ul className="space-y-1">
               {section.items.map((item) => {
                 const isActive = activeTab === item.key;
-                const isCompleted = completedSteps.has(item.key);
+                const isCompleted = item.href ? false : completedSteps.has(item.key);
                 const Icon = item.icon;
 
                 return (
                   <li key={item.key}>
-                    <button
-                      onClick={() => onTabChange(item.key)}
+                    <ItemSurface
+                      href={item.href?.(communityId, programId)}
+                      onClick={() => {
+                        if (!item.href) onTabChange(item.key);
+                      }}
                       className={cn(
                         "w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
                         isActive
@@ -256,7 +303,7 @@ export function SettingsSidebar({
                           </p>
                         )}
                       </div>
-                    </button>
+                    </ItemSurface>
                   </li>
                 );
               })}

@@ -1,17 +1,11 @@
 "use client";
 
-import {
-  ArrowDownTrayIcon,
-  ArrowPathIcon,
-  CheckIcon,
-  ClipboardDocumentIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowPathIcon, CheckIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { Button as UiButton } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   useExportSimocracyFeedback,
   useSimocracyCouncil,
@@ -20,6 +14,7 @@ import {
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { cn } from "@/utilities/tailwind";
+import { GatheringUriField } from "./GatheringUriField";
 import { SimocracyCredentialSection } from "./SimocracyCredentialSection";
 
 const GATHERING_AT_URI =
@@ -48,7 +43,7 @@ const gatheringUriSchema = z
       "Paste the gathering AT-URI (at://did:…/org.simocracy.gathering/<id>) or the Simocracy gathering URL (simocracy.org/c/<did>/<id>)",
   });
 
-export interface SimocracyConfigCardProps {
+interface SimocracyConfigCardProps {
   programId: string;
   /** False for reviewers — the form renders read-only. */
   canEdit: boolean;
@@ -99,18 +94,14 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
   const savedUri = saved?.gatheringUri ?? "";
   const savedEnabled = saved?.enabled ?? false;
 
-  const [enabled, setEnabled] = useState(false);
-  const [gatheringUri, setGatheringUri] = useState("");
+  // Drafts sit on top of the saved config; null means "not edited yet", so a
+  // refetch changing the saved values flows through until the user types.
+  const [draftEnabled, setDraftEnabled] = useState<boolean | null>(null);
+  const [draftUri, setDraftUri] = useState<string | null>(null);
+  const enabled = draftEnabled ?? savedEnabled;
+  const gatheringUri = draftUri ?? savedUri;
   const [editingUri, setEditingUri] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-
-  // Seed the form from the saved config once it arrives (and re-seed after an
-  // external refetch changes it). Keyed on the saved values, not the object
-  // identity, so optimistic cache writes don't wipe in-progress edits.
-  useEffect(() => {
-    setEnabled(savedEnabled);
-    setGatheringUri(savedUri);
-  }, [savedEnabled, savedUri]);
 
   const { data: council } = useSimocracyCouncil(programId, {
     enabled: canEdit && savedEnabled && savedUri.length > 0,
@@ -138,7 +129,7 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
 
   const handleToggle = () => {
     const next = !enabled;
-    setEnabled(next);
+    setDraftEnabled(next);
     // A configured gathering saves the flip immediately; before the first URI
     // is set there is nothing valid to persist yet — Save does it.
     if (savedUri.length > 0) {
@@ -155,7 +146,12 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
     setValidationError(null);
     updateMutation.mutate(
       { gatheringUri: parsed.data, enabled },
-      { onSuccess: () => setEditingUri(false) }
+      {
+        onSuccess: () => {
+          setEditingUri(false);
+          setDraftUri(null);
+        },
+      }
     );
   };
 
@@ -210,102 +206,26 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
             </div>
           )}
 
-          <div className="mt-3">
-            <label
-              htmlFor="simocracy-gathering-uri"
-              className="block text-xs font-medium text-gray-700 dark:text-gray-300"
-            >
-              Gathering AT-URI
-            </label>
-            {showUriInput ? (
-              <div className="mt-1 flex gap-2">
-                <Input
-                  id="simocracy-gathering-uri"
-                  type="text"
-                  value={gatheringUri}
-                  onChange={(event) => {
-                    setGatheringUri(event.target.value);
-                    if (validationError) setValidationError(null);
-                  }}
-                  disabled={!canEdit || updateMutation.isPending}
-                  placeholder="at://did:plc:…/org.simocracy.gathering/…"
-                  spellCheck={false}
-                  aria-invalid={!!validationError}
-                  className={cn(
-                    "min-w-0 flex-1 font-mono",
-                    validationError && "border-red-400 dark:border-red-700"
-                  )}
-                />
-                {canEdit && (
-                  <>
-                    <Button
-                      variant="primary"
-                      onClick={handleSave}
-                      disabled={updateMutation.isPending}
-                      isLoading={updateMutation.isPending}
-                      className="shrink-0"
-                    >
-                      Save
-                    </Button>
-                    {savedUri.length > 0 && (
-                      <UiButton
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingUri(false);
-                          setGatheringUri(savedUri);
-                          setValidationError(null);
-                        }}
-                        disabled={updateMutation.isPending}
-                        className="shrink-0 text-gray-600 dark:text-gray-300"
-                      >
-                        Cancel
-                      </UiButton>
-                    )}
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="mt-1 flex h-[38px] items-center gap-2 rounded-md border border-gray-200 bg-gray-50 pl-3 pr-2 dark:border-gray-700 dark:bg-zinc-900/60">
-                <code
-                  className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[13px] text-gray-600 dark:text-gray-300"
-                  title={savedUri}
-                >
-                  {savedUri}
-                </code>
-                <UiButton
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Copy gathering AT-URI"
-                  onClick={() => copy(savedUri, "Gathering AT-URI copied")}
-                  className="shrink-0 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                >
-                  <ClipboardDocumentIcon className="h-4 w-4" />
-                </UiButton>
-                {canEdit && (
-                  <UiButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingUri(true)}
-                    className="h-7 shrink-0 text-xs font-medium text-gray-600 dark:text-gray-300"
-                  >
-                    Change
-                  </UiButton>
-                )}
-              </div>
-            )}
-            {validationError ? (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                {validationError}
-              </p>
-            ) : (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                The Simocracy gathering this program's rounds run in.
-              </p>
-            )}
-          </div>
+          <GatheringUriField
+            value={gatheringUri}
+            savedUri={savedUri}
+            editing={showUriInput}
+            validationError={validationError}
+            canEdit={canEdit}
+            isPending={updateMutation.isPending}
+            onChange={(value) => {
+              setDraftUri(value);
+              if (validationError) setValidationError(null);
+            }}
+            onSave={handleSave}
+            onCancel={() => {
+              setEditingUri(false);
+              setDraftUri(null);
+              setValidationError(null);
+            }}
+            onEdit={() => setEditingUri(true)}
+            onCopy={() => copy(savedUri, "Gathering AT-URI copied")}
+          />
 
           {canEdit && savedUri.length > 0 && (
             <>

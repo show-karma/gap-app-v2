@@ -14,3 +14,14 @@ export const addressSchema = z
 
 export const CUSTOM_SIM_VALUE = "__custom__";
 export const CUSTOM_ADDRESS_VALUE = "__custom__";
+
+export interface ReviewerOption {
+  publicAddress: string;
+  name: string;
+  email: string;
+}
+
+export function truncateMiddle(value: string, head = 24, tail = 12): string {
+  if (value.length <= head + tail + 1) return value;
+  return `${value.slice(0, head)}…${value.slice(-tail)}`;
+}

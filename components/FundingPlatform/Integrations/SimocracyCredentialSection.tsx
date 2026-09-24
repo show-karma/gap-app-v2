@@ -12,7 +12,7 @@ import {
 } from "@/hooks/useApplicationIntegrations";
 import type { ISimocracyIntegrationConfig } from "@/types/funding-platform";
 
-export interface SimocracyCredentialSectionProps {
+interface SimocracyCredentialSectionProps {
   programId: string;
   config?: ISimocracyIntegrationConfig;
 }
@@ -48,7 +48,7 @@ export const SimocracyCredentialSection: FC<SimocracyCredentialSectionProps> = (
           </h3>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             Used to publish each application as a proposal on the gathering account. Paste an app
-            password for the account that hosts the gathering — Karma verifies it against that
+            password for the account that hosts the gathering; Karma verifies it against that
             account automatically.
           </p>
         </div>
@@ -67,7 +67,7 @@ export const SimocracyCredentialSection: FC<SimocracyCredentialSectionProps> = (
           </span>
           {config?.credentialDid && (
             <code
-              className="truncate font-mono text-[11px] text-gray-500 dark:text-gray-400"
+              className="truncate font-mono text-xs text-gray-500 dark:text-gray-400"
               title={config.credentialDid}
             >
               {config.credentialDid}

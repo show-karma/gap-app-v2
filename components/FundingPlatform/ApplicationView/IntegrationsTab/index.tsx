@@ -10,12 +10,16 @@ import {
   useSimocracyProgramSummary,
 } from "@/hooks/useApplicationIntegrations";
 import { useAuth } from "@/hooks/useAuth";
-import { isIntegrationEnabled } from "@/services/fundingApplicationIntegrations.service";
+import {
+  isIntegrationEnabled,
+  type SimocracyEvaluationsResponse,
+  type SimocracyProgramSummary,
+} from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
-import { CouncilEvaluations } from "./CouncilEvaluations";
+import { CouncilEvaluations, type FeedbackContext } from "./CouncilEvaluations";
 import { SimComments } from "./SimComments";
 
-export interface IntegrationsTabProps {
+interface IntegrationsTabProps {
   referenceNumber: string;
   /** Enables sim-evaluation feedback controls (manage view; admin-scoped). */
   feedbackAdmin?: boolean;
@@ -64,6 +68,50 @@ const EmptyState: FC<EmptyStateProps> = ({ title, description }) => (
   </div>
 );
 
+interface SProcessSectionProps {
+  data: SimocracyEvaluationsResponse;
+  summary: SimocracyProgramSummary | undefined;
+  feedback: FeedbackContext | undefined;
+}
+
+// Deliberation comments are independent of the S-Process round: Sims can
+// comment on a proposal (e.g. milestone evaluations) before any run exists
+// or when they recused, so they render regardless of the evaluation state.
+const SProcessSection: FC<SProcessSectionProps> = ({ data, summary, feedback }) => {
+  if (data.runId === null) {
+    return (
+      <EmptyState
+        title="The S-Process round hasn't run yet"
+        description="S-Process sim evaluations will appear here once a Simocracy round runs for this program. Milestone evaluations and deliberation show up in the comments below."
+      />
+    );
+  }
+  if (data.evaluations.length === 0) {
+    return (
+      <EmptyState
+        title="No S-Process evaluations for this application"
+        description="The Sims did not score this application in the latest S-Process run. Milestone evaluations and deliberation show up in the comments below."
+      />
+    );
+  }
+  return (
+    <>
+      <SimocracySectionHeader
+        count={data.evaluations.length}
+        linkedCount={summary?.sims?.length}
+        programId={data.programId}
+        runId={data.runId}
+        proposalUri={data.evaluations[0]?.proposalUri}
+      />
+      <CouncilEvaluations
+        evaluations={data.evaluations}
+        linkedSims={summary?.sims}
+        feedback={feedback}
+      />
+    </>
+  );
+};
+
 interface SimocracySectionProps {
   referenceNumber: string;
   feedbackAdmin?: boolean;
@@ -107,49 +155,9 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
     );
   }
 
-  // Deliberation comments are independent of the S-Process round: Sims can
-  // comment on a proposal (e.g. milestone evaluations) before any run exists
-  // or when they recused, so they render regardless of the evaluation state.
-  const renderEvaluations = () => {
-    if (data.runId === null) {
-      return (
-        <EmptyState
-          title="The S-Process round hasn't run yet"
-          description="S-Process sim evaluations will appear here once a Simocracy round runs for this program. Milestone evaluations and deliberation show up in the comments below."
-        />
-      );
-    }
-
-    if (data.evaluations.length === 0) {
-      return (
-        <EmptyState
-          title="No S-Process evaluations for this application"
-          description="The Sims did not score this application in the latest S-Process run. Milestone evaluations and deliberation show up in the comments below."
-        />
-      );
-    }
-
-    return (
-      <>
-        <SimocracySectionHeader
-          count={data.evaluations.length}
-          linkedCount={summary?.sims?.length}
-          programId={data.programId}
-          runId={data.runId}
-          proposalUri={data.evaluations[0]?.proposalUri}
-        />
-        <CouncilEvaluations
-          evaluations={data.evaluations}
-          linkedSims={summary?.sims}
-          feedback={feedbackConfig}
-        />
-      </>
-    );
-  };
-
   return (
     <div className="space-y-4">
-      {renderEvaluations()}
+      <SProcessSection data={data} summary={summary} feedback={feedbackConfig} />
       <SimComments referenceNumber={referenceNumber} feedback={commentFeedbackConfig} />
     </div>
   );
@@ -190,7 +198,7 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
           </span>
         </div>
         <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-          How each reviewer&apos;s Sim — their AI twin on Simocracy — judged this application in the
+          How each reviewer&apos;s Sim (their AI twin on Simocracy) judged this application in the
           latest funding round.
         </p>
       </div>
@@ -214,7 +222,7 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
         )}
         {runId && (
           <span
-            className="font-mono text-[11px] text-gray-400 dark:text-gray-500"
+            className="font-mono text-xs text-gray-400 dark:text-gray-500"
             title={`Mechanism run ${runId}`}
           >
             {runId.slice(0, 16)}…
@@ -265,5 +273,3 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber, fee
     </div>
   );
 };
-
-export default IntegrationsTab;

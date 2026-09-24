@@ -1,7 +1,7 @@
 "use client";
 
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,7 +17,7 @@ import {
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
-export interface EvaluationFeedbackProps {
+interface EvaluationFeedbackProps {
   referenceNumber: string;
   subject: SimocracyFeedbackSubject;
   simUri: string;
@@ -53,18 +53,16 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
   );
   const mine = ownFeedback(forSim, simUri, viewerAddresses);
 
-  const [verdict, setVerdict] = useState<SimocracyFeedbackVerdict | null>(null);
-  const [comment, setComment] = useState("");
-
-  useEffect(() => {
-    setVerdict(mine?.verdict ?? null);
-    setComment(mine?.comment ?? "");
-  }, [mine?.verdict, mine?.comment]);
+  // Drafts sit on top of the saved entry; null means "not edited yet".
+  const [draftVerdict, setDraftVerdict] = useState<SimocracyFeedbackVerdict | null>(null);
+  const [draftComment, setDraftComment] = useState<string | null>(null);
+  const verdict = draftVerdict ?? mine?.verdict ?? null;
+  const comment = draftComment ?? mine?.comment ?? "";
 
   const othersFeedback = forSim.filter((entry) => !viewerAddresses.has(entry.authorAddress));
 
   const handleSubmit = (nextVerdict: SimocracyFeedbackVerdict) => {
-    setVerdict(nextVerdict);
+    setDraftVerdict(nextVerdict);
     submit.mutate({
       simUri,
       verdict: nextVerdict,
@@ -81,7 +79,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
       {canGiveFeedback && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
               Your feedback
             </span>
             <Button
@@ -123,7 +121,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
             <Input
               type="text"
               value={comment}
-              onChange={(event) => setComment(event.target.value)}
+              onChange={(event) => setDraftComment(event.target.value)}
               placeholder="Add a note (optional)"
               className="h-8 text-xs"
             />
