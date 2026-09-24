@@ -4,13 +4,7 @@ import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { cn } from "@/utilities/tailwind";
 import { MenuItemClient } from "./menu-item-client";
-import {
-  exploreItems,
-  forFundersItems,
-  forNonprofitsItems,
-  forProjectsItems,
-  resourcesItems,
-} from "./menu-items";
+import { exploreItems, forFundersItems, forProjectsItems, resourcesItems } from "./menu-items";
 import { SimpleMenuItemClient } from "./simple-menu-item-client";
 
 const menuStyles = {
@@ -64,32 +58,6 @@ export function ForProjectsContent({ variant = "desktop", onClose }: ForProjects
         ))}
       </div>
       <Image src="/images/homepage/nav-builder.png" alt="For Projects" width={170} height={132} />
-    </div>
-  );
-}
-
-// For Nonprofits Section
-interface ForNonprofitsContentProps {
-  variant?: "desktop" | "mobile";
-  onClose?: () => void;
-}
-
-export function ForNonprofitsContent({ variant = "desktop", onClose }: ForNonprofitsContentProps) {
-  if (variant === "mobile") {
-    return (
-      <>
-        {forNonprofitsItems.map((item) => (
-          <MenuItem key={item.href} {...item} variant="mobile" onClick={onClose} />
-        ))}
-      </>
-    );
-  }
-
-  return (
-    <div className="flex flex-col items-start justify-start">
-      {forNonprofitsItems.map((item) => (
-        <MenuItem key={item.href} {...item} variant="desktop" />
-      ))}
     </div>
   );
 }

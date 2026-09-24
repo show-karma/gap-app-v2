@@ -13,6 +13,7 @@ import FoundationFundingDataPage, {
   metadata,
 } from "@/app/t/[tenant]/(chrome)/data/foundation-funding/page";
 import { FILINGS_STATS } from "@/src/features/non-profits/lib/stats";
+import { NONPROFITS_ORIGIN } from "@/utilities/domains";
 
 // The static sitemap pulls blog slugs from Sanity, whose gateway validates the
 // client env at import time. Blog entries are irrelevant here.
@@ -154,9 +155,9 @@ describe("/data/foundation-funding (server-rendered)", () => {
     });
   });
 
-  it("links to find-funders and the due-diligence knowledge article", () => {
+  it("links to the nonprofits app and the due-diligence knowledge article", () => {
     const doc = renderStatic();
-    expect(doc.querySelector('a[href="/nonprofits/find-funders"]')).not.toBeNull();
+    expect(doc.querySelector(`a[href="${NONPROFITS_ORIGIN}"]`)).not.toBeNull();
     expect(doc.querySelector('a[href="/knowledge/nonprofit-due-diligence"]')).not.toBeNull();
   });
 });

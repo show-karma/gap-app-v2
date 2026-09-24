@@ -1,7 +1,6 @@
 /**
- * Indexed-filings stats surfaced across the find-funders UI. Single source of
- * truth for the count and phrasing so the navbar, search spinner, landing
- * hero, chat composer footer, and stats grid stay in sync.
+ * Indexed-filings stats. Single source of truth for the counts and phrasing
+ * rendered on /data/foundation-funding.
  *
  * Source: IRS 990 + 990-PF filings ingested by the Karma indexer.
  */

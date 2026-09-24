@@ -93,7 +93,7 @@ describe("Menu Items Configuration", () => {
     it('should lead the Foundations group with "Run a grant program"', () => {
       const foundations = forFundersItems.groups.find((group) => group.title === "Foundations");
       expect(foundations?.items[0].title).toBe("Run a grant program");
-      expect(foundations?.items[0].href).toBe(PAGES.FOUNDATIONS);
+      expect(foundations?.items[0].href).toBe(PAGES.HOME);
       expect(foundations?.items[0].external).toBeUndefined();
     });
 

@@ -12,13 +12,13 @@ import {
 import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
 import { followLinks } from "@/src/components/navbar/follow-links";
 import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
+import { NONPROFITS_ORIGIN } from "@/utilities/domains";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { Logo } from "../shared/logo";
 import {
   ExploreContent,
   ForFundersContent,
-  ForNonprofitsContent,
   ForProjectsContent,
   MenuSection,
   ResourcesContent,
@@ -78,15 +78,10 @@ function NavSegmentDropdowns() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* For Nonprofits Dropdown */}
-      <DropdownMenu>
-        <NavDropdownTrigger>For Nonprofits</NavDropdownTrigger>
-        <DropdownMenuContent align="start" className="p-0">
-          <div className="min-w-[400px] p-4">
-            <ForNonprofitsContent variant="desktop" />
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* For Nonprofits — a plain link to the separate nonprofits app */}
+      <Link href={NONPROFITS_ORIGIN} className={menuStyles.trigger}>
+        For Nonprofits
+      </Link>
     </div>
   );
 }
