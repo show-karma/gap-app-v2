@@ -164,11 +164,9 @@ export const PAGES = {
   },
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
-  FOUNDATIONS: `/foundations`,
   FUNDERS: `/funders`,
   FOR_PROJECTS: `/for-projects`,
   FOR_AGENTS: `/for-agents`,
-  NONPROFITS: `/nonprofits`,
   DONOR_ADVISORS: `/donor-advisors`,
   DONOR_REWARDS: `/donor-rewards`,
   CREATE_PROJECT_PROFILE: `/create-project-profile`,
@@ -270,30 +268,3 @@ export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
         : `${domain}/browse-applications`,
   };
 };
-
-// ── Find Funders (foundations + nonprofits search) ──────────────────────────
-// Route constants for the /nonprofits/find-funders feature area. Surfaces
-// foundation profiles, nonprofit profiles, grants, and the agentic search
-// workbench grounded in IRS 990 filings.
-
-const FIND_FUNDERS = "/nonprofits/find-funders";
-
-export const NON_PROFITS_PAGES = {
-  HOME: FIND_FUNDERS,
-  DEEP_RESEARCH: "/nonprofits/find-funders-deep-research" as const,
-  SEARCH: (id: string) => `${FIND_FUNDERS}/search/${id}`,
-  FOUNDATION: (id: string, searchId?: string) =>
-    `${FIND_FUNDERS}/foundations/${id}${searchId ? `?searchId=${searchId}` : ""}`,
-  NONPROFIT: (id: string, search?: { searchId?: string; grantId?: string }): string => {
-    const params = new URLSearchParams();
-    if (search?.searchId) params.set("searchId", search.searchId);
-    if (search?.grantId) params.set("grantId", search.grantId);
-    const qs = params.toString();
-    return `${FIND_FUNDERS}/nonprofits/${id}${qs ? `?${qs}` : ""}`;
-  },
-  GRANT: (id: string, searchId?: string) =>
-    `${FIND_FUNDERS}/grants/${id}${searchId ? `?searchId=${searchId}` : ""}`,
-  CONNECT: `${FIND_FUNDERS}/connect` as const,
-  CONNECT_CLAUDE: `${FIND_FUNDERS}/connect/claude` as const,
-  CONNECT_CHATGPT: `${FIND_FUNDERS}/connect/chatgpt` as const,
-} as const;

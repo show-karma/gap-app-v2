@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
-import { LayeredScreenshots } from "@/src/features/foundations/components/layered-screenshots";
+import { DashboardScreenshot } from "@/src/features/foundations/components/dashboard-screenshot";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
@@ -67,10 +67,8 @@ export function Hero() {
           </Button>
         </div>
 
-        {/* Layered product screenshots — above the fold proof for foundations.
-            Moved here from the audience-neutral home hero so the home page can
-            keep its switcher above the fold. */}
-        <LayeredScreenshots className="mt-4" />
+        {/* Above-the-fold proof: the dashboard program managers actually run. */}
+        <DashboardScreenshot className="mt-4" />
       </SectionContainer>
     </section>
   );

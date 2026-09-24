@@ -83,6 +83,7 @@ import userEvent from "@testing-library/user-event";
 import { useAuth } from "@/hooks/useAuth";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
 import { useNavbarPermissions } from "@/src/components/navbar/navbar-permissions-context";
+import { NONPROFITS_ORIGIN } from "@/utilities/domains";
 import { PAGES } from "@/utilities/pages";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 import { mockAuthState, mockNavbarPermissionsState } from "../setup";
@@ -250,6 +251,19 @@ describe("NavbarDesktopNavigation", () => {
       expect(forFundersButton).toBeInTheDocument();
     });
 
+    it('should render "For Nonprofits" as a plain link to the nonprofits app, not a dropdown', () => {
+      const authFixture = getAuthFixture("unauthenticated");
+      renderWithProviders(<NavbarDesktopNavigation />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+      });
+
+      expect(screen.getByRole("link", { name: /for nonprofits/i })).toHaveAttribute(
+        "href",
+        NONPROFITS_ORIGIN
+      );
+      expect(screen.queryByRole("button", { name: /for nonprofits/i })).not.toBeInTheDocument();
+    });
+
     it('should render "Explore" dropdown trigger', () => {
       const authFixture = getAuthFixture("unauthenticated");
       renderWithProviders(<NavbarDesktopNavigation />, {
@@ -335,7 +349,7 @@ describe("NavbarDesktopNavigation", () => {
         expect(screen.getByText("Run a grant program")).toBeInTheDocument();
       });
       expect(screen.getByText("Foundations")).toBeInTheDocument();
-      expect(screen.getByText("Donor Advisors")).toBeInTheDocument();
+      expect(screen.queryByText("Donor Advisors")).not.toBeInTheDocument();
     });
 
     it("should render ExploreContent in Explore dropdown", async () => {
@@ -502,11 +516,12 @@ describe("NavbarDesktopNavigation", () => {
       });
 
       // When logged in, the Dashboard button shows alongside the shared
-      // For Projects/Funders/Nonprofits dropdowns and the Explore dropdown.
+      // For Projects/Funders dropdowns, the For Nonprofits link and the
+      // Explore dropdown.
       expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /for projects/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /for funders/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /for nonprofits/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /for nonprofits/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
     });
   });

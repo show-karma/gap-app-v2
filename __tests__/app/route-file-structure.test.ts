@@ -128,7 +128,6 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
   "create-project-profile",
   "donor-advisors",
   "for-agents",
-  "foundations",
   "funders",
   "funding-map",
   "knowledge",
@@ -159,11 +158,6 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
   "knowledge/why-grant-programs-fail",
   "knowledge/why-grantees-need-project-profiles",
   "mcp/connect",
-  "nonprofits",
-  "nonprofits/find-funders/(landing-nav)",
-  "nonprofits/find-funders/(workbench-nav)/connect",
-  "nonprofits/find-funders/(workbench-nav)/connect/chatgpt",
-  "nonprofits/find-funders/(workbench-nav)/connect/claude",
   "privacy-policy",
   "project/[projectId]/(profile)",
   "projects",
@@ -171,19 +165,14 @@ const SITEMAP_NO_LOADING: ReadonlySet<string> = new Set([
   "terms-and-conditions",
 ]);
 
-// The crawlable routes that legitimately live in `(bare)`: the find-funders
-// section brings its own navbar and footer, which is why it sits outside
-// `(chrome)`. Every OTHER route in SITEMAP_NO_LOADING must be in `(chrome)`.
-// Listing only the exceptions keeps this to one short list instead of a second
-// copy of all 53 routes, and it still fails in both directions — a route that
-// leaves `(chrome)` fails here, and an entry whose route stops being crawlable
-// fails as stale.
-const SITEMAP_BARE_ROUTES: ReadonlySet<string> = new Set([
-  "nonprofits/find-funders/(landing-nav)",
-  "nonprofits/find-funders/(workbench-nav)/connect",
-  "nonprofits/find-funders/(workbench-nav)/connect/chatgpt",
-  "nonprofits/find-funders/(workbench-nav)/connect/claude",
-]);
+// The crawlable routes that legitimately live in `(bare)` — a section that
+// brings its own navbar and footer. None do today (the find-funders section
+// that used to moved to the separate nonprofits app), so every route in
+// SITEMAP_NO_LOADING must be in `(chrome)`. Listing only the exceptions keeps
+// this to one short list instead of a second copy of every route, and it still
+// fails in both directions — a route that leaves `(chrome)` fails here, and an
+// entry whose route stops being crawlable fails as stale.
+const SITEMAP_BARE_ROUTES: ReadonlySet<string> = new Set<string>([]);
 
 // Routes known to be missing loading.tsx at the time this ratchet was added.
 const LOADING_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
@@ -283,8 +272,7 @@ const ERROR_LEGACY_ALLOWLIST: ReadonlySet<string> = new Set([
  * invisible in the URL, but they are how a route is addressed on disk, and
  * keeping them is what makes an entry go stale when a route moves between
  * groups instead of silently matching the wrong directory. Hence
- * `project/[projectId]/(profile)` and the find-funders `(landing-nav)` /
- * `(workbench-nav)` entries above.
+ * `project/[projectId]/(profile)` above.
  */
 function collectPageDirs(): string[] {
   const dirs: string[] = [];

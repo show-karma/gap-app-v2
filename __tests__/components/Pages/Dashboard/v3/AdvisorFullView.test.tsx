@@ -4,12 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdvisorFullView } from "@/components/Pages/Dashboard/v3/AdvisorModule";
 import type { ResearchReportListItem } from "@/types/donor-research";
 
-// Rail's "Saved nonprofits" tab is backed by the research tray.
-const savedMock = vi.fn();
-vi.mock("@/src/features/non-profits/hooks/use-research-tray", () => ({
-  useResearchTray: () => savedMock(),
-}));
-
 vi.mock("@/src/components/navigation/Link", () => ({
   Link: ({
     href,
@@ -74,7 +68,6 @@ describe("AdvisorFullView", () => {
       isError: false,
       refetch: vi.fn(),
     });
-    savedMock.mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() });
     listReportsMock.mockResolvedValue({ items: [report()], limit: 6, offset: 0 });
   });
 
@@ -86,11 +79,11 @@ describe("AdvisorFullView", () => {
     });
     renderView();
 
-    // "Your work" rail — order: Research reports, Donor handles, Saved nonprofits.
+    // "Your work" rail — order: Research reports, Donor handles.
     expect(screen.getByText("Your work")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /research reports/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /donor handles/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /saved nonprofits/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /saved nonprofits/i })).not.toBeInTheDocument();
 
     // The reports section is the default view; New report is a redirect link.
     expect(screen.getByText("Every report you've generated")).toBeInTheDocument();
@@ -117,33 +110,6 @@ describe("AdvisorFullView", () => {
     renderView();
 
     expect(await screen.findByText("Unable to load your research reports.")).toBeInTheDocument();
-  });
-
-  it("switches to the Saved nonprofits tab, with a Find funders header link", async () => {
-    savedMock.mockReturnValue({
-      data: [
-        {
-          id: "b1",
-          userId: "u1",
-          entityType: "nonprofit",
-          entityId: "e1",
-          name: "Ocean Trust",
-          metadata: null,
-          createdAt: "2026-01-08T00:00:00.000Z",
-        },
-      ],
-      isLoading: false,
-      isError: false,
-      refetch: vi.fn(),
-    });
-    renderView();
-
-    fireEvent.click(screen.getByRole("button", { name: /saved nonprofits/i }));
-    expect(await screen.findByText("Ocean Trust")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /find funders/i })).toHaveAttribute(
-      "href",
-      expect.stringContaining("find-funders")
-    );
   });
 
   it("switches the Donor handles tab and cross-links to the Personas section", async () => {

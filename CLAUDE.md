@@ -110,7 +110,7 @@ Token consumption is always allowed — Tailwind theme classes and `var(--x)` / 
 | `primitiveExemptGlobs` (`components/ui/**`) | the shadcn primitives themselves | DS005 only |
 | `inlineStyleExemptGlobs` + `inlineStyleExemptImports` | `next/og` / `@vercel/og` image routes, where Satori supports inline styles only | DS003 only |
 
-Legacy debt is **not** exempted — `styles/non-profits-landing.css` keeps its 84 DS007 findings on purpose. The added-lines gate means they never block you; the baseline stops them growing. Scan roots are the Tailwind `content` globs plus `utilities/**`, `hooks/**`, `services/**`, `store/**` and `widget/**` (the widget ships through `pnpm build:widget`), plus every `.css`/`.scss`. MDX is out of scope in v1.
+Legacy debt is **not** exempted — a file carrying old findings keeps them on purpose. The added-lines gate means they never block you; the baseline stops them growing. Scan roots are the Tailwind `content` globs plus `utilities/**`, `hooks/**`, `services/**`, `store/**` and `widget/**` (the widget ships through `pnpm build:widget`), plus every `.css`/`.scss`. MDX is out of scope in v1.
 
 ```bash
 pnpm design:check                          # whole repo, exit 1 on errors

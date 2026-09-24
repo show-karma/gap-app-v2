@@ -22,8 +22,6 @@ describe("toRoutePattern", () => {
     ["/", "/"],
     ["/funding-map", "/funding-map"],
     ["/my-projects", "/my-projects"],
-    ["/nonprofits", "/nonprofits"],
-    ["/nonprofits/find-funders", "/nonprofits/find-funders"],
   ])("leaves the static route %s alone", (pathname, expected) => {
     expect(toRoutePattern(pathname)).toBe(expected);
   });

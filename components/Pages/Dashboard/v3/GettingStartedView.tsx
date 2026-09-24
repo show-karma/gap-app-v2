@@ -3,7 +3,8 @@
 import dynamic from "next/dynamic";
 import { memo } from "react";
 import { Link } from "@/src/components/navigation/Link";
-import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
+import { NONPROFITS_ORIGIN } from "@/utilities/domains";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import type { DashboardModuleKey } from "./module";
 import { SoftIcon } from "./SoftIcon";
@@ -58,7 +59,7 @@ const CARDS: GettingStartedCard[] = [
     icon: "compass",
     title: "Find funders",
     body: "Search foundations and grants aligned to a mission — grounded in IRS 990 filings.",
-    cta: { label: "Browse Find Funders", icon: "arrow", href: NON_PROFITS_PAGES.HOME },
+    cta: { label: "Go to Karma for Nonprofits", icon: "arrow", href: NONPROFITS_ORIGIN },
   },
 ];
 

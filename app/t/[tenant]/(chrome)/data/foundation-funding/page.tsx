@@ -5,9 +5,10 @@ import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { DatasetJsonLd } from "@/components/Seo/DatasetJsonLd";
 import { FAQJsonLd } from "@/components/Seo/FAQJsonLd";
 import { FILINGS_STATS } from "@/src/features/non-profits/lib/stats";
+import { NONPROFITS_ORIGIN } from "@/utilities/domains";
 import { formatDate } from "@/utilities/formatDate";
 import { customMetadata } from "@/utilities/meta";
-import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import {
   DATA_PAGE_DESCRIPTION,
@@ -97,7 +98,7 @@ function linkifyFindFunders(answer: string, linkClass: string): React.ReactNode 
   return (
     <>
       {answer.slice(0, index)}
-      <Link href={NON_PROFITS_PAGES.HOME} className={linkClass}>
+      <Link href={NONPROFITS_ORIGIN} className={linkClass}>
         {phrase}
       </Link>
       {answer.slice(index + phrase.length)}
@@ -278,7 +279,7 @@ export default function FoundationFundingDataPage() {
             Use the data
           </h2>
           <p className="mt-3 max-w-[62ch] text-base leading-7 text-muted-foreground">
-            <Link href={NON_PROFITS_PAGES.HOME} className={linkClass}>
+            <Link href={NONPROFITS_ORIGIN} className={linkClass}>
               Karma Find Funders
             </Link>{" "}
             searches this corpus conversationally and cites the source filing behind every answer.

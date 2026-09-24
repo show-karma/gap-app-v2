@@ -13,10 +13,9 @@ import {
   Radio,
   ScrollText,
   UserPlus,
-  UserRoundSearch,
 } from "lucide-react";
 import { karmaLinks } from "@/utilities/karma/karma";
-import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
+import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 
 export interface MenuItem {
@@ -68,28 +67,13 @@ export const forProjectsItems: MenuItem[] = [
   },
 ];
 
-export const forNonprofitsItems: MenuItem[] = [
-  {
-    href: PAGES.NONPROFITS,
-    icon: UserPlus,
-    title: "Create profile",
-    description: "Share your website. Karma builds the funder-facing profile.",
-  },
-  {
-    href: NON_PROFITS_PAGES.HOME,
-    icon: BanknoteArrowDown,
-    title: "Find funders",
-    description: "Search foundations and donors aligned to your cause.",
-  },
-];
-
 export const forFundersItems: ForFundersItems = {
   groups: [
     {
       title: "Foundations",
       items: [
         {
-          href: PAGES.FOUNDATIONS,
+          href: PAGES.HOME,
           icon: GoalIcon,
           title: "Run a grant program",
           description: "Setup and start funding in 2 days",
@@ -99,16 +83,6 @@ export const forFundersItems: ForFundersItems = {
           icon: GalleryThumbnails,
           title: "Case studies",
           anchor: "case-studies",
-        },
-      ],
-    },
-    {
-      title: "Donor Advisors",
-      items: [
-        {
-          href: PAGES.DONOR_ADVISORS,
-          icon: UserRoundSearch,
-          title: "Nonprofit Deep Research",
         },
       ],
     },

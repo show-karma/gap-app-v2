@@ -9,6 +9,7 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
+import { NONPROFITS_ORIGIN } from "@/utilities/domains";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   cleanupAfterEach,
@@ -70,8 +71,8 @@ describe("Navigation Flow Integration Tests", () => {
       // Verify the audience groups and their items
       expect(screen.getByText("Foundations")).toBeInTheDocument();
       expect(screen.getByText("Case studies")).toBeInTheDocument();
-      expect(screen.getByText("Donor Advisors")).toBeInTheDocument();
-      expect(screen.getByText("Nonprofit Deep Research")).toBeInTheDocument();
+      expect(screen.queryByText("Donor Advisors")).not.toBeInTheDocument();
+      expect(screen.queryByText("Nonprofit Deep Research")).not.toBeInTheDocument();
       expect(screen.getByText("Schedule demo")).toBeInTheDocument();
     });
 
@@ -188,6 +189,11 @@ describe("Navigation Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       expect(within(drawer).getByText("For Projects")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
+      expect(within(drawer).getByRole("link", { name: "For Nonprofits" })).toHaveAttribute(
+        "href",
+        NONPROFITS_ORIGIN
+      );
+      expect(within(drawer).queryByText("Find funders")).not.toBeInTheDocument();
       // Explore section renders as subsections
       expect(within(drawer).getByText("Explore Projects")).toBeInTheDocument();
     });

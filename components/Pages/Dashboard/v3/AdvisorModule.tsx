@@ -4,10 +4,8 @@ import pluralize from "pluralize";
 import { type ReactNode, useState } from "react";
 import { useDonorHandles } from "@/hooks/useDonorHandles";
 import { Link } from "@/src/components/navigation/Link";
-import { useResearchTray } from "@/src/features/non-profits/hooks/use-research-tray";
-import type { ResearchTrayEntry } from "@/src/features/non-profits/services/research-tray.service";
 import type { DonorHandle, ResearchReportListItem } from "@/types/donor-research";
-import { NON_PROFITS_PAGES, PAGES } from "@/utilities/pages";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { EmptyState, ErrorState, type ModuleStatus, Section, SkeletonList } from "./primitives";
 import { SoftIcon } from "./SoftIcon";
@@ -22,7 +20,7 @@ import {
 } from "./soft-classes";
 import { reportTitle, statusBadge, useAdvisorData } from "./useAdvisorData";
 
-type AdvisorView = "reports" | "handles" | "saved";
+type AdvisorView = "reports" | "handles";
 
 function timeAgo(iso?: string | null): string {
   if (!iso) return "";
@@ -131,13 +129,11 @@ function LeftRail({
   active,
   onSelect,
   reportCount,
-  savedCount,
   handleCount,
 }: {
   active: AdvisorView;
   onSelect: (view: AdvisorView) => void;
   reportCount: number;
-  savedCount: number;
   handleCount: number;
 }) {
   return (
@@ -158,13 +154,6 @@ function LeftRail({
         icon="users"
         label="Donor handles"
         onClick={() => onSelect("handles")}
-      />
-      <RailItem
-        active={active === "saved"}
-        count={savedCount}
-        icon="bookmark"
-        label="Saved nonprofits"
-        onClick={() => onSelect("saved")}
       />
     </aside>
   );
@@ -236,91 +225,6 @@ function ReportsView({
       soft
       sub="Every report you've generated"
       title="Research reports"
-    >
-      {body}
-    </Section>
-  );
-}
-
-function bookmarkHref(entry: ResearchTrayEntry): string {
-  switch (entry.entityType) {
-    case "foundation":
-      return NON_PROFITS_PAGES.FOUNDATION(entry.entityId);
-    case "nonprofit":
-      return NON_PROFITS_PAGES.NONPROFIT(entry.entityId);
-    case "grant":
-      return NON_PROFITS_PAGES.GRANT(entry.entityId);
-    default:
-      return NON_PROFITS_PAGES.HOME;
-  }
-}
-
-/** "Saved nonprofits" tab — the research-tray bookmarks. */
-function SavedView({
-  entries,
-  isLoading,
-  isError,
-  onRetry,
-}: {
-  entries: ResearchTrayEntry[];
-  isLoading: boolean;
-  isError: boolean;
-  onRetry: () => void;
-}) {
-  let body: ReactNode;
-  if (isError) {
-    body = <ErrorState message="Unable to load your saved nonprofits." onRetry={onRetry} />;
-  } else if (isLoading) {
-    body = <SkeletonList count={4} />;
-  } else if (entries.length === 0) {
-    body = (
-      <EmptyState
-        body="Bookmark foundations and nonprofits while researching in Find Funders to build a prospect list."
-        icon="bookmark"
-        secondary={{ label: "Browse Find Funders", icon: "compass", href: NON_PROFITS_PAGES.HOME }}
-        title="No saved nonprofits yet"
-      />
-    );
-  } else {
-    body = (
-      <div className="flex flex-col overflow-hidden rounded-sf-tile border border-sf-line bg-sf-card">
-        {entries.map((entry) => (
-          <Link
-            className="flex items-center gap-[14px] px-4 py-[15px] transition-colors hover:bg-sf-elev [&+&]:border-t [&+&]:border-sf-line"
-            href={bookmarkHref(entry)}
-            key={entry.id}
-          >
-            <div className={cn(THUMB_BASE, "h-9 w-9 rounded-[9px]")}>
-              <SoftIcon name="bookmark" className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[13.5px] font-[600] text-sf-heading">
-                {entry.name || "Untitled"}
-              </div>
-              <div className="truncate text-[12px] capitalize text-sf-muted">
-                {entry.entityType}
-              </div>
-            </div>
-            <SoftIcon name="arrow" className="h-4 w-4 flex-none text-sf-muted" />
-          </Link>
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <Section
-      action={
-        <Link className={cn(BTN_BASE, BTN_SM, BTN_OUTLINE)} href={NON_PROFITS_PAGES.HOME}>
-          <SoftIcon name="compass" className="h-4 w-4" />
-          Find funders
-        </Link>
-      }
-      icon="bookmark"
-      id="saved"
-      soft
-      sub="Bookmarked from your Find Funders research"
-      title="Saved nonprofits"
     >
       {body}
     </Section>
@@ -415,7 +319,7 @@ function HandlesView({
 
 /**
  * The advisor drill-in: a "Your work" rail whose items switch the main column in
- * place — all research reports, donor handles, or saved nonprofits. Creating a
+ * place — all research reports or donor handles. Creating a
  * report redirects to the full /nonprofit-research builder. Only mounts for
  * confirmed advisors (the bento tile).
  */
@@ -423,10 +327,8 @@ export function AdvisorFullView({ authenticated }: { authenticated: boolean }) {
   const [view, setView] = useState<AdvisorView>("reports");
   const { status, reports, onRetry } = useAdvisorData(authenticated);
   const handlesQuery = useDonorHandles();
-  const savedQuery = useResearchTray();
 
   const handles = handlesQuery.data?.items ?? [];
-  const saved = savedQuery.data ?? [];
 
   return (
     <div className="grid gap-[26px] lg:[grid-template-columns:234px_minmax(0,1fr)]">
@@ -435,7 +337,6 @@ export function AdvisorFullView({ authenticated }: { authenticated: boolean }) {
         handleCount={handles.length}
         onSelect={setView}
         reportCount={reports.length}
-        savedCount={saved.length}
       />
       <div className="flex min-w-0 flex-col gap-[18px]">
         {view === "reports" ? (
@@ -447,14 +348,6 @@ export function AdvisorFullView({ authenticated }: { authenticated: boolean }) {
             isError={handlesQuery.isError}
             isLoading={handlesQuery.isLoading}
             onRetry={() => handlesQuery.refetch()}
-          />
-        ) : null}
-        {view === "saved" ? (
-          <SavedView
-            entries={saved}
-            isError={savedQuery.isError}
-            isLoading={savedQuery.isLoading}
-            onRetry={() => savedQuery.refetch()}
           />
         ) : null}
       </div>

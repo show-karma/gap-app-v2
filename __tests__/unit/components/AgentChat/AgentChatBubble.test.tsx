@@ -91,24 +91,6 @@ vi.mock("@/src/components/ai-elements/message-response", () => ({
   ),
 }));
 
-// WidgetInput is now used by AgentChatBubble — mock the InputGroup primitives it renders
-vi.mock("@/components/ui/input-group", () => ({
-  InputGroup: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="input-group">{children}</div>
-  ),
-  InputGroupTextarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-    <textarea data-testid="prompt-textarea" {...props} />
-  ),
-  InputGroupAddon: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  InputGroupButton: ({
-    children,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => {
-    const { variant, size, ...rest } = props as Record<string, unknown>;
-    return <button {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>;
-  },
-}));
-
 // Mock use-stick-to-bottom
 vi.mock("use-stick-to-bottom", () => ({
   useStickToBottomContext: () => ({

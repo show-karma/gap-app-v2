@@ -23,13 +23,14 @@ import { FollowLinkAnchor } from "@/src/components/navbar/follow-link-anchor";
 import { followLinks } from "@/src/components/navbar/follow-links";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { NONPROFITS_ORIGIN } from "@/utilities/domains";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
 import { Logo } from "../shared/logo";
 import {
   ExploreContent,
   ForFundersContent,
-  ForNonprofitsContent,
   ForProjectsContent,
   MenuSection,
   ResourcesContent,
@@ -196,10 +197,15 @@ export function NavbarMobileMenu() {
                 <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
               </div>
 
-              {/* For Nonprofits Section */}
+              {/* For Nonprofits — a plain link to the separate nonprofits app */}
               <div className="border-b border-border py-3">
-                <MenuSection title="For Nonprofits" variant="mobile" />
-                <ForNonprofitsContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                <Link
+                  href={NONPROFITS_ORIGIN}
+                  className={cn(menuStyles.itemText, "block py-2")}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  For Nonprofits
+                </Link>
               </div>
 
               {/* Explore Section */}

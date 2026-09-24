@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { NONPROFITS_ORIGIN } from "./utilities/domains";
 import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
@@ -119,7 +120,6 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-accordion",
       "@radix-ui/react-avatar",
       "@radix-ui/react-checkbox",
-      "@radix-ui/react-hover-card",
       "@radix-ui/react-label",
       "@radix-ui/react-scroll-area",
       "@radix-ui/react-separator",
@@ -186,6 +186,32 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // The foundations landing page became the homepage.
+      {
+        source: "/foundations",
+        destination: "/",
+        permanent: true,
+      },
+      // The nonprofit surfaces (the /nonprofits landing, Find Funders and its
+      // deep-research intake) moved to their own app. That app has no
+      // equivalent deep links, so every path lands on its root. The
+      // /nonprofits/is-ai-ready checker stays here and is deliberately not
+      // matched.
+      {
+        source: "/nonprofits",
+        destination: NONPROFITS_ORIGIN,
+        permanent: true,
+      },
+      {
+        source: "/nonprofits/find-funders/:path*",
+        destination: NONPROFITS_ORIGIN,
+        permanent: true,
+      },
+      {
+        source: "/nonprofits/find-funders-deep-research",
+        destination: NONPROFITS_ORIGIN,
+        permanent: true,
+      },
       // Donor research renamed the advisor-facing "Clients" concept to
       // "Personas". Keep existing bookmarks and shared internal links valid.
       {
