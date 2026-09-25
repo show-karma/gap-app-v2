@@ -5,6 +5,7 @@ import { FoundationsFaqSection } from "@/src/features/foundations/components/fou
 import { Hero } from "@/src/features/foundations/components/hero";
 import { FOUNDATION_FAQS } from "@/src/features/foundations/content";
 import { CaseStudiesSection } from "@/src/features/home/components/case-studies-section";
+import { CompassAnnouncementBanner } from "@/src/features/home/components/compass-announcement-banner";
 import { HowItWorksSection } from "@/src/features/home/components/how-it-works-section";
 import { NumbersSection } from "@/src/features/home/components/numbers-section";
 import { ObjectionsSection } from "@/src/features/home/components/objections-section";
@@ -35,7 +36,10 @@ export default function Index() {
     <main className="flex w-full flex-col flex-1 items-center bg-background">
       <FAQJsonLd questions={FOUNDATION_FAQS} />
       <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-16 lg:gap-24">
-        <Hero />
+        <div className="flex w-full flex-col items-center">
+          <CompassAnnouncementBanner />
+          <Hero />
+        </div>
         {/* Narrative break: intro to problem */}
         <HorizontalLine className="max-w-full" />
         <PainPoints />

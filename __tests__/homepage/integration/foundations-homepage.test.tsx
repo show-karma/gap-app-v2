@@ -4,6 +4,7 @@
  */
 
 import HomePage, { metadata } from "@/app/t/[tenant]/(chrome)/page";
+import { NONPROFITS_ORIGIN } from "@/utilities/domains";
 import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
@@ -38,6 +39,16 @@ describe("Homepage (foundations landing)", () => {
       expect.stringContaining("/images/homepage/manage-dashboard.png"),
       expect.stringContaining("/images/homepage/manage-dashboard-drk.png"),
     ]);
+  });
+
+  it("announces Karma Compass above the hero, linking to the Compass app", () => {
+    renderWithProviders(<HomePage />);
+
+    const banner = screen.getByRole("link", { name: /Introducing Karma Compass/i });
+    expect(banner).toHaveAttribute("href", NONPROFITS_ORIGIN);
+
+    const h1 = screen.getByRole("heading", { level: 1 });
+    expect(banner.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("carries the case-studies anchor the navbar links to", () => {
