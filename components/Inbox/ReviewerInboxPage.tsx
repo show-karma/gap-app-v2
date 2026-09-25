@@ -452,6 +452,7 @@ function InboxDetailPane({ item, communityId, isCommunityAdmin }: InboxDetailPan
         grantUid={item.grantUid}
         projectSlug={item.projectSlug}
         projectTitle={item.project}
+        programName={item.subtitle}
         milestoneUid={item.milestoneUid}
         communityId={communityId}
       />

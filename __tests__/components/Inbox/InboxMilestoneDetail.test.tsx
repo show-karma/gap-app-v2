@@ -399,7 +399,7 @@ describe("InboxMilestoneDetail", () => {
     });
 
     render(<InboxMilestoneDetail {...baseProps} />);
-    expect(screen.getByText(/Team: Yiannis Psarras/)).toBeInTheDocument();
+    expect(screen.getByText("Yiannis Psarras")).toBeInTheDocument();
   });
 
   it("shows the application comments thread on the Comments tab when a reference number exists", () => {
