@@ -1,10 +1,14 @@
 "use client";
 
 import {
+  ArrowTopRightOnSquareIcon,
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
+  FolderOpenIcon,
+  RectangleStackIcon,
   SparklesIcon,
   UserGroupIcon,
+  UsersIcon,
 } from "@heroicons/react/20/solid";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
@@ -351,6 +355,8 @@ interface InboxMilestoneDetailProps {
   projectSlug?: string;
   /** Project title, for the "mention in chat" affordance. */
   projectTitle?: string;
+  /** Program (grant round) name — shown beside the project in the header. */
+  programName?: string;
   /** The milestone to render. Must match one in the fetched grant. */
   milestoneUid: string;
   /** Community id — scopes the comments/activity thread. */
@@ -371,6 +377,7 @@ export function InboxMilestoneDetail({
   grantUid,
   projectSlug,
   projectTitle,
+  programName,
   milestoneUid,
   communityId,
   showAdminTools = false,
@@ -505,29 +512,57 @@ export function InboxMilestoneDetail({
 
   return (
     <div className="space-y-4">
-      {detailProjectSlug && (detailProjectTitle || detailGrantUid || detailTeamName) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-          {detailProjectTitle && (
-            <Link
-              href={PAGES.PROJECT.OVERVIEW(detailProjectSlug)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-primary-600 hover:underline dark:text-primary-400"
-            >
-              {detailProjectTitle}
-            </Link>
-          )}
-          {detailTeamName && (
-            <span className="text-gray-500 dark:text-gray-400">Team: {detailTeamName}</span>
-          )}
-          {detailGrantUid && (
+      {(detailProjectTitle || programName || detailTeamName || detailGrantUid) && (
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              {detailProjectTitle &&
+                (detailProjectSlug ? (
+                  <Link
+                    href={PAGES.PROJECT.OVERVIEW(detailProjectSlug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex w-max max-w-full items-center gap-1.5 text-base font-semibold text-gray-900 transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-white dark:hover:text-primary-300"
+                  >
+                    <FolderOpenIcon
+                      className="h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400"
+                      aria-hidden="true"
+                    />
+                    <span className="truncate">{detailProjectTitle}</span>
+                    <ArrowTopRightOnSquareIcon
+                      className="h-3.5 w-3.5 shrink-0 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100"
+                      aria-hidden="true"
+                    />
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-base font-semibold text-gray-900 dark:text-white">
+                    <FolderOpenIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+                    <span className="truncate">{detailProjectTitle}</span>
+                  </span>
+                ))}
+              {programName && (
+                <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+                  <RectangleStackIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{programName}</span>
+                </span>
+              )}
+            </div>
+            {detailTeamName && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                <UsersIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{detailTeamName}</span>
+              </span>
+            )}
+          </div>
+          {detailGrantUid && detailProjectSlug && (
             <Link
               href={PAGES.PROJECT.GRANT(detailProjectSlug, detailGrantUid)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-500 hover:underline dark:text-gray-400"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-primary-400 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-300"
             >
-              View grant →
+              View grant
+              <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           )}
         </div>
