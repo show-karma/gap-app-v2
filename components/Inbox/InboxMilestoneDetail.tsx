@@ -9,6 +9,7 @@ import {
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import pluralize from "pluralize";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
 import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
@@ -34,6 +35,7 @@ import {
 import { ReviewerType } from "@/src/core/rbac/types";
 import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { InboxMilestoneSimocracyTab } from "./InboxMilestoneSimocracyTab";
 
@@ -82,6 +84,20 @@ function parseProgramId(programId: string): string {
     return id ?? programId;
   }
   return programId;
+}
+
+/**
+ * The application form has no canonical team field — programs label it
+ * themselves — so surface the first answer whose question mentions "team".
+ */
+function extractTeamName(applicationData?: Record<string, unknown> | null): string | null {
+  if (!applicationData) return null;
+  for (const [label, value] of Object.entries(applicationData)) {
+    if (label.toLowerCase().includes("team") && typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return null;
 }
 
 function getRatingColor(rating: number): string {
@@ -372,6 +388,7 @@ export function InboxMilestoneDetail({
   );
 
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectUid, programId);
+  const { application } = useFundingApplicationByProjectUID(projectUid);
 
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
@@ -481,8 +498,40 @@ export function InboxMilestoneDetail({
 
   const index = milestones.findIndex((m) => m.uid === selectedMilestone.uid);
 
+  const detailProjectTitle = project?.details?.title ?? projectTitle;
+  const detailProjectSlug = project?.details?.slug ?? projectSlug ?? project?.uid ?? projectUid;
+  const detailGrantUid = grant?.uid ?? grantUid;
+  const detailTeamName = extractTeamName(application?.applicationData);
+
   return (
     <div className="space-y-4">
+      {detailProjectSlug && (detailProjectTitle || detailGrantUid || detailTeamName) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          {detailProjectTitle && (
+            <Link
+              href={PAGES.PROJECT.OVERVIEW(detailProjectSlug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary-600 hover:underline dark:text-primary-400"
+            >
+              {detailProjectTitle}
+            </Link>
+          )}
+          {detailTeamName && (
+            <span className="text-gray-500 dark:text-gray-400">Team: {detailTeamName}</span>
+          )}
+          {detailGrantUid && (
+            <Link
+              href={PAGES.PROJECT.GRANT(detailProjectSlug, detailGrantUid)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:underline dark:text-gray-400"
+            >
+              View grant →
+            </Link>
+          )}
+        </div>
+      )}
       {/*
         Queue facts and the section tabs share one sticky band. They used to be
         two stacked rows above a third carrying the title, so a fifth of the

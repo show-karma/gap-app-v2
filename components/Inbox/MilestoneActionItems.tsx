@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import React, { type FC, useCallback, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -16,6 +16,16 @@ import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
+/** A `type="date"` value (`YYYY-MM-DD`) is a calendar day; the API stores the
+ * follow-up as UTC midnight, so convert both ways without shifting the day. */
+function calendarDayToIso(day: string): string {
+  return new Date(`${day}T00:00:00.000Z`).toISOString();
+}
+
+function isoToCalendarDay(iso: string | null): string {
+  return iso ? iso.slice(0, 10) : "";
+}
+
 /** True when an open item's follow-up day falls before the viewer's today. */
 function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
   if (item.completedAt) return false;
@@ -25,19 +35,83 @@ function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
 interface ActionItemRowProps {
   item: IMilestoneActionItem;
   onToggle: (item: IMilestoneActionItem) => void;
+  onUpdate: (id: string, input: { content: string; followUpAt: string }) => void;
   onDelete: (item: IMilestoneActionItem) => Promise<void>;
+  isUpdating: boolean;
   isDeleting: boolean;
 }
 
 const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   item,
   onToggle,
+  onUpdate,
   onDelete,
+  isUpdating,
   isDeleting,
 }) => {
   const done = Boolean(item.completedAt);
   const overdue = isFollowUpOverdue(item);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(item.content);
+  const [editFollowUp, setEditFollowUp] = useState(isoToCalendarDay(item.followUpAt));
+
+  const startEdit = useCallback(() => {
+    setEditContent(item.content);
+    setEditFollowUp(isoToCalendarDay(item.followUpAt));
+    setIsEditing(true);
+  }, [item.content, item.followUpAt]);
+
+  const cancelEdit = useCallback(() => setIsEditing(false), []);
+
+  const saveEdit = useCallback(() => {
+    const content = editContent.trim();
+    if (!content || !editFollowUp) return;
+    onUpdate(item.id, { content, followUpAt: calendarDayToIso(editFollowUp) });
+    setIsEditing(false);
+  }, [editContent, editFollowUp, onUpdate, item.id]);
+
+  if (isEditing) {
+    return (
+      <li className="rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+        <Textarea
+          value={editContent}
+          onChange={(event) => setEditContent(event.target.value)}
+          rows={2}
+          aria-label="Action item note"
+        />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <label
+            htmlFor={`action-item-edit-follow-up-${item.id}`}
+            className="text-xs text-gray-500 dark:text-gray-400"
+          >
+            Next follow-up <span className="text-red-500">*</span>
+          </label>
+          <Input
+            id={`action-item-edit-follow-up-${item.id}`}
+            type="date"
+            required
+            value={editFollowUp}
+            onChange={(event) => setEditFollowUp(event.target.value)}
+            className="h-8 w-auto"
+          />
+          <div className="ml-auto flex gap-2">
+            <Button variant="ghost" size="sm" onClick={cancelEdit}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={saveEdit}
+              disabled={!editContent.trim() || !editFollowUp || isUpdating}
+              isLoading={isUpdating}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </li>
+    );
+  }
 
   return (
     <li className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
@@ -89,6 +163,17 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
         </div>
       </div>
 
+      {!done && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Edit action item"
+          onClick={startEdit}
+          className="text-gray-400 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+        >
+          <PencilIcon className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="icon-sm"
@@ -123,7 +208,7 @@ interface MilestoneActionItemsProps {
 }
 
 /**
- * The admin follow-up log for one milestone: free-form notes with an optional
+ * The admin follow-up log for one milestone: free-form notes with a required
  * next-follow-up date, checked off when the chase is resolved.
  *
  * The completion timestamp is stamped server-side; the checkbox only sends the
@@ -144,6 +229,7 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
     updateItem,
     deleteItem,
     isCreating,
+    isUpdating,
     isDeleting,
   } = useMilestoneActionItems(communityId, milestoneUid, { enabled });
 
@@ -159,12 +245,11 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
 
   const handleCreate = useCallback(() => {
     const content = draft.trim();
-    if (!content) return;
+    if (!content || !draftFollowUp) return;
 
     createItem({
       content,
-      // A date input yields `YYYY-MM-DD`; the API expects a full ISO instant.
-      followUpAt: draftFollowUp ? new Date(`${draftFollowUp}T00:00:00.000Z`).toISOString() : null,
+      followUpAt: calendarDayToIso(draftFollowUp),
     });
     resetDraft();
   }, [draft, draftFollowUp, createItem, resetDraft]);
@@ -172,6 +257,13 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
   const handleToggle = useCallback(
     (item: IMilestoneActionItem) => {
       updateItem({ id: item.id, input: { completed: !item.completedAt } });
+    },
+    [updateItem]
+  );
+
+  const handleUpdate = useCallback(
+    (id: string, input: { content: string; followUpAt: string }) => {
+      updateItem({ id, input });
     },
     [updateItem]
   );
@@ -219,11 +311,12 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
               htmlFor="action-item-follow-up"
               className="text-xs text-gray-500 dark:text-gray-400"
             >
-              Next follow-up
+              Next follow-up <span className="text-red-500">*</span>
             </label>
             <Input
               id="action-item-follow-up"
               type="date"
+              required
               min={todayCalendarDay()}
               value={draftFollowUp}
               onChange={(event) => setDraftFollowUp(event.target.value)}
@@ -236,7 +329,7 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
               <Button
                 size="sm"
                 onClick={handleCreate}
-                disabled={!draft.trim() || isCreating}
+                disabled={!draft.trim() || !draftFollowUp || isCreating}
                 isLoading={isCreating}
               >
                 Save
@@ -270,7 +363,9 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
               key={item.id}
               item={item}
               onToggle={handleToggle}
+              onUpdate={handleUpdate}
               onDelete={handleDelete}
+              isUpdating={isUpdating}
               isDeleting={isDeleting}
             />
           ))}

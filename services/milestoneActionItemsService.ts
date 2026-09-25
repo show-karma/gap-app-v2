@@ -36,8 +36,8 @@ export async function getMilestoneActionItems(
 
 export interface CreateMilestoneActionItemInput {
   content: string;
-  /** ISO date, or null for no follow-up. */
-  followUpAt?: string | null;
+  /** ISO date — required; every action item must be scheduled. */
+  followUpAt: string;
 }
 
 export async function createMilestoneActionItem(

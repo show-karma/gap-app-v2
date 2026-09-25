@@ -157,7 +157,7 @@ describe("MilestoneActionItems", () => {
     fireEvent.change(screen.getByLabelText("Action item note"), {
       target: { value: "  Called them  " },
     });
-    fireEvent.change(screen.getByLabelText("Next follow-up"), {
+    fireEvent.change(screen.getByLabelText(/Next follow-up/), {
       target: { value: "2026-09-25" },
     });
     fireEvent.click(screen.getByText("Save"));
@@ -168,18 +168,51 @@ describe("MilestoneActionItems", () => {
     });
   });
 
-  it("creates an item with no follow-up date when none is given", () => {
+  it("requires a follow-up date before creating", () => {
     render(<MilestoneActionItems {...baseProps} />);
 
     fireEvent.click(screen.getByText("Add"));
     fireEvent.change(screen.getByLabelText("Action item note"), {
       target: { value: "No response" },
     });
+    // No follow-up date set: Save is disabled and nothing is submitted.
     fireEvent.click(screen.getByText("Save"));
+    expect(createItem).not.toHaveBeenCalled();
 
+    fireEvent.change(screen.getByLabelText(/Next follow-up/), {
+      target: { value: "2026-09-25" },
+    });
+    fireEvent.click(screen.getByText("Save"));
     expect(createItem).toHaveBeenCalledWith({
       content: "No response",
-      followUpAt: null,
+      followUpAt: "2026-09-25T00:00:00.000Z",
+    });
+  });
+
+  it("edits an item's note and follow-up date", () => {
+    setHookState({
+      items: [
+        makeItem({
+          id: "ai-1",
+          content: "Old note",
+          followUpAt: "2026-09-25T00:00:00.000Z",
+        }),
+      ],
+    });
+    render(<MilestoneActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByLabelText("Edit action item"));
+    fireEvent.change(screen.getByLabelText("Action item note"), {
+      target: { value: "Updated note" },
+    });
+    fireEvent.change(screen.getByLabelText(/Next follow-up/), {
+      target: { value: "2026-10-01" },
+    });
+    fireEvent.click(screen.getByText("Save"));
+
+    expect(updateItem).toHaveBeenCalledWith({
+      id: "ai-1",
+      input: { content: "Updated note", followUpAt: "2026-10-01T00:00:00.000Z" },
     });
   });
 
