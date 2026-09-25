@@ -5,10 +5,9 @@ import { CompassAnnouncementBanner } from "@/src/features/home/components/compas
 import { NONPROFITS_ORIGIN } from "@/utilities/domains";
 
 describe("CompassAnnouncementBanner", () => {
-  it("announces Karma Compass with a New badge", () => {
+  it("announces Karma Compass", () => {
     render(<CompassAnnouncementBanner />);
 
-    expect(screen.getByText("New")).toBeInTheDocument();
     expect(screen.getByText("Introducing Karma Compass")).toBeInTheDocument();
   });
 

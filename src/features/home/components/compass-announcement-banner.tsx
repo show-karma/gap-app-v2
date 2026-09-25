@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Compass } from "lucide-react";
 import Link from "next/link";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
@@ -13,25 +13,29 @@ export function CompassAnnouncementBanner() {
         <Link
           href={NONPROFITS_ORIGIN}
           className={cn(
-            "group flex w-full items-center justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-sm transition",
-            "hover:border-primary/40 hover:shadow-md",
+            "group flex w-full items-center justify-between gap-4 rounded-2xl border-2 border-brand-300 px-5 py-4 shadow-md transition",
+            "bg-gradient-to-r from-brand-100 via-brand-50 to-card",
+            "dark:border-brand-700 dark:from-brand-900 dark:via-brand-950 dark:to-card",
+            "hover:border-brand-500 hover:shadow-lg",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            "max-md:flex-col max-md:items-start max-md:gap-3 max-md:px-4 max-md:py-3"
+            "max-md:flex-col max-md:items-start max-md:gap-3 max-md:px-4"
           )}
         >
-          <div className="flex items-center gap-3 max-md:items-start">
-            <span className="shrink-0 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold uppercase text-primary-foreground">
-              New
+          <div className="flex items-center gap-4 max-md:items-start max-md:gap-3">
+            <span
+              aria-hidden
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-brand-950"
+            >
+              <Compass className="h-5 w-5" />
             </span>
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">Introducing Karma Compass</span>
-              <span className="max-md:hidden"> · </span>
-              <span className="max-md:block">
+            <div className="flex flex-col gap-0.5">
+              <p className="text-base font-semibold text-foreground">Introducing Karma Compass</p>
+              <p className="text-sm text-muted-foreground">
                 AI agents that run your nonprofit&apos;s board meetings, over email.
-              </span>
-            </p>
+              </p>
+            </div>
           </div>
-          <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-primary">
+          <span className="flex shrink-0 items-center gap-1.5 rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white transition group-hover:bg-brand-700 dark:bg-brand-500 dark:text-brand-950 dark:group-hover:bg-brand-400 max-md:ml-14">
             Try Compass
             <ArrowRight
               aria-hidden
