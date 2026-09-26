@@ -31,7 +31,7 @@ export function CompassAnnouncementBanner() {
             <div className="flex flex-col gap-0.5">
               <p className="text-base font-semibold text-foreground">Introducing Karma Compass</p>
               <p className="text-sm text-muted-foreground">
-                AI agents that run your nonprofit&apos;s board meetings, over email.
+                AI-powered board management for nonprofits
               </p>
             </div>
           </div>

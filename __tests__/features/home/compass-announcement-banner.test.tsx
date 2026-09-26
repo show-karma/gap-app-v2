@@ -9,6 +9,7 @@ describe("CompassAnnouncementBanner", () => {
     render(<CompassAnnouncementBanner />);
 
     expect(screen.getByText("Introducing Karma Compass")).toBeInTheDocument();
+    expect(screen.getByText("AI-powered board management for nonprofits")).toBeInTheDocument();
   });
 
   it("links the whole banner to the Compass app", () => {
