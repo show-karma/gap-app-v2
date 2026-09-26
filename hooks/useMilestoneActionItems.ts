@@ -67,6 +67,7 @@ export function useMilestoneActionItems(
     queryClient.invalidateQueries({ queryKey });
     // The queue row shows openActionItems / followUpOverdue for this milestone.
     queryClient.invalidateQueries({ queryKey: ["reviewer-inbox", communityId] });
+    queryClient.invalidateQueries({ queryKey: ["community-action-items", communityId] });
   }, [queryClient, queryKey, communityId]);
 
   const createMutation = useMutation({

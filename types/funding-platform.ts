@@ -396,6 +396,17 @@ export interface IMilestoneActionItem {
   updatedAt: string;
 }
 
+export interface ICommunityActionItem extends IMilestoneActionItem {
+  projectUid: string | null;
+  projectTitle: string | null;
+  milestoneTitle: string | null;
+}
+
+export interface ICommunityActionItemPage {
+  items: ICommunityActionItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
 export type MilestoneTimelineEventType =
   | "created"
   | "due"
