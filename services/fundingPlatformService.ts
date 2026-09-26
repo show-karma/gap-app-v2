@@ -119,6 +119,10 @@ export interface IApplicationFilters {
   reviewerAddress?: string;
   /** Reviewer inbox: narrow the feed to one of the community's programs. */
   programId?: string;
+  /** Reviewer inbox: narrow applications and milestones to this project. */
+  projectUid?: string;
+  /** Admin inbox: list milestones with at least one incomplete action item. */
+  pendingActionItems?: boolean;
   reviewerAddresses?: string[];
   /**
    * Reviewer-inbox only: narrows the ADMIN milestone queue to one stage.

@@ -4,6 +4,7 @@ import { useQueryState } from "nuqs";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Button as FilterButton } from "@/components/ui/button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
@@ -17,11 +18,13 @@ import type { Community } from "@/types/v2/community";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { cn } from "@/utilities/tailwind";
 import ApplicationDetailView from "../FundingPlatform/ApplicationView/ApplicationDetailView";
+import { CommunityActionItemsView } from "./CommunityActionItemsView";
 import { InboxAttentionFilter } from "./InboxAttentionFilter";
 import { InboxHeader } from "./InboxHeader";
 import { type InboxKindFilter, InboxList } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
 import { InboxProgramFilter } from "./InboxProgramFilter";
+import { InboxProjectFilter } from "./InboxProjectFilter";
 import { InboxSortControl } from "./InboxSortControl";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
@@ -115,15 +118,22 @@ export function ReviewerInboxPage({
   const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
   const [inboxSort, setInboxSort] = useState<ReviewerInboxSort>("priority");
   const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
-  const [programId] = useQueryState("programId");
+  const [programId, setProgramId] = useQueryState("programId");
+  const [projectUid, setProjectUid] = useQueryState("projectUid");
+  const [pendingParam, setPendingParam] = useQueryState("pendingActionItems");
+  const pendingActionItems = pendingParam === "true";
+  const [viewParam, setViewParam] = useQueryState("view");
+  const showActionItems = isCommunityAdmin && syncSelectionToHash && viewParam === "actions";
 
   const { items, stats, isLoading, isFetching, totalCount, error, refetch } = useInboxFeed({
     communityId,
-    includeApplications,
-    includeMilestones,
+    includeApplications: includeApplications && !showActionItems,
+    includeMilestones: includeMilestones && !showActionItems,
     applicationFilters: { limit },
     attention: attentionFilter,
     programId,
+    projectUid,
+    pendingActionItems,
     inboxSort,
   });
 
@@ -210,6 +220,32 @@ export function ReviewerInboxPage({
     [resetToNewList]
   );
 
+  const handleProgramChange = useCallback(
+    (value: string | null) => {
+      void setProgramId(value);
+      void setProjectUid(null);
+      setAttentionFilter(null);
+      resetToNewList();
+    },
+    [setProgramId, setProjectUid, resetToNewList]
+  );
+
+  const handleProjectChange = useCallback(
+    (value: string | null) => {
+      void setProjectUid(value);
+      setAttentionFilter(null);
+      resetToNewList();
+    },
+    [setProjectUid, resetToNewList]
+  );
+
+  const handlePendingChange = useCallback(() => {
+    void setPendingParam(pendingActionItems ? null : "true");
+    setAttentionFilter(null);
+    setKindFilter("all");
+    resetToNewList();
+  }, [pendingActionItems, setPendingParam, resetToNewList]);
+
   const handleSortChange = useCallback(
     (value: ReviewerInboxSort) => {
       setInboxSort(value);
@@ -246,7 +282,8 @@ export function ReviewerInboxPage({
     // A fresh load here stays hash-driven so the first CLICK pushes a history
     // entry and Back returns to the list instead of ejecting off-page.
     const allowed = syncSelectionToHash ? autoSelectPending.current : !hasAutoSelected.current;
-    if (!allowed || selectedId != null || items.length === 0) return;
+    if (showActionItems || !allowed || selectedId != null || items.length === 0 || isFetching)
+      return;
     const visible = kindFilter === "all" ? items : items.filter((i) => i.kind === kindFilter);
     if (visible.length === 0) return;
     const first = visible.reduce((best, current) =>
@@ -256,7 +293,7 @@ export function ReviewerInboxPage({
     autoSelectPending.current = false;
     // replace, never push: the reader did not click this.
     selectItem(first.id, { replace: true });
-  }, [items, selectedId, kindFilter, syncSelectionToHash, selectItem]);
+  }, [items, selectedId, kindFilter, syncSelectionToHash, selectItem, isFetching, showActionItems]);
 
   const selectedItem: InboxItem | undefined = useMemo(
     () => items.find((i) => i.id === selectedId),
@@ -284,24 +321,117 @@ export function ReviewerInboxPage({
 
   return (
     <div className="w-full space-y-4">
-      <InboxHeader stats={stats} isCommunityAdmin={isCommunityAdmin} />
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-x-5 gap-y-2",
+          isCommunityAdmin &&
+            syncSelectionToHash &&
+            "border-b border-gray-200 pb-3 dark:border-zinc-700"
+        )}
+      >
+        <InboxHeader
+          stats={stats}
+          isCommunityAdmin={isCommunityAdmin}
+          showQueueSummary={!showActionItems}
+        />
+        {isCommunityAdmin && syncSelectionToHash && (
+          <div className="inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1 dark:bg-zinc-800">
+            <FilterButton
+              type="button"
+              size="chip"
+              aria-pressed={!showActionItems}
+              variant="ghost"
+              className={cn(
+                "font-medium",
+                !showActionItems
+                  ? "bg-white text-gray-950 shadow-sm hover:bg-white dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-900"
+                  : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-zinc-700"
+              )}
+              onClick={() => void setViewParam(null)}
+            >
+              Milestones
+            </FilterButton>
+            <FilterButton
+              type="button"
+              size="chip"
+              aria-pressed={showActionItems}
+              variant="ghost"
+              className={cn(
+                "font-medium",
+                showActionItems
+                  ? "bg-white text-gray-950 shadow-sm hover:bg-white dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-900"
+                  : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-zinc-700"
+              )}
+              onClick={() => void setViewParam("actions")}
+            >
+              Action items
+            </FilterButton>
+          </div>
+        )}
+      </div>
 
-      {isCommunityAdmin && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-y border-gray-200 py-2 dark:border-zinc-700">
+      {isCommunityAdmin && !showActionItems && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-gray-200 pb-3 dark:border-zinc-700">
           <InboxAttentionFilter
             stats={stats}
             value={attentionFilter}
             onChange={handleAttentionChange}
             totalMilestones={stats.milestones}
           />
+          <FilterButton
+            type="button"
+            variant={pendingActionItems ? "secondary" : "outline"}
+            size="chip"
+            aria-pressed={pendingActionItems}
+            onClick={handlePendingChange}
+            className={cn(
+              "font-medium",
+              pendingActionItems &&
+                "border border-primary-500 text-primary-700 dark:text-primary-300"
+            )}
+          >
+            Milestones with pending action items
+          </FilterButton>
           <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
-            <InboxProgramFilter communityId={communityId} />
+            <InboxProgramFilter
+              communityId={communityId}
+              value={programId}
+              onChange={handleProgramChange}
+            />
+            <InboxProjectFilter
+              communityId={communityId}
+              programId={programId ? normalizeProgramId(programId) : null}
+              value={projectUid}
+              onChange={handleProjectChange}
+            />
             <InboxSortControl value={inboxSort} onChange={handleSortChange} />
           </div>
         </div>
       )}
 
-      {error ? (
+      {showActionItems ? (
+        <CommunityActionItemsView
+          communityId={communityId}
+          programId={programId}
+          projectUid={projectUid}
+          active={showActionItems}
+          scopeFilters={
+            <div className="flex flex-wrap items-center gap-2">
+              <InboxProgramFilter
+                communityId={communityId}
+                value={programId}
+                onChange={handleProgramChange}
+              />
+              <InboxProjectFilter
+                communityId={communityId}
+                programId={programId ? normalizeProgramId(programId) : null}
+                value={projectUid}
+                onChange={handleProjectChange}
+              />
+            </div>
+          }
+        />
+      ) : error ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
           <p className="text-gray-600 dark:text-gray-400">
             There was an error loading your action items. Please try again.
@@ -321,7 +451,9 @@ export function ReviewerInboxPage({
               <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
                 <p className="text-gray-500 dark:text-gray-400">
                   {isCommunityAdmin
-                    ? "Nothing needs attention right now."
+                    ? pendingActionItems
+                      ? "No milestones with pending action items match these filters."
+                      : "Nothing needs attention right now."
                     : "Nothing assigned to you yet. New reviews will appear here."}
                 </p>
               </div>

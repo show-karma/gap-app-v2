@@ -186,6 +186,10 @@ export const INDEXER = {
     },
     // Admin milestone queue detail: lifecycle timeline + follow-up action items.
     MILESTONE_ACTION_ITEMS: {
+      PROJECT_OPTIONS: (communityId: string, qs?: string) =>
+        `/v2/milestone-action-items/${communityId}/projects${qs ? `?${qs}` : ""}`,
+      COMMUNITY_LIST: (communityId: string, qs?: string) =>
+        `/v2/milestone-action-items/${communityId}/items${qs ? `?${qs}` : ""}`,
       TIMELINE: (communityId: string, milestoneUid: string) =>
         `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/timeline`,
       LIST: (communityId: string, milestoneUid: string) =>

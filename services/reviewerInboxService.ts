@@ -24,6 +24,8 @@ export async function getReviewerInbox(
   // reviewer's feed.
   if (filters.attention) params.append("attention", filters.attention);
   if (filters.programId) params.append("programId", filters.programId);
+  if (filters.projectUid) params.append("projectUid", filters.projectUid);
+  if (filters.pendingActionItems) params.append("pendingActionItems", "true");
   // Ordering mode. Omitted for "priority" so the server owns the default and
   // the two cannot drift; an unrecognised value is a 400, never a silent
   // fallback to priority order while the UI shows follow-up as active.

@@ -23,6 +23,7 @@ interface InboxHeaderProps {
    * as controls rather than as statistics that happen to be clickable.
    */
   isCommunityAdmin?: boolean;
+  showQueueSummary?: boolean;
 }
 
 interface SummaryPart {
@@ -86,7 +87,11 @@ const AdminSummary: FC<{ stats: InboxStats }> = ({ stats }) => {
   );
 };
 
-const InboxHeaderComponent: FC<InboxHeaderProps> = ({ stats, isCommunityAdmin = false }) => {
+const InboxHeaderComponent: FC<InboxHeaderProps> = ({
+  stats,
+  isCommunityAdmin = false,
+  showQueueSummary = true,
+}) => {
   // The admin queue is a working surface, not a landing page: the title drops
   // to breadcrumb scale and the summary moves inline, which is ~230px of
   // vertical space handed back to the queue itself.
@@ -96,10 +101,14 @@ const InboxHeaderComponent: FC<InboxHeaderProps> = ({ stats, isCommunityAdmin = 
         <h1 className="text-base font-semibold leading-tight text-gray-900 dark:text-white">
           Action Items
         </h1>
-        <span className="text-sm tabular-nums text-gray-500 dark:text-gray-400">
-          {stats.milestones + stats.applications}
-        </span>
-        <AdminSummary stats={stats} />
+        {showQueueSummary && (
+          <>
+            <span className="text-sm tabular-nums text-gray-500 dark:text-gray-400">
+              {stats.milestones + stats.applications}
+            </span>
+            <AdminSummary stats={stats} />
+          </>
+        )}
       </div>
     );
   }

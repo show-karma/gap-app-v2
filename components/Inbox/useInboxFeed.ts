@@ -18,6 +18,8 @@ export interface UseInboxFeedOptions {
   attention?: MilestoneQueueFilter | null;
   /** Narrow the feed to one of the community's programs. */
   programId?: string | null;
+  projectUid?: string | null;
+  pendingActionItems?: boolean;
   /** Ordering mode. The server owns the default, so "priority" is not sent. */
   inboxSort?: ReviewerInboxSort;
 }
@@ -50,6 +52,8 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
     applicationFilters = {},
     attention = null,
     programId = null,
+    projectUid = null,
+    pendingActionItems = false,
     inboxSort,
   } = options;
 
@@ -59,6 +63,8 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
       ...applicationFilters,
       ...(attention ? { attention } : {}),
       ...(programId ? { programId } : {}),
+      ...(projectUid ? { projectUid } : {}),
+      ...(pendingActionItems ? { pendingActionItems } : {}),
       ...(inboxSort ? { inboxSort } : {}),
     },
     {

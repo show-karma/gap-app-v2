@@ -34,6 +34,11 @@ export const QUERY_KEYS = {
     communityId,
     milestoneUid,
   ],
+  communityActionItems: (communityId: string, filters: object) => [
+    "community-action-items",
+    communityId,
+    filters,
+  ],
   application: (applicationId: string) => ["funding-application", applicationId],
   applicationByReference: (referenceNumber: string) => [
     "application-by-reference",
