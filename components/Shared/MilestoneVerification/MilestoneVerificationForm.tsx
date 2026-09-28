@@ -1,6 +1,6 @@
 "use client";
 
-import type { FC } from "react";
+import type { FC, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -22,22 +22,39 @@ export const MilestoneVerificationForm: FC<MilestoneVerificationFormProps> = ({
   isSubmitting,
 }) => {
   const inputId = `verify-comment-${milestoneUID}`;
+  const hintId = `${inputId}-hint`;
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Escape" && !isSubmitting) {
+      event.preventDefault();
+      onCancel();
+    }
+  };
 
   return (
-    <div className="flex w-full flex-col gap-2 rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/10">
-      <label htmlFor={inputId} className="text-sm font-semibold text-green-900 dark:text-green-200">
-        Verify Milestone Completion
-      </label>
+    <div className="flex w-full flex-col gap-3 rounded-lg border bg-secondary p-4">
+      <div className="flex flex-col gap-0.5">
+        <label htmlFor={inputId} className="text-sm font-semibold text-foreground">
+          Verify this milestone
+        </label>
+        <p id={hintId} className="text-xs text-muted-foreground">
+          Your verification is recorded on-chain under your wallet. Add a note for the grantee if
+          you have one.
+        </p>
+      </div>
       <Textarea
         id={inputId}
+        aria-describedby={hintId}
         value={comment}
         onChange={(event) => onCommentChange(event.target.value)}
-        placeholder="Add verification comment (optional)..."
+        onKeyDown={handleKeyDown}
+        placeholder="Optional note, for example what you checked"
         rows={3}
+        autoFocus
         disabled={isSubmitting}
-        className="bg-white dark:bg-zinc-800"
+        className="min-h-[72px] bg-background"
       />
-      <div className="flex gap-2">
+      <div className="flex flex-row-reverse flex-wrap gap-2">
         <Button
           type="button"
           size="sm"
@@ -45,15 +62,9 @@ export const MilestoneVerificationForm: FC<MilestoneVerificationFormProps> = ({
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >
-          Verify
+          Verify milestone
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
       </div>

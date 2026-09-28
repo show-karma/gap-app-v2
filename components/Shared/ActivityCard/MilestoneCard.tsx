@@ -9,10 +9,14 @@ import { useMutation } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { CancelledMilestoneBanner } from "@/components/Shared/CancelledMilestoneBanner";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
+import {
+  VerifyGrantMilestonePanel,
+  VerifyGrantMilestoneTrigger,
+} from "@/components/Shared/MilestoneVerification/VerifyGrantMilestone";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Badge } from "@/components/ui/badge";
@@ -207,6 +211,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       : null) ||
     (Array.isArray(projectMilestone?.verified) ? projectMilestone.verified : null) ||
     [];
+  const [isVerifyOpen, setIsVerifyOpen] = useState(false);
+  const verifyParams =
+    type === "grant" && grantMilestone && !isVerified
+      ? {
+          milestoneUID: milestone.uid,
+          chainId: milestone.chainID,
+          programId: grantDetails?.programId,
+          communityUID:
+            grantMilestone.grant.community?.uid || grantMilestone.grant.community?.details?.slug,
+        }
+      : null;
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
@@ -316,12 +331,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                 title={`${title} - Reviews`}
                 isVerified={isVerified}
                 verifications={verifications}
-                programId={grantDetails?.programId}
-                communityUID={
-                  grantMilestone?.grant.community?.uid ||
-                  grantMilestone?.grant.community?.details?.slug
-                }
-                onVerified={refetch}
               />
             </div>
             <PostedInfoTooltip date={completionDate} attester={completionAttester} />
@@ -435,54 +444,71 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         <ActivityAttribution
           date={completionDate || ""}
           attester={completionAttester}
-          actions={
-            isAuthorized ? (
-              <div className="flex flex-row gap-3 max-sm:gap-4 items-center">
-                {/* Share Button */}
-                <ExternalLink
-                  href={shareOnX(
-                    type === "grant" && grantMilestone
-                      ? SHARE_TEXTS.MILESTONE_COMPLETED(
-                          grantTitle || "Grant",
-                          (project?.details?.slug || project?.uid) as string,
-                          grantMilestone.grant.uid
-                        )
-                      : SHARE_TEXTS.PROJECT_ACTIVITY(
-                          title,
-                          (project?.details?.slug || project?.uid) as string
-                        )
-                  )}
-                  className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75  h-6 w-6 items-center justify-center"
-                >
-                  <ShareIcon className="h-5 w-5" />
-                </ExternalLink>
-
-                {/* Edit Button */}
-                <Button
-                  className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75  h-6 w-6 p-0 items-center justify-center"
-                  onClick={() => handleEditing(true)}
-                >
-                  <PencilSquareIcon className="h-5 w-5" />
-                </Button>
-
-                {/* Revoke Completion Button */}
-                <DeleteDialog
-                  deleteFunction={() => undoMutation.mutateAsync()}
-                  isLoading={undoMutation.isPending}
-                  title={
-                    <p className="font-normal">
-                      Are you sure you want to revoke the completion of <b>{milestone.title}</b>?
-                    </p>
-                  }
-                  buttonElement={{
-                    text: "",
-                    icon: <TrashIcon className="h-5 w-5" />,
-                    styleClass:
-                      "bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75 h-6 w-6 p-0 items-center justify-center",
-                  }}
-                />
-              </div>
+          panel={
+            isVerifyOpen && verifyParams ? (
+              <VerifyGrantMilestonePanel
+                {...verifyParams}
+                onClose={() => setIsVerifyOpen(false)}
+                onVerified={refetch}
+              />
             ) : undefined
+          }
+          actions={
+            <div className="flex flex-row gap-3 max-sm:gap-4 items-center">
+              {verifyParams && !isVerifyOpen ? (
+                <VerifyGrantMilestoneTrigger
+                  {...verifyParams}
+                  onOpen={() => setIsVerifyOpen(true)}
+                />
+              ) : null}
+              {isAuthorized ? (
+                <>
+                  {/* Share Button */}
+                  <ExternalLink
+                    href={shareOnX(
+                      type === "grant" && grantMilestone
+                        ? SHARE_TEXTS.MILESTONE_COMPLETED(
+                            grantTitle || "Grant",
+                            (project?.details?.slug || project?.uid) as string,
+                            grantMilestone.grant.uid
+                          )
+                        : SHARE_TEXTS.PROJECT_ACTIVITY(
+                            title,
+                            (project?.details?.slug || project?.uid) as string
+                          )
+                    )}
+                    className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75  h-6 w-6 items-center justify-center"
+                  >
+                    <ShareIcon className="h-5 w-5" />
+                  </ExternalLink>
+
+                  {/* Edit Button */}
+                  <Button
+                    className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75  h-6 w-6 p-0 items-center justify-center"
+                    onClick={() => handleEditing(true)}
+                  >
+                    <PencilSquareIcon className="h-5 w-5" />
+                  </Button>
+
+                  {/* Revoke Completion Button */}
+                  <DeleteDialog
+                    deleteFunction={() => undoMutation.mutateAsync()}
+                    isLoading={undoMutation.isPending}
+                    title={
+                      <p className="font-normal">
+                        Are you sure you want to revoke the completion of <b>{milestone.title}</b>?
+                      </p>
+                    }
+                    buttonElement={{
+                      text: "",
+                      icon: <TrashIcon className="h-5 w-5" />,
+                      styleClass:
+                        "bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75 h-6 w-6 p-0 items-center justify-center",
+                    }}
+                  />
+                </>
+              ) : null}
+            </div>
           }
           isCompleted
         />

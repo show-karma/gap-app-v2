@@ -5,7 +5,6 @@ import {
 } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import type { GrantMilestone } from "@/types/v2/grant";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
-import { VerifyGrantMilestoneButton } from "./VerifyGrantMilestoneButton";
 
 interface MilestoneVerificationSectionProps {
   milestone: GrantMilestone | UnifiedMilestone;
@@ -22,9 +21,6 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   title,
   isVerified: isVerifiedProp,
   verifications,
-  onVerified,
-  programId,
-  communityUID,
 }) => {
   // V2: verified is an array of verifications
   const getInitialVerifiedState = (): boolean => {
@@ -57,20 +53,7 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
     }
   }, [isVerifiedProp]);
 
-  if (!isVerified) {
-    return (
-      <VerifyGrantMilestoneButton
-        milestoneUID={milestone.uid}
-        chainId={milestone.chainID}
-        programId={programId}
-        communityUID={communityUID}
-        onVerified={() => {
-          setIsVerified(true);
-          onVerified?.();
-        }}
-      />
-    );
-  }
+  if (!isVerified) return null;
 
   return (
     <div className="flex flex-row gap-4 items-center flex-wrap w-max max-w-full">

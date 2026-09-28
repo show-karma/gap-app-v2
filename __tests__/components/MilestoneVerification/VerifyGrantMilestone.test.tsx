@@ -1,5 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { VerifyGrantMilestoneButton } from "@/components/Shared/MilestoneVerification/VerifyGrantMilestoneButton";
+import {
+  VerifyGrantMilestonePanel,
+  VerifyGrantMilestoneTrigger,
+} from "@/components/Shared/MilestoneVerification/VerifyGrantMilestone";
 
 const mockUseGrantMilestoneVerifyAccess = vi.fn();
 const mockUseProjectGrantMilestones = vi.fn();
@@ -32,18 +35,9 @@ vi.mock("@/utilities/query-client", () => ({
 
 const milestone = { uid: "0xMS", chainId: 10, verificationDetails: null };
 const data = { project: { uid: "0xproject" }, grantMilestones: [milestone] };
+const params = { milestoneUID: "0xms", chainId: 10, programId: "959_10", communityUID: "comm-1" };
 
-const renderButton = () =>
-  render(
-    <VerifyGrantMilestoneButton
-      milestoneUID="0xms"
-      chainId={10}
-      programId="959_10"
-      communityUID="comm-1"
-    />
-  );
-
-describe("VerifyGrantMilestoneButton", () => {
+describe("VerifyGrantMilestoneTrigger", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseGrantMilestoneVerifyAccess.mockReturnValue({
@@ -59,10 +53,10 @@ describe("VerifyGrantMilestoneButton", () => {
       isMilestoneReviewer: false,
     });
 
-    const { container } = renderButton();
+    const { container } = render(<VerifyGrantMilestoneTrigger {...params} onOpen={vi.fn()} />);
 
     expect(container).toBeEmptyDOMElement();
-    expect(mockUseProjectGrantMilestones).not.toHaveBeenCalled();
+    expect(mockUseProjectGrantMilestones).toHaveBeenCalledWith("", "959_10");
   });
 
   it("renders nothing when the milestone is already verified", () => {
@@ -73,13 +67,13 @@ describe("VerifyGrantMilestoneButton", () => {
       },
     });
 
-    const { container } = renderButton();
+    const { container } = render(<VerifyGrantMilestoneTrigger {...params} onOpen={vi.fn()} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it("scopes the permission check to the grant's community and program", () => {
-    renderButton();
+    render(<VerifyGrantMilestoneTrigger {...params} onOpen={vi.fn()} />);
 
     expect(mockUseGrantMilestoneVerifyAccess).toHaveBeenCalledWith({
       communityUID: "comm-1",
@@ -88,24 +82,44 @@ describe("VerifyGrantMilestoneButton", () => {
     });
   });
 
-  it("submits the verification with the comment and reviewer flag", () => {
-    renderButton();
+  it("opens on click", () => {
+    const onOpen = vi.fn();
+    render(<VerifyGrantMilestoneTrigger {...params} onOpen={onOpen} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
-    fireEvent.change(screen.getByLabelText(/verify milestone completion/i), {
+    fireEvent.click(screen.getByRole("button", { name: /verify milestone/i }));
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("VerifyGrantMilestonePanel", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseGrantMilestoneVerifyAccess.mockReturnValue({
+      canVerify: true,
+      isMilestoneReviewer: true,
+    });
+    mockUseProjectGrantMilestones.mockReturnValue({ data });
+  });
+
+  it("submits the verification with the comment and reviewer flag", () => {
+    render(<VerifyGrantMilestonePanel {...params} onClose={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText(/verify this milestone/i), {
       target: { value: "Looks good" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: /^verify$/i })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /verify milestone/i }));
 
     expect(mockVerifyMilestone).toHaveBeenCalledWith(milestone, true, data, "Looks good");
   });
 
-  it("cancel closes the comment form", () => {
-    renderButton();
+  it("cancel and Escape both close the panel", () => {
+    const onClose = vi.fn();
+    render(<VerifyGrantMilestonePanel {...params} onClose={onClose} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
     fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    fireEvent.keyDown(screen.getByLabelText(/verify this milestone/i), { key: "Escape" });
 
-    expect(screen.queryByLabelText(/verify milestone completion/i)).not.toBeInTheDocument();
+    expect(onClose).toHaveBeenCalledTimes(2);
   });
 });
