@@ -317,7 +317,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                 isVerified={isVerified}
                 verifications={verifications}
                 programId={grantDetails?.programId}
-                communityUID={grantMilestone?.grant.community?.uid}
+                communityUID={
+                  grantMilestone?.grant.community?.uid ||
+                  grantMilestone?.grant.community?.details?.slug
+                }
                 onVerified={refetch}
               />
             </div>
