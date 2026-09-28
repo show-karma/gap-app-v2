@@ -319,6 +319,22 @@ export function ReviewerInboxPage({
     );
   }
 
+  const scopeFilterControls = (
+    <>
+      <InboxProgramFilter
+        communityId={communityId}
+        value={programId}
+        onChange={handleProgramChange}
+      />
+      <InboxProjectFilter
+        communityId={communityId}
+        programId={programId ? normalizeProgramId(programId) : null}
+        value={projectUid}
+        onChange={handleProjectChange}
+      />
+    </>
+  );
+
   return (
     <div className="w-full space-y-4">
       <div
@@ -393,17 +409,7 @@ export function ReviewerInboxPage({
             Milestones with pending action items
           </FilterButton>
           <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
-            <InboxProgramFilter
-              communityId={communityId}
-              value={programId}
-              onChange={handleProgramChange}
-            />
-            <InboxProjectFilter
-              communityId={communityId}
-              programId={programId ? normalizeProgramId(programId) : null}
-              value={projectUid}
-              onChange={handleProjectChange}
-            />
+            {scopeFilterControls}
             <InboxSortControl value={inboxSort} onChange={handleSortChange} />
           </div>
         </div>
@@ -416,19 +422,7 @@ export function ReviewerInboxPage({
           projectUid={projectUid}
           active={showActionItems}
           scopeFilters={
-            <div className="flex flex-wrap items-center gap-2">
-              <InboxProgramFilter
-                communityId={communityId}
-                value={programId}
-                onChange={handleProgramChange}
-              />
-              <InboxProjectFilter
-                communityId={communityId}
-                programId={programId ? normalizeProgramId(programId) : null}
-                value={projectUid}
-                onChange={handleProjectChange}
-              />
-            </div>
+            <div className="flex flex-wrap items-center gap-2">{scopeFilterControls}</div>
           }
         />
       ) : error ? (

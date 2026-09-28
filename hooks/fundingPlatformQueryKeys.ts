@@ -39,6 +39,11 @@ export const QUERY_KEYS = {
     communityId,
     filters,
   ],
+  inboxProjectOptions: (communityId: string, programId: string | null) => [
+    "inbox-project-options",
+    communityId,
+    programId,
+  ],
   application: (applicationId: string) => ["funding-application", applicationId],
   applicationByReference: (referenceNumber: string) => [
     "application-by-reference",

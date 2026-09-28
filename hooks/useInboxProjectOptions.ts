@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -12,7 +13,7 @@ export interface InboxProjectOption {
 /** Lightweight project names for the admin Action Items filters. */
 export function useInboxProjectOptions(communityId: string, programId: string | null) {
   return useQuery<InboxProjectOption[]>({
-    queryKey: ["inbox-project-options", communityId, programId],
+    queryKey: QUERY_KEYS.inboxProjectOptions(communityId, programId),
     enabled: Boolean(communityId),
     queryFn: async () => {
       const qs = programId ? new URLSearchParams({ programId }).toString() : undefined;
