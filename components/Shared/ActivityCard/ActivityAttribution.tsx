@@ -5,6 +5,7 @@ interface ActivityAttributionProps {
   date: number | string;
   attester?: string;
   actions?: React.ReactNode;
+  panel?: React.ReactNode;
   isCompleted?: boolean;
   hideDateAndAttester?: boolean;
 }
@@ -13,10 +14,11 @@ export const ActivityAttribution = ({
   date,
   attester,
   actions,
+  panel,
   isCompleted = false,
   hideDateAndAttester = false,
 }: ActivityAttributionProps) => {
-  if (hideDateAndAttester && !actions) return null;
+  if (hideDateAndAttester && !actions && !panel) return null;
 
   return (
     <div className="flex flex-col gap-2 w-full border-t px-5 py-3">
@@ -45,6 +47,7 @@ export const ActivityAttribution = ({
         {/* Actions on the right side */}
         {actions && <div className="flex flex-row gap-2">{actions}</div>}
       </div>
+      {panel}
     </div>
   );
 };

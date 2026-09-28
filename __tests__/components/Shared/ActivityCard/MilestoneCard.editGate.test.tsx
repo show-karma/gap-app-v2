@@ -90,6 +90,11 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "project-1" }),
 }));
 
+vi.mock("@/components/Shared/MilestoneVerification/VerifyGrantMilestone", () => ({
+  VerifyGrantMilestoneTrigger: () => null,
+  VerifyGrantMilestonePanel: () => null,
+}));
+
 vi.mock("@/components/DeleteDialog", () => ({
   DeleteDialog: () => <button type="button" data-testid="delete-button" />,
 }));

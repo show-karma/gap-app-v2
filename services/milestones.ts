@@ -6,6 +6,7 @@ import { api } from "@/utilities/api/client";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
+import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 // Keep apiClient for mutations (PUT, POST)
@@ -120,11 +121,6 @@ export async function fetchApplicationMilestoneEvaluation(
   return data ?? { evaluations: [] };
 }
 
-function stripChainSuffix(programId: string | undefined): string | undefined {
-  if (!programId) return programId;
-  return programId.includes("_") ? programId.split("_")[0] : programId;
-}
-
 async function fetchGrantByProgramId(
   projectUid: string,
   programId: string
@@ -137,8 +133,10 @@ async function fetchGrantByProgramId(
     // Compare in normalized form: grant.details.programId may be stored as
     // either "1013" or "1013_42161" depending on when the grant was created,
     // while the caller always passes the chain-stripped form.
-    const normalizedTarget = stripChainSuffix(programId);
-    return grants.find((g) => stripChainSuffix(g.details?.programId) === normalizedTarget);
+    const normalizedTarget = normalizeProgramId(programId);
+    return grants.find(
+      (g) => g.details?.programId && normalizeProgramId(g.details.programId) === normalizedTarget
+    );
   } catch (error) {
     // Reported, not swallowed: errorManager owns the Sentry capture. The grant
     // is supplementary to the milestones, so a failure here degrades the
@@ -153,7 +151,7 @@ async function fetchGrantByProgramId(
  * poll-friendly read so the two can never drift apart on query params.
  */
 function grantMilestonesEndpoint(projectUid: string, programId: string): string {
-  const normalizedProgramId = stripChainSuffix(programId) ?? programId;
+  const normalizedProgramId = normalizeProgramId(programId);
   return `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${normalizedProgramId}&includeFundingApplicationData=true`;
 }
 
@@ -202,7 +200,7 @@ export async function fetchProjectGrantMilestones(
   programId: string
 ): Promise<ProjectGrantMilestonesResponse> {
   // Normalize programId (remove chainId suffix if present) before sending to API
-  const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
+  const normalizedProgramId = normalizeProgramId(programId);
   const [project, updatesResponse, grant] = await Promise.all([
     // TODO(#1775): add zod schema
     api
