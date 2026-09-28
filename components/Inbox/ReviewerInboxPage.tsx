@@ -331,6 +331,7 @@ export function ReviewerInboxPage({
         programId={programId ? normalizeProgramId(programId) : null}
         value={projectUid}
         onChange={handleProjectChange}
+        onlyWithActionItems={showActionItems}
       />
     </>
   );

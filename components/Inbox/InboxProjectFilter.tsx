@@ -20,6 +20,8 @@ interface InboxProjectFilterProps {
   programId: string | null;
   value: string | null;
   onChange: (value: string | null) => void;
+  /** Scope options to projects that have action items (Action Items view). */
+  onlyWithActionItems?: boolean;
 }
 
 const ALL_PROJECTS = "All projects";
@@ -29,6 +31,7 @@ const InboxProjectFilterComponent: FC<InboxProjectFilterProps> = ({
   programId,
   value,
   onChange,
+  onlyWithActionItems = false,
 }) => {
   const [open, setOpen] = useState(false);
   const {
@@ -36,7 +39,7 @@ const InboxProjectFilterComponent: FC<InboxProjectFilterProps> = ({
     isLoading,
     isError,
     refetch,
-  } = useInboxProjectOptions(communityId, programId);
+  } = useInboxProjectOptions(communityId, programId, onlyWithActionItems);
   const selected = options.find((option) => option.id === value);
   const active = Boolean(value);
 

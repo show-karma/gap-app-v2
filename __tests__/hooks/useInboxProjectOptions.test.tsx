@@ -30,4 +30,15 @@ describe("useInboxProjectOptions", () => {
       "/v2/milestone-action-items/filecoin/projects?programId=774",
     ]);
   });
+
+  it("scopes to projects with action items when requested", async () => {
+    apiGet.mockResolvedValueOnce({ options: [] });
+
+    renderHook(() => useInboxProjectOptions("filecoin", "774", true), { wrapper });
+
+    await waitFor(() => expect(apiGet).toHaveBeenCalled());
+    expect(apiGet.mock.calls.map(([url]) => url)).toEqual([
+      "/v2/milestone-action-items/filecoin/projects?programId=774&withActionItems=true",
+    ]);
+  });
 });
