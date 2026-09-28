@@ -18,6 +18,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { CancelledMilestoneBanner } from "@/components/Shared/CancelledMilestoneBanner";
+import { MilestoneVerificationForm } from "@/components/Shared/MilestoneVerification/MilestoneVerificationForm";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button as BrandButton } from "@/components/ui/button";
@@ -882,36 +883,14 @@ export function MilestoneCard({
             !isVerified && (
               <div className="mb-3">
                 {verifyingMilestoneId === milestone.uid ? (
-                  <div className="p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-md space-y-2">
-                    <p className="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
-                      Verify Milestone Completion
-                    </p>
-                    <textarea
-                      value={verificationComment}
-                      onChange={(e) => onVerificationCommentChange(e.target.value)}
-                      placeholder="Add verification comment (optional)..."
-                      rows={3}
-                      className="w-full px-3 py-2 text-sm border border-green-300 dark:border-green-700 rounded-md bg-white dark:bg-zinc-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400"
-                    />
-                    <div className="flex gap-2">
-                      <BrandButton
-                        onClick={() => onSubmitVerification(milestone)}
-                        size="sm"
-                        className="text-xs"
-                        disabled={isVerifying}
-                        isLoading={isVerifying}
-                      >
-                        Verify
-                      </BrandButton>
-                      <Button
-                        onClick={onCancelVerification}
-                        className="px-3 py-1 text-xs bg-gray-500 hover:bg-gray-600"
-                        disabled={isVerifying}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
+                  <MilestoneVerificationForm
+                    milestoneUID={milestone.uid}
+                    comment={verificationComment}
+                    onCommentChange={onVerificationCommentChange}
+                    onSubmit={() => onSubmitVerification(milestone)}
+                    onCancel={onCancelVerification}
+                    isSubmitting={isVerifying}
+                  />
                 ) : (
                   <div className="flex items-center gap-2">
                     <BrandButton onClick={() => onVerifyClick(milestone.uid)}>

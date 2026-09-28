@@ -3,13 +3,13 @@
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import { useGrantMilestoneVerifyAccess } from "@/src/core/rbac/hooks/use-resource-access";
 import { useProjectStore } from "@/store";
 import { queryClient } from "@/utilities/query-client";
 import { createProjectQueryPredicate } from "@/utilities/queryKeys";
+import { MilestoneVerificationForm } from "./MilestoneVerificationForm";
 
 interface VerifyGrantMilestoneButtonProps {
   milestoneUID: string;
@@ -66,43 +66,14 @@ const VerifyGrantMilestoneControl: FC<VerifyGrantMilestoneControlProps> = ({
   }
 
   return (
-    <div className="flex w-full flex-col gap-2 rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/10">
-      <label
-        htmlFor={`verify-comment-${milestoneUID}`}
-        className="text-sm font-semibold text-green-900 dark:text-green-200"
-      >
-        Verify milestone completion
-      </label>
-      <Textarea
-        id={`verify-comment-${milestoneUID}`}
-        value={comment}
-        onChange={(event) => setComment(event.target.value)}
-        placeholder="Add a verification comment (optional)"
-        rows={3}
-        disabled={isVerifying}
-        className="bg-white dark:bg-zinc-800"
-      />
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => verifyMilestone(milestone, isMilestoneReviewer, data, comment)}
-          disabled={isVerifying}
-          isLoading={isVerifying}
-        >
-          Verify
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={() => setIsOpen(false)}
-          disabled={isVerifying}
-        >
-          Cancel
-        </Button>
-      </div>
-    </div>
+    <MilestoneVerificationForm
+      milestoneUID={milestoneUID}
+      comment={comment}
+      onCommentChange={setComment}
+      onSubmit={() => verifyMilestone(milestone, isMilestoneReviewer, data, comment)}
+      onCancel={() => setIsOpen(false)}
+      isSubmitting={isVerifying}
+    />
   );
 };
 

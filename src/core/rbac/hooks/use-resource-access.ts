@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
+import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { Permission } from "../types/permission";
 import { ReviewerType, Role } from "../types/role";
 import { usePermissionsQuery } from "./use-permissions";
@@ -103,9 +104,6 @@ interface GrantMilestoneVerifyAccess {
   isLoading: boolean;
 }
 
-const stripChainSuffix = (programId?: string): string | undefined =>
-  programId?.includes("_") ? programId.split("_")[0] : programId;
-
 /**
  * Backend-resolved "may the current user verify a grant milestone from the
  * project page". Reviewers of the grant's program, admins of the grant's
@@ -121,7 +119,7 @@ export function useGrantMilestoneVerifyAccess({
   const { isAuthenticated } = useAuth();
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const normalizedProgramId = stripChainSuffix(programId);
+  const normalizedProgramId = programId ? normalizeProgramId(programId) : undefined;
   const query = usePermissionsQuery(
     { communityId: communityUID, programId: normalizedProgramId, chainId },
     { enabled: isAuthenticated && Boolean(communityUID || normalizedProgramId) }
