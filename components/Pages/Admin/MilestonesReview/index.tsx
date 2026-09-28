@@ -4,7 +4,6 @@ import {
   ArrowLeftIcon,
   ArrowPathIcon,
   AtSymbolIcon,
-  ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ClockIcon,
   DocumentTextIcon,
@@ -13,6 +12,7 @@ import {
 import dynamic from "next/dynamic";
 import { usePathname, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { InboxMilestoneSimocracyTab } from "@/components/Inbox/InboxMilestoneSimocracyTab";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -43,6 +43,7 @@ import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCommentsAndActivity } from "./GrantCommentsAndActivity";
 import { MilestoneCard } from "./MilestoneCard";
+import { type ReviewPanelTab, ReviewPanelTabs } from "./ReviewPanelTabs";
 import {
   FILTER_TABS,
   getMilestoneStatus,
@@ -250,8 +251,6 @@ function ProjectAskButton({
     </Button>
   );
 }
-
-type ReviewPanelTab = "details" | "comments";
 
 function getPlainTextPreview(value: string): string {
   return value
@@ -958,31 +957,7 @@ function MilestonesReviewPageContent({
                     </h2>
                   )}
                 </div>
-                <div className="inline-flex w-max rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
-                  {[
-                    { key: "details" as const, label: "Details", icon: DocumentTextIcon },
-                    { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
-                  ].map((tab) => {
-                    const Icon = tab.icon;
-                    const isActive = activePanelTab === tab.key;
-                    return (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => setActivePanelTab(tab.key)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue",
-                          isActive
-                            ? "bg-white text-gray-950 shadow-sm dark:bg-zinc-950 dark:text-white"
-                            : "text-gray-600 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                        {tab.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <ReviewPanelTabs active={activePanelTab} onChange={setActivePanelTab} />
               </div>
             </div>
 
@@ -1047,6 +1022,19 @@ function MilestonesReviewPageContent({
                     <p className="mt-1 max-w-sm text-sm text-gray-500 dark:text-gray-400">
                       Pick one from the list to see the full story, review the completion, and leave
                       a note for the team.
+                    </p>
+                  </div>
+                )
+              ) : activePanelTab === "simocracy" ? (
+                selectedMilestone ? (
+                  <InboxMilestoneSimocracyTab
+                    projectUID={project.uid}
+                    milestone={{ uid: selectedMilestone.uid, title: selectedMilestone.title }}
+                  />
+                ) : (
+                  <div className="flex min-h-[420px] flex-col items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Pick a milestone to see what the Sims said about it.
                     </p>
                   </div>
                 )
