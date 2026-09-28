@@ -1,10 +1,11 @@
 import { renderHook } from "@testing-library/react";
 import {
   useGrantMilestoneAccess,
+  useGrantMilestoneVerifyAccess,
   useProjectAccess,
   useScopedCommunityAdmin,
 } from "@/src/core/rbac/hooks/use-resource-access";
-import { Permission } from "@/src/core/rbac/types";
+import { Permission, ReviewerType, Role } from "@/src/core/rbac/types";
 
 const mockUsePermissionsQuery = vi.fn();
 
@@ -15,6 +16,12 @@ vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
 
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ isAuthenticated: true }),
+}));
+
+const projectFlags = { isProjectOwner: false, isProjectAdmin: false };
+
+vi.mock("@/store", () => ({
+  useProjectStore: (selector: (state: typeof projectFlags) => unknown) => selector(projectFlags),
 }));
 
 const queryResult = (permissions: Permission[], extra: Record<string, unknown> = {}) => ({
@@ -101,5 +108,94 @@ describe("useScopedCommunityAdmin", () => {
       { communityId: "comm-1", chainId: 10 },
       { enabled: true }
     );
+  });
+});
+
+describe("useGrantMilestoneVerifyAccess", () => {
+  const params = { communityUID: "comm-1", programId: "959_42161", chainId: 42161 };
+  const roles = (overrides: { roles?: Role[]; reviewerTypes?: ReviewerType[] } = {}) => ({
+    roles: { primaryRole: Role.GUEST, roles: [], reviewerTypes: [], ...overrides },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    projectFlags.isProjectOwner = false;
+    projectFlags.isProjectAdmin = false;
+    mockUsePermissionsQuery.mockReturnValue(queryResult([], roles()));
+  });
+
+  it("strips the chain suffix from the program id before querying", () => {
+    renderHook(() => useGrantMilestoneVerifyAccess(params));
+
+    expect(mockUsePermissionsQuery).toHaveBeenCalledWith(
+      { communityId: "comm-1", programId: "959", chainId: 42161 },
+      { enabled: true }
+    );
+  });
+
+  it("denies users with no review authority", () => {
+    const { result } = renderHook(() => useGrantMilestoneVerifyAccess(params));
+
+    expect(result.current.canVerify).toBe(false);
+  });
+
+  it("grants community admins", () => {
+    mockUsePermissionsQuery.mockReturnValue(
+      queryResult([], { isCommunityAdmin: true, ...roles() })
+    );
+
+    const { result } = renderHook(() => useGrantMilestoneVerifyAccess(params));
+
+    expect(result.current.canVerify).toBe(true);
+    expect(result.current.isMilestoneReviewer).toBe(false);
+  });
+
+  it("grants milestone reviewers but not program-only reviewers", () => {
+    mockUsePermissionsQuery.mockReturnValue(
+      queryResult([], roles({ reviewerTypes: [ReviewerType.PROGRAM] }))
+    );
+    const { result: programOnly } = renderHook(() => useGrantMilestoneVerifyAccess(params));
+    expect(programOnly.current.canVerify).toBe(false);
+
+    mockUsePermissionsQuery.mockReturnValue(
+      queryResult([], roles({ reviewerTypes: [ReviewerType.MILESTONE] }))
+    );
+    const { result } = renderHook(() => useGrantMilestoneVerifyAccess(params));
+    expect(result.current.canVerify).toBe(true);
+    expect(result.current.isMilestoneReviewer).toBe(true);
+  });
+
+  it("grants staff", () => {
+    mockUsePermissionsQuery.mockReturnValue(queryResult([], roles({ roles: [Role.SUPER_ADMIN] })));
+
+    const { result } = renderHook(() => useGrantMilestoneVerifyAccess(params));
+
+    expect(result.current.canVerify).toBe(true);
+  });
+
+  it("never lets project owners or admins verify their own milestones", () => {
+    mockUsePermissionsQuery.mockReturnValue(
+      queryResult([], { isCommunityAdmin: true, ...roles() })
+    );
+
+    projectFlags.isProjectOwner = true;
+    const { result: owner } = renderHook(() => useGrantMilestoneVerifyAccess(params));
+    expect(owner.current.canVerify).toBe(false);
+
+    projectFlags.isProjectOwner = false;
+    projectFlags.isProjectAdmin = true;
+    const { result: admin } = renderHook(() => useGrantMilestoneVerifyAccess(params));
+    expect(admin.current.canVerify).toBe(false);
+  });
+
+  it("denies while showing placeholder data from a previous context", () => {
+    mockUsePermissionsQuery.mockReturnValue({
+      ...queryResult([], { isCommunityAdmin: true, ...roles() }),
+      isPlaceholderData: true,
+    });
+
+    const { result } = renderHook(() => useGrantMilestoneVerifyAccess(params));
+
+    expect(result.current.canVerify).toBe(false);
   });
 });

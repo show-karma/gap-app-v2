@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useProjectStore } from "@/store";
 import { Permission } from "../types/permission";
+import { ReviewerType, Role } from "../types/role";
 import { usePermissionsQuery } from "./use-permissions";
 
 interface ProjectAccess {
@@ -85,6 +87,59 @@ export function useScopedCommunityAdmin(
 
   return {
     isCommunityAdmin: query.data?.isCommunityAdmin === true,
+    isLoading: query.isLoading,
+  };
+}
+
+interface GrantMilestoneVerifyAccessParams {
+  communityUID?: string;
+  programId?: string;
+  chainId?: number;
+}
+
+interface GrantMilestoneVerifyAccess {
+  canVerify: boolean;
+  isMilestoneReviewer: boolean;
+  isLoading: boolean;
+}
+
+const stripChainSuffix = (programId?: string): string | undefined =>
+  programId?.includes("_") ? programId.split("_")[0] : programId;
+
+/**
+ * Backend-resolved "may the current user verify a grant milestone from the
+ * project page". Reviewers of the grant's program, admins of the grant's
+ * community and staff qualify, across all linked wallets. Project owners and
+ * admins never do, even when they also hold one of those roles: completing
+ * and verifying the same milestone must be separate people.
+ */
+export function useGrantMilestoneVerifyAccess({
+  communityUID,
+  programId,
+  chainId,
+}: GrantMilestoneVerifyAccessParams): GrantMilestoneVerifyAccess {
+  const { isAuthenticated } = useAuth();
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const normalizedProgramId = stripChainSuffix(programId);
+  const query = usePermissionsQuery(
+    { communityId: communityUID, programId: normalizedProgramId, chainId },
+    { enabled: isAuthenticated && Boolean(communityUID || normalizedProgramId) }
+  );
+  const roles = query.data?.roles;
+  const isMilestoneReviewer = roles?.reviewerTypes?.includes(ReviewerType.MILESTONE) ?? false;
+  const isSuperAdmin = roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
+  const hasReviewAuthority =
+    query.data?.isCommunityAdmin === true || isMilestoneReviewer || isSuperAdmin;
+
+  return {
+    canVerify:
+      isAuthenticated &&
+      !query.isPlaceholderData &&
+      hasReviewAuthority &&
+      !isProjectOwner &&
+      !isProjectAdmin,
+    isMilestoneReviewer,
     isLoading: query.isLoading,
   };
 }

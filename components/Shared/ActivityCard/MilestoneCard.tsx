@@ -316,6 +316,9 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                 title={`${title} - Reviews`}
                 isVerified={isVerified}
                 verifications={verifications}
+                programId={grantDetails?.programId}
+                communityUID={grantMilestone?.grant.community?.uid}
+                onVerified={refetch}
               />
             </div>
             <PostedInfoTooltip date={completionDate} attester={completionAttester} />
