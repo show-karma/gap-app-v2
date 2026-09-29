@@ -16,6 +16,14 @@ interface ResolveEmailResponse {
   walletAddress: string;
 }
 
+export interface EnlistCommunityAdminResponse {
+  communityUID: string;
+  chainID: number;
+  address: string;
+  txHash: string | null;
+  alreadyAdmin: boolean;
+}
+
 export interface UserProfileInfo {
   publicAddress: string;
   name: string;
@@ -44,6 +52,21 @@ export const communityAdminsService = {
     const response = await apiClient.post<ResolveEmailResponse>(INDEXER.USERS.RESOLVE_EMAIL, body);
 
     return response.data.walletAddress.toLowerCase();
+  },
+
+  /**
+   * Enlist a community admin through the backend, which signs with the resolver
+   * owner key. Fallback for when the caller's wallet cannot enlist on-chain.
+   */
+  async enlistAdmin(
+    communityIdOrSlug: string,
+    address: string
+  ): Promise<EnlistCommunityAdminResponse> {
+    const response = await apiClient.post<EnlistCommunityAdminResponse>(
+      INDEXER.COMMUNITY.ENLIST_ADMIN(communityIdOrSlug),
+      { address }
+    );
+    return response.data;
   },
 
   /**

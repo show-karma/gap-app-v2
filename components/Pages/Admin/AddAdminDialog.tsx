@@ -16,6 +16,7 @@ import { communityAdminsService } from "@/services/community-admins.service";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
+import { isUserRejectionError } from "@/utilities/wallet/signerReadiness";
 import { Button } from "../../ui/button";
 
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -82,6 +83,41 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   const { changeStepperStep, setIsStepper, startAttestation, showSuccess, showError } =
     useAttestationToast();
 
+  const notifyAttestationListener = async (hash: string) => {
+    try {
+      await api.post(INDEXER.ATTESTATION_LISTENER(hash, chainid), {});
+    } catch (listenerError) {
+      // SUPPRESSED: best-effort attestation-listener notification; the
+      // indexing retry loop below polls the admins list independently,
+      // matching the legacy fetchData behavior which never surfaced
+      // errors from this call.
+      errorManager("Failed to notify attestation listener", listenerError, {
+        community: UUID,
+        hash,
+      });
+    }
+  };
+
+  const enlistWithFallback = async (
+    walletSigner: Parameters<typeof GAP.getCommunityResolver>[0],
+    walletAddress: string
+  ): Promise<string | null> => {
+    try {
+      const communityResolver = await GAP.getCommunityResolver(walletSigner);
+      const communityResponse = await communityResolver.enlist(UUID, walletAddress);
+      changeStepperStep("pending");
+      await communityResponse.wait();
+      return communityResponse.hash;
+    } catch (onChainError) {
+      if (isUserRejectionError(onChainError)) throw onChainError;
+      // The resolver only lets its owner enlist, so community admins revert
+      // on-chain; the backend enlists with the owner key instead.
+      changeStepperStep("pending");
+      const result = await communityAdminsService.enlistAdmin(UUID, walletAddress);
+      return result.txHash;
+    }
+  };
+
   const onSubmit = async (data: SchemaType) => {
     setIsLoading(true);
     const setup = await setupChainAndWallet({
@@ -97,61 +133,44 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
     const { walletSigner } = setup;
     try {
-      // Resolve email to wallet address before the on-chain call
       const walletAddress = await communityAdminsService.resolveEmailToWallet(data.email);
 
       startAttestation("Adding admin...");
-      const communityResolver = await GAP.getCommunityResolver(walletSigner);
-      const communityResponse = await communityResolver.enlist(UUID, walletAddress);
-      changeStepperStep("pending");
-      const { hash } = communityResponse;
-      await communityResponse.wait().then(async () => {
-        if (hash) {
-          try {
-            await api.post(INDEXER.ATTESTATION_LISTENER(hash, chainid), {});
-          } catch (listenerError) {
-            // SUPPRESSED: best-effort attestation-listener notification; the
-            // indexing retry loop below polls the admins list independently,
-            // matching the legacy fetchData behavior which never surfaced
-            // errors from this call.
-            errorManager("Failed to notify attestation listener", listenerError, {
-              community: UUID,
-              hash,
-            });
+      const hash = await enlistWithFallback(walletSigner, walletAddress);
+      if (hash) {
+        await notifyAttestationListener(hash);
+      }
+      changeStepperStep("indexing");
+      let retries = 1000;
+      let addressAdded = false;
+      while (retries > 0) {
+        try {
+          // TODO(#1775): add zod schema
+          const response = await api.get<{ admins: unknown[] }>(INDEXER.COMMUNITY.ADMINS(UUID), {
+            isAuthorized: false,
+          });
+          if (!response) {
+            throw new Error(`Error fetching admins for community ${UUID}`);
           }
-        }
-        changeStepperStep("indexing");
-        let retries = 1000;
-        let addressAdded = false;
-        while (retries > 0) {
-          try {
-            // TODO(#1775): add zod schema
-            const response = await api.get<{ admins: unknown[] }>(INDEXER.COMMUNITY.ADMINS(UUID), {
-              isAuthorized: false,
-            });
-            if (!response) {
-              throw new Error(`Error fetching admins for community ${UUID}`);
-            }
 
-            addressAdded = response.admins.some(
-              (admin: any) => admin.user.id.toLowerCase() === walletAddress
-            );
+          addressAdded = response.admins.some(
+            (admin: any) => admin.user.id.toLowerCase() === walletAddress
+          );
 
-            if (addressAdded) {
-              await fetchAdmins();
-              changeStepperStep("indexed");
-              showSuccess("Admin added successfully!");
-              reset();
-              closeModal();
-              break;
-            }
-          } catch (_error: any) {}
+          if (addressAdded) {
+            await fetchAdmins();
+            changeStepperStep("indexed");
+            showSuccess("Admin added successfully!");
+            reset();
+            closeModal();
+            break;
+          }
+        } catch (_error: any) {}
 
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      });
+        retries -= 1;
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
     } catch (error: any) {
       showError("Failed to add admin. Please try again.");
       errorManager(`Error adding admin ${data.email} to community ${UUID}`, error, {
