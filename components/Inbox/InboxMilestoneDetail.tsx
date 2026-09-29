@@ -19,7 +19,7 @@ import { type FC, memo, useCallback, useMemo, useState } from "react";
 import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
 import { MilestoneActionItems } from "@/components/Inbox/MilestoneActionItems";
 import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
-import { describeFollowUp, stageAgeTone } from "@/components/Inbox/stageAge";
+import { describeFollowUp } from "@/components/Inbox/stageAge";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
 import { GrantCommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/GrantCommentsAndActivity";
 import { MilestoneCard } from "@/components/Pages/Admin/MilestonesReview/MilestoneCard";
@@ -309,7 +309,6 @@ const QueueHeader: FC<{
   stageAgeDays?: number;
   nextFollowUpAt?: string | null;
 }> = ({ reason, stageAgeDays, nextFollowUpAt }) => {
-  const tone = stageAgeTone(stageAgeDays);
   const followUp = describeFollowUp(nextFollowUpAt, (iso) => formatDate(iso, "UTC"));
 
   return (
@@ -324,12 +323,10 @@ const QueueHeader: FC<{
       </span>
 
       {typeof stageAgeDays === "number" && (
-        <span className={cn("font-semibold tabular-nums", tone.text)}>
+        <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
           {stageAgeDays} {pluralize("day", stageAgeDays)} {STAGE_AGE_LABEL[reason]}
         </span>
       )}
-
-      <span className="h-3.5 w-px bg-gray-200 dark:bg-zinc-700" aria-hidden="true" />
 
       <span
         className={cn(
@@ -541,7 +538,7 @@ export function InboxMilestoneDetail({
                   </span>
                 ))}
               {programName && (
-                <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+                <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-zinc-800 dark:text-gray-300">
                   <RectangleStackIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate">{programName}</span>
                 </span>
@@ -567,25 +564,21 @@ export function InboxMilestoneDetail({
           )}
         </div>
       )}
-      {/*
-        Queue facts and the section tabs share one sticky band. They used to be
-        two stacked rows above a third carrying the title, so a fifth of the
-        pane was chrome before any content. Merging them also keeps the tabs
-        reachable once the panel scrolls.
-      */}
-      <div className="sticky top-0 z-10 -mx-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-gray-200 bg-white px-1 pb-2.5 pt-1 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="sticky top-0 z-10 -mx-1 border-b border-gray-200 bg-white px-1 pt-1 dark:border-zinc-700 dark:bg-zinc-900">
         {attentionReason && (
-          <QueueHeader
-            reason={attentionReason}
-            stageAgeDays={stageAgeDays}
-            nextFollowUpAt={nextFollowUpAt}
-          />
+          <div className="pb-2">
+            <QueueHeader
+              reason={attentionReason}
+              stageAgeDays={stageAgeDays}
+              nextFollowUpAt={nextFollowUpAt}
+            />
+          </div>
         )}
 
         <div
           role="tablist"
           aria-label="Milestone detail sections"
-          className="ml-auto inline-flex w-max shrink-0 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800"
+          className="-mb-px flex max-w-full items-center gap-1 overflow-x-auto"
         >
           {PANEL_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -604,10 +597,10 @@ export function InboxMilestoneDetail({
                 onClick={() => setActivePanelTab(tab.key)}
                 onKeyDown={handleTabKeyDown}
                 className={cn(
-                  "rounded-md font-medium focus-visible:ring-2 focus-visible:ring-primary-500",
+                  "shrink-0 rounded-none border-b-2 border-transparent px-3 font-medium focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500",
                   isActive
-                    ? "bg-white text-gray-950 shadow-sm hover:bg-white dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-950"
-                    : "text-gray-600 hover:bg-transparent hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
+                    ? "border-gray-900 text-gray-950 hover:bg-transparent dark:border-gray-100 dark:text-white"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-zinc-800 dark:hover:text-white"
                 )}
               >
                 <Icon className="h-4 w-4" />

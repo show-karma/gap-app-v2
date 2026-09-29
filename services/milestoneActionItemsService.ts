@@ -1,4 +1,8 @@
-import type { IMilestoneActionItem, IMilestoneTimeline } from "@/types/funding-platform";
+import type {
+  ICommunityActionItemPage,
+  IMilestoneActionItem,
+  IMilestoneTimeline,
+} from "@/types/funding-platform";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -32,6 +36,27 @@ export async function getMilestoneActionItems(
   );
 
   return data?.items ?? [];
+}
+
+export interface CommunityActionItemFilters {
+  page: number;
+  status: "pending" | "completed" | "all";
+  programId?: string | null;
+  projectUid?: string | null;
+}
+
+export async function getCommunityActionItems(
+  communityId: string,
+  filters: CommunityActionItemFilters
+): Promise<ICommunityActionItemPage> {
+  const query = new URLSearchParams({ page: String(filters.page), status: filters.status });
+  if (filters.programId) query.set("programId", filters.programId);
+  if (filters.projectUid) query.set("projectUid", filters.projectUid);
+  const data = await api.get<ICommunityActionItemPage>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.COMMUNITY_LIST(communityId, query.toString())
+  );
+  if (!data) throw new Error("Failed to fetch community action items");
+  return data;
 }
 
 export interface CreateMilestoneActionItemInput {

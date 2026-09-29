@@ -34,6 +34,16 @@ export const QUERY_KEYS = {
     communityId,
     milestoneUid,
   ],
+  communityActionItems: (communityId: string, filters: object) => [
+    "community-action-items",
+    communityId,
+    filters,
+  ],
+  inboxProjectOptions: (
+    communityId: string,
+    programId: string | null,
+    onlyWithActionItems: boolean
+  ) => ["inbox-project-options", communityId, programId, onlyWithActionItems],
   application: (applicationId: string) => ["funding-application", applicationId],
   applicationByReference: (referenceNumber: string) => [
     "application-by-reference",

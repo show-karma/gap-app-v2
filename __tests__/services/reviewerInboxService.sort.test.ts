@@ -71,4 +71,14 @@ describe("getReviewerInbox › inboxSort", () => {
     expect(query.get("programId")).toBe("774");
     expect(query.get("inboxSort")).toBe("follow_up_date");
   });
+
+  it("sends project and pending-action-item filters to the indexer", async () => {
+    await getReviewerInbox("filecoin", {
+      projectUid: "project-9",
+      pendingActionItems: true,
+    });
+
+    expect(requestedQuery().get("projectUid")).toBe("project-9");
+    expect(requestedQuery().get("pendingActionItems")).toBe("true");
+  });
 });

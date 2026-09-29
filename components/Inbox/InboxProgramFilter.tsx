@@ -1,7 +1,6 @@
 "use client";
 
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
-import { useQueryState } from "nuqs";
 import React, { type FC, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +24,8 @@ function bareProgramId(value: string | null | undefined): string | null {
 
 interface InboxProgramFilterProps {
   communityId: string;
+  value: string | null;
+  onChange: (value: string | null) => void;
 }
 
 /**
@@ -32,13 +33,14 @@ interface InboxProgramFilterProps {
  * chips beside it; the selection lives in the URL as `programId`, the key the
  * other manage pages use.
  */
-const InboxProgramFilterComponent: FC<InboxProgramFilterProps> = ({ communityId }) => {
+const InboxProgramFilterComponent: FC<InboxProgramFilterProps> = ({
+  communityId,
+  value,
+  onChange,
+}) => {
   const [open, setOpen] = useState(false);
   const { data: programs = [], isLoading } = useCommunityPrograms(communityId);
-  const [programId, setProgramId] = useQueryState("programId", {
-    parse: (value) => bareProgramId(value),
-    serialize: (value) => bareProgramId(value) ?? "",
-  });
+  const programId = bareProgramId(value);
 
   const options = useMemo(
     () =>
@@ -83,7 +85,7 @@ const InboxProgramFilterComponent: FC<InboxProgramFilterProps> = ({ communityId 
               <CommandItem
                 value={ALL_PROGRAMS}
                 onSelect={() => {
-                  setProgramId(null);
+                  onChange(null);
                   setOpen(false);
                 }}
               >
@@ -98,7 +100,7 @@ const InboxProgramFilterComponent: FC<InboxProgramFilterProps> = ({ communityId 
                   key={option.id}
                   value={`${option.title} ${option.id}`}
                   onSelect={() => {
-                    setProgramId(option.id);
+                    onChange(option.id);
                     setOpen(false);
                   }}
                 >

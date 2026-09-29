@@ -5,13 +5,20 @@ import type { InboxItem, InboxStats } from "@/components/Inbox/types";
 import type { Community } from "@/types/v2/community";
 
 // --- Dependency mocks: keep the test focused on the selection/history logic ---
+const filterState = vi.hoisted(() => ({ isAdmin: false, setPending: vi.fn() }));
 vi.mock("nuqs", () => ({
-  useQueryState: (_key: string, options?: { defaultValue?: string }) =>
-    [options?.defaultValue ?? null, vi.fn()] as const,
+  useQueryState: (key: string, options?: { defaultValue?: string }) =>
+    [
+      options?.defaultValue ?? null,
+      key === "pendingActionItems" ? filterState.setPending : vi.fn(),
+    ] as const,
 }));
 
 vi.mock("@/components/Inbox/InboxProgramFilter", () => ({
   InboxProgramFilter: () => null,
+}));
+vi.mock("@/components/Inbox/InboxProjectFilter", () => ({
+  InboxProjectFilter: () => null,
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -24,7 +31,7 @@ vi.mock("@/src/core/rbac/context/permission-context", () => ({
 }));
 
 vi.mock("@/hooks/communities/useCommunityAdminAccess", () => ({
-  useCommunityAdminAccess: () => ({ hasAccess: false, isLoading: false }),
+  useCommunityAdminAccess: () => ({ hasAccess: filterState.isAdmin, isLoading: false }),
 }));
 
 const mockStats: InboxStats = { action: 2, waiting: 0, done: 0 };
@@ -71,7 +78,18 @@ const community = {
 describe("ReviewerInboxPage selection ↔ URL hash", () => {
   beforeEach(() => {
     mockItems = [milestone(1), milestone(2)];
+    filterState.isAdmin = false;
+    filterState.setPending.mockClear();
     window.history.replaceState({}, "", "/community/octant/manage/action-items");
+  });
+
+  it("offers the pending milestone filter to admins", () => {
+    filterState.isAdmin = true;
+    render(<ReviewerInboxPage community={community} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Milestones with pending action items" }));
+
+    expect(filterState.setPending).toHaveBeenCalledWith("true");
   });
 
   afterEach(() => {
