@@ -2,9 +2,12 @@
 
 import {
   ArrowTopRightOnSquareIcon,
+  ChartBarIcon,
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
+  EnvelopeIcon,
   FolderOpenIcon,
+  PaperAirplaneIcon,
   RectangleStackIcon,
   SparklesIcon,
   UserGroupIcon,
@@ -41,6 +44,7 @@ import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { sanitizeTelegram } from "@/utilities/validators";
 import { InboxMilestoneSimocracyTab } from "./InboxMilestoneSimocracyTab";
 
 const MarkdownPreview = dynamic(
@@ -103,6 +107,50 @@ function extractTeamName(applicationData?: Record<string, unknown> | null): stri
   }
   return null;
 }
+
+interface ApplicantContacts {
+  email: string | null;
+  telegram: string | null;
+  slack: string | null;
+}
+
+/**
+ * Pulls the applicant's reachable channels off the funding application so a
+ * reviewer can follow up without leaving the queue. Labels are free-form
+ * ("Primary Contact Email", "Telegram handle", …), so we match on the channel
+ * keyword and keep the first non-empty value.
+ */
+function extractContacts(
+  applicationData: Record<string, unknown> | null | undefined,
+  applicantEmail?: string | null
+): ApplicantContacts {
+  const contacts: ApplicantContacts = {
+    email: applicantEmail?.trim() || null,
+    telegram: null,
+    slack: null,
+  };
+  if (applicationData) {
+    for (const [label, value] of Object.entries(applicationData)) {
+      if (typeof value !== "string" || !value.trim()) continue;
+      const key = label.toLowerCase();
+      const trimmed = value.trim();
+      if (!contacts.email && key.includes("email")) contacts.email = trimmed;
+      else if (!contacts.telegram && key.includes("telegram")) contacts.telegram = trimmed;
+      else if (!contacts.slack && key.includes("slack")) contacts.slack = trimmed;
+    }
+  }
+  return contacts;
+}
+
+function telegramHref(handle: string): string {
+  const trimmed = handle.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://t.me/${sanitizeTelegram(trimmed)}`;
+}
+
+/** Shared style for the header's outline actions (View grant / View impact). */
+const HEADER_ACTION_CLASS =
+  "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-primary-400 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-300";
 
 function getRatingColor(rating: number): string {
   if (rating >= 8) return "text-green-700 dark:text-green-300";
@@ -506,10 +554,19 @@ export function InboxMilestoneDetail({
   const detailProjectSlug = project?.details?.slug ?? projectSlug ?? project?.uid ?? projectUid;
   const detailGrantUid = grant?.uid ?? grantUid;
   const detailTeamName = extractTeamName(application?.applicationData);
+  const detailContacts = extractContacts(application?.applicationData, application?.applicantEmail);
+  const hasContacts = Boolean(
+    detailContacts.email || detailContacts.telegram || detailContacts.slack
+  );
 
   return (
     <div className="space-y-4">
-      {(detailProjectTitle || programName || detailTeamName || detailGrantUid) && (
+      {(detailProjectTitle ||
+        programName ||
+        detailTeamName ||
+        detailGrantUid ||
+        hasContacts ||
+        detailProjectSlug) && (
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
@@ -550,17 +607,77 @@ export function InboxMilestoneDetail({
                 <span className="truncate">{detailTeamName}</span>
               </span>
             )}
+            {hasContacts && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                {detailContacts.email && (
+                  <a
+                    href={`mailto:${detailContacts.email}`}
+                    className="inline-flex max-w-full items-center gap-1 text-gray-500 transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:text-primary-300"
+                  >
+                    <EnvelopeIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <span className="truncate">{detailContacts.email}</span>
+                  </a>
+                )}
+                {detailContacts.telegram && (
+                  <a
+                    href={telegramHref(detailContacts.telegram)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex max-w-full items-center gap-1 text-gray-500 transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:text-primary-300"
+                  >
+                    <PaperAirplaneIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <span className="truncate">{detailContacts.telegram}</span>
+                  </a>
+                )}
+                {detailContacts.slack &&
+                  (/^https?:\/\//i.test(detailContacts.slack) ? (
+                    <a
+                      href={detailContacts.slack}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex max-w-full items-center gap-1 text-gray-500 transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:text-primary-300"
+                    >
+                      <ChatBubbleLeftRightIcon
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">Slack</span>
+                    </a>
+                  ) : (
+                    <span className="inline-flex max-w-full items-center gap-1 text-gray-500 dark:text-gray-400">
+                      <ChatBubbleLeftRightIcon
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">{detailContacts.slack}</span>
+                    </span>
+                  ))}
+              </div>
+            )}
           </div>
-          {detailGrantUid && detailProjectSlug && (
-            <Link
-              href={PAGES.PROJECT.GRANT(detailProjectSlug, detailGrantUid)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-primary-400 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-300"
-            >
-              View grant
-              <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
+          {detailProjectSlug && (detailGrantUid || detailProjectSlug) && (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {detailGrantUid && (
+                <Link
+                  href={PAGES.PROJECT.GRANT(detailProjectSlug, detailGrantUid)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={HEADER_ACTION_CLASS}
+                >
+                  View grant
+                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              )}
+              <Link
+                href={PAGES.PROJECT.IMPACT.ROOT(detailProjectSlug)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={HEADER_ACTION_CLASS}
+              >
+                <ChartBarIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                View impact
+              </Link>
+            </div>
           )}
         </div>
       )}
