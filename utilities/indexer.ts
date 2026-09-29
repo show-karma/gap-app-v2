@@ -719,6 +719,7 @@ export const INDEXER = {
     GLOBAL_STATS: () => `/v2/communities/stats`,
     ADMINS_BATCH: () => `/communities/admins/batch`,
     ADMINS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/admins`,
+    ENLIST_ADMIN: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/admins`,
     BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
     PROJECT_UPDATES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/project-updates`,

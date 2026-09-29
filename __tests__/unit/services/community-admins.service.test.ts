@@ -54,6 +54,32 @@ describe("communityAdminsService", () => {
     vi.clearAllMocks();
   });
 
+  describe("enlistAdmin", () => {
+    it("should post the address to the community admins endpoint and return the result", async () => {
+      const payload = {
+        communityUID: "0xuid",
+        chainID: 42220,
+        address: "0xabc",
+        txHash: "0xtx",
+        alreadyAdmin: false,
+      };
+      mockAxiosInstance.post.mockResolvedValueOnce({ data: payload });
+
+      const result = await communityAdminsService.enlistAdmin("0xuid", "0xabc");
+
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith("/v2/communities/0xuid/admins", {
+        address: "0xabc",
+      });
+      expect(result).toEqual(payload);
+    });
+
+    it("should propagate backend errors", async () => {
+      mockAxiosInstance.post.mockRejectedValueOnce(new Error("503"));
+
+      await expect(communityAdminsService.enlistAdmin("0xuid", "0xabc")).rejects.toThrow("503");
+    });
+  });
+
   describe("resolveEmailToWallet", () => {
     it("should return a lowercase wallet address for a given email", async () => {
       const mockWallet = "0xABCDEF1234567890ABCDEF1234567890ABCDEF12";

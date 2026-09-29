@@ -71,6 +71,25 @@ describe("AddAdminDialog", () => {
     });
   });
 
+  describe("Backend fallback when the wallet cannot enlist", () => {
+    it("falls back to communityAdminsService.enlistAdmin after an on-chain failure", () => {
+      const catchIndex = source.indexOf("catch (onChainError)");
+      expect(catchIndex).toBeGreaterThan(-1);
+      expect(
+        source.indexOf("communityAdminsService.enlistAdmin(UUID, walletAddress)")
+      ).toBeGreaterThan(catchIndex);
+    });
+
+    it("does not fall back when the user rejects the wallet request", () => {
+      expect(source).toContain("if (isUserRejectionError(onChainError)) throw onChainError;");
+    });
+
+    it("notifies the attestation listener only when a tx hash exists", () => {
+      expect(source).toContain("if (hash) {");
+      expect(source).toContain("await notifyAttestationListener(hash)");
+    });
+  });
+
   describe("Zod schema validation (isolated)", () => {
     // Mirror the component's email-only schema
     const schema = z.object({
