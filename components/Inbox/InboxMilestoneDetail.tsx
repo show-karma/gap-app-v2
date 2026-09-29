@@ -44,6 +44,7 @@ import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { sanitizeTelegram } from "@/utilities/validators";
 import { InboxMilestoneSimocracyTab } from "./InboxMilestoneSimocracyTab";
 
 const MarkdownPreview = dynamic(
@@ -144,8 +145,12 @@ function extractContacts(
 function telegramHref(handle: string): string {
   const trimmed = handle.trim();
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://t.me/${trimmed.replace(/^@/, "")}`;
+  return `https://t.me/${sanitizeTelegram(trimmed)}`;
 }
+
+/** Shared style for the header's outline actions (View grant / View impact). */
+const HEADER_ACTION_CLASS =
+  "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-primary-400 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-300";
 
 function getRatingColor(rating: number): string {
   if (rating >= 8) return "text-green-700 dark:text-green-300";
@@ -657,7 +662,7 @@ export function InboxMilestoneDetail({
                   href={PAGES.PROJECT.GRANT(detailProjectSlug, detailGrantUid)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-primary-400 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-300"
+                  className={HEADER_ACTION_CLASS}
                 >
                   View grant
                   <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -667,7 +672,7 @@ export function InboxMilestoneDetail({
                 href={PAGES.PROJECT.IMPACT.ROOT(detailProjectSlug)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-primary-400 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-300"
+                className={HEADER_ACTION_CLASS}
               >
                 <ChartBarIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 View impact
