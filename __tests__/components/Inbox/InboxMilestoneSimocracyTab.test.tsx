@@ -12,6 +12,10 @@ vi.mock("@/hooks/useFundingApplicationByProjectUID", () => ({
   useFundingApplicationByProjectUID: (...args: unknown[]) =>
     mockUseFundingApplicationByProjectUID(...args),
 }));
+vi.mock("@/hooks/useSimocracyMilestoneVerdicts", () => ({
+  useSimocracyMilestoneVerdicts: () => ({ data: undefined }),
+  useApproveSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useApplicationIntegrations: (...args: unknown[]) => mockUseApplicationIntegrations(...args),
   useSimocracyComments: (...args: unknown[]) => mockUseSimocracyComments(...args),
@@ -169,6 +173,8 @@ describe("InboxMilestoneSimocracyTab", () => {
   it("shows an empty note when no Sim has evaluated this milestone", () => {
     renderTab();
 
-    expect(screen.getByText(/No Sim evaluations for this milestone yet/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/No published Sim evaluations for this milestone yet/)
+    ).toBeInTheDocument();
   });
 });

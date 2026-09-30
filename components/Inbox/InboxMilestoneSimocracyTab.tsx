@@ -31,7 +31,7 @@ export function InboxMilestoneSimocracyTab({
   milestone,
 }: InboxMilestoneSimocracyTabProps) {
   const { address } = useAuth();
-  const { isCommunityAdmin } = usePermissionContext();
+  const { isCommunityAdmin, isReviewer } = usePermissionContext();
   const { application, isLoading, error, refetch } = useFundingApplicationByProjectUID(projectUID);
   const referenceNumber = application?.referenceNumber ?? "";
   const { data: integrations, isLoading: isLoadingIntegrations } =
@@ -84,6 +84,11 @@ export function InboxMilestoneSimocracyTab({
   }
 
   return (
-    <SimComments referenceNumber={referenceNumber} milestone={milestone} feedback={feedback} />
+    <SimComments
+      referenceNumber={referenceNumber}
+      milestone={milestone}
+      feedback={feedback}
+      review={isCommunityAdmin || isReviewer}
+    />
   );
 }

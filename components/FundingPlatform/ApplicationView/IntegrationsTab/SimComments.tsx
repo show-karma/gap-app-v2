@@ -11,9 +11,11 @@ import {
   useSimocracyCouncil,
   useSimocracyProgramSummary,
 } from "@/hooks/useApplicationIntegrations";
+import { useSimocracyMilestoneVerdicts } from "@/hooks/useSimocracyMilestoneVerdicts";
 import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
+import { PendingVerdicts } from "./PendingVerdicts";
 
 // Long comments collapse to three lines with a Show more/less toggle, matching
 // the sim-evaluation reasoning treatment in CouncilEvaluations.
@@ -231,8 +233,11 @@ export const SimComments: FC<{
   feedback?: CommentFeedbackContext;
   /** Narrows the list to one milestone's verdicts, rendered flat without headings. */
   milestone?: MilestoneFilter;
-}> = ({ referenceNumber, feedback, milestone }) => {
+  /** Reviewer surface: also loads the private drafts awaiting approval. */
+  review?: boolean;
+}> = ({ referenceNumber, feedback, milestone, review = false }) => {
   const { data, isLoading } = useSimocracyComments(referenceNumber);
+  const { data: drafts } = useSimocracyMilestoneVerdicts(referenceNumber, { enabled: review });
   // The program summary answers instantly but only lists Sims linked to a
   // reviewer; the council (read live from ATProto, slower) carries every Sim
   // of the gathering and fills in the rest once it arrives.
@@ -270,15 +275,29 @@ export const SimComments: FC<{
     return null;
   }
 
+  const pendingSection =
+    review && drafts && !drafts.forbidden ? (
+      <PendingVerdicts
+        referenceNumber={referenceNumber}
+        verdicts={drafts.verdicts}
+        avatars={avatars}
+        feedback={feedback}
+        milestoneUid={milestone?.uid}
+      />
+    ) : null;
+
   if (groups.length === 0) {
     return (
-      <div className="space-y-2">
-        {!milestone && <SectionHeading>Sim comments</SectionHeading>}
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {milestone
-            ? "No Sim evaluations for this milestone yet."
-            : "No Sim comments on this application yet."}
-        </p>
+      <div className="space-y-4">
+        {pendingSection}
+        <div className="space-y-2">
+          {!milestone && <SectionHeading>Sim comments</SectionHeading>}
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {milestone
+              ? "No published Sim evaluations for this milestone yet."
+              : "No published Sim comments on this application yet."}
+          </p>
+        </div>
       </div>
     );
   }
@@ -286,6 +305,7 @@ export const SimComments: FC<{
   if (milestone) {
     return (
       <div className="space-y-3">
+        {pendingSection}
         {groups[0].threads.map((node) => (
           <CommentItem
             key={node.commentUri}
@@ -301,6 +321,7 @@ export const SimComments: FC<{
 
   return (
     <div className="space-y-4">
+      {pendingSection}
       <SectionHeading>Sim comments</SectionHeading>
       {groups.map((group) => (
         <details key={group.milestone ?? "deliberation"} open className="group space-y-3">
