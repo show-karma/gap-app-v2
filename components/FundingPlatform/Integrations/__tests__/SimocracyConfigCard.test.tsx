@@ -44,6 +44,7 @@ function createConfigResult(overrides: Record<string, unknown> = {}) {
           simocracy: {
             gatheringUri: "at://did:plc:abc/org.simocracy.gathering/xyz",
             enabled: true,
+            feedbackWindowHours: 48,
           },
         },
       },
@@ -154,6 +155,7 @@ describe("SimocracyConfigCard", () => {
             simocracy: {
               gatheringUri: "at://did:plc:new/org.simocracy.gathering/next",
               enabled: true,
+              feedbackWindowHours: 48,
             },
           },
         });
@@ -181,6 +183,7 @@ describe("SimocracyConfigCard", () => {
               gatheringUri:
                 "at://did:plc:3s3lgrhmpp26jzirn5ck46lw/org.simocracy.gathering/3mtwpbrpjof2g",
               enabled: true,
+              feedbackWindowHours: 48,
             },
           },
         });
@@ -202,6 +205,7 @@ describe("SimocracyConfigCard", () => {
             simocracy: {
               gatheringUri: "at://did:plc:abc/org.simocracy.gathering/xyz",
               enabled: false,
+              feedbackWindowHours: 48,
             },
           },
         });

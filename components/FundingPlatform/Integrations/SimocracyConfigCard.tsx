@@ -14,6 +14,7 @@ import {
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { cn } from "@/utilities/tailwind";
+import { DEFAULT_FEEDBACK_WINDOW_HOURS, FeedbackWindowField } from "./FeedbackWindowField";
 import { GatheringUriField } from "./GatheringUriField";
 import { SimocracyCredentialSection } from "./SimocracyCredentialSection";
 
@@ -93,6 +94,7 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
   const saved = program?.applicationConfig?.integrations?.simocracy;
   const savedUri = saved?.gatheringUri ?? "";
   const savedEnabled = saved?.enabled ?? false;
+  const savedWindow = saved?.feedbackWindowHours ?? DEFAULT_FEEDBACK_WINDOW_HOURS;
 
   // Drafts sit on top of the saved config; null means "not edited yet", so a
   // refetch changing the saved values flows through until the user types.
@@ -100,6 +102,8 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
   const [draftUri, setDraftUri] = useState<string | null>(null);
   const enabled = draftEnabled ?? savedEnabled;
   const gatheringUri = draftUri ?? savedUri;
+  const [draftWindow, setDraftWindow] = useState<string | null>(null);
+  const feedbackWindow = draftWindow ?? String(savedWindow);
   const [editingUri, setEditingUri] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -133,8 +137,20 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
     // A configured gathering saves the flip immediately; before the first URI
     // is set there is nothing valid to persist yet — Save does it.
     if (savedUri.length > 0) {
-      updateMutation.mutate({ gatheringUri: savedUri, enabled: next });
+      updateMutation.mutate({
+        gatheringUri: savedUri,
+        enabled: next,
+        feedbackWindowHours: savedWindow,
+      });
     }
+  };
+
+  // Informational for now: it tells reviewers how long they have with a Sim
+  // verdict before it is approved; nothing publishes on its own.
+  const commitFeedbackWindow = (hours: number | null) => {
+    setDraftWindow(null);
+    if (hours === null || hours === savedWindow) return;
+    updateMutation.mutate({ gatheringUri: savedUri, enabled, feedbackWindowHours: hours });
   };
 
   const handleSave = () => {
@@ -145,7 +161,7 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
     }
     setValidationError(null);
     updateMutation.mutate(
-      { gatheringUri: parsed.data, enabled },
+      { gatheringUri: parsed.data, enabled, feedbackWindowHours: savedWindow },
       {
         onSuccess: () => {
           setEditingUri(false);
@@ -226,6 +242,16 @@ export const SimocracyConfigCard: FC<SimocracyConfigCardProps> = ({ programId, c
             onEdit={() => setEditingUri(true)}
             onCopy={() => copy(savedUri, "Gathering AT-URI copied")}
           />
+
+          {savedUri.length > 0 && (
+            <FeedbackWindowField
+              programId={programId}
+              value={feedbackWindow}
+              disabled={!canEdit || updateMutation.isPending}
+              onChange={setDraftWindow}
+              onCommit={commitFeedbackWindow}
+            />
+          )}
 
           {canEdit && savedUri.length > 0 && (
             <>

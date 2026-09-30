@@ -10,6 +10,7 @@ import type {
 } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
+import { SimAvatar, SimTag } from "./SimIdentity";
 
 const TOP_PAD_PCT = 10;
 
@@ -233,22 +234,13 @@ const ReasoningRow: FC<ReasoningRowProps> = memo(function ReasoningRow({
     >
       <div className="w-full shrink-0 sm:w-52">
         <div className="flex items-center gap-2.5">
-          {evaluation.sim.avatar ? (
-            <ProfilePicture
-              imageURL={evaluation.sim.avatar}
-              name={name}
-              size="32"
-              className="h-8 w-8 rounded-md [image-rendering:pixelated]"
-              alt=""
-            />
-          ) : (
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
-              <CpuChipIcon className="h-5 w-5" />
-            </span>
-          )}
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: tint }} />
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
+          <SimAvatar avatar={evaluation.sim.avatar} name={name} />
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: tint }} />
+              <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
+            </div>
+            <SimTag />
           </div>
         </div>
         {(firstDollarValue !== null || relPct !== null) && (

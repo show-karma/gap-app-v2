@@ -1,19 +1,24 @@
 "use client";
 
-import { ChatBubbleLeftRightIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, memo, type ReactNode, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useSimocracyComments,
   useSimocracyCouncil,
   useSimocracyProgramSummary,
 } from "@/hooks/useApplicationIntegrations";
-import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrations.service";
+import { useSimocracyMilestoneVerdicts } from "@/hooks/useSimocracyMilestoneVerdicts";
+import type {
+  SimocracyCommentRow,
+  SimocracyMilestoneVerdictRow,
+} from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
+import { PendingVerdicts } from "./PendingVerdicts";
+import { SimAuthor, SimSectionHeading } from "./SimIdentity";
 
 // Long comments collapse to three lines with a Show more/less toggle, matching
 // the sim-evaluation reasoning treatment in CouncilEvaluations.
@@ -64,15 +69,17 @@ function buildThreads(comments: SimocracyCommentRow[]): CommentNode[] {
 // lifted into the section heading and dropped from the body.
 const MILESTONE_LINE = /^Milestone:\s*(.+)$/;
 
+const ATTRIBUTION_LINE = /^\*\*Sim milestone evaluation — .+\*\*$/;
+
 function splitMilestone(text: string): { milestone: string | null; body: string } {
   const lines = text.split("\n");
   for (let i = 0; i < Math.min(2, lines.length); i++) {
     const match = MILESTONE_LINE.exec(lines[i].trim());
     if (match) {
-      return {
-        milestone: match[1].trim(),
-        body: [...lines.slice(0, i), ...lines.slice(i + 1)].join("\n").trim(),
-      };
+      // The header already names the milestone and the Sim; both lines go.
+      const rest = [...lines.slice(0, i), ...lines.slice(i + 1)];
+      const body = rest.filter((line, index) => !(index < 2 && ATTRIBUTION_LINE.test(line.trim())));
+      return { milestone: match[1].trim(), body: body.join("\n").trim() };
     }
   }
   return { milestone: null, body: text };
@@ -122,21 +129,6 @@ interface CommentItemProps {
   avatars: Map<string, string | null>;
 }
 
-const SimAvatar: FC<{ avatar: string | null | undefined; name: string }> = ({ avatar, name }) =>
-  avatar ? (
-    <ProfilePicture
-      imageURL={avatar}
-      name={name}
-      size="32"
-      className="h-8 w-8 shrink-0 rounded-md [image-rendering:pixelated]"
-      alt=""
-    />
-  ) : (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
-      <CpuChipIcon className="h-5 w-5" />
-    </span>
-  );
-
 const CommentItem: FC<CommentItemProps> = memo(({ node, depth, feedback, avatars }) => {
   const [expanded, setExpanded] = useState(false);
   const isLong =
@@ -146,35 +138,43 @@ const CommentItem: FC<CommentItemProps> = memo(({ node, depth, feedback, avatars
   return (
     <div className={depth > 0 ? "mt-3 border-l border-gray-200 pl-4 dark:border-gray-700" : ""}>
       <div className="rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-700 dark:bg-zinc-800">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2.5">
-            {node.authorSimUri && (
-              <SimAvatar avatar={avatars.get(node.authorSimUri)} name={node.authorName ?? "Sim"} />
-            )}
+        {node.authorSimUri ? (
+          <SimAuthor
+            name={node.authorName ?? "Sim"}
+            avatar={avatars.get(node.authorSimUri)}
+            trailing={
+              node.createdAt && (
+                <time
+                  dateTime={node.createdAt}
+                  className="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {formatDate(node.createdAt)}
+                </time>
+              )
+            }
+          />
+        ) : (
+          <div className="flex items-center justify-between gap-2">
             <span
-              className={
-                node.authorName
-                  ? "truncate text-sm font-semibold text-gray-900 dark:text-white"
-                  : "font-mono text-xs text-gray-500 dark:text-gray-400"
-              }
+              className="font-mono text-xs text-gray-500 dark:text-gray-400"
               title={node.authorDid}
             >
               {node.authorName ?? shortenDid(node.authorDid)}
             </span>
+            {node.createdAt && (
+              <time
+                dateTime={node.createdAt}
+                className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
+              >
+                {formatDate(node.createdAt)}
+              </time>
+            )}
           </div>
-          {node.createdAt && (
-            <time
-              dateTime={node.createdAt}
-              className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
-            >
-              {formatDate(node.createdAt)}
-            </time>
-          )}
-        </div>
+        )}
         <div
           id={bodyId}
           className={cn(
-            "mt-1.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300",
+            "mt-2.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300",
             !expanded &&
               isLong &&
               "max-h-28 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
@@ -219,20 +219,16 @@ const CommentItem: FC<CommentItemProps> = memo(({ node, depth, feedback, avatars
 });
 CommentItem.displayName = "CommentItem";
 
-const SectionHeading: FC<{ children: ReactNode }> = ({ children }) => (
-  <div className="flex items-center gap-2">
-    <ChatBubbleLeftRightIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{children}</h3>
-  </div>
-);
-
 export const SimComments: FC<{
   referenceNumber: string;
   feedback?: CommentFeedbackContext;
   /** Narrows the list to one milestone's verdicts, rendered flat without headings. */
   milestone?: MilestoneFilter;
-}> = ({ referenceNumber, feedback, milestone }) => {
+  /** Reviewer surface: also loads the private drafts awaiting approval. */
+  review?: boolean;
+}> = ({ referenceNumber, feedback, milestone, review = false }) => {
   const { data, isLoading } = useSimocracyComments(referenceNumber);
+  const { data: drafts } = useSimocracyMilestoneVerdicts(referenceNumber, { enabled: review });
   // The program summary answers instantly but only lists Sims linked to a
   // reviewer; the council (read live from ATProto, slower) carries every Sim
   // of the gathering and fills in the rest once it arrives.
@@ -270,14 +266,119 @@ export const SimComments: FC<{
     return null;
   }
 
+  const published = (
+    <PublishedComments
+      groups={groups}
+      milestone={milestone}
+      feedback={feedback}
+      avatars={avatars}
+      headed={!review || !drafts || drafts.forbidden}
+    />
+  );
+
+  // Reviewers get the three states side by side; everyone else sees only
+  // what is public.
+  if (review && drafts && !drafts.forbidden) {
+    return (
+      <VerdictTabs
+        referenceNumber={referenceNumber}
+        verdicts={drafts.verdicts}
+        milestoneUid={milestone?.uid}
+        avatars={avatars}
+        feedback={feedback}
+        publishedCount={groups.reduce((sum, group) => sum + group.threads.length, 0)}
+        flat={!!milestone}
+      >
+        {published}
+      </VerdictTabs>
+    );
+  }
+
+  return published;
+};
+
+type VerdictTab = "pending" | "published" | "dismissed";
+
+interface VerdictTabsProps {
+  referenceNumber: string;
+  verdicts: SimocracyMilestoneVerdictRow[];
+  milestoneUid?: string;
+  avatars: Map<string, string | null>;
+  feedback?: CommentFeedbackContext;
+  publishedCount: number;
+  flat: boolean;
+  children: ReactNode;
+}
+
+const VerdictTabs: FC<VerdictTabsProps> = ({
+  referenceNumber,
+  verdicts,
+  milestoneUid,
+  avatars,
+  feedback,
+  publishedCount,
+  flat,
+  children,
+}) => {
+  const scoped = milestoneUid
+    ? verdicts.filter(
+        (verdict) => verdict.milestoneUid.toLowerCase() === milestoneUid.toLowerCase()
+      )
+    : verdicts;
+  const pendingCount = scoped.filter(
+    (verdict) => verdict.status === "pending_review" || verdict.status === "publishing"
+  ).length;
+  const dismissedCount = scoped.filter((verdict) => verdict.status === "dismissed").length;
+  const [tab, setTab] = useState<VerdictTab>(pendingCount > 0 ? "pending" : "published");
+  const shared = { referenceNumber, verdicts, avatars, feedback, milestoneUid, hideHeading: true };
+
+  return (
+    <div className="space-y-3">
+      {!flat && <SimSectionHeading title="Sim evaluations" />}
+      <Tabs value={tab} onValueChange={(value) => setTab(value as VerdictTab)}>
+        <TabsList aria-label="Sim verdicts by state">
+          <TabsTrigger value="pending">Pending review ({pendingCount})</TabsTrigger>
+          <TabsTrigger value="published">Published ({publishedCount})</TabsTrigger>
+          <TabsTrigger value="dismissed">Dismissed ({dismissedCount})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="pending" className="mt-3">
+          <PendingVerdicts {...shared} show="open" />
+        </TabsContent>
+        <TabsContent value="published" className="mt-3">
+          {children}
+        </TabsContent>
+        <TabsContent value="dismissed" className="mt-3">
+          <PendingVerdicts {...shared} show="dismissed" />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+interface PublishedCommentsProps {
+  groups: CommentGroup[];
+  milestone?: MilestoneFilter;
+  feedback?: CommentFeedbackContext;
+  avatars: Map<string, string | null>;
+  /** Carry the section heading; false inside the reviewer tabs, which have their own. */
+  headed: boolean;
+}
+
+const PublishedComments: FC<PublishedCommentsProps> = ({
+  groups,
+  milestone,
+  feedback,
+  avatars,
+  headed,
+}) => {
   if (groups.length === 0) {
     return (
       <div className="space-y-2">
-        {!milestone && <SectionHeading>Sim comments</SectionHeading>}
+        {headed && !milestone && <SimSectionHeading title="Sim evaluations" />}
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {milestone
-            ? "No Sim evaluations for this milestone yet."
-            : "No Sim comments on this application yet."}
+            ? "No published Sim evaluations for this milestone yet."
+            : "No published Sim evaluations on this application yet."}
         </p>
       </div>
     );
@@ -301,7 +402,7 @@ export const SimComments: FC<{
 
   return (
     <div className="space-y-4">
-      <SectionHeading>Sim comments</SectionHeading>
+      {headed && <SimSectionHeading title="Sim evaluations" />}
       {groups.map((group) => (
         <details key={group.milestone ?? "deliberation"} open className="group space-y-3">
           <summary className="flex cursor-pointer list-none items-baseline gap-2 rounded text-sm font-medium text-gray-900 marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white [&::-webkit-details-marker]:hidden">
@@ -315,7 +416,7 @@ export const SimComments: FC<{
               {group.milestone ? `Milestone: ${group.milestone}` : "Round deliberation"}
             </h4>
             <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
-              {group.threads.length} {pluralize("comment", group.threads.length)}
+              {group.threads.length} {pluralize("Sim verdict", group.threads.length)}
             </span>
           </summary>
           {group.threads.map((node) => (

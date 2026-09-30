@@ -122,6 +122,9 @@ export type ApplicationReportAction = "review" | "request_revision" | "approve" 
 export interface ISimocracyIntegrationConfig {
   gatheringUri: string;
   enabled: boolean;
+  // Hours reviewers are expected to take with a Sim verdict before approving
+  // it. Informational: nothing publishes on its own.
+  feedbackWindowHours?: number;
   // Non-secret credential summary surfaced by the read API (the encrypted
   // password never leaves the backend).
   credentialConfigured?: boolean;

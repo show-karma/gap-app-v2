@@ -3,7 +3,7 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useSimocracyFeedback,
   useSubmitSimocracyFeedback,
@@ -118,12 +118,12 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
             </Button>
           </div>
           <div className="flex gap-2">
-            <Input
-              type="text"
+            <Textarea
               value={comment}
               onChange={(event) => setDraftComment(event.target.value)}
               placeholder="Add a note (optional)"
-              className="h-8 text-xs"
+              rows={2}
+              className="min-h-0 resize-y py-1.5 text-xs"
             />
             <Button
               type="button"
@@ -150,7 +150,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
               ) : (
                 <HandThumbDownIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
               )}
-              <span className="min-w-0">
+              <span className="min-w-0 whitespace-pre-wrap">
                 {entry.authorName ? (
                   <span className="font-medium text-gray-700 dark:text-gray-200">
                     {entry.authorName}

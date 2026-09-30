@@ -5,6 +5,11 @@ const mockUseApplicationIntegrations = vi.fn();
 const mockUseSimocracyEvaluations = vi.fn();
 const mockUseSimocracyProgramSummary = vi.fn();
 
+vi.mock("@/hooks/useSimocracyMilestoneVerdicts", () => ({
+  useSimocracyMilestoneVerdicts: () => ({ data: undefined }),
+  useApproveSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
+  useDismissSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useApplicationIntegrations: (referenceNumber: string) =>
     mockUseApplicationIntegrations(referenceNumber),
