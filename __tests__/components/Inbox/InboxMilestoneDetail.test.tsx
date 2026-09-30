@@ -10,6 +10,7 @@ const mockVerifyMilestone = vi.fn();
 const mockUseMilestoneEvaluation = vi.fn();
 const mockUseMilestoneAllocationsByGrants = vi.fn();
 const mockUseFundingApplicationByProjectUID = vi.fn();
+const mockUseInboxContacts = vi.fn();
 const mockRefetch = vi.fn();
 const mockInvalidateQueries = vi.fn();
 
@@ -94,6 +95,12 @@ vi.mock("@/hooks/useMilestoneActionItems", () => ({
 vi.mock("@/hooks/useFundingApplicationByProjectUID", () => ({
   useFundingApplicationByProjectUID: (...args: unknown[]) =>
     mockUseFundingApplicationByProjectUID(...args),
+}));
+
+// Contact aggregation (applicant + project members) has its own react-query
+// hooks; stub it so this suite drives the header contacts through one probe.
+vi.mock("@/hooks/useInboxContacts", () => ({
+  useInboxContacts: (...args: unknown[]) => mockUseInboxContacts(...args),
 }));
 
 // Comments threads are exercised in their own suites; stub them to probes that
@@ -187,6 +194,11 @@ beforeEach(() => {
     isLoading: false,
     error: null,
     refetch: vi.fn(),
+  });
+  mockUseInboxContacts.mockReturnValue({
+    applicationContact: null,
+    members: [],
+    isLoading: false,
   });
 });
 
@@ -379,23 +391,23 @@ describe("InboxMilestoneDetail", () => {
     expect(mockUseFundingApplicationByProjectUID).toHaveBeenCalledWith("proj-1");
   });
 
-  it("shows the team name from the application's first team-labelled answer", () => {
+  it("shows the point-of-contact name in the header contacts", () => {
     mockUseProjectGrantMilestones.mockReturnValue({
       data: makeData([makeMilestone()]),
       isLoading: false,
       error: null,
       refetch: mockRefetch,
     });
-    mockUseFundingApplicationByProjectUID.mockReturnValue({
-      application: {
-        applicationData: {
-          "Project Name": "ProbeLab",
-          "Team Lead/Point of Contact Name": "Yiannis Psarras",
-        },
+    mockUseInboxContacts.mockReturnValue({
+      applicationContact: {
+        name: "Yiannis Psarras",
+        email: null,
+        telegram: null,
+        address: null,
+        role: "Application contact",
       },
+      members: [],
       isLoading: false,
-      error: null,
-      refetch: vi.fn(),
     });
 
     render(<InboxMilestoneDetail {...baseProps} />);

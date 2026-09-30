@@ -5,13 +5,10 @@ import {
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
-  EnvelopeIcon,
   FolderOpenIcon,
-  PaperAirplaneIcon,
   RectangleStackIcon,
   SparklesIcon,
   UserGroupIcon,
-  UsersIcon,
 } from "@heroicons/react/20/solid";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,6 +28,7 @@ import { Button as UiButton } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
+import { useInboxContacts } from "@/hooks/useInboxContacts";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useMilestoneEvaluation } from "@/hooks/useMilestoneEvaluation";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
@@ -44,7 +42,7 @@ import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { sanitizeTelegram } from "@/utilities/validators";
+import { InboxContactsPopover } from "./InboxContactsPopover";
 import { InboxMilestoneSimocracyTab } from "./InboxMilestoneSimocracyTab";
 
 const MarkdownPreview = dynamic(
@@ -92,60 +90,6 @@ function parseProgramId(programId: string): string {
     return id ?? programId;
   }
   return programId;
-}
-
-/**
- * The application form has no canonical team field — programs label it
- * themselves — so surface the first answer whose question mentions "team".
- */
-function extractTeamName(applicationData?: Record<string, unknown> | null): string | null {
-  if (!applicationData) return null;
-  for (const [label, value] of Object.entries(applicationData)) {
-    if (label.toLowerCase().includes("team") && typeof value === "string" && value.trim()) {
-      return value.trim();
-    }
-  }
-  return null;
-}
-
-interface ApplicantContacts {
-  email: string | null;
-  telegram: string | null;
-  slack: string | null;
-}
-
-/**
- * Pulls the applicant's reachable channels off the funding application so a
- * reviewer can follow up without leaving the queue. Labels are free-form
- * ("Primary Contact Email", "Telegram handle", …), so we match on the channel
- * keyword and keep the first non-empty value.
- */
-function extractContacts(
-  applicationData: Record<string, unknown> | null | undefined,
-  applicantEmail?: string | null
-): ApplicantContacts {
-  const contacts: ApplicantContacts = {
-    email: applicantEmail?.trim() || null,
-    telegram: null,
-    slack: null,
-  };
-  if (applicationData) {
-    for (const [label, value] of Object.entries(applicationData)) {
-      if (typeof value !== "string" || !value.trim()) continue;
-      const key = label.toLowerCase();
-      const trimmed = value.trim();
-      if (!contacts.email && key.includes("email")) contacts.email = trimmed;
-      else if (!contacts.telegram && key.includes("telegram")) contacts.telegram = trimmed;
-      else if (!contacts.slack && key.includes("slack")) contacts.slack = trimmed;
-    }
-  }
-  return contacts;
-}
-
-function telegramHref(handle: string): string {
-  const trimmed = handle.trim();
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://t.me/${sanitizeTelegram(trimmed)}`;
 }
 
 /** Shared style for the header's outline actions (View grant / View impact). */
@@ -441,6 +385,12 @@ export function InboxMilestoneDetail({
 
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectUid, programId);
   const { application } = useFundingApplicationByProjectUID(projectUid);
+  const contacts = useInboxContacts({
+    referenceNumber: application?.referenceNumber,
+    applicationData: application?.applicationData,
+    applicantEmail: application?.applicantEmail,
+    projectUidOrSlug: projectSlug || projectUid,
+  });
 
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
@@ -553,17 +503,12 @@ export function InboxMilestoneDetail({
   const detailProjectTitle = project?.details?.title ?? projectTitle;
   const detailProjectSlug = project?.details?.slug ?? projectSlug ?? project?.uid ?? projectUid;
   const detailGrantUid = grant?.uid ?? grantUid;
-  const detailTeamName = extractTeamName(application?.applicationData);
-  const detailContacts = extractContacts(application?.applicationData, application?.applicantEmail);
-  const hasContacts = Boolean(
-    detailContacts.email || detailContacts.telegram || detailContacts.slack
-  );
+  const hasContacts = Boolean(contacts.applicationContact || contacts.members.length);
 
   return (
     <div className="space-y-4">
       {(detailProjectTitle ||
         programName ||
-        detailTeamName ||
         detailGrantUid ||
         hasContacts ||
         detailProjectSlug) && (
@@ -601,58 +546,11 @@ export function InboxMilestoneDetail({
                 </span>
               )}
             </div>
-            {detailTeamName && (
-              <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                <UsersIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="truncate">{detailTeamName}</span>
-              </span>
-            )}
             {hasContacts && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                {detailContacts.email && (
-                  <a
-                    href={`mailto:${detailContacts.email}`}
-                    className="inline-flex max-w-full items-center gap-1 text-gray-500 transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:text-primary-300"
-                  >
-                    <EnvelopeIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                    <span className="truncate">{detailContacts.email}</span>
-                  </a>
-                )}
-                {detailContacts.telegram && (
-                  <a
-                    href={telegramHref(detailContacts.telegram)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex max-w-full items-center gap-1 text-gray-500 transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:text-primary-300"
-                  >
-                    <PaperAirplaneIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                    <span className="truncate">{detailContacts.telegram}</span>
-                  </a>
-                )}
-                {detailContacts.slack &&
-                  (/^https?:\/\//i.test(detailContacts.slack) ? (
-                    <a
-                      href={detailContacts.slack}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex max-w-full items-center gap-1 text-gray-500 transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:text-primary-300"
-                    >
-                      <ChatBubbleLeftRightIcon
-                        className="h-3.5 w-3.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="truncate">Slack</span>
-                    </a>
-                  ) : (
-                    <span className="inline-flex max-w-full items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <ChatBubbleLeftRightIcon
-                        className="h-3.5 w-3.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="truncate">{detailContacts.slack}</span>
-                    </span>
-                  ))}
-              </div>
+              <InboxContactsPopover
+                applicationContact={contacts.applicationContact}
+                members={contacts.members}
+              />
             )}
           </div>
           {detailProjectSlug && (detailGrantUid || detailProjectSlug) && (
