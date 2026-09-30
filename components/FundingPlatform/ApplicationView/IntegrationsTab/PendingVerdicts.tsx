@@ -320,7 +320,16 @@ interface PendingVerdictsProps {
   feedback?: VerdictFeedbackContext;
   /** Set when the list is already scoped to one milestone. */
   milestoneUid?: string;
+  /** Which verdicts to show: still open for a decision, or set aside. */
+  show?: "open" | "dismissed";
+  /** Rendered inside a tab that already names the group. */
+  hideHeading?: boolean;
 }
+
+const EMPTY_TEXT: Record<"open" | "dismissed", string> = {
+  open: "No Sim verdicts awaiting review.",
+  dismissed: "No dismissed Sim verdicts.",
+};
 
 // Drafts awaiting a reviewer's decision, plus dismissed ones (private, so this
 // is the only place they show). Published verdicts render from the public
@@ -331,34 +340,49 @@ export const PendingVerdicts: FC<PendingVerdictsProps> = ({
   avatars,
   feedback,
   milestoneUid,
+  show = "open",
+  hideHeading = false,
 }) => {
-  // A verdict published from this list stays in view with a green badge, so
-  // the reviewer sees the result where they clicked; it drops out on the
-  // next page load, when the public comment list carries it.
+  // A verdict published or dismissed from this list stays in view with its
+  // new badge, so the reviewer sees the result where they clicked; it moves
+  // to its own tab on the next page load.
   const [actedHere, setActedHere] = useState<Set<string>>(() => new Set());
+  const belongs = (status: SimocracyMilestoneVerdictRow["status"]) =>
+    show === "dismissed"
+      ? status === "dismissed"
+      : status !== "published" && status !== "dismissed";
   const pending = verdicts.filter(
     (verdict) =>
-      (verdict.status !== "published" || actedHere.has(verdict.verdictId)) &&
+      (belongs(verdict.status) || actedHere.has(verdict.verdictId)) &&
       (!milestoneUid || verdict.milestoneUid.toLowerCase() === milestoneUid.toLowerCase())
   );
   const awaiting = pending.filter(
     (verdict) => verdict.status !== "published" && verdict.status !== "dismissed"
   ).length;
-  if (pending.length === 0) return null;
+  if (pending.length === 0) {
+    return hideHeading ? (
+      <p className="text-sm text-gray-500 dark:text-gray-400">{EMPTY_TEXT[show]}</p>
+    ) : null;
+  }
 
   return (
-    <section className="space-y-3" aria-label="Sim verdicts awaiting review">
-      <div className="flex flex-wrap items-center gap-2">
-        <SimTag>Sim evaluations</SimTag>
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Awaiting your review
-        </h3>
-        {awaiting > 0 && (
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {awaiting} {pluralize("verdict", awaiting)} not yet on Simocracy
-          </span>
-        )}
-      </div>
+    <section
+      className="space-y-3"
+      aria-label={show === "dismissed" ? "Dismissed Sim verdicts" : "Sim verdicts awaiting review"}
+    >
+      {!hideHeading && (
+        <div className="flex flex-wrap items-center gap-2">
+          <SimTag>Sim evaluations</SimTag>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {show === "dismissed" ? "Dismissed" : "Awaiting your review"}
+          </h3>
+          {awaiting > 0 && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {awaiting} {pluralize("verdict", awaiting)} not yet on Simocracy
+            </span>
+          )}
+        </div>
+      )}
       {pending.map((verdict) => (
         <VerdictCard
           key={verdict.verdictId}

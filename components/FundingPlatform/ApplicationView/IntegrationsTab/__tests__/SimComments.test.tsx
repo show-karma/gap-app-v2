@@ -176,9 +176,17 @@ describe("SimComments", () => {
 
       render(<SimComments referenceNumber="APP-1" review />);
 
-      expect(screen.getByText("Awaiting your review")).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Pending review (1)" })).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
       expect(screen.getByText("Demonstrated. The repo shows the release.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^publish$/i })).toBeEnabled();
+      expect(screen.queryByText("VERDICT: FUND REDUCED")).not.toBeInTheDocument();
+
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "Published (1)" }));
+      fireEvent.click(screen.getByRole("tab", { name: "Published (1)" }));
+
       expect(screen.getByText("VERDICT: FUND REDUCED")).toBeInTheDocument();
     });
 
@@ -256,6 +264,10 @@ describe("SimComments", () => {
       });
 
       render(<SimComments referenceNumber="APP-1" review />);
+
+      expect(screen.getByRole("tab", { name: "Pending review (0)" })).toBeInTheDocument();
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "Dismissed (1)" }));
+      fireEvent.click(screen.getByRole("tab", { name: "Dismissed (1)" }));
 
       expect(screen.getByText(/dismissed · rev 1/i)).toBeInTheDocument();
       expect(screen.getByText(/set aside by 0xabcd…0002/i)).toBeInTheDocument();

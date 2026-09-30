@@ -1,16 +1,20 @@
 "use client";
 
 import pluralize from "pluralize";
-import { type FC, memo, useMemo, useState } from "react";
+import { type FC, memo, type ReactNode, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useSimocracyComments,
   useSimocracyCouncil,
   useSimocracyProgramSummary,
 } from "@/hooks/useApplicationIntegrations";
 import { useSimocracyMilestoneVerdicts } from "@/hooks/useSimocracyMilestoneVerdicts";
-import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrations.service";
+import type {
+  SimocracyCommentRow,
+  SimocracyMilestoneVerdictRow,
+} from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
 import { PendingVerdicts } from "./PendingVerdicts";
@@ -262,29 +266,120 @@ export const SimComments: FC<{
     return null;
   }
 
-  const pendingSection =
-    review && drafts && !drafts.forbidden ? (
-      <PendingVerdicts
+  const published = (
+    <PublishedComments
+      groups={groups}
+      milestone={milestone}
+      feedback={feedback}
+      avatars={avatars}
+      headed={!review || !drafts || drafts.forbidden}
+    />
+  );
+
+  // Reviewers get the three states side by side; everyone else sees only
+  // what is public.
+  if (review && drafts && !drafts.forbidden) {
+    return (
+      <VerdictTabs
         referenceNumber={referenceNumber}
         verdicts={drafts.verdicts}
+        milestoneUid={milestone?.uid}
         avatars={avatars}
         feedback={feedback}
-        milestoneUid={milestone?.uid}
-      />
-    ) : null;
+        publishedCount={groups.reduce((sum, group) => sum + group.threads.length, 0)}
+        flat={!!milestone}
+      >
+        {published}
+      </VerdictTabs>
+    );
+  }
 
+  return published;
+};
+
+type VerdictTab = "pending" | "published" | "dismissed";
+
+interface VerdictTabsProps {
+  referenceNumber: string;
+  verdicts: SimocracyMilestoneVerdictRow[];
+  milestoneUid?: string;
+  avatars: Map<string, string | null>;
+  feedback?: CommentFeedbackContext;
+  publishedCount: number;
+  flat: boolean;
+  children: ReactNode;
+}
+
+const VerdictTabs: FC<VerdictTabsProps> = ({
+  referenceNumber,
+  verdicts,
+  milestoneUid,
+  avatars,
+  feedback,
+  publishedCount,
+  flat,
+  children,
+}) => {
+  const scoped = milestoneUid
+    ? verdicts.filter(
+        (verdict) => verdict.milestoneUid.toLowerCase() === milestoneUid.toLowerCase()
+      )
+    : verdicts;
+  const pendingCount = scoped.filter(
+    (verdict) => verdict.status === "pending_review" || verdict.status === "publishing"
+  ).length;
+  const dismissedCount = scoped.filter((verdict) => verdict.status === "dismissed").length;
+  const [tab, setTab] = useState<VerdictTab>(pendingCount > 0 ? "pending" : "published");
+  const shared = { referenceNumber, verdicts, avatars, feedback, milestoneUid, hideHeading: true };
+
+  return (
+    <div className="space-y-3">
+      {!flat && <SimSectionHeading title="Sim evaluations" />}
+      <Tabs value={tab} onValueChange={(value) => setTab(value as VerdictTab)}>
+        <TabsList aria-label="Sim verdicts by state">
+          <TabsTrigger value="pending">Pending review ({pendingCount})</TabsTrigger>
+          <TabsTrigger value="published">Published ({publishedCount})</TabsTrigger>
+          <TabsTrigger value="dismissed">Dismissed ({dismissedCount})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="pending" className="mt-3">
+          <PendingVerdicts {...shared} show="open" />
+        </TabsContent>
+        <TabsContent value="published" className="mt-3">
+          {children}
+        </TabsContent>
+        <TabsContent value="dismissed" className="mt-3">
+          <PendingVerdicts {...shared} show="dismissed" />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+interface PublishedCommentsProps {
+  groups: CommentGroup[];
+  milestone?: MilestoneFilter;
+  feedback?: CommentFeedbackContext;
+  avatars: Map<string, string | null>;
+  /** Carry the section heading; false inside the reviewer tabs, which have their own. */
+  headed: boolean;
+}
+
+const PublishedComments: FC<PublishedCommentsProps> = ({
+  groups,
+  milestone,
+  feedback,
+  avatars,
+  headed,
+}) => {
   if (groups.length === 0) {
     return (
-      <div className="space-y-4">
-        {pendingSection}
-        <div className="space-y-2">
-          {!milestone && <SimSectionHeading title="Sim evaluations" />}
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {milestone
-              ? "No published Sim evaluations for this milestone yet."
-              : "No published Sim evaluations on this application yet."}
-          </p>
-        </div>
+      <div className="space-y-2">
+        {headed && !milestone && <SimSectionHeading title="Sim evaluations" />}
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {milestone
+            ? "No published Sim evaluations for this milestone yet."
+            : "No published Sim evaluations on this application yet."}
+        </p>
       </div>
     );
   }
@@ -292,7 +387,6 @@ export const SimComments: FC<{
   if (milestone) {
     return (
       <div className="space-y-3">
-        {pendingSection}
         {groups[0].threads.map((node) => (
           <CommentItem
             key={node.commentUri}
@@ -308,8 +402,7 @@ export const SimComments: FC<{
 
   return (
     <div className="space-y-4">
-      {pendingSection}
-      <SimSectionHeading title="Sim evaluations" />
+      {headed && <SimSectionHeading title="Sim evaluations" />}
       {groups.map((group) => (
         <details key={group.milestone ?? "deliberation"} open className="group space-y-3">
           <summary className="flex cursor-pointer list-none items-baseline gap-2 rounded text-sm font-medium text-gray-900 marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white [&::-webkit-details-marker]:hidden">
