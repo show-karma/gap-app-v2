@@ -65,15 +65,17 @@ function buildThreads(comments: SimocracyCommentRow[]): CommentNode[] {
 // lifted into the section heading and dropped from the body.
 const MILESTONE_LINE = /^Milestone:\s*(.+)$/;
 
+const ATTRIBUTION_LINE = /^\*\*Sim milestone evaluation — .+\*\*$/;
+
 function splitMilestone(text: string): { milestone: string | null; body: string } {
   const lines = text.split("\n");
   for (let i = 0; i < Math.min(2, lines.length); i++) {
     const match = MILESTONE_LINE.exec(lines[i].trim());
     if (match) {
-      return {
-        milestone: match[1].trim(),
-        body: [...lines.slice(0, i), ...lines.slice(i + 1)].join("\n").trim(),
-      };
+      // The header already names the milestone and the Sim; both lines go.
+      const rest = [...lines.slice(0, i), ...lines.slice(i + 1)];
+      const body = rest.filter((line, index) => !(index < 2 && ATTRIBUTION_LINE.test(line.trim())));
+      return { milestone: match[1].trim(), body: body.join("\n").trim() };
     }
   }
   return { milestone: null, body: text };
@@ -131,14 +133,7 @@ const CommentItem: FC<CommentItemProps> = memo(({ node, depth, feedback, avatars
 
   return (
     <div className={depth > 0 ? "mt-3 border-l border-gray-200 pl-4 dark:border-gray-700" : ""}>
-      <div
-        className={cn(
-          "rounded-lg border p-3.5",
-          node.authorSimUri
-            ? "border-violet-100 bg-violet-50/40 dark:border-violet-900/40 dark:bg-violet-900/10"
-            : "border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-800"
-        )}
-      >
+      <div className="rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-700 dark:bg-zinc-800">
         {node.authorSimUri ? (
           <SimAuthor
             name={node.authorName ?? "Sim"}

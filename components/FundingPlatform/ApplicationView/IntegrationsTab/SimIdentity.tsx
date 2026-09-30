@@ -24,13 +24,13 @@ export const SimAvatar: FC<{
         alt=""
       />
     ) : (
-      <span className="flex h-9 w-9 items-center justify-center rounded-md bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+      <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
         <CpuChipIcon className="h-5 w-5" />
       </span>
     )}
     <span
       aria-hidden="true"
-      className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-white ring-2 ring-white dark:ring-zinc-800"
+      className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white ring-2 ring-white dark:ring-zinc-800"
     >
       <CpuChipIcon className="h-2.5 w-2.5" />
     </span>
@@ -38,7 +38,7 @@ export const SimAvatar: FC<{
 );
 
 export const SimTag: FC<{ children?: ReactNode }> = ({ children = "AI Sim" }) => (
-  <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
     <CpuChipIcon className="h-3 w-3" />
     {children}
   </span>
@@ -76,7 +76,7 @@ export const SimAuthor: FC<SimAuthorProps> = ({ name, avatar, detail, trailing }
 export const SimSectionHeading: FC<{ title: string; count?: ReactNode }> = ({ title, count }) => (
   <div>
     <div className="flex flex-wrap items-center gap-2">
-      <CpuChipIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+      <CpuChipIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
       {count}
     </div>
