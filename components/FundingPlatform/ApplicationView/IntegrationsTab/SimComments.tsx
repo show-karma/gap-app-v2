@@ -1,10 +1,8 @@
 "use client";
 
-import { ChatBubbleLeftRightIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
-import { type FC, memo, type ReactNode, useMemo, useState } from "react";
+import { type FC, memo, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Button } from "@/components/ui/button";
 import {
   useSimocracyComments,
@@ -16,6 +14,7 @@ import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrati
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
 import { PendingVerdicts } from "./PendingVerdicts";
+import { SimAuthor, SimSectionHeading } from "./SimIdentity";
 
 // Long comments collapse to three lines with a Show more/less toggle, matching
 // the sim-evaluation reasoning treatment in CouncilEvaluations.
@@ -124,21 +123,6 @@ interface CommentItemProps {
   avatars: Map<string, string | null>;
 }
 
-const SimAvatar: FC<{ avatar: string | null | undefined; name: string }> = ({ avatar, name }) =>
-  avatar ? (
-    <ProfilePicture
-      imageURL={avatar}
-      name={name}
-      size="32"
-      className="h-8 w-8 shrink-0 rounded-md [image-rendering:pixelated]"
-      alt=""
-    />
-  ) : (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
-      <CpuChipIcon className="h-5 w-5" />
-    </span>
-  );
-
 const CommentItem: FC<CommentItemProps> = memo(({ node, depth, feedback, avatars }) => {
   const [expanded, setExpanded] = useState(false);
   const isLong =
@@ -147,36 +131,51 @@ const CommentItem: FC<CommentItemProps> = memo(({ node, depth, feedback, avatars
 
   return (
     <div className={depth > 0 ? "mt-3 border-l border-gray-200 pl-4 dark:border-gray-700" : ""}>
-      <div className="rounded-lg border border-gray-200 bg-white p-3.5 dark:border-gray-700 dark:bg-zinc-800">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2.5">
-            {node.authorSimUri && (
-              <SimAvatar avatar={avatars.get(node.authorSimUri)} name={node.authorName ?? "Sim"} />
-            )}
+      <div
+        className={cn(
+          "rounded-lg border p-3.5",
+          node.authorSimUri
+            ? "border-violet-100 bg-violet-50/40 dark:border-violet-900/40 dark:bg-violet-900/10"
+            : "border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-800"
+        )}
+      >
+        {node.authorSimUri ? (
+          <SimAuthor
+            name={node.authorName ?? "Sim"}
+            avatar={avatars.get(node.authorSimUri)}
+            trailing={
+              node.createdAt && (
+                <time
+                  dateTime={node.createdAt}
+                  className="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {formatDate(node.createdAt)}
+                </time>
+              )
+            }
+          />
+        ) : (
+          <div className="flex items-center justify-between gap-2">
             <span
-              className={
-                node.authorName
-                  ? "truncate text-sm font-semibold text-gray-900 dark:text-white"
-                  : "font-mono text-xs text-gray-500 dark:text-gray-400"
-              }
+              className="font-mono text-xs text-gray-500 dark:text-gray-400"
               title={node.authorDid}
             >
               {node.authorName ?? shortenDid(node.authorDid)}
             </span>
+            {node.createdAt && (
+              <time
+                dateTime={node.createdAt}
+                className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
+              >
+                {formatDate(node.createdAt)}
+              </time>
+            )}
           </div>
-          {node.createdAt && (
-            <time
-              dateTime={node.createdAt}
-              className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
-            >
-              {formatDate(node.createdAt)}
-            </time>
-          )}
-        </div>
+        )}
         <div
           id={bodyId}
           className={cn(
-            "mt-1.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300",
+            "mt-2.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300",
             !expanded &&
               isLong &&
               "max-h-28 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
@@ -220,13 +219,6 @@ const CommentItem: FC<CommentItemProps> = memo(({ node, depth, feedback, avatars
   );
 });
 CommentItem.displayName = "CommentItem";
-
-const SectionHeading: FC<{ children: ReactNode }> = ({ children }) => (
-  <div className="flex items-center gap-2">
-    <ChatBubbleLeftRightIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{children}</h3>
-  </div>
-);
 
 export const SimComments: FC<{
   referenceNumber: string;
@@ -291,11 +283,11 @@ export const SimComments: FC<{
       <div className="space-y-4">
         {pendingSection}
         <div className="space-y-2">
-          {!milestone && <SectionHeading>Sim comments</SectionHeading>}
+          {!milestone && <SimSectionHeading title="Sim evaluations" />}
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {milestone
               ? "No published Sim evaluations for this milestone yet."
-              : "No published Sim comments on this application yet."}
+              : "No published Sim evaluations on this application yet."}
           </p>
         </div>
       </div>
@@ -322,7 +314,7 @@ export const SimComments: FC<{
   return (
     <div className="space-y-4">
       {pendingSection}
-      <SectionHeading>Sim comments</SectionHeading>
+      <SimSectionHeading title="Sim evaluations" />
       {groups.map((group) => (
         <details key={group.milestone ?? "deliberation"} open className="group space-y-3">
           <summary className="flex cursor-pointer list-none items-baseline gap-2 rounded text-sm font-medium text-gray-900 marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white [&::-webkit-details-marker]:hidden">
@@ -336,7 +328,7 @@ export const SimComments: FC<{
               {group.milestone ? `Milestone: ${group.milestone}` : "Round deliberation"}
             </h4>
             <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
-              {group.threads.length} {pluralize("comment", group.threads.length)}
+              {group.threads.length} {pluralize("Sim verdict", group.threads.length)}
             </span>
           </summary>
           {group.threads.map((node) => (

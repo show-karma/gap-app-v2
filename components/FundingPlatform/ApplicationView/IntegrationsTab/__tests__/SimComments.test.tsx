@@ -83,7 +83,7 @@ describe("SimComments", () => {
     });
     render(<SimComments referenceNumber="APP-1" />);
     expect(
-      screen.getByText(/No published Sim comments on this application yet/)
+      screen.getByText(/No published Sim evaluations on this application yet/)
     ).toBeInTheDocument();
   });
 
@@ -173,7 +173,7 @@ describe("SimComments", () => {
 
       render(<SimComments referenceNumber="APP-1" review />);
 
-      expect(screen.getByText("Awaiting review")).toBeInTheDocument();
+      expect(screen.getByText("Awaiting your review")).toBeInTheDocument();
       expect(screen.getByText("Demonstrated. The repo shows the release.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /approve & publish/i })).toBeEnabled();
       expect(screen.getByText("VERDICT: FUND REDUCED")).toBeInTheDocument();

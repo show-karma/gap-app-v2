@@ -1,10 +1,9 @@
 "use client";
 
-import { CheckCircleIcon, CpuChipIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, memo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +21,7 @@ import type {
   SimocracyVerdictPublishBlocker,
 } from "@/services/fundingApplicationIntegrations.service";
 import { EvaluationFeedback } from "./EvaluationFeedback";
+import { SimAuthor, SimTag } from "./SimIdentity";
 
 export interface VerdictFeedbackContext {
   referenceNumber: string;
@@ -108,46 +108,30 @@ const VerdictCard: FC<VerdictCardProps> = memo(
         data-testid={`pending-verdict-${verdict.verdictId}`}
         aria-busy={isPublishing}
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2.5">
-            {avatar ? (
-              <ProfilePicture
-                imageURL={avatar}
-                name={verdict.simName}
-                size="32"
-                className="h-8 w-8 shrink-0 rounded-md [image-rendering:pixelated]"
-                alt=""
-              />
-            ) : (
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
-                <CpuChipIcon className="h-5 w-5" />
-              </span>
-            )}
-            <div className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-gray-900 dark:text-white">
-                {verdict.simName}
-              </span>
-              {showMilestone && verdict.milestoneTitle && (
-                <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
-                  Milestone: {verdict.milestoneTitle}
-                </span>
+        <SimAuthor
+          name={verdict.simName}
+          avatar={avatar}
+          detail={
+            showMilestone && verdict.milestoneTitle
+              ? `Milestone: ${verdict.milestoneTitle}`
+              : undefined
+          }
+          trailing={
+            <>
+              <VerdictBadge verdict={verdict} revisionPending={revisionPending} />
+              {verdict.updatedAt && (
+                <time
+                  dateTime={verdict.updatedAt}
+                  className="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {formatDate(verdict.updatedAt)}
+                </time>
               )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <VerdictBadge verdict={verdict} revisionPending={revisionPending} />
-            {verdict.updatedAt && (
-              <time
-                dateTime={verdict.updatedAt}
-                className="text-xs text-gray-500 dark:text-gray-400"
-              >
-                {formatDate(verdict.updatedAt)}
-              </time>
-            )}
-          </div>
-        </div>
+            </>
+          }
+        />
 
-        <div className="mt-2 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+        <div className="mt-2.5 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300">
           <MarkdownPreview variant="inline" source={verdict.text} />
         </div>
 
@@ -273,8 +257,11 @@ export const PendingVerdicts: FC<PendingVerdictsProps> = ({
 
   return (
     <section className="space-y-3" aria-label="Sim verdicts awaiting review">
-      <div className="flex items-center gap-2">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Awaiting review</h3>
+      <div className="flex flex-wrap items-center gap-2">
+        <SimTag>Sim evaluations</SimTag>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          Awaiting your review
+        </h3>
         {awaiting > 0 && (
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {awaiting} {pluralize("verdict", awaiting)} not yet on Simocracy
