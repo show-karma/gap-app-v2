@@ -23,50 +23,64 @@ export function useSimocracyMilestoneVerdicts(
   });
 }
 
-// Publishes one verdict. The card flips to "published" at once and rolls
-// back if Karma refuses (revision moved on, milestone reverted, PDS down…).
+// Publishes one verdict. While the request runs the card shows "Publishing…"
+// (and a progress toast); on success the row flips to published and the
+// public comment list is refetched so the verdict reappears there.
+const APPROVE_TOAST_ID = "simocracy-verdict-approve";
+
 export function useApproveSimocracyVerdict(referenceNumber: string) {
   const queryClient = useQueryClient();
   const verdictsKey = QUERY_KEYS.simocracyMilestoneVerdicts(referenceNumber);
 
+  const patchVerdict = (
+    verdictId: string,
+    patch: Partial<SimocracyMilestoneVerdictsResult["verdicts"][number]>
+  ) => {
+    const current = queryClient.getQueryData<SimocracyMilestoneVerdictsResult>(verdictsKey);
+    if (!current) return;
+    queryClient.setQueryData<SimocracyMilestoneVerdictsResult>(verdictsKey, {
+      ...current,
+      verdicts: current.verdicts.map((verdict) =>
+        verdict.verdictId === verdictId ? { ...verdict, ...patch } : verdict
+      ),
+    });
+  };
+
   return useMutation({
     mutationFn: (input: { verdictId: string; revision: number }) =>
       approveSimocracyVerdict(referenceNumber, input.verdictId, input.revision),
-    onMutate: async ({ verdictId, revision }) => {
+    onMutate: async ({ verdictId }) => {
       await queryClient.cancelQueries({ queryKey: verdictsKey });
       const previous = queryClient.getQueryData<SimocracyMilestoneVerdictsResult>(verdictsKey);
-      if (previous) {
-        queryClient.setQueryData<SimocracyMilestoneVerdictsResult>(verdictsKey, {
-          ...previous,
-          verdicts: previous.verdicts.map((verdict) =>
-            verdict.verdictId === verdictId
-              ? {
-                  ...verdict,
-                  status: "published",
-                  publishedRevision: revision,
-                  canPublish: false,
-                  publishBlocker: "already_published",
-                }
-              : verdict
-          ),
-        });
-      }
+      patchVerdict(verdictId, {
+        status: "publishing",
+        canPublish: false,
+        publishBlocker: "publishing",
+      });
+      toast.loading("Publishing to Simocracy…", { id: APPROVE_TOAST_ID });
       return { previous };
     },
     onError: (error: Error, _input, context) => {
       if (context?.previous) {
         queryClient.setQueryData(verdictsKey, context.previous);
       }
-      toast.error(error.message);
+      toast.error(error.message, { id: APPROVE_TOAST_ID });
     },
-    onSuccess: (result) => {
+    onSuccess: (result, { verdictId, revision }) => {
+      patchVerdict(verdictId, {
+        status: "published",
+        publishedRevision: revision,
+        canPublish: false,
+        publishBlocker: "already_published",
+      });
       toast.success(
-        result.alreadyPublished ? "This verdict was already published" : "Verdict published"
+        result.alreadyPublished ? "This verdict was already published" : "Verdict published",
+        { id: APPROVE_TOAST_ID }
       );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: verdictsKey });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.simocracyComments(referenceNumber) });
+      queryClient.refetchQueries({ queryKey: QUERY_KEYS.simocracyComments(referenceNumber) });
       queryClient.invalidateQueries({ queryKey: ["simocracy-feedback", referenceNumber] });
     },
   });

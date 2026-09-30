@@ -1,6 +1,6 @@
 "use client";
 
-import { CpuChipIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, memo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
 import { useApproveSimocracyVerdict } from "@/hooks/useSimocracyMilestoneVerdicts";
 import type {
   SimocracyMilestoneVerdictRow,
@@ -42,27 +43,70 @@ function formatDate(iso: string | null): string {
     : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
+const AMBER_BADGE =
+  "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300";
+
+const VerdictBadge: FC<{ verdict: SimocracyMilestoneVerdictRow; revisionPending: boolean }> = ({
+  verdict,
+  revisionPending,
+}) => {
+  if (verdict.status === "published") {
+    return (
+      <Badge
+        variant="outline"
+        className="gap-1 border-green-300 bg-green-50 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300"
+      >
+        <CheckCircleIcon className="h-3.5 w-3.5" />
+        Published · rev {verdict.revision}
+      </Badge>
+    );
+  }
+  if (verdict.status === "publishing") {
+    return (
+      <Badge variant="outline" className={`gap-1.5 ${AMBER_BADGE}`}>
+        <Spinner className="h-3 w-3" />
+        Publishing…
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className={AMBER_BADGE}>
+      {revisionPending
+        ? `Revision ${verdict.revision} pending`
+        : `Awaiting review · rev ${verdict.revision}`}
+    </Badge>
+  );
+};
+
 interface VerdictCardProps {
   verdict: SimocracyMilestoneVerdictRow;
   avatar: string | null | undefined;
   referenceNumber: string;
   feedback?: VerdictFeedbackContext;
   showMilestone: boolean;
+  onPublished: (verdictId: string) => void;
 }
 
 const VerdictCard: FC<VerdictCardProps> = memo(
-  ({ verdict, avatar, referenceNumber, feedback, showMilestone }) => {
+  ({ verdict, avatar, referenceNumber, feedback, showMilestone, onPublished }) => {
     const [confirming, setConfirming] = useState(false);
     const approve = useApproveSimocracyVerdict(referenceNumber);
     const revisionPending = verdict.publishedRevision !== null && verdict.status !== "published";
+    const isPublishing = verdict.status === "publishing";
+    const isPublished = verdict.status === "published";
     const staleFeedback = verdict.feedback.filter(
       (entry) => entry.revision !== null && entry.revision < verdict.revision
     ).length;
 
     return (
       <div
-        className="rounded-lg border border-amber-200 bg-amber-50/40 p-3.5 dark:border-amber-900/50 dark:bg-amber-900/10"
+        className={
+          isPublished
+            ? "rounded-lg border border-green-200 bg-green-50/40 p-3.5 dark:border-green-900/50 dark:bg-green-900/10"
+            : "rounded-lg border border-amber-200 bg-amber-50/40 p-3.5 dark:border-amber-900/50 dark:bg-amber-900/10"
+        }
         data-testid={`pending-verdict-${verdict.verdictId}`}
+        aria-busy={isPublishing}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -91,14 +135,7 @@ const VerdictCard: FC<VerdictCardProps> = memo(
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-            >
-              {revisionPending
-                ? `Revision ${verdict.revision} pending`
-                : `Awaiting review · rev ${verdict.revision}`}
-            </Badge>
+            <VerdictBadge verdict={verdict} revisionPending={revisionPending} />
             {verdict.updatedAt && (
               <time
                 dateTime={verdict.updatedAt}
@@ -135,22 +172,38 @@ const VerdictCard: FC<VerdictCardProps> = memo(
           />
         )}
 
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => setConfirming(true)}
-            disabled={!verdict.canPublish || approve.isPending}
-            title={verdict.publishBlocker ? BLOCKER_REASON[verdict.publishBlocker] : undefined}
-          >
-            {approve.isPending ? "Publishing…" : "Approve & publish"}
-          </Button>
-        </div>
-        {verdict.publishBlocker && verdict.publishBlocker !== "already_published" && (
-          <p className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400">
-            {BLOCKER_REASON[verdict.publishBlocker]}
+        {isPublished ? (
+          <p className="mt-3 text-right text-xs text-green-700 dark:text-green-300">
+            Now on Simocracy and in the comments below.
           </p>
+        ) : (
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setConfirming(true)}
+              disabled={!verdict.canPublish || approve.isPending || isPublishing}
+              title={verdict.publishBlocker ? BLOCKER_REASON[verdict.publishBlocker] : undefined}
+              className="gap-1.5"
+            >
+              {approve.isPending || isPublishing ? (
+                <>
+                  <Spinner className="h-3.5 w-3.5" />
+                  Publishing…
+                </>
+              ) : (
+                "Approve & publish"
+              )}
+            </Button>
+          </div>
         )}
+        {!isPublished &&
+          verdict.publishBlocker &&
+          verdict.publishBlocker !== "already_published" && (
+            <p className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400">
+              {BLOCKER_REASON[verdict.publishBlocker]}
+            </p>
+          )}
 
         <Dialog open={confirming} onOpenChange={setConfirming}>
           <DialogContent>
@@ -171,7 +224,10 @@ const VerdictCard: FC<VerdictCardProps> = memo(
                 type="button"
                 onClick={() => {
                   setConfirming(false);
-                  approve.mutate({ verdictId: verdict.verdictId, revision: verdict.revision });
+                  approve.mutate(
+                    { verdictId: verdict.verdictId, revision: verdict.revision },
+                    { onSuccess: () => onPublished(verdict.verdictId) }
+                  );
                 }}
               >
                 Publish
@@ -203,20 +259,27 @@ export const PendingVerdicts: FC<PendingVerdictsProps> = ({
   feedback,
   milestoneUid,
 }) => {
+  // A verdict published from this list stays in view with a green badge, so
+  // the reviewer sees the result where they clicked; it drops out on the
+  // next page load, when the public comment list carries it.
+  const [publishedHere, setPublishedHere] = useState<Set<string>>(() => new Set());
   const pending = verdicts.filter(
     (verdict) =>
-      verdict.status !== "published" &&
+      (verdict.status !== "published" || publishedHere.has(verdict.verdictId)) &&
       (!milestoneUid || verdict.milestoneUid.toLowerCase() === milestoneUid.toLowerCase())
   );
+  const awaiting = pending.filter((verdict) => verdict.status !== "published").length;
   if (pending.length === 0) return null;
 
   return (
     <section className="space-y-3" aria-label="Sim verdicts awaiting review">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Awaiting review</h3>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {pending.length} {pluralize("verdict", pending.length)} not yet on Simocracy
-        </span>
+        {awaiting > 0 && (
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {awaiting} {pluralize("verdict", awaiting)} not yet on Simocracy
+          </span>
+        )}
       </div>
       {pending.map((verdict) => (
         <VerdictCard
@@ -226,6 +289,7 @@ export const PendingVerdicts: FC<PendingVerdictsProps> = ({
           referenceNumber={referenceNumber}
           feedback={feedback}
           showMilestone={!milestoneUid}
+          onPublished={(verdictId) => setPublishedHere((prev) => new Set(prev).add(verdictId))}
         />
       ))}
     </section>
