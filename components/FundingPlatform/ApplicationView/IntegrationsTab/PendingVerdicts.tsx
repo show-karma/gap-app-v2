@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, NoSymbolIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, memo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -15,7 +15,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { useApproveSimocracyVerdict } from "@/hooks/useSimocracyMilestoneVerdicts";
+import {
+  useApproveSimocracyVerdict,
+  useDismissSimocracyVerdict,
+} from "@/hooks/useSimocracyMilestoneVerdicts";
 import type {
   SimocracyMilestoneVerdictRow,
   SimocracyVerdictPublishBlocker,
@@ -32,8 +35,13 @@ export interface VerdictFeedbackContext {
 const BLOCKER_REASON: Record<SimocracyVerdictPublishBlocker, string> = {
   already_published: "Already published",
   publishing: "Another reviewer is publishing this verdict",
-  not_sim_owner: "Only this Sim's owner, a community admin or staff can publish it",
+  dismissed: "Dismissed",
+  not_sim_owner: "Only this Sim's owner, a community admin or staff can publish or dismiss it",
 };
+
+function shortAddress(address: string): string {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
@@ -69,6 +77,17 @@ const VerdictBadge: FC<{ verdict: SimocracyMilestoneVerdictRow; revisionPending:
       </Badge>
     );
   }
+  if (verdict.status === "dismissed") {
+    return (
+      <Badge
+        variant="outline"
+        className="gap-1 border-gray-300 bg-gray-100 text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+      >
+        <NoSymbolIcon className="h-3.5 w-3.5" />
+        Dismissed · rev {verdict.revision}
+      </Badge>
+    );
+  }
   return (
     <Badge variant="outline" className={AMBER_BADGE}>
       {revisionPending
@@ -78,33 +97,63 @@ const VerdictBadge: FC<{ verdict: SimocracyMilestoneVerdictRow; revisionPending:
   );
 };
 
+const DismissedNote: FC<{ verdict: SimocracyMilestoneVerdictRow }> = ({ verdict }) => {
+  const by = verdict.dismissedBy ? ` by ${shortAddress(verdict.dismissedBy)}` : "";
+  const on = verdict.dismissedAt ? ` on ${formatDate(verdict.dismissedAt)}` : "";
+  return (
+    <p className="mt-3 text-right text-xs text-gray-500 dark:text-gray-400">
+      Set aside{by}
+      {on}. Not on Simocracy; a new revision from the Sim re-opens it.
+    </p>
+  );
+};
+
 interface VerdictCardProps {
   verdict: SimocracyMilestoneVerdictRow;
   avatar: string | null | undefined;
   referenceNumber: string;
   feedback?: VerdictFeedbackContext;
   showMilestone: boolean;
-  onPublished: (verdictId: string) => void;
+  onActed: (verdictId: string) => void;
+}
+
+function cardClassName(status: SimocracyMilestoneVerdictRow["status"]): string {
+  if (status === "published") {
+    return "rounded-lg border border-green-200 bg-green-50/40 p-3.5 dark:border-green-900/50 dark:bg-green-900/10";
+  }
+  if (status === "dismissed") {
+    return "rounded-lg border border-gray-200 bg-gray-50 p-3.5 dark:border-gray-700 dark:bg-gray-800/40";
+  }
+  return "rounded-lg border border-amber-200 bg-amber-50/40 p-3.5 dark:border-amber-900/50 dark:bg-amber-900/10";
 }
 
 const VerdictCard: FC<VerdictCardProps> = memo(
-  ({ verdict, avatar, referenceNumber, feedback, showMilestone, onPublished }) => {
-    const [confirming, setConfirming] = useState(false);
+  ({ verdict, avatar, referenceNumber, feedback, showMilestone, onActed }) => {
+    const [confirming, setConfirming] = useState<"publish" | "dismiss" | null>(null);
     const approve = useApproveSimocracyVerdict(referenceNumber);
-    const revisionPending = verdict.publishedRevision !== null && verdict.status !== "published";
+    const dismiss = useDismissSimocracyVerdict(referenceNumber);
+    const revisionPending =
+      verdict.publishedRevision !== null &&
+      verdict.status !== "published" &&
+      verdict.status !== "dismissed";
     const isPublishing = verdict.status === "publishing";
     const isPublished = verdict.status === "published";
+    const isDismissed = verdict.status === "dismissed";
+    const busy = approve.isPending || dismiss.isPending || isPublishing;
+    const act = (kind: "publish" | "dismiss") => {
+      setConfirming(null);
+      const input = { verdictId: verdict.verdictId, revision: verdict.revision };
+      const options = { onSuccess: () => onActed(verdict.verdictId) };
+      if (kind === "publish") approve.mutate(input, options);
+      else dismiss.mutate(input, options);
+    };
     const staleFeedback = verdict.feedback.filter(
       (entry) => entry.revision !== null && entry.revision < verdict.revision
     ).length;
 
     return (
       <div
-        className={
-          isPublished
-            ? "rounded-lg border border-green-200 bg-green-50/40 p-3.5 dark:border-green-900/50 dark:bg-green-900/10"
-            : "rounded-lg border border-amber-200 bg-amber-50/40 p-3.5 dark:border-amber-900/50 dark:bg-amber-900/10"
-        }
+        className={cardClassName(verdict.status)}
         data-testid={`pending-verdict-${verdict.verdictId}`}
         aria-busy={isPublishing}
       >
@@ -156,17 +205,37 @@ const VerdictCard: FC<VerdictCardProps> = memo(
           />
         )}
 
-        {isPublished ? (
+        {isPublished && (
           <p className="mt-3 text-right text-xs text-green-700 dark:text-green-300">
             Now on Simocracy and in the comments below.
           </p>
-        ) : (
+        )}
+        {isDismissed && <DismissedNote verdict={verdict} />}
+        {!isPublished && !isDismissed && (
           <div className="mt-3 flex items-center justify-end gap-2">
             <Button
               type="button"
               size="sm"
-              onClick={() => setConfirming(true)}
-              disabled={!verdict.canPublish || approve.isPending || isPublishing}
+              variant="outline"
+              onClick={() => setConfirming("dismiss")}
+              disabled={!verdict.canPublish || busy}
+              title={verdict.publishBlocker ? BLOCKER_REASON[verdict.publishBlocker] : undefined}
+              className="gap-1.5"
+            >
+              {dismiss.isPending ? (
+                <>
+                  <Spinner className="h-3.5 w-3.5" />
+                  Dismissing…
+                </>
+              ) : (
+                "Dismiss"
+              )}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setConfirming("publish")}
+              disabled={!verdict.canPublish || busy}
               title={verdict.publishBlocker ? BLOCKER_REASON[verdict.publishBlocker] : undefined}
               className="gap-1.5"
             >
@@ -182,6 +251,7 @@ const VerdictCard: FC<VerdictCardProps> = memo(
           </div>
         )}
         {!isPublished &&
+          !isDismissed &&
           verdict.publishBlocker &&
           verdict.publishBlocker !== "already_published" && (
             <p className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400">
@@ -189,7 +259,10 @@ const VerdictCard: FC<VerdictCardProps> = memo(
             </p>
           )}
 
-        <Dialog open={confirming} onOpenChange={setConfirming}>
+        <Dialog
+          open={confirming === "publish"}
+          onOpenChange={(open) => !open && setConfirming(null)}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Publish this Sim verdict?</DialogTitle>
@@ -201,20 +274,35 @@ const VerdictCard: FC<VerdictCardProps> = memo(
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setConfirming(false)}>
+              <Button type="button" variant="outline" onClick={() => setConfirming(null)}>
                 Cancel
               </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  setConfirming(false);
-                  approve.mutate(
-                    { verdictId: verdict.verdictId, revision: verdict.revision },
-                    { onSuccess: () => onPublished(verdict.verdictId) }
-                  );
-                }}
-              >
+              <Button type="button" onClick={() => act("publish")}>
                 Yes, publish
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={confirming === "dismiss"}
+          onOpenChange={(open) => !open && setConfirming(null)}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Dismiss this Sim verdict?</DialogTitle>
+              <DialogDescription>
+                Revision {verdict.revision} of {verdict.simName}&apos;s evaluation is set aside and
+                never reaches Simocracy. Reviewers still see it here as dismissed. If the Sim runs
+                again, the new revision comes back for review.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setConfirming(null)}>
+                Cancel
+              </Button>
+              <Button type="button" variant="destructive" onClick={() => act("dismiss")}>
+                Yes, dismiss
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -234,8 +322,9 @@ interface PendingVerdictsProps {
   milestoneUid?: string;
 }
 
-// Drafts awaiting a reviewer's approval. Published verdicts render from the
-// public comment list; only rows still ahead of their published revision show here.
+// Drafts awaiting a reviewer's decision, plus dismissed ones (private, so this
+// is the only place they show). Published verdicts render from the public
+// comment list; only rows still ahead of their published revision show here.
 export const PendingVerdicts: FC<PendingVerdictsProps> = ({
   referenceNumber,
   verdicts,
@@ -246,13 +335,15 @@ export const PendingVerdicts: FC<PendingVerdictsProps> = ({
   // A verdict published from this list stays in view with a green badge, so
   // the reviewer sees the result where they clicked; it drops out on the
   // next page load, when the public comment list carries it.
-  const [publishedHere, setPublishedHere] = useState<Set<string>>(() => new Set());
+  const [actedHere, setActedHere] = useState<Set<string>>(() => new Set());
   const pending = verdicts.filter(
     (verdict) =>
-      (verdict.status !== "published" || publishedHere.has(verdict.verdictId)) &&
+      (verdict.status !== "published" || actedHere.has(verdict.verdictId)) &&
       (!milestoneUid || verdict.milestoneUid.toLowerCase() === milestoneUid.toLowerCase())
   );
-  const awaiting = pending.filter((verdict) => verdict.status !== "published").length;
+  const awaiting = pending.filter(
+    (verdict) => verdict.status !== "published" && verdict.status !== "dismissed"
+  ).length;
   if (pending.length === 0) return null;
 
   return (
@@ -276,7 +367,7 @@ export const PendingVerdicts: FC<PendingVerdictsProps> = ({
           referenceNumber={referenceNumber}
           feedback={feedback}
           showMilestone={!milestoneUid}
-          onPublished={(verdictId) => setPublishedHere((prev) => new Set(prev).add(verdictId))}
+          onActed={(verdictId) => setActedHere((prev) => new Set(prev).add(verdictId))}
         />
       ))}
     </section>

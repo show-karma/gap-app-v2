@@ -402,8 +402,12 @@ export async function submitSimocracyFeedback(
   }
 }
 
-export type SimocracyVerdictStatus = "pending_review" | "publishing" | "published";
-export type SimocracyVerdictPublishBlocker = "already_published" | "publishing" | "not_sim_owner";
+export type SimocracyVerdictStatus = "pending_review" | "publishing" | "published" | "dismissed";
+export type SimocracyVerdictPublishBlocker =
+  | "already_published"
+  | "publishing"
+  | "dismissed"
+  | "not_sim_owner";
 
 export interface SimocracyVerdictFeedbackEntry {
   authorAddress: string;
@@ -429,6 +433,8 @@ export interface SimocracyMilestoneVerdictRow {
   publishedRevision: number | null;
   publishedAt: string | null;
   publishedBy: string | null;
+  dismissedAt: string | null;
+  dismissedBy: string | null;
   updatedAt: string | null;
   canPublish: boolean;
   publishBlocker: SimocracyVerdictPublishBlocker | null;
@@ -481,6 +487,44 @@ const APPROVE_MESSAGES: Record<number, string> = {
   502: "Simocracy did not accept the verdict. Nothing was published; try again in a moment.",
   503: "The Simocracy council could not be read right now. Try again in a moment.",
 };
+
+export interface SimocracyVerdictDismissal {
+  verdictId: string;
+  revision: number;
+  status: SimocracyVerdictStatus;
+  alreadyDismissed: boolean;
+}
+
+const DISMISS_MESSAGES: Record<number, string> = {
+  409: "This verdict changed since you opened it (published or re-run). Reload to see its current state.",
+};
+
+// Sets the current revision aside on Karma. Nothing reaches Simocracy; the
+// next revision the agent submits re-opens the verdict.
+export async function dismissSimocracyVerdict(
+  referenceNumber: string,
+  verdictId: string,
+  revision: number
+): Promise<SimocracyVerdictDismissal> {
+  try {
+    const data = await api.post<SimocracyVerdictDismissal>(
+      SIMOCRACY_ROUTES.applications.SIMOCRACY_MILESTONE_VERDICT_DISMISS(referenceNumber, verdictId),
+      { revision }
+    );
+    if (!data?.verdictId) {
+      throw new Error("Empty response dismissing the verdict");
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw new SimocracyVerdictApproveError(
+        DISMISS_MESSAGES[error.status] || httpErrorMessage(error),
+        error.status
+      );
+    }
+    throw new SimocracyVerdictApproveError(httpErrorMessage(error), null);
+  }
+}
 
 export async function approveSimocracyVerdict(
   referenceNumber: string,

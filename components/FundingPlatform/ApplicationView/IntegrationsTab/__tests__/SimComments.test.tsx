@@ -7,6 +7,7 @@ vi.mock("@/hooks/useSimocracyMilestoneVerdicts", () => ({
   useSimocracyMilestoneVerdicts: (referenceNumber: string, options?: { enabled?: boolean }) =>
     mockUseSimocracyMilestoneVerdicts(referenceNumber, options),
   useApproveSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
+  useDismissSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useSimocracyComments: (referenceNumber: string) => mockUseSimocracyComments(referenceNumber),
@@ -38,6 +39,8 @@ function pendingVerdict(overrides: Record<string, unknown> = {}) {
     publishedRevision: null,
     publishedAt: null,
     publishedBy: null,
+    dismissedAt: null,
+    dismissedBy: null,
     updatedAt: "2026-09-30T00:00:00.000Z",
     canPublish: true,
     publishBlocker: null,
@@ -228,7 +231,36 @@ describe("SimComments", () => {
       render(<SimComments referenceNumber="APP-1" review />);
 
       expect(screen.getByRole("button", { name: /^publish$/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /^dismiss$/i })).toBeDisabled();
       expect(screen.getByText(/only this sim's owner/i)).toBeInTheDocument();
+    });
+
+    it("keeps a dismissed verdict visible to reviewers without any action", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: { programId: "1", comments: [], forbidden: false },
+        isLoading: false,
+      });
+      mockUseSimocracyMilestoneVerdicts.mockReturnValue({
+        data: {
+          verdicts: [
+            pendingVerdict({
+              status: "dismissed",
+              canPublish: false,
+              publishBlocker: "dismissed",
+              dismissedBy: "0xabcdef0000000000000000000000000000000002",
+              dismissedAt: "2026-09-30T00:00:00.000Z",
+            }),
+          ],
+          forbidden: false,
+        },
+      });
+
+      render(<SimComments referenceNumber="APP-1" review />);
+
+      expect(screen.getByText(/dismissed · rev 1/i)).toBeInTheDocument();
+      expect(screen.getByText(/set aside by 0xabcd…0002/i)).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^publish$/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/not yet on Simocracy/)).not.toBeInTheDocument();
     });
   });
 });

@@ -15,6 +15,7 @@ vi.mock("@/hooks/useFundingApplicationByProjectUID", () => ({
 vi.mock("@/hooks/useSimocracyMilestoneVerdicts", () => ({
   useSimocracyMilestoneVerdicts: () => ({ data: undefined }),
   useApproveSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
+  useDismissSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useApplicationIntegrations: (...args: unknown[]) => mockUseApplicationIntegrations(...args),
