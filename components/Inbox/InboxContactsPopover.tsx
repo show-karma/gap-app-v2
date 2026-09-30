@@ -78,7 +78,7 @@ export const InboxContactsPopover: FC<{
         <Button
           variant="ghost"
           aria-label="View contacts"
-          className="group inline-flex h-auto max-w-full items-center gap-1.5 rounded-md p-0 text-xs font-normal text-gray-500 hover:bg-transparent hover:text-primary-700 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:bg-transparent dark:hover:text-primary-300"
+          className="group inline-flex h-auto w-max max-w-full items-center justify-start gap-1.5 rounded-md p-0 text-xs font-normal text-gray-500 hover:bg-transparent hover:text-primary-700 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:bg-transparent dark:hover:text-primary-300"
         >
           <UsersIcon className="shrink-0" aria-hidden="true" />
           <span className="truncate">{triggerName}</span>
