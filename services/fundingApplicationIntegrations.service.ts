@@ -498,8 +498,11 @@ export async function approveSimocracyVerdict(
     return data;
   } catch (error) {
     if (error instanceof HttpError) {
+      // A 422 carries the precise reason (milestone reverted, Sim off the
+      // council, credential unreadable…); the fixed texts cover the rest.
+      const serverMessage = error.status === 422 ? httpErrorMessage(error) : null;
       throw new SimocracyVerdictApproveError(
-        APPROVE_MESSAGES[error.status] ?? httpErrorMessage(error),
+        serverMessage || APPROVE_MESSAGES[error.status] || httpErrorMessage(error),
         error.status
       );
     }
