@@ -175,7 +175,7 @@ describe("SimComments", () => {
 
       expect(screen.getByText("Awaiting your review")).toBeInTheDocument();
       expect(screen.getByText("Demonstrated. The repo shows the release.")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /approve & publish/i })).toBeEnabled();
+      expect(screen.getByRole("button", { name: /^publish$/i })).toBeEnabled();
       expect(screen.getByText("VERDICT: FUND REDUCED")).toBeInTheDocument();
     });
 
@@ -227,7 +227,7 @@ describe("SimComments", () => {
 
       render(<SimComments referenceNumber="APP-1" review />);
 
-      expect(screen.getByRole("button", { name: /approve & publish/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /^publish$/i })).toBeDisabled();
       expect(screen.getByText(/only this sim's owner/i)).toBeInTheDocument();
     });
   });

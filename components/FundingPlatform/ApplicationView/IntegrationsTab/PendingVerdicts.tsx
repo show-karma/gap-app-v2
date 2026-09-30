@@ -176,7 +176,7 @@ const VerdictCard: FC<VerdictCardProps> = memo(
                   Publishing…
                 </>
               ) : (
-                "Approve & publish"
+                "Publish"
               )}
             </Button>
           </div>
@@ -214,7 +214,7 @@ const VerdictCard: FC<VerdictCardProps> = memo(
                   );
                 }}
               >
-                Publish
+                Yes, publish
               </Button>
             </DialogFooter>
           </DialogContent>
