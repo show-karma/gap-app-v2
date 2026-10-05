@@ -36,9 +36,11 @@ function verdict(overrides: Record<string, unknown> = {}) {
     publishedAt: null,
     publishedBy: null,
     updatedAt: null,
+    mayAct: true,
     canPublish: true,
     publishBlocker: null,
     feedback: [],
+    revisions: [],
     ...overrides,
   };
 }

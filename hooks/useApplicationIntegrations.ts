@@ -268,8 +268,12 @@ export function useSubmitSimocracyFeedback(
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { simUri: string; verdict: SimocracyFeedbackVerdict; comment?: string }) =>
-      submitSimocracyFeedback(referenceNumber, { ...subject, ...input }),
+    mutationFn: (input: {
+      simUri: string;
+      verdict: SimocracyFeedbackVerdict;
+      comment?: string;
+      revision?: number;
+    }) => submitSimocracyFeedback(referenceNumber, { ...subject, ...input }),
     onSuccess: () => {
       // Drops the narrowed and the "all" caches of this application at once.
       queryClient.invalidateQueries({

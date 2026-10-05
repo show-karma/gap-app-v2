@@ -386,6 +386,8 @@ export async function submitSimocracyFeedback(
     simUri: string;
     verdict: SimocracyFeedbackVerdict;
     comment?: string;
+    // Which version of a milestone verdict the note is about; the latest when omitted.
+    revision?: number;
   }
 ): Promise<SimocracyEvaluationFeedback> {
   try {
@@ -420,6 +422,21 @@ export interface SimocracyVerdictFeedbackEntry {
 
 // A Sim's milestone verdict as Karma holds it: private until a reviewer
 // publishes it, then mirrored into the public comment list.
+export type SimocracyVerdictRevisionOutcome = "current" | "published" | "dismissed" | "superseded";
+
+// One version of a verdict: the current one plus every revision the agent
+// replaced, each with what happened to it and the notes it received.
+export interface SimocracyVerdictRevision {
+  revision: number;
+  text: string;
+  submittedAt: string | null;
+  outcome: SimocracyVerdictRevisionOutcome;
+  publishedAt: string | null;
+  dismissedAt: string | null;
+  dismissedBy: string | null;
+  feedback: SimocracyVerdictFeedbackEntry[];
+}
+
 export interface SimocracyMilestoneVerdictRow {
   verdictId: string;
   milestoneUid: string;
@@ -436,9 +453,13 @@ export interface SimocracyMilestoneVerdictRow {
   dismissedAt: string | null;
   dismissedBy: string | null;
   updatedAt: string | null;
+  // The viewer may publish or dismiss this Sim's verdicts, whatever their state.
+  mayAct: boolean;
   canPublish: boolean;
   publishBlocker: SimocracyVerdictPublishBlocker | null;
   feedback: SimocracyVerdictFeedbackEntry[];
+  // Newest first; the first entry is the current revision.
+  revisions: SimocracyVerdictRevision[];
 }
 
 export interface SimocracyMilestoneVerdictsResult {

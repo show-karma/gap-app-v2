@@ -23,6 +23,11 @@ interface EvaluationFeedbackProps {
   simUri: string;
   /** True when the viewer owns this sim or is a program admin. */
   canGiveFeedback: boolean;
+  /**
+   * The verdict version on screen. Notes left on other versions are listed
+   * with their version instead of reading as if they were about this one.
+   */
+  currentRevision?: number;
 }
 
 function ownFeedback(
@@ -33,12 +38,17 @@ function ownFeedback(
   return all.find((entry) => entry.simUri === simUri && addresses.has(entry.authorAddress));
 }
 
+function onRevision(entry: SimocracyEvaluationFeedback, revision: number | undefined): boolean {
+  return revision === undefined || entry.revision == null || entry.revision === revision;
+}
+
 export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses: Set<string> }> = ({
   referenceNumber,
   subject,
   simUri,
   canGiveFeedback,
   viewerAddresses,
+  currentRevision,
 }) => {
   // A run has its own query; verdict comments share the application-wide
   // one so a long comment list costs a single request.
@@ -51,7 +61,9 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
   const forSim = (feedback ?? []).filter(
     (entry) => entry.simUri === simUri && feedbackMatchesSubject(entry, subject)
   );
-  const mine = ownFeedback(forSim, simUri, viewerAddresses);
+  const saved = ownFeedback(forSim, simUri, viewerAddresses);
+  // A vote cast on an earlier version is history, not a pre-filled answer.
+  const mine = saved && onRevision(saved, currentRevision) ? saved : undefined;
 
   // Drafts sit on top of the saved entry; null means "not edited yet".
   const [draftVerdict, setDraftVerdict] = useState<SimocracyFeedbackVerdict | null>(null);
@@ -59,7 +71,9 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
   const verdict = draftVerdict ?? mine?.verdict ?? null;
   const comment = draftComment ?? mine?.comment ?? "";
 
-  const othersFeedback = forSim.filter((entry) => !viewerAddresses.has(entry.authorAddress));
+  const othersFeedback = forSim.filter(
+    (entry) => !viewerAddresses.has(entry.authorAddress) || entry !== mine
+  );
 
   const handleSubmit = (nextVerdict: SimocracyFeedbackVerdict) => {
     setDraftVerdict(nextVerdict);
@@ -67,6 +81,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
       simUri,
       verdict: nextVerdict,
       comment: comment.trim() || undefined,
+      revision: currentRevision,
     });
   };
 
@@ -161,6 +176,11 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
                   </span>
                 )}
                 {entry.comment ? ` — ${entry.comment}` : ""}
+                {entry.revision != null && !onRevision(entry, currentRevision) && (
+                  <span className="ml-1.5 text-gray-400 dark:text-gray-500">
+                    on v{entry.revision}
+                  </span>
+                )}
               </span>
             </div>
           ))}

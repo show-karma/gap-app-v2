@@ -1,24 +1,20 @@
 "use client";
 
 import pluralize from "pluralize";
-import { type FC, memo, type ReactNode, useMemo, useState } from "react";
+import { type FC, memo, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useSimocracyComments,
   useSimocracyCouncil,
   useSimocracyProgramSummary,
 } from "@/hooks/useApplicationIntegrations";
 import { useSimocracyMilestoneVerdicts } from "@/hooks/useSimocracyMilestoneVerdicts";
-import type {
-  SimocracyCommentRow,
-  SimocracyMilestoneVerdictRow,
-} from "@/services/fundingApplicationIntegrations.service";
+import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
-import { PendingVerdicts } from "./PendingVerdicts";
 import { SimAuthor, SimSectionHeading } from "./SimIdentity";
+import { VerdictReview } from "./VerdictReview";
 
 // Long comments collapse to three lines with a Show more/less toggle, matching
 // the sim-evaluation reasoning treatment in CouncilEvaluations.
@@ -241,8 +237,11 @@ export const SimComments: FC<{
       if (sim.avatar || !map.has(sim.simUri)) map.set(sim.simUri, sim.avatar);
     return map;
   }, [summary?.sims, council]);
+  const reviewVerdicts = review && drafts && !drafts.forbidden ? drafts.verdicts : null;
   const groups = useMemo(() => {
-    const comments = data?.comments ?? [];
+    // Verdicts the reviewer sees as cards are not repeated in the thread.
+    const covered = new Set((reviewVerdicts ?? []).map((verdict) => verdict.commentUri));
+    const comments = (data?.comments ?? []).filter((comment) => !covered.has(comment.commentUri));
     if (!milestone) return groupByMilestone(buildThreads(comments));
     const own = comments.filter((comment) => isAboutMilestone(comment, milestone));
     const threads = buildThreads(own).map((node) => ({
@@ -250,7 +249,7 @@ export const SimComments: FC<{
       text: splitMilestone(node.text).body,
     }));
     return threads.length > 0 ? [{ milestone: milestone.title, threads }] : [];
-  }, [data?.comments, milestone]);
+  }, [data?.comments, milestone, reviewVerdicts]);
 
   if (isLoading) {
     return (
@@ -266,92 +265,39 @@ export const SimComments: FC<{
     return null;
   }
 
-  const published = (
+  // Reviewers get the verdict desk; everyone else sees only what is public.
+  if (reviewVerdicts) {
+    return (
+      <div className="space-y-6">
+        <VerdictReview
+          referenceNumber={referenceNumber}
+          verdicts={reviewVerdicts}
+          milestoneUid={milestone?.uid}
+          avatars={avatars}
+          feedback={feedback}
+        />
+        {groups.length > 0 && (
+          <PublishedComments
+            groups={groups}
+            milestone={milestone}
+            feedback={feedback}
+            avatars={avatars}
+            headed={false}
+            title="Public thread"
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
     <PublishedComments
       groups={groups}
       milestone={milestone}
       feedback={feedback}
       avatars={avatars}
-      headed={!review || !drafts || drafts.forbidden}
+      headed
     />
-  );
-
-  // Reviewers get the three states side by side; everyone else sees only
-  // what is public.
-  if (review && drafts && !drafts.forbidden) {
-    return (
-      <VerdictTabs
-        referenceNumber={referenceNumber}
-        verdicts={drafts.verdicts}
-        milestoneUid={milestone?.uid}
-        avatars={avatars}
-        feedback={feedback}
-        publishedCount={groups.reduce((sum, group) => sum + group.threads.length, 0)}
-        flat={!!milestone}
-      >
-        {published}
-      </VerdictTabs>
-    );
-  }
-
-  return published;
-};
-
-type VerdictTab = "pending" | "published" | "dismissed";
-
-interface VerdictTabsProps {
-  referenceNumber: string;
-  verdicts: SimocracyMilestoneVerdictRow[];
-  milestoneUid?: string;
-  avatars: Map<string, string | null>;
-  feedback?: CommentFeedbackContext;
-  publishedCount: number;
-  flat: boolean;
-  children: ReactNode;
-}
-
-const VerdictTabs: FC<VerdictTabsProps> = ({
-  referenceNumber,
-  verdicts,
-  milestoneUid,
-  avatars,
-  feedback,
-  publishedCount,
-  flat,
-  children,
-}) => {
-  const scoped = milestoneUid
-    ? verdicts.filter(
-        (verdict) => verdict.milestoneUid.toLowerCase() === milestoneUid.toLowerCase()
-      )
-    : verdicts;
-  const pendingCount = scoped.filter(
-    (verdict) => verdict.status === "pending_review" || verdict.status === "publishing"
-  ).length;
-  const dismissedCount = scoped.filter((verdict) => verdict.status === "dismissed").length;
-  const [tab, setTab] = useState<VerdictTab>(pendingCount > 0 ? "pending" : "published");
-  const shared = { referenceNumber, verdicts, avatars, feedback, milestoneUid, hideHeading: true };
-
-  return (
-    <div className="space-y-3">
-      {!flat && <SimSectionHeading title="Sim evaluations" />}
-      <Tabs value={tab} onValueChange={(value) => setTab(value as VerdictTab)}>
-        <TabsList aria-label="Sim verdicts by state">
-          <TabsTrigger value="pending">Pending review ({pendingCount})</TabsTrigger>
-          <TabsTrigger value="published">Published ({publishedCount})</TabsTrigger>
-          <TabsTrigger value="dismissed">Dismissed ({dismissedCount})</TabsTrigger>
-        </TabsList>
-        <TabsContent value="pending" className="mt-3">
-          <PendingVerdicts {...shared} show="open" />
-        </TabsContent>
-        <TabsContent value="published" className="mt-3">
-          {children}
-        </TabsContent>
-        <TabsContent value="dismissed" className="mt-3">
-          <PendingVerdicts {...shared} show="dismissed" />
-        </TabsContent>
-      </Tabs>
-    </div>
   );
 };
 
@@ -360,8 +306,10 @@ interface PublishedCommentsProps {
   milestone?: MilestoneFilter;
   feedback?: CommentFeedbackContext;
   avatars: Map<string, string | null>;
-  /** Carry the section heading; false inside the reviewer tabs, which have their own. */
+  /** Carry the section heading; false inside the reviewer desk, which has its own. */
   headed: boolean;
+  /** Plain label used when the section sits below the reviewer desk. */
+  title?: string;
 }
 
 const PublishedComments: FC<PublishedCommentsProps> = ({
@@ -370,6 +318,7 @@ const PublishedComments: FC<PublishedCommentsProps> = ({
   feedback,
   avatars,
   headed,
+  title,
 }) => {
   if (groups.length === 0) {
     return (
@@ -387,6 +336,9 @@ const PublishedComments: FC<PublishedCommentsProps> = ({
   if (milestone) {
     return (
       <div className="space-y-3">
+        {!headed && title && (
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+        )}
         {groups[0].threads.map((node) => (
           <CommentItem
             key={node.commentUri}
@@ -403,6 +355,9 @@ const PublishedComments: FC<PublishedCommentsProps> = ({
   return (
     <div className="space-y-4">
       {headed && <SimSectionHeading title="Sim evaluations" />}
+      {!headed && title && (
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+      )}
       {groups.map((group) => (
         <details key={group.milestone ?? "deliberation"} open className="group space-y-3">
           <summary className="flex cursor-pointer list-none items-baseline gap-2 rounded text-sm font-medium text-gray-900 marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white [&::-webkit-details-marker]:hidden">
