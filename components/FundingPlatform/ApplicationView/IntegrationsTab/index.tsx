@@ -158,7 +158,11 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
   return (
     <div className="space-y-4">
       <SProcessSection data={data} summary={summary} feedback={feedbackConfig} />
-      <SimComments referenceNumber={referenceNumber} feedback={commentFeedbackConfig} />
+      <SimComments
+        referenceNumber={referenceNumber}
+        feedback={commentFeedbackConfig}
+        review={feedbackAdmin}
+      />
     </div>
   );
 };

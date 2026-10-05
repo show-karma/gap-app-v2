@@ -172,7 +172,7 @@ describe("IntegrationsTab", () => {
       renderTab();
 
       expect(await screen.findByText("The S-Process round hasn't run yet")).toBeInTheDocument();
-      expect(await screen.findByText("Sim comments")).toBeInTheDocument();
+      expect(await screen.findByText("Sim evaluations")).toBeInTheDocument();
       expect(screen.getByText("Round deliberation")).toBeInTheDocument();
       expect(screen.getByText("S1")).toBeInTheDocument();
     });
@@ -213,11 +213,11 @@ describe("IntegrationsTab", () => {
       expect(
         await screen.findByRole("heading", { level: 4, name: "Milestone: Dashboard MVP" })
       ).toBeInTheDocument();
-      expect(screen.getByText("2 comments")).toBeInTheDocument();
+      expect(screen.getByText("2 Sim verdicts")).toBeInTheDocument();
       expect(
         screen.getByRole("heading", { level: 4, name: "Milestone: Audit" })
       ).toBeInTheDocument();
-      expect(screen.getAllByText("1 comment")).toHaveLength(2);
+      expect(screen.getAllByText("1 Sim verdict")).toHaveLength(2);
       expect(
         screen.getByRole("heading", { level: 4, name: "Round deliberation" })
       ).toBeInTheDocument();

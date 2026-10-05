@@ -3,7 +3,7 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useSimocracyFeedback,
   useSubmitSimocracyFeedback,
@@ -23,14 +23,29 @@ interface EvaluationFeedbackProps {
   simUri: string;
   /** True when the viewer owns this sim or is a program admin. */
   canGiveFeedback: boolean;
+  /**
+   * The verdict version on screen. Notes left on other versions are listed
+   * with their version instead of reading as if they were about this one.
+   */
+  currentRevision?: number;
 }
 
+function onRevision(entry: SimocracyEvaluationFeedback, revision: number | undefined): boolean {
+  return revision === undefined || entry.revision == null || entry.revision === revision;
+}
+
+// The viewer's own note on the version on screen; notes on other versions
+// are history and never pre-fill the form.
 function ownFeedback(
   all: SimocracyEvaluationFeedback[],
   simUri: string,
-  addresses: Set<string>
+  addresses: Set<string>,
+  revision: number | undefined
 ): SimocracyEvaluationFeedback | undefined {
-  return all.find((entry) => entry.simUri === simUri && addresses.has(entry.authorAddress));
+  return all.find(
+    (entry) =>
+      entry.simUri === simUri && addresses.has(entry.authorAddress) && onRevision(entry, revision)
+  );
 }
 
 export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses: Set<string> }> = ({
@@ -39,6 +54,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
   simUri,
   canGiveFeedback,
   viewerAddresses,
+  currentRevision,
 }) => {
   // A run has its own query; verdict comments share the application-wide
   // one so a long comment list costs a single request.
@@ -51,7 +67,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
   const forSim = (feedback ?? []).filter(
     (entry) => entry.simUri === simUri && feedbackMatchesSubject(entry, subject)
   );
-  const mine = ownFeedback(forSim, simUri, viewerAddresses);
+  const mine = ownFeedback(forSim, simUri, viewerAddresses, currentRevision);
 
   // Drafts sit on top of the saved entry; null means "not edited yet".
   const [draftVerdict, setDraftVerdict] = useState<SimocracyFeedbackVerdict | null>(null);
@@ -59,15 +75,15 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
   const verdict = draftVerdict ?? mine?.verdict ?? null;
   const comment = draftComment ?? mine?.comment ?? "";
 
-  const othersFeedback = forSim.filter((entry) => !viewerAddresses.has(entry.authorAddress));
+  const othersFeedback = forSim.filter(
+    (entry) => !viewerAddresses.has(entry.authorAddress) || entry !== mine
+  );
 
-  const handleSubmit = (nextVerdict: SimocracyFeedbackVerdict) => {
-    setDraftVerdict(nextVerdict);
-    submit.mutate({
-      simUri,
-      verdict: nextVerdict,
-      comment: comment.trim() || undefined,
-    });
+  // A vote without a note tells the Sim nothing, so both go together on Save.
+  const canSave = verdict !== null && comment.trim().length > 0 && !submit.isPending;
+  const handleSave = () => {
+    if (!verdict || !canSave) return;
+    submit.mutate({ simUri, verdict, comment: comment.trim(), revision: currentRevision });
   };
 
   if (!canGiveFeedback && othersFeedback.length === 0) {
@@ -88,7 +104,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
               size="icon-sm"
               aria-label="Represented faithfully"
               aria-pressed={verdict === "up"}
-              onClick={() => handleSubmit("up")}
+              onClick={() => setDraftVerdict("up")}
               disabled={submit.isPending}
               className={cn(
                 "h-7 w-7 shadow-none",
@@ -105,7 +121,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
               size="icon-sm"
               aria-label="Not represented faithfully"
               aria-pressed={verdict === "down"}
-              onClick={() => handleSubmit("down")}
+              onClick={() => setDraftVerdict("down")}
               disabled={submit.isPending}
               className={cn(
                 "h-7 w-7 shadow-none",
@@ -118,21 +134,23 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
             </Button>
           </div>
           <div className="flex gap-2">
-            <Input
-              type="text"
+            <Textarea
               value={comment}
               onChange={(event) => setDraftComment(event.target.value)}
-              placeholder="Add a note (optional)"
-              className="h-8 text-xs"
+              placeholder="Add a note to improve the Sim's evaluation"
+              aria-label="Feedback note"
+              rows={2}
+              className="min-h-0 resize-y py-1.5 text-xs"
             />
             <Button
               type="button"
               size="sm"
-              onClick={() => verdict && handleSubmit(verdict)}
-              disabled={!verdict || submit.isPending}
+              onClick={handleSave}
+              disabled={!canSave}
+              title={canSave ? undefined : "Pick thumbs up or down and write a note"}
               className="shrink-0 text-xs"
             >
-              Save note
+              Save feedback
             </Button>
           </div>
         </div>
@@ -150,7 +168,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
               ) : (
                 <HandThumbDownIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
               )}
-              <span className="min-w-0">
+              <span className="min-w-0 whitespace-pre-wrap">
                 {entry.authorName ? (
                   <span className="font-medium text-gray-700 dark:text-gray-200">
                     {entry.authorName}
@@ -161,6 +179,11 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
                   </span>
                 )}
                 {entry.comment ? ` — ${entry.comment}` : ""}
+                {entry.revision != null && !onRevision(entry, currentRevision) && (
+                  <span className="ml-1.5 text-gray-400 dark:text-gray-500">
+                    on v{entry.revision}
+                  </span>
+                )}
               </span>
             </div>
           ))}

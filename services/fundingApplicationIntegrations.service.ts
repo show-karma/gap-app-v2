@@ -288,6 +288,8 @@ export interface SimocracyEvaluationFeedback {
   authorName?: string | null;
   verdict: SimocracyFeedbackVerdict;
   comment: string | null;
+  // The verdict revision the feedback was left on; null for S-Process subjects.
+  revision?: number | null;
   updatedAt: string;
 }
 
@@ -384,6 +386,8 @@ export async function submitSimocracyFeedback(
     simUri: string;
     verdict: SimocracyFeedbackVerdict;
     comment?: string;
+    // Which version of a milestone verdict the note is about; the latest when omitted.
+    revision?: number;
   }
 ): Promise<SimocracyEvaluationFeedback> {
   try {
@@ -397,5 +401,138 @@ export async function submitSimocracyFeedback(
     return data.feedback;
   } catch (error) {
     throw new Error(httpErrorMessage(error));
+  }
+}
+
+export type SimocracyVerdictStatus = "pending_review" | "publishing" | "published" | "dismissed";
+export type SimocracyVerdictPublishBlocker =
+  | "already_published"
+  | "publishing"
+  | "dismissed"
+  | "not_sim_owner";
+
+export interface SimocracyVerdictFeedbackEntry {
+  authorAddress: string;
+  authorName: string | null;
+  verdict: SimocracyFeedbackVerdict;
+  comment: string | null;
+  revision: number | null;
+  createdAt: string | null;
+}
+
+// A Sim's milestone verdict as Karma holds it: private until a reviewer
+// publishes it, then mirrored into the public comment list.
+export type SimocracyVerdictRevisionOutcome = "current" | "published" | "dismissed" | "superseded";
+
+// One version of a verdict: the current one plus every revision the agent
+// replaced, each with what happened to it and the notes it received.
+export interface SimocracyVerdictRevision {
+  revision: number;
+  text: string;
+  submittedAt: string | null;
+  outcome: SimocracyVerdictRevisionOutcome;
+  publishedAt: string | null;
+  dismissedAt: string | null;
+  dismissedBy: string | null;
+  feedback: SimocracyVerdictFeedbackEntry[];
+}
+
+export interface SimocracyMilestoneVerdictRow {
+  verdictId: string;
+  milestoneUid: string;
+  milestoneTitle: string | null;
+  simUri: string;
+  simName: string;
+  commentUri: string;
+  text: string;
+  status: SimocracyVerdictStatus;
+  revision: number;
+  publishedRevision: number | null;
+  publishedAt: string | null;
+  publishedBy: string | null;
+  dismissedAt: string | null;
+  dismissedBy: string | null;
+  updatedAt: string | null;
+  // The viewer may publish or dismiss this Sim's verdicts, whatever their state.
+  mayAct: boolean;
+  canPublish: boolean;
+  publishBlocker: SimocracyVerdictPublishBlocker | null;
+  feedback: SimocracyVerdictFeedbackEntry[];
+  // Newest first; the first entry is the current revision.
+  revisions: SimocracyVerdictRevision[];
+}
+
+export interface SimocracyMilestoneVerdictsResult {
+  verdicts: SimocracyMilestoneVerdictRow[];
+  // The viewer is not a reviewer/admin/staff of the program.
+  forbidden: boolean;
+}
+
+export async function fetchSimocracyMilestoneVerdicts(
+  referenceNumber: string
+): Promise<SimocracyMilestoneVerdictsResult> {
+  try {
+    const data = await api.get<{ verdicts: SimocracyMilestoneVerdictRow[] }>(
+      SIMOCRACY_ROUTES.applications.SIMOCRACY_MILESTONE_VERDICTS(referenceNumber)
+    );
+    return { verdicts: data?.verdicts ?? [], forbidden: false };
+  } catch (error) {
+    if (error instanceof HttpError && (error.status === 403 || error.status === 401)) {
+      return { verdicts: [], forbidden: true };
+    }
+    throw new Error(httpErrorMessage(error));
+  }
+}
+
+export interface SimocracyVerdictApproval {
+  verdictId: string;
+  commentUri: string;
+  cid: string;
+  publishedRevision: number;
+  alreadyPublished: boolean;
+}
+
+export class SimocracyVerdictApproveError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number | null
+  ) {
+    super(message);
+    this.name = "SimocracyVerdictApproveError";
+  }
+}
+
+const APPROVE_MESSAGES: Record<number, string> = {
+  409: "The agent re-ran this verdict since you opened it. Reload to see the new revision.",
+  422: "This verdict can no longer be published. Check that the milestone is still completed and the Sim is still on the council.",
+  502: "Simocracy did not accept the verdict. Nothing was published; try again in a moment.",
+  503: "The Simocracy council could not be read right now. Try again in a moment.",
+};
+
+export async function approveSimocracyVerdict(
+  referenceNumber: string,
+  verdictId: string,
+  revision: number
+): Promise<SimocracyVerdictApproval> {
+  try {
+    const data = await api.post<SimocracyVerdictApproval>(
+      SIMOCRACY_ROUTES.applications.SIMOCRACY_MILESTONE_VERDICT_APPROVE(referenceNumber, verdictId),
+      { revision }
+    );
+    if (!data?.commentUri) {
+      throw new Error("Empty response publishing the verdict");
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof HttpError) {
+      // A 422 carries the precise reason (milestone reverted, Sim off the
+      // council, credential unreadable…); the fixed texts cover the rest.
+      const serverMessage = error.status === 422 ? httpErrorMessage(error) : null;
+      throw new SimocracyVerdictApproveError(
+        serverMessage || APPROVE_MESSAGES[error.status] || httpErrorMessage(error),
+        error.status
+      );
+    }
+    throw new SimocracyVerdictApproveError(httpErrorMessage(error), null);
   }
 }
