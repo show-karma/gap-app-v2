@@ -20,11 +20,11 @@ import { VerdictCard, type VerdictFeedbackContext } from "./VerdictCard";
 
 type Filter = "all" | "pending" | "published" | "dismissed";
 
-const FILTERS: { key: Filter; label: string }[] = [
+// Dismissal exists on the API but is off the desk for now.
+const FILTERS: { key: Filter; label: string; dot?: string }[] = [
   { key: "all", label: "All" },
-  { key: "pending", label: "Pending review" },
-  { key: "published", label: "Published" },
-  { key: "dismissed", label: "Dismissed" },
+  { key: "pending", label: "Pending human review", dot: "bg-amber-500" },
+  { key: "published", label: "Published", dot: "bg-green-500" },
 ];
 
 type Bucket = Exclude<Filter, "all">;
@@ -95,7 +95,9 @@ const DOT: Record<keyof Counts, string> = {
 };
 
 const CountSummary: FC<{ counts: Counts; compact?: boolean }> = ({ counts, compact = false }) => {
-  const parts = (Object.keys(DOT) as (keyof Counts)[]).filter((key) => counts[key] > 0);
+  const parts = (Object.keys(DOT) as (keyof Counts)[]).filter(
+    (key) => counts[key] > 0 && key !== "dismissed"
+  );
   return (
     <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-normal tabular-nums text-gray-500 dark:text-gray-400">
       {parts.map((key) => (
@@ -140,6 +142,9 @@ const FilterChips: FC<{
               : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-zinc-700"
           )}
         >
+          {filter.dot && (
+            <span aria-hidden="true" className={cn("h-1.5 w-1.5 rounded-full", filter.dot)} />
+          )}
           {filter.label}
           <span className="tabular-nums text-gray-400 dark:text-gray-500">
             {counts[filter.key]}

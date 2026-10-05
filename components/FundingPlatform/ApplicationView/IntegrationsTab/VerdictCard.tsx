@@ -194,21 +194,11 @@ interface ActionsProps {
   /** The version on screen; Publish sends this one. */
   revision: number;
   busy: boolean;
-  dismissing: boolean;
   publishing: boolean;
   onPublish: () => void;
-  onDismiss: () => void;
 }
 
-const Actions: FC<ActionsProps> = ({
-  verdict,
-  revision,
-  busy,
-  dismissing,
-  publishing,
-  onPublish,
-  onDismiss,
-}) => {
+const Actions: FC<ActionsProps> = ({ verdict, revision, busy, publishing, onPublish }) => {
   const viewingLatest = revision === verdict.revision;
   const isLive = revision === verdict.publishedRevision;
   const canPublish = verdict.mayAct && !isLive && verdict.status !== "publishing";
@@ -222,26 +212,7 @@ const Actions: FC<ActionsProps> = ({
       {!verdict.mayAct && (
         <span className="mr-auto text-xs text-gray-500 dark:text-gray-400">{reason}</span>
       )}
-      {viewingLatest && verdict.status === "pending_review" && (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={onDismiss}
-          disabled={!verdict.mayAct || busy}
-          title={reason}
-          className="gap-1.5"
-        >
-          {dismissing ? (
-            <>
-              <Spinner className="h-3.5 w-3.5" />
-              Dismissing…
-            </>
-          ) : (
-            "Dismiss"
-          )}
-        </Button>
-      )}
+      {/* Dismiss stays on the API; the desk hides it for now. */}
       <Button
         type="button"
         size="sm"
@@ -399,10 +370,8 @@ export const VerdictCard: FC<VerdictCardProps> = memo(
                 verdict={verdict}
                 revision={shown.revision}
                 busy={busy}
-                dismissing={dismiss.isPending}
                 publishing={approve.isPending || isPublishing}
                 onPublish={() => setConfirming("publish")}
-                onDismiss={() => setConfirming("dismiss")}
               />
             </div>
           )}

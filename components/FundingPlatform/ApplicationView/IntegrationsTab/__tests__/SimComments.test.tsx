@@ -226,7 +226,7 @@ describe("SimComments", () => {
 
       render(<SimComments referenceNumber="APP-1" review />);
 
-      expect(screen.getByRole("button", { name: "Pending review (1)" })).toHaveAttribute(
+      expect(screen.getByRole("button", { name: "Pending human review (1)" })).toHaveAttribute(
         "aria-pressed",
         "true"
       );
@@ -295,7 +295,6 @@ describe("SimComments", () => {
       render(<SimComments referenceNumber="APP-1" review />);
 
       expect(screen.getByRole("button", { name: /^publish$/i })).toBeDisabled();
-      expect(screen.getByRole("button", { name: /^dismiss$/i })).toBeDisabled();
       expect(screen.getByText(/only this sim's owner/i)).toBeInTheDocument();
     });
 
@@ -436,7 +435,7 @@ describe("SimComments", () => {
 
       render(<SimComments referenceNumber="APP-1" review />);
 
-      expect(screen.getByRole("button", { name: "Pending review (1)" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Pending human review (1)" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Published (1)" })).toBeInTheDocument();
       expect(screen.getByText("Third take.")).toBeInTheDocument();
       expect(screen.getByText("New version · v1 live")).toBeInTheDocument();

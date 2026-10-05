@@ -75,14 +75,11 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
     (entry) => !viewerAddresses.has(entry.authorAddress) || entry !== mine
   );
 
-  const handleSubmit = (nextVerdict: SimocracyFeedbackVerdict) => {
-    setDraftVerdict(nextVerdict);
-    submit.mutate({
-      simUri,
-      verdict: nextVerdict,
-      comment: comment.trim() || undefined,
-      revision: currentRevision,
-    });
+  // A vote without a note tells the Sim nothing, so both go together on Save.
+  const canSave = verdict !== null && comment.trim().length > 0 && !submit.isPending;
+  const handleSave = () => {
+    if (!verdict || !canSave) return;
+    submit.mutate({ simUri, verdict, comment: comment.trim(), revision: currentRevision });
   };
 
   if (!canGiveFeedback && othersFeedback.length === 0) {
@@ -103,7 +100,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
               size="icon-sm"
               aria-label="Represented faithfully"
               aria-pressed={verdict === "up"}
-              onClick={() => handleSubmit("up")}
+              onClick={() => setDraftVerdict("up")}
               disabled={submit.isPending}
               className={cn(
                 "h-7 w-7 shadow-none",
@@ -120,7 +117,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
               size="icon-sm"
               aria-label="Not represented faithfully"
               aria-pressed={verdict === "down"}
-              onClick={() => handleSubmit("down")}
+              onClick={() => setDraftVerdict("down")}
               disabled={submit.isPending}
               className={cn(
                 "h-7 w-7 shadow-none",
@@ -136,18 +133,20 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
             <Textarea
               value={comment}
               onChange={(event) => setDraftComment(event.target.value)}
-              placeholder="Add a note (optional)"
+              placeholder="Add a note to improve the Sim's evaluation"
+              aria-label="Feedback note"
               rows={2}
               className="min-h-0 resize-y py-1.5 text-xs"
             />
             <Button
               type="button"
               size="sm"
-              onClick={() => verdict && handleSubmit(verdict)}
-              disabled={!verdict || submit.isPending}
+              onClick={handleSave}
+              disabled={!canSave}
+              title={canSave ? undefined : "Pick thumbs up or down and write a note"}
               className="shrink-0 text-xs"
             >
-              Save note
+              Save feedback
             </Button>
           </div>
         </div>
