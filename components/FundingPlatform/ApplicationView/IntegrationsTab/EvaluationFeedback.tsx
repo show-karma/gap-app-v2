@@ -30,16 +30,22 @@ interface EvaluationFeedbackProps {
   currentRevision?: number;
 }
 
+function onRevision(entry: SimocracyEvaluationFeedback, revision: number | undefined): boolean {
+  return revision === undefined || entry.revision == null || entry.revision === revision;
+}
+
+// The viewer's own note on the version on screen; notes on other versions
+// are history and never pre-fill the form.
 function ownFeedback(
   all: SimocracyEvaluationFeedback[],
   simUri: string,
-  addresses: Set<string>
+  addresses: Set<string>,
+  revision: number | undefined
 ): SimocracyEvaluationFeedback | undefined {
-  return all.find((entry) => entry.simUri === simUri && addresses.has(entry.authorAddress));
-}
-
-function onRevision(entry: SimocracyEvaluationFeedback, revision: number | undefined): boolean {
-  return revision === undefined || entry.revision == null || entry.revision === revision;
+  return all.find(
+    (entry) =>
+      entry.simUri === simUri && addresses.has(entry.authorAddress) && onRevision(entry, revision)
+  );
 }
 
 export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses: Set<string> }> = ({
@@ -61,9 +67,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
   const forSim = (feedback ?? []).filter(
     (entry) => entry.simUri === simUri && feedbackMatchesSubject(entry, subject)
   );
-  const saved = ownFeedback(forSim, simUri, viewerAddresses);
-  // A vote cast on an earlier version is history, not a pre-filled answer.
-  const mine = saved && onRevision(saved, currentRevision) ? saved : undefined;
+  const mine = ownFeedback(forSim, simUri, viewerAddresses, currentRevision);
 
   // Drafts sit on top of the saved entry; null means "not edited yet".
   const [draftVerdict, setDraftVerdict] = useState<SimocracyFeedbackVerdict | null>(null);

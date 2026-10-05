@@ -8,7 +8,6 @@ vi.mock("@/hooks/useSimocracyMilestoneVerdicts", () => ({
   useSimocracyMilestoneVerdicts: (referenceNumber: string, options?: { enabled?: boolean }) =>
     mockUseSimocracyMilestoneVerdicts(referenceNumber, options),
   useApproveSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
-  useDismissSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useSimocracyComments: (referenceNumber: string) => mockUseSimocracyComments(referenceNumber),

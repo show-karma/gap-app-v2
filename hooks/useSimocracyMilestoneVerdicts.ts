@@ -3,7 +3,6 @@ import toast from "react-hot-toast";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import {
   approveSimocracyVerdict,
-  dismissSimocracyVerdict,
   fetchSimocracyMilestoneVerdicts,
   type SimocracyMilestoneVerdictsResult,
 } from "@/services/fundingApplicationIntegrations.service";
@@ -89,44 +88,6 @@ export function useApproveSimocracyVerdict(referenceNumber: string) {
       queryClient.invalidateQueries({ queryKey: verdictsKey });
       queryClient.refetchQueries({ queryKey: QUERY_KEYS.simocracyComments(referenceNumber) });
       queryClient.invalidateQueries({ queryKey: ["simocracy-feedback", referenceNumber] });
-    },
-  });
-}
-
-// Sets one verdict aside. The card flips to dismissed at once and rolls back
-// if the server refuses (already published, or the agent re-ran it).
-const DISMISS_TOAST_ID = "simocracy-verdict-dismiss";
-
-export function useDismissSimocracyVerdict(referenceNumber: string) {
-  const { queryClient, verdictsKey, patchVerdict } = useVerdictPatcher(referenceNumber);
-
-  return useMutation({
-    mutationFn: (input: { verdictId: string; revision: number }) =>
-      dismissSimocracyVerdict(referenceNumber, input.verdictId, input.revision),
-    onMutate: async ({ verdictId }) => {
-      await queryClient.cancelQueries({ queryKey: verdictsKey });
-      const previous = queryClient.getQueryData<SimocracyMilestoneVerdictsResult>(verdictsKey);
-      patchVerdict(verdictId, {
-        status: "dismissed",
-        canPublish: false,
-        publishBlocker: "dismissed",
-      });
-      return { previous };
-    },
-    onError: (error: Error, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(verdictsKey, context.previous);
-      }
-      toast.error(error.message, { id: DISMISS_TOAST_ID });
-    },
-    onSuccess: (result) => {
-      toast.success(
-        result.alreadyDismissed ? "This verdict was already dismissed" : "Verdict dismissed",
-        { id: DISMISS_TOAST_ID }
-      );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: verdictsKey });
     },
   });
 }

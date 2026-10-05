@@ -509,44 +509,6 @@ const APPROVE_MESSAGES: Record<number, string> = {
   503: "The Simocracy council could not be read right now. Try again in a moment.",
 };
 
-export interface SimocracyVerdictDismissal {
-  verdictId: string;
-  revision: number;
-  status: SimocracyVerdictStatus;
-  alreadyDismissed: boolean;
-}
-
-const DISMISS_MESSAGES: Record<number, string> = {
-  409: "This verdict changed since you opened it (published or re-run). Reload to see its current state.",
-};
-
-// Sets the current revision aside on Karma. Nothing reaches Simocracy; the
-// next revision the agent submits re-opens the verdict.
-export async function dismissSimocracyVerdict(
-  referenceNumber: string,
-  verdictId: string,
-  revision: number
-): Promise<SimocracyVerdictDismissal> {
-  try {
-    const data = await api.post<SimocracyVerdictDismissal>(
-      SIMOCRACY_ROUTES.applications.SIMOCRACY_MILESTONE_VERDICT_DISMISS(referenceNumber, verdictId),
-      { revision }
-    );
-    if (!data?.verdictId) {
-      throw new Error("Empty response dismissing the verdict");
-    }
-    return data;
-  } catch (error) {
-    if (error instanceof HttpError) {
-      throw new SimocracyVerdictApproveError(
-        DISMISS_MESSAGES[error.status] || httpErrorMessage(error),
-        error.status
-      );
-    }
-    throw new SimocracyVerdictApproveError(httpErrorMessage(error), null);
-  }
-}
-
 export async function approveSimocracyVerdict(
   referenceNumber: string,
   verdictId: string,

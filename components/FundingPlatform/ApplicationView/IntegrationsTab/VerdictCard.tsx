@@ -20,13 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  useApproveSimocracyVerdict,
-  useDismissSimocracyVerdict,
-} from "@/hooks/useSimocracyMilestoneVerdicts";
+import { useApproveSimocracyVerdict } from "@/hooks/useSimocracyMilestoneVerdicts";
 import type {
   SimocracyMilestoneVerdictRow,
-  SimocracyVerdictPublishBlocker,
   SimocracyVerdictRevision,
 } from "@/services/fundingApplicationIntegrations.service";
 import { shortAddress } from "@/utilities/shortAddress";
@@ -40,12 +36,7 @@ export interface VerdictFeedbackContext {
   canGiveFeedback: (simUri: string) => boolean;
 }
 
-const BLOCKER_REASON: Record<SimocracyVerdictPublishBlocker, string> = {
-  already_published: "Already published",
-  publishing: "Another reviewer is publishing this verdict",
-  dismissed: "Dismissed",
-  not_sim_owner: "Only this Sim's owner, a community admin or staff can publish or dismiss it",
-};
+const NOT_SIM_OWNER_REASON = "Only this Sim's owner, a community admin or staff can publish it";
 
 // Long verdicts collapse to a few lines; the toggle keeps a six-milestone
 // application scannable without hiding anything.
@@ -203,7 +194,7 @@ const Actions: FC<ActionsProps> = ({ verdict, revision, busy, publishing, onPubl
   const isLive = revision === verdict.publishedRevision;
   const canPublish = verdict.mayAct && !isLive && verdict.status !== "publishing";
   const reason = !verdict.mayAct
-    ? BLOCKER_REASON.not_sim_owner
+    ? NOT_SIM_OWNER_REASON
     : isLive
       ? "This version is the one live on Simocracy"
       : undefined;
@@ -212,7 +203,6 @@ const Actions: FC<ActionsProps> = ({ verdict, revision, busy, publishing, onPubl
       {!verdict.mayAct && (
         <span className="mr-auto text-xs text-gray-500 dark:text-gray-400">{reason}</span>
       )}
-      {/* Dismiss stays on the API; the desk hides it for now. */}
       <Button
         type="button"
         size="sm"
@@ -262,30 +252,25 @@ const CARD = "rounded-lg border border-gray-200 bg-white dark:border-zinc-700 da
 
 export const VerdictCard: FC<VerdictCardProps> = memo(
   ({ verdict, avatar, referenceNumber, feedback, openOn }) => {
-    const [confirming, setConfirming] = useState<"publish" | "dismiss" | null>(null);
+    const [confirming, setConfirming] = useState(false);
     const [viewing, setViewing] = useState<number>(openOn ?? verdict.revision);
     const [expanded, setExpanded] = useState(false);
     const approve = useApproveSimocracyVerdict(referenceNumber);
-    const dismiss = useDismissSimocracyVerdict(referenceNumber);
 
     const shown =
       verdict.revisions.find((revision) => revision.revision === viewing) ?? verdict.revisions[0];
     const viewingCurrent = shown.revision === verdict.revision;
     const isPublishing = verdict.status === "publishing";
     const pending = verdict.status === "pending_review" || isPublishing;
-    const busy = approve.isPending || dismiss.isPending || isPublishing;
+    const busy = approve.isPending || isPublishing;
     // Publish is offered on any version that is not the live one.
     const showActions = pending || shown.revision !== verdict.publishedRevision;
     const isLong = shown.text.length > CLAMP_MIN_CHARS;
     const bodyId = `verdict-${verdict.verdictId}-v${shown.revision}`;
 
-    const act = (kind: "publish" | "dismiss") => {
-      setConfirming(null);
-      if (kind === "publish") {
-        approve.mutate({ verdictId: verdict.verdictId, revision: shown.revision });
-      } else {
-        dismiss.mutate({ verdictId: verdict.verdictId, revision: verdict.revision });
-      }
+    const publish = () => {
+      setConfirming(false);
+      approve.mutate({ verdictId: verdict.verdictId, revision: shown.revision });
     };
 
     return (
@@ -371,16 +356,13 @@ export const VerdictCard: FC<VerdictCardProps> = memo(
                 revision={shown.revision}
                 busy={busy}
                 publishing={approve.isPending || isPublishing}
-                onPublish={() => setConfirming("publish")}
+                onPublish={() => setConfirming(true)}
               />
             </div>
           )}
         </footer>
 
-        <Dialog
-          open={confirming === "publish"}
-          onOpenChange={(open) => !open && setConfirming(null)}
-        >
+        <Dialog open={confirming} onOpenChange={setConfirming}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Publish v{shown.revision} of this Sim verdict?</DialogTitle>
@@ -394,35 +376,11 @@ export const VerdictCard: FC<VerdictCardProps> = memo(
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setConfirming(null)}>
+              <Button type="button" variant="outline" onClick={() => setConfirming(false)}>
                 Cancel
               </Button>
-              <Button type="button" onClick={() => act("publish")}>
+              <Button type="button" onClick={publish}>
                 Yes, publish
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog
-          open={confirming === "dismiss"}
-          onOpenChange={(open) => !open && setConfirming(null)}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Dismiss this Sim verdict?</DialogTitle>
-              <DialogDescription>
-                v{verdict.revision} of {verdict.simName}&apos;s evaluation is set aside and never
-                reaches Simocracy. Reviewers still see it here as dismissed. If the Sim runs again,
-                the new version comes back for review.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setConfirming(null)}>
-                Cancel
-              </Button>
-              <Button type="button" variant="destructive" onClick={() => act("dismiss")}>
-                Yes, dismiss
               </Button>
             </DialogFooter>
           </DialogContent>

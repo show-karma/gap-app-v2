@@ -4,19 +4,15 @@ import type { ReactNode } from "react";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import {
   useApproveSimocracyVerdict,
-  useDismissSimocracyVerdict,
   useSimocracyMilestoneVerdicts,
 } from "@/hooks/useSimocracyMilestoneVerdicts";
 
 const mockFetch = vi.fn();
 const mockApprove = vi.fn();
-const mockDismiss = vi.fn();
 vi.mock("@/services/fundingApplicationIntegrations.service", () => ({
   fetchSimocracyMilestoneVerdicts: (ref: string) => mockFetch(ref),
   approveSimocracyVerdict: (ref: string, id: string, revision: number) =>
     mockApprove(ref, id, revision),
-  dismissSimocracyVerdict: (ref: string, id: string, revision: number) =>
-    mockDismiss(ref, id, revision),
 }));
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), loading: vi.fn() }));
 vi.mock("react-hot-toast", () => ({ default: toast }));
@@ -113,34 +109,6 @@ describe("useSimocracyMilestoneVerdicts", () => {
     expect(refetch).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.simocracyComments("APP-1"),
     });
-  });
-
-  it("flips the card to dismissed and rolls back when the server refuses", async () => {
-    const key = QUERY_KEYS.simocracyMilestoneVerdicts("APP-1");
-    client.setQueryData(key, { verdicts: [verdict()], forbidden: false });
-    mockDismiss.mockResolvedValue({
-      verdictId: "v1",
-      revision: 2,
-      status: "dismissed",
-      alreadyDismissed: false,
-    });
-
-    const { result } = renderHook(() => useDismissSimocracyVerdict("APP-1"), { wrapper });
-    act(() => result.current.mutate({ verdictId: "v1", revision: 2 }));
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockDismiss).toHaveBeenCalledWith("APP-1", "v1", 2);
-    expect(toast.success).toHaveBeenCalledWith("Verdict dismissed", expect.anything());
-
-    client.setQueryData(key, { verdicts: [verdict()], forbidden: false });
-    mockDismiss.mockRejectedValue(new Error("This verdict changed since you opened it."));
-    const failing = renderHook(() => useDismissSimocracyVerdict("APP-1"), { wrapper });
-    act(() => failing.result.current.mutate({ verdictId: "v1", revision: 2 }));
-
-    await waitFor(() => expect(failing.result.current.isError).toBe(true));
-    expect(client.getQueryData<{ verdicts: { status: string }[] }>(key)?.verdicts[0].status).toBe(
-      "pending_review"
-    );
   });
 
   it("rolls the card back and shows the server's reason when publishing fails", async () => {
