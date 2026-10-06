@@ -403,6 +403,7 @@ describe("InboxMilestoneDetail", () => {
         name: "Yiannis Psarras",
         email: null,
         telegram: null,
+        slack: null,
         address: null,
         role: "Application contact",
       },

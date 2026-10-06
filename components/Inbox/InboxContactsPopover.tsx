@@ -1,9 +1,9 @@
 "use client";
 
 import {
+  ChatBubbleLeftRightIcon,
   ChevronDownIcon,
   EnvelopeIcon,
-  IdentificationIcon,
   PaperAirplaneIcon,
   UsersIcon,
 } from "@heroicons/react/20/solid";
@@ -12,14 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { InboxContact } from "@/hooks/useInboxContacts";
 import { telegramHref } from "@/utilities/applicationContacts";
-import { shortAddress } from "@/utilities/shortAddress";
 
 const channelClass =
   "inline-flex max-w-full items-center gap-1.5 text-gray-600 transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:text-gray-300 dark:hover:text-primary-300";
 
 const ContactRow: FC<{ contact: InboxContact }> = ({ contact }) => {
   const tg = contact.telegram ? telegramHref(contact.telegram) : null;
-  const hasChannel = contact.email || contact.telegram || contact.address;
+  const hasChannel = contact.email || contact.telegram || contact.slack;
   return (
     <div className="flex flex-col gap-1 py-2">
       <div className="flex flex-wrap items-center gap-1.5">
@@ -51,12 +50,23 @@ const ContactRow: FC<{ contact: InboxContact }> = ({ contact }) => {
               <span className="truncate">{contact.telegram}</span>
             </span>
           ))}
-        {contact.address && (
-          <span className="inline-flex max-w-full items-center gap-1.5 font-mono text-gray-500 dark:text-gray-400">
-            <IdentificationIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{shortAddress(contact.address)}</span>
-          </span>
-        )}
+        {contact.slack &&
+          (/^https?:\/\//i.test(contact.slack) ? (
+            <a
+              href={contact.slack}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={channelClass}
+            >
+              <ChatBubbleLeftRightIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">Slack</span>
+            </a>
+          ) : (
+            <span className="inline-flex max-w-full items-center gap-1.5 text-gray-500 dark:text-gray-400">
+              <ChatBubbleLeftRightIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">Slack: {contact.slack}</span>
+            </span>
+          ))}
         {!hasChannel && <span className="text-gray-400 dark:text-gray-500">No contact info</span>}
       </div>
     </div>

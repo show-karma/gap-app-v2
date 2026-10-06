@@ -9,6 +9,7 @@ export interface InboxContact {
   name: string;
   email: string | null;
   telegram: string | null;
+  slack: string | null;
   address: string | null;
   role?: string;
 }
@@ -60,6 +61,7 @@ export function useInboxContacts(opts: {
           name: profile?.name?.trim() || "",
           email: profile?.email?.trim() || null,
           telegram: null,
+          slack: null,
           address,
           role: address === ownerAddress ? "Owner" : "Member",
         };
@@ -79,6 +81,7 @@ export function useInboxContacts(opts: {
             name: applicationName || "Applicant",
             email: channels.email || applicant?.email || null,
             telegram: channels.telegram,
+            slack: channels.slack,
             address: applicant?.address ?? null,
             role: "Application contact",
           }
@@ -91,6 +94,7 @@ export function useInboxContacts(opts: {
           name: c.name,
           email: c.email || null,
           telegram: null,
+          slack: null,
           address: c.address || null,
           role: c.role,
         })),
