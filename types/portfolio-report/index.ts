@@ -100,6 +100,8 @@ export interface PortfolioReport {
    * inside a sandboxed frame, format-agnostic by design.
    */
   content: string;
+  /** External HTML is rendered in an opaque-origin, script-free sandbox. */
+  contentFormat?: "generated-html" | "external-html";
   dataSnapshot: Record<string, unknown>;
   modelId: string;
   tokenUsage: TokenUsage | null;

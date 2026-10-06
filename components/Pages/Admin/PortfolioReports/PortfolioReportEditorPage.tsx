@@ -129,6 +129,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const generating = isReportGenerating(report);
   const failed = report.status === "failed";
+  const isExternal = report.contentFormat === "external-html";
 
   // Drafts are compared against the snapshot taken when the dialog opened, not
   // against live `report` — so a background refresh is never mistaken for a
@@ -352,32 +353,38 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
             <Pencil className="mr-1 h-3 w-3" />
             Edit
           </Button>
-          <ExportDataMenu communitySlug={community.details.slug} reportId={reportId} />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.print()}
-            disabled={generating || !report.content}
-            title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
-          >
-            <Download className="mr-1 h-3 w-3" />
-            Export PDF
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowRegenerateDialog(true)}
-            disabled={regenerateMutation.isPending || generating}
-          >
-            <RefreshCw className="mr-1 h-3 w-3" />
-            {regenerateMutation.isPending
-              ? "Starting…"
-              : generating
-                ? "Generating…"
-                : failed
-                  ? "Retry"
-                  : "Regenerate"}
-          </Button>
+          {!isExternal ? (
+            <ExportDataMenu communitySlug={community.details.slug} reportId={reportId} />
+          ) : null}
+          {!isExternal ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              disabled={generating || !report.content}
+              title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
+            >
+              <Download className="mr-1 h-3 w-3" />
+              Export PDF
+            </Button>
+          ) : null}
+          {!isExternal ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowRegenerateDialog(true)}
+              disabled={regenerateMutation.isPending || generating}
+            >
+              <RefreshCw className="mr-1 h-3 w-3" />
+              {regenerateMutation.isPending
+                ? "Starting…"
+                : generating
+                  ? "Generating…"
+                  : failed
+                    ? "Retry"
+                    : "Regenerate"}
+            </Button>
+          ) : null}
           {report.status === "draft" ? (
             <Button size="sm" onClick={handlePublish} disabled={publishMutation.isPending}>
               <Eye className="mr-1 h-3 w-3" />
@@ -420,7 +427,11 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       <div className="flex-1 p-4">
         {report.content ? (
           <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
-            <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+            <HtmlReportFrame
+              html={report.content}
+              title={`Portfolio report — ${runDateLabel}`}
+              isolated={isExternal}
+            />
             <ReportChartsSection communitySlug={slug} reportId={report.id} authenticated />
           </div>
         ) : (

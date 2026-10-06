@@ -20,7 +20,11 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 vi.mock("@/components/Pages/Community/PortfolioReports/HtmlReportFrame", () => ({
-  HtmlReportFrame: ({ html }: { html?: string }) => <div data-testid="report-frame">{html}</div>,
+  HtmlReportFrame: ({ html, isolated }: { html?: string; isolated?: boolean }) => (
+    <div data-testid="report-frame" data-isolated={isolated}>
+      {html}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/Pages/Community/PortfolioReports/ReportChartsSection", () => ({
@@ -79,6 +83,21 @@ describe("PortfolioReportEditorPage", () => {
     mockUseUnpublishReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseRegenerateReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseUpdateReportContent.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
+  });
+
+  it("isolates imported reports and hides unsupported generation/export actions", () => {
+    mockUsePortfolioReport.mockReturnValue({
+      data: { ...baseReport, status: "draft", contentFormat: "external-html" },
+      isLoading: false,
+    } as ReturnType<typeof usePortfolioReport>);
+
+    render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
+
+    expect(screen.getByTestId("report-frame")).toHaveAttribute("data-isolated", "true");
+    expect(screen.queryByTestId("export-data-menu")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Export PDF/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Regenerate/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeEnabled();
   });
 
   describe("data export", () => {

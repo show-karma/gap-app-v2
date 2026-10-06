@@ -53,6 +53,7 @@ export function PortfolioReportDocumentView({
   canExportData = false,
 }: Props) {
   const runDateLabel = formatRunDate(runDate).label;
+  const isExternal = report.contentFormat === "external-html";
 
   return (
     <>
@@ -84,24 +85,30 @@ export function PortfolioReportDocumentView({
             </ol>
           </nav>
           <div className="flex flex-wrap items-center gap-2">
-            {canExportData ? (
+            {canExportData && !isExternal ? (
               <ExportDataMenu communitySlug={community.details.slug} reportId={report.id} />
             ) : null}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.print()}
-              disabled={!report.content}
-              title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
-            >
-              <Download className="mr-1 h-3 w-3" />
-              Export PDF
-            </Button>
+            {!isExternal ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                disabled={!report.content}
+                title="Tip: turn off 'Headers and footers' in the print dialog for a cleaner PDF"
+              >
+                <Download className="mr-1 h-3 w-3" />
+                Export PDF
+              </Button>
+            ) : null}
           </div>
         </div>
 
         <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-[#f5f6f8] p-4 sm:p-6">
-          <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+          <HtmlReportFrame
+            html={report.content}
+            title={`Portfolio report — ${runDateLabel}`}
+            isolated={isExternal}
+          />
 
           <ReportChartsSection
             communitySlug={community.details.slug}
@@ -111,7 +118,9 @@ export function PortfolioReportDocumentView({
         </div>
 
         <footer className="report-print-hide mt-12 border-t border-zinc-200 pt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
-          <span>Generated {formatDate(report.generatedAt)}</span>
+          <span>
+            {isExternal ? "Imported" : "Generated"} {formatDate(report.generatedAt)}
+          </span>
           <span className="mx-2">·</span>
           <span>{report.modelId}</span>
           {report.publishedAt ? (

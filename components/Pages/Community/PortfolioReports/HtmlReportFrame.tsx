@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { SandboxedReportFrame } from "./SandboxedReportFrame";
 
 interface Props {
   html: string;
   /** Accessible label, mirrors the prior iframe `title` prop. */
   title: string;
+  isolated?: boolean;
 }
 
 /**
@@ -24,7 +26,15 @@ interface Props {
  * markup that could land in `report.content` via the admin Edit
  * textarea (see sanitizeFragment).
  */
-export function HtmlReportFrame({ html, title }: Props) {
+export function HtmlReportFrame({ html, title, isolated = false }: Props) {
+  return isolated ? (
+    <SandboxedReportFrame html={html} title={title} />
+  ) : (
+    <GeneratedReportFrame html={html} title={title} />
+  );
+}
+
+function GeneratedReportFrame({ html, title }: Props) {
   const hostRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
