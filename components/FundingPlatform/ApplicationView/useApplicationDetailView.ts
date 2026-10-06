@@ -63,9 +63,8 @@ interface UseApplicationDetailViewParams {
   communityId: string;
 }
 
-// UI-only check. The backend API MUST enforce these same restrictions to
-// prevent unauthorized edits (it should reject edits for approved applications
-// regardless of client-side checks).
+// Mirrors the backend rule: applicants cannot edit approved applications,
+// community admins can.
 const isEditableStatus = (app: IFundingApplication) =>
   !["approved"].includes(app.status.toLowerCase());
 
@@ -292,7 +291,7 @@ export function useApplicationDetailView({
 
   const handleDeleteCancel = () => setIsDeleteModalOpen(false);
 
-  const canEditApplication = !!application && isEditableStatus(application);
+  const canEditApplication = !!application && (isAdmin || isEditableStatus(application));
 
   // Auto-open edit modal when ?edit=true is present in URL
   useEffect(() => {
