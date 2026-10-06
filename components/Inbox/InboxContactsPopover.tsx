@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChatBubbleLeftRightIcon,
   ChevronDownIcon,
   EnvelopeIcon,
   PaperAirplaneIcon,
@@ -17,7 +18,7 @@ const channelClass =
 
 const ContactRow: FC<{ contact: InboxContact }> = ({ contact }) => {
   const tg = contact.telegram ? telegramHref(contact.telegram) : null;
-  const hasChannel = contact.email || contact.telegram;
+  const hasChannel = contact.email || contact.telegram || contact.slack;
   return (
     <div className="flex flex-col gap-1 py-2">
       <div className="flex flex-wrap items-center gap-1.5">
@@ -47,6 +48,23 @@ const ContactRow: FC<{ contact: InboxContact }> = ({ contact }) => {
             <span className="inline-flex max-w-full items-center gap-1.5 text-gray-500 dark:text-gray-400">
               <PaperAirplaneIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{contact.telegram}</span>
+            </span>
+          ))}
+        {contact.slack &&
+          (/^https?:\/\//i.test(contact.slack) ? (
+            <a
+              href={contact.slack}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={channelClass}
+            >
+              <ChatBubbleLeftRightIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">Slack</span>
+            </a>
+          ) : (
+            <span className="inline-flex max-w-full items-center gap-1.5 text-gray-500 dark:text-gray-400">
+              <ChatBubbleLeftRightIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">Slack: {contact.slack}</span>
             </span>
           ))}
         {!hasChannel && <span className="text-gray-400 dark:text-gray-500">No contact info</span>}
