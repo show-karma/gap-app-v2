@@ -26,9 +26,9 @@ type ExplorerNavOverride = {
   readonly tabLabels?: Readonly<Partial<Record<CommunityNavItemId, string>>>;
   /**
    * Navigation item id -> replacement destination, as the host-relative path a
-   * whitelabel visitor sees. For a tab the tenant has renamed: a URL that still
-   * says `browse-applications` contradicts the tab that led to it, and the
-   * destination is what gets copied out of the address bar and shared.
+   * whitelabel visitor sees. For a tab the tenant has renamed: a URL that
+   * contradicts the tab that led to it is what gets copied out of the address
+   * bar and shared.
    *
    * These are `WHITELABEL_ROUTE_ALIASES` keys, which only resolve on a tenant
    * host — which is also why they are bare paths rather than `PAGES` builders:
@@ -54,15 +54,14 @@ type ExplorerNavOverride = {
 export const EXPLORER_NAV_OVERRIDES: Readonly<Partial<Record<string, ExplorerNavOverride>>> = {
   filecoin: {
     // Commitments & Disbursements and every report type are in the filpgf.io
-    // navbar under Funding and Reports. Funded projects are reachable from the
-    // navbar's Funding -> Grants entries, though those are program-scoped —
-    // the unfiltered list is only linked from filpgf.io itself.
-    hiddenTabs: ["community-projects", "reports", "financials"],
-    // This tenant funds projects, not applications, and says so everywhere: the
-    // landing site's "Projects Explorer" (filecoin-grants `src/data/nav.ts`),
-    // the tenant navbar's entry of the same name, and this tab all arrive at
-    // the same listing, under the same name and at the same URL.
-    tabLabels: { "browse-applications": "Browse Projects" },
-    tabPaths: { "browse-applications": "/browse-projects" },
+    // navbar under Funding and Reports.
+    hiddenTabs: ["reports", "financials"],
+    // This tenant funds projects and says so everywhere: the landing site's
+    // "Projects Explorer" (filecoin-grants `src/data/nav.ts`), the tenant
+    // navbar's entry of the same name, and this tab all arrive at the funded
+    // projects listing, under the same name and at the same URL. Applications
+    // keep their own tab under the product's name for them.
+    tabLabels: { "community-projects": "Browse Projects" },
+    tabPaths: { "community-projects": "/browse-projects" },
   },
 };

@@ -45,9 +45,9 @@ vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
   EXPLORER_NAV_OVERRIDES: {
     filecoin: {
-      hiddenTabs: ["community-projects", "reports", "financials"],
-      tabLabels: { "browse-applications": "Browse Projects" },
-      tabPaths: { "browse-applications": "/browse-projects" },
+      hiddenTabs: ["reports", "financials"],
+      tabLabels: { "community-projects": "Browse Projects" },
+      tabPaths: { "community-projects": "/browse-projects" },
     },
   },
 }));
@@ -166,7 +166,6 @@ describe("CommunityPageNavigator", () => {
       it("should hide the tabs listed in hiddenTabs", () => {
         renderFilecoin();
 
-        expect(screen.queryByText("View funded projects")).not.toBeInTheDocument();
         expect(screen.queryByText("Reports")).not.toBeInTheDocument();
         expect(screen.queryByText("Commitments & Disbursements")).not.toBeInTheDocument();
       });
@@ -176,23 +175,35 @@ describe("CommunityPageNavigator", () => {
 
         expect(screen.getAllByRole("link").map((link) => link.textContent?.trim())).toEqual([
           "Funding opportunities",
+          "Browse applications",
           "Browse Projects",
           "Milestone updates",
           "Impact",
         ]);
       });
 
-      it("should apply the override label to the browse applications tab", () => {
+      it("should apply the override label to the funded projects tab", () => {
         renderFilecoin();
 
         expect(screen.getByText("Browse Projects")).toBeInTheDocument();
-        expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
+        expect(screen.queryByText("View funded projects")).not.toBeInTheDocument();
       });
 
-      // A renamed tab that lands on /browse-applications contradicts itself in
-      // the address bar, and that URL is what gets shared. The tenant's own
-      // name for the listing is the URL too — the whitelabel rewrite resolves
-      // /browse-projects back onto the same route (WHITELABEL_ROUTE_ALIASES).
+      // Each tab is named for what it lists: the applications tab keeps the
+      // product's name, so a visitor cannot land on APP-xxx rows under a tab
+      // that promised projects.
+      it("should keep the applications tab under its own name", () => {
+        renderFilecoin();
+
+        expect(screen.getByText("Browse applications").closest("a")).toHaveAttribute(
+          "href",
+          "/browse-applications"
+        );
+      });
+
+      // The tenant's own name for the listing is the URL too — the whitelabel
+      // rewrite resolves /browse-projects back onto the same route
+      // (WHITELABEL_ROUTE_ALIASES).
       it("should send the renamed tab to the tenant's own URL for the listing", () => {
         renderFilecoin();
 
@@ -211,9 +222,15 @@ describe("CommunityPageNavigator", () => {
       });
 
       it("should keep the renamed tab highlighted on the underlying path", () => {
-        renderFilecoin({ pathname: "/browse-applications" });
+        renderFilecoin({ pathname: "/projects" });
 
         expect(activeTabLabels()).toEqual(["Browse Projects"]);
+      });
+
+      it("should highlight the applications tab, not the renamed one, on its own path", () => {
+        renderFilecoin({ pathname: "/browse-applications" });
+
+        expect(activeTabLabels()).toEqual(["Browse applications"]);
       });
 
       it("should skip the published-reports query when the reports tab is hidden", () => {
@@ -232,21 +249,21 @@ describe("CommunityPageNavigator", () => {
         expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
       });
 
-      it("should keep the default browse-applications label", () => {
+      it("should keep the default funded-projects label", () => {
         renderFilecoin({ isWhitelabel: false });
 
-        expect(screen.getByText("Browse applications")).toBeInTheDocument();
+        expect(screen.getByText("View funded projects")).toBeInTheDocument();
         expect(screen.queryByText("Browse Projects")).not.toBeInTheDocument();
       });
 
       // The alias only resolves on a tenant host, so linking it from karmahq.org
       // would be a 404 with a tab bar around it.
-      it("should keep the default browse-applications destination", () => {
+      it("should keep the default funded-projects destination", () => {
         renderFilecoin({ isWhitelabel: false });
 
-        expect(screen.getByText("Browse applications").closest("a")).toHaveAttribute(
+        expect(screen.getByText("View funded projects").closest("a")).toHaveAttribute(
           "href",
-          "/community/filecoin/browse-applications"
+          "/community/filecoin/projects"
         );
       });
 
@@ -369,9 +386,10 @@ describe("CommunityPageNavigator", () => {
 
   describe("No Active Tab", () => {
     // Highlighting a tab the reader is not on is worse than highlighting none:
-    // on a whitelabel filecoin host /projects is hidden, so its own URL matches
-    // nothing — the bar must stay unhighlighted rather than claim another tab.
-    it.each(["/community/filecoin", "/community/filecoin/projects"])(
+    // on a whitelabel filecoin host Reports and Commitments & Disbursements are
+    // hidden, so their own URLs match nothing — the bar must stay unhighlighted
+    // rather than claim another tab.
+    it.each(["/community/filecoin/reports", "/community/filecoin/financials"])(
       "should highlight nothing on %s, where no visible tab matches",
       (pathname) => {
         mockUseWhitelabel.mockReturnValue({

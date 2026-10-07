@@ -63,18 +63,18 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     id: "browse-applications",
     path: (communityId: string) => PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId),
     Icon: FileSearch,
-    // "browse-projects" is the same page under a tenant's own name for it (see
-    // EXPLORER_NAV_OVERRIDES.tabPaths); without it the tab a visitor just
-    // followed goes dark on arrival.
-    isActive: (segment: string) =>
-      segment === "browse-applications" || segment === "browse-projects",
+    isActive: (segment: string) => segment === "browse-applications",
   },
   {
     id: "community-projects",
     path: (communityId: string) => PAGES.COMMUNITY.PROJECTS(communityId),
     Icon: SquareUser,
     // The community root renders the funded-projects list, so "" counts too.
-    isActive: (segment: string) => segment === "" || segment === "projects",
+    // "browse-projects" is the same page under a tenant's own name for it (see
+    // EXPLORER_NAV_OVERRIDES.tabPaths); without it the tab a visitor just
+    // followed goes dark on arrival.
+    isActive: (segment: string) =>
+      segment === "" || segment === "projects" || segment === "browse-projects",
   },
   {
     id: "milestone-updates",

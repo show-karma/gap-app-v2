@@ -220,12 +220,10 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
           // Whitelabel-only navbar, so the clean paths below are safe and save
           // the /community/filecoin/* -> / redirect hop.
           //
-          // "Projects Explorer" is the explorer tab this tenant calls "Browse
-          // Projects" — one listing, reached by the same URL from the landing
-          // site's header, this menu and that tab. /browse-projects is a
-          // whitelabel alias of /browse-applications (WHITELABEL_ROUTE_ALIASES);
-          // it is NOT /projects, which is the funded-projects listing this
-          // tenant hides from its tab bar.
+          // "Projects Explorer" is the funded-projects tab this tenant calls
+          // "Browse Projects" — one listing, reached by the same URL from the
+          // landing site's header, this menu and that tab. /browse-projects is
+          // a whitelabel alias of /projects (WHITELABEL_ROUTE_ALIASES).
           { label: "Projects Explorer", href: "/browse-projects" },
           { label: COMMITMENTS_AND_DISBURSEMENTS, href: "/financials" },
           {

@@ -16,9 +16,8 @@
  * `from` is the clean path a visitor sees and shares; `to` is the community
  * sub-route that serves it, with no redirect and no second copy of the page.
  * A tenant whose vocabulary differs from the product's needs its own URL, not
- * only its own tab label — a link to "Projects Explorer" that lands on
- * `/browse-applications` reads as the wrong page before it has finished
- * loading.
+ * only its own tab label — a tab called "Browse Projects" should land on a URL
+ * that says so, and the alias is what makes the two agree.
  */
 type WhitelabelRouteAlias = {
   readonly from: string;
@@ -35,23 +34,22 @@ type WhitelabelRouteAlias = {
  * Clean-URL aliases, applied on whitelabel hosts only.
  *
  * Aliasing rather than a second route keeps one listing, one component and one
- * set of tests, and leaves `/browse-applications` working for everyone who
- * already has that link.
+ * set of tests, and leaves `/projects` working for everyone who already has
+ * that link.
  *
  * Not applied on karmahq.org, deliberately: there the same alias would put a
  * second URL in front of one page for every community at once, which is a
  * duplicate for search engines and a second answer to "where does this live".
  */
 export const WHITELABEL_ROUTE_ALIASES: readonly WhitelabelRouteAlias[] = [
-  { from: "/browse-projects", to: "/browse-applications", communities: ["filecoin"] },
+  { from: "/browse-projects", to: "/projects", communities: ["filecoin"] },
 ];
 
 /**
  * Resolves a whitelabel clean path through {@link WHITELABEL_ROUTE_ALIASES} for
  * the community whose host it arrived on, sub-paths included
- * (`/browse-projects/APP-1` -> `/browse-applications/APP-1`), so an alias
- * covers a section rather than a single URL. Returns the path unchanged when
- * nothing matches.
+ * (`/browse-projects/x` -> `/projects/x`), so an alias covers a section rather
+ * than a single URL. Returns the path unchanged when nothing matches.
  */
 export function resolveWhitelabelRouteAlias(path: string, communitySlug: string): string {
   for (const { from, to, communities } of WHITELABEL_ROUTE_ALIASES) {
@@ -66,11 +64,11 @@ export function resolveWhitelabelRouteAlias(path: string, communitySlug: string)
  * The inverse: the alias a whitelabel link should point at, given the path the
  * app built.
  *
- * Components address this listing as `PAGES.COMMUNITY.BROWSE_APPLICATIONS`, and
- * a tenant that renamed it should not have to be known to each of them. Turning
- * the link on the way out is what keeps a rename to one URL rather than two —
+ * Components address this listing as `PAGES.COMMUNITY.PROJECTS`, and a tenant
+ * that renamed it should not have to be known to each of them. Turning the
+ * link on the way out is what keeps a rename to one URL rather than two —
  * without it a visitor reaches the tab at `/browse-projects` and the very next
- * click puts `/browse-applications` in their history for the same screen.
+ * page of results puts `/projects?page=2` in their history for the same screen.
  *
  * Only ever called with an already-stripped whitelabel path (see the `Link`
  * component); on the canonical host the alias does not resolve, so nothing may

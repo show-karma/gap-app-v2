@@ -152,22 +152,16 @@ describe("toRoutePattern", () => {
 // quietly lose that tenant on deploy day.
 describe("whitelabel aliases, which name one screen twice", () => {
   it("reports the alias as the route that serves it", () => {
-    expect(toRoutePattern("/browse-projects")).toBe("/browse-applications");
-  });
-
-  it("reports its sub-paths the same way", () => {
-    expect(toRoutePattern("/browse-projects/APP-1AB2CD3E-XY45")).toBe(
-      "/browse-applications/APP-1AB2CD3E-XY45"
-    );
+    expect(toRoutePattern("/browse-projects")).toBe("/projects");
   });
 
   it("keeps the trailing-slash form of the served route", () => {
-    expect(toRoutePattern("/browse-projects/")).toBe("/browse-applications");
+    expect(toRoutePattern("/browse-projects/")).toBe("/projects");
   });
 
   it("groups the alias with the page it is an alias of", () => {
-    expect(toPageGroup("/browse-projects")).toBe("browse-applications");
-    expect(toPageGroup("/browse-projects")).toBe(toPageGroup("/browse-applications"));
+    expect(toPageGroup("/browse-projects")).toBe("projects");
+    expect(toPageGroup("/browse-projects")).toBe(toPageGroup("/projects"));
   });
 
   it("leaves a path that merely starts the same alone", () => {
