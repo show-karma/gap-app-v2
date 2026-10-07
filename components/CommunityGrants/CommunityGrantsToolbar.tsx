@@ -2,8 +2,12 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useProjectFilters } from "@/hooks/useProjectFilters";
+import { useTracksForCommunity } from "@/hooks/useTracks";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
+import { hasCommunityTrackFacet } from "@/utilities/community-flags";
 import { parseCommunityProjectsPage } from "@/utilities/queries/v2/communityProjectsRequest";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
+import { CommunityTrackFilter } from "../Pages/Communities/Impact/CommunityTrackFilter";
 import { ProgramFilter } from "../Pages/Communities/Impact/ProgramFilter";
 import { TrackFilter } from "../Pages/Communities/Impact/TrackFilter";
 import { CategoryFilter } from "./CategoryFilter";
@@ -68,6 +72,13 @@ export function CommunityGrantsToolbar({
   const searchParams = useSearchParams();
   const page = parseCommunityProjectsPage({ page: searchParams.get("page") ?? undefined });
 
+  const { isWhitelabel } = useWhitelabel();
+  const communityTrackFacet = hasCommunityTrackFacet(communityId, isWhitelabel);
+  // Empty uid disables the query where the facet is off.
+  const { data: communityTracks = [] } = useTracksForCommunity(
+    communityTrackFacet ? communityUid : ""
+  );
+
   useEffect(() => {
     onFiltersChange({
       categories: selectedCategories,
@@ -90,9 +101,16 @@ export function CommunityGrantsToolbar({
   return (
     <div className="flex items-stretch sm:items-end gap-x-3 flex-wrap gap-y-3 w-full">
       <ProgramFilter onChange={changeProgramId} />
+      {communityTrackFacet && communityTracks.length > 0 ? (
+        <CommunityTrackFilter
+          tracks={communityTracks}
+          selectedTrackId={selectedTrackIds?.[0] ?? null}
+          onChange={(trackId) => changeTrackIds(trackId ? [trackId] : null)}
+        />
+      ) : null}
 
       <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-y-3 gap-x-8 justify-start flex-wrap sm:pb-3">
-        {selectedProgramId && (
+        {!communityTrackFacet && selectedProgramId && (
           <TrackFilter
             onChange={changeTrackIds}
             communityUid={communityUid}

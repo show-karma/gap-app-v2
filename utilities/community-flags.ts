@@ -67,3 +67,20 @@ export const EXPLORER_NAV_OVERRIDES: Readonly<Partial<Record<string, ExplorerNav
     tabPaths: { "community-projects": "/browse-projects" },
   },
 };
+
+/**
+ * Communities whose funded-projects explorer carries a Track dropdown beside
+ * the Program one at all times, listing the community's tracks (its funding
+ * initiatives, e.g. Kernel / R&D / Revenue Development) rather than the
+ * program-scoped tracks the default explorer shows only once a program is
+ * chosen. The two filters combine: `programId` and `trackIds` both go to the
+ * API.
+ *
+ * APPLIED ON WHITELABEL HOSTS ONLY, keyed by the `communityId` ROUTE PARAM —
+ * same caveats as {@link EXPLORER_NAV_OVERRIDES}.
+ */
+export const COMMUNITY_TRACK_FACET_COMMUNITIES: readonly string[] = ["filecoin"];
+
+/** Whether this community's explorer, on the host being rendered, shows the community track dropdown. */
+export const hasCommunityTrackFacet = (communityId: string, isWhitelabel: boolean): boolean =>
+  isWhitelabel && COMMUNITY_TRACK_FACET_COMMUNITIES.includes(communityId);
