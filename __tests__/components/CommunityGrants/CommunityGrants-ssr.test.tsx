@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ComponentProps, ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { renderWithProviders } from "@/__tests__/utils/render";
@@ -105,8 +106,15 @@ vi.mock("@/components/Pages/Communities/Impact/CommunityTrackFilter", () => ({
 // Tracks the community catalog answers with; the facet renders only when the
 // catalog is non-empty.
 let communityTracks: Array<{ id: string; name: string }> = [];
+let communityTracksError: Error | null = null;
+const refetchCommunityTracks = vi.fn();
 vi.mock("@/hooks/useTracks", () => ({
-  useTracksForCommunity: () => ({ data: communityTracks, isLoading: false }),
+  useTracksForCommunity: () => ({
+    data: communityTracks,
+    error: communityTracksError,
+    isLoading: false,
+    refetch: refetchCommunityTracks,
+  }),
 }));
 let isWhitelabelHost = false;
 vi.mock("@/utilities/whitelabel-context", () => ({
@@ -184,6 +192,7 @@ beforeEach(() => {
   routeCommunityId = COMMUNITY_ID;
   isWhitelabelHost = false;
   communityTracks = [];
+  communityTracksError = null;
   vi.clearAllMocks();
   // Never resolves: the mount revalidation stays in flight, which is precisely
   // the state that used to blank the grid to a skeleton.
@@ -348,8 +357,10 @@ describe("CommunityGrants server-rendered project entities", () => {
   });
 });
 
-// The explorer's primary dropdown is the Program filter for every community —
-// tracks are a secondary facet that only appears once a program is chosen.
+// The explorer's primary dropdown is the Program filter for every community;
+// by default tracks are a secondary facet that only appears once a program is
+// chosen. Communities in COMMUNITY_TRACK_FACET_COMMUNITIES get the community
+// track dropdown beside it instead, on their own host.
 // Pinned for filecoin, which once swapped the program dropdown for a track one.
 describe("CommunityGrants explorer filters", () => {
   it("renders the program filter for filecoin on karmahq.org, with no track filter until a program is chosen", () => {
@@ -417,6 +428,20 @@ describe("CommunityGrants explorer filters", () => {
       );
 
       expect(html).not.toContain('data-testid="community-track-filter"');
+      expect(html).not.toContain("Couldn't load tracks.");
+    });
+
+    // A failed tracks query is not a community without tracks: say so and
+    // offer a retry rather than silently dropping the filter.
+    it("says so and offers a retry when the tracks query fails", async () => {
+      communityTracks = [];
+      communityTracksError = new Error("boom");
+
+      renderWithProviders(<CommunityGrants {...defaultProps} initialProjects={makeServerPage()} />);
+
+      expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load tracks.");
+      await userEvent.click(screen.getByRole("button", { name: /retry/i }));
+      expect(refetchCommunityTracks).toHaveBeenCalled();
     });
 
     it("stays on the program facet for another tenant", () => {

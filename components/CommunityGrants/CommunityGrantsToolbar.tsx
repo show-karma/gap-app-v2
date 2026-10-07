@@ -1,6 +1,8 @@
 "use client";
+import { RefreshCw } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { useProjectFilters } from "@/hooks/useProjectFilters";
 import { useTracksForCommunity } from "@/hooks/useTracks";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
@@ -75,8 +77,26 @@ export function CommunityGrantsToolbar({
   const { isWhitelabel } = useWhitelabel();
   const communityTrackFacet = hasCommunityTrackFacet(communityId, isWhitelabel);
   // Empty uid disables the query where the facet is off.
-  const { data: communityTracks = [] } = useTracksForCommunity(
-    communityTrackFacet ? communityUid : ""
+  const {
+    data: communityTracks = [],
+    error: communityTracksError,
+    refetch: refetchCommunityTracks,
+  } = useTracksForCommunity(communityTrackFacet ? communityUid : "");
+
+  // `changeProgramId` clears trackIds because the default track list is
+  // program-scoped. A community track spans programs, so here the two
+  // selections combine and a program change must keep the track.
+  const handleProgramChange = useCallback(
+    async (programId: string | null) => {
+      if (!communityTrackFacet) {
+        await changeProgramId(programId);
+        return;
+      }
+      const trackIds = selectedTrackIds;
+      await changeProgramId(programId);
+      await changeTrackIds(trackIds);
+    },
+    [communityTrackFacet, changeProgramId, changeTrackIds, selectedTrackIds]
   );
 
   useEffect(() => {
@@ -100,13 +120,31 @@ export function CommunityGrantsToolbar({
 
   return (
     <div className="flex items-stretch sm:items-end gap-x-3 flex-wrap gap-y-3 w-full">
-      <ProgramFilter onChange={changeProgramId} />
+      <ProgramFilter onChange={handleProgramChange} />
       {communityTrackFacet && communityTracks.length > 0 ? (
         <CommunityTrackFilter
           tracks={communityTracks}
           selectedTrackId={selectedTrackIds?.[0] ?? null}
           onChange={(trackId) => changeTrackIds(trackId ? [trackId] : null)}
         />
+      ) : null}
+      {communityTrackFacet && communityTracksError && communityTracks.length === 0 ? (
+        <div
+          role="alert"
+          className="flex flex-col justify-end gap-1.5 text-sm text-muted-foreground min-w-[220px]"
+        >
+          <span>Couldn&apos;t load tracks.</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => refetchCommunityTracks()}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Retry
+          </Button>
+        </div>
       ) : null}
 
       <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-y-3 gap-x-8 justify-start flex-wrap sm:pb-3">

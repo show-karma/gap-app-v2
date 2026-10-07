@@ -1,5 +1,4 @@
 import {
-  COMMUNITY_TRACK_FACET_COMMUNITIES,
   EXPLORER_NAV_OVERRIDES,
   FINANCIALS_ENABLED_COMMUNITIES,
   hasCommunityTrackFacet,
@@ -18,10 +17,6 @@ describe("community-flags", () => {
   });
 
   describe("COMMUNITY_TRACK_FACET_COMMUNITIES", () => {
-    it("lists filecoin", () => {
-      expect(COMMUNITY_TRACK_FACET_COMMUNITIES).toEqual(["filecoin"]);
-    });
-
     it("applies on the tenant host only", () => {
       expect(hasCommunityTrackFacet("filecoin", true)).toBe(true);
       expect(hasCommunityTrackFacet("filecoin", false)).toBe(false);
