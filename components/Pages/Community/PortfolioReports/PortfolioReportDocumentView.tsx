@@ -109,6 +109,12 @@ export function PortfolioReportDocumentView({
         {external ? (
           <div className="report-print-area">
             <ExternalReportFrame html={report.content} title={frameTitle} />
+
+            <ReportChartsSection
+              communitySlug={community.details.slug}
+              reportId={report.id}
+              authenticated={isAdmin}
+            />
           </div>
         ) : (
           <div className="report-print-area mx-auto max-w-[1100px] rounded-xl bg-zinc-100 dark:bg-zinc-900 p-4 sm:p-6">

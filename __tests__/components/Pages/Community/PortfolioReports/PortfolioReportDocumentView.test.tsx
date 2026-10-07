@@ -84,13 +84,13 @@ describe("PortfolioReportDocumentView renderer selection", () => {
     expect(screen.queryByTestId("external-frame")).not.toBeInTheDocument();
   });
 
-  it("uses the verbatim external renderer, without Karma card styling or charts, for external reports", () => {
+  it("uses the isolated external renderer with frozen charts, without Karma card styling, for external reports", () => {
     renderView(reportFixture({ source: "external", generatedBy: "claude-code" }));
 
     const frame = screen.getByTestId("external-frame");
     expect(frame).toBeInTheDocument();
     expect(screen.queryByTestId("karma-frame")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("report-charts-section")).not.toBeInTheDocument();
+    expect(screen.getByTestId("report-charts-section")).toBeInTheDocument();
     // Full-bleed: the external frame is not wrapped in the padded Karma card.
     expect(frame.parentElement?.className).not.toMatch(/p-4|rounded-xl|max-w-/);
     // Footer credits the agent rather than a Karma model.
