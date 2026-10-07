@@ -56,8 +56,8 @@ export function PortfolioReportDocumentView({
 }: Props) {
   const runDateLabel = formatRunDate(runDate).label;
   const frameTitle = `Portfolio report — ${runDateLabel}`;
-  // External reports render verbatim, full-bleed: no Karma card padding or
-  // background around them, so the page shows exactly what the agent produced.
+  // External reports render full-bleed: no Karma card padding or background
+  // around them, so the page shows the agent's own layout.
   const external = isExternalReport(report);
 
   return (
