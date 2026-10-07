@@ -7,11 +7,11 @@ import { KARMA_TENANT_PARAM, TENANT_ROUTE_PREFIX } from "@/utilities/tenant-para
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
 /**
- * `/browse-projects` is the URL a tenant that funds "projects" rather than
- * "applications" puts in its header, its navbar and its explorer tab. It has no
- * route of its own on purpose — one listing, one component, one set of tests —
- * so the whitelabel rewrite has to resolve it onto `browse-applications`
- * *without* redirecting: the alias is the URL the visitor keeps and shares.
+ * `/browse-projects` is the URL a tenant puts in its header, its navbar and its
+ * explorer tab for the funded-projects listing. It has no route of its own on
+ * purpose — one listing, one component, one set of tests — so the whitelabel
+ * rewrite has to resolve it onto `projects` *without* redirecting: the alias is
+ * the URL the visitor keeps and shares.
  *
  * These pin both halves of that: the alias resolves on a tenant host, and it
  * does not exist anywhere else.
@@ -83,11 +83,11 @@ describe("whitelabel route aliases", () => {
    */
   const tenantMount = `${TENANT_ROUTE_PREFIX}/${host}`;
 
-  it("serves /browse-projects from the browse-applications route", async () => {
+  it("serves /browse-projects from the funded-projects route", async () => {
     const response = await respond("/browse-projects");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}${tenantMount}/community/${slug}/browse-applications`
+      `https://${host}${tenantMount}/community/${slug}/projects`
     );
   });
 
@@ -98,36 +98,29 @@ describe("whitelabel route aliases", () => {
   });
 
   it("preserves the filter query the explorer round-trips through the URL", async () => {
-    const response = await respond("/browse-projects?trackIds=track-1,track-2&status=approved");
+    const response = await respond("/browse-projects?programId=42&page=2");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}${tenantMount}/community/${slug}/browse-applications?trackIds=track-1,track-2&status=approved`
+      `https://${host}${tenantMount}/community/${slug}/projects?programId=42&page=2`
     );
   });
 
-  it("carries a sub-path across, so a linked application still resolves", async () => {
-    const response = await respond("/browse-projects/APP-1AB2CD3E-XY45");
-
-    expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}${tenantMount}/community/${slug}/browse-applications/APP-1AB2CD3E-XY45`
-    );
-  });
-
-  it("leaves the underlying /browse-applications URL working", async () => {
-    const response = await respond("/browse-applications");
-
-    expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}${tenantMount}/community/${slug}/browse-applications`
-    );
-  });
-
-  // The route the alias sits next to, and the one a careless alias key would
-  // swallow: /projects is the funded-grants listing, a different page.
-  it("leaves /projects rewriting to the funded-projects listing", async () => {
+  it("leaves the underlying /projects URL working", async () => {
     const response = await respond("/projects");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
       `https://${host}${tenantMount}/community/${slug}/projects`
+    );
+  });
+
+  // The applications list has no tab on this host but is still served: each
+  // program's details page links into it, and a careless alias must not
+  // swallow it.
+  it("leaves /browse-applications rewriting to the applications listing", async () => {
+    const response = await respond("/browse-applications?programId=42");
+
+    expect(response?.headers.get("x-middleware-rewrite")).toBe(
+      `https://${host}${tenantMount}/community/${slug}/browse-applications?programId=42`
     );
   });
 
@@ -139,11 +132,10 @@ describe("whitelabel route aliases", () => {
 
     // The tenant rewrite fires for every page request, here as anywhere, so the
     // claim is not "no rewrite" but "not THAT rewrite": the path it lands on is
-    // still /browse-projects and never browse-applications.
+    // still /browse-projects and never /projects.
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
       `https://${CANONICAL_HOST}${TENANT_ROUTE_PREFIX}/${KARMA_TENANT_PARAM}/browse-projects`
     );
-    expect(response?.headers.get("x-middleware-rewrite")).not.toContain("browse-applications");
     expect(response?.headers.get("location")).toBeNull();
   });
 
@@ -155,7 +147,7 @@ describe("whitelabel route aliases", () => {
     const explorer = funding?.items?.find((item) => item.label === "Projects Explorer");
 
     expect(explorer?.href).toBe("/browse-projects");
-    expect(EXPLORER_NAV_OVERRIDES.filecoin?.tabPaths?.["browse-applications"]).toBe(explorer?.href);
+    expect(EXPLORER_NAV_OVERRIDES.filecoin?.tabPaths?.["community-projects"]).toBe(explorer?.href);
   });
 
   // Nor on another tenant's host: this is one community's word for the listing,
@@ -169,12 +161,11 @@ describe("whitelabel route aliases", () => {
     const response = await respond("/browse-projects", other.domain);
 
     // Not a community sub-route segment there, so it takes only that tenant's
-    // own mount and keeps the path it arrived on — no rewrite onto
-    // browse-applications, and the app answers its own 404.
+    // own mount and keeps the path it arrived on — no rewrite onto /projects,
+    // and the app answers its own 404.
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
       `https://${other.domain}${TENANT_ROUTE_PREFIX}/${other.domain}/browse-projects`
     );
-    expect(response?.headers.get("x-middleware-rewrite")).not.toContain("browse-applications");
     expect(response?.headers.get("location")).toBeNull();
   });
 });

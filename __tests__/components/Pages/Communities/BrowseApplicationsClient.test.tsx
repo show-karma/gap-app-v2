@@ -321,11 +321,11 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
   });
 });
 
-// The filecoin explorer renames this tab to "Browse Projects" on its own host;
-// the decision was that the page heading follows the tab so the two agree. Both
-// sides read the same EXPLORER_NAV_OVERRIDES entry and the same default out of
+// The page heading follows the explorer tab so the two agree: both read the
+// same EXPLORER_NAV_OVERRIDES entry and the same default out of
 // COMMUNITY_NAV_LABELS (neither is mocked here — the real maps are what is
-// under test), so a rename in one place cannot drift from the other.
+// under test). Filecoin hides this tab rather than renaming it, so on its own
+// host this page keeps the product's name and noun.
 describe("BrowseApplicationsClient - page heading tracks the explorer tab label", () => {
   const DEFAULT_HEADING_PROGRAMS = [
     {
@@ -375,41 +375,34 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
       { wrapper: createWrapper() }
     );
 
-  it("uses the overridden tab label as the <h1> for filecoin on its own host", () => {
+  it("keeps the default heading for filecoin on its own host", () => {
     renderWhitelabel("filecoin");
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Browse Projects");
-    expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Browse applications");
+    expect(screen.queryByText("Browse Projects")).not.toBeInTheDocument();
   });
 
-  // Same reason the tab bar keeps its default labels on karmahq.org: the
-  // rename belongs to the tenant's own navbar-carrying host.
   it("keeps the default heading for filecoin on karmahq.org", () => {
     render(<BrowseApplicationsClient communityId="filecoin" />, { wrapper: createWrapper() });
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Browse applications");
-    expect(screen.queryByText("Browse Projects")).not.toBeInTheDocument();
   });
 
   it("falls back to the default heading for a community without an override", () => {
     renderWhitelabel("test-community");
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Browse applications");
-    expect(screen.queryByText("Browse Projects")).not.toBeInTheDocument();
   });
 
-  it("reads the label from EXPLORER_NAV_OVERRIDES rather than hardcoding it", () => {
-    expect(EXPLORER_NAV_OVERRIDES.filecoin?.tabLabels?.["browse-applications"]).toBe(
-      "Browse Projects"
-    );
+  it("does not rename this tab for filecoin", () => {
+    expect(EXPLORER_NAV_OVERRIDES.filecoin?.tabLabels?.["browse-applications"]).toBeUndefined();
   });
 
   it("reads its default from the same map the tab bar defaults to", () => {
     expect(COMMUNITY_NAV_LABELS["browse-applications"]).toBe("Browse applications");
   });
 
-  // "Browse Projects" over a count of "applications" is the drift this guards.
-  it("counts the noun the heading names, not always 'applications'", async () => {
+  it("counts applications under the default heading on the tenant host", async () => {
     const user = userEvent.setup();
     // A real count is needed to assert the noun beside it — the subtitle drops
     // the number entirely when it is zero or still unknown.
@@ -431,31 +424,24 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
     });
     renderWhitelabel("filecoin");
 
-    // A track is picked from its own dropdown now, but the noun in the count
-    // still has to follow the heading.
     await selectTrack(user, "Kernel");
 
     await waitFor(() => {
-      expect(screen.getByText(/project(s)? · Kernel/)).toBeInTheDocument();
+      expect(screen.getByText(/application(s)? · Kernel/)).toBeInTheDocument();
     });
-    expect(screen.queryByText(/application(s)? · Kernel/)).not.toBeInTheDocument();
   });
 
-  // The empty state is the first thing a visitor arriving from "Projects
-  // Explorer" reads, and "No applications yet" under a "Browse Projects"
-  // heading is the same contradiction the count already guards against.
   // With no program selected the list is the whole community's, so the empty
   // state speaks for the community rather than for a program.
-  it("names the same noun in the empty state as in the heading", async () => {
+  it("names applications in the empty state on the tenant host", async () => {
     renderWhitelabel("filecoin");
 
     await waitFor(() => {
-      expect(screen.getByText("No projects yet")).toBeInTheDocument();
+      expect(screen.getByText("No applications yet")).toBeInTheDocument();
     });
     expect(
-      screen.getByText("This community doesn't have any public projects yet.")
+      screen.getByText("This community doesn't have any public applications yet.")
     ).toBeInTheDocument();
-    expect(screen.queryByText("No applications yet")).not.toBeInTheDocument();
   });
 
   it("attributes the empty state to the program once one is selected", async () => {
@@ -466,7 +452,7 @@ describe("BrowseApplicationsClient - page heading tracks the explorer tab label"
 
     await waitFor(() => {
       expect(
-        screen.getByText("This program doesn't have any public projects yet.")
+        screen.getByText("This program doesn't have any public applications yet.")
       ).toBeInTheDocument();
     });
   });

@@ -45,9 +45,9 @@ vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
   EXPLORER_NAV_OVERRIDES: {
     filecoin: {
-      hiddenTabs: ["community-projects", "reports", "financials"],
-      tabLabels: { "browse-applications": "Browse Projects" },
-      tabPaths: { "browse-applications": "/browse-projects" },
+      hiddenTabs: ["browse-applications", "reports", "financials"],
+      tabLabels: { "community-projects": "Browse Projects" },
+      tabPaths: { "community-projects": "/browse-projects" },
     },
   },
 }));

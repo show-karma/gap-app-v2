@@ -14,20 +14,16 @@ import {
  */
 describe("whitelabel route aliases", () => {
   it("resolves an alias to the route that serves it", () => {
-    expect(resolveWhitelabelRouteAlias("/browse-projects", "filecoin")).toBe(
-      "/browse-applications"
-    );
+    expect(resolveWhitelabelRouteAlias("/browse-projects", "filecoin")).toBe("/projects");
   });
 
   it("resolves the trailing-slash form too", () => {
-    expect(resolveWhitelabelRouteAlias("/browse-projects/", "filecoin")).toBe(
-      "/browse-applications"
-    );
+    expect(resolveWhitelabelRouteAlias("/browse-projects/", "filecoin")).toBe("/projects");
   });
 
   it("carries sub-paths across, so an alias covers a section", () => {
-    expect(resolveWhitelabelRouteAlias("/browse-projects/APP-1AB2CD3E-XY45", "filecoin")).toBe(
-      "/browse-applications/APP-1AB2CD3E-XY45"
+    expect(resolveWhitelabelRouteAlias("/browse-projects/featured", "filecoin")).toBe(
+      "/projects/featured"
     );
   });
 
@@ -40,6 +36,7 @@ describe("whitelabel route aliases", () => {
   });
 
   it("leaves an unaliased path untouched", () => {
+    expect(resolveWhitelabelRouteAlias("/projects", "filecoin")).toBe("/projects");
     expect(resolveWhitelabelRouteAlias("/browse-applications", "filecoin")).toBe(
       "/browse-applications"
     );
@@ -88,32 +85,31 @@ describe("whitelabel route aliases", () => {
 
   describe("the outbound direction", () => {
     it("turns a link into the tenant's own name for the section", () => {
-      expect(toWhitelabelRouteAlias("/browse-applications", "filecoin")).toBe("/browse-projects");
+      expect(toWhitelabelRouteAlias("/projects", "filecoin")).toBe("/browse-projects");
     });
 
-    it("keeps the query a program card puts on it", () => {
-      expect(toWhitelabelRouteAlias("/browse-applications?programId=42", "filecoin")).toBe(
-        "/browse-projects?programId=42"
+    it("keeps the query the pagination and filters put on it", () => {
+      expect(toWhitelabelRouteAlias("/projects?programId=42&page=2", "filecoin")).toBe(
+        "/browse-projects?programId=42&page=2"
       );
     });
 
-    it("carries the reference a row links to", () => {
-      expect(toWhitelabelRouteAlias("/browse-applications/APP-1AB2CD3E-XY45", "filecoin")).toBe(
-        "/browse-projects/APP-1AB2CD3E-XY45"
+    it("carries a sub-path across", () => {
+      expect(toWhitelabelRouteAlias("/projects/featured", "filecoin")).toBe(
+        "/browse-projects/featured"
       );
     });
 
     it("leaves another tenant's links alone", () => {
-      expect(toWhitelabelRouteAlias("/browse-applications", "optimism")).toBe(
-        "/browse-applications"
-      );
+      expect(toWhitelabelRouteAlias("/projects", "optimism")).toBe("/projects");
     });
 
     it("leaves an unrelated path alone", () => {
       expect(toWhitelabelRouteAlias("/impact", "filecoin")).toBe("/impact");
-      expect(toWhitelabelRouteAlias("/browse-applications-archive", "filecoin")).toBe(
-        "/browse-applications-archive"
+      expect(toWhitelabelRouteAlias("/browse-applications", "filecoin")).toBe(
+        "/browse-applications"
       );
+      expect(toWhitelabelRouteAlias("/projects-archive", "filecoin")).toBe("/projects-archive");
     });
 
     it("round-trips with the inbound direction", () => {
