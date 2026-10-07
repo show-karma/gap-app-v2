@@ -54,13 +54,15 @@ type ExplorerNavOverride = {
 export const EXPLORER_NAV_OVERRIDES: Readonly<Partial<Record<string, ExplorerNavOverride>>> = {
   filecoin: {
     // Commitments & Disbursements and every report type are in the filpgf.io
-    // navbar under Funding and Reports.
-    hiddenTabs: ["reports", "financials"],
+    // navbar under Funding and Reports. Applications are reached per program:
+    // every program's details page carries a "View applications" link into
+    // the (still served) /browse-applications list, so the cross-program tab
+    // goes.
+    hiddenTabs: ["browse-applications", "reports", "financials"],
     // This tenant funds projects and says so everywhere: the landing site's
     // "Projects Explorer" (filecoin-grants `src/data/nav.ts`), the tenant
     // navbar's entry of the same name, and this tab all arrive at the funded
-    // projects listing, under the same name and at the same URL. Applications
-    // keep their own tab under the product's name for them.
+    // projects listing, under the same name and at the same URL.
     tabLabels: { "community-projects": "Browse Projects" },
     tabPaths: { "community-projects": "/browse-projects" },
   },

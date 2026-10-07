@@ -113,14 +113,14 @@ describe("whitelabel route aliases", () => {
     );
   });
 
-  // The route the alias sits next to, and the one a careless alias would
-  // swallow: /browse-applications is the applications listing, a different
-  // page that keeps its own tab and its own URL.
+  // The applications list has no tab on this host but is still served: each
+  // program's details page links into it, and a careless alias must not
+  // swallow it.
   it("leaves /browse-applications rewriting to the applications listing", async () => {
-    const response = await respond("/browse-applications");
+    const response = await respond("/browse-applications?programId=42");
 
     expect(response?.headers.get("x-middleware-rewrite")).toBe(
-      `https://${host}${tenantMount}/community/${slug}/browse-applications`
+      `https://${host}${tenantMount}/community/${slug}/browse-applications?programId=42`
     );
   });
 

@@ -324,8 +324,8 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
 // The page heading follows the explorer tab so the two agree: both read the
 // same EXPLORER_NAV_OVERRIDES entry and the same default out of
 // COMMUNITY_NAV_LABELS (neither is mocked here — the real maps are what is
-// under test). Filecoin renames the funded-projects tab, not this one, so on
-// its own host this page keeps the product's name and noun.
+// under test). Filecoin hides this tab rather than renaming it, so on its own
+// host this page keeps the product's name and noun.
 describe("BrowseApplicationsClient - page heading tracks the explorer tab label", () => {
   const DEFAULT_HEADING_PROGRAMS = [
     {

@@ -45,7 +45,7 @@ vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
   EXPLORER_NAV_OVERRIDES: {
     filecoin: {
-      hiddenTabs: ["reports", "financials"],
+      hiddenTabs: ["browse-applications", "reports", "financials"],
       tabLabels: { "community-projects": "Browse Projects" },
       tabPaths: { "community-projects": "/browse-projects" },
     },
@@ -166,6 +166,7 @@ describe("CommunityPageNavigator", () => {
       it("should hide the tabs listed in hiddenTabs", () => {
         renderFilecoin();
 
+        expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
         expect(screen.queryByText("Reports")).not.toBeInTheDocument();
         expect(screen.queryByText("Commitments & Disbursements")).not.toBeInTheDocument();
       });
@@ -175,7 +176,6 @@ describe("CommunityPageNavigator", () => {
 
         expect(screen.getAllByRole("link").map((link) => link.textContent?.trim())).toEqual([
           "Funding opportunities",
-          "Browse applications",
           "Browse Projects",
           "Milestone updates",
           "Impact",
@@ -187,18 +187,6 @@ describe("CommunityPageNavigator", () => {
 
         expect(screen.getByText("Browse Projects")).toBeInTheDocument();
         expect(screen.queryByText("View funded projects")).not.toBeInTheDocument();
-      });
-
-      // Each tab is named for what it lists: the applications tab keeps the
-      // product's name, so a visitor cannot land on APP-xxx rows under a tab
-      // that promised projects.
-      it("should keep the applications tab under its own name", () => {
-        renderFilecoin();
-
-        expect(screen.getByText("Browse applications").closest("a")).toHaveAttribute(
-          "href",
-          "/browse-applications"
-        );
       });
 
       // The tenant's own name for the listing is the URL too — the whitelabel
@@ -227,10 +215,12 @@ describe("CommunityPageNavigator", () => {
         expect(activeTabLabels()).toEqual(["Browse Projects"]);
       });
 
-      it("should highlight the applications tab, not the renamed one, on its own path", () => {
+      // The applications list is still served, reached from each program's
+      // details page; with its tab gone nothing in the bar claims it.
+      it("should highlight nothing on the applications list", () => {
         renderFilecoin({ pathname: "/browse-applications" });
 
-        expect(activeTabLabels()).toEqual(["Browse applications"]);
+        expect(activeTabLabels()).toEqual([]);
       });
 
       it("should skip the published-reports query when the reports tab is hidden", () => {
@@ -244,6 +234,7 @@ describe("CommunityPageNavigator", () => {
       it("should keep every tab the overrides would have hidden", () => {
         renderFilecoin({ isWhitelabel: false });
 
+        expect(screen.getByText("Browse applications")).toBeInTheDocument();
         expect(screen.getByText("View funded projects")).toBeInTheDocument();
         expect(screen.getByText("Reports")).toBeInTheDocument();
         expect(screen.getByText("Commitments & Disbursements")).toBeInTheDocument();
