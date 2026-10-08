@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { PortfolioReportListPage } from "@/components/Pages/Admin/PortfolioReports/PortfolioReportListPage";
@@ -107,6 +107,13 @@ const filecoinCommunity = {
   details: { slug: "filecoin", name: "Filecoin" },
 } as any;
 
+const TEST_SCHEDULE = {
+  intervalUnit: "months",
+  intervalCount: 1,
+  startDate: "2026-04-01",
+  ends: { kind: "never" },
+};
+
 describe("PortfolioReportListPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -168,7 +175,16 @@ describe("PortfolioReportListPage", () => {
 
   it("shows the report's custom title with the config name as secondary context", () => {
     mockUseReportConfigs.mockReturnValue({
-      data: [{ id: "config-1", name: "Monthly Pods Report", isActive: false, programIds: [] }],
+      data: [
+        {
+          id: "config-1",
+          name: "Monthly Pods Report",
+          isActive: false,
+          programIds: [],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+        },
+      ],
       isLoading: false,
     } as any);
     mockUsePortfolioReports.mockReturnValue({
@@ -178,14 +194,60 @@ describe("PortfolioReportListPage", () => {
 
     render(<PortfolioReportListPage community={filecoinCommunity} />);
 
-    expect(screen.getByText("Pods Report — June 2026")).toBeInTheDocument();
+    const table = within(screen.getByRole("table"));
+    expect(table.getByText("Pods Report — June 2026")).toBeInTheDocument();
     // Config name stays visible as secondary context so admins know its source.
-    expect(screen.getByText("Monthly Pods Report")).toBeInTheDocument();
+    expect(table.getByText("Monthly Pods Report")).toBeInTheDocument();
+  });
+
+  it("lists inactive configs with Generate disabled and Configure available", () => {
+    mockUseReportConfigs.mockReturnValue({
+      data: [
+        {
+          id: "cfg-on",
+          name: "Weekly",
+          isActive: true,
+          programIds: ["p1"],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+        },
+        {
+          id: "cfg-off",
+          name: "Agent series",
+          isActive: false,
+          programIds: ["p1"],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+        },
+      ],
+      isLoading: false,
+    } as any);
+    mockUsePortfolioReports.mockReturnValue({ data: [], isLoading: false } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    const rows = screen.getAllByRole("listitem");
+    const off = rows.find((r) => within(r).queryByText("Agent series"));
+    expect(off).toBeTruthy();
+    expect(within(off as HTMLElement).getByRole("button", { name: /generate/i })).toBeDisabled();
+    expect(within(off as HTMLElement).getByRole("button", { name: /configure/i })).toBeEnabled();
+    expect(within(off as HTMLElement).getByText(/inactive/)).toBeInTheDocument();
+    const on = rows.find((r) => within(r).queryByText("Weekly")) as HTMLElement;
+    expect(within(on).getByRole("button", { name: /generate/i })).toBeEnabled();
   });
 
   it("falls back to the config name when a report has no custom title", () => {
     mockUseReportConfigs.mockReturnValue({
-      data: [{ id: "config-1", name: "Monthly Pods Report", isActive: false, programIds: [] }],
+      data: [
+        {
+          id: "config-1",
+          name: "Monthly Pods Report",
+          isActive: false,
+          programIds: [],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+        },
+      ],
       isLoading: false,
     } as any);
     mockUsePortfolioReports.mockReturnValue({
@@ -195,8 +257,8 @@ describe("PortfolioReportListPage", () => {
 
     render(<PortfolioReportListPage community={filecoinCommunity} />);
 
-    // Only one occurrence — the config name stands in for the missing title.
-    expect(screen.getAllByText("Monthly Pods Report")).toHaveLength(1);
+    // Only one occurrence in the table — the config name stands in for the missing title.
+    expect(within(screen.getByRole("table")).getAllByText("Monthly Pods Report")).toHaveLength(1);
   });
 
   it("does not show a Preview action for published reports", () => {

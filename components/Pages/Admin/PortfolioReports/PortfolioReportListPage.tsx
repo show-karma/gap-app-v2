@@ -146,6 +146,7 @@ interface ReportTableRowProps {
 }
 
 const EXTERNAL_REGENERATE_HINT = "Regenerate is unavailable for this report";
+const INACTIVE_GENERATE_HINT = "This report is inactive. Activate it in Configure to generate.";
 
 const ReportTableRow = memo(function ReportTableRow({
   slug,
@@ -278,7 +279,10 @@ export function PortfolioReportListPage({ community }: Props) {
     return map;
   }, [configs]);
 
-  const activeConfigs = useMemo(() => (configs ?? []).filter((c) => c.isActive), [configs]);
+  const sortedConfigs = useMemo(
+    () => [...(configs ?? [])].sort((a, b) => Number(b.isActive) - Number(a.isActive)),
+    [configs]
+  );
 
   const [typeFilter, setTypeFilter] = useQueryState("type", { defaultValue: ALL_TYPES });
 
@@ -456,13 +460,15 @@ export function PortfolioReportListPage({ community }: Props) {
         </div>
         <Button onClick={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)}>
           <Plus className="mr-2 h-4 w-4" />
-          Configure New Report
+          Set Up Report
         </Button>
       </div>
 
       {/* Per-config generate row */}
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">Generate now</h2>
+        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Configured reports
+        </h2>
         {configsLoading ? (
           <div className="flex items-center gap-2 text-sm text-zinc-500">
             <Spinner className="h-4 w-4" />
@@ -470,21 +476,21 @@ export function PortfolioReportListPage({ community }: Props) {
           </div>
         ) : configsError ? (
           <p className="text-sm text-red-500">Failed to load configs.</p>
-        ) : activeConfigs.length === 0 ? (
+        ) : sortedConfigs.length === 0 ? (
           <p className="text-sm text-zinc-500">
-            No active configs.{" "}
+            No reports configured yet.{" "}
             <button
               type="button"
               className="text-blue-600 underline dark:text-blue-400"
               onClick={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)}
             >
-              Configure your first report
+              Set up your first report
             </button>{" "}
             to get started.
           </p>
         ) : (
           <ul className="space-y-2">
-            {activeConfigs.map((cfg) => (
+            {sortedConfigs.map((cfg) => (
               <li
                 key={cfg.id}
                 className="flex items-center justify-between rounded-md border border-zinc-200 px-3 py-2 dark:border-zinc-700"
@@ -496,6 +502,7 @@ export function PortfolioReportListPage({ community }: Props) {
                   <p className="truncate text-xs text-zinc-500">
                     {formatScheduleLabel(cfg.schedule)} · {cfg.programIds.length} program
                     {cfg.programIds.length === 1 ? "" : "s"} · {cfg.modelId}
+                    {cfg.isActive ? null : " · inactive"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -514,9 +521,11 @@ export function PortfolioReportListPage({ community }: Props) {
                     size="sm"
                     onClick={() => cfg.id && handleGenerate(cfg.id)}
                     disabled={
+                      !cfg.isActive ||
                       generatingConfigId !== null ||
                       (cfg.id ? generatingConfigIds.has(cfg.id) : false)
                     }
+                    title={cfg.isActive ? undefined : INACTIVE_GENERATE_HINT}
                   >
                     {generatingConfigId === cfg.id ||
                     (cfg.id && generatingConfigIds.has(cfg.id)) ? (
