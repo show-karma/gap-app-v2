@@ -11,6 +11,8 @@ import { usePermissionContext } from "@/src/core/rbac/context/permission-context
 
 interface InboxMilestoneSimocracyTabProps {
   projectUID: string;
+  /** The program whose milestones are on screen; picks that program's application. */
+  programId?: string;
   milestone: { uid: string; title: string };
 }
 
@@ -28,23 +30,29 @@ const Note = ({ children }: { children: string }) => (
  */
 export function InboxMilestoneSimocracyTab({
   projectUID,
+  programId,
   milestone,
 }: InboxMilestoneSimocracyTabProps) {
   const { address } = useAuth();
   const { isCommunityAdmin, isReviewer } = usePermissionContext();
-  const { application, isLoading, error, refetch } = useFundingApplicationByProjectUID(projectUID);
+  const { application, isLoading, error, refetch } = useFundingApplicationByProjectUID(
+    projectUID,
+    programId
+  );
   const referenceNumber = application?.referenceNumber ?? "";
   const { data: integrations, isLoading: isLoadingIntegrations } =
     useApplicationIntegrations(referenceNumber);
 
+  // Admins may rate any Sim; a reviewer rates the Sims they own, which the
+  // verdict row itself reports (`mayAct`), so the card widens this per Sim.
   const feedback = useMemo(() => {
-    if (!isCommunityAdmin || !referenceNumber) return undefined;
+    if (!(isCommunityAdmin || isReviewer) || !referenceNumber) return undefined;
     return {
       referenceNumber,
       viewerAddresses: new Set(address ? [address.toLowerCase()] : []),
-      canGiveFeedback: () => true,
+      canGiveFeedback: () => isCommunityAdmin,
     };
-  }, [isCommunityAdmin, referenceNumber, address]);
+  }, [isCommunityAdmin, isReviewer, referenceNumber, address]);
 
   if (isLoading || (referenceNumber && isLoadingIntegrations)) {
     return (

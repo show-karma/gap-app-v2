@@ -113,7 +113,10 @@ export const INDEXER = {
       MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
     },
     APPLICATIONS: {
-      BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
+      BY_PROJECT_UID: (projectUID: string, programId?: string) =>
+        `/v2/funding-applications/project/${projectUID}${
+          programId ? `?programId=${encodeURIComponent(programId)}` : ""
+        }`,
       COMMENTS: (applicationId: string) => `/v2/applications/${applicationId}/comments`,
       DELETE: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}`,
     },

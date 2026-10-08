@@ -340,7 +340,7 @@ export const VerdictCard: FC<VerdictCardProps> = memo(
               referenceNumber={feedback.referenceNumber}
               subject={{ commentUri: verdict.commentUri }}
               simUri={verdict.simUri}
-              canGiveFeedback={feedback.canGiveFeedback(verdict.simUri)}
+              canGiveFeedback={feedback.canGiveFeedback(verdict.simUri) || verdict.mayAct}
               viewerAddresses={feedback.viewerAddresses}
               currentRevision={shown.revision}
             />

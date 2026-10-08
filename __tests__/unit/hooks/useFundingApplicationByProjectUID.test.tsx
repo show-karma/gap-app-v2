@@ -66,7 +66,7 @@ describe("useFundingApplicationByProjectUID", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1");
+      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1", undefined);
       expect(result.current.application).toEqual(mockApplication);
       expect(result.current.error).toBeNull();
     });
@@ -212,6 +212,23 @@ describe("useFundingApplicationByProjectUID", () => {
   });
 
   describe("Query Key Management", () => {
+    it("forwards the program so a project in several programs resolves to the right one", async () => {
+      mockFetchApplicationByProjectUID.mockResolvedValue({
+        id: "app-1",
+        projectUID: "project-1",
+      } as any);
+
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1", "992"), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1", "992");
+    });
+
     it("should use proper query keys", async () => {
       mockFetchApplicationByProjectUID.mockResolvedValue({
         id: "app-1",
@@ -227,7 +244,7 @@ describe("useFundingApplicationByProjectUID", () => {
       });
 
       // Should have fetched with the correct projectUID
-      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1");
+      expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1", undefined);
       expect(result.current.application?.id).toBe("app-1");
     });
   });

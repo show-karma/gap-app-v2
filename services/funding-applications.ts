@@ -26,13 +26,16 @@ function httpErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+// A project can hold one application per program; pass the program being
+// viewed so a project in two batches resolves to the right one.
 export async function fetchApplicationByProjectUID(
-  projectUID: string
+  projectUID: string,
+  programId?: string
 ): Promise<IFundingApplication | null> {
   try {
     // TODO(#1775): add zod schema
     const data = await api.get<IFundingApplication>(
-      INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID)
+      INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID, programId)
     );
     return data || null;
   } catch (error) {
