@@ -146,8 +146,6 @@ interface ReportTableRowProps {
 }
 
 const EXTERNAL_REGENERATE_HINT = "Regenerate is unavailable for this report";
-const INACTIVE_GENERATE_HINT =
-  "This report config is inactive. Open Configure and activate it to generate reports.";
 
 const ReportTableRow = memo(function ReportTableRow({
   slug,
@@ -501,7 +499,7 @@ export function PortfolioReportListPage({ community }: Props) {
                   <p className="truncate text-xs text-zinc-500">
                     {formatScheduleLabel(cfg.schedule)} · {cfg.programIds.length} program
                     {cfg.programIds.length === 1 ? "" : "s"} · {cfg.modelId}
-                    {cfg.isActive ? null : " · inactive"}
+                    {cfg.isActive ? null : " · schedule off"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -516,40 +514,27 @@ export function PortfolioReportListPage({ community }: Props) {
                     <Settings className="mr-1 h-3 w-3" />
                     Configure
                   </Button>
-                  {cfg.isActive ? (
-                    <Button
-                      size="sm"
-                      onClick={() => cfg.id && handleGenerate(cfg.id)}
-                      disabled={
-                        generatingConfigId !== null ||
-                        (cfg.id ? generatingConfigIds.has(cfg.id) : false)
-                      }
-                    >
-                      {generatingConfigId === cfg.id ||
-                      (cfg.id && generatingConfigIds.has(cfg.id)) ? (
-                        <>
-                          <Spinner className="mr-2 h-3 w-3" />
-                          Generating…
-                        </>
-                      ) : (
-                        <>
-                          <Play className="mr-1 h-3 w-3" />
-                          Generate
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      aria-disabled="true"
-                      title={INACTIVE_GENERATE_HINT}
-                      aria-label={INACTIVE_GENERATE_HINT}
-                      className="cursor-not-allowed opacity-50"
-                    >
-                      <Play className="mr-1 h-3 w-3" />
-                      Generate
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => cfg.id && handleGenerate(cfg.id)}
+                    disabled={
+                      generatingConfigId !== null ||
+                      (cfg.id ? generatingConfigIds.has(cfg.id) : false)
+                    }
+                  >
+                    {generatingConfigId === cfg.id ||
+                    (cfg.id && generatingConfigIds.has(cfg.id)) ? (
+                      <>
+                        <Spinner className="mr-2 h-3 w-3" />
+                        Generating…
+                      </>
+                    ) : (
+                      <>
+                        <Play className="mr-1 h-3 w-3" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
                 </div>
               </li>
             ))}

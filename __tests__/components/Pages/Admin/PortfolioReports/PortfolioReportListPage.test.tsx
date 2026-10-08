@@ -200,7 +200,7 @@ describe("PortfolioReportListPage", () => {
     expect(table.getByText("Monthly Pods Report")).toBeInTheDocument();
   });
 
-  it("lists inactive configs with Generate disabled and Configure available", () => {
+  it("lists inactive configs with Generate still available", () => {
     mockUseReportConfigs.mockReturnValue({
       data: [
         {
@@ -229,11 +229,9 @@ describe("PortfolioReportListPage", () => {
     const rows = screen.getAllByRole("listitem");
     const off = rows.find((r) => within(r).queryByText("Agent series"));
     expect(off).toBeTruthy();
-    const blocked = within(off as HTMLElement).getByRole("button", { name: /inactive/i });
-    expect(blocked).toHaveAttribute("aria-disabled", "true");
-    expect(blocked).toHaveAttribute("title", expect.stringMatching(/inactive/i));
+    expect(within(off as HTMLElement).getByRole("button", { name: /generate/i })).toBeEnabled();
     expect(within(off as HTMLElement).getByRole("button", { name: /^configure$/i })).toBeEnabled();
-    expect(within(off as HTMLElement).getByText(/inactive/)).toBeInTheDocument();
+    expect(within(off as HTMLElement).getByText(/schedule off/)).toBeInTheDocument();
     const on = rows.find((r) => within(r).queryByText("Weekly")) as HTMLElement;
     expect(within(on).getByRole("button", { name: /generate/i })).toBeEnabled();
   });
