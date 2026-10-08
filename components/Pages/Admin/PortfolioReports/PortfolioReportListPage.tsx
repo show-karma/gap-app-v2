@@ -15,7 +15,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -46,6 +46,7 @@ import {
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { formatRunDate, formatScheduleLabel } from "@/utilities/portfolio-reports/period";
+import { isExternalReport } from "@/utilities/portfolio-reports/source";
 import { GenerationStatusBadge } from "./GenerationStatusBadge";
 
 interface Props {
@@ -144,7 +145,9 @@ interface ReportTableRowProps {
   onDelete: () => void;
 }
 
-function ReportTableRow({
+const EXTERNAL_REGENERATE_HINT = "Regenerate is unavailable for this report";
+
+const ReportTableRow = memo(function ReportTableRow({
   slug,
   report: initialReport,
   configName,
@@ -162,6 +165,8 @@ function ReportTableRow({
   const generating = isReportGenerating(report);
   const failed = report.status === "failed";
   const actionsDisabled = rowPending || generating;
+  // Karma never regenerates a report an external agent produced.
+  const external = isExternalReport(report);
   // Drafts and failed generations can be removed; published reports back
   // public URLs (unpublish first) and generating reports are still in flight.
   const deletable = report.status === "draft" || failed;
@@ -170,14 +175,16 @@ function ReportTableRow({
       <ReportNameCell title={report.title} configName={configName} />
       <td className="px-4 py-3 text-zinc-500">{fmt.shortLabel}</td>
       <td className="px-4 py-3">
-        <GenerationStatusBadge status={report.status} />
+        <div className="flex flex-wrap items-center gap-1">
+          <GenerationStatusBadge status={report.status} />
+        </div>
         {failed && report.generationError ? (
           <p className="mt-1 max-w-md truncate text-xs text-red-500" title={report.generationError}>
             {report.generationError}
           </p>
         ) : null}
       </td>
-      <td className="px-4 py-3 text-zinc-500">{report.modelId}</td>
+      <td className="px-4 py-3 text-zinc-500">{external ? "—" : report.modelId}</td>
       <td className="px-4 py-3 text-zinc-500">
         {new Date(report.generatedAt).toLocaleDateString()}
       </td>
@@ -203,16 +210,32 @@ function ReportTableRow({
               {rowPending && activeMutationType === "unpublish" ? "Unpublishing..." : "Unpublish"}
             </Button>
           ) : null}
-          <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={actionsDisabled}>
-            <RefreshCw className="mr-1 h-3 w-3" />
-            {rowPending && activeMutationType === "regenerate"
-              ? "Regenerating..."
-              : generating
-                ? "Generating…"
-                : failed
-                  ? "Retry"
-                  : "Regen"}
-          </Button>
+          {external ? (
+            // `aria-disabled` rather than `disabled` so the hint stays reachable
+            // by hover, focus and assistive tech; there is no click handler.
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-disabled="true"
+              title={EXTERNAL_REGENERATE_HINT}
+              aria-label={EXTERNAL_REGENERATE_HINT}
+              className="cursor-not-allowed opacity-50"
+            >
+              <RefreshCw className="mr-1 h-3 w-3" />
+              Regen
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={actionsDisabled}>
+              <RefreshCw className="mr-1 h-3 w-3" />
+              {rowPending && activeMutationType === "regenerate"
+                ? "Regenerating..."
+                : generating
+                  ? "Generating…"
+                  : failed
+                    ? "Retry"
+                    : "Regen"}
+            </Button>
+          )}
           {deletable ? (
             <Button
               variant="ghost"
@@ -229,7 +252,7 @@ function ReportTableRow({
       </td>
     </tr>
   );
-}
+});
 
 export function PortfolioReportListPage({ community }: Props) {
   const slug = community.details.slug;
@@ -255,7 +278,10 @@ export function PortfolioReportListPage({ community }: Props) {
     return map;
   }, [configs]);
 
-  const activeConfigs = useMemo(() => (configs ?? []).filter((c) => c.isActive), [configs]);
+  const sortedConfigs = useMemo(
+    () => [...(configs ?? [])].sort((a, b) => Number(b.isActive) - Number(a.isActive)),
+    [configs]
+  );
 
   const [typeFilter, setTypeFilter] = useQueryState("type", { defaultValue: ALL_TYPES });
 
@@ -447,7 +473,7 @@ export function PortfolioReportListPage({ community }: Props) {
           </div>
         ) : configsError ? (
           <p className="text-sm text-red-500">Failed to load configs.</p>
-        ) : activeConfigs.length === 0 ? (
+        ) : sortedConfigs.length === 0 ? (
           <p className="text-sm text-zinc-500">
             No active configs.{" "}
             <button
@@ -461,7 +487,7 @@ export function PortfolioReportListPage({ community }: Props) {
           </p>
         ) : (
           <ul className="space-y-2">
-            {activeConfigs.map((cfg) => (
+            {sortedConfigs.map((cfg) => (
               <li
                 key={cfg.id}
                 className="flex items-center justify-between rounded-md border border-zinc-200 px-3 py-2 dark:border-zinc-700"
@@ -473,6 +499,7 @@ export function PortfolioReportListPage({ community }: Props) {
                   <p className="truncate text-xs text-zinc-500">
                     {formatScheduleLabel(cfg.schedule)} · {cfg.programIds.length} program
                     {cfg.programIds.length === 1 ? "" : "s"} · {cfg.modelId}
+                    {cfg.isActive ? null : " · schedule off"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

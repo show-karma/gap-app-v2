@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { PortfolioReportListPage } from "@/components/Pages/Admin/PortfolioReports/PortfolioReportListPage";
@@ -90,6 +90,8 @@ function reportFixture(overrides: Record<string, unknown> = {}) {
     dataSnapshot: {},
     modelId: "gpt-4.1",
     tokenUsage: null,
+    source: "karma",
+    generatedBy: null,
     generatedAt: "2026-04-01T00:00:00.000Z",
     generationError: null,
     publishedAt: null,
@@ -104,6 +106,13 @@ const filecoinCommunity = {
   uid: "community-1",
   details: { slug: "filecoin", name: "Filecoin" },
 } as any;
+
+const TEST_SCHEDULE = {
+  intervalUnit: "months",
+  intervalCount: 1,
+  startDate: "2026-04-01",
+  ends: { kind: "never" },
+};
 
 describe("PortfolioReportListPage", () => {
   beforeEach(() => {
@@ -166,7 +175,16 @@ describe("PortfolioReportListPage", () => {
 
   it("shows the report's custom title with the config name as secondary context", () => {
     mockUseReportConfigs.mockReturnValue({
-      data: [{ id: "config-1", name: "Monthly Pods Report", isActive: false, programIds: [] }],
+      data: [
+        {
+          id: "config-1",
+          name: "Monthly Pods Report",
+          isActive: false,
+          programIds: [],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+        },
+      ],
       isLoading: false,
     } as any);
     mockUsePortfolioReports.mockReturnValue({
@@ -176,14 +194,60 @@ describe("PortfolioReportListPage", () => {
 
     render(<PortfolioReportListPage community={filecoinCommunity} />);
 
-    expect(screen.getByText("Pods Report — June 2026")).toBeInTheDocument();
+    const table = within(screen.getByRole("table"));
+    expect(table.getByText("Pods Report — June 2026")).toBeInTheDocument();
     // Config name stays visible as secondary context so admins know its source.
-    expect(screen.getByText("Monthly Pods Report")).toBeInTheDocument();
+    expect(table.getByText("Monthly Pods Report")).toBeInTheDocument();
+  });
+
+  it("lists inactive configs with Generate still available", () => {
+    mockUseReportConfigs.mockReturnValue({
+      data: [
+        {
+          id: "cfg-on",
+          name: "Weekly",
+          isActive: true,
+          programIds: ["p1"],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+        },
+        {
+          id: "cfg-off",
+          name: "Agent series",
+          isActive: false,
+          programIds: ["p1"],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+        },
+      ],
+      isLoading: false,
+    } as any);
+    mockUsePortfolioReports.mockReturnValue({ data: [], isLoading: false } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    const rows = screen.getAllByRole("listitem");
+    const off = rows.find((r) => within(r).queryByText("Agent series"));
+    expect(off).toBeTruthy();
+    expect(within(off as HTMLElement).getByRole("button", { name: /generate/i })).toBeEnabled();
+    expect(within(off as HTMLElement).getByRole("button", { name: /^configure$/i })).toBeEnabled();
+    expect(within(off as HTMLElement).getByText(/schedule off/)).toBeInTheDocument();
+    const on = rows.find((r) => within(r).queryByText("Weekly")) as HTMLElement;
+    expect(within(on).getByRole("button", { name: /generate/i })).toBeEnabled();
   });
 
   it("falls back to the config name when a report has no custom title", () => {
     mockUseReportConfigs.mockReturnValue({
-      data: [{ id: "config-1", name: "Monthly Pods Report", isActive: false, programIds: [] }],
+      data: [
+        {
+          id: "config-1",
+          name: "Monthly Pods Report",
+          isActive: false,
+          programIds: [],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+        },
+      ],
       isLoading: false,
     } as any);
     mockUsePortfolioReports.mockReturnValue({
@@ -193,8 +257,8 @@ describe("PortfolioReportListPage", () => {
 
     render(<PortfolioReportListPage community={filecoinCommunity} />);
 
-    // Only one occurrence — the config name stands in for the missing title.
-    expect(screen.getAllByText("Monthly Pods Report")).toHaveLength(1);
+    // Only one occurrence in the table — the config name stands in for the missing title.
+    expect(within(screen.getByRole("table")).getAllByText("Monthly Pods Report")).toHaveLength(1);
   });
 
   it("does not show a Preview action for published reports", () => {
@@ -260,6 +324,47 @@ describe("PortfolioReportListPage", () => {
     render(<PortfolioReportListPage community={filecoinCommunity} />);
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+  });
+
+  describe("external reports", () => {
+    it("hides the working Regenerate action without labelling the source", async () => {
+      const user = userEvent.setup();
+      const regenerateMutateAsync = vi.fn();
+      mockUseRegenerateReport.mockReturnValue({
+        isPending: false,
+        mutateAsync: regenerateMutateAsync,
+      } as any);
+      mockUsePortfolioReports.mockReturnValue({
+        data: [reportFixture({ id: "ext-report", source: "external", generatedBy: "claude-code" })],
+        isLoading: false,
+      } as any);
+
+      render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+      expect(screen.queryByText("External")).not.toBeInTheDocument();
+      expect(screen.queryByText("claude-code")).not.toBeInTheDocument();
+      // The Regen control is replaced by an inert hint; nothing regenerates.
+      const hint = screen.getByRole("button", {
+        name: "Regenerate is unavailable for this report",
+      });
+      expect(hint).toHaveAttribute("aria-disabled", "true");
+      await user.click(hint);
+      expect(regenerateMutateAsync).not.toHaveBeenCalled();
+    });
+
+    it("keeps the Regenerate action for karma reports", () => {
+      mockUsePortfolioReports.mockReturnValue({
+        data: [reportFixture({ id: "karma-report", source: "karma" })],
+        isLoading: false,
+      } as any);
+
+      render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+      expect(screen.queryByText("External")).not.toBeInTheDocument();
+      const regen = screen.getByRole("button", { name: /^regen$/i });
+      expect(regen).toBeEnabled();
+      expect(regen).not.toHaveAttribute("aria-disabled");
+    });
   });
 
   it("does not show a Delete action for published reports", () => {
