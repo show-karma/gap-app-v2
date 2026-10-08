@@ -232,7 +232,7 @@ describe("PortfolioReportListPage", () => {
     const blocked = within(off as HTMLElement).getByRole("button", { name: /inactive/i });
     expect(blocked).toHaveAttribute("aria-disabled", "true");
     expect(blocked).toHaveAttribute("title", expect.stringMatching(/inactive/i));
-    expect(within(off as HTMLElement).getByRole("button", { name: /configure/i })).toBeEnabled();
+    expect(within(off as HTMLElement).getByRole("button", { name: /^configure$/i })).toBeEnabled();
     expect(within(off as HTMLElement).getByText(/inactive/)).toBeInTheDocument();
     const on = rows.find((r) => within(r).queryByText("Weekly")) as HTMLElement;
     expect(within(on).getByRole("button", { name: /generate/i })).toBeEnabled();
