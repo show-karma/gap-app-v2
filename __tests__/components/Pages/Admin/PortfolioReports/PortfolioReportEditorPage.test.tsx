@@ -92,13 +92,13 @@ describe("PortfolioReportEditorPage", () => {
   describe("external reports", () => {
     const externalReport = { ...baseReport, source: "external", generatedBy: "claude-code" };
 
-    it("hides Regenerate, shows the External badge and renders the verbatim frame", async () => {
+    it("hides Regenerate and renders the isolated frame without labelling the source", async () => {
       const user = userEvent.setup();
       mockUsePortfolioReport.mockReturnValue({ data: externalReport, isLoading: false } as any);
 
       render(<PortfolioReportEditorPage community={community} reportId="report-1" />);
 
-      expect(screen.getByText("External")).toBeInTheDocument();
+      expect(screen.queryByText("External")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /regenerate/i })).not.toBeInTheDocument();
       expect(screen.getByTestId("external-report-frame")).toHaveTextContent(
         "<p>Server content</p>"

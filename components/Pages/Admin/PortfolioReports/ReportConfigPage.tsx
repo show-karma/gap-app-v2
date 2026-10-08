@@ -45,7 +45,6 @@ import {
 } from "@/utilities/portfolio-reports/period";
 import { cn } from "@/utilities/tailwind";
 import { zodResolver } from "@/utilities/zodResolver";
-import { ReportSourceBadge } from "./ReportSourceBadge";
 
 interface Props {
   community: Community;
@@ -510,10 +509,7 @@ function ReportConfigPageLoaded({
               {configs.map((cfg: ReportConfig) => (
                 <tr key={cfg.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                   <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                    <span className="inline-flex flex-wrap items-center gap-2">
-                      {cfg.name}
-                      <ReportSourceBadge source={cfg.source} />
-                    </span>
+                    {cfg.name}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
                     {formatScheduleLabel(cfg.schedule)}
@@ -565,7 +561,6 @@ function ReportConfigPageLoaded({
           <div className="flex items-start justify-between">
             <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {formTitle}
-              <ReportSourceBadge source={editingConfig?.source} />
             </h2>
             <Button
               variant="ghost"

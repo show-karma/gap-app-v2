@@ -130,8 +130,12 @@ export function PortfolioReportDocumentView({
 
         <footer className="report-print-hide mt-12 border-t border-zinc-200 pt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
           <span>Generated {formatDate(report.generatedAt)}</span>
-          <span className="mx-2">·</span>
-          <span>{external ? (report.generatedBy ?? "External agent") : report.modelId}</span>
+          {external ? null : (
+            <>
+              <span className="mx-2">·</span>
+              <span>{report.modelId}</span>
+            </>
+          )}
           {report.publishedAt ? (
             <>
               <span className="mx-2">·</span>

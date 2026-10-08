@@ -48,7 +48,6 @@ import { PAGES } from "@/utilities/pages";
 import { formatRunDate, formatScheduleLabel } from "@/utilities/portfolio-reports/period";
 import { isExternalReport } from "@/utilities/portfolio-reports/source";
 import { GenerationStatusBadge } from "./GenerationStatusBadge";
-import { ReportSourceBadge } from "./ReportSourceBadge";
 
 interface Props {
   community: Community;
@@ -146,7 +145,7 @@ interface ReportTableRowProps {
   onDelete: () => void;
 }
 
-const EXTERNAL_REGENERATE_HINT = "Saved from an external agent, regenerate is unavailable";
+const EXTERNAL_REGENERATE_HINT = "Regenerate is unavailable for this report";
 
 const ReportTableRow = memo(function ReportTableRow({
   slug,
@@ -178,7 +177,6 @@ const ReportTableRow = memo(function ReportTableRow({
       <td className="px-4 py-3">
         <div className="flex flex-wrap items-center gap-1">
           <GenerationStatusBadge status={report.status} />
-          <ReportSourceBadge source={report.source} />
         </div>
         {failed && report.generationError ? (
           <p className="mt-1 max-w-md truncate text-xs text-red-500" title={report.generationError}>
@@ -186,9 +184,7 @@ const ReportTableRow = memo(function ReportTableRow({
           </p>
         ) : null}
       </td>
-      <td className="px-4 py-3 text-zinc-500">
-        {external ? (report.generatedBy ?? "External agent") : report.modelId}
-      </td>
+      <td className="px-4 py-3 text-zinc-500">{external ? "—" : report.modelId}</td>
       <td className="px-4 py-3 text-zinc-500">
         {new Date(report.generatedAt).toLocaleDateString()}
       </td>

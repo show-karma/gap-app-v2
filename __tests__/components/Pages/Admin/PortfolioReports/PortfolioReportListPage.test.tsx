@@ -265,7 +265,7 @@ describe("PortfolioReportListPage", () => {
   });
 
   describe("external reports", () => {
-    it("shows an External badge and hides the working Regenerate action", async () => {
+    it("hides the working Regenerate action without labelling the source", async () => {
       const user = userEvent.setup();
       const regenerateMutateAsync = vi.fn();
       mockUseRegenerateReport.mockReturnValue({
@@ -279,11 +279,11 @@ describe("PortfolioReportListPage", () => {
 
       render(<PortfolioReportListPage community={filecoinCommunity} />);
 
-      expect(screen.getByText("External")).toBeInTheDocument();
-      expect(screen.getByText("claude-code")).toBeInTheDocument();
+      expect(screen.queryByText("External")).not.toBeInTheDocument();
+      expect(screen.queryByText("claude-code")).not.toBeInTheDocument();
       // The Regen control is replaced by an inert hint; nothing regenerates.
       const hint = screen.getByRole("button", {
-        name: "Saved from an external agent, regenerate is unavailable",
+        name: "Regenerate is unavailable for this report",
       });
       expect(hint).toHaveAttribute("aria-disabled", "true");
       await user.click(hint);

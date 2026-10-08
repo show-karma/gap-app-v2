@@ -34,7 +34,6 @@ import { PAGES } from "@/utilities/pages";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { isExternalReport } from "@/utilities/portfolio-reports/source";
 import { GenerationStatusBadge } from "./GenerationStatusBadge";
-import { ReportSourceBadge } from "./ReportSourceBadge";
 
 interface Props {
   community: Community;
@@ -341,13 +340,8 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
             </h1>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
               <GenerationStatusBadge status={report.status} />
-              <ReportSourceBadge source={report.source} />
               {report.title && <span>{runDateLabel}</span>}
-              <span>
-                {external
-                  ? `Agent: ${report.generatedBy ?? "external"}`
-                  : `Model: ${report.modelId}`}
-              </span>
+              {external ? null : <span>{`Model: ${report.modelId}`}</span>}
               {report.tokenUsage && (
                 <span>{report.tokenUsage.totalTokens.toLocaleString()} tokens</span>
               )}
