@@ -155,6 +155,44 @@ describe("RecordPaymentDialog", () => {
     expect(submitButton).toBeEnabled();
   });
 
+  it("should key the breakdown by the allocation's milestone uid when the invoice row carries the empty sentinel", async () => {
+    const user = userEvent.setup();
+    renderDialog({
+      milestoneAllocations: [
+        { id: "alloc-2", milestoneUID: "ms-2", label: "Milestone 2", amount: "50000" },
+      ],
+      milestoneInvoices: [
+        {
+          milestoneLabel: "Milestone 2",
+          milestoneUID: "",
+          allocatedAmount: "50000",
+          paymentStatus: "pending",
+        },
+      ],
+    });
+
+    const checkbox = screen
+      .getByText("Milestone 2")
+      .closest("label")!
+      .querySelector("input[type='checkbox']") as HTMLInputElement;
+    await user.click(checkbox);
+    const amountInput = screen.getByPlaceholderText("e.g. 50000");
+    await user.clear(amountInput);
+    await user.type(amountInput, "50000");
+    const dateInput = screen.getByLabelText("Payment Date");
+    await user.clear(dateInput);
+    await user.type(dateInput, "2026-03-15");
+    const submit = screen.getByRole("button", { name: /record payment/i });
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+
+    expect(mockMutate).toHaveBeenCalledTimes(1);
+    const body = mockMutate.mock.calls[0][0];
+    expect(body.paidAllocationIds).toEqual(["alloc-2"]);
+    expect(Object.keys(body.milestoneBreakdown)).toEqual(["ms-2"]);
+    expect(body.milestoneLabels).toEqual({ "ms-2": "Milestone: Milestone 2" });
+  });
+
   it("should show chain warning when chain unsupported", () => {
     // chainID 999 is not in TOKEN_ADDRESSES.usdc
     renderDialog({ chainID: 999 });
