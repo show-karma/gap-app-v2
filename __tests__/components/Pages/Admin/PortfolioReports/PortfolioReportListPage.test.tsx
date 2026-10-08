@@ -229,7 +229,9 @@ describe("PortfolioReportListPage", () => {
     const rows = screen.getAllByRole("listitem");
     const off = rows.find((r) => within(r).queryByText("Agent series"));
     expect(off).toBeTruthy();
-    expect(within(off as HTMLElement).getByRole("button", { name: /generate/i })).toBeDisabled();
+    const blocked = within(off as HTMLElement).getByRole("button", { name: /inactive/i });
+    expect(blocked).toHaveAttribute("aria-disabled", "true");
+    expect(blocked).toHaveAttribute("title", expect.stringMatching(/inactive/i));
     expect(within(off as HTMLElement).getByRole("button", { name: /configure/i })).toBeEnabled();
     expect(within(off as HTMLElement).getByText(/inactive/)).toBeInTheDocument();
     const on = rows.find((r) => within(r).queryByText("Weekly")) as HTMLElement;
