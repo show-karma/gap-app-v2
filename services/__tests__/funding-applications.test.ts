@@ -61,6 +61,16 @@ describe("funding-applications service", () => {
       updatedAt: new Date().toISOString(),
     };
 
+    it("scopes the lookup to a program when one is given", async () => {
+      mockApiGet.mockResolvedValue(mockApplication);
+
+      await fetchApplicationByProjectUID("project-456", "992");
+
+      expect(mockApiGet).toHaveBeenCalledWith(
+        "/v2/funding-applications/project/project-456?programId=992"
+      );
+    });
+
     it("should fetch application successfully", async () => {
       mockApiGet.mockResolvedValue(mockApplication);
 

@@ -215,7 +215,7 @@ function MilestoneCommentsTab({
     isLoading,
     error,
     refetch,
-  } = useFundingApplicationByProjectUID(projectUID || "");
+  } = useFundingApplicationByProjectUID(projectUID || "", parseProgramId(programId));
   const referenceNumber = fundingApplication?.referenceNumber;
 
   if (isLoading && !referenceNumber) {
@@ -384,7 +384,7 @@ export function InboxMilestoneDetail({
   );
 
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectUid, programId);
-  const { application } = useFundingApplicationByProjectUID(projectUid);
+  const { application } = useFundingApplicationByProjectUID(projectUid, parsedProgramId);
   const contacts = useInboxContacts({
     referenceNumber: application?.referenceNumber,
     applicationData: application?.applicationData,
@@ -680,6 +680,7 @@ export function InboxMilestoneDetail({
         {activePanelTab === "simocracy" && (
           <InboxMilestoneSimocracyTab
             projectUID={project?.uid ?? projectUid}
+            programId={parsedProgramId}
             milestone={{ uid: selectedMilestone.uid, title: selectedMilestone.title }}
           />
         )}

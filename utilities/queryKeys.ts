@@ -93,7 +93,8 @@ export const QUERY_KEYS = {
     EVALUATION: (milestoneUID: string) => ["milestone-evaluation", milestoneUID] as const,
   },
   APPLICATIONS: {
-    BY_PROJECT_UID: (projectUID: string) => ["application-by-project-uid", projectUID] as const,
+    BY_PROJECT_UID: (projectUID: string, programId?: string) =>
+      ["application-by-project-uid", projectUID, programId ?? null] as const,
     GRANTEE_ACCESS: (address?: string, communitySlug?: string, programId?: string) =>
       [
         "application-grantee-access",

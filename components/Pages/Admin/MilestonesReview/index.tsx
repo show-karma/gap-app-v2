@@ -552,7 +552,7 @@ function MilestonesReviewPageContent({
     isLoading: isLoadingFundingApp,
     error: fundingApplicationError,
     refetch: refetchFundingApplication,
-  } = useFundingApplicationByProjectUID(projectUID || "");
+  } = useFundingApplicationByProjectUID(projectUID || "", parsedProgramId);
 
   // On-chain milestone attestations don't carry completion criteria, so we look
   // it up from the application data (where the grantee originally entered it).
@@ -1029,6 +1029,7 @@ function MilestonesReviewPageContent({
                 selectedMilestone ? (
                   <InboxMilestoneSimocracyTab
                     projectUID={project.uid}
+                    programId={parsedProgramId}
                     milestone={{ uid: selectedMilestone.uid, title: selectedMilestone.title }}
                   />
                 ) : (

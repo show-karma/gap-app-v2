@@ -388,7 +388,8 @@ describe("InboxMilestoneDetail", () => {
     render(<InboxMilestoneDetail {...baseProps} />);
     // The header derives the team name from the application, so it is fetched
     // up front rather than deferred to the Comments tab.
-    expect(mockUseFundingApplicationByProjectUID).toHaveBeenCalledWith("proj-1");
+    // Scoped to the program on screen: the project may hold one application per program.
+    expect(mockUseFundingApplicationByProjectUID).toHaveBeenCalledWith("proj-1", "959");
   });
 
   it("shows the point-of-contact name in the header contacts", () => {

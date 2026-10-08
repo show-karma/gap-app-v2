@@ -40,13 +40,18 @@ describe("queryKeys", () => {
     describe("BY_PROJECT_UID", () => {
       it("should generate correct query key", () => {
         const key = QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID("project-uid-123");
-        expect(key).toEqual(["application-by-project-uid", "project-uid-123"]);
+        expect(key).toEqual(["application-by-project-uid", "project-uid-123", null]);
+        expect(QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID("project-uid-123", "992")).toEqual([
+          "application-by-project-uid",
+          "project-uid-123",
+          "992",
+        ]);
       });
 
       it("should return as const tuple", () => {
         const key = QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID("uid-1");
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(2);
+        expect(key.length).toBe(3);
       });
 
       it("should handle different project UIDs", () => {
