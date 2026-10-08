@@ -80,7 +80,7 @@ describe("ReportConfigPage", () => {
   });
 
   describe("external configs", () => {
-    it("shows the prompt read-only with an explanatory note", async () => {
+    it("keeps the prompt editable for agent-created configs", async () => {
       const user = userEvent.setup();
       mockUseReportConfigs.mockReturnValue({
         data: [configFixture({ source: "external", prompt: "Agent-authored prompt" })],
@@ -94,13 +94,9 @@ describe("ReportConfigPage", () => {
       await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
       const prompt = screen.getByLabelText(/report prompt/i) as HTMLTextAreaElement;
-      expect(prompt).toHaveAttribute("readonly");
+      expect(prompt).not.toHaveAttribute("readonly");
       expect(prompt.value).toBe("Agent-authored prompt");
-      expect(
-        screen.getByText(/this prompt was saved from an external agent\. karma does not run it/i)
-      ).toBeInTheDocument();
-      // Other fields remain editable.
-      expect(screen.getByLabelText(/report name/i)).not.toHaveAttribute("readonly");
+      expect(screen.queryByText(/saved from an external agent/i)).not.toBeInTheDocument();
     });
 
     it("keeps the prompt editable for karma configs and the create flow", async () => {

@@ -43,7 +43,6 @@ import {
   RUN_DATE_REGEX,
   type SchedulePresetKey,
 } from "@/utilities/portfolio-reports/period";
-import { isExternalConfig } from "@/utilities/portfolio-reports/source";
 import { cn } from "@/utilities/tailwind";
 import { zodResolver } from "@/utilities/zodResolver";
 import { ReportSourceBadge } from "./ReportSourceBadge";
@@ -160,14 +159,9 @@ function buildProgramOptions(grantPrograms: CommunityProgram[]): ProgramOption[]
 interface ReportPromptFieldProps {
   registration: UseFormRegisterReturn<"prompt">;
   error?: string;
-  /**
-   * External configs carry a prompt the admin's own agent wrote. Karma never
-   * runs it, so it is shown read-only as a record of how the report was made.
-   */
-  isExternal: boolean;
 }
 
-function ReportPromptField({ registration, error, isExternal }: ReportPromptFieldProps) {
+function ReportPromptField({ registration, error }: ReportPromptFieldProps) {
   return (
     <div>
       <label
@@ -176,29 +170,16 @@ function ReportPromptField({ registration, error, isExternal }: ReportPromptFiel
       >
         Report Prompt
       </label>
-      {isExternal ? (
-        <p className="mb-2 rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 dark:border-zinc-600 dark:bg-zinc-900/50 dark:text-zinc-300">
-          This prompt was saved from an external agent. Karma does not run it, it is kept as a
-          record of how the report was produced.
-        </p>
-      ) : (
-        <p className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-          <strong>Tip:</strong> specify the time window in your prompt (e.g. &quot;summarize the
-          last 30 days&quot; or &quot;past quarter&quot;). If you don&apos;t, the agent defaults to
-          the last 30 days.
-        </p>
-      )}
+      <p className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+        <strong>Tip:</strong> specify the time window in your prompt (e.g. &quot;summarize the last
+        30 days&quot; or &quot;past quarter&quot;). If you don&apos;t, the agent defaults to the
+        last 30 days.
+      </p>
       <Textarea
         id={PROMPT_TEXTAREA_ID}
         rows={12}
-        placeholder={isExternal ? undefined : PROMPT_PLACEHOLDER}
-        readOnly={isExternal}
-        aria-readonly={isExternal || undefined}
-        className={cn(
-          "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100",
-          isExternal &&
-            "cursor-default bg-zinc-50 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-        )}
+        placeholder={PROMPT_PLACEHOLDER}
+        className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
         {...registration}
       />
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
@@ -453,9 +434,6 @@ function ReportConfigPageLoaded({
 
   const isSaving = createMutation.isPending || updateMutation.isPending || isSubmitting;
   const isFormOpen = editingId !== null;
-  // An external config's prompt was written by the admin's own agent. Karma
-  // never runs it, so it is shown as a read-only record rather than a field.
-  const isEditingExternal = editingConfig !== null && isExternalConfig(editingConfig);
   const formTitle =
     editingId === "new"
       ? "New Report"
@@ -670,11 +648,7 @@ function ReportConfigPageLoaded({
           </div>
 
           {/* Prompt */}
-          <ReportPromptField
-            registration={register("prompt")}
-            error={errors.prompt?.message}
-            isExternal={isEditingExternal}
-          />
+          <ReportPromptField registration={register("prompt")} error={errors.prompt?.message} />
 
           {/* Metrics */}
           <div>
