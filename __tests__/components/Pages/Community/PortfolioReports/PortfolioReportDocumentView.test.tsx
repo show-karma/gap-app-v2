@@ -93,6 +93,8 @@ describe("PortfolioReportDocumentView renderer selection", () => {
     expect(screen.getByTestId("report-charts-section")).toBeInTheDocument();
     // Full-bleed: the external frame is not wrapped in the padded Karma card.
     expect(frame.parentElement?.className).not.toMatch(/p-4|rounded-xl|max-w-/);
+    // No structured sections to export from agent-authored HTML.
+    expect(screen.queryByRole("button", { name: /export data/i })).not.toBeInTheDocument();
     // Provenance stays in the data, not on the page.
     expect(screen.queryByText("claude-code")).not.toBeInTheDocument();
     expect(screen.queryByText(/external/i)).not.toBeInTheDocument();

@@ -90,7 +90,7 @@ export function PortfolioReportDocumentView({
             </ol>
           </nav>
           <div className="flex flex-wrap items-center gap-2">
-            {canExportData ? (
+            {canExportData && !external ? (
               <ExportDataMenu communitySlug={community.details.slug} reportId={report.id} />
             ) : null}
             <Button
