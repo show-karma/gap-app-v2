@@ -116,14 +116,18 @@ export function EditorialProgramCard({ program, communityId }: EditorialProgramC
   const title = program.metadata?.title ?? program.name ?? "Untitled program";
   const description = program.metadata?.shortDescription ?? program.metadata?.description ?? "";
   const href = PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, program.programId);
-  // Same rule the details page uses for its "View applications" link: a public
-  // list only exists for a program with a form that is not private.
   const hasPublicApplications =
     !!program.applicationConfig?.formSchema &&
     !program.applicationConfig.formSchema.settings?.privateApplications;
   const applicationsHref = hasPublicApplications
     ? `${PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId)}?programId=${program.programId}`
     : null;
+  const applicantsLabel = (
+    <>
+      <Users className="h-3.5 w-3.5" aria-hidden />
+      {view.applicants} {pluralize("applicant", view.applicants)}
+    </>
+  );
   const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
   const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
   const dateLabel = (() => {
@@ -202,17 +206,12 @@ export function EditorialProgramCard({ program, communityId }: EditorialProgramC
               // Above the title's card-wide overlay, or the click lands on Details.
               <AppLink
                 href={applicationsHref}
-                title="View applications"
                 className="relative z-10 inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
               >
-                <Users className="h-3.5 w-3.5" aria-hidden />
-                {view.applicants} {pluralize("applicant", view.applicants)}
+                {applicantsLabel}
               </AppLink>
             ) : (
-              <span className="inline-flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" aria-hidden />
-                {view.applicants} {pluralize("applicant", view.applicants)}
-              </span>
+              <span className="inline-flex items-center gap-1.5">{applicantsLabel}</span>
             )
           ) : (
             <span />

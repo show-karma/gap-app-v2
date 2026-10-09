@@ -1,5 +1,5 @@
 /**
- * @file Tests for computeProgramView pure function.
+ * @file Tests for computeProgramView and the card's applicants link.
  */
 
 import { render, screen } from "@testing-library/react";
@@ -181,9 +181,6 @@ describe("computeProgramView", () => {
   });
 });
 
-// The applicant count is the shortest way into a program's public
-// applications list, which otherwise sits one click deeper on the details
-// page. It links under the same rule that page uses for "View applications".
 describe("EditorialProgramCard - applicants link", () => {
   const withApplicants = (
     applicationConfig: FundingProgram["applicationConfig"],
