@@ -131,20 +131,27 @@ function RecordPaymentDialogInner({
     if (milestoneInvoices && milestoneInvoices.length > 0) {
       for (let i = 0; i < milestoneInvoices.length; i++) {
         const invoice = milestoneInvoices[i];
-        const allocation = milestoneAllocations?.find(
-          (a) => a.milestoneUID && a.milestoneUID === invoice.milestoneUID
+        // Off-chain invoice rows carry the "" sentinel uid; fall back to the
+        // allocation that shares the label so the row still resolves to a
+        // real milestone instead of sending an empty key to the backend.
+        const invoiceUID = invoice.milestoneUID || null;
+        const allocation = milestoneAllocations?.find((a) =>
+          invoiceUID
+            ? a.milestoneUID === invoiceUID
+            : Boolean(a.milestoneUID) && a.label === invoice.milestoneLabel
         );
         if (allocation) usedAllocationIds.add(allocation.id);
 
+        const milestoneUID = invoiceUID ?? allocation?.milestoneUID ?? null;
         const label = allocation?.label || invoice.milestoneLabel || `Milestone ${i + 1}`;
         options.push({
-          key: invoice.milestoneUID ?? `milestone-${i}`,
+          key: milestoneUID ?? allocation?.id ?? `milestone-${i}`,
           label,
-          milestoneUID: invoice.milestoneUID,
+          milestoneUID,
           allocationId: allocation?.id ?? null,
           allocatedAmount: allocation?.amount ?? invoice.allocatedAmount ?? null,
           isPaid: invoice.paymentStatus === "disbursed",
-          category: classifyOption(label, invoice.milestoneUID),
+          category: classifyOption(label, milestoneUID),
         });
       }
     }
@@ -229,7 +236,10 @@ function RecordPaymentDialogInner({
     const milestoneBreakdown: Record<string, string> | undefined =
       selectedMilestones.length > 0
         ? Object.fromEntries(
-            selectedMilestones.map((m) => [m.milestoneUID ?? m.key, disbursedAmount])
+            selectedMilestones.map((m) => [
+              m.milestoneUID ?? m.allocationId ?? m.key,
+              disbursedAmount,
+            ])
           )
         : undefined;
 
@@ -245,7 +255,7 @@ function RecordPaymentDialogInner({
             selectedMilestones.map((m) => {
               const prefix = CATEGORY_PREFIX[m.category];
               const displayLabel = prefix ? `${prefix}: ${m.label}` : m.label;
-              return [m.milestoneUID ?? m.key, displayLabel];
+              return [m.milestoneUID ?? m.allocationId ?? m.key, displayLabel];
             })
           )
         : undefined;
