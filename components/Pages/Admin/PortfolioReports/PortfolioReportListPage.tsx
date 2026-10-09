@@ -12,6 +12,7 @@ import {
   Settings,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
@@ -45,6 +46,7 @@ import {
 } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
+import { deriveConfigSlugs } from "@/utilities/portfolio-reports/config-slug";
 import { formatRunDate, formatScheduleLabel } from "@/utilities/portfolio-reports/period";
 import { isExternalReport } from "@/utilities/portfolio-reports/source";
 import { GenerationStatusBadge } from "./GenerationStatusBadge";
@@ -120,10 +122,23 @@ function ReportTypeFilterSelect({
  * config's name. When a title is set the config name still shows underneath so
  * admins can tell which config produced the report.
  */
-function ReportNameCell({ title, configName }: { title?: string | null; configName: string }) {
+function ReportNameCell({
+  title,
+  configName,
+  href,
+}: {
+  title?: string | null;
+  configName: string;
+  href: string;
+}) {
   return (
     <td className="px-4 py-3">
-      <span className="font-medium text-zinc-900 dark:text-zinc-100">{title ?? configName}</span>
+      <Link
+        href={href}
+        className="font-medium text-zinc-900 hover:text-blue-600 hover:underline dark:text-zinc-100 dark:hover:text-blue-400"
+      >
+        {title ?? configName}
+      </Link>
       {title ? (
         <span className="mt-0.5 block text-xs font-normal text-zinc-500">{configName}</span>
       ) : null}
@@ -133,6 +148,8 @@ function ReportNameCell({ title, configName }: { title?: string | null; configNa
 
 interface ReportTableRowProps {
   slug: string;
+  /** Public page when published, admin preview otherwise. */
+  href: string;
   report: PortfolioReport;
   configName: string;
   rowPending: boolean;
@@ -149,6 +166,7 @@ const EXTERNAL_REGENERATE_HINT = "Regenerate is unavailable for this report";
 
 const ReportTableRow = memo(function ReportTableRow({
   slug,
+  href,
   report: initialReport,
   configName,
   rowPending,
@@ -172,7 +190,7 @@ const ReportTableRow = memo(function ReportTableRow({
   const deletable = report.status === "draft" || failed;
   return (
     <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-      <ReportNameCell title={report.title} configName={configName} />
+      <ReportNameCell title={report.title} configName={configName} href={href} />
       <td className="px-4 py-3 text-zinc-500">{fmt.shortLabel}</td>
       <td className="px-4 py-3">
         <div className="flex flex-wrap items-center gap-1">
@@ -184,7 +202,6 @@ const ReportTableRow = memo(function ReportTableRow({
           </p>
         ) : null}
       </td>
-      <td className="px-4 py-3 text-zinc-500">{external ? "—" : report.modelId}</td>
       <td className="px-4 py-3 text-zinc-500">
         {new Date(report.generatedAt).toLocaleDateString()}
       </td>
@@ -270,6 +287,7 @@ export function PortfolioReportListPage({ community }: Props) {
   const regenerateMutation = useRegenerateReport(slug);
   const deleteMutation = useDeleteReport(slug);
 
+  const configSlugById = useMemo(() => deriveConfigSlugs(configs ?? []), [configs]);
   const configById = useMemo(() => {
     const map = new Map<string, ReportConfig>();
     for (const cfg of configs ?? []) {
@@ -585,7 +603,6 @@ export function PortfolioReportListPage({ community }: Props) {
                     <th className="px-4 py-3 text-left font-medium text-zinc-500">Report</th>
                     <th className="px-4 py-3 text-left font-medium text-zinc-500">Run date</th>
                     <th className="px-4 py-3 text-left font-medium text-zinc-500">Status</th>
-                    <th className="px-4 py-3 text-left font-medium text-zinc-500">Model</th>
                     <th className="px-4 py-3 text-left font-medium text-zinc-500">Generated</th>
                     <th className="px-4 py-3 text-right font-medium text-zinc-500">Actions</th>
                   </tr>
@@ -597,6 +614,15 @@ export function PortfolioReportListPage({ community }: Props) {
                       slug={slug}
                       report={report}
                       configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
+                      href={
+                        report.status === "published"
+                          ? PAGES.COMMUNITY.REPORT_DETAIL(
+                              slug,
+                              report.runDate,
+                              configSlugById.get(report.reportConfigId) ?? null
+                            )
+                          : PAGES.ADMIN.PORTFOLIO_REPORTS_PREVIEW(slug, report.id)
+                      }
                       rowPending={isRowPending(report.id)}
                       activeMutationType={activeMutationType}
                       onEdit={() =>
