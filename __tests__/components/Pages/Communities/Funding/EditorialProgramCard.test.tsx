@@ -2,7 +2,11 @@
  * @file Tests for computeProgramView pure function.
  */
 
-import { computeProgramView } from "@/components/Pages/Communities/Funding/EditorialProgramCard";
+import { render, screen } from "@testing-library/react";
+import {
+  computeProgramView,
+  EditorialProgramCard,
+} from "@/components/Pages/Communities/Funding/EditorialProgramCard";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 
 const FIXED_NOW = new Date("2026-05-07T12:00:00.000Z");
@@ -174,5 +178,60 @@ describe("computeProgramView", () => {
     const b = computeProgramView({ ...createProgram(), programId: "beta-different" });
     expect(a.accentClass).toBe("bg-brand-500");
     expect(b.accentClass).toBe("bg-brand-500");
+  });
+});
+
+// The applicant count is the shortest way into a program's public
+// applications list, which otherwise sits one click deeper on the details
+// page. It links under the same rule that page uses for "View applications".
+describe("EditorialProgramCard - applicants link", () => {
+  const withApplicants = (
+    applicationConfig: FundingProgram["applicationConfig"],
+    applicants = 3
+  ): FundingProgram => ({
+    ...createProgram({ applicantsNumber: applicants }, applicationConfig),
+    metrics: { totalApplications: applicants } as FundingProgram["metrics"],
+  });
+  const publicForm = { isEnabled: true, formSchema: { settings: {} } } as NonNullable<
+    FundingProgram["applicationConfig"]
+  >;
+  const privateForm = {
+    isEnabled: true,
+    formSchema: { settings: { privateApplications: true } },
+  } as NonNullable<FundingProgram["applicationConfig"]>;
+
+  it("links the applicant count to the program's public applications", () => {
+    render(<EditorialProgramCard program={withApplicants(publicForm)} communityId="filecoin" />);
+
+    expect(screen.getByRole("link", { name: "3 applicants" })).toHaveAttribute(
+      "href",
+      "/community/filecoin/browse-applications?programId=program-1"
+    );
+  });
+
+  it("pluralizes the count on the link", () => {
+    render(<EditorialProgramCard program={withApplicants(publicForm, 1)} communityId="filecoin" />);
+
+    expect(screen.getByRole("link", { name: "1 applicant" })).toBeInTheDocument();
+  });
+
+  it("keeps the count as text when the program's applications are private", () => {
+    render(<EditorialProgramCard program={withApplicants(privateForm)} communityId="filecoin" />);
+
+    expect(screen.queryByRole("link", { name: "3 applicants" })).not.toBeInTheDocument();
+    expect(screen.getByText("3 applicants")).toBeInTheDocument();
+  });
+
+  it("keeps the count as text when the program has no application form", () => {
+    render(<EditorialProgramCard program={withApplicants(null)} communityId="filecoin" />);
+
+    expect(screen.queryByRole("link", { name: "3 applicants" })).not.toBeInTheDocument();
+    expect(screen.getByText("3 applicants")).toBeInTheDocument();
+  });
+
+  it("renders no count at all without applicants", () => {
+    render(<EditorialProgramCard program={withApplicants(publicForm, 0)} communityId="filecoin" />);
+
+    expect(screen.queryByText(/applicant/)).not.toBeInTheDocument();
   });
 });
