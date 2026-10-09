@@ -236,6 +236,52 @@ describe("PortfolioReportListPage", () => {
     expect(within(on).getByRole("button", { name: /generate/i })).toBeEnabled();
   });
 
+  it("links a published report title to its public page and a draft to the admin preview", () => {
+    mockUseReportConfigs.mockReturnValue({
+      data: [
+        {
+          id: "config-1",
+          name: "Monthly Pods Report",
+          isActive: true,
+          programIds: [],
+          modelId: "gpt-5.5",
+          schedule: TEST_SCHEDULE,
+          createdAt: "2026-04-01T00:00:00.000Z",
+        },
+      ],
+      isLoading: false,
+    } as any);
+    mockUsePortfolioReports.mockReturnValue({
+      data: [
+        reportFixture({
+          id: "pub-1",
+          title: "June 2026",
+          status: "published",
+          runDate: "2026-06-30",
+        }),
+        reportFixture({
+          id: "draft-1",
+          title: "July 2026",
+          status: "draft",
+          runDate: "2026-07-31",
+        }),
+      ],
+      isLoading: false,
+    } as any);
+
+    render(<PortfolioReportListPage community={filecoinCommunity} />);
+
+    expect(screen.getByRole("link", { name: "June 2026" })).toHaveAttribute(
+      "href",
+      "/community/filecoin/reports/2026-06-30/monthly-pods-report"
+    );
+    expect(screen.getByRole("link", { name: "July 2026" })).toHaveAttribute(
+      "href",
+      "/community/filecoin/manage/portfolio-reports/draft-1/preview"
+    );
+    expect(screen.queryByRole("columnheader", { name: "Model" })).not.toBeInTheDocument();
+  });
+
   it("falls back to the config name when a report has no custom title", () => {
     mockUseReportConfigs.mockReturnValue({
       data: [
