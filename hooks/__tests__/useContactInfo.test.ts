@@ -97,16 +97,17 @@ describe("useContactInfo", () => {
     expect(result.current.data).toBeNull();
   });
 
-  it("maps contacts on success", async () => {
-    mockApiGet.mockResolvedValue([
-      { _id: { $oid: "c1" }, name: "Ada", email: "ada@x.io", telegram: "@ada" },
-    ]);
+  it.each([
+    { format: "string", id: "507f1f77bcf86cd799439011" },
+    { format: "legacy $oid", id: { $oid: "507f1f77bcf86cd799439011" } },
+  ])("preserves $format contact IDs for editing and deletion", async ({ id }) => {
+    mockApiGet.mockResolvedValue([{ _id: id, name: "Ada", email: "ada@x.io", telegram: "@ada" }]);
 
     const { result } = renderHook(() => useContactInfo("proj-1"), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.data).toEqual([
-        { id: "c1", name: "Ada", email: "ada@x.io", telegram: "@ada" },
+        { id: "507f1f77bcf86cd799439011", name: "Ada", email: "ada@x.io", telegram: "@ada" },
       ]);
     });
     expect(mockErrorManager).not.toHaveBeenCalled();
