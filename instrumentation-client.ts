@@ -9,7 +9,10 @@ import {
   shouldDropChunkErrorEvent,
 } from "./utilities/chunkRecovery";
 import { isChunkLoadError } from "./utilities/isChunkLoadError";
-import { isBrowserExtensionOnlyError } from "./utilities/sentry/browserExtensionErrors";
+import {
+  isBrowserExtensionOnlyError,
+  isUrbanVpnExtensionError,
+} from "./utilities/sentry/browserExtensionErrors";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 import {
   isTransientHttpError,
@@ -57,14 +60,10 @@ Sentry.init({
     if (shouldDropChunkErrorEvent(original)) {
       return null;
     }
-    // Duelling wallet extensions wrap each other's injected provider and
-    // recurse until the stack blows, yielding `RangeError: Maximum call stack
-    // size exceeded` with zero first-party frames. Unactionable, and it drags
-    // a session replay up with it (`replaysOnErrorSampleRate` is 1.0).
-    // Matched on frame provenance, never on the message — a genuine runaway
-    // recursion in our own code reads identically and must keep reporting.
-    // See GAP-FRONTEND-26Q / ./utilities/sentry/browserExtensionErrors.ts
-    if (isBrowserExtensionOnlyError(event)) {
+    // Drop extension-only stacks and Urban VPN's known M_ID rejection at its
+    // executor throw site. A matching message alone never suppresses an app
+    // exception. See GAP-FRONTEND-26Q / GAP-FRONTEND-28K.
+    if (isBrowserExtensionOnlyError(event) || isUrbanVpnExtensionError(event)) {
       return null;
     }
     if (isChunkLoadError(original)) {
