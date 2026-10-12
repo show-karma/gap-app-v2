@@ -9,7 +9,10 @@ import {
   shouldDropChunkErrorEvent,
 } from "./utilities/chunkRecovery";
 import { isChunkLoadError } from "./utilities/isChunkLoadError";
-import { isBrowserExtensionOnlyError } from "./utilities/sentry/browserExtensionErrors";
+import {
+  isBrowserExtensionOnlyError,
+  isUrbanVpnExtensionError,
+} from "./utilities/sentry/browserExtensionErrors";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 import {
   isTransientHttpError,
@@ -49,6 +52,11 @@ Sentry.init({
     // GAP-FRONTEND-1Y2 and ./utilities/attestWithRetry.ts
     if (isAttestRetryExhaustedError(original)) {
       return event;
+    }
+    // GAP-FRONTEND-28K: drop only Urban VPN's known M_ID rejection at its
+    // injected executor throw site, including Sentry's app:/// URL form.
+    if (isUrbanVpnExtensionError(event)) {
+      return null;
     }
     // Stale-deploy chunk failures: drop while one-time reload recovery is
     // possible/in flight; report only when recovery is exhausted. See

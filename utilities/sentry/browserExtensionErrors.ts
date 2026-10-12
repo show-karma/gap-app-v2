@@ -111,3 +111,26 @@ export function isBrowserExtensionOnlyError(event: Event): boolean {
 
   return sawAnyFrame && sawInjectedFrame;
 }
+
+const URBAN_VPN_EXECUTOR_URL =
+  /^(?:app:\/\/\/|chrome-extension:\/\/eppiocemhmnlbhjplcgkofciiegomcon\/)executors\/200\.js$/;
+const URBAN_VPN_ERROR_MESSAGE = "Cannot read properties of undefined (reading 'M_ID')";
+
+/**
+ * Urban VPN injects this executor into pages and leaks an unhandled rejection.
+ * Its Y/E frames match GAP-FRONTEND-28K; the executor is not shipped by Karma.
+ * See https://github.com/debpalash/VoiceStudio/issues/1901
+ * and https://karma-crypto-inc.sentry.io/issues/7786161917/
+ */
+export function isUrbanVpnExtensionError(event: Event): boolean {
+  // Sentry orders exceptions from cause to wrapper and frames from caller to
+  // throw site. Only inspect the outer exception and its actual throw site:
+  // an extension elsewhere in a first-party stack must not hide an app error.
+  const exception = event.exception?.values?.at(-1);
+  if (exception?.type !== "TypeError" || exception.value !== URBAN_VPN_ERROR_MESSAGE) {
+    return false;
+  }
+
+  const filename = exception.stacktrace?.frames?.at(-1)?.filename;
+  return typeof filename === "string" && URBAN_VPN_EXECUTOR_URL.test(filename);
+}
