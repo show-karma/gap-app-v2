@@ -49,7 +49,7 @@ export const useContactInfo = (projectId: string | undefined, isAuthorized?: boo
         if (!data) return null;
 
         return data.map((contact: APIContact) => ({
-          id: contact._id.$oid,
+          id: typeof contact._id === "string" ? contact._id : contact._id.$oid,
           name: contact.name,
           email: contact.email,
           telegram: contact.telegram,

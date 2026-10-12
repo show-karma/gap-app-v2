@@ -9,9 +9,7 @@ export type APIContact = {
   attestationId: {
     $oid: string;
   };
-  _id: {
-    $oid: string;
-  };
+  _id: string | { $oid: string };
   createdAt: string;
   updatedAt: string;
   name?: string;
