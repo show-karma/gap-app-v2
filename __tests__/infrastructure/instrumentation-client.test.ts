@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import type { Event } from "@sentry/nextjs";
+import type { Event, EventHint } from "@sentry/nextjs";
 
 // Mock @sentry/nextjs before importing the module under test
 const mockInit = vi.fn();
@@ -100,6 +100,12 @@ describe("instrumentation-client", () => {
   describe("beforeSend — Urban VPN injected executor (GAP-FRONTEND-28K)", () => {
     const message = "Cannot read properties of undefined (reading 'M_ID')";
     const extensionUrl = "chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/executors/200.js";
+    let beforeSend: (event: Event, hint: EventHint) => Event | null;
+
+    beforeEach(async () => {
+      await import("@/instrumentation-client");
+      beforeSend = mockInit.mock.calls[0][0].beforeSend;
+    });
 
     function createExecutorEvent(filename = "app:///executors/200.js"): Event {
       // Exact exception/stack from event a589ee7b9bb94b9ab2a66e7f82a9e0cd.
@@ -128,11 +134,8 @@ describe("instrumentation-client", () => {
 
     it.each(["app:///executors/200.js", extensionUrl])(
       "drops the captured M_ID exception from %s even without an originalException hint",
-      async (filename) => {
-        await import("@/instrumentation-client");
-        const initConfig = mockInit.mock.calls[0][0];
-
-        expect(initConfig.beforeSend(createExecutorEvent(filename), {})).toBeNull();
+      (filename) => {
+        expect(beforeSend(createExecutorEvent(filename), {})).toBeNull();
       }
     );
 
@@ -140,53 +143,43 @@ describe("instrumentation-client", () => {
       "https://www.karmahq.org/_next/static/chunks/app.js",
       "app:///executors/201.js",
       "https://www.karmahq.org/executors/200.js",
-    ])("keeps the same message from an unrecognized source: %s", async (filename) => {
-      await import("@/instrumentation-client");
-      const initConfig = mockInit.mock.calls[0][0];
+    ])("keeps the same message from an unrecognized source: %s", (filename) => {
       const event = createExecutorEvent(filename);
 
-      expect(initConfig.beforeSend(event, {})).toBe(event);
+      expect(beforeSend(event, {})).toBe(event);
     });
 
-    it("keeps a first-party throw even when an extension frame is an older caller", async () => {
-      await import("@/instrumentation-client");
-      const initConfig = mockInit.mock.calls[0][0];
+    it("keeps a first-party throw even when an extension frame is an older caller", () => {
       const event = createExecutorEvent();
       const exception = event.exception?.values?.[0];
       exception?.stacktrace?.frames?.push({
         filename: "https://www.karmahq.org/_next/static/chunks/app.js",
       });
 
-      expect(initConfig.beforeSend(event, {})).toBe(event);
+      expect(beforeSend(event, {})).toBe(event);
     });
 
-    it("keeps an application error wrapping an extension exception as its cause", async () => {
-      await import("@/instrumentation-client");
-      const initConfig = mockInit.mock.calls[0][0];
+    it("keeps an application error wrapping an extension exception as its cause", () => {
       const event = createExecutorEvent();
       event.exception?.values?.push({ type: "Error", value: "Application failed" });
 
-      expect(initConfig.beforeSend(event, {})).toBe(event);
+      expect(beforeSend(event, {})).toBe(event);
     });
 
-    it("keeps the same message when the throw site is unknown", async () => {
-      await import("@/instrumentation-client");
-      const initConfig = mockInit.mock.calls[0][0];
+    it("keeps the same message when the throw site is unknown", () => {
       const event: Event = {
         exception: { values: [{ type: "TypeError", value: message }] },
       };
 
-      expect(initConfig.beforeSend(event, {})).toBe(event);
+      expect(beforeSend(event, {})).toBe(event);
     });
 
-    it("keeps other failures from the executor", async () => {
-      await import("@/instrumentation-client");
-      const initConfig = mockInit.mock.calls[0][0];
+    it("keeps other failures from the executor", () => {
       const event = createExecutorEvent();
       const exception = event.exception?.values?.[0];
       if (exception) exception.value = "Some unrelated failure";
 
-      expect(initConfig.beforeSend(event, {})).toBe(event);
+      expect(beforeSend(event, {})).toBe(event);
     });
   });
 

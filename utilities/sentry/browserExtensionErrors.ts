@@ -127,10 +127,9 @@ export function isUrbanVpnExtensionError(event: Event): boolean {
   // throw site. Only inspect the outer exception and its actual throw site:
   // an extension elsewhere in a first-party stack must not hide an app error.
   const exception = event.exception?.values?.at(-1);
-  if (exception?.type !== "TypeError" || exception.value !== URBAN_VPN_ERROR_MESSAGE) {
-    return false;
-  }
-
-  const filename = exception.stacktrace?.frames?.at(-1)?.filename;
-  return typeof filename === "string" && URBAN_VPN_EXECUTOR_URL.test(filename);
+  return (
+    exception?.type === "TypeError" &&
+    exception.value === URBAN_VPN_ERROR_MESSAGE &&
+    URBAN_VPN_EXECUTOR_URL.test(exception.stacktrace?.frames?.at(-1)?.filename ?? "")
+  );
 }
