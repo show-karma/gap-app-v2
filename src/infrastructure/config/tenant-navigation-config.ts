@@ -175,7 +175,7 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
         prefix: "fil",
         accent: "pgf",
         suffix: ".io",
-        href: "https://filpgf.io",
+        href: "https://www.filpgf.io",
         // The filecoin tenant also serves grants.filecoin.io, which is not the
         // filpgf.io brand — it keeps the logo + title brand linking to the app.
         domains: ["app.filpgf.io"],
@@ -204,11 +204,11 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
           {
             label: "Funding Programs",
             items: [
-              { label: "Kernel", href: "https://filpgf.io/kernel/", isExternal: true },
-              { label: "R&D", href: "https://filpgf.io/rnd/", isExternal: true },
+              { label: "Kernel", href: "https://www.filpgf.io/kernel/", isExternal: true },
+              { label: "R&D", href: "https://www.filpgf.io/rnd/", isExternal: true },
               {
                 label: "Revenue Development",
-                href: "https://filpgf.io/revenue-development/",
+                href: "https://www.filpgf.io/revenue-development/",
                 isExternal: true,
               },
             ],
@@ -249,6 +249,7 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
         items: [
           { label: "Filecoin", href: "https://www.filecoin.io/learn", isExternal: true },
           { label: "Upcoming Events", href: "https://fil.org/events/", isExternal: true },
+          { label: "Roadmap", href: "https://www.filpgf.io/roadmap/", isExternal: true },
         ],
       },
     ],
@@ -258,7 +259,7 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
      * Blog sits to the right of Connect, matching the landing site's header
      * (filecoin-grants `src/data/nav.ts`). The two are meant to read as one.
      */
-    itemsAfterSocialLinks: [{ label: "Blog", href: "https://filpgf.io/blog/", isExternal: true }],
+    itemsAfterSocialLinks: [{ label: "Blog", href: "https://www.filpgf.io/blog/", isExternal: true }],
     socialLinks: {
       twitter: "https://twitter.com/Filecoin",
       discord: "https://discord.gg/yeQ2hcd2TD",
