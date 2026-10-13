@@ -38,7 +38,6 @@ overrides:
   uuid@<11.1.1: 11.1.1
   uuid@>=13.0.0 <13.0.1: 13.0.1
   valibot@>=1.0.0 <1.4.2: 1.4.2
-  vite@>=7.0.0 <7.3.5: 7.3.5
   ws@>=7.0.0 <7.5.11: 7.5.11
   ws@>=8.0.0 <8.21.0: 8.21.0
 
@@ -2938,7 +2937,7 @@ packages:
     resolution: {integrity: sha512-J4BaTocTOYFkMHIra1JDWrMWpNmBl4EkplIwHEsV8aeUOtdWjwSnln9U7twjMFTAEB7mptNtSKyVi1Y2W9sDJw==}
     peerDependencies:
       typescript: '>= 4.3.x'
-      vite: 7.3.5
+      vite: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -6150,7 +6149,7 @@ packages:
     resolution: {integrity: sha512-ukTgD1hY+00VOA85fbXGrm30eMKYZr7I69/EonAb3rX8JS7JeI2Zoxd8WRXwQUafYbwRH6GSfjJ65xLXe9BCuQ==}
     peerDependencies:
       storybook: ^10.0.5
-      vite: 7.3.5
+      vite: ^5.0.0 || ^6.0.0 || ^7.0.0
 
   '@storybook/builder-webpack5@10.0.5':
     resolution: {integrity: sha512-hLihSyoy6CRgkWYVrablIBcRytUR1CiJoZaOMyQjxXKgnWXzczpJaUg+b9WmjIuOTZva5//3O1HMCpQyEEFbOw==}
@@ -6172,7 +6171,7 @@ packages:
       esbuild: 0.28.1
       rollup: '*'
       storybook: ^10.0.5
-      vite: 7.3.5
+      vite: '*'
       webpack: '*'
     peerDependenciesMeta:
       esbuild:
@@ -6218,7 +6217,7 @@ packages:
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       storybook: ^10.0.5
       typescript: '*'
-      vite: 7.3.5
+      vite: ^5.0.0 || ^6.0.0 || ^7.0.0
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -6275,7 +6274,7 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       storybook: ^10.0.5
-      vite: 7.3.5
+      vite: ^5.0.0 || ^6.0.0 || ^7.0.0
 
   '@storybook/react@10.0.5':
     resolution: {integrity: sha512-FDajPP8HG4n1w3nql7lxQUNKg5+wEa+qJzAPNk583FRaeH6GuxSHlG1vUARQ1QnAZwwlrZzcmgjVNxIucms/5g==}
@@ -6872,13 +6871,13 @@ packages:
     resolution: {integrity: sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
-      vite: 7.3.5
+      vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
 
   '@vitejs/plugin-react@5.2.0':
     resolution: {integrity: sha512-YmKkfhOAi3wsB1PhJq5Scj3GXMn3WvtQ/JC0xoopuHoXSdmtdStOpFrYaT1kie2YgFBcIe64ROzMYRjCrYOdYw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
-      vite: 7.3.5
+      vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
 
   '@vitest/browser-playwright@4.0.7':
     resolution: {integrity: sha512-j5vA74jIqKbMA6yRTQ4PwEwbuPx+Ldtdb12gAJt++eds3kDtuvmfqRe9SmCxXRJ50drZaSai6Vunh2WcjUw8Fg==}
@@ -6913,7 +6912,7 @@ packages:
     resolution: {integrity: sha512-OsDwLS7WnpuNslOV6bJkXVYVV/6RSc4eeVxV7h9wxQPNxnjRvTTrIikfwCbMyl8XJmW6oOccBj2Q07YwZtQcCw==}
     peerDependencies:
       msw: ^2.4.9
-      vite: 7.3.5
+      vite: ^6.0.0 || ^7.0.0-0
     peerDependenciesMeta:
       msw:
         optional: true
@@ -6924,7 +6923,7 @@ packages:
     resolution: {integrity: sha512-evxREh+Hork43+Y4IOhTo+h5lGmVRyjqI739Rz4RlUPqwrkFFDF6EMvOOYjTx4E8Tl6gyCLRL8Mu7Ry12a13Tw==}
     peerDependencies:
       msw: ^2.4.9
-      vite: 7.3.5
+      vite: ^6.0.0 || ^7.0.0 || ^8.0.0-0
     peerDependenciesMeta:
       msw:
         optional: true
@@ -14500,12 +14499,12 @@ packages:
     peerDependencies:
       next: ^14.1.0 || ^15.0.0 || ^16.0.0
       storybook: ^0.0.0-0 || ^9.0.0 || ^10.0.0 || ^10.0.0-0 || ^10.1.0-0
-      vite: 7.3.5
+      vite: ^5.0.0 || ^6.0.0 || ^7.0.0
 
   vite-tsconfig-paths@5.1.4:
     resolution: {integrity: sha512-cYj0LRuLV2c2sMqhqhGpaO3LretdtMn/BVX4cPLanIZuwwrkVl+lK84E/miEXkCHWXuq65rhNN4rXsBcOB3S4w==}
     peerDependencies:
-      vite: 7.3.5
+      vite: '*'
     peerDependenciesMeta:
       vite:
         optional: true
@@ -14513,7 +14512,7 @@ packages:
   vite-tsconfig-paths@6.1.1:
     resolution: {integrity: sha512-2cihq7zliibCCZ8P9cKJrQBkfgdvcFkOOc3Y02o3GWUDLgqjWsZudaoiuOwO/gzTzy17cS5F7ZPo4bsnS4DGkg==}
     peerDependencies:
-      vite: 7.3.5
+      vite: '*'
 
   vite@7.3.5:
     resolution: {integrity: sha512-KuOaNhcnGFN2zIPGA7wRmzF+lJA1sea7rHq17aiJ++9lzY1WWG6Jpwqwe1KNbRVPIqHmr8GLYx7jbrQcN/7/ww==}
@@ -14569,7 +14568,7 @@ packages:
       '@vitest/ui': 4.1.0
       happy-dom: '*'
       jsdom: '*'
-      vite: 7.3.5
+      vite: ^6.0.0 || ^7.0.0 || ^8.0.0-0
     peerDependenciesMeta:
       '@edge-runtime/vm':
         optional: true
