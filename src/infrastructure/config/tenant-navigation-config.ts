@@ -249,6 +249,7 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
         items: [
           { label: "Filecoin", href: "https://www.filecoin.io/learn", isExternal: true },
           { label: "Upcoming Events", href: "https://fil.org/events/", isExternal: true },
+          { label: "Roadmap", href: "https://www.filpgf.io/roadmap/", isExternal: true },
         ],
       },
     ],
