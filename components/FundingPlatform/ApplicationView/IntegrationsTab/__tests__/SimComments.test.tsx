@@ -237,6 +237,49 @@ describe("SimComments", () => {
       expect(screen.getByText("VERDICT: FUND REDUCED")).toBeInTheDocument();
     });
 
+    // Evaluations posted straight to the thread never had a draft, so the desk
+    // is empty while the thread is not. "No Sim verdicts yet" over three
+    // verdicts is the contradiction this guards.
+    it("shows the public thread as the section when a reviewer has nothing on the desk", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: {
+          programId: "1",
+          comments: [
+            comment({
+              text: "Milestone: Milestone 2\n**Sim milestone evaluation — Marta (FilPGF)**\n\nVerdict: Demonstrated",
+              milestoneUid: "0xm2",
+            }),
+          ],
+          forbidden: false,
+        },
+        isLoading: false,
+      });
+      mockUseSimocracyMilestoneVerdicts.mockReturnValue({
+        data: { verdicts: [], forbidden: false },
+      });
+
+      render(<SimComments referenceNumber="APP-1" review />);
+
+      expect(screen.queryByText(/No Sim verdicts on this application yet/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Public thread" })).not.toBeInTheDocument();
+      expect(screen.getByText("Sim evaluations")).toBeInTheDocument();
+      expect(screen.getByText("Verdict: Demonstrated")).toBeInTheDocument();
+    });
+
+    it("keeps the empty desk message when neither drafts nor comments exist", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: { programId: "1", comments: [], forbidden: false },
+        isLoading: false,
+      });
+      mockUseSimocracyMilestoneVerdicts.mockReturnValue({
+        data: { verdicts: [], forbidden: false },
+      });
+
+      render(<SimComments referenceNumber="APP-1" review />);
+
+      expect(screen.getByText(/No Sim verdicts on this application yet/)).toBeInTheDocument();
+    });
+
     it("keeps only the selected milestone's drafts and hides published ones", () => {
       mockUseSimocracyComments.mockReturnValue({
         data: { programId: "1", comments: [], forbidden: false },

@@ -266,7 +266,9 @@ export const SimComments: FC<{
   }
 
   // Reviewers get the verdict desk; everyone else sees only what is public.
-  if (reviewVerdicts) {
+  // An empty desk over a non-empty thread is the public view: evaluations
+  // posted straight to the thread never had a draft to review.
+  if (reviewVerdicts && (reviewVerdicts.length > 0 || groups.length === 0)) {
     return (
       <div className="space-y-6">
         <VerdictReview
