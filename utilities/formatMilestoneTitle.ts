@@ -14,8 +14,9 @@ export function formatMilestoneTitle(index: number, title: string): string {
     return `Milestone ${number}`;
   }
 
-  // Avoid double-prefixing if title already starts with "Milestone N"
-  const milestonePrefix = new RegExp(`^Milestone\\s+${number}(\\s*:|$)`);
+  // Avoid double-prefixing if title already starts with "Milestone N",
+  // whether the title continues with ":", "-", an en/em dash, or nothing.
+  const milestonePrefix = new RegExp(`^Milestone\\s+${number}(\\s*[:\\-\u2013\u2014]|$)`);
   if (milestonePrefix.test(trimmed)) {
     return trimmed;
   }
