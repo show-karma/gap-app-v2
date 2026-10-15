@@ -29,7 +29,11 @@ describe("matchPayoutCsvRows", () => {
   });
 
   it("matches a row that carries the project uid instead of the slug", async () => {
-    const result = await matchPayoutCsvRows([row(ORIGINAL)], grants, vi.fn());
+    const result = await matchPayoutCsvRows(
+      [row(ORIGINAL)],
+      grants,
+      vi.fn(async () => null)
+    );
 
     expect(result.matches[0].grantUid).toBe("grant-original");
   });
@@ -85,6 +89,44 @@ describe("matchPayoutCsvRows", () => {
 
     expect(failed.unmatchedProjects).toEqual(["x"]);
     expect(notFound.unmatchedProjects).toEqual(["y"]);
+  });
+
+  it("keeps the first grant when a project has several grants in the table", async () => {
+    const twoGrants: PayoutGrantRow[] = [
+      { uid: "grant-first", projectUid: ORIGINAL, projectSlug: "ipni-network-indexer" },
+      { uid: "grant-second", projectUid: ORIGINAL, projectSlug: "ipni-network-indexer" },
+    ];
+    const resolve = vi.fn(
+      async (slugOrUid: string): Promise<ResolvedProject | null> =>
+        slugOrUid === "merged-slug"
+          ? { uid: DUPLICATE, pointers: [{ originalProjectUID: ORIGINAL }] }
+          : { uid: ORIGINAL }
+    );
+
+    const result = await matchPayoutCsvRows(
+      [row("ipni-network-indexer"), row(ORIGINAL), row("merged-slug")],
+      twoGrants,
+      resolve
+    );
+
+    expect(result.matches.map((m) => m.grantUid)).toEqual([
+      "grant-first",
+      "grant-first",
+      "grant-first",
+    ]);
+  });
+
+  it("resolves each unknown slug once even when it repeats across rows", async () => {
+    const resolve = vi.fn(async (): Promise<ResolvedProject | null> => null);
+
+    const result = await matchPayoutCsvRows(
+      [row("same"), row("SAME "), row("same")],
+      grants,
+      resolve
+    );
+
+    expect(resolve).toHaveBeenCalledTimes(1);
+    expect(result.unmatchedProjects).toEqual(["same", "SAME ", "same"]);
   });
 
   it("stops on a self pointer instead of looping", async () => {

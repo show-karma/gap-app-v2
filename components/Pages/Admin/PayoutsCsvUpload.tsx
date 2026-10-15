@@ -21,7 +21,7 @@ export interface CsvParseResult {
 }
 
 interface PayoutsCsvUploadProps {
-  onDataParsed: (result: CsvParseResult) => void;
+  onDataParsed: (result: CsvParseResult) => void | Promise<void>;
   disabled?: boolean;
   unmatchedProjects?: string[];
   onDownloadExample?: () => void;
@@ -84,7 +84,7 @@ export function PayoutsCsvUpload({
       Papa.parse(file, {
         header: false,
         skipEmptyLines: true,
-        complete: (results) => {
+        complete: async (results) => {
           try {
             if (!results.data || results.data.length < 2) {
               toast.error("CSV file appears to be empty or only contains headers");
@@ -210,9 +210,8 @@ export function PayoutsCsvUpload({
             setParseResults({ successful, failed, skipped, errors });
 
             if (parsedData.length > 0) {
-              // Pass the parsed data to parent component for matching
-              onDataParsed({ data: parsedData, unmatchedProjects: [] });
               toast.success(`Successfully parsed ${successful} entries`);
+              await onDataParsed({ data: parsedData, unmatchedProjects: [] });
             } else {
               toast.error("No valid entries found in CSV");
             }

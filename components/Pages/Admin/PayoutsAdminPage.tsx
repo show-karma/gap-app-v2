@@ -3,7 +3,8 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { BanknotesIcon, CheckIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import pluralize from "pluralize";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { formatUnits, isAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -506,10 +507,11 @@ export default function PayoutsAdminPage() {
     unmatchedProjects: string[];
   } | null>(null);
 
-  // Handle CSV data
+  const csvRunRef = useRef(0);
+
   const handleCsvData = useCallback(
     async (parseResult: CsvParseResult) => {
-      // Clear previous results when new CSV is uploaded
+      const run = ++csvRunRef.current;
       setLastCsvResult(null);
 
       const { matches, unmatchedProjects } = await matchPayoutCsvRows(
@@ -517,8 +519,8 @@ export default function PayoutsAdminPage() {
         tableData,
         getProject
       );
+      if (run !== csvRunRef.current) return;
 
-      // Use functional state update to avoid stale closure issues
       setEditedFields((prevEditedFields) => {
         const newEditedFields = { ...prevEditedFields };
         for (const match of matches) {
@@ -530,13 +532,10 @@ export default function PayoutsAdminPage() {
         }
         return newEditedFields;
       });
-
-      // Store unmatched projects for display
       setLastCsvResult({ unmatchedProjects });
 
-      // Show feedback about matches
       if (matches.length > 0) {
-        toast.success(`Matched ${matches.length} projects`);
+        toast.success(`Matched ${pluralize("grant", matches.length, true)}`);
       }
     },
     [tableData]
