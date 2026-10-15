@@ -24,6 +24,7 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
+import { getProject } from "@/services/project.service";
 import { CreateDisbursementModal } from "@/src/features/payout-disbursement/components/CreateDisbursementModal";
 import { getPaidAllocationIds } from "@/src/features/payout-disbursement/components/MilestoneSelectionStep";
 import { PayoutConfigurationModal } from "@/src/features/payout-disbursement/components/PayoutConfigurationModal";
@@ -48,6 +49,7 @@ import {
 import { CANONICAL_ORIGIN } from "@/utilities/domains";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { matchPayoutCsvRows } from "@/utilities/payouts/matchPayoutCsvRows";
 import { cn } from "@/utilities/tailwind";
 import { sanitizeNumericInput } from "@/utilities/validation";
 import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload";
@@ -506,33 +508,26 @@ export default function PayoutsAdminPage() {
 
   // Handle CSV data
   const handleCsvData = useCallback(
-    (parseResult: CsvParseResult) => {
-      const unmatchedProjects: string[] = [];
-      let matchedCount = 0;
-
+    async (parseResult: CsvParseResult) => {
       // Clear previous results when new CSV is uploaded
       setLastCsvResult(null);
+
+      const { matches, unmatchedProjects } = await matchPayoutCsvRows(
+        parseResult.data,
+        tableData,
+        getProject
+      );
 
       // Use functional state update to avoid stale closure issues
       setEditedFields((prevEditedFields) => {
         const newEditedFields = { ...prevEditedFields };
-
-        parseResult.data.forEach((csvRow) => {
-          // Find matching project in table data
-          const matchingProject = tableData.find((item) => item.projectSlug === csvRow.projectSlug);
-
-          if (matchingProject) {
-            matchedCount++;
-            newEditedFields[matchingProject.uid] = {
-              ...newEditedFields[matchingProject.uid],
-              payoutAddress: csvRow.payoutAddress,
-              amount: csvRow.amount,
-            };
-          } else {
-            unmatchedProjects.push(csvRow.projectSlug);
-          }
-        });
-
+        for (const match of matches) {
+          newEditedFields[match.grantUid] = {
+            ...newEditedFields[match.grantUid],
+            payoutAddress: match.payoutAddress,
+            amount: match.amount,
+          };
+        }
         return newEditedFields;
       });
 
@@ -540,12 +535,8 @@ export default function PayoutsAdminPage() {
       setLastCsvResult({ unmatchedProjects });
 
       // Show feedback about matches
-      if (matchedCount > 0) {
-        toast.success(`Matched ${matchedCount} projects`);
-      }
-
-      if (unmatchedProjects.length > 0) {
-        console.warn("Unmatched projects:", unmatchedProjects);
+      if (matches.length > 0) {
+        toast.success(`Matched ${matches.length} projects`);
       }
     },
     [tableData]
