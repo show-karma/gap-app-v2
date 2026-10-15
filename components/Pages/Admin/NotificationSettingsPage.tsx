@@ -8,6 +8,7 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Input } from "@/components/ui/input";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   type TelegramChat,
@@ -72,7 +73,9 @@ function telegramChatsEqual(
 ): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i += 1) {
-    if (a[i].id !== b[i].id || a[i].name !== b[i].name) return false;
+    if (a[i].id !== b[i].id || a[i].name !== b[i].name || a[i].threadId !== b[i].threadId) {
+      return false;
+    }
   }
   return true;
 }
@@ -464,22 +467,42 @@ function ChatsEditor({
         return (
           <div key={rowKey} className="flex items-start gap-2">
             <div className="flex-1 space-y-1">
-              <input
-                type="text"
-                value={chat.id}
-                onChange={(e) => {
-                  const next = [...chats];
-                  next[idx] = { id: e.target.value, name: chat.name };
-                  onChange(next);
-                }}
-                disabled={disabled}
-                placeholder={idx === 0 ? "-1001234567890" : "Additional chat ID"}
-                aria-label={`Telegram chat ID ${idx + 1}`}
-                className="h-9 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder-stone-400 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/40 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder-zinc-500"
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={chat.id}
+                  onChange={(e) => {
+                    const next = [...chats];
+                    next[idx] = { ...chat, id: e.target.value };
+                    onChange(next);
+                  }}
+                  disabled={disabled}
+                  placeholder={idx === 0 ? "-1001234567890" : "Additional chat ID"}
+                  aria-label={`Telegram chat ID ${idx + 1}`}
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder-stone-400 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/40 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder-zinc-500"
+                />
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={chat.threadId ?? ""}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    const { threadId: _dropped, ...rest } = chat;
+                    const next = [...chats];
+                    next[idx] = digits ? { ...rest, threadId: Number(digits) } : rest;
+                    onChange(next);
+                  }}
+                  disabled={disabled}
+                  placeholder="Topic ID"
+                  aria-label={`Telegram topic ID ${idx + 1}`}
+                  title="Optional. Forum topic ID (the last number in the topic link). Leave blank to post in the main chat."
+                  className="h-9 w-24 rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder-stone-400 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/40 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder-zinc-500"
+                />
+              </div>
               {chat.name ? (
                 <p className="px-1 text-xs text-stone-600 dark:text-zinc-400">
                   Paired to <span className="font-medium">{chat.name}</span>
+                  {chat.threadId ? ` · topic #${chat.threadId}` : ""}
                 </p>
               ) : chat.id.trim() ? (
                 <p className="px-1 text-xs italic text-stone-400 dark:text-zinc-500">
@@ -701,13 +724,20 @@ function TelegramProviderCard(props: TelegramProviderProps) {
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
 
   const handleTest = () => {
-    const filteredIds = props.chats.map((c) => c.id).filter((id) => id.trim());
+    const targets = props.chats.filter((c) => c.id.trim());
+    const filteredIds = targets.map((c) => c.id);
     testConfig(
       {
         providerType: "TELEGRAM",
         botToken: null,
         chatId: filteredIds[0] || null,
         chatIds: filteredIds.length > 0 ? filteredIds : undefined,
+        chats:
+          targets.length > 0
+            ? targets.map((c) =>
+                c.threadId ? { chatId: c.id, threadId: c.threadId } : { chatId: c.id }
+              )
+            : undefined,
         webhookUrl: null,
       },
       {
@@ -785,9 +815,10 @@ function TelegramProviderCard(props: TelegramProviderProps) {
           // chat into local state here: drop blank sentinel rows, keep existing
           // entries, de-dupe by id.
           const withoutBlanks = props.chats.filter((c) => c.id.trim());
-          const alreadyPresent = withoutBlanks.some((c) => c.id === chat.id);
+          const sameTarget = (c: TelegramChat) => c.id === chat.id && c.threadId === chat.threadId;
+          const alreadyPresent = withoutBlanks.some(sameTarget);
           const next = alreadyPresent
-            ? withoutBlanks.map((c) => (c.id === chat.id ? chat : c))
+            ? withoutBlanks.map((c) => (sameTarget(c) ? chat : c))
             : [...withoutBlanks, chat];
           props.onChatsChange(next);
         }}

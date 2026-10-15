@@ -11,6 +11,7 @@ export interface TestNotificationConfigRequest {
   botToken?: string | null;
   chatId?: string | null;
   chatIds?: string[];
+  chats?: Array<{ chatId: string; threadId?: number }>;
   webhookUrl?: string | null;
   webhookUrls?: string[];
 }

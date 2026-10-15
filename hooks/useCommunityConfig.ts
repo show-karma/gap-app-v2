@@ -13,6 +13,7 @@ const TelegramChatSchema = z
   .object({
     id: z.string(),
     name: z.string(),
+    threadId: z.number().int().positive().optional(),
   })
   .passthrough();
 export type TelegramChat = z.infer<typeof TelegramChatSchema>;

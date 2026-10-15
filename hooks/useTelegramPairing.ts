@@ -27,6 +27,7 @@ export interface TelegramPairVerifyResponse {
   chatId: string;
   chatTitle: string;
   chatType: string;
+  threadId?: number;
   alreadyPaired: boolean;
 }
 
@@ -131,10 +132,19 @@ export const useVerifyTelegramPairing = (communitySlug: string | undefined) => {
       queryClient.setQueryData<CommunityConfig | null>(queryKey, (old) => {
         if (!old) return old;
         const existingChats = old.telegramChats ?? [];
-        const alreadyPaired = existingChats.some((c) => c.id === data.chatId);
+        const alreadyPaired = existingChats.some(
+          (c) => c.id === data.chatId && c.threadId === data.threadId
+        );
         const nextChats = alreadyPaired
           ? existingChats
-          : [...existingChats, { id: data.chatId, name: data.chatTitle }];
+          : [
+              ...existingChats,
+              {
+                id: data.chatId,
+                name: data.chatTitle,
+                ...(data.threadId !== undefined ? { threadId: data.threadId } : {}),
+              },
+            ];
         return {
           ...old,
           telegramChats: nextChats,
