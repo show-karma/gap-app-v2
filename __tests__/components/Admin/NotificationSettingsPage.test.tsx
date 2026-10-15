@@ -516,8 +516,61 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
         providerType: "TELEGRAM",
         chatId: "-1001111",
         chatIds: ["-1001111", "-1002222"],
+        chats: [{ chatId: "-1001111" }, { chatId: "-1002222" }],
         webhookUrl: null,
       }),
+      expect.any(Object)
+    );
+  });
+
+  it("should_include_threadId_in_test_payload_when_chat_targets_a_topic", () => {
+    setupDefaultMocks({
+      config: createConfig({
+        telegramEnabled: true,
+        telegramChats: [{ id: "-1001111", name: "SC group", threadId: 2 }],
+      }),
+    });
+
+    renderPage();
+
+    const telegramCard = getCardByTitle("Telegram");
+    expect(within(telegramCard).getByDisplayValue("2")).toBeInTheDocument();
+    expect(within(telegramCard).getByText(/topic #2/)).toBeInTheDocument();
+
+    fireEvent.click(within(telegramCard).getByRole("button", { name: /Test/i }));
+
+    expect(testConfigMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chats: [{ chatId: "-1001111", threadId: 2 }],
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it("should_set_and_clear_threadId_from_the_topic_input", () => {
+    setupDefaultMocks({
+      config: createConfig({
+        telegramEnabled: true,
+        telegramChats: tgChats("-1001111"),
+      }),
+    });
+
+    renderPage();
+
+    const telegramCard = getCardByTitle("Telegram");
+    const topicInput = within(telegramCard).getByLabelText("Telegram topic ID 1");
+
+    fireEvent.change(topicInput, { target: { value: "42" } });
+    fireEvent.click(within(telegramCard).getByRole("button", { name: /Test/i }));
+    expect(testConfigMutate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ chats: [{ chatId: "-1001111", threadId: 42 }] }),
+      expect.any(Object)
+    );
+
+    fireEvent.change(topicInput, { target: { value: "" } });
+    fireEvent.click(within(telegramCard).getByRole("button", { name: /Test/i }));
+    expect(testConfigMutate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ chats: [{ chatId: "-1001111" }] }),
       expect.any(Object)
     );
   });
@@ -594,11 +647,11 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
     renderPage();
 
     const telegramCard = getCardByTitle("Telegram");
-    expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(1);
+    expect(within(telegramCard).getAllByLabelText(/^Telegram chat ID/)).toHaveLength(1);
 
     fireEvent.click(within(telegramCard).getByRole("button", { name: /Add chat ID/i }));
 
-    expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(2);
+    expect(within(telegramCard).getAllByLabelText(/^Telegram chat ID/)).toHaveLength(2);
   });
 
   it("should_remove_empty_row_without_confirmation_prompt", () => {
@@ -611,7 +664,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
     renderPage();
 
     const telegramCard = getCardByTitle("Telegram");
-    const inputs = within(telegramCard).getAllByRole("textbox");
+    const inputs = within(telegramCard).getAllByLabelText(/^Telegram chat ID/);
     expect(inputs).toHaveLength(2);
 
     // Find the trash button next to the empty row (second row)
@@ -622,7 +675,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
     fireEvent.click(trashButtons[1]);
 
     expect(confirmSpy).not.toHaveBeenCalled();
-    expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(1);
+    expect(within(telegramCard).getAllByLabelText(/^Telegram chat ID/)).toHaveLength(1);
 
     confirmSpy.mockRestore();
   });
@@ -637,7 +690,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
     const telegramCard = getCardByTitle("Telegram");
     await trashAndConfirm(telegramCard, 0, "continue");
 
-    expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(1);
+    expect(within(telegramCard).getAllByLabelText(/^Telegram chat ID/)).toHaveLength(1);
     expect(within(telegramCard).getByDisplayValue("-1002")).toBeInTheDocument();
   });
 
@@ -651,7 +704,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
     const telegramCard = getCardByTitle("Telegram");
     await trashAndConfirm(telegramCard, 0, "cancel");
 
-    expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(2);
+    expect(within(telegramCard).getAllByLabelText(/^Telegram chat ID/)).toHaveLength(2);
     expect(within(telegramCard).getByDisplayValue("-1001")).toBeInTheDocument();
     expect(within(telegramCard).getByDisplayValue("-1002")).toBeInTheDocument();
   });
@@ -912,7 +965,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
 
     // Add an empty row that should be filtered out
     fireEvent.click(within(telegramCard).getByRole("button", { name: /Add chat ID/i }));
-    expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(2);
+    expect(within(telegramCard).getAllByLabelText(/^Telegram chat ID/)).toHaveLength(2);
 
     // Click global Save — fires mutateAsync, which the mock resolves immediately
     await act(async () => {
@@ -924,7 +977,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
 
     // Local state should collapse back to the single non-empty row
     const refetchedCard = getCardByTitle("Telegram");
-    expect(within(refetchedCard).getAllByRole("textbox")).toHaveLength(1);
+    expect(within(refetchedCard).getAllByLabelText(/^Telegram chat ID/)).toHaveLength(1);
     expect(within(refetchedCard).getByDisplayValue("-1009999")).toBeInTheDocument();
 
     // Save bar is hidden now (no dirty state)

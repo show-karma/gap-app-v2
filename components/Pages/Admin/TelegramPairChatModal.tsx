@@ -22,7 +22,7 @@ interface TelegramPairChatModalProps {
   // re-synced from props (see NotificationSettingsPage.tsx:1074-1078 — sync
   // would clobber unsaved edits). Without this callback the provider card's
   // Chat-IDs list stays empty until the page is remounted.
-  onPaired?: (chat: { id: string; name: string }) => void;
+  onPaired?: (chat: { id: string; name: string; threadId?: number }) => void;
 }
 
 // Poll every 3s. The backend rate-limits verify at 10/min per community
@@ -190,7 +190,11 @@ export function TelegramPairChatModal({
             // Fire even on already-paired: server truth includes the chat
             // but the parent's local state may not (paired in another tab).
             // Parent de-dupes by id.
-            onPaired?.({ id: data.chatId, name: data.chatTitle });
+            onPaired?.({
+              id: data.chatId,
+              name: data.chatTitle,
+              ...(data.threadId !== undefined ? { threadId: data.threadId } : {}),
+            });
             onOpenChange(false);
           },
           onError: (err) => {
