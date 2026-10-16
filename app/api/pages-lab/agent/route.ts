@@ -50,6 +50,12 @@ interface ToolUse {
 const ENABLED = process.env.PAGES_LAB_ENABLED === "1";
 
 /**
+ * A generation with tool rounds runs well past a serverless function's default
+ * ceiling, which would kill it on a deployed preview.
+ */
+export const maxDuration = 300;
+
+/**
  * The panel reads production regardless of which indexer the surrounding app
  * points at, so a preview needs no extra configuration to show real numbers.
  * Reads only, and PAGES_LAB_API_URL overrides it when a branch needs staging.
@@ -657,6 +663,10 @@ async function getOperation(path: string): Promise<string> {
 }
 
 async function karmaGet(path: string): Promise<string> {
+  if (/\{[^}]+\}/.test(path)) {
+    return `error: ${path} still contains a {placeholder} — substitute the real value before calling`;
+  }
+
   const operations = getOperations(await loadSpec());
   if (!operations.some((op) => specPathMatches(op.path, path))) {
     return `error: ${path} is not a GET the spec declares — find it with karma_api_search_docs first`;
