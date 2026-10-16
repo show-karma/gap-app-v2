@@ -49,6 +49,24 @@ interface ToolUse {
  */
 const ENABLED = process.env.PAGES_LAB_ENABLED === "1";
 
+/**
+ * The panel reads production regardless of which indexer the surrounding app
+ * points at, so a preview needs no extra configuration to show real numbers.
+ * Reads only, and PAGES_LAB_API_URL overrides it when a branch needs staging.
+ */
+const PANELS_API_URL = (process.env.PAGES_LAB_API_URL ?? "https://gapapi.karmahq.xyz").replace(
+  /\/+$/,
+  ""
+);
+
+function apiHost(): string {
+  try {
+    return new URL(PANELS_API_URL).host;
+  } catch {
+    return PANELS_API_URL;
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (!ENABLED) return new NextResponse(null, { status: 404 });
 
@@ -491,7 +509,8 @@ function moveCacheBreakpoint(messages: { role: string; content: unknown }[]): vo
 
 function describeTool(use: ToolUse): string {
   if (use.name === "karma_api_search_docs") return String(use.input.query ?? "");
-  return String(use.input.path ?? "");
+
+  return `${apiHost()}${String(use.input.path ?? "")}`;
 }
 
 const KARMA_TOOLS = [
@@ -554,10 +573,7 @@ const MAX_BODY_CHARS = 40000;
 async function loadSpec(): Promise<OpenApiSpec> {
   if (specCache && Date.now() - specCache.at < SPEC_TTL_MS) return specCache.spec;
 
-  const base = process.env.NEXT_PUBLIC_GAP_INDEXER_URL;
-  if (!base) throw new Error("indexer base url is not configured");
-
-  const response = await fetch(`${base}/v2/docs/json`);
+  const response = await fetch(`${PANELS_API_URL}/v2/docs/json`);
   if (!response.ok) throw new Error(`spec fetch failed: ${response.status}`);
 
   const spec = (await response.json()) as OpenApiSpec;
@@ -641,15 +657,12 @@ async function getOperation(path: string): Promise<string> {
 }
 
 async function karmaGet(path: string): Promise<string> {
-  const base = process.env.NEXT_PUBLIC_GAP_INDEXER_URL;
-  if (!base) return "error: indexer base url is not configured";
-
   const operations = getOperations(await loadSpec());
   if (!operations.some((op) => specPathMatches(op.path, path))) {
     return `error: ${path} is not a GET the spec declares — find it with karma_api_search_docs first`;
   }
 
-  const response = await fetch(`${base}${path}`);
+  const response = await fetch(`${PANELS_API_URL}${path}`);
   if (!response.ok) return `error: ${response.status} ${response.statusText}`;
 
   const body = await response.text();
