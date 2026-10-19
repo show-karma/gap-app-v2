@@ -198,10 +198,30 @@ describe("PublicReportListPage", () => {
       expect(screen.getByRole("heading", { name: "Monthly Pods Report" })).toBeInTheDocument();
     });
 
-    it("should_fall_back_to_a_content_heading_when_untitled_and_the_config_is_deleted", () => {
+    it("should_prefer_the_indexer_resolved_displayTitle", () => {
       mockUsePublishedReports.mockReturnValue({
         data: [
           createReport({
+            displayTitle: "Bi-Weekly Check-In — Oct 2026",
+            title: null,
+            reportConfigName: "Bi-Weekly Check-In",
+          }),
+        ],
+        isLoading: false,
+      } as any);
+
+      render(<PublicReportListPage community={community} />);
+
+      expect(
+        screen.getByRole("heading", { name: "Bi-Weekly Check-In — Oct 2026" })
+      ).toBeInTheDocument();
+    });
+
+    it("should_not_scrape_a_name_out_of_the_report_markup", () => {
+      mockUsePublishedReports.mockReturnValue({
+        data: [
+          createReport({
+            displayTitle: null,
             title: null,
             reportConfigName: null,
             content: "<h1>Scraped From Content</h1>",
@@ -212,7 +232,23 @@ describe("PublicReportListPage", () => {
 
       render(<PublicReportListPage community={community} />);
 
-      expect(screen.getByRole("heading", { name: "Scraped From Content" })).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Scraped From Content" })).toBeNull();
+      expect(screen.getByRole("heading", { name: "July 6, 2026" })).toBeInTheDocument();
+    });
+
+    it("should_fall_back_to_title_when_the_api_omits_displayTitle", () => {
+      const { displayTitle: _omitted, ...withoutDisplayTitle } = createReport({
+        title: "Legacy response",
+        reportConfigName: null,
+      });
+      mockUsePublishedReports.mockReturnValue({
+        data: [withoutDisplayTitle],
+        isLoading: false,
+      } as any);
+
+      render(<PublicReportListPage community={community} />);
+
+      expect(screen.getByRole("heading", { name: "Legacy response" })).toBeInTheDocument();
     });
 
     it("should_fall_back_to_the_run_date_when_no_other_source_names_the_report", () => {
