@@ -86,6 +86,16 @@ export interface PortfolioReport {
    */
   reportConfigName?: string | null;
   /**
+   * The report's name as the indexer resolved it: its own `title`, else the
+   * originating series name. `null` when neither was ever recorded, in which
+   * case the caller labels the row from `runDate`. Never derived from
+   * `content` — a report's name is not scraped from its markup.
+   *
+   * Optional, not just nullable: responses from before the indexer shipped
+   * the field omit it, so readers fall through to `title`/`reportConfigName`.
+   */
+  displayTitle?: string | null;
+  /**
    * URL segment identifying the originating ReportConfig. Needed because
    * `runDate` alone is ambiguous — two configs can publish on the same day.
    * Populated by the public list endpoint only; `null` when the config has

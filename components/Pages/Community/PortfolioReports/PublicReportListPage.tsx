@@ -45,30 +45,6 @@ function formatPublished(iso: string): string {
   });
 }
 
-function decodeBasicEntities(s: string): string {
-  return s
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-}
-
-function extractTitle(content: string): string | null {
-  if (!content) return null;
-  const titleTag = content.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  if (titleTag?.[1]?.trim()) return decodeBasicEntities(titleTag[1]).trim();
-  const h1 = content.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
-  if (h1?.[1]) {
-    const stripped = h1[1].replace(/<[^>]+>/g, "").trim();
-    if (stripped) return decodeBasicEntities(stripped);
-  }
-  const mdHeading = content.match(/^#{1,2}\s+(.+)$/m);
-  if (mdHeading?.[1]) return mdHeading[1].trim();
-  return null;
-}
-
 const MONTH_ABBR = [
   "JAN",
   "FEB",
@@ -85,20 +61,20 @@ const MONTH_ABBR = [
 ];
 
 /**
- * What a reader sees as the report's name, most-specific first:
+ * What a reader sees as the report's name. The indexer resolves it into
+ * `displayTitle` (the report's own `title`, else the originating series name),
+ * so this picks a label rather than deciding what the report is called.
  *
- * 1. `title` — admin-authored, the only source that can name the period the
- *    report covers (nothing else records it).
- * 2. `reportConfigName` — shared by every run of that config, so a year of
- *    monthly reports all read identically. This is the pre-DEV-520 behaviour
- *    and remains the fallback for untitled reports.
- * 3. a heading scraped from the rendered content, then the run date.
+ * `title` and `reportConfigName` stay as fallbacks only for responses from
+ * before the indexer shipped `displayTitle`. When nothing names the report —
+ * untitled, and its series deleted — the run date is the label; a name is not
+ * scraped out of the stored markup.
  */
 function resolveReportTitle(report: PortfolioReport): string {
   return (
+    report.displayTitle ??
     report.title ??
     report.reportConfigName ??
-    extractTitle(report.content) ??
     formatRunDate(report.runDate).label
   );
 }
