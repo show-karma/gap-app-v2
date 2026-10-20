@@ -5,12 +5,7 @@ import pluralize from "pluralize";
 import { memo, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  PANEL_MODELS,
-  type PanelModelId,
-  type PanelTurn,
-  type PanelVersionSummary,
-} from "@/types/panels";
+import type { PanelTurn, PanelVersionSummary } from "@/types/panels";
 import { type BlockRef, resolveAnchor } from "./anchor";
 import { anchorOf, type Comment } from "./types";
 
@@ -22,16 +17,12 @@ interface Props {
   currentVersionId: string | null;
   selectedCommentId: string | null;
   busy: boolean;
-  model: PanelModelId;
-  onModelChange: (model: PanelModelId) => void;
   hasPage: boolean;
   onSend: (prompt: string) => Promise<boolean>;
   onSelectComment: (commentId: string) => void;
   onDropComment: (commentId: string) => void;
   onRevert: (versionId: string) => void;
 }
-
-const shortModel = (id: string) => PANEL_MODELS.find((option) => option.id === id)?.label ?? id;
 
 export function AgentPanel({
   blocks,
@@ -41,8 +32,6 @@ export function AgentPanel({
   currentVersionId,
   selectedCommentId,
   busy,
-  model,
-  onModelChange,
   hasPage,
   onSend,
   onSelectComment,
@@ -94,30 +83,6 @@ export function AgentPanel({
         <h2 className="font-medium text-sm tracking-tight" style={{ color: "var(--kp-ink)" }}>
           Karma AI
         </h2>
-        <div
-          className="ml-auto flex items-center gap-0.5 rounded-md p-0.5"
-          style={{ background: "var(--kp-ground)" }}
-        >
-          {PANEL_MODELS.map((option) => (
-            <Button
-              key={option.id}
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() => onModelChange(option.id)}
-              title={option.id}
-              className="h-6 px-2 font-mono text-[10px]"
-              style={
-                model === option.id
-                  ? { background: "var(--kp-accent-strong)", color: "var(--kp-sheet)" }
-                  : { color: "var(--kp-ink-faint)" }
-              }
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
       </header>
 
       <div ref={streamRef} className="kp-scroll min-h-0 flex-1 overflow-y-auto px-4 py-4">
@@ -297,7 +262,6 @@ const TurnRow = memo(function TurnRow({
             ) : (
               "No page change"
             )}
-            <span className="font-mono"> · {shortModel(turn.modelId)}</span>
             {pinned > 0 ? ` · applied ${pluralize("comment", pinned, true)}` : null}
           </span>
         ) : null}

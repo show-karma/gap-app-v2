@@ -1,13 +1,6 @@
 export type PanelCommentStatus = "open" | "applied";
 export type PanelTurnStatus = "working" | "done" | "failed";
 
-export const PANEL_MODELS = [
-  { id: "claude-sonnet-5-5", label: "Sonnet" },
-  { id: "claude-haiku-5-5", label: "Haiku" },
-] as const;
-
-export type PanelModelId = (typeof PANEL_MODELS)[number]["id"];
-
 export interface Panel {
   id: string;
   communityUid: string;
@@ -93,7 +86,6 @@ export interface UpdatePanelCommentRequest {
 
 export interface PanelTurnRequest {
   prompt: string;
-  modelId?: PanelModelId;
   commentIds?: string[];
 }
 

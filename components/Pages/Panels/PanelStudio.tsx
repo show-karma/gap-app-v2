@@ -15,7 +15,6 @@ import {
 } from "@/hooks/panels/usePanels";
 import { usePanelTurn } from "@/hooks/panels/usePanelTurn";
 import { Link } from "@/src/components/navigation/Link";
-import type { PanelModelId } from "@/types/panels";
 import { PAGES } from "@/utilities/pages";
 import { AgentPanel } from "./AgentPanel";
 import type { BlockRef } from "./anchor";
@@ -40,7 +39,6 @@ export function PanelStudio({ communityId, panelId }: Props) {
   const [pending, setPending] = useState<{ id: string; label: string } | null>(null);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const [armed, setArmed] = useState(false);
-  const [model, setModel] = useState<PanelModelId>("claude-sonnet-5-5");
   const [streamHtml, setStreamHtml] = useState<string | null>(null);
 
   const currentVersionId = detail?.panel.currentVersionId ?? null;
@@ -86,7 +84,7 @@ export function PanelStudio({ communityId, panelId }: Props) {
     const commentIds = comments
       .filter((comment) => comment.status === "open")
       .map((comment) => comment.id);
-    const ok = await send({ prompt, modelId: model, commentIds });
+    const ok = await send({ prompt, commentIds });
     if (ok) setSelectedCommentId(null);
     return ok;
   };
@@ -233,8 +231,6 @@ export function PanelStudio({ communityId, panelId }: Props) {
             currentVersionId={currentVersionId}
             selectedCommentId={selectedCommentId}
             busy={busy}
-            model={model}
-            onModelChange={setModel}
             hasPage={html !== null}
             onSend={sendTurn}
             onSelectComment={onSelectComment}
