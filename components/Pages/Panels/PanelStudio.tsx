@@ -19,6 +19,7 @@ import { PAGES } from "@/utilities/pages";
 import { AgentPanel } from "./AgentPanel";
 import type { BlockRef } from "./anchor";
 import { PageCanvas } from "./PageCanvas";
+import { PanelTitle } from "./PanelTitle";
 
 interface Props {
   communityId: string;
@@ -145,12 +146,11 @@ export function PanelStudio({ communityId, panelId }: Props) {
             <ArrowLeft className="size-4" aria-hidden />
           </Link>
         </Button>
-        <h1
-          className="truncate font-semibold text-sm tracking-tight"
-          style={{ color: "var(--kp-ink)" }}
-        >
-          {detail.panel.title}
-        </h1>
+        <PanelTitle
+          title={detail.panel.title}
+          saving={updatePanel.isPending}
+          onRename={(title) => updatePanel.mutate({ title })}
+        />
 
         {html ? (
           <Button
