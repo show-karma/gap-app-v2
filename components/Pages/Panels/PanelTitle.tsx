@@ -56,20 +56,18 @@ export function PanelTitle({ title, saving, onRename }: Props) {
       size="sm"
       disabled={saving}
       onClick={() => setEditing(true)}
-      aria-label="Rename panel"
-      className="group flex min-w-0 items-center gap-2 px-1"
+      title="Rename panel"
+      className="flex min-w-0 items-center gap-2 px-2"
+      style={{
+        color: "var(--kp-ink)",
+        border: "1px dashed var(--kp-line-strong)",
+      }}
     >
-      <span
-        className="truncate font-semibold text-sm tracking-tight"
-        style={{ color: "var(--kp-ink)" }}
-      >
-        {title}
+      <span className="truncate font-semibold text-sm tracking-tight">{title}</span>
+      <Pencil className="size-3 shrink-0" style={{ color: "var(--kp-ink-soft)" }} aria-hidden />
+      <span className="text-xs" style={{ color: "var(--kp-ink-faint)" }}>
+        Rename
       </span>
-      <Pencil
-        className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-        style={{ color: "var(--kp-ink-faint)" }}
-        aria-hidden
-      />
     </Button>
   );
 }
