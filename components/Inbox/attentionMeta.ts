@@ -22,6 +22,10 @@ export interface AttentionMeta {
    * measures a different clock, so the wording names what the number counts.
    */
   ageSuffix: string;
+  /** Hover text: what the stage means. */
+  description: string;
+  /** Hover text for the clock: the event the days are counted from. */
+  clockDescription: string;
 }
 
 const RED = {
@@ -50,15 +54,69 @@ const SLATE = {
 };
 
 export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
-  past_due: { label: "Past due", ageSuffix: "overdue", ...RED },
-  awaiting_review: { label: "Awaiting review", ageSuffix: "waiting", ...BRAND },
-  awaiting_invoice: { label: "Awaiting invoice", ageSuffix: "waiting", ...AMBER },
-  invoice_unpaid: { label: "Invoice unpaid", ageSuffix: "unpaid", ...PURPLE },
-  pending_review: { label: "Pending review", ageSuffix: "waiting", ...INDIGO },
-  under_review: { label: "Under review", ageSuffix: "in review", ...BRAND },
-  revision_requested: { label: "Revision requested", ageSuffix: "with applicant", ...AMBER },
-  kyb_pending: { label: "KYB pending", ageSuffix: "since approval", ...SLATE },
-  agreement_pending: { label: "Agreement pending", ageSuffix: "since approval", ...SLATE },
+  past_due: {
+    label: "Past due",
+    ageSuffix: "overdue",
+    description: "The milestone's due date has passed and it has not been delivered",
+    clockDescription: "Days since the milestone's due date",
+    ...RED,
+  },
+  awaiting_review: {
+    label: "Awaiting review",
+    ageSuffix: "waiting",
+    description: "The grantee marked the milestone complete; no reviewer has verified it yet",
+    clockDescription: "Days since the grantee marked it complete",
+    ...BRAND,
+  },
+  awaiting_invoice: {
+    label: "Awaiting invoice",
+    ageSuffix: "waiting",
+    description: "The milestone is verified and the program requires an invoice, but none was sent",
+    clockDescription: "Days since the milestone was verified",
+    ...AMBER,
+  },
+  invoice_unpaid: {
+    label: "Invoice unpaid",
+    ageSuffix: "unpaid",
+    description: "An invoice was received for this milestone but payment has not been recorded",
+    clockDescription: "Days since the invoice was received",
+    ...PURPLE,
+  },
+  pending_review: {
+    label: "Pending review",
+    ageSuffix: "waiting",
+    description: "The application was submitted and no reviewer has opened it yet",
+    clockDescription: "Days since the application was submitted",
+    ...INDIGO,
+  },
+  under_review: {
+    label: "Under review",
+    ageSuffix: "in review",
+    description: "A reviewer has the application open; a decision is outstanding",
+    clockDescription: "Days since the review started",
+    ...BRAND,
+  },
+  revision_requested: {
+    label: "Revision requested",
+    ageSuffix: "with applicant",
+    description: "The application was sent back to the applicant for changes",
+    clockDescription: "Days since the revision was requested",
+    ...AMBER,
+  },
+  kyb_pending: {
+    label: "KYB pending",
+    ageSuffix: "since approval",
+    description: "The application is approved but the KYB verification has not been passed",
+    clockDescription: "Days since the application was approved",
+    ...SLATE,
+  },
+  agreement_pending: {
+    label: "Agreement pending",
+    ageSuffix: "since approval",
+    description: "The application is approved but the grant agreement is not signed",
+    clockDescription: "Days since the application was approved",
+    ...SLATE,
+  },
 };
 
 /** Milestone stage order in the filter — mirrors the milestone lifecycle. */

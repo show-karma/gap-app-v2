@@ -37,6 +37,7 @@ const StageHeader: FC<{ item: InboxItem }> = ({ item }) => {
       {stages.map((stage) => (
         <span
           key={stage}
+          title={ATTENTION_META[stage].description}
           className={cn(
             "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium",
             ATTENTION_META[stage].badgeClass
@@ -46,7 +47,10 @@ const StageHeader: FC<{ item: InboxItem }> = ({ item }) => {
         </span>
       ))}
       {typeof days === "number" && (
-        <span className={cn("text-sm font-medium tabular-nums", tone.text)}>
+        <span
+          title={meta.clockDescription}
+          className={cn("text-sm font-medium tabular-nums", tone.text)}
+        >
           {days} {pluralize("day", days)} {meta.ageSuffix}
         </span>
       )}

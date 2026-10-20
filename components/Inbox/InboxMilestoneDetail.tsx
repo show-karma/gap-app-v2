@@ -306,6 +306,7 @@ const QueueHeader: FC<{
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
       <span
+        title={ATTENTION_META[reason].description}
         className={cn(
           "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
           ATTENTION_META[reason].badgeClass
@@ -315,7 +316,10 @@ const QueueHeader: FC<{
       </span>
 
       {typeof stageAgeDays === "number" && (
-        <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+        <span
+          title={ATTENTION_META[reason].clockDescription}
+          className="font-semibold tabular-nums text-gray-900 dark:text-gray-100"
+        >
           {stageAgeDays} {pluralize("day", stageAgeDays)} {ATTENTION_META[reason].ageSuffix}
         </span>
       )}

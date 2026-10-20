@@ -36,6 +36,7 @@ const StageLine: FC<{ item: InboxItem }> = ({ item }) => {
       {stages.map((stage) => (
         <span
           key={stage}
+          title={ATTENTION_META[stage].description}
           className={cn(
             "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[11px] font-medium",
             ATTENTION_META[stage].badgeClass
@@ -45,7 +46,10 @@ const StageLine: FC<{ item: InboxItem }> = ({ item }) => {
         </span>
       ))}
       {typeof days === "number" && (
-        <span className={cn("truncate text-xs font-medium tabular-nums", tone.text)}>
+        <span
+          title={meta.clockDescription}
+          className={cn("truncate text-xs font-medium tabular-nums", tone.text)}
+        >
           {days} {pluralize("day", days)} {meta.ageSuffix}
         </span>
       )}
@@ -183,7 +187,10 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({
         <FollowUpSlot item={item} />
 
         {openItems > 0 && (
-          <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+          <span
+            title="Follow-up notes logged by admins that are not marked done"
+            className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
+          >
             {openItems} open {pluralize("note", openItems)}
           </span>
         )}
