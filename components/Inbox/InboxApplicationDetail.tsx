@@ -76,15 +76,7 @@ const InboxApplicationDetailComponent: FC<InboxApplicationDetailProps> = ({
 
   return (
     <div className="space-y-4">
-      {showAdminTools && (
-        <>
-          <StageHeader item={item} />
-          <ActionItems
-            communityId={communityId}
-            target={{ kind: "application", id: referenceNumber }}
-          />
-        </>
-      )}
+      {showAdminTools && <StageHeader item={item} />}
       <ApplicationDetailView
         applicationId={referenceNumber}
         programId={programId}
@@ -92,6 +84,12 @@ const InboxApplicationDetailComponent: FC<InboxApplicationDetailProps> = ({
         communityId={communityId}
         variant="panel"
       />
+      {showAdminTools && (
+        <ActionItems
+          communityId={communityId}
+          target={{ kind: "application", id: referenceNumber }}
+        />
+      )}
     </div>
   );
 };
