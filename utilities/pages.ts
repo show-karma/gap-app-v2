@@ -134,6 +134,9 @@ export const PAGES = {
       `/community/${community}/manage/portfolio-reports/${reportId}/preview`,
     PORTFOLIO_REPORTS_CONFIG: (community: string) =>
       `/community/${community}/manage/portfolio-reports/config`,
+    PANELS: (community: string) => `/community/${community}/manage/panels`,
+    PANEL_STUDIO: (community: string, panelId: string) =>
+      `/community/${community}/panels/${panelId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

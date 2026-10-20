@@ -1,35 +1,37 @@
 "use client";
 
 import { X } from "lucide-react";
+import pluralize from "pluralize";
 import { memo, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  PANEL_MODELS,
+  type PanelModelId,
+  type PanelTurn,
+  type PanelVersionSummary,
+} from "@/types/panels";
 import { type BlockRef, resolveAnchor } from "./anchor";
-import type { Comment, Turn, Version } from "./types";
+import { anchorOf, type Comment } from "./types";
 
 interface Props {
   blocks: BlockRef[];
   comments: Comment[];
-  versions: Version[];
-  turns: Turn[];
+  versions: PanelVersionSummary[];
+  turns: PanelTurn[];
   currentVersionId: string | null;
   selectedCommentId: string | null;
   busy: boolean;
-  model: string;
-  onModelChange: (model: string) => void;
+  model: PanelModelId;
+  onModelChange: (model: PanelModelId) => void;
   hasPage: boolean;
-  dryPrompt: string | null;
   onSend: (prompt: string) => Promise<boolean>;
   onSelectComment: (commentId: string) => void;
   onDropComment: (commentId: string) => void;
   onRevert: (versionId: string) => void;
-  onDismissDry: () => void;
 }
 
-const MODELS = [
-  { id: "claude-sonnet-5-5", label: "Sonnet" },
-  { id: "claude-haiku-5-5", label: "Haiku" },
-];
+const shortModel = (id: string) => PANEL_MODELS.find((option) => option.id === id)?.label ?? id;
 
 export function AgentPanel({
   blocks,
@@ -42,16 +44,15 @@ export function AgentPanel({
   model,
   onModelChange,
   hasPage,
-  dryPrompt,
   onSend,
   onSelectComment,
   onDropComment,
   onRevert,
-  onDismissDry,
 }: Props) {
   const [prompt, setPrompt] = useState("");
   const streamRef = useRef<HTMLDivElement>(null);
   const open = comments.filter((comment) => comment.status === "open");
+  const versionLabelById = new Map(versions.map((version) => [version.id, version.versionNumber]));
 
   useEffect(() => {
     streamRef.current?.scrollTo({ top: streamRef.current.scrollHeight, behavior: "smooth" });
@@ -60,11 +61,17 @@ export function AgentPanel({
   const submit = () => {
     const text = prompt.trim();
     if (busy) return;
-    if (!hasPage && text.length === 0) return;
+    if (text.length === 0 && open.length === 0) return;
     void onSend(text).then((ok) => {
       if (ok) setPrompt("");
     });
   };
+
+  const placeholder = (() => {
+    if (!hasPage) return "A one-page funding summary for…";
+    if (open.length > 0) return `Send to apply ${pluralize("pinned comment", open.length, true)}…`;
+    return "What should change?";
+  })();
 
   return (
     <aside
@@ -91,7 +98,7 @@ export function AgentPanel({
           className="ml-auto flex items-center gap-0.5 rounded-md p-0.5"
           style={{ background: "var(--kp-ground)" }}
         >
-          {MODELS.map((option) => (
+          {PANEL_MODELS.map((option) => (
             <Button
               key={option.id}
               type="button"
@@ -120,46 +127,18 @@ export function AgentPanel({
               Describe the panel you want. Karma AI writes it, reads the Karma API for real numbers,
               and rewrites any block you comment on.
             </p>
-            <p className="mt-3 text-xs" style={{ color: "var(--kp-ink-faint)" }}>
-              Nothing is saved — reloading starts over.
-            </p>
           </div>
         ) : (
           <div className="flex flex-col gap-5">
             {turns.map((turn) => (
-              <TurnRow key={turn.id} turn={turn} />
+              <TurnRow
+                key={turn.id}
+                turn={turn}
+                versionNumber={turn.versionId ? versionLabelById.get(turn.versionId) : undefined}
+              />
             ))}
           </div>
         )}
-
-        {dryPrompt ? (
-          <div
-            className="mt-4 rounded-lg p-3"
-            style={{ background: "var(--kp-ground)", border: "1px solid var(--kp-line)" }}
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <p className="font-medium text-xs" style={{ color: "var(--kp-ink)" }}>
-                No credential — prompt only
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onDismissDry}
-                className="h-6 text-xs"
-                style={{ color: "var(--kp-ink-faint)" }}
-              >
-                Dismiss
-              </Button>
-            </div>
-            <pre
-              className="kp-scroll max-h-40 overflow-auto whitespace-pre-wrap font-mono text-[10px] leading-relaxed"
-              style={{ color: "var(--kp-ink-soft)" }}
-            >
-              {dryPrompt}
-            </pre>
-          </div>
-        ) : null}
       </div>
 
       {open.length > 0 ? (
@@ -191,23 +170,14 @@ export function AgentPanel({
       {versions.length > 1 ? (
         <div className="shrink-0 px-4 py-3" style={{ borderTop: "1px solid var(--kp-line)" }}>
           <div className="flex flex-wrap gap-1.5">
-            {versions.map((version, index) => (
-              <Button
+            {versions.map((version) => (
+              <VersionChip
                 key={version.id}
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onRevert(version.id)}
-                title={version.note}
-                className="h-7 px-2 font-mono text-[11px]"
-                style={
-                  version.id === currentVersionId
-                    ? { background: "var(--kp-accent)", color: "var(--kp-accent-ink)" }
-                    : { background: "var(--kp-ground)", color: "var(--kp-ink-soft)" }
-                }
-              >
-                v{index + 1}
-              </Button>
+                version={version}
+                current={version.id === currentVersionId}
+                disabled={busy}
+                onRevert={onRevert}
+              />
             ))}
           </div>
         </div>
@@ -229,13 +199,7 @@ export function AgentPanel({
             }}
             rows={3}
             disabled={busy}
-            placeholder={
-              hasPage
-                ? open.length > 0
-                  ? `Send to apply ${open.length} pinned ${open.length === 1 ? "comment" : "comments"}…`
-                  : "What should change?"
-                : "A one-page funding summary for…"
-            }
+            placeholder={placeholder}
             className="w-full resize-none bg-transparent px-1.5 py-1 text-sm outline-none disabled:opacity-60"
             style={{ color: "var(--kp-ink)" }}
           />
@@ -247,7 +211,7 @@ export function AgentPanel({
               type="button"
               size="sm"
               onClick={submit}
-              disabled={busy || (!hasPage && prompt.trim().length === 0)}
+              disabled={busy || (prompt.trim().length === 0 && open.length === 0)}
               className="text-xs"
               style={{ background: "var(--kp-accent)", color: "var(--kp-accent-ink)" }}
             >
@@ -260,14 +224,52 @@ export function AgentPanel({
   );
 }
 
-const TurnRow = memo(function TurnRow({ turn }: { turn: Turn }) {
+const VersionChip = memo(function VersionChip({
+  version,
+  current,
+  disabled,
+  onRevert,
+}: {
+  version: PanelVersionSummary;
+  current: boolean;
+  disabled: boolean;
+  onRevert: (versionId: string) => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      disabled={disabled}
+      onClick={() => onRevert(version.id)}
+      title={version.note}
+      className="h-7 px-2 font-mono text-[11px]"
+      style={
+        current
+          ? { background: "var(--kp-accent)", color: "var(--kp-accent-ink)" }
+          : { background: "var(--kp-ground)", color: "var(--kp-ink-soft)" }
+      }
+    >
+      v{version.versionNumber}
+    </Button>
+  );
+});
+
+const TurnRow = memo(function TurnRow({
+  turn,
+  versionNumber,
+}: {
+  turn: PanelTurn;
+  versionNumber: number | undefined;
+}) {
+  const pinned = turn.pinnedCommentIds.length;
   return (
     <div className="flex flex-col gap-1.5">
       <div
         className="self-end rounded-xl rounded-br-sm px-3 py-2 text-sm leading-relaxed"
         style={{ background: "var(--kp-raised)", color: "var(--kp-ink)", maxWidth: "92%" }}
       >
-        {turn.prompt}
+        {turn.prompt.length > 0 ? turn.prompt : "Apply the pinned comments"}
       </div>
 
       <div className="flex items-center gap-1.5 pl-0.5">
@@ -285,14 +287,18 @@ const TurnRow = memo(function TurnRow({ turn }: { turn: Turn }) {
 
         {turn.status === "done" ? (
           <span className="text-xs" style={{ color: "var(--kp-ink-faint)" }}>
-            Wrote{" "}
-            <span className="font-mono" style={{ color: "var(--kp-ink-soft)" }}>
-              {turn.versionLabel}
-            </span>
-            {turn.modelLabel ? <span className="font-mono"> · {turn.modelLabel}</span> : null}
-            {turn.pinnedCount > 0
-              ? ` · applied ${turn.pinnedCount} ${turn.pinnedCount === 1 ? "comment" : "comments"}`
-              : null}
+            {versionNumber !== undefined ? (
+              <>
+                Wrote{" "}
+                <span className="font-mono" style={{ color: "var(--kp-ink-soft)" }}>
+                  v{versionNumber}
+                </span>
+              </>
+            ) : (
+              "No page change"
+            )}
+            <span className="font-mono"> · {shortModel(turn.modelId)}</span>
+            {pinned > 0 ? ` · applied ${pluralize("comment", pinned, true)}` : null}
           </span>
         ) : null}
 
@@ -302,6 +308,15 @@ const TurnRow = memo(function TurnRow({ turn }: { turn: Turn }) {
           </span>
         ) : null}
       </div>
+
+      {turn.status === "done" && turn.summary ? (
+        <p
+          className="whitespace-pre-wrap pl-0.5 text-xs leading-relaxed"
+          style={{ color: "var(--kp-ink-soft)" }}
+        >
+          {turn.summary}
+        </p>
+      ) : null}
     </div>
   );
 });
@@ -321,7 +336,7 @@ const PinnedRow = memo(function PinnedRow({
   onSelect,
   onDrop,
 }: PinnedRowProps) {
-  const match = resolveAnchor(blocks, comment.anchor);
+  const match = resolveAnchor(blocks, anchorOf(comment));
 
   return (
     <div
@@ -342,7 +357,7 @@ const PinnedRow = memo(function PinnedRow({
           style={{ color: match.kind === "orphan" ? "var(--kp-danger)" : "var(--kp-ink-faint)" }}
         >
           {match.kind === "orphan" ? "orphaned · " : ""}
-          {comment.anchor.label}
+          {comment.blockLabel}
         </span>
         <span className="mt-0.5 block text-xs leading-snug" style={{ color: "var(--kp-ink-soft)" }}>
           {comment.body}

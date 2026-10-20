@@ -5,7 +5,7 @@ import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/H
 import { type BlockRef, readBlocks, resolveAnchor } from "./anchor";
 import { CommentCard } from "./CommentCard";
 import { CommentPopover } from "./CommentPopover";
-import type { Comment } from "./types";
+import { anchorOf, type Comment } from "./types";
 
 const STYLE_ID = "kp-canvas-style";
 
@@ -227,7 +227,7 @@ export function PageCanvas({
       }
 
       const existing = comments.find(
-        (comment) => comment.status === "open" && comment.anchor.id === block.id
+        (comment) => comment.status === "open" && comment.blockId === block.id
       );
       if (existing) onSelectComment(existing.id);
     };
@@ -256,7 +256,7 @@ export function PageCanvas({
           rect={hovered.rect}
           label={hovered.label}
           comments={comments.filter(
-            (comment) => comment.status === "open" && comment.anchor.id === hovered.id
+            (comment) => comment.status === "open" && comment.blockId === hovered.id
           )}
           onEdit={onEditComment}
           onDrop={onDropComment}
@@ -293,7 +293,7 @@ function groupByBlock(blocks: BlockRef[], comments: Comment[]): Map<string, stri
   const grouped = new Map<string, string[]>();
   for (const comment of comments) {
     if (comment.status !== "open") continue;
-    const match = resolveAnchor(blocks, comment.anchor);
+    const match = resolveAnchor(blocks, anchorOf(comment));
     if (match.kind === "orphan") continue;
     const bodies = grouped.get(match.block.id) ?? [];
     bodies.push(comment.body);
@@ -309,7 +309,7 @@ function selectedBlockId(
 ): string | null {
   const selected = comments.find((comment) => comment.id === selectedCommentId);
   if (!selected) return null;
-  const match = resolveAnchor(blocks, selected.anchor);
+  const match = resolveAnchor(blocks, anchorOf(selected));
   return match.kind === "orphan" ? null : match.block.id;
 }
 
