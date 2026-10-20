@@ -10,6 +10,8 @@ import {
   useDeletePanelComment,
   usePanel,
   usePanelVersion,
+  usePublishPanel,
+  useUnpublishPanel,
   useUpdatePanel,
   useUpdatePanelComment,
 } from "@/hooks/panels/usePanels";
@@ -20,6 +22,7 @@ import { AgentPanel } from "./AgentPanel";
 import type { BlockRef } from "./anchor";
 import { PageCanvas } from "./PageCanvas";
 import { PanelTitle } from "./PanelTitle";
+import { PublishControl } from "./PublishControl";
 
 interface Props {
   communityId: string;
@@ -31,6 +34,8 @@ const PREVIEW_TICK_MS = 300;
 export function PanelStudio({ communityId, panelId }: Props) {
   const { data: detail, isLoading, isError, refetch } = usePanel(communityId, panelId);
   const updatePanel = useUpdatePanel(communityId, panelId);
+  const publishPanel = usePublishPanel(communityId, panelId);
+  const unpublishPanel = useUnpublishPanel(communityId, panelId);
   const createComment = useCreatePanelComment(communityId, panelId);
   const updateComment = useUpdatePanelComment(communityId, panelId);
   const deleteComment = useDeletePanelComment(communityId, panelId);
@@ -150,6 +155,18 @@ export function PanelStudio({ communityId, panelId }: Props) {
           title={detail.panel.title}
           saving={updatePanel.isPending}
           onRename={(title) => updatePanel.mutate({ title })}
+        />
+        <PublishControl
+          panel={detail.panel}
+          currentVersionNumber={version?.versionNumber ?? null}
+          publishedVersionNumber={
+            detail.versions.find((item) => item.id === detail.panel.publishedVersionId)
+              ?.versionNumber ?? null
+          }
+          publishing={publishPanel.isPending}
+          unpublishing={unpublishPanel.isPending}
+          onPublish={() => publishPanel.mutate()}
+          onUnpublish={() => unpublishPanel.mutate()}
         />
 
         {html ? (

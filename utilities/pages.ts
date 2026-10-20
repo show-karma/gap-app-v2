@@ -137,6 +137,7 @@ export const PAGES = {
     PANELS: (community: string) => `/community/${community}/manage/panels`,
     PANEL_STUDIO: (community: string, panelId: string) =>
       `/community/${community}/panels/${panelId}`,
+    PANEL_SHARED: (token: string) => `/panels/shared/${token}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

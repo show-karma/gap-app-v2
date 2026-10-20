@@ -5,6 +5,8 @@ import type {
   PanelComment,
   PanelDetail,
   PanelVersion,
+  PublishPanelRequest,
+  SharedPanel,
   UpdatePanelCommentRequest,
   UpdatePanelRequest,
 } from "@/types/panels";
@@ -45,6 +47,29 @@ export async function updatePanel(
 ): Promise<Panel> {
   const { data } = await apiClient.patch(panelPath(community, panelId), body);
   return data;
+}
+
+export async function publishPanel(
+  community: string,
+  panelId: string,
+  body: PublishPanelRequest = {}
+): Promise<Panel> {
+  const { data } = await apiClient.post(`${panelPath(community, panelId)}/publish`, body);
+  return data;
+}
+
+export async function unpublishPanel(community: string, panelId: string): Promise<Panel> {
+  const { data } = await apiClient.post(`${panelPath(community, panelId)}/unpublish`);
+  return data;
+}
+
+export async function getSharedPanel(token: string): Promise<SharedPanel> {
+  const res = await fetch(`${API_URL}/v2/panels/shared/${encodeURIComponent(token)}`);
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  }
+  const body = (await res.json()) as { data?: SharedPanel } & SharedPanel;
+  return body.data ?? body;
 }
 
 export async function deletePanel(community: string, panelId: string): Promise<void> {

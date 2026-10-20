@@ -7,9 +7,24 @@ export interface Panel {
   title: string;
   createdBy: string;
   currentVersionId: string | null;
+  publishedVersionId: string | null;
+  shareToken: string | null;
+  publishedAt: string | null;
   versionCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+/** What a share link exposes: the frozen page only. */
+export interface SharedPanel {
+  title: string;
+  html: string;
+  versionNumber: number;
+  publishedAt: string | null;
+}
+
+export interface PublishPanelRequest {
+  versionId?: string;
 }
 
 export interface PanelVersionSummary {

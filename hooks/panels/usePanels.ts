@@ -101,6 +101,44 @@ export function useUpdatePanel(community: string, panelId: string) {
   });
 }
 
+function usePublishMutation(community: string, panelId: string, run: () => Promise<Panel>) {
+  const queryClient = useQueryClient();
+  const detailKey = panelKeys.detail(community, panelId);
+  return useMutation({
+    mutationFn: run,
+    onSuccess: (panel) => {
+      queryClient.setQueryData<PanelDetail>(detailKey, (old) => (old ? { ...old, panel } : old));
+      queryClient.setQueryData<Panel[]>(panelKeys.all(community), (old) =>
+        old?.map((item) => (item.id === panel.id ? panel : item))
+      );
+    },
+  });
+}
+
+export function usePublishPanel(community: string, panelId: string) {
+  return usePublishMutation(community, panelId, () =>
+    panelsService.publishPanel(community, panelId)
+  );
+}
+
+export function useUnpublishPanel(community: string, panelId: string) {
+  return usePublishMutation(community, panelId, () =>
+    panelsService.unpublishPanel(community, panelId)
+  );
+}
+
+export const sharedPanelKey = (token: string) => ["panels", "shared", token] as const;
+
+export function useSharedPanel(token: string) {
+  return useQuery({
+    queryKey: sharedPanelKey(token),
+    queryFn: () => panelsService.getSharedPanel(token),
+    enabled: token.length > 0,
+    retry: false,
+    staleTime: 60_000,
+  });
+}
+
 export function useDeletePanel(community: string) {
   const queryClient = useQueryClient();
   return useMutation({

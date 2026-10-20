@@ -7,6 +7,8 @@ import {
   useDeletePanelComment,
   usePanel,
   usePanels,
+  usePublishPanel,
+  useSharedPanel,
   useUpdatePanel,
 } from "@/hooks/panels/usePanels";
 import * as panelsService from "@/services/panels.service";
@@ -17,6 +19,8 @@ vi.mock("@/services/panels.service");
 const mockList = vi.mocked(panelsService.listPanels);
 const mockGet = vi.mocked(panelsService.getPanel);
 const mockUpdate = vi.mocked(panelsService.updatePanel);
+const mockPublish = vi.mocked(panelsService.publishPanel);
+const mockShared = vi.mocked(panelsService.getSharedPanel);
 const mockCreateComment = vi.mocked(panelsService.createPanelComment);
 const mockDeleteComment = vi.mocked(panelsService.deletePanelComment);
 
@@ -30,6 +34,9 @@ function makePanel(overrides: Partial<Panel> = {}): Panel {
     title: "Untitled panel",
     createdBy: "0xabc",
     currentVersionId: "v-1",
+    publishedVersionId: null,
+    shareToken: null,
+    publishedAt: null,
     versionCount: 1,
     createdAt: "2026-10-20T00:00:00.000Z",
     updatedAt: "2026-10-20T00:00:00.000Z",
@@ -220,5 +227,49 @@ describe("useDeletePanelComment", () => {
     });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(queryClient.getQueryData<PanelDetail>(key)?.comments).toHaveLength(1);
+  });
+});
+
+describe("usePublishPanel", () => {
+  it("writes the published panel into the detail and list caches", async () => {
+    const key = panelKeys.detail(SLUG, PANEL_ID);
+    queryClient.setQueryData(key, makeDetail());
+    queryClient.setQueryData(panelKeys.all(SLUG), [makePanel()]);
+    const published = makePanel({ publishedVersionId: "v-1", shareToken: "tok" });
+    mockPublish.mockResolvedValue(published);
+
+    const { result } = renderHook(() => usePublishPanel(SLUG, PANEL_ID), { wrapper });
+    act(() => {
+      result.current.mutate();
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryData<PanelDetail>(key)?.panel.shareToken).toBe("tok");
+    expect(queryClient.getQueryData<Panel[]>(panelKeys.all(SLUG))?.[0].shareToken).toBe("tok");
+  });
+});
+
+describe("useSharedPanel", () => {
+  it("loads the frozen page for a token", async () => {
+    mockShared.mockResolvedValue({
+      title: "Q3",
+      html: '<html><body><p data-pl-id="a">x</p></body></html>',
+      versionNumber: 2,
+      publishedAt: null,
+    });
+
+    const { result } = renderHook(() => useSharedPanel("tok"), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockShared).toHaveBeenCalledWith("tok");
+    expect(result.current.data?.title).toBe("Q3");
+  });
+
+  it("surfaces an error when the link is revoked", async () => {
+    mockShared.mockRejectedValue(new Error("API error: 404"));
+
+    const { result } = renderHook(() => useSharedPanel("gone"), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
   });
 });
