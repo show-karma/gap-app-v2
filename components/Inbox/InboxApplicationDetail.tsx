@@ -30,17 +30,21 @@ const StageHeader: FC<{ item: InboxItem }> = ({ item }) => {
   const followUp = item.nextFollowUpAt
     ? describeFollowUp(item.nextFollowUpAt, (iso) => formatDate(iso, "UTC"))
     : null;
+  const stages = item.pendingGates?.length ? item.pendingGates : [item.attentionReason];
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
-      <span
-        className={cn(
-          "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium",
-          meta.badgeClass
-        )}
-      >
-        {meta.label}
-      </span>
+      {stages.map((stage) => (
+        <span
+          key={stage}
+          className={cn(
+            "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium",
+            ATTENTION_META[stage].badgeClass
+          )}
+        >
+          {ATTENTION_META[stage].label}
+        </span>
+      ))}
       {typeof days === "number" && (
         <span className={cn("text-sm font-medium tabular-nums", tone.text)}>
           {days} {pluralize("day", days)} {meta.ageSuffix}

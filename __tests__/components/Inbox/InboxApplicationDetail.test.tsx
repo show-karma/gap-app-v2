@@ -68,6 +68,19 @@ describe("InboxApplicationDetail", () => {
     );
   });
 
+  it("should_show_both_open_gates_in_the_header", () => {
+    render(
+      <InboxApplicationDetail
+        item={{ ...item, pendingGates: ["kyb_pending", "agreement_pending"] }}
+        communityId="filecoin"
+        showAdminTools
+      />
+    );
+
+    expect(screen.getByText("KYB pending")).toBeInTheDocument();
+    expect(screen.getByText("Agreement pending")).toBeInTheDocument();
+  });
+
   it("should_skip_the_stage_header_when_the_feed_carries_no_stage", () => {
     render(
       <InboxApplicationDetail

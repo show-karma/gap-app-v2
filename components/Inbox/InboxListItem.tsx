@@ -27,17 +27,23 @@ const StageLine: FC<{ item: InboxItem }> = ({ item }) => {
   const meta = ATTENTION_META[item.attentionReason];
   const days = item.stageAgeDays;
   const tone = stageAgeTone(days);
+  // An approved application can be stuck behind KYB AND the agreement; both
+  // are shown, the clock counts once from approval.
+  const stages = item.pendingGates?.length ? item.pendingGates : [item.attentionReason];
 
   return (
-    <span className="inline-flex min-w-0 items-center gap-1.5">
-      <span
-        className={cn(
-          "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[11px] font-medium",
-          meta.badgeClass
-        )}
-      >
-        {meta.label}
-      </span>
+    <span className="inline-flex min-w-0 flex-wrap items-center gap-1.5">
+      {stages.map((stage) => (
+        <span
+          key={stage}
+          className={cn(
+            "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[11px] font-medium",
+            ATTENTION_META[stage].badgeClass
+          )}
+        >
+          {ATTENTION_META[stage].label}
+        </span>
+      ))}
       {typeof days === "number" && (
         <span className={cn("truncate text-xs font-medium tabular-nums", tone.text)}>
           {days} {pluralize("day", days)} {meta.ageSuffix}

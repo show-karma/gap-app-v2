@@ -377,6 +377,8 @@ export interface IReviewerInboxItem {
    * scoped feed — a reviewer's payload omits them entirely.
    */
   attentionReason?: InboxAttentionReason;
+  /** Applications only: every open post-approval gate when more than one is. */
+  pendingGates?: ApplicationAttentionReason[];
   /** Whole days spent in the current attention stage. */
   stageAgeDays?: number;
   openActionItems?: number;

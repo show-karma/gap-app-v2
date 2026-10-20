@@ -1,4 +1,4 @@
-import type { InboxAttentionReason } from "@/types/funding-platform";
+import type { ApplicationAttentionReason, InboxAttentionReason } from "@/types/funding-platform";
 
 /** The two review streams a Reviewer Inbox unifies. */
 export type InboxKind = "application" | "milestone";
@@ -59,6 +59,8 @@ export interface InboxItem {
    * every consumer must treat these as optional rather than defaulting them.
    */
   attentionReason?: InboxAttentionReason;
+  /** Applications only: every open post-approval gate when more than one is. */
+  pendingGates?: ApplicationAttentionReason[];
   /** Whole days spent in the current attention stage. */
   stageAgeDays?: number;
   openActionItems?: number;

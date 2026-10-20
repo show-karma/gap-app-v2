@@ -107,6 +107,24 @@ describe("InboxListItem stage age", () => {
     expect(screen.getByText("1 day overdue")).toBeInTheDocument();
   });
 
+  it("should_show_every_open_gate_with_one_clock", () => {
+    render(
+      <InboxListItem
+        {...baseProps}
+        item={makeItem({
+          kind: "application",
+          attentionReason: "kyb_pending",
+          pendingGates: ["kyb_pending", "agreement_pending"],
+          stageAgeDays: 6,
+        })}
+      />
+    );
+
+    expect(screen.getByText("KYB pending")).toBeInTheDocument();
+    expect(screen.getByText("Agreement pending")).toBeInTheDocument();
+    expect(screen.getAllByText(/since approval/)).toHaveLength(1);
+  });
+
   it("should_describe_an_application_stage_in_its_own_words", () => {
     render(
       <InboxListItem
