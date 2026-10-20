@@ -2,6 +2,7 @@ import type {
   ICommunityActionItemPage,
   IMilestoneActionItem,
   IMilestoneTimeline,
+  IQueueItemSummary,
 } from "@/types/funding-platform";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
@@ -47,6 +48,21 @@ export async function getApplicationActionItems(
   );
 
   return data?.items ?? [];
+}
+
+export async function getQueueItemSummary(
+  communityId: string,
+  target: { kind: "milestone" | "application"; id: string },
+  options: { refresh?: boolean } = {}
+): Promise<IQueueItemSummary> {
+  const qs = options.refresh ? "refresh=true" : undefined;
+  const url =
+    target.kind === "application"
+      ? INDEXER.V2.MILESTONE_ACTION_ITEMS.APPLICATION_SUMMARY(communityId, target.id, qs)
+      : INDEXER.V2.MILESTONE_ACTION_ITEMS.MILESTONE_SUMMARY(communityId, target.id, qs);
+  const data = await api.get<IQueueItemSummary>(url);
+  if (!data) throw new Error("Failed to fetch queue item summary");
+  return data;
 }
 
 export interface CommunityActionItemFilters {

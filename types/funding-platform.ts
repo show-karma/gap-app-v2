@@ -439,6 +439,13 @@ export interface ICommunityActionItem extends IMilestoneActionItem {
   applicationTitle: string | null;
 }
 
+/** Two-sentence AI brief on why a queue item is where it is. */
+export interface IQueueItemSummary {
+  summary: string;
+  generatedAt: string;
+  cached: boolean;
+}
+
 export interface ICommunityActionItemPage {
   items: ICommunityActionItem[];
   pagination: { page: number; limit: number; total: number; totalPages: number };

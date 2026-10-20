@@ -19,6 +19,7 @@ import { type FC, memo, useCallback, useMemo, useState } from "react";
 import { ActionItems } from "@/components/Inbox/ActionItems";
 import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
 import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
+import { QueueSummary } from "@/components/Inbox/QueueSummary";
 import { describeFollowUp } from "@/components/Inbox/stageAge";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
 import { GrantCommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/GrantCommentsAndActivity";
@@ -637,6 +638,12 @@ export function InboxMilestoneDetail({
       >
         {activePanelTab === "details" && (
           <div className="space-y-4">
+            {showAdminTools && (
+              <QueueSummary
+                communityId={communityId}
+                target={{ kind: "milestone", id: milestoneUid }}
+              />
+            )}
             <MilestoneCard
               key={selectedMilestone.uid}
               milestone={selectedMilestone}

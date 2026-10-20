@@ -5,6 +5,7 @@ import React, { type FC } from "react";
 import ApplicationDetailView from "@/components/FundingPlatform/ApplicationView/ApplicationDetailView";
 import { ActionItems } from "@/components/Inbox/ActionItems";
 import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
+import { QueueSummary } from "@/components/Inbox/QueueSummary";
 import { describeFollowUp, stageAgeTone } from "@/components/Inbox/stageAge";
 import type { InboxItem } from "@/components/Inbox/types";
 import { formatDate } from "@/utilities/formatDate";
@@ -84,7 +85,15 @@ const InboxApplicationDetailComponent: FC<InboxApplicationDetailProps> = ({
 
   return (
     <div className="space-y-4">
-      {showAdminTools && <StageHeader item={item} />}
+      {showAdminTools && (
+        <>
+          <StageHeader item={item} />
+          <QueueSummary
+            communityId={communityId}
+            target={{ kind: "application", id: referenceNumber }}
+          />
+        </>
+      )}
       <ApplicationDetailView
         applicationId={referenceNumber}
         programId={programId}

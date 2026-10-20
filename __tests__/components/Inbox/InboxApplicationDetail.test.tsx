@@ -11,6 +11,10 @@ vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationDetailView", ()
 }));
 
 const actionItems = vi.fn();
+vi.mock("@/components/Inbox/QueueSummary", () => ({
+  QueueSummary: () => <div data-testid="queue-summary" />,
+}));
+
 vi.mock("@/components/Inbox/ActionItems", () => ({
   ActionItems: (props: Record<string, unknown>) => {
     actionItems(props);

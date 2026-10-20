@@ -77,6 +77,10 @@ vi.mock("@/hooks/useMilestoneAdminTimeline", () => ({
   }),
 }));
 
+vi.mock("@/components/Inbox/QueueSummary", () => ({
+  QueueSummary: () => <div data-testid="queue-summary" />,
+}));
+
 vi.mock("@/hooks/useActionItems", () => ({
   useActionItems: () => ({
     items: [],
