@@ -74,11 +74,25 @@ describe("QueueSummary", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
-  it("should_gate_the_fetch_on_the_enabled_flag", () => {
+  it("should_not_write_anything_until_asked", () => {
+    mockUseQueueSummary.mockReturnValue(state());
+
+    render(<QueueSummary communityId="filecoin" target={target} />);
+
+    expect(mockUseQueueSummary).toHaveBeenLastCalledWith("filecoin", target, { enabled: false });
+    expect(screen.queryByRole("button", { name: "Rewrite brief" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Write brief" }));
+
+    expect(mockUseQueueSummary).toHaveBeenLastCalledWith("filecoin", target, { enabled: true });
+  });
+
+  it("should_stay_off_when_the_caller_disables_it", () => {
     mockUseQueueSummary.mockReturnValue(state());
 
     render(<QueueSummary communityId="filecoin" target={target} enabled={false} />);
+    fireEvent.click(screen.getByRole("button", { name: "Write brief" }));
 
-    expect(mockUseQueueSummary).toHaveBeenCalledWith("filecoin", target, { enabled: false });
+    expect(mockUseQueueSummary).toHaveBeenLastCalledWith("filecoin", target, { enabled: false });
   });
 });

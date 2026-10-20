@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowPathIcon, SparklesIcon } from "@heroicons/react/24/outline";
-import React, { type FC } from "react";
+import React, { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ActionItemTarget } from "@/hooks/useActionItems";
@@ -20,6 +20,9 @@ interface QueueSummaryProps {
 /**
  * Two sentences on why the item is where it is, above the full timeline and
  * follow-up log, for the admin who does not have time to read either.
+ *
+ * Nothing is written until the admin asks: the model call costs money and
+ * most items are opened without needing it.
  */
 const QueueSummaryComponent: FC<QueueSummaryProps> = ({
   communityId,
@@ -27,10 +30,11 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
   enabled = true,
   className,
 }) => {
+  const [requested, setRequested] = useState(false);
   const { summary, isLoading, error, refetch, refresh, isRefreshing } = useQueueSummary(
     communityId,
     target,
-    { enabled }
+    { enabled: enabled && requested }
   );
 
   return (
@@ -72,23 +76,37 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
               </p>
             </>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No brief yet.</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Get a two-line brief on why this is stuck.
+              </p>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-purple-700 dark:text-purple-300"
+                onClick={() => setRequested(true)}
+              >
+                Write brief
+              </Button>
+            </div>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Rewrite brief"
-          title="Rewrite the brief from the current facts"
-          onClick={() => refresh()}
-          disabled={isLoading || isRefreshing}
-          className="shrink-0 text-gray-400 hover:text-purple-700 dark:text-zinc-500 dark:hover:text-purple-300"
-        >
-          <ArrowPathIcon
-            className={cn("h-4 w-4", isRefreshing && "animate-spin motion-reduce:animate-none")}
-            aria-hidden="true"
-          />
-        </Button>
+        {summary && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Rewrite brief"
+            title="Rewrite the brief from the current facts"
+            onClick={() => refresh()}
+            disabled={isLoading || isRefreshing}
+            className="shrink-0 text-gray-400 hover:text-purple-700 dark:text-zinc-500 dark:hover:text-purple-300"
+          >
+            <ArrowPathIcon
+              className={cn("h-4 w-4", isRefreshing && "animate-spin motion-reduce:animate-none")}
+              aria-hidden="true"
+            />
+          </Button>
+        )}
       </div>
     </section>
   );
