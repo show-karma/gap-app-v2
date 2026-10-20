@@ -61,26 +61,30 @@ describe("InboxListItem follow-up slot", () => {
       />
     );
 
-    expect(screen.getByText(/52 days ago/i)).toBeInTheDocument();
+    expect(screen.getByText("Follow-up overdue")).toBeInTheDocument();
+    expect(screen.getByTitle(/52 days ago/i)).toBeInTheDocument();
   });
 
-  // These rows sort last; a blank slot gives no reason why.
-  it("should_say_no_follow_up_when_none_is_scheduled", () => {
+  // The follow-up-ordered list labels its undated tail; a row-level "No
+  // follow-up" repeated down the column read like a warning.
+  it("should_omit_the_slot_when_none_is_scheduled", () => {
     render(<InboxListItem {...baseProps} item={makeItem({ attentionReason: "invoice_unpaid" })} />);
 
-    expect(screen.getByText("No follow-up")).toBeInTheDocument();
+    expect(screen.queryByText(/follow-up/i)).not.toBeInTheDocument();
   });
 
   // Reviewer-scoped rows carry no attention reason and no follow-up data.
   it("should_omit_the_slot_entirely_on_a_reviewer_row", () => {
     render(<InboxListItem {...baseProps} item={makeItem({ kind: "application" })} />);
 
-    expect(screen.queryByText("No follow-up")).not.toBeInTheDocument();
+    expect(screen.queryByText(/follow-up/i)).not.toBeInTheDocument();
   });
 });
 
 describe("InboxListItem stage age", () => {
-  it("should_render_the_days_stuck_beside_the_title", () => {
+  // The clock sits beside the stage badge as one phrase, so the number says
+  // what it counts instead of floating alone at the edge of the row.
+  it("should_render_the_days_stuck_with_the_stage_it_belongs_to", () => {
     render(
       <InboxListItem
         {...baseProps}
@@ -88,20 +92,8 @@ describe("InboxListItem stage age", () => {
       />
     );
 
-    expect(screen.getByText("379d")).toBeInTheDocument();
-  });
-
-  // The numeral carries a title attribute so the stage the age belongs to is
-  // recoverable — "379d" alone does not say 379 days of what.
-  it("should_name_the_stage_the_age_belongs_to", () => {
-    render(
-      <InboxListItem
-        {...baseProps}
-        item={makeItem({ attentionReason: "invoice_unpaid", stageAgeDays: 379 })}
-      />
-    );
-
-    expect(screen.getByTitle("379 days awaiting payment")).toBeInTheDocument();
+    expect(screen.getByText("Invoice unpaid")).toBeInTheDocument();
+    expect(screen.getByText("379 days unpaid")).toBeInTheDocument();
   });
 
   it("should_singularize_a_one_day_age", () => {
@@ -112,7 +104,23 @@ describe("InboxListItem stage age", () => {
       />
     );
 
-    expect(screen.getByTitle("1 day overdue")).toBeInTheDocument();
+    expect(screen.getByText("1 day overdue")).toBeInTheDocument();
+  });
+
+  it("should_describe_an_application_stage_in_its_own_words", () => {
+    render(
+      <InboxListItem
+        {...baseProps}
+        item={makeItem({
+          kind: "application",
+          attentionReason: "kyb_pending",
+          stageAgeDays: 6,
+        })}
+      />
+    );
+
+    expect(screen.getByText("KYB pending")).toBeInTheDocument();
+    expect(screen.getByText("6 days since approval")).toBeInTheDocument();
   });
 
   it("should_omit_the_age_when_the_feed_did_not_supply_one", () => {
@@ -130,7 +138,7 @@ describe("InboxListItem open action items", () => {
         item={makeItem({ attentionReason: "invoice_unpaid", openActionItems: 1 })}
       />
     );
-    expect(screen.getByText("1 open item")).toBeInTheDocument();
+    expect(screen.getByText("1 open note")).toBeInTheDocument();
 
     rerender(
       <InboxListItem
@@ -138,7 +146,7 @@ describe("InboxListItem open action items", () => {
         item={makeItem({ attentionReason: "invoice_unpaid", openActionItems: 3 })}
       />
     );
-    expect(screen.getByText("3 open items")).toBeInTheDocument();
+    expect(screen.getByText("3 open notes")).toBeInTheDocument();
   });
 
   // A block tied to a count is hidden when the count is zero — never "0 open".
@@ -150,6 +158,6 @@ describe("InboxListItem open action items", () => {
       />
     );
 
-    expect(screen.queryByText(/open item/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/open note/i)).not.toBeInTheDocument();
   });
 });

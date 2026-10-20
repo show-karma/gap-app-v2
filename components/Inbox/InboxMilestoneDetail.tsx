@@ -16,8 +16,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import pluralize from "pluralize";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
-import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
-import { MilestoneActionItems } from "@/components/Inbox/MilestoneActionItems";
+import { ActionItems } from "@/components/Inbox/ActionItems";
+import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
 import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
 import { describeFollowUp } from "@/components/Inbox/stageAge";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
@@ -316,7 +316,7 @@ const QueueHeader: FC<{
 
       {typeof stageAgeDays === "number" && (
         <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-          {stageAgeDays} {pluralize("day", stageAgeDays)} {STAGE_AGE_LABEL[reason]}
+          {stageAgeDays} {pluralize("day", stageAgeDays)} {ATTENTION_META[reason].ageSuffix}
         </span>
       )}
 
@@ -664,7 +664,10 @@ export function InboxMilestoneDetail({
             {showAdminTools && (
               <>
                 <MilestoneTimeline communityId={communityId} milestoneUid={milestoneUid} />
-                <MilestoneActionItems communityId={communityId} milestoneUid={milestoneUid} />
+                <ActionItems
+                  communityId={communityId}
+                  target={{ kind: "milestone", id: milestoneUid }}
+                />
               </>
             )}
           </div>

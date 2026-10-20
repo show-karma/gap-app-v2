@@ -196,6 +196,10 @@ export const INDEXER = {
         `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/items`,
       CREATE: (communityId: string, milestoneUid: string) =>
         `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/items`,
+      APPLICATION_LIST: (communityId: string, referenceNumber: string) =>
+        `/v2/milestone-action-items/${communityId}/applications/${referenceNumber}/items`,
+      APPLICATION_CREATE: (communityId: string, referenceNumber: string) =>
+        `/v2/milestone-action-items/${communityId}/applications/${referenceNumber}/items`,
       UPDATE: (communityId: string, id: string) =>
         `/v2/milestone-action-items/${communityId}/items/${id}`,
       DELETE: (communityId: string, id: string) =>

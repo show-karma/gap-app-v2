@@ -1,4 +1,4 @@
-import type { MilestoneAttentionReason } from "@/types/funding-platform";
+import type { InboxAttentionReason } from "@/types/funding-platform";
 
 /** The two review streams a Reviewer Inbox unifies. */
 export type InboxKind = "application" | "milestone";
@@ -58,7 +58,7 @@ export interface InboxItem {
    * ADMIN QUEUE (community admins only). Absent on a reviewer-scoped feed, so
    * every consumer must treat these as optional rather than defaulting them.
    */
-  attentionReason?: MilestoneAttentionReason;
+  attentionReason?: InboxAttentionReason;
   /** Whole days spent in the current attention stage. */
   stageAgeDays?: number;
   openActionItems?: number;
@@ -81,4 +81,9 @@ export interface InboxStats {
   awaitingInvoice?: number;
   invoiceUnpaid?: number;
   followUpDue?: number;
+  pendingReview?: number;
+  underReview?: number;
+  revisionRequested?: number;
+  kybPending?: number;
+  agreementPending?: number;
 }

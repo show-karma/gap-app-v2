@@ -77,8 +77,8 @@ vi.mock("@/hooks/useMilestoneAdminTimeline", () => ({
   }),
 }));
 
-vi.mock("@/hooks/useMilestoneActionItems", () => ({
-  useMilestoneActionItems: () => ({
+vi.mock("@/hooks/useActionItems", () => ({
+  useActionItems: () => ({
     items: [],
     isLoading: false,
     error: null,

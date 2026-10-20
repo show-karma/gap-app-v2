@@ -12,7 +12,7 @@ const service = vi.hoisted(() => ({
 vi.mock("@/services/milestoneActionItemsService", () => service);
 
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
-import { useMilestoneActionItems } from "@/hooks/useMilestoneActionItems";
+import { useActionItems } from "@/hooks/useActionItems";
 
 const COMMUNITY = "filecoin";
 const MILESTONE = "0xabc";
@@ -21,6 +21,7 @@ const makeItem = (overrides: Partial<IMilestoneActionItem> = {}): IMilestoneActi
   id: "item-1",
   milestoneUID: MILESTONE,
   grantUID: "grant-1",
+  applicationReference: null,
   communityUID: "community-1",
   programId: "774",
   content: "Emailed the team",
@@ -34,7 +35,7 @@ const makeItem = (overrides: Partial<IMilestoneActionItem> = {}): IMilestoneActi
   ...overrides,
 });
 
-describe("useMilestoneActionItems", () => {
+describe("useActionItems", () => {
   let serverItems: IMilestoneActionItem[];
 
   beforeEach(() => {
@@ -52,7 +53,7 @@ describe("useMilestoneActionItems", () => {
     );
 
     const { result, queryClient } = renderHookWithProviders(() =>
-      useMilestoneActionItems(COMMUNITY, MILESTONE)
+      useActionItems(COMMUNITY, { kind: "milestone", id: MILESTONE })
     );
     await waitFor(() => expect(result.current.items).toHaveLength(1));
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
@@ -82,7 +83,9 @@ describe("useMilestoneActionItems", () => {
   it("should_restore_the_previous_list_when_create_fails", async () => {
     service.createMilestoneActionItem.mockRejectedValue(new Error("boom"));
 
-    const { result } = renderHookWithProviders(() => useMilestoneActionItems(COMMUNITY, MILESTONE));
+    const { result } = renderHookWithProviders(() =>
+      useActionItems(COMMUNITY, { kind: "milestone", id: MILESTONE })
+    );
     await waitFor(() => expect(result.current.items).toHaveLength(1));
 
     await act(async () => {
@@ -105,7 +108,9 @@ describe("useMilestoneActionItems", () => {
       }
     );
 
-    const { result } = renderHookWithProviders(() => useMilestoneActionItems(COMMUNITY, MILESTONE));
+    const { result } = renderHookWithProviders(() =>
+      useActionItems(COMMUNITY, { kind: "milestone", id: MILESTONE })
+    );
     await waitFor(() => expect(result.current.items).toHaveLength(1));
 
     act(() => {
@@ -127,7 +132,9 @@ describe("useMilestoneActionItems", () => {
       serverItems = serverItems.filter((item) => item.id !== id);
     });
 
-    const { result } = renderHookWithProviders(() => useMilestoneActionItems(COMMUNITY, MILESTONE));
+    const { result } = renderHookWithProviders(() =>
+      useActionItems(COMMUNITY, { kind: "milestone", id: MILESTONE })
+    );
     await waitFor(() => expect(result.current.items).toHaveLength(1));
 
     act(() => {

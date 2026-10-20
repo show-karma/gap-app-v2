@@ -13,15 +13,21 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
-import type { MilestoneQueueFilter, ReviewerInboxSort } from "@/types/funding-platform";
+import type {
+  InboxKindFilter as InboxKind,
+  InboxQueueFilter,
+  ReviewerInboxSort,
+} from "@/types/funding-platform";
 import type { Community } from "@/types/v2/community";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { cn } from "@/utilities/tailwind";
-import ApplicationDetailView from "../FundingPlatform/ApplicationView/ApplicationDetailView";
+import { isApplicationReason } from "./attentionMeta";
 import { CommunityActionItemsView } from "./CommunityActionItemsView";
+import { InboxApplicationDetail } from "./InboxApplicationDetail";
 import { InboxAttentionFilter } from "./InboxAttentionFilter";
 import { InboxHeader } from "./InboxHeader";
-import { type InboxKindFilter, InboxList } from "./InboxList";
+import { InboxKindFilter } from "./InboxKindFilter";
+import { InboxList, type InboxKindFilter as ListKindFilter } from "./InboxList";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
 import { InboxProgramFilter } from "./InboxProgramFilter";
 import { InboxProjectFilter } from "./InboxProjectFilter";
@@ -115,9 +121,12 @@ export function ReviewerInboxPage({
   // with a stage filter. The server decides scope from the authenticated
   // caller — this flag only drives what the page renders, never what it is
   // allowed to see.
-  const [attentionFilter, setAttentionFilter] = useState<MilestoneQueueFilter | null>(null);
+  const [attentionFilter, setAttentionFilter] = useState<InboxQueueFilter | null>(null);
   const [inboxSort, setInboxSort] = useState<ReviewerInboxSort>("priority");
   const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
+  const [kindParam, setKindParam] = useQueryState("kind");
+  const queueKind: InboxKind | null =
+    kindParam === "application" || kindParam === "milestone" ? kindParam : null;
   const [programId, setProgramId] = useQueryState("programId");
   const [projectUid, setProjectUid] = useQueryState("projectUid");
   const [pendingParam, setPendingParam] = useQueryState("pendingActionItems");
@@ -131,6 +140,7 @@ export function ReviewerInboxPage({
     includeMilestones: includeMilestones && !showActionItems,
     applicationFilters: { limit },
     attention: attentionFilter,
+    kind: isCommunityAdmin ? queueKind : null,
     programId,
     projectUid,
     pendingActionItems,
@@ -144,7 +154,7 @@ export function ReviewerInboxPage({
   const [selectedId, setSelectedId] = useState<string | null>(() =>
     syncSelectionToHash ? getSelectedIdFromHash() : null
   );
-  const [kindFilter, setKindFilter] = useState<InboxKindFilter>("all");
+  const [kindFilter, setKindFilter] = useState<ListKindFilter>("all");
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
   /** A filter change asked for the first item of the incoming list. */
@@ -213,11 +223,26 @@ export function ReviewerInboxPage({
   }, [syncSelectionToHash]);
 
   const handleAttentionChange = useCallback(
-    (value: MilestoneQueueFilter | null) => {
+    (value: InboxQueueFilter | null) => {
       setAttentionFilter(value);
       resetToNewList();
     },
     [resetToNewList]
+  );
+
+  // Switching stream drops a stage filter that belongs to the other stream, so
+  // "Applications" never shows an empty list filtered to a milestone stage.
+  const handleKindChange = useCallback(
+    (value: InboxKind | null) => {
+      void setKindParam(value);
+      setAttentionFilter((current) => {
+        if (current === null || value === null || current === "followup_due") return current;
+        const currentKind: InboxKind = isApplicationReason(current) ? "application" : "milestone";
+        return currentKind === value ? current : null;
+      });
+      resetToNewList();
+    },
+    [setKindParam, resetToNewList]
   );
 
   const handleProgramChange = useCallback(
@@ -366,7 +391,7 @@ export function ReviewerInboxPage({
               )}
               onClick={() => void setViewParam(null)}
             >
-              Milestones
+              Queue
             </FilterButton>
             <FilterButton
               type="button"
@@ -389,11 +414,12 @@ export function ReviewerInboxPage({
 
       {isCommunityAdmin && !showActionItems && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-gray-200 pb-3 dark:border-zinc-700">
+          <InboxKindFilter stats={stats} value={queueKind} onChange={handleKindChange} />
           <InboxAttentionFilter
             stats={stats}
             value={attentionFilter}
             onChange={handleAttentionChange}
-            totalMilestones={stats.milestones}
+            kind={queueKind}
           />
           <FilterButton
             type="button"
@@ -407,7 +433,7 @@ export function ReviewerInboxPage({
                 "border border-primary-500 text-primary-700 dark:text-primary-300"
             )}
           >
-            Milestones with pending action items
+            With open action items
           </FilterButton>
           <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
             {scopeFilterControls}
@@ -447,7 +473,7 @@ export function ReviewerInboxPage({
                 <p className="text-gray-500 dark:text-gray-400">
                   {isCommunityAdmin
                     ? pendingActionItems
-                      ? "No milestones with pending action items match these filters."
+                      ? "Nothing with open action items matches these filters."
                       : "Nothing needs attention right now."
                     : "Nothing assigned to you yet. New reviews will appear here."}
                 </p>
@@ -537,21 +563,12 @@ function InboxDetailPane({ item, communityId, isCommunityAdmin }: InboxDetailPan
         </div>
       );
     }
-    const rawProgramId = item.programId;
-    const programId = normalizeProgramId(rawProgramId);
-    const combinedProgramId = rawProgramId.includes("_")
-      ? rawProgramId
-      : item.chainID
-        ? `${rawProgramId}_${item.chainID}`
-        : rawProgramId;
     return (
-      <ApplicationDetailView
+      <InboxApplicationDetail
         key={item.id}
-        applicationId={item.referenceNumber || item.id}
-        programId={programId}
-        combinedProgramId={combinedProgramId}
+        item={item}
         communityId={communityId}
-        variant="panel"
+        showAdminTools={isCommunityAdmin}
       />
     );
   }
@@ -571,7 +588,11 @@ function InboxDetailPane({ item, communityId, isCommunityAdmin }: InboxDetailPan
       <InboxMilestoneDetail
         key={item.id}
         showAdminTools={isCommunityAdmin}
-        attentionReason={item.attentionReason}
+        attentionReason={
+          item.attentionReason && !isApplicationReason(item.attentionReason)
+            ? item.attentionReason
+            : undefined
+        }
         stageAgeDays={item.stageAgeDays}
         nextFollowUpAt={item.nextFollowUpAt}
         projectUid={item.projectUid}

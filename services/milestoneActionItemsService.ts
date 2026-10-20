@@ -38,6 +38,17 @@ export async function getMilestoneActionItems(
   return data?.items ?? [];
 }
 
+export async function getApplicationActionItems(
+  communityId: string,
+  referenceNumber: string
+): Promise<IMilestoneActionItem[]> {
+  const data = await api.get<{ items: IMilestoneActionItem[] }>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.APPLICATION_LIST(communityId, referenceNumber)
+  );
+
+  return data?.items ?? [];
+}
+
 export interface CommunityActionItemFilters {
   page: number;
   status: "pending" | "completed" | "all";
@@ -72,6 +83,23 @@ export async function createMilestoneActionItem(
 ): Promise<IMilestoneActionItem> {
   const data = await api.post<IMilestoneActionItem>(
     INDEXER.V2.MILESTONE_ACTION_ITEMS.CREATE(communityId, milestoneUid),
+    input
+  );
+
+  if (!data) {
+    throw new Error("Failed to create action item");
+  }
+
+  return data;
+}
+
+export async function createApplicationActionItem(
+  communityId: string,
+  referenceNumber: string,
+  input: CreateMilestoneActionItemInput
+): Promise<IMilestoneActionItem> {
+  const data = await api.post<IMilestoneActionItem>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.APPLICATION_CREATE(communityId, referenceNumber),
     input
   );
 

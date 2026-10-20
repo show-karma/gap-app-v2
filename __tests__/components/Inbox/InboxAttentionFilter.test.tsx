@@ -24,7 +24,7 @@ const onChange = vi.fn();
 const baseProps = {
   value: null,
   onChange,
-  totalMilestones: 0,
+  kind: null,
 };
 
 /** The stage list lives in a popover — nothing renders until it is opened. */
@@ -49,13 +49,12 @@ describe("InboxAttentionFilter trigger", () => {
     render(
       <InboxAttentionFilter
         {...baseProps}
-        stats={makeStats({ pastDue: 3, invoiceUnpaid: 9 })}
-        totalMilestones={12}
+        stats={makeStats({ milestones: 12, pastDue: 3, invoiceUnpaid: 9 })}
       />
     );
 
     const trigger = screen.getByRole("button", { name: /filter by stage/i });
-    expect(within(trigger).getByText("All items")).toBeInTheDocument();
+    expect(within(trigger).getByText("All stages")).toBeInTheDocument();
     expect(within(trigger).getByText("12")).toBeInTheDocument();
   });
 
@@ -64,8 +63,7 @@ describe("InboxAttentionFilter trigger", () => {
       <InboxAttentionFilter
         {...baseProps}
         value="invoice_unpaid"
-        stats={makeStats({ pastDue: 3, invoiceUnpaid: 9 })}
-        totalMilestones={12}
+        stats={makeStats({ milestones: 12, pastDue: 3, invoiceUnpaid: 9 })}
       />
     );
 
@@ -79,11 +77,7 @@ describe("InboxAttentionFilter trigger", () => {
 describe("InboxAttentionFilter menu", () => {
   it("hides zero-count stages so no option leads to an empty list", () => {
     render(
-      <InboxAttentionFilter
-        {...baseProps}
-        stats={makeStats({ pastDue: 3, invoiceUnpaid: 0 })}
-        totalMilestones={3}
-      />
+      <InboxAttentionFilter {...baseProps} stats={makeStats({ pastDue: 3, invoiceUnpaid: 0 })} />
     );
 
     const menu = openMenu();
@@ -93,25 +87,13 @@ describe("InboxAttentionFilter menu", () => {
 
   // Without it there is no way back from a filtered view.
   it("always offers All items when at least one stage has items", () => {
-    render(
-      <InboxAttentionFilter
-        {...baseProps}
-        stats={makeStats({ awaitingReview: 2 })}
-        totalMilestones={2}
-      />
-    );
+    render(<InboxAttentionFilter {...baseProps} stats={makeStats({ awaitingReview: 2 })} />);
 
-    expect(within(openMenu()).getByText("All items")).toBeInTheDocument();
+    expect(within(openMenu()).getByText("All stages")).toBeInTheDocument();
   });
 
   it("emits the reason when a stage is selected", () => {
-    render(
-      <InboxAttentionFilter
-        {...baseProps}
-        stats={makeStats({ invoiceUnpaid: 5 })}
-        totalMilestones={5}
-      />
-    );
+    render(<InboxAttentionFilter {...baseProps} stats={makeStats({ invoiceUnpaid: 5 })} />);
 
     fireEvent.click(within(openMenu()).getByText("Invoice unpaid"));
 
@@ -120,26 +102,17 @@ describe("InboxAttentionFilter menu", () => {
 
   it("emits null when All items is selected", () => {
     render(
-      <InboxAttentionFilter
-        {...baseProps}
-        value="past_due"
-        stats={makeStats({ pastDue: 1 })}
-        totalMilestones={1}
-      />
+      <InboxAttentionFilter {...baseProps} value="past_due" stats={makeStats({ pastDue: 1 })} />
     );
 
-    fireEvent.click(within(openMenu()).getByText("All items"));
+    fireEvent.click(within(openMenu()).getByText("All stages"));
 
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
   it("shows each stage count in the menu", () => {
     render(
-      <InboxAttentionFilter
-        {...baseProps}
-        stats={makeStats({ pastDue: 3, invoiceUnpaid: 9 })}
-        totalMilestones={12}
-      />
+      <InboxAttentionFilter {...baseProps} stats={makeStats({ pastDue: 3, invoiceUnpaid: 9 })} />
     );
 
     const menu = openMenu();
@@ -181,14 +154,65 @@ describe("InboxAttentionFilter — reviewer scope", () => {
     } as IReviewerInboxStats;
 
     const { container } = render(
-      <InboxAttentionFilter
-        value={null}
-        onChange={onChange}
-        totalMilestones={10}
-        stats={reviewerStats}
-      />
+      <InboxAttentionFilter value={null} onChange={onChange} stats={reviewerStats} />
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("InboxAttentionFilter kinds", () => {
+  it("groups application and milestone stages under their own headings", () => {
+    render(
+      <InboxAttentionFilter
+        {...baseProps}
+        stats={makeStats({
+          applications: 4,
+          milestones: 3,
+          pendingReview: 4,
+          pastDue: 3,
+        })}
+      />
+    );
+
+    const menu = openMenu();
+    expect(within(menu).getByText("Applications")).toBeInTheDocument();
+    expect(within(menu).getByText("Milestones")).toBeInTheDocument();
+    expect(within(menu).getByText("Pending review")).toBeInTheDocument();
+    expect(within(menu).getByText("Past due")).toBeInTheDocument();
+  });
+
+  it("offers only the stages of the stream the queue is narrowed to", () => {
+    render(
+      <InboxAttentionFilter
+        {...baseProps}
+        kind="application"
+        stats={makeStats({
+          applications: 4,
+          milestones: 3,
+          kybPending: 4,
+          pastDue: 3,
+        })}
+      />
+    );
+
+    const trigger = screen.getByRole("button", { name: /filter by stage/i });
+    expect(within(trigger).getByText("4")).toBeInTheDocument();
+    const menu = openMenu();
+    expect(within(menu).getByText("KYB pending")).toBeInTheDocument();
+    expect(within(menu).queryByText("Past due")).not.toBeInTheDocument();
+  });
+
+  it("emits the application stage when one is selected", () => {
+    render(
+      <InboxAttentionFilter
+        {...baseProps}
+        stats={makeStats({ applications: 2, agreementPending: 2 })}
+      />
+    );
+
+    fireEvent.click(within(openMenu()).getByText("Agreement pending"));
+
+    expect(onChange).toHaveBeenCalledWith("agreement_pending");
   });
 });

@@ -87,7 +87,7 @@ describe("ReviewerInboxPage selection ↔ URL hash", () => {
     filterState.isAdmin = true;
     render(<ReviewerInboxPage community={community} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Milestones with pending action items" }));
+    fireEvent.click(screen.getByRole("button", { name: "With open action items" }));
 
     expect(filterState.setPending).toHaveBeenCalledWith("true");
   });

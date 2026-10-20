@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarDaysIcon } from "@heroicons/react/24/outline";
+import { CalendarDaysIcon, DocumentTextIcon, FlagIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import React, { type FC } from "react";
-import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
+import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
 import { AiScore, DueChip, KindTag, StatusBadge } from "@/components/Inbox/InboxBadges";
 import { describeFollowUp, stageAgeTone } from "@/components/Inbox/stageAge";
 import type { InboxItem } from "@/components/Inbox/types";
+import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
@@ -14,40 +15,46 @@ import { cn } from "@/utilities/tailwind";
 const formatCalendarDay = (iso: string): string => formatDate(iso, "UTC");
 
 /**
- * Time in the current stage — the one loud element on an admin row.
+ * The stage an admin row sits in, with how long it has been there.
  *
- * Everything else on the row is deliberately quiet so this reads first. The
- * stage is already named by the badge, so only the number belongs here; the
- * title attribute carries the stage back for anyone who needs it, since "379d"
- * alone does not say 379 days of what.
+ * The number used to float alone at the far right of the title ("153d"),
+ * detached from the badge that gave it meaning. Here the badge and the clock
+ * are one phrase — "Past due · 153 days overdue" — so the row says what the
+ * number counts. The clock keeps the heat tone; the badge keeps its stage hue.
  */
-const StageAge: FC<{ item: InboxItem }> = ({ item }) => {
-  if (!item.attentionReason || typeof item.stageAgeDays !== "number") return null;
-  const tone = stageAgeTone(item.stageAgeDays);
+const StageLine: FC<{ item: InboxItem }> = ({ item }) => {
+  if (!item.attentionReason) return null;
+  const meta = ATTENTION_META[item.attentionReason];
+  const days = item.stageAgeDays;
+  const tone = stageAgeTone(days);
 
   return (
-    <span
-      className={cn("shrink-0 text-sm font-semibold tabular-nums", tone.text)}
-      title={`${item.stageAgeDays} ${pluralize("day", item.stageAgeDays)} ${
-        STAGE_AGE_LABEL[item.attentionReason]
-      }`}
-    >
-      {item.stageAgeDays}d
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[11px] font-medium",
+          meta.badgeClass
+        )}
+      >
+        {meta.label}
+      </span>
+      {typeof days === "number" && (
+        <span className={cn("truncate text-xs font-medium tabular-nums", tone.text)}>
+          {days} {pluralize("day", days)} {meta.ageSuffix}
+        </span>
+      )}
     </span>
   );
 };
 
 /**
- * Project and program on one dimmed line.
- *
- * These were two stacked lines, and the program repeated verbatim on nearly
- * every row ("Filecoin ProPGF Batch 1" four times running). Joined and
- * truncated, the distinguishing half comes first and the repetition costs one
- * line instead of two.
+ * Who and where: applicant email for an application, project for a milestone,
+ * then the program. Joined on one dimmed line so the distinguishing half comes
+ * first and the repetition costs one line instead of two.
  */
 const Provenance: FC<{ item: InboxItem; hideSubtitle: boolean }> = ({ item, hideSubtitle }) => {
   const primary = item.kind === "milestone" ? item.project : item.who;
-  const secondary = item.kind === "milestone" && !hideSubtitle ? item.subtitle : undefined;
+  const secondary = !hideSubtitle ? item.subtitle : undefined;
   const parts = [primary, secondary].filter(Boolean);
   if (parts.length === 0) return null;
 
@@ -59,29 +66,28 @@ const Provenance: FC<{ item: InboxItem; hideSubtitle: boolean }> = ({ item, hide
 };
 
 /**
- * The follow-up date, on every admin row.
- *
- * The queue can be ordered by this date, so hiding it when it is merely "not
- * overdue" left the reader with an order they could not verify. Only the
- * relative phrase renders here — on a date-ordered queue the absolute date is
- * near-identical down the column and separates nothing.
+ * The next scheduled chase, only when one exists. An unscheduled row says
+ * nothing here: the follow-up-ordered list already labels the undated tail,
+ * and "No follow-up" on every other row was noise that read like a warning.
  */
 const FollowUpSlot: FC<{ item: InboxItem }> = ({ item }) => {
-  if (!item.attentionReason) return null;
+  if (!item.attentionReason || !item.nextFollowUpAt) return null;
   const followUp = describeFollowUp(item.nextFollowUpAt, formatCalendarDay);
 
   return (
     <span
       className={cn("inline-flex min-w-0 items-center gap-1 text-xs", followUp.className)}
-      title={followUp.scheduled ? `Next follow-up ${followUp.label}` : "No follow-up scheduled"}
+      title={`Next follow-up ${followUp.label}`}
     >
       <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <span className="truncate">{followUp.shortLabel}</span>
+      <span className="truncate">
+        {followUp.overdue ? "Follow-up overdue" : `Follow-up ${followUp.shortLabel}`}
+      </span>
     </span>
   );
 };
 
-/** Submitted + last-updated line for application rows. */
+/** Submitted + last-updated line for reviewer-scoped application rows. */
 const ApplicationDates: FC<{ item: InboxItem }> = ({ item }) => {
   if (!item.submittedAt && !item.updatedAt) return null;
   return (
@@ -110,12 +116,10 @@ interface InboxListItemProps {
 /**
  * Master-list row in the Reviewer Inbox.
  *
- * Three lines, not five: title + days stuck, then provenance, then a meta line
- * carrying the stage badge, the follow-up and the open-item count. Rows are
- * separated by hairlines rather than drawn as bordered cards — at 25 rows the
- * card chrome cost more vertical space than the content it framed.
- *
- * Purely presentational — selection state and handling are driven by props.
+ * Three lines: a kind glyph and the title, then provenance, then one meta
+ * line — stage with its clock, the next follow-up, open notes. Rows are
+ * separated by hairlines rather than drawn as bordered cards. Purely
+ * presentational — selection state and handling are driven by props.
  */
 const InboxListItemComponent: FC<InboxListItemProps> = ({
   item,
@@ -125,33 +129,36 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({
   hideSubtitle = false,
 }) => {
   const isAdminRow = Boolean(item.attentionReason);
-  const heat = stageAgeTone(item.stageAgeDays);
   const openItems = item.openActionItems ?? 0;
+  const KindGlyph = item.kind === "application" ? DocumentTextIcon : FlagIcon;
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={() => onSelect(item.id)}
       aria-current={selected ? "true" : undefined}
       className={cn(
-        "group relative block w-full py-2.5 pl-4 pr-3 text-left transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500",
+        "group block h-auto w-full min-w-0 justify-start whitespace-normal rounded-none px-4 py-2.5 text-left focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500",
         selected
-          ? "bg-primary-50 dark:bg-primary-900/20"
+          ? "bg-primary-50 hover:bg-primary-50 dark:bg-primary-900/20 dark:hover:bg-primary-900/20"
           : "hover:bg-gray-50 dark:hover:bg-zinc-800/60"
       )}
     >
-      {isAdminRow && (
-        <span aria-hidden="true" className={cn("absolute inset-y-0 left-0 w-1", heat.bar)} />
-      )}
-
-      {!hideKind && (
+      {!hideKind && !isAdminRow && (
         <span className="mb-1 flex items-center gap-2">
           <KindTag kind={item.kind} />
-          {!isAdminRow && <StatusBadge status={item.status} className="ml-auto shrink-0" />}
+          <StatusBadge status={item.status} className="ml-auto shrink-0" />
         </span>
       )}
 
-      <span className="flex items-baseline gap-2">
+      <span className="flex items-start gap-2">
+        {!hideKind && isAdminRow && (
+          <KindGlyph
+            className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-zinc-500"
+            aria-label={item.kind === "application" ? "Application" : "Milestone"}
+          />
+        )}
         <span
           className={cn(
             "line-clamp-2 min-w-0 flex-1 text-sm font-semibold leading-snug",
@@ -160,37 +167,25 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({
         >
           {item.title}
         </span>
-        <StageAge item={item} />
       </span>
 
       <Provenance item={item} hideSubtitle={hideSubtitle} />
 
-      <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        {isAdminRow && item.attentionReason ? (
-          <span
-            className={cn(
-              "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[11px] font-medium",
-              ATTENTION_META[item.attentionReason].badgeClass
-            )}
-          >
-            {ATTENTION_META[item.attentionReason].label}
-          </span>
-        ) : (
-          <DueChip item={item} />
-        )}
+      <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+        {isAdminRow ? <StageLine item={item} /> : <DueChip item={item} />}
 
         <FollowUpSlot item={item} />
 
         {openItems > 0 && (
           <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
-            {openItems} open {pluralize("item", openItems)}
+            {openItems} open {pluralize("note", openItems)}
           </span>
         )}
 
         {!isAdminRow && <ApplicationDates item={item} />}
         <AiScore score={item.aiScore} className="ml-auto" />
       </span>
-    </button>
+    </Button>
   );
 };
 
