@@ -27,11 +27,16 @@ import type {
 } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 
+/** Not a stage: "has at least one open follow-up note", served by the same menu. */
+export const OPEN_NOTES_FILTER = "open_notes" as const;
+
+export type InboxStageFilterValue = InboxQueueFilter | typeof OPEN_NOTES_FILTER;
+
 interface InboxAttentionFilterProps {
   stats: IReviewerInboxStats;
   /** `null` = no stage filter (All). */
-  value: InboxQueueFilter | null;
-  onChange: (value: InboxQueueFilter | null) => void;
+  value: InboxStageFilterValue | null;
+  onChange: (value: InboxStageFilterValue | null) => void;
   /** Which stream the queue is narrowed to; `null` offers both groups. */
   kind: InboxKindFilter | null;
 }
@@ -58,10 +63,11 @@ function countForKind(stats: IReviewerInboxStats, kind: InboxKindFilter | null):
 }
 
 interface StageOption {
-  key: InboxQueueFilter;
+  key: InboxStageFilterValue;
   label: string;
-  count: number;
-  dotClass: string;
+  /** Absent when the feed does not count this option. */
+  count?: number;
+  dotClass?: string;
 }
 
 interface StageGroup {
@@ -98,8 +104,8 @@ const InboxAttentionFilterComponent: FC<InboxAttentionFilterProps> = ({
     const milestones: StageOption[] = MILESTONE_FILTER_ORDER.map(toOption);
 
     const followUpCount = stats.followUpDue ?? 0;
-    const followUp: StageOption[] =
-      followUpCount > 0
+    const followUp: StageOption[] = [
+      ...(followUpCount > 0
         ? [
             {
               key: FOLLOW_UP_FILTER,
@@ -108,7 +114,9 @@ const InboxAttentionFilterComponent: FC<InboxAttentionFilterProps> = ({
               count: followUpCount,
             },
           ]
-        : [];
+        : []),
+      { key: OPEN_NOTES_FILTER, label: "Has open notes" },
+    ];
 
     const candidates: StageGroup[] = [
       ...(kind !== "milestone" ? [{ heading: "Applications", options: applications }] : []),
@@ -119,22 +127,26 @@ const InboxAttentionFilterComponent: FC<InboxAttentionFilterProps> = ({
     return candidates
       .map((group) => ({
         ...group,
-        options: group.options.filter((option) => option.count > 0),
+        options: group.options.filter((option) => option.count === undefined || option.count > 0),
       }))
       .filter((group) => group.options.length > 0);
   }, [stats, kind]);
 
   const total = useMemo(() => countForKind(stats, kind), [stats, kind]);
 
-  // Nothing to filter by — don't render a control whose only option is "All".
-  if (groups.length === 0) return null;
+  // Nothing to filter by — don't render a control whose only options are "All"
+  // and "Has open notes". A reviewer-scoped feed carries no stage counts.
+  const hasCountedOption = groups.some((group) =>
+    group.options.some((option) => option.count !== undefined)
+  );
+  if (!hasCountedOption) return null;
 
   const selected = groups.flatMap((group) => group.options).find((o) => o.key === value) ?? null;
   const active = selected !== null;
   const triggerLabel = selected?.label ?? ALL_LABEL;
-  const triggerCount = selected?.count ?? total;
+  const triggerCount = selected ? selected.count : total;
 
-  const choose = (next: InboxQueueFilter | null) => {
+  const choose = (next: InboxStageFilterValue | null) => {
     onChange(next);
     setOpen(false);
   };
@@ -159,9 +171,11 @@ const InboxAttentionFilterComponent: FC<InboxAttentionFilterProps> = ({
             />
           ) : null}
           <span className="truncate">{triggerLabel}</span>
-          <span className="ml-auto shrink-0 tabular-nums text-xs text-gray-500 dark:text-zinc-400">
-            {triggerCount}
-          </span>
+          {triggerCount !== undefined && (
+            <span className="ml-auto shrink-0 tabular-nums text-xs text-gray-500 dark:text-zinc-400">
+              {triggerCount}
+            </span>
+          )}
           <ChevronDownIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
@@ -200,14 +214,18 @@ const InboxAttentionFilterComponent: FC<InboxAttentionFilterProps> = ({
                         )}
                         aria-hidden="true"
                       />
-                      <span
-                        className={cn("mr-2 h-1.5 w-1.5 shrink-0 rounded-full", option.dotClass)}
-                        aria-hidden="true"
-                      />
+                      {option.dotClass && (
+                        <span
+                          className={cn("mr-2 h-1.5 w-1.5 shrink-0 rounded-full", option.dotClass)}
+                          aria-hidden="true"
+                        />
+                      )}
                       <span className="truncate">{option.label}</span>
-                      <span className="ml-auto shrink-0 tabular-nums text-xs text-gray-500 dark:text-zinc-400">
-                        {option.count}
-                      </span>
+                      {option.count !== undefined && (
+                        <span className="ml-auto shrink-0 tabular-nums text-xs text-gray-500 dark:text-zinc-400">
+                          {option.count}
+                        </span>
+                      )}
                     </CommandItem>
                   ))}
                 </CommandGroup>

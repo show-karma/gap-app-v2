@@ -24,7 +24,11 @@ import { cn } from "@/utilities/tailwind";
 import { isApplicationReason } from "./attentionMeta";
 import { CommunityActionItemsView } from "./CommunityActionItemsView";
 import { InboxApplicationDetail } from "./InboxApplicationDetail";
-import { InboxAttentionFilter } from "./InboxAttentionFilter";
+import {
+  InboxAttentionFilter,
+  type InboxStageFilterValue,
+  OPEN_NOTES_FILTER,
+} from "./InboxAttentionFilter";
 import { InboxHeader } from "./InboxHeader";
 import { InboxKindFilter } from "./InboxKindFilter";
 import { InboxList, type InboxKindFilter as ListKindFilter } from "./InboxList";
@@ -222,12 +226,24 @@ export function ReviewerInboxPage({
     setSelectedId(null);
   }, [syncSelectionToHash]);
 
+  // "Has open notes" lives in the stage menu but is a different server
+  // parameter, so the menu's value is derived from both pieces of state.
+  const stageFilterValue: InboxStageFilterValue | null = pendingActionItems
+    ? OPEN_NOTES_FILTER
+    : attentionFilter;
+
   const handleAttentionChange = useCallback(
-    (value: InboxQueueFilter | null) => {
-      setAttentionFilter(value);
+    (value: InboxStageFilterValue | null) => {
+      if (value === OPEN_NOTES_FILTER) {
+        setAttentionFilter(null);
+        void setPendingParam("true");
+      } else {
+        setAttentionFilter(value);
+        void setPendingParam(null);
+      }
       resetToNewList();
     },
-    [resetToNewList]
+    [resetToNewList, setPendingParam]
   );
 
   // Switching stream drops a stage filter that belongs to the other stream, so
@@ -263,13 +279,6 @@ export function ReviewerInboxPage({
     },
     [setProjectUid, resetToNewList]
   );
-
-  const handlePendingChange = useCallback(() => {
-    void setPendingParam(pendingActionItems ? null : "true");
-    setAttentionFilter(null);
-    setKindFilter("all");
-    resetToNewList();
-  }, [pendingActionItems, setPendingParam, resetToNewList]);
 
   const handleSortChange = useCallback(
     (value: ReviewerInboxSort) => {
@@ -417,24 +426,10 @@ export function ReviewerInboxPage({
           <InboxKindFilter stats={stats} value={queueKind} onChange={handleKindChange} />
           <InboxAttentionFilter
             stats={stats}
-            value={attentionFilter}
+            value={stageFilterValue}
             onChange={handleAttentionChange}
             kind={queueKind}
           />
-          <FilterButton
-            type="button"
-            variant={pendingActionItems ? "secondary" : "outline"}
-            size="chip"
-            aria-pressed={pendingActionItems}
-            onClick={handlePendingChange}
-            className={cn(
-              "font-medium",
-              pendingActionItems &&
-                "border border-primary-500 text-primary-700 dark:text-primary-300"
-            )}
-          >
-            With open action items
-          </FilterButton>
           <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
             {scopeFilterControls}
             <InboxSortControl value={inboxSort} onChange={handleSortChange} />

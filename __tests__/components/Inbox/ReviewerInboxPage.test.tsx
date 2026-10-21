@@ -34,7 +34,15 @@ vi.mock("@/hooks/communities/useCommunityAdminAccess", () => ({
   useCommunityAdminAccess: () => ({ hasAccess: filterState.isAdmin, isLoading: false }),
 }));
 
-const mockStats: InboxStats = { action: 2, waiting: 0, done: 0 };
+const mockStats: InboxStats = {
+  action: 2,
+  waiting: 0,
+  done: 0,
+  overdue: 0,
+  applications: 0,
+  milestones: 2,
+  pastDue: 2,
+};
 let mockItems: InboxItem[] = [];
 vi.mock("@/components/Inbox/useInboxFeed", () => ({
   useInboxFeed: () => ({
@@ -87,7 +95,8 @@ describe("ReviewerInboxPage selection ↔ URL hash", () => {
     filterState.isAdmin = true;
     render(<ReviewerInboxPage community={community} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "With open action items" }));
+    fireEvent.click(screen.getByRole("button", { name: /filter by stage/i }));
+    fireEvent.click(screen.getByText("Has open notes"));
 
     expect(filterState.setPending).toHaveBeenCalledWith("true");
   });

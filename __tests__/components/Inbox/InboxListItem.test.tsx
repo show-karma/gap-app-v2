@@ -47,7 +47,7 @@ describe("InboxListItem follow-up slot", () => {
       />
     );
 
-    expect(screen.getByText(/in 7 days/i)).toBeInTheDocument();
+    expect(screen.getByText(/follow-up in 7 days/i)).toBeInTheDocument();
   });
 
   it("should_show_an_overdue_follow_up_date", () => {
@@ -61,16 +61,16 @@ describe("InboxListItem follow-up slot", () => {
       />
     );
 
-    expect(screen.getByText("Follow-up overdue")).toBeInTheDocument();
+    expect(screen.getByText("follow-up overdue")).toBeInTheDocument();
     expect(screen.getByTitle(/52 days ago/i)).toBeInTheDocument();
   });
 
   // The follow-up-ordered list labels its undated tail; a row-level "No
   // follow-up" repeated down the column read like a warning.
-  it("should_omit_the_slot_when_none_is_scheduled", () => {
+  it("should_say_nobody_has_followed_up_when_nothing_is_scheduled_or_logged", () => {
     render(<InboxListItem {...baseProps} item={makeItem({ attentionReason: "invoice_unpaid" })} />);
 
-    expect(screen.queryByText(/follow-up/i)).not.toBeInTheDocument();
+    expect(screen.getByText("no follow-up yet")).toBeInTheDocument();
   });
 
   // Reviewer-scoped rows carry no attention reason and no follow-up data.
@@ -92,8 +92,8 @@ describe("InboxListItem stage age", () => {
       />
     );
 
-    expect(screen.getByText("Invoice unpaid")).toBeInTheDocument();
-    expect(screen.getByText("379 days unpaid")).toBeInTheDocument();
+    expect(screen.getByText(/Invoice unpaid/)).toBeInTheDocument();
+    expect(screen.getByText("379 days")).toBeInTheDocument();
   });
 
   it("should_singularize_a_one_day_age", () => {
@@ -104,7 +104,7 @@ describe("InboxListItem stage age", () => {
       />
     );
 
-    expect(screen.getByText("1 day overdue")).toBeInTheDocument();
+    expect(screen.getByText("1 day")).toBeInTheDocument();
   });
 
   it("should_show_every_open_gate_with_one_clock", () => {
@@ -120,9 +120,8 @@ describe("InboxListItem stage age", () => {
       />
     );
 
-    expect(screen.getByText("KYB pending")).toBeInTheDocument();
-    expect(screen.getByText("Agreement pending")).toBeInTheDocument();
-    expect(screen.getAllByText(/since approval/)).toHaveLength(1);
+    expect(screen.getByText(/KYB pending and Agreement pending/)).toBeInTheDocument();
+    expect(screen.getAllByText("6 days")).toHaveLength(1);
   });
 
   it("should_describe_an_application_stage_in_its_own_words", () => {
@@ -137,14 +136,42 @@ describe("InboxListItem stage age", () => {
       />
     );
 
-    expect(screen.getByText("KYB pending")).toBeInTheDocument();
-    expect(screen.getByText("6 days since approval")).toBeInTheDocument();
+    expect(screen.getByText(/KYB pending/)).toBeInTheDocument();
+    expect(screen.getByText("6 days")).toBeInTheDocument();
   });
 
   it("should_omit_the_age_when_the_feed_did_not_supply_one", () => {
     render(<InboxListItem {...baseProps} item={makeItem({ attentionReason: "invoice_unpaid" })} />);
 
-    expect(screen.queryByText(/\d+d$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+ days?$/)).not.toBeInTheDocument();
+  });
+});
+
+describe("InboxListItem colour", () => {
+  it("should_turn_the_stage_red_only_when_a_date_was_missed", () => {
+    const { rerender } = render(
+      <InboxListItem
+        {...baseProps}
+        item={makeItem({ attentionReason: "invoice_unpaid", stageAgeDays: 40 })}
+      />
+    );
+    expect(screen.getByText(/Invoice unpaid/)).not.toHaveClass("text-red-600");
+
+    rerender(
+      <InboxListItem
+        {...baseProps}
+        item={makeItem({ attentionReason: "invoice_unpaid", stageAgeDays: 120 })}
+      />
+    );
+    expect(screen.getByText(/Invoice unpaid/)).toHaveClass("text-red-600");
+
+    rerender(
+      <InboxListItem
+        {...baseProps}
+        item={makeItem({ attentionReason: "past_due", stageAgeDays: 3 })}
+      />
+    );
+    expect(screen.getByText(/Past due/)).toHaveClass("text-red-600");
   });
 });
 

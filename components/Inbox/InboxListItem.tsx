@@ -1,11 +1,10 @@
 "use client";
 
-import { CalendarDaysIcon, DocumentTextIcon, FlagIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import React, { type FC } from "react";
 import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
 import { AiScore, DueChip, KindTag, StatusBadge } from "@/components/Inbox/InboxBadges";
-import { describeFollowUp, stageAgeTone } from "@/components/Inbox/stageAge";
+import { describeFollowUp } from "@/components/Inbox/stageAge";
 import type { InboxItem } from "@/components/Inbox/types";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utilities/formatDate";
@@ -14,88 +13,88 @@ import { cn } from "@/utilities/tailwind";
 /** Prints a stored calendar day in UTC — see utilities/calendarDay. */
 const formatCalendarDay = (iso: string): string => formatDate(iso, "UTC");
 
+/** Days in stage from which the clock turns red. */
+const CRITICAL_DAYS = 90;
+
+/** Stages that are red regardless of age: the deadline itself has passed. */
+const RED_STAGES = new Set<string>(["past_due"]);
+
 /**
- * The stage an admin row sits in, with how long it has been there.
- *
- * The number used to float alone at the far right of the title ("153d"),
- * detached from the badge that gave it meaning. Here the badge and the clock
- * are one phrase — "Past due · 153 days overdue" — so the row says what the
- * number counts. The clock keeps the heat tone; the badge keeps its stage hue.
+ * One sentence on where the item stands: the stage and how long it has been
+ * there, then the next chase. Reads as prose, not as a row of chips, because a
+ * reader scans forty of these and chips of four hues told them nothing the
+ * words did not. Red is reserved for a missed date: a past-due milestone, a
+ * stage held past the critical threshold, or an overdue follow-up.
  */
-const StageLine: FC<{ item: InboxItem }> = ({ item }) => {
+const StatusLine: FC<{ item: InboxItem }> = ({ item }) => {
   if (!item.attentionReason) return null;
+  const stages = item.pendingGates?.length ? item.pendingGates : [item.attentionReason];
   const meta = ATTENTION_META[item.attentionReason];
   const days = item.stageAgeDays;
-  const tone = stageAgeTone(days);
-  // An approved application can be stuck behind KYB AND the agreement; both
-  // are shown, the clock counts once from approval.
-  const stages = item.pendingGates?.length ? item.pendingGates : [item.attentionReason];
+  const stageRed =
+    stages.some((stage) => RED_STAGES.has(stage)) ||
+    (typeof days === "number" && days >= CRITICAL_DAYS);
+  const followUp = item.nextFollowUpAt
+    ? describeFollowUp(item.nextFollowUpAt, formatCalendarDay)
+    : null;
+  const openNotes = item.openActionItems ?? 0;
 
   return (
-    <span className="inline-flex min-w-0 flex-wrap items-center gap-1.5">
-      {stages.map((stage) => (
-        <span
-          key={stage}
-          title={ATTENTION_META[stage].description}
-          className={cn(
-            "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[11px] font-medium",
-            ATTENTION_META[stage].badgeClass
-          )}
-        >
-          {ATTENTION_META[stage].label}
-        </span>
-      ))}
-      {typeof days === "number" && (
-        <span
-          title={meta.clockDescription}
-          className={cn("truncate text-xs font-medium tabular-nums", tone.text)}
-        >
-          {days} {pluralize("day", days)} {meta.ageSuffix}
-        </span>
+    <span className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-xs text-gray-500 dark:text-gray-400">
+      <span
+        title={stages.map((stage) => ATTENTION_META[stage].description).join(" ")}
+        className={cn(
+          "font-medium",
+          stageRed ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-200"
+        )}
+      >
+        {stages.map((stage) => ATTENTION_META[stage].label).join(" and ")}
+        {typeof days === "number" && (
+          <span title={meta.clockDescription} className="font-normal tabular-nums">
+            {" "}
+            {days} {pluralize("day", days)}
+          </span>
+        )}
+      </span>
+      {followUp && (
+        <>
+          <span aria-hidden="true">·</span>
+          <span
+            title={`Next follow-up ${followUp.label}`}
+            className={cn(followUp.overdue && "font-medium text-red-600 dark:text-red-400")}
+          >
+            {followUp.overdue ? "follow-up overdue" : `follow-up ${followUp.shortLabel}`}
+          </span>
+        </>
+      )}
+      {!followUp && openNotes === 0 && (
+        <>
+          <span aria-hidden="true">·</span>
+          <span>no follow-up yet</span>
+        </>
+      )}
+      {openNotes > 0 && (
+        <>
+          <span aria-hidden="true">·</span>
+          <span title="Follow-up notes logged by admins that are not marked done">
+            {openNotes} open {pluralize("note", openNotes)}
+          </span>
+        </>
       )}
     </span>
   );
 };
 
 /**
- * Who and where: applicant email for an application, project for a milestone,
- * then the program. Joined on one dimmed line so the distinguishing half comes
- * first and the repetition costs one line instead of two.
+ * Who and where: the project for a milestone, the applicant for an
+ * application, then the program when it varies across the visible rows.
  */
-const Provenance: FC<{ item: InboxItem; hideSubtitle: boolean }> = ({ item, hideSubtitle }) => {
+function provenance(item: InboxItem, hideSubtitle: boolean): string | null {
   const primary = item.kind === "milestone" ? item.project : item.who;
   const secondary = !hideSubtitle ? item.subtitle : undefined;
   const parts = [primary, secondary].filter(Boolean);
-  if (parts.length === 0) return null;
-
-  return (
-    <span className="mt-0.5 block truncate text-xs text-gray-500 dark:text-gray-400">
-      {parts.join(" · ")}
-    </span>
-  );
-};
-
-/**
- * The next scheduled chase, only when one exists. An unscheduled row says
- * nothing here: the follow-up-ordered list already labels the undated tail,
- * and "No follow-up" on every other row was noise that read like a warning.
- */
-const FollowUpSlot: FC<{ item: InboxItem }> = ({ item }) => {
-  if (!item.attentionReason || !item.nextFollowUpAt) return null;
-  const followUp = describeFollowUp(item.nextFollowUpAt, formatCalendarDay);
-
-  return (
-    <span
-      className={cn("inline-flex min-w-0 items-center gap-1 text-xs", followUp.className)}
-      title={`Next follow-up ${followUp.label}`}
-    >
-      <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <span className="truncate">
-        {followUp.overdue ? "Follow-up overdue" : `Follow-up ${followUp.shortLabel}`}
-      </span>
-    </span>
-  );
-};
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
 
 /** Submitted + last-updated line for reviewer-scoped application rows. */
 const ApplicationDates: FC<{ item: InboxItem }> = ({ item }) => {
@@ -126,10 +125,12 @@ interface InboxListItemProps {
 /**
  * Master-list row in the Reviewer Inbox.
  *
- * Three lines: a kind glyph and the title, then provenance, then one meta
- * line — stage with its clock, the next follow-up, open notes. Rows are
- * separated by hairlines rather than drawn as bordered cards. Purely
- * presentational — selection state and handling are driven by props.
+ * An admin row is the title with its provenance under it, then one sentence
+ * of status. No glyphs, no chips, no score: the kind is implied by the title
+ * and the group, the stage is said in words, and colour appears only where a
+ * date was missed. Rows are separated by hairlines rather than drawn as
+ * cards. Purely presentational — selection state and handling are driven by
+ * props.
  */
 const InboxListItemComponent: FC<InboxListItemProps> = ({
   item,
@@ -139,8 +140,7 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({
   hideSubtitle = false,
 }) => {
   const isAdminRow = Boolean(item.attentionReason);
-  const openItems = item.openActionItems ?? 0;
-  const KindGlyph = item.kind === "application" ? DocumentTextIcon : FlagIcon;
+  const where = provenance(item, hideSubtitle);
 
   return (
     <Button
@@ -149,7 +149,7 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({
       onClick={() => onSelect(item.id)}
       aria-current={selected ? "true" : undefined}
       className={cn(
-        "group block h-auto w-full min-w-0 justify-start whitespace-normal rounded-none px-4 py-2.5 text-left focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500",
+        "group block h-auto w-full min-w-0 justify-start whitespace-normal rounded-none px-4 py-3 text-left focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500",
         selected
           ? "bg-primary-50 hover:bg-primary-50 dark:bg-primary-900/20 dark:hover:bg-primary-900/20"
           : "hover:bg-gray-50 dark:hover:bg-zinc-800/60"
@@ -162,42 +162,30 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({
         </span>
       )}
 
-      <span className="flex items-start gap-2">
-        {!hideKind && isAdminRow && (
-          <KindGlyph
-            className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-zinc-500"
-            aria-label={item.kind === "application" ? "Application" : "Milestone"}
-          />
+      <span
+        className={cn(
+          "line-clamp-2 block text-sm font-semibold leading-snug",
+          selected ? "text-gray-950 dark:text-white" : "text-gray-900 dark:text-gray-100"
         )}
-        <span
-          className={cn(
-            "line-clamp-2 min-w-0 flex-1 text-sm font-semibold leading-snug",
-            selected ? "text-gray-950 dark:text-white" : "text-gray-900 dark:text-gray-100"
-          )}
-        >
-          {item.title}
+      >
+        {item.title}
+      </span>
+
+      {where && (
+        <span className="mt-0.5 block truncate text-xs text-gray-500 dark:text-gray-400">
+          {where}
         </span>
-      </span>
+      )}
 
-      <Provenance item={item} hideSubtitle={hideSubtitle} />
-
-      <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-        {isAdminRow ? <StageLine item={item} /> : <DueChip item={item} />}
-
-        <FollowUpSlot item={item} />
-
-        {openItems > 0 && (
-          <span
-            title="Follow-up notes logged by admins that are not marked done"
-            className="shrink-0 text-xs text-gray-500 dark:text-gray-400"
-          >
-            {openItems} open {pluralize("note", openItems)}
-          </span>
-        )}
-
-        {!isAdminRow && <ApplicationDates item={item} />}
-        <AiScore score={item.aiScore} className="ml-auto" />
-      </span>
+      {isAdminRow ? (
+        <StatusLine item={item} />
+      ) : (
+        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <DueChip item={item} />
+          <ApplicationDates item={item} />
+          <AiScore score={item.aiScore} className="ml-auto" />
+        </span>
+      )}
     </Button>
   );
 };

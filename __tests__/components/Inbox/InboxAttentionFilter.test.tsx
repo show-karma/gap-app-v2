@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 describe("InboxAttentionFilter trigger", () => {
-  it("renders nothing when every stage count is zero", () => {
+  it("renders nothing over an empty queue", () => {
     const { container } = render(<InboxAttentionFilter {...baseProps} stats={makeStats()} />);
 
     expect(container).toBeEmptyDOMElement();
@@ -214,5 +214,31 @@ describe("InboxAttentionFilter kinds", () => {
     fireEvent.click(within(openMenu()).getByText("Agreement pending"));
 
     expect(onChange).toHaveBeenCalledWith("agreement_pending");
+  });
+});
+
+describe("InboxAttentionFilter open notes", () => {
+  it("always offers the open-notes option on a non-empty queue", () => {
+    render(
+      <InboxAttentionFilter {...baseProps} stats={makeStats({ milestones: 2, pastDue: 2 })} />
+    );
+
+    fireEvent.click(within(openMenu()).getByText("Has open notes"));
+
+    expect(onChange).toHaveBeenCalledWith("open_notes");
+  });
+
+  it("names the open-notes view on the trigger without a count", () => {
+    render(
+      <InboxAttentionFilter
+        {...baseProps}
+        value="open_notes"
+        stats={makeStats({ milestones: 2, pastDue: 2 })}
+      />
+    );
+
+    const trigger = screen.getByRole("button", { name: /filter by stage/i });
+    expect(within(trigger).getByText("Has open notes")).toBeInTheDocument();
+    expect(within(trigger).queryByText("2")).not.toBeInTheDocument();
   });
 });
