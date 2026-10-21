@@ -29,7 +29,7 @@ import { cn } from "@/utilities/tailwind";
  * Presentation metadata per event type. Module-level so it is built once.
  * The indexer decides which events exist; this table only decides how they look.
  */
-const EVENT_META: Record<
+export const EVENT_META: Record<
   MilestoneTimelineEventType,
   { label: string; icon: typeof CalendarIcon; toneClass: string }
 > = {

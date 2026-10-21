@@ -81,8 +81,7 @@ describe("InboxApplicationDetail", () => {
       />
     );
 
-    expect(screen.getByText("KYB pending")).toBeInTheDocument();
-    expect(screen.getByText("Agreement pending")).toBeInTheDocument();
+    expect(screen.getByText("KYB pending and Agreement pending")).toBeInTheDocument();
   });
 
   it("should_skip_the_stage_header_when_the_feed_carries_no_stage", () => {

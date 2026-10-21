@@ -16,9 +16,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import pluralize from "pluralize";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
-import { ActionItems } from "@/components/Inbox/ActionItems";
+import { ActionItems, type ActivityEvent } from "@/components/Inbox/ActionItems";
 import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
-import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
+import { EVENT_META } from "@/components/Inbox/MilestoneTimeline";
 import { QueueSummary } from "@/components/Inbox/QueueSummary";
 import { describeFollowUp } from "@/components/Inbox/stageAge";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useInboxContacts } from "@/hooks/useInboxContacts";
+import { useMilestoneAdminTimeline } from "@/hooks/useMilestoneAdminTimeline";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useMilestoneEvaluation } from "@/hooks/useMilestoneEvaluation";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
@@ -52,22 +53,32 @@ const MarkdownPreview = dynamic(
   { ssr: false }
 );
 
-/** Detail-pane tabs, mirroring the milestone-review page. */
-const PANEL_TABS = [
-  { key: "details" as const, label: "Details", icon: DocumentTextIcon },
-  { key: "ai" as const, label: "AI Review", icon: SparklesIcon },
-  { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
-  { key: "simocracy" as const, label: "Simocracy", icon: UserGroupIcon },
-];
+type PanelTabKey = "followup" | "details" | "ai" | "comments" | "simocracy";
+interface PanelTab {
+  key: PanelTabKey;
+  label: string;
+  icon: typeof DocumentTextIcon;
+}
 
-type PanelTabKey = (typeof PANEL_TABS)[number]["key"];
+/** Admin-only first tab: where the item stands and what was done about it. */
+const FOLLOW_UP_TAB: PanelTab = { key: "followup", label: "Follow-up", icon: CalendarDaysIcon };
+
+/** Detail-pane tabs, mirroring the milestone-review page. */
+const PANEL_TABS: PanelTab[] = [
+  { key: "details", label: "Milestone", icon: DocumentTextIcon },
+  { key: "ai", label: "AI Review", icon: SparklesIcon },
+  { key: "comments", label: "Comments", icon: ChatBubbleLeftRightIcon },
+  { key: "simocracy", label: "Simocracy", icon: UserGroupIcon },
+];
+const ADMIN_PANEL_TABS: PanelTab[] = [FOLLOW_UP_TAB, ...PANEL_TABS];
 
 /** Roving-tabindex keyboard pattern for the detail tabs (arrows, Home, End). */
 function moveTabFocus(
   event: React.KeyboardEvent<HTMLButtonElement>,
+  tabs: PanelTab[],
   activate: (next: PanelTabKey) => void
 ): void {
-  const keys = PANEL_TABS.map((tab) => tab.key);
+  const keys = tabs.map((tab) => tab.key);
   const current = keys.indexOf(event.currentTarget.id.replace("inbox-ms-tab-", "") as PanelTabKey);
   if (current < 0) return;
   const steps: Record<string, number> = {
@@ -284,57 +295,56 @@ function MilestoneCommentsTab({
 }
 
 /**
- * Pinned header for a queued milestone.
- *
- * One milestone legitimately carries three statuses at once — a verification
- * state ("Verified"), an application state ("Approved") and a queue stage
- * ("Invoice unpaid") — and the detail pane shows all three in different
- * places. Read cold they look like contradictions, and a reviewer who sees
- * "Verified" concludes there is nothing to do. Leading with the queue stage,
- * the time spent in it and the next follow-up makes the other two read as
- * history rather than conflict.
- *
- * The follow-up date is here because the queue can be ORDERED by it: the key a
- * list is sorted on has to be visible on the thing you opened from that list.
+ * The facts an admin checks before acting, in one strip: when it was due and
+ * how late, what it pays, when they said they would chase next, and the
+ * stage. The follow-up date is here because the queue can be ORDERED by it:
+ * the key a list is sorted on has to be visible on the thing opened from it.
  */
-const QueueHeader: FC<{
+const FactsStrip: FC<{
   reason: MilestoneAttentionReason;
   stageAgeDays?: number;
   nextFollowUpAt?: string | null;
-}> = ({ reason, stageAgeDays, nextFollowUpAt }) => {
+  dueDate?: string | null;
+  amount?: string;
+}> = ({ reason, stageAgeDays, nextFollowUpAt, dueDate, amount }) => {
   const followUp = describeFollowUp(nextFollowUpAt, (iso) => formatDate(iso, "UTC"));
+  const meta = ATTENTION_META[reason];
+  const age =
+    typeof stageAgeDays === "number"
+      ? `${stageAgeDays} ${pluralize("day", stageAgeDays)} ${meta.ageSuffix}`
+      : undefined;
+  const cells: { label: string; value: string; note?: string; noteClass?: string }[] = [
+    {
+      label: "Due",
+      value: dueDate ? formatDate(dueDate, "UTC") : "No due date",
+      note: reason === "past_due" ? age : undefined,
+    },
+    { label: "Amount", value: amount ? amount : "Not set" },
+    {
+      label: "Next follow-up",
+      value: followUp.scheduled ? followUp.shortLabel : "None scheduled",
+      note: followUp.scheduled && nextFollowUpAt ? formatDate(nextFollowUpAt, "UTC") : undefined,
+      noteClass: followUp.overdue ? "text-red-600 dark:text-red-400" : undefined,
+    },
+    { label: "Stage", value: meta.label, note: reason === "past_due" ? undefined : age },
+  ];
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
-      <span
-        title={ATTENTION_META[reason].description}
-        className={cn(
-          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-          ATTENTION_META[reason].badgeClass
-        )}
-      >
-        {ATTENTION_META[reason].label}
-      </span>
-
-      {typeof stageAgeDays === "number" && (
-        <span
-          title={ATTENTION_META[reason].clockDescription}
-          className="font-semibold tabular-nums text-gray-900 dark:text-gray-100"
-        >
-          {stageAgeDays} {pluralize("day", stageAgeDays)} {ATTENTION_META[reason].ageSuffix}
-        </span>
-      )}
-
-      <span
-        className={cn(
-          "inline-flex items-center gap-1.5 text-[13px]",
-          followUp.overdue ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"
-        )}
-      >
-        <CalendarDaysIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-        {followUp.scheduled ? `Follow-up ${followUp.label}` : followUp.label}
-      </span>
-    </div>
+    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-gray-200 bg-gray-200 sm:grid-cols-4 dark:border-zinc-700 dark:bg-zinc-700">
+      {cells.map((cell) => (
+        <div key={cell.label} className="bg-white px-3 py-2 dark:bg-zinc-900">
+          <dt className="text-xs text-gray-500 dark:text-gray-400">{cell.label}</dt>
+          <dd className="mt-0.5 text-sm font-medium text-gray-900 dark:text-gray-100">
+            {cell.value}
+          </dd>
+          {cell.note && (
+            <dd className={cn("text-xs text-gray-500 dark:text-gray-400", cell.noteClass)}>
+              {cell.note}
+            </dd>
+          )}
+        </div>
+      ))}
+    </dl>
   );
 };
 
@@ -381,11 +391,27 @@ export function InboxMilestoneDetail({
 }: InboxMilestoneDetailProps) {
   const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
   const queryClient = useQueryClient();
-  const [activePanelTab, setActivePanelTab] = useState<PanelTabKey>("details");
+  const panelTabs = showAdminTools ? ADMIN_PANEL_TABS : PANEL_TABS;
+  const [activePanelTab, setActivePanelTab] = useState<PanelTabKey>(
+    showAdminTools ? "followup" : "details"
+  );
   const handleTabKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>) =>
-      moveTabFocus(event, (next) => setActivePanelTab(next)),
-    []
+      moveTabFocus(event, panelTabs, (next) => setActivePanelTab(next)),
+    [panelTabs]
+  );
+  const { timeline } = useMilestoneAdminTimeline(communityId, milestoneUid, {
+    enabled: showAdminTools,
+  });
+  const activityEvents = useMemo<ActivityEvent[]>(
+    () =>
+      (timeline?.events ?? []).map((event) => ({
+        at: event.at,
+        label: EVENT_META[event.type].label,
+        detail: event.reason,
+        toneClass: EVENT_META[event.type].toneClass,
+      })),
+    [timeline]
   );
 
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectUid, programId);
@@ -586,11 +612,16 @@ export function InboxMilestoneDetail({
       )}
       <div className="sticky top-0 z-10 -mx-1 border-b border-gray-200 bg-white px-1 pt-1 dark:border-zinc-700 dark:bg-zinc-900">
         {attentionReason && (
-          <div className="pb-2">
-            <QueueHeader
+          <div className="pb-3">
+            <FactsStrip
               reason={attentionReason}
               stageAgeDays={stageAgeDays}
               nextFollowUpAt={nextFollowUpAt}
+              dueDate={selectedMilestone.dueDate}
+              amount={
+                allocationMap.get(selectedMilestone.uid) ??
+                allocationMap.get(selectedMilestone.uid.toLowerCase())
+              }
             />
           </div>
         )}
@@ -600,7 +631,7 @@ export function InboxMilestoneDetail({
           aria-label="Milestone detail sections"
           className="-mb-px flex max-w-full items-center gap-1 overflow-x-auto"
         >
-          {PANEL_TABS.map((tab) => {
+          {panelTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activePanelTab === tab.key;
             return (
@@ -636,14 +667,21 @@ export function InboxMilestoneDetail({
         id={`inbox-ms-panel-${activePanelTab}`}
         aria-labelledby={`inbox-ms-tab-${activePanelTab}`}
       >
+        {activePanelTab === "followup" && showAdminTools && (
+          <div className="space-y-4">
+            <QueueSummary
+              communityId={communityId}
+              target={{ kind: "milestone", id: milestoneUid }}
+            />
+            <ActionItems
+              communityId={communityId}
+              target={{ kind: "milestone", id: milestoneUid }}
+              events={activityEvents}
+            />
+          </div>
+        )}
         {activePanelTab === "details" && (
           <div className="space-y-4">
-            {showAdminTools && (
-              <QueueSummary
-                communityId={communityId}
-                target={{ kind: "milestone", id: milestoneUid }}
-              />
-            )}
             <MilestoneCard
               key={selectedMilestone.uid}
               milestone={selectedMilestone}
@@ -672,15 +710,6 @@ export function InboxMilestoneDetail({
               showAIEvaluationButton={false}
               quietSurface
             />
-            {showAdminTools && (
-              <>
-                <MilestoneTimeline communityId={communityId} milestoneUid={milestoneUid} />
-                <ActionItems
-                  communityId={communityId}
-                  target={{ kind: "milestone", id: milestoneUid }}
-                />
-              </>
-            )}
           </div>
         )}
         {activePanelTab === "ai" && <InlineAIEvaluation milestone={selectedMilestone} />}
