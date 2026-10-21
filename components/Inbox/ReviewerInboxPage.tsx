@@ -37,7 +37,7 @@ import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
 import { InboxProgramFilter } from "./InboxProgramFilter";
 import { InboxProjectFilter } from "./InboxProjectFilter";
 import { InboxSortControl } from "./InboxSortControl";
-import { InboxViewChips } from "./InboxViewChips";
+import { InboxViewTabs } from "./InboxViewTabs";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -434,13 +434,13 @@ export function ReviewerInboxPage({
       </div>
 
       {isCommunityAdmin && !showActionItems && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-gray-200 pb-3 dark:border-zinc-700">
-          <InboxViewChips
+        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-gray-200 dark:border-zinc-700">
+          <InboxViewTabs
             stats={stats}
             value={pendingActionItems ? null : attentionFilter}
             onChange={handleAttentionChange}
           />
-          <div className="ml-auto flex flex-wrap items-center gap-x-2 gap-y-2">
+          <div className="flex items-center pb-2">
             <InboxFiltersMenu
               activeCount={
                 [queueKind, stageFilterValue, programId, projectUid].filter(Boolean).length
@@ -486,9 +486,12 @@ export function ReviewerInboxPage({
                     />
                   ),
                 },
+                {
+                  label: "Order",
+                  control: <InboxSortControl value={inboxSort} onChange={handleSortChange} />,
+                },
               ]}
             />
-            <InboxSortControl value={inboxSort} onChange={handleSortChange} />
           </div>
         </div>
       )}
