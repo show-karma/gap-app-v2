@@ -23,6 +23,7 @@ export async function getReviewerInbox(
   // resolves scope from the authenticated caller, so this cannot widen a
   // reviewer's feed.
   if (filters.attention) params.append("attention", filters.attention);
+  if (filters.kind) params.append("kind", filters.kind);
   if (filters.programId) params.append("programId", filters.programId);
   if (filters.projectUid) params.append("projectUid", filters.projectUid);
   if (filters.pendingActionItems) params.append("pendingActionItems", "true");

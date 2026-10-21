@@ -199,6 +199,14 @@ export const INDEXER = {
         `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/items`,
       CREATE: (communityId: string, milestoneUid: string) =>
         `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/items`,
+      APPLICATION_LIST: (communityId: string, referenceNumber: string) =>
+        `/v2/milestone-action-items/${communityId}/applications/${referenceNumber}/items`,
+      APPLICATION_CREATE: (communityId: string, referenceNumber: string) =>
+        `/v2/milestone-action-items/${communityId}/applications/${referenceNumber}/items`,
+      MILESTONE_SUMMARY: (communityId: string, milestoneUid: string, qs?: string) =>
+        `/v2/milestone-action-items/${communityId}/milestones/${milestoneUid}/summary${qs ? `?${qs}` : ""}`,
+      APPLICATION_SUMMARY: (communityId: string, referenceNumber: string, qs?: string) =>
+        `/v2/milestone-action-items/${communityId}/applications/${referenceNumber}/summary${qs ? `?${qs}` : ""}`,
       UPDATE: (communityId: string, id: string) =>
         `/v2/milestone-action-items/${communityId}/items/${id}`,
       DELETE: (communityId: string, id: string) =>

@@ -11,8 +11,9 @@ import type {
   IFormSchema,
   IFundingApplication,
   IFundingProgramConfig,
+  InboxKindFilter,
+  InboxQueueFilter,
   IPaginatedApplicationsResponse,
-  MilestoneQueueFilter,
   ReviewerInboxSort,
 } from "@/types/funding-platform";
 import { emitApplicationStatusChanged } from "@/utilities/analytics/emitters/application";
@@ -128,7 +129,9 @@ export interface IApplicationFilters {
    * Reviewer-inbox only: narrows the ADMIN milestone queue to one stage.
    * Ignored by every other endpoint and inert for non-admin callers.
    */
-  attention?: MilestoneQueueFilter;
+  attention?: InboxQueueFilter;
+  /** Reviewer-inbox only: narrows the admin queue to one source stream. */
+  kind?: InboxKindFilter;
   /**
    * Reviewer-inbox only: how the feed is ordered. Omitted for the default
    * (`priority`), so the server owns the default rather than the client.

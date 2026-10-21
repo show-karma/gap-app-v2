@@ -2,6 +2,7 @@ import type {
   ICommunityActionItemPage,
   IMilestoneActionItem,
   IMilestoneTimeline,
+  IQueueItemSummary,
 } from "@/types/funding-platform";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
@@ -38,6 +39,32 @@ export async function getMilestoneActionItems(
   return data?.items ?? [];
 }
 
+export async function getApplicationActionItems(
+  communityId: string,
+  referenceNumber: string
+): Promise<IMilestoneActionItem[]> {
+  const data = await api.get<{ items: IMilestoneActionItem[] }>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.APPLICATION_LIST(communityId, referenceNumber)
+  );
+
+  return data?.items ?? [];
+}
+
+export async function getQueueItemSummary(
+  communityId: string,
+  target: { kind: "milestone" | "application"; id: string },
+  options: { refresh?: boolean } = {}
+): Promise<IQueueItemSummary> {
+  const qs = options.refresh ? "refresh=true" : undefined;
+  const url =
+    target.kind === "application"
+      ? INDEXER.V2.MILESTONE_ACTION_ITEMS.APPLICATION_SUMMARY(communityId, target.id, qs)
+      : INDEXER.V2.MILESTONE_ACTION_ITEMS.MILESTONE_SUMMARY(communityId, target.id, qs);
+  const data = await api.get<IQueueItemSummary>(url);
+  if (!data) throw new Error("Failed to fetch queue item summary");
+  return data;
+}
+
 export interface CommunityActionItemFilters {
   page: number;
   status: "pending" | "completed" | "all";
@@ -72,6 +99,23 @@ export async function createMilestoneActionItem(
 ): Promise<IMilestoneActionItem> {
   const data = await api.post<IMilestoneActionItem>(
     INDEXER.V2.MILESTONE_ACTION_ITEMS.CREATE(communityId, milestoneUid),
+    input
+  );
+
+  if (!data) {
+    throw new Error("Failed to create action item");
+  }
+
+  return data;
+}
+
+export async function createApplicationActionItem(
+  communityId: string,
+  referenceNumber: string,
+  input: CreateMilestoneActionItemInput
+): Promise<IMilestoneActionItem> {
+  const data = await api.post<IMilestoneActionItem>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.APPLICATION_CREATE(communityId, referenceNumber),
     input
   );
 

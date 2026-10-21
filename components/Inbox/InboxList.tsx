@@ -175,9 +175,9 @@ const InboxListComponent: FC<InboxListProps> = ({
   );
 
   const shown = useMemo(() => {
-    if (!hasBothRoles || kindFilter === "all") return items;
+    if (!hasBothRoles || isCommunityAdmin || kindFilter === "all") return items;
     return items.filter((i) => i.kind === kindFilter);
-  }, [items, hasBothRoles, kindFilter]);
+  }, [items, hasBothRoles, isCommunityAdmin, kindFilter]);
 
   const uniform = useMemo(() => findUniformFields(shown), [shown]);
 
@@ -198,8 +198,11 @@ const InboxListComponent: FC<InboxListProps> = ({
     [shown]
   );
 
-  // Only worth a toggle when both streams actually have something in them.
-  const showKindToggle = hasBothRoles && counts.application > 0 && counts.milestone > 0;
+  // Only worth a toggle when both streams actually have something in them,
+  // and only for a reviewer: the admin queue filters by kind server-side from
+  // the filter bar, so a second toggle here would be a competing control.
+  const showKindToggle =
+    hasBothRoles && !isCommunityAdmin && counts.application > 0 && counts.milestone > 0;
 
   const isTruncated = totalCount != null && totalCount > items.length && kindFilter === "all";
 
@@ -225,17 +228,21 @@ const InboxListComponent: FC<InboxListProps> = ({
       {shown.length === 0 ? (
         <div className="m-4 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No {kindFilter === "application" ? "applications" : "milestones"} in this view.
+            {kindFilter === "all"
+              ? "Nothing in this view."
+              : `No ${kindFilter === "application" ? "applications" : "milestones"} in this view.`}
           </p>
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={() => onKindFilterChange("all")}
-            className="mt-2 text-primary-700 dark:text-primary-300"
-          >
-            Show all items
-          </Button>
+          {kindFilter !== "all" && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => onKindFilterChange("all")}
+              className="mt-2 text-primary-700 dark:text-primary-300"
+            >
+              Show all items
+            </Button>
+          )}
         </div>
       ) : followUpSplit ? (
         <div className="divide-y divide-gray-100 dark:divide-zinc-800">

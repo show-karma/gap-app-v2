@@ -11,7 +11,9 @@ import type { CommunityActionItemFilters } from "@/services/milestoneActionItems
 import type { ICommunityActionItem } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
+import { InboxApplicationDetail } from "./InboxApplicationDetail";
 import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
+import type { InboxItem } from "./types";
 
 interface Props {
   communityId: string;
@@ -22,6 +24,21 @@ interface Props {
 }
 
 const STATUSES = ["all", "pending", "completed"] as const;
+
+/** The minimal inbox shape the application pane needs from a follow-up row. */
+function toApplicationItem(item: ICommunityActionItem): InboxItem {
+  const referenceNumber = item.applicationReference ?? "";
+  return {
+    id: referenceNumber,
+    kind: "application",
+    bucket: "action",
+    status: "",
+    title: item.applicationTitle ?? referenceNumber,
+    programId: item.programId ?? "",
+    activitySort: 0,
+    referenceNumber,
+  };
+}
 
 const ActionItemRow = memo(function ActionItemRow({
   item,
@@ -59,8 +76,11 @@ const ActionItemRow = memo(function ActionItemRow({
           />
         </span>
         <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
-          {item.projectTitle ?? item.projectUid ?? "Unknown project"} ·{" "}
-          {item.milestoneTitle ?? "Milestone"}
+          {item.applicationReference
+            ? `${item.applicationTitle ?? item.applicationReference} · Application`
+            : `${item.projectTitle ?? item.projectUid ?? "Unknown project"} · ${
+                item.milestoneTitle ?? "Milestone"
+              }`}
         </span>
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
           <span
@@ -243,14 +263,21 @@ export function CommunityActionItemsView({
           )}
         </aside>
 
-        <section ref={detailRef} className="min-w-0 scroll-mt-4" aria-label="Selected milestone">
-          {selectedItem?.projectUid && selectedItem.programId ? (
+        <section ref={detailRef} className="min-w-0 scroll-mt-4" aria-label="Selected item">
+          {selectedItem?.applicationReference && selectedItem.programId ? (
+            <InboxApplicationDetail
+              key={selectedItem.applicationReference}
+              item={toApplicationItem(selectedItem)}
+              communityId={communityId}
+              showAdminTools
+            />
+          ) : selectedItem?.projectUid && selectedItem.programId && selectedItem.milestoneUID ? (
             <InboxMilestoneDetail
               key={selectedItem.milestoneUID}
               showAdminTools
               projectUid={selectedItem.projectUid}
               programId={selectedItem.programId}
-              grantUid={selectedItem.grantUID}
+              grantUid={selectedItem.grantUID ?? undefined}
               projectTitle={selectedItem.projectTitle ?? undefined}
               milestoneUid={selectedItem.milestoneUID}
               communityId={communityId}
@@ -259,8 +286,8 @@ export function CommunityActionItemsView({
             <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
               <p className="text-gray-500 dark:text-gray-400">
                 {selectedItem
-                  ? "This milestone could not be opened because its project or program is unavailable."
-                  : "Select an action item on the left to view its milestone."}
+                  ? "This item could not be opened because its project or program is unavailable."
+                  : "Select an action item on the left to view what it is about."}
               </p>
             </div>
           )}

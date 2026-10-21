@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
 
-const mockUseMilestoneActionItems = vi.fn();
+const mockUseActionItems = vi.fn();
 
-vi.mock("@/hooks/useMilestoneActionItems", () => ({
-  useMilestoneActionItems: (...args: unknown[]) => mockUseMilestoneActionItems(...args),
+vi.mock("@/hooks/useActionItems", () => ({
+  useActionItems: (...args: unknown[]) => mockUseActionItems(...args),
 }));
 
 // DeleteDialog opens a Radix dialog; stub it to a plain trigger so these tests
@@ -25,7 +25,7 @@ vi.mock("@/components/DeleteDialog", () => ({
   ),
 }));
 
-import { MilestoneActionItems } from "@/components/Inbox/MilestoneActionItems";
+import { ActionItems } from "@/components/Inbox/ActionItems";
 import { formatDate } from "@/utilities/formatDate";
 
 function makeItem(overrides: Partial<IMilestoneActionItem> = {}): IMilestoneActionItem {
@@ -52,7 +52,7 @@ const updateItem = vi.fn();
 const deleteItem = vi.fn();
 
 function setHookState(overrides: Record<string, unknown> = {}) {
-  mockUseMilestoneActionItems.mockReturnValue({
+  mockUseActionItems.mockReturnValue({
     items: [],
     isLoading: false,
     error: null,
@@ -67,18 +67,18 @@ function setHookState(overrides: Record<string, unknown> = {}) {
   });
 }
 
-const baseProps = { communityId: "filecoin", milestoneUid: "ms-1" };
+const baseProps = { communityId: "filecoin", target: { kind: "milestone" as const, id: "ms-1" } };
 
 beforeEach(() => {
   vi.clearAllMocks();
   setHookState();
 });
 
-describe("MilestoneActionItems", () => {
+describe("ActionItems", () => {
   it("renders a loading state while fetching", () => {
     setHookState({ isLoading: true });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(screen.getByLabelText("Loading")).toBeInTheDocument();
   });
@@ -86,14 +86,14 @@ describe("MilestoneActionItems", () => {
   it("renders an error state with a retry affordance", () => {
     setHookState({ error: new Error("boom") });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(screen.getByText(/couldn't load action items/i)).toBeInTheDocument();
     expect(screen.getByText("Try again")).toBeInTheDocument();
   });
 
   it("renders an empty state rather than nothing", () => {
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(screen.getByText(/no action items yet/i)).toBeInTheDocument();
   });
@@ -101,7 +101,7 @@ describe("MilestoneActionItems", () => {
   it("uses the singular noun for one open item", () => {
     setHookState({ items: [makeItem()] });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(screen.getByText("1 open item")).toBeInTheDocument();
   });
@@ -109,7 +109,7 @@ describe("MilestoneActionItems", () => {
   it("uses the plural noun for several open items", () => {
     setHookState({ items: [makeItem(), makeItem({ id: "item-2" })] });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(screen.getByText("2 open items")).toBeInTheDocument();
   });
@@ -119,7 +119,7 @@ describe("MilestoneActionItems", () => {
       items: [makeItem(), makeItem({ id: "item-2", completedAt: "2026-09-10T00:00:00.000Z" })],
     });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(screen.getByText("1 open item")).toBeInTheDocument();
   });
@@ -127,7 +127,7 @@ describe("MilestoneActionItems", () => {
   it("sends only the desired state when toggling, never a timestamp", () => {
     setHookState({ items: [makeItem()] });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
     fireEvent.click(screen.getByRole("checkbox"));
 
     expect(updateItem).toHaveBeenCalledWith({
@@ -141,7 +141,7 @@ describe("MilestoneActionItems", () => {
       items: [makeItem({ completedAt: "2026-09-10T00:00:00.000Z" })],
     });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
     fireEvent.click(screen.getByRole("checkbox"));
 
     expect(updateItem).toHaveBeenCalledWith({
@@ -151,7 +151,7 @@ describe("MilestoneActionItems", () => {
   });
 
   it("creates an item with an ISO follow-up date", () => {
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     fireEvent.click(screen.getByText("Add"));
     fireEvent.change(screen.getByLabelText("Action item note"), {
@@ -169,7 +169,7 @@ describe("MilestoneActionItems", () => {
   });
 
   it("requires a follow-up date before creating", () => {
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     fireEvent.click(screen.getByText("Add"));
     fireEvent.change(screen.getByLabelText("Action item note"), {
@@ -199,7 +199,7 @@ describe("MilestoneActionItems", () => {
         }),
       ],
     });
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     fireEvent.click(screen.getByLabelText("Edit action item"));
     fireEvent.change(screen.getByLabelText("Action item note"), {
@@ -217,7 +217,7 @@ describe("MilestoneActionItems", () => {
   });
 
   it("does not submit an empty note", () => {
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     fireEvent.click(screen.getByText("Add"));
     fireEvent.change(screen.getByLabelText("Action item note"), {
@@ -233,7 +233,7 @@ describe("MilestoneActionItems", () => {
       items: [makeItem({ followUpAt: "2020-01-01T00:00:00.000Z" })],
     });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(screen.getByText(/follow-up overdue/i)).toBeInTheDocument();
   });
@@ -248,7 +248,7 @@ describe("MilestoneActionItems", () => {
       ],
     });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(screen.queryByText(/follow-up overdue/i)).not.toBeInTheDocument();
   });
@@ -256,7 +256,7 @@ describe("MilestoneActionItems", () => {
   it("routes deletion through a confirmation dialog", () => {
     setHookState({ items: [makeItem()] });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
     fireEvent.click(screen.getByTestId("delete-trigger"));
 
     expect(deleteItem).toHaveBeenCalledWith("item-1");
@@ -281,7 +281,7 @@ describe("MilestoneActionItems — timezone-safe date rendering", () => {
   it("pins the follow-up date to UTC", () => {
     setHookState({ items: [makeItem({ followUpAt: "2026-09-25T00:00:00.000Z" })] });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(tzArgFor("2026-09-25T00:00:00.000Z")).toBe("UTC");
   });
@@ -289,7 +289,7 @@ describe("MilestoneActionItems — timezone-safe date rendering", () => {
   it("pins the completion date to UTC", () => {
     setHookState({ items: [makeItem({ completedAt: "2026-09-05T00:00:00.000Z" })] });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(tzArgFor("2026-09-05T00:00:00.000Z")).toBe("UTC");
   });
@@ -297,7 +297,7 @@ describe("MilestoneActionItems — timezone-safe date rendering", () => {
   it("pins the created date to UTC", () => {
     setHookState({ items: [makeItem({ createdAt: "2026-09-01T00:00:00.000Z" })] });
 
-    render(<MilestoneActionItems {...baseProps} />);
+    render(<ActionItems {...baseProps} />);
 
     expect(tzArgFor("2026-09-01T00:00:00.000Z")).toBe("UTC");
   });

@@ -1,6 +1,10 @@
 import { useReviewerInbox } from "@/hooks/useReviewerInbox";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
-import type { MilestoneQueueFilter, ReviewerInboxSort } from "@/types/funding-platform";
+import type {
+  InboxKindFilter,
+  InboxQueueFilter,
+  ReviewerInboxSort,
+} from "@/types/funding-platform";
 import type { InboxItem, InboxStats } from "./types";
 
 export interface UseInboxFeedOptions {
@@ -15,7 +19,9 @@ export interface UseInboxFeedOptions {
    * Admin milestone-queue stage filter. Applied server-side; the header stats
    * still cover the FULL feed so counts don't collapse as you filter.
    */
-  attention?: MilestoneQueueFilter | null;
+  attention?: InboxQueueFilter | null;
+  /** Admin queue: narrow to one source stream. Null means both. */
+  kind?: InboxKindFilter | null;
   /** Narrow the feed to one of the community's programs. */
   programId?: string | null;
   projectUid?: string | null;
@@ -51,6 +57,7 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
     includeMilestones,
     applicationFilters = {},
     attention = null,
+    kind = null,
     programId = null,
     projectUid = null,
     pendingActionItems = false,
@@ -62,6 +69,7 @@ export function useInboxFeed(options: UseInboxFeedOptions): UseInboxFeedResult {
     {
       ...applicationFilters,
       ...(attention ? { attention } : {}),
+      ...(kind ? { kind } : {}),
       ...(programId ? { programId } : {}),
       ...(projectUid ? { projectUid } : {}),
       ...(pendingActionItems ? { pendingActionItems } : {}),

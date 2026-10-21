@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useMilestoneActionItems } from "@/hooks/useMilestoneActionItems";
+import { type ActionItemTarget, useActionItems } from "@/hooks/useActionItems";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
 import { describeRelativeDay, isBeforeToday, todayCalendarDay } from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
@@ -200,26 +200,23 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
 const ActionItemRow = React.memo(ActionItemRowComponent);
 ActionItemRow.displayName = "ActionItemRow";
 
-interface MilestoneActionItemsProps {
+interface ActionItemsProps {
   communityId: string;
-  milestoneUid: string;
+  /** The milestone or application the log is attached to. */
+  target: ActionItemTarget;
   /** Gate the fetch — the endpoints are community-admin only. */
   enabled?: boolean;
 }
 
 /**
- * The admin follow-up log for one milestone: free-form notes with a required
+ * The admin follow-up log for one queue item: free-form notes with a required
  * next-follow-up date, checked off when the chase is resolved.
  *
  * The completion timestamp is stamped server-side; the checkbox only sends the
  * desired state. Deletion goes through `DeleteDialog` rather than a bare
  * button, per the destructive-action rule.
  */
-const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
-  communityId,
-  milestoneUid,
-  enabled = true,
-}) => {
+const ActionItemsComponent: FC<ActionItemsProps> = ({ communityId, target, enabled = true }) => {
   const {
     items,
     isLoading,
@@ -231,7 +228,7 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
     isCreating,
     isUpdating,
     isDeleting,
-  } = useMilestoneActionItems(communityId, milestoneUid, { enabled });
+  } = useActionItems(communityId, target, { enabled });
 
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState("");
@@ -354,7 +351,8 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
         </div>
       ) : items.length === 0 ? (
         <p className="py-2 text-sm text-gray-500 dark:text-gray-400">
-          No action items yet. Log a note when you reach out about this milestone.
+          No action items yet. Log a note when you reach out about this{" "}
+          {target.kind === "application" ? "application" : "milestone"}.
         </p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -375,5 +373,5 @@ const MilestoneActionItemsComponent: FC<MilestoneActionItemsProps> = ({
   );
 };
 
-export const MilestoneActionItems = React.memo(MilestoneActionItemsComponent);
-MilestoneActionItems.displayName = "MilestoneActionItems";
+export const ActionItems = React.memo(ActionItemsComponent);
+ActionItems.displayName = "ActionItems";

@@ -44,11 +44,17 @@ interface SummaryPart {
  */
 function buildSummary(stats: InboxStats): SummaryPart[] {
   const pastDue = stats.pastDue ?? 0;
+  const awaitingDecision = (stats.pendingReview ?? 0) + (stats.underReview ?? 0);
   const invoiceUnpaid = stats.invoiceUnpaid ?? 0;
   const followUpDue = stats.followUpDue ?? 0;
 
   const parts: SummaryPart[] = [
     { key: "pastDue", count: pastDue, label: "past due", urgent: true },
+    {
+      key: "awaitingDecision",
+      count: awaitingDecision,
+      label: `${pluralize("application", awaitingDecision)} to review`,
+    },
     { key: "invoiceUnpaid", count: invoiceUnpaid, label: "awaiting payment" },
     {
       key: "followUpDue",

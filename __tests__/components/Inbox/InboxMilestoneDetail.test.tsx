@@ -77,8 +77,12 @@ vi.mock("@/hooks/useMilestoneAdminTimeline", () => ({
   }),
 }));
 
-vi.mock("@/hooks/useMilestoneActionItems", () => ({
-  useMilestoneActionItems: () => ({
+vi.mock("@/components/Inbox/QueueSummary", () => ({
+  QueueSummary: () => <div data-testid="queue-summary" />,
+}));
+
+vi.mock("@/hooks/useActionItems", () => ({
+  useActionItems: () => ({
     items: [],
     isLoading: false,
     error: null,

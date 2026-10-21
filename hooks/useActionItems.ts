@@ -3,48 +3,63 @@ import { useCallback, useMemo } from "react";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import {
   type CreateMilestoneActionItemInput,
+  createApplicationActionItem,
   createMilestoneActionItem,
   deleteMilestoneActionItem,
+  getApplicationActionItems,
   getMilestoneActionItems,
   type UpdateMilestoneActionItemInput,
   updateMilestoneActionItem,
 } from "@/services/milestoneActionItemsService";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
 
-interface UseMilestoneActionItemsOptions {
+interface UseActionItemsOptions {
   /** Gate the query — the endpoints are community-admin only. */
   enabled?: boolean;
 }
+
+/** What the follow-up log is attached to. */
+export type ActionItemTarget =
+  | { kind: "milestone"; id: string }
+  | { kind: "application"; id: string };
 
 /** Placeholder id for an item that exists only in the optimistic cache. */
 const OPTIMISTIC_ID_PREFIX = "optimistic-";
 
 /**
- * Reads and mutates the admin follow-up log on a milestone.
+ * Reads and mutates the admin follow-up log on a milestone or an application.
  *
  * Every mutation applies an optimistic update and rolls back the exact previous
  * cache snapshot on error, then invalidates so the server's version — including
  * the server-stamped `completedAt` — becomes the source of truth. The inbox
- * feed is invalidated too, because a milestone's open-item count and
+ * feed is invalidated too, because the target's open-item count and
  * follow-up-overdue flag are rendered on its queue row.
  */
-export function useMilestoneActionItems(
+export function useActionItems(
   communityId: string,
-  milestoneUid: string | undefined,
-  options: UseMilestoneActionItemsOptions = {}
+  target: ActionItemTarget | undefined,
+  options: UseActionItemsOptions = {}
 ) {
   const { enabled = true } = options;
   const queryClient = useQueryClient();
+  const targetKind = target?.kind;
+  const targetId = target?.id;
 
   const queryKey = useMemo(
-    () => QUERY_KEYS.milestoneActionItems(communityId, milestoneUid ?? ""),
-    [communityId, milestoneUid]
+    () =>
+      targetKind === "application"
+        ? QUERY_KEYS.applicationActionItems(communityId, targetId ?? "")
+        : QUERY_KEYS.milestoneActionItems(communityId, targetId ?? ""),
+    [communityId, targetKind, targetId]
   );
 
   const query = useQuery<IMilestoneActionItem[]>({
     queryKey,
-    queryFn: () => getMilestoneActionItems(communityId, milestoneUid as string),
-    enabled: Boolean(communityId) && Boolean(milestoneUid) && enabled,
+    queryFn: () =>
+      targetKind === "application"
+        ? getApplicationActionItems(communityId, targetId as string)
+        : getMilestoneActionItems(communityId, targetId as string),
+    enabled: Boolean(communityId) && Boolean(targetId) && enabled,
     staleTime: 1000 * 60,
   });
 
@@ -72,15 +87,18 @@ export function useMilestoneActionItems(
 
   const createMutation = useMutation({
     mutationFn: (input: CreateMilestoneActionItemInput) =>
-      createMilestoneActionItem(communityId, milestoneUid as string, input),
+      targetKind === "application"
+        ? createApplicationActionItem(communityId, targetId as string, input)
+        : createMilestoneActionItem(communityId, targetId as string, input),
     onMutate: async (input) => {
       const rollback = await snapshot();
       const now = new Date().toISOString();
 
       const optimistic: IMilestoneActionItem = {
         id: `${OPTIMISTIC_ID_PREFIX}${now}`,
-        milestoneUID: milestoneUid ?? "",
-        grantUID: "",
+        milestoneUID: targetKind === "milestone" ? (targetId ?? "") : null,
+        grantUID: null,
+        applicationReference: targetKind === "application" ? (targetId ?? "") : null,
         communityUID: "",
         programId: null,
         content: input.content,

@@ -54,7 +54,7 @@ describe("CommunityActionItemsView", () => {
     );
 
     expect(
-      screen.getByText("Select an action item on the left to view its milestone.")
+      screen.getByText("Select an action item on the left to view what it is about.")
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Follow up with grantee/ }));
     expect(screen.getByTestId("milestone-detail")).toBeInTheDocument();

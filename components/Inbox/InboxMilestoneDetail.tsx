@@ -16,9 +16,10 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import pluralize from "pluralize";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
-import { ATTENTION_META, STAGE_AGE_LABEL } from "@/components/Inbox/attentionMeta";
-import { MilestoneActionItems } from "@/components/Inbox/MilestoneActionItems";
+import { ActionItems } from "@/components/Inbox/ActionItems";
+import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
 import { MilestoneTimeline } from "@/components/Inbox/MilestoneTimeline";
+import { QueueSummary } from "@/components/Inbox/QueueSummary";
 import { describeFollowUp } from "@/components/Inbox/stageAge";
 import { CommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/CommentsAndActivity";
 import { GrantCommentsAndActivity } from "@/components/Pages/Admin/MilestonesReview/GrantCommentsAndActivity";
@@ -306,6 +307,7 @@ const QueueHeader: FC<{
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
       <span
+        title={ATTENTION_META[reason].description}
         className={cn(
           "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
           ATTENTION_META[reason].badgeClass
@@ -315,8 +317,11 @@ const QueueHeader: FC<{
       </span>
 
       {typeof stageAgeDays === "number" && (
-        <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-          {stageAgeDays} {pluralize("day", stageAgeDays)} {STAGE_AGE_LABEL[reason]}
+        <span
+          title={ATTENTION_META[reason].clockDescription}
+          className="font-semibold tabular-nums text-gray-900 dark:text-gray-100"
+        >
+          {stageAgeDays} {pluralize("day", stageAgeDays)} {ATTENTION_META[reason].ageSuffix}
         </span>
       )}
 
@@ -633,6 +638,12 @@ export function InboxMilestoneDetail({
       >
         {activePanelTab === "details" && (
           <div className="space-y-4">
+            {showAdminTools && (
+              <QueueSummary
+                communityId={communityId}
+                target={{ kind: "milestone", id: milestoneUid }}
+              />
+            )}
             <MilestoneCard
               key={selectedMilestone.uid}
               milestone={selectedMilestone}
@@ -664,7 +675,10 @@ export function InboxMilestoneDetail({
             {showAdminTools && (
               <>
                 <MilestoneTimeline communityId={communityId} milestoneUid={milestoneUid} />
-                <MilestoneActionItems communityId={communityId} milestoneUid={milestoneUid} />
+                <ActionItems
+                  communityId={communityId}
+                  target={{ kind: "milestone", id: milestoneUid }}
+                />
               </>
             )}
           </div>

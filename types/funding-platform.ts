@@ -322,6 +322,26 @@ export type MilestoneAttentionReason =
 export type MilestoneQueueFilter = MilestoneAttentionReason | "followup_due";
 
 /**
+ * Why a funding application sits in the community admin queue. Mirrors the
+ * indexer's ApplicationAttentionReasonEnum: three review stages plus the two
+ * post-approval gates (KYB, grant agreement).
+ */
+export type ApplicationAttentionReason =
+  | "pending_review"
+  | "under_review"
+  | "revision_requested"
+  | "kyb_pending"
+  | "agreement_pending";
+
+export type InboxAttentionReason = MilestoneAttentionReason | ApplicationAttentionReason;
+
+/** Every stage the admin queue can be narrowed to, across both kinds. */
+export type InboxQueueFilter = MilestoneQueueFilter | ApplicationAttentionReason;
+
+/** Narrows the admin queue to one source stream; absent means both. */
+export type InboxKindFilter = "application" | "milestone";
+
+/**
  * Ordering modes for the reviewer inbox feed. Mirrors `ReviewerInboxSortEnum`
  * in the indexer; the wire values are the enum's, not these key names.
  *
@@ -356,7 +376,9 @@ export interface IReviewerInboxItem {
    * Admin queue fields. Present only on milestone items in a community-admin
    * scoped feed — a reviewer's payload omits them entirely.
    */
-  attentionReason?: MilestoneAttentionReason;
+  attentionReason?: InboxAttentionReason;
+  /** Applications only: every open post-approval gate when more than one is. */
+  pendingGates?: ApplicationAttentionReason[];
   /** Whole days spent in the current attention stage. */
   stageAgeDays?: number;
   openActionItems?: number;
@@ -379,13 +401,23 @@ export interface IReviewerInboxStats {
   awaitingInvoice?: number;
   invoiceUnpaid?: number;
   followUpDue?: number;
+  /** Application-stage counters, same emission rule. */
+  pendingReview?: number;
+  underReview?: number;
+  revisionRequested?: number;
+  kybPending?: number;
+  agreementPending?: number;
 }
 
-/** One action item logged by an admin against a milestone. */
+/**
+ * One action item logged by an admin against a queue item. Exactly one target
+ * is set: a milestone (with its grant) or a funding application.
+ */
 export interface IMilestoneActionItem {
   id: string;
-  milestoneUID: string;
-  grantUID: string;
+  milestoneUID: string | null;
+  grantUID: string | null;
+  applicationReference: string | null;
   communityUID: string;
   programId: string | null;
   content: string;
@@ -403,6 +435,15 @@ export interface ICommunityActionItem extends IMilestoneActionItem {
   projectUid: string | null;
   projectTitle: string | null;
   milestoneTitle: string | null;
+  /** Application items only: the resolved application/project name. */
+  applicationTitle: string | null;
+}
+
+/** Two-sentence AI brief on why a queue item is where it is. */
+export interface IQueueItemSummary {
+  summary: string;
+  generatedAt: string;
+  cached: boolean;
 }
 
 export interface ICommunityActionItemPage {
