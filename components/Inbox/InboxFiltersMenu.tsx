@@ -42,7 +42,7 @@ const InboxFiltersMenuComponent: FC<InboxFiltersMenuProps> = ({ activeCount, row
           {active && <span className="tabular-nums text-xs">{activeCount}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 max-w-[calc(100vw-2rem)] p-3">
+      <PopoverContent align="end" className="w-80 p-3">
         <div className="flex flex-col gap-3">
           {rows.map((row) => (
             <div key={row.label} className="flex flex-col gap-1">
