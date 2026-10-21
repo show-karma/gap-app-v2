@@ -46,7 +46,7 @@ describe("QueueSummary", () => {
     render(<QueueSummary communityId="filecoin" target={target} />);
 
     expect(screen.getByText("The team has not replied since 1 March.")).toBeInTheDocument();
-    expect(screen.getByText(/written/)).toBeInTheDocument();
+    expect(screen.getByText(/AI summary from the timeline/)).toBeInTheDocument();
   });
 
   it("should_offer_a_retry_on_error", () => {
