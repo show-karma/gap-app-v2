@@ -121,7 +121,7 @@ describe("MilestoneTimeline", () => {
 
     render(<MilestoneTimeline {...baseProps} />);
 
-    expect(screen.getByText("Invoice unpaid")).toBeInTheDocument();
+    expect(screen.getByText("Pending payment")).toBeInTheDocument();
   });
 
   it("omits stage durations entirely when no stage has been reached", () => {

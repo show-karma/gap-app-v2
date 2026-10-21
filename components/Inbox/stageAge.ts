@@ -1,5 +1,5 @@
 import type { InboxItem } from "@/components/Inbox/types";
-import { describeRelativeDay, isBeforeToday } from "@/utilities/calendarDay";
+import { daysFromToday, describeRelativeDay, isBeforeToday } from "@/utilities/calendarDay";
 
 /**
  * Time-in-stage and follow-up presentation for the admin queue.
@@ -113,6 +113,52 @@ export function describeFollowUp(
       ? "font-medium text-red-600 dark:text-red-400"
       : "text-gray-500 dark:text-gray-400",
   };
+}
+
+/** The admin's next-step buckets, in the order the list shows them. */
+export type FollowUpGroup = "overdue" | "today" | "this_week" | "later" | "none";
+
+export const FOLLOW_UP_GROUP_ORDER: FollowUpGroup[] = [
+  "overdue",
+  "today",
+  "this_week",
+  "later",
+  "none",
+];
+
+export const FOLLOW_UP_GROUP_LABEL: Record<FollowUpGroup, string> = {
+  overdue: "Follow-up overdue",
+  today: "Follow up today",
+  this_week: "Follow up this week",
+  later: "Follow up later",
+  none: "No follow-up scheduled",
+};
+
+/** Which next-step bucket a row belongs to, by the viewer's calendar day. */
+export function followUpGroupOf(item: InboxItem): FollowUpGroup {
+  if (!item.nextFollowUpAt) return "none";
+  const delta = daysFromToday(item.nextFollowUpAt);
+  if (delta === null) return "none";
+  if (delta < 0) return "overdue";
+  if (delta === 0) return "today";
+  if (delta <= 7) return "this_week";
+  return "later";
+}
+
+/**
+ * Groups a follow-up-ordered list by when the admin said they would chase.
+ * Order within a group is the server's, so rows stay date-ordered.
+ */
+export function groupByFollowUp(items: InboxItem[]): { group: FollowUpGroup; list: InboxItem[] }[] {
+  const buckets = new Map<FollowUpGroup, InboxItem[]>();
+  for (const item of items) {
+    const group = followUpGroupOf(item);
+    buckets.set(group, [...(buckets.get(group) ?? []), item]);
+  }
+  return FOLLOW_UP_GROUP_ORDER.flatMap((group) => {
+    const list = buckets.get(group);
+    return list ? [{ group, list }] : [];
+  });
 }
 
 /**

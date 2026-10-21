@@ -123,36 +123,38 @@ describe("InboxList follow-up ordering", () => {
     }),
   ];
 
-  // Re-grouping a global date order into buckets scatters it across three
-  // sections, leaving an order the reader cannot follow.
-  it("should_render_a_flat_list_without_bucket_headings_when_sorted_by_follow_up", () => {
+  // Under follow-up order the bucket sections give way to next-step groups.
+  it("should_group_by_next_step_instead_of_bucket_when_sorted_by_follow_up", () => {
     render(<InboxList {...adminProps} items={followUpItems} sort="follow_up_date" />);
 
     expect(screen.getAllByTestId("inbox-item")).toHaveLength(2);
     expect(screen.queryByRole("heading", { name: /needs action/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /overdue follow-ups first/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /by next follow-up/i })).toBeInTheDocument();
   });
 
-  // Undated items sort last however long they have been stuck; the divider is
-  // what stops that reading as a broken sort.
-  it("should_mark_where_the_follow_up_dates_run_out", () => {
+  // Undated items sort last however long they have been stuck; the group
+  // label is what stops that reading as a broken sort.
+  it("should_label_the_items_with_no_follow_up_scheduled", () => {
     render(<InboxList {...adminProps} items={followUpItems} sort="follow_up_date" />);
 
-    const divider = screen.getByRole("heading", { name: /no follow-up set/i });
-    expect(divider).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /no follow-up scheduled/i })).toBeInTheDocument();
   });
 
-  it("should_hide_the_divider_when_every_item_has_a_follow_up_date", () => {
+  it("should_hide_the_unscheduled_group_when_every_item_has_a_follow_up_date", () => {
     render(<InboxList {...adminProps} items={[followUpItems[0]]} sort="follow_up_date" />);
 
-    expect(screen.queryByRole("heading", { name: /no follow-up set/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /no follow-up scheduled/i })
+    ).not.toBeInTheDocument();
   });
 
   // Priority ordering keeps the bucket sections it was designed around.
   it("should_keep_bucket_grouping_under_priority_sort", () => {
     render(<InboxList {...adminProps} items={followUpItems} sort="priority" />);
 
-    expect(screen.queryByRole("heading", { name: /no follow-up set/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /no follow-up scheduled/i })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /needs attention/i })).toBeInTheDocument();
   });
 
@@ -169,7 +171,58 @@ describe("InboxList follow-up ordering", () => {
       />
     );
 
-    expect(screen.queryByRole("heading", { name: /no follow-up set/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /no follow-up scheduled/i })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /assigned to you/i })).toBeInTheDocument();
+  });
+});
+
+describe("InboxList follow-up groups", () => {
+  const day = (offset: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return `${d.toISOString().slice(0, 10)}T00:00:00.000Z`;
+  };
+  const row = (id: string, nextFollowUpAt?: string): InboxItem => ({
+    id,
+    kind: "milestone",
+    bucket: "action",
+    status: "past_due",
+    title: id,
+    programId: "992",
+    activitySort: 0,
+    attentionReason: "past_due",
+    stageAgeDays: 10,
+    ...(nextFollowUpAt ? { nextFollowUpAt } : {}),
+  });
+
+  it("should_group_an_admin_queue_by_the_next_follow_up", () => {
+    render(
+      <InboxList
+        items={[
+          row("late", day(-3)),
+          row("today", day(0)),
+          row("week", day(4)),
+          row("later", day(20)),
+          row("none"),
+        ]}
+        onSelect={vi.fn()}
+        hasBothRoles
+        isCommunityAdmin
+        kindFilter="all"
+        onKindFilterChange={vi.fn()}
+        sort="follow_up_date"
+      />
+    );
+
+    const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(headings).toEqual([
+      "Follow-up overdue",
+      "Follow up today",
+      "Follow up this week",
+      "Follow up later",
+      "No follow-up scheduled",
+    ]);
   });
 });

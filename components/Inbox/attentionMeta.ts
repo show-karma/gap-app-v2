@@ -28,9 +28,9 @@ export interface AttentionMeta {
   clockDescription: string;
 }
 
-const RED = {
-  badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  dotClass: "bg-red-500",
+const GRAY = {
+  badgeClass: "bg-gray-100 text-gray-700 dark:bg-zinc-700 dark:text-zinc-200",
+  dotClass: "bg-gray-400",
 };
 const BRAND = {
   badgeClass: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300",
@@ -59,28 +59,28 @@ const SKY = {
 
 export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
   past_due: {
-    label: "Past due",
-    ageSuffix: "overdue",
+    label: "Milestone overdue",
+    ageSuffix: "late",
     description: "The milestone's due date has passed and it has not been delivered",
     clockDescription: "Days since the milestone's due date",
-    ...RED,
+    ...GRAY,
   },
   awaiting_review: {
-    label: "Awaiting review",
-    ageSuffix: "waiting",
-    description: "The grantee marked the milestone complete; no reviewer has verified it yet",
+    label: "In review",
+    ageSuffix: "in review",
+    description: "The grantee marked the milestone complete; a reviewer has not verified it yet",
     clockDescription: "Days since the grantee marked it complete",
     ...BRAND,
   },
   awaiting_invoice: {
-    label: "Awaiting invoice",
+    label: "Invoice due",
     ageSuffix: "waiting",
     description: "The milestone is verified and the program requires an invoice, but none was sent",
     clockDescription: "Days since the milestone was verified",
     ...AMBER,
   },
   invoice_unpaid: {
-    label: "Invoice unpaid",
+    label: "Pending payment",
     ageSuffix: "unpaid",
     description: "An invoice was received for this milestone but payment has not been recorded",
     clockDescription: "Days since the invoice was received",

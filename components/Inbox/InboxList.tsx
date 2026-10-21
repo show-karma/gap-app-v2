@@ -3,7 +3,7 @@
 import pluralize from "pluralize";
 import React, { type FC, useMemo } from "react";
 import { InboxListItem } from "@/components/Inbox/InboxListItem";
-import { partitionByFollowUp } from "@/components/Inbox/stageAge";
+import { FOLLOW_UP_GROUP_LABEL, groupByFollowUp } from "@/components/Inbox/stageAge";
 import { ADMIN_BUCKET_LABEL, BUCKET_META, BUCKET_RANK } from "@/components/Inbox/statusToBucket";
 import type { InboxItem, ReviewBucket } from "@/components/Inbox/types";
 import { Button } from "@/components/ui/button";
@@ -54,21 +54,29 @@ const ORDERED_BUCKETS: ReviewBucket[] = (Object.keys(BUCKET_META) as ReviewBucke
  */
 function getListHeading(isCommunityAdmin: boolean, byFollowUp: boolean): string {
   if (!isCommunityAdmin) return "Assigned to you";
-  return byFollowUp ? "Overdue follow-ups first" : "Needs attention";
+  return byFollowUp ? "By next follow-up" : "Needs attention";
 }
 
 /**
- * Marks where a follow-up-ordered list runs out of dates.
- *
- * Undated items sort last however long they have been stuck, so without this
- * boundary a milestone stuck 378 days sitting below one stuck 44 days reads as
- * a broken sort instead of "nobody has scheduled a chase for it".
+ * Section label for a follow-up group: the admin's next step, with a count.
+ * The overdue group is the only one in red, because it is the only one where
+ * the admin is the one who is late.
  */
-const NoFollowUpDivider: FC<{ count: number }> = ({ count }) => (
+const FollowUpGroupHeader: FC<{ label: string; count: number; urgent: boolean }> = ({
+  label,
+  count,
+  urgent,
+}) => (
   <div className="flex items-center gap-2 border-y border-gray-100 bg-gray-50 px-4 py-1.5 dark:border-zinc-800 dark:bg-zinc-800/40">
-    <h3 className="text-[13px] font-semibold text-gray-500 dark:text-gray-400">No follow-up set</h3>
-    <span className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" aria-hidden="true" />
-    <span className="text-xs font-medium tabular-nums text-gray-500 dark:text-zinc-400">
+    <h3
+      className={cn(
+        "text-[11px] font-semibold uppercase tracking-wider",
+        urgent ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"
+      )}
+    >
+      {label}
+    </h3>
+    <span className="ml-auto text-xs font-medium tabular-nums text-gray-500 dark:text-zinc-400">
       {count}
     </span>
   </div>
@@ -184,8 +192,8 @@ const InboxListComponent: FC<InboxListProps> = ({
   // Only the admin queue carries follow-up dates, so only it can order by them.
   const byFollowUp = isCommunityAdmin && sort === "follow_up_date";
 
-  const followUpSplit = useMemo(
-    () => (byFollowUp ? partitionByFollowUp(shown) : null),
+  const followUpGroups = useMemo(
+    () => (byFollowUp ? groupByFollowUp(shown) : null),
     [byFollowUp, shown]
   );
 
@@ -244,35 +252,29 @@ const InboxListComponent: FC<InboxListProps> = ({
             </Button>
           )}
         </div>
-      ) : followUpSplit ? (
-        <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-          {followUpSplit.scheduled.map((item) => (
-            <InboxListItem
-              key={item.id}
-              item={item}
-              selected={item.id === selectedId}
-              onSelect={onSelect}
-              hideKind={uniform.kind}
-              hideSubtitle={uniform.subtitle}
-            />
+      ) : followUpGroups ? (
+        <div>
+          {followUpGroups.map(({ group, list }) => (
+            <div key={group}>
+              <FollowUpGroupHeader
+                label={FOLLOW_UP_GROUP_LABEL[group]}
+                count={list.length}
+                urgent={group === "overdue"}
+              />
+              <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+                {list.map((item) => (
+                  <InboxListItem
+                    key={item.id}
+                    item={item}
+                    selected={item.id === selectedId}
+                    onSelect={onSelect}
+                    hideKind={uniform.kind}
+                    hideSubtitle={uniform.subtitle}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
-
-          {followUpSplit.unscheduled.length > 0 && (
-            <>
-              <NoFollowUpDivider count={followUpSplit.unscheduled.length} />
-
-              {followUpSplit.unscheduled.map((item) => (
-                <InboxListItem
-                  key={item.id}
-                  item={item}
-                  selected={item.id === selectedId}
-                  onSelect={onSelect}
-                  hideKind={uniform.kind}
-                  hideSubtitle={uniform.subtitle}
-                />
-              ))}
-            </>
-          )}
         </div>
       ) : (
         <div>

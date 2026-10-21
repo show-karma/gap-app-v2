@@ -36,6 +36,7 @@ import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
 import { InboxProgramFilter } from "./InboxProgramFilter";
 import { InboxProjectFilter } from "./InboxProjectFilter";
 import { InboxSortControl } from "./InboxSortControl";
+import { InboxViewChips } from "./InboxViewChips";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -126,7 +127,8 @@ export function ReviewerInboxPage({
   // caller — this flag only drives what the page renders, never what it is
   // allowed to see.
   const [attentionFilter, setAttentionFilter] = useState<InboxQueueFilter | null>(null);
-  const [inboxSort, setInboxSort] = useState<ReviewerInboxSort>("priority");
+  // Admins work the queue as a chase list, so it opens by next follow-up.
+  const [inboxSort, setInboxSort] = useState<ReviewerInboxSort>("follow_up_date");
   const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
   const [kindParam, setKindParam] = useQueryState("kind");
   const queueKind: InboxKind | null =
@@ -423,14 +425,19 @@ export function ReviewerInboxPage({
 
       {isCommunityAdmin && !showActionItems && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-gray-200 pb-3 dark:border-zinc-700">
-          <InboxKindFilter stats={stats} value={queueKind} onChange={handleKindChange} />
-          <InboxAttentionFilter
+          <InboxViewChips
             stats={stats}
-            value={stageFilterValue}
+            value={pendingActionItems ? null : attentionFilter}
             onChange={handleAttentionChange}
-            kind={queueKind}
           />
           <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
+            <InboxKindFilter stats={stats} value={queueKind} onChange={handleKindChange} />
+            <InboxAttentionFilter
+              stats={stats}
+              value={stageFilterValue}
+              onChange={handleAttentionChange}
+              kind={queueKind}
+            />
             {scopeFilterControls}
             <InboxSortControl value={inboxSort} onChange={handleSortChange} />
           </div>
