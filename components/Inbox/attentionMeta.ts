@@ -48,9 +48,13 @@ const INDIGO = {
   badgeClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
   dotClass: "bg-indigo-500",
 };
-const SLATE = {
-  badgeClass: "bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-200",
-  dotClass: "bg-slate-500",
+const ROSE = {
+  badgeClass: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+  dotClass: "bg-rose-500",
+};
+const SKY = {
+  badgeClass: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
+  dotClass: "bg-sky-500",
 };
 
 export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
@@ -108,14 +112,14 @@ export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
     ageSuffix: "since approval",
     description: "The application is approved but the KYB verification has not been passed",
     clockDescription: "Days since the application was approved",
-    ...SLATE,
+    ...ROSE,
   },
   agreement_pending: {
     label: "Agreement pending",
     ageSuffix: "since approval",
     description: "The application is approved but the grant agreement is not signed",
     clockDescription: "Days since the application was approved",
-    ...SLATE,
+    ...SKY,
   },
 };
 
