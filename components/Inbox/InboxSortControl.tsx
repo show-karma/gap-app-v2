@@ -1,7 +1,10 @@
 "use client";
 
-import React, { type FC } from "react";
+import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
+import React, { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ReviewerInboxSort } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 
@@ -12,66 +15,75 @@ interface InboxSortControlProps {
 
 const OPTIONS: { key: ReviewerInboxSort; label: string; hint: string }[] = [
   {
-    key: "priority",
-    label: "Priority",
-    hint: "Past due and awaiting review first, then longest stuck",
-  },
-  {
     key: "follow_up_date",
     label: "Follow-up date",
     hint: "Overdue follow-ups first, then soonest. No follow-up set sorts last",
   },
+  {
+    key: "priority",
+    label: "Priority",
+    hint: "Past due and awaiting review first, then longest stuck",
+  },
 ];
 
 /**
- * Ordering control for the community-admin queue.
- *
- * Deliberately two named modes rather than a field/direction pair: each mode
- * has exactly one meaningful direction (most urgent first, earliest chase
- * first), and offering "follow-up date, descending" would only ever surface
- * the least urgent work.
- *
- * Rendered as a connected segmented control on a recessed track, NOT as the
- * outlined chips used by the filters beside it. Both controls were the same
- * pill, so nothing distinguished "narrow the list" from "reorder the list" —
- * the only cue was a small "Sort by" label that is easy to skip past. A
- * segment sits inside its track; a filter chip sits on the surface.
- *
- * The chosen mode is passed to the server, which owns the ordering. Nothing
- * here re-sorts the feed client-side.
+ * Ordering control for the community-admin queue: one dropdown that states
+ * the current order. Two named modes rather than a field/direction pair,
+ * since each mode has exactly one meaningful direction. The chosen mode is
+ * passed to the server, which owns the ordering.
  */
-const InboxSortControlComponent: FC<InboxSortControlProps> = ({ value, onChange }) => (
-  <fieldset className="flex shrink-0 items-center gap-2 border-0 p-0">
-    <legend className="sr-only">Sort by</legend>
-    <span aria-hidden="true" className="text-xs font-medium text-gray-500 dark:text-gray-400">
-      Sort
-    </span>
-    <div className="inline-flex rounded-lg bg-gray-100 p-0.5 dark:bg-zinc-800">
-      {OPTIONS.map((option) => {
-        const active = option.key === value;
-        return (
-          <Button
-            key={option.key}
-            type="button"
-            variant="ghost"
-            size="chip"
-            aria-pressed={active}
-            title={option.hint}
-            onClick={() => onChange(option.key)}
-            className={cn(
-              "rounded-md font-medium focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500",
-              active
-                ? "bg-white text-gray-900 shadow-sm hover:bg-white dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-950"
-                : "text-gray-500 hover:bg-transparent hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            )}
-          >
-            {option.label}
-          </Button>
-        );
-      })}
-    </div>
-  </fieldset>
-);
+const InboxSortControlComponent: FC<InboxSortControlProps> = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const current = OPTIONS.find((option) => option.key === value) ?? OPTIONS[0];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="chip"
+          aria-label={`Sort by: ${current.label}`}
+          className="font-medium focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+        >
+          <span className="text-gray-500 dark:text-gray-400">Sort</span>
+          <span className="truncate">{current.label}</span>
+          <ChevronDownIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-0">
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              {OPTIONS.map((option) => (
+                <CommandItem
+                  key={option.key}
+                  value={option.label}
+                  onSelect={() => {
+                    onChange(option.key);
+                    setOpen(false);
+                  }}
+                >
+                  <CheckIcon
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      option.key === value ? "opacity-100" : "opacity-0"
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span className="flex min-w-0 flex-col">
+                    <span>{option.label}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{option.hint}</span>
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 export const InboxSortControl = React.memo(InboxSortControlComponent);
 InboxSortControl.displayName = "InboxSortControl";

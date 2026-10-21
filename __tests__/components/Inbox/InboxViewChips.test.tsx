@@ -12,6 +12,7 @@ const stats = (overrides: Partial<IReviewerInboxStats> = {}): IReviewerInboxStat
   followUpDue: 8,
   pastDue: 5,
   invoiceUnpaid: 2,
+  paperworkPending: 27,
   ...overrides,
 });
 
@@ -22,6 +23,7 @@ describe("InboxViewChips", () => {
     expect(screen.getByRole("button", { name: /Follow-ups due\s*8/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Milestone overdue\s*5/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Pending payment\s*2/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Paperwork pending\s*27/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /All\s*40/ })).toBeInTheDocument();
   });
 
@@ -34,7 +36,7 @@ describe("InboxViewChips", () => {
   it("should_render_nothing_when_only_all_would_remain", () => {
     const { container } = render(
       <InboxViewChips
-        stats={stats({ followUpDue: 0, pastDue: 0, invoiceUnpaid: 0 })}
+        stats={stats({ followUpDue: 0, pastDue: 0, invoiceUnpaid: 0, paperworkPending: 0 })}
         value={null}
         onChange={vi.fn()}
       />

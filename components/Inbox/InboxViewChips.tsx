@@ -35,6 +35,7 @@ const InboxViewChipsComponent: FC<InboxViewChipsProps> = ({ stats, value, onChan
       label: ATTENTION_META.invoice_unpaid.label,
       count: stats.invoiceUnpaid ?? 0,
     },
+    { key: "paperwork_pending", label: "Paperwork pending", count: stats.paperworkPending ?? 0 },
     { key: null, label: "All", count: stats.applications + stats.milestones },
   ];
   const chips = candidates.filter((chip) => chip.count > 0);

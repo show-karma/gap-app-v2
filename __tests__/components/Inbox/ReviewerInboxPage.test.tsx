@@ -95,6 +95,7 @@ describe("ReviewerInboxPage selection ↔ URL hash", () => {
     filterState.isAdmin = true;
     render(<ReviewerInboxPage community={community} />);
 
+    fireEvent.click(screen.getByRole("button", { name: /^Filters/ }));
     fireEvent.click(screen.getByRole("button", { name: /filter by stage/i }));
     fireEvent.click(screen.getByText("Has open notes"));
 

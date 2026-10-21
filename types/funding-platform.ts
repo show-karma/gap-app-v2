@@ -336,7 +336,10 @@ export type ApplicationAttentionReason =
 export type InboxAttentionReason = MilestoneAttentionReason | ApplicationAttentionReason;
 
 /** Every stage the admin queue can be narrowed to, across both kinds. */
-export type InboxQueueFilter = MilestoneQueueFilter | ApplicationAttentionReason;
+export type InboxQueueFilter =
+  | MilestoneQueueFilter
+  | ApplicationAttentionReason
+  | "paperwork_pending";
 
 /** Narrows the admin queue to one source stream; absent means both. */
 export type InboxKindFilter = "application" | "milestone";
@@ -407,6 +410,8 @@ export interface IReviewerInboxStats {
   revisionRequested?: number;
   kybPending?: number;
   agreementPending?: number;
+  /** Approved applications with KYB or the agreement outstanding, counted once each. */
+  paperworkPending?: number;
 }
 
 /**
