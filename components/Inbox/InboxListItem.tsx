@@ -23,8 +23,10 @@ const RED_STAGES = new Set<string>(["past_due"]);
  * One sentence on where the item stands: the stage and how long it has been
  * there, then the next chase. Reads as prose, not as a row of chips, because a
  * reader scans forty of these and chips of four hues told them nothing the
- * words did not. Red is reserved for a missed date: a past-due milestone, a
- * stage held past the critical threshold, or an overdue follow-up.
+ * words did not. The stage keeps its hue as a small dot, the same dot the
+ * stage menu uses, so the two read as one vocabulary. Red text is reserved
+ * for a missed date: a past-due milestone, a stage held past the critical
+ * threshold, or an overdue follow-up.
  */
 const StatusLine: FC<{ item: InboxItem }> = ({ item }) => {
   if (!item.attentionReason) return null;
@@ -41,6 +43,13 @@ const StatusLine: FC<{ item: InboxItem }> = ({ item }) => {
 
   return (
     <span className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-xs text-gray-500 dark:text-gray-400">
+      <span
+        aria-hidden="true"
+        className={cn(
+          "inline-block h-1.5 w-1.5 self-center rounded-full",
+          ATTENTION_META[item.attentionReason].dotClass
+        )}
+      />
       <span
         title={stages.map((stage) => ATTENTION_META[stage].description).join(" ")}
         className={cn(
