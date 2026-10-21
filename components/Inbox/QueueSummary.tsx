@@ -77,7 +77,7 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
           ) : (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Summarize where this stands and what is blocking it.
+                See what is blocking this and who owes the next step.
               </p>
               <Button
                 variant="link"
