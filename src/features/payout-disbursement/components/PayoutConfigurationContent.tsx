@@ -77,7 +77,7 @@ function detectTokenTypeFromConfig(config: PayoutGrantConfig): TokenType {
     if (usdcAddresses.includes(normalizedAddress)) return "usdc";
     return "native";
   }
-  return "native";
+  return "usdc";
 }
 
 export function PayoutConfigurationContent({
