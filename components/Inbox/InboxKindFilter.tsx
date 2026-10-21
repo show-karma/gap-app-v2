@@ -26,7 +26,7 @@ const InboxKindFilterComponent: FC<InboxKindFilterProps> = ({ stats, value, onCh
   return (
     <fieldset
       aria-label="Item type"
-      className="inline-flex rounded-lg bg-gray-100 p-1 dark:bg-zinc-800"
+      className="flex w-full rounded-lg bg-gray-100 p-1 dark:bg-zinc-800"
     >
       {options.map((option) => {
         const active = option.key === value;
@@ -39,7 +39,7 @@ const InboxKindFilterComponent: FC<InboxKindFilterProps> = ({ stats, value, onCh
             onClick={() => onChange(option.key)}
             aria-pressed={active}
             className={cn(
-              "gap-1.5 font-medium",
+              "min-w-0 flex-1 gap-1 px-2 font-medium",
               active
                 ? "bg-white text-gray-950 shadow-sm hover:bg-white dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-900"
                 : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-zinc-700"
