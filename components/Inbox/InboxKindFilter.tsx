@@ -39,7 +39,7 @@ const InboxKindFilterComponent: FC<InboxKindFilterProps> = ({ stats, value, onCh
             onClick={() => onChange(option.key)}
             aria-pressed={active}
             className={cn(
-              "min-w-0 flex-1 gap-1 px-2 font-medium",
+              "flex-1 gap-1.5 whitespace-nowrap px-2 font-medium",
               active
                 ? "bg-white text-gray-950 shadow-sm hover:bg-white dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-900"
                 : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-zinc-700"
