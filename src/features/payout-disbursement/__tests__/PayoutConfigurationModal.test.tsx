@@ -771,6 +771,36 @@ describe("PayoutConfigurationModal", () => {
   });
 
   describe("token selection", () => {
+    it("should default to USDC when existing config has no token", async () => {
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: {
+          id: "config-no-token",
+          grantUID: "grant-123",
+          projectUID: "project-456",
+          communityUID: "community-789",
+          payoutAddress: null,
+          totalGrantAmount: "60000",
+          tokenAddress: null,
+          chainID: 10,
+          milestoneAllocations: [],
+          createdBy: "0xadmin",
+          updatedBy: null,
+          createdAt: "2024-01-01T00:00:00Z",
+          updatedAt: "2024-01-01T00:00:00Z",
+        },
+        isLoading: false,
+      });
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        const tokenSelect = screen.getByLabelText("Token") as HTMLSelectElement;
+        expect(tokenSelect.value).toBe("usdc");
+      });
+    });
+
     it("should show USDC as default token", () => {
       render(<PayoutConfigurationModal {...defaultProps} />, {
         wrapper: createWrapper(),
