@@ -95,7 +95,7 @@ describe("ActionItems", () => {
   it("renders an empty state rather than nothing", () => {
     render(<ActionItems {...baseProps} />);
 
-    expect(screen.getByText(/no action items yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no notes yet/i)).toBeInTheDocument();
   });
 
   it("uses the singular noun for one open item", () => {
@@ -103,7 +103,7 @@ describe("ActionItems", () => {
 
     render(<ActionItems {...baseProps} />);
 
-    expect(screen.getByText("1 open item")).toBeInTheDocument();
+    expect(screen.getByText("1 open note")).toBeInTheDocument();
   });
 
   it("uses the plural noun for several open items", () => {
@@ -111,7 +111,7 @@ describe("ActionItems", () => {
 
     render(<ActionItems {...baseProps} />);
 
-    expect(screen.getByText("2 open items")).toBeInTheDocument();
+    expect(screen.getByText("2 open notes")).toBeInTheDocument();
   });
 
   it("excludes completed items from the open count", () => {
@@ -121,7 +121,7 @@ describe("ActionItems", () => {
 
     render(<ActionItems {...baseProps} />);
 
-    expect(screen.getByText("1 open item")).toBeInTheDocument();
+    expect(screen.getByText("1 open note")).toBeInTheDocument();
   });
 
   it("sends only the desired state when toggling, never a timestamp", () => {
@@ -153,7 +153,7 @@ describe("ActionItems", () => {
   it("creates an item with an ISO follow-up date", () => {
     render(<ActionItems {...baseProps} />);
 
-    fireEvent.click(screen.getByText("Add"));
+    fireEvent.click(screen.getByText("Add note"));
     fireEvent.change(screen.getByLabelText("Action item note"), {
       target: { value: "  Called them  " },
     });
@@ -171,7 +171,7 @@ describe("ActionItems", () => {
   it("requires a follow-up date before creating", () => {
     render(<ActionItems {...baseProps} />);
 
-    fireEvent.click(screen.getByText("Add"));
+    fireEvent.click(screen.getByText("Add note"));
     fireEvent.change(screen.getByLabelText("Action item note"), {
       target: { value: "No response" },
     });
@@ -219,7 +219,7 @@ describe("ActionItems", () => {
   it("does not submit an empty note", () => {
     render(<ActionItems {...baseProps} />);
 
-    fireEvent.click(screen.getByText("Add"));
+    fireEvent.click(screen.getByText("Add note"));
     fireEvent.change(screen.getByLabelText("Action item note"), {
       target: { value: "   " },
     });
@@ -300,5 +300,31 @@ describe("MilestoneActionItems — timezone-safe date rendering", () => {
     render(<ActionItems {...baseProps} />);
 
     expect(tzArgFor("2026-09-01T00:00:00.000Z")).toBe("UTC");
+  });
+});
+
+describe("ActionItems activity", () => {
+  it("interleaves lifecycle events with notes, newest first", () => {
+    setHookState({
+      items: [
+        makeItem({ id: "n1", content: "Chased by email", createdAt: "2026-03-10T00:00:00.000Z" }),
+      ],
+    });
+
+    render(
+      <ActionItems
+        {...baseProps}
+        events={[
+          { at: "2026-03-01T00:00:00.000Z", label: "Due date" },
+          { at: "2026-03-20T00:00:00.000Z", label: "Invoice requested" },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("Activity")).toBeInTheDocument();
+    const rows = screen.getAllByRole("listitem").map((row) => row.textContent ?? "");
+    expect(rows[0]).toContain("Invoice requested");
+    expect(rows[1]).toContain("Chased by email");
+    expect(rows[2]).toContain("Due date");
   });
 });

@@ -347,7 +347,7 @@ describe("InboxMilestoneDetail", () => {
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["reviewer-inbox"] });
   });
 
-  it("renders Details and Comments tabs for a selected milestone", () => {
+  it("renders Milestone and Comments tabs for a selected milestone", () => {
     mockUseProjectGrantMilestones.mockReturnValue({
       data: makeData([makeMilestone()]),
       isLoading: false,
@@ -356,7 +356,7 @@ describe("InboxMilestoneDetail", () => {
     });
 
     render(<InboxMilestoneDetail {...baseProps} />);
-    const detailsTab = screen.getByRole("tab", { name: /Details/ });
+    const detailsTab = screen.getByRole("tab", { name: /Milestone/ });
     const commentsTab = screen.getByRole("tab", { name: /Comments/ });
     expect(detailsTab).toHaveAttribute("aria-selected", "true");
     expect(commentsTab).toHaveAttribute("aria-selected", "false");

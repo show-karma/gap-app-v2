@@ -2,7 +2,7 @@
 
 import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
-import React, { type FC, useCallback, useState } from "react";
+import React, { type FC, useCallback, useMemo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
@@ -200,13 +200,55 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
 const ActionItemRow = React.memo(ActionItemRowComponent);
 ActionItemRow.displayName = "ActionItemRow";
 
+/** A dated fact from the item's own lifecycle, shown between the notes. */
+export interface ActivityEvent {
+  at: string;
+  label: string;
+  detail?: string;
+  toneClass?: string;
+}
+
 interface ActionItemsProps {
   communityId: string;
   /** The milestone or application the log is attached to. */
   target: ActionItemTarget;
   /** Gate the fetch — the endpoints are community-admin only. */
   enabled?: boolean;
+  /**
+   * Lifecycle events to interleave with the notes, newest first, so the log
+   * reads as one story: due date passed, admin chased, grantee replied.
+   */
+  events?: ActivityEvent[];
 }
+
+type ActivityEntry =
+  | { kind: "note"; at: string; item: IMilestoneActionItem }
+  | { kind: "event"; at: string; event: ActivityEvent };
+
+const EventRow: FC<{ event: ActivityEvent }> = ({ event }) => (
+  <li className="flex items-start gap-3 px-3 py-1.5">
+    <span
+      aria-hidden="true"
+      className={cn(
+        "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current",
+        event.toneClass ?? "text-gray-400 dark:text-zinc-500"
+      )}
+    />
+    <div className="min-w-0 flex-1 text-sm">
+      <span className="mr-2 text-xs tabular-nums text-gray-500 dark:text-gray-400">
+        {formatDate(event.at, "UTC")}
+      </span>
+      <span className={cn("font-medium", event.toneClass ?? "text-gray-700 dark:text-gray-200")}>
+        {event.label}
+      </span>
+      {event.detail && (
+        <p className="mt-0.5 whitespace-pre-wrap break-words text-xs text-gray-600 dark:text-gray-300">
+          {event.detail}
+        </p>
+      )}
+    </div>
+  </li>
+);
 
 /**
  * The admin follow-up log for one queue item: free-form notes with a required
@@ -216,7 +258,12 @@ interface ActionItemsProps {
  * desired state. Deletion goes through `DeleteDialog` rather than a bare
  * button, per the destructive-action rule.
  */
-const ActionItemsComponent: FC<ActionItemsProps> = ({ communityId, target, enabled = true }) => {
+const ActionItemsComponent: FC<ActionItemsProps> = ({
+  communityId,
+  target,
+  enabled = true,
+  events,
+}) => {
   const {
     items,
     isLoading,
@@ -273,23 +320,38 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({ communityId, target, enabl
   );
 
   const openCount = items.filter((item) => !item.completedAt).length;
+  const isActivity = events !== undefined;
+
+  const entries = useMemo<ActivityEntry[]>(() => {
+    const notes: ActivityEntry[] = items.map((item) => ({
+      kind: "note",
+      at: item.createdAt,
+      item,
+    }));
+    const facts: ActivityEntry[] = (events ?? []).map((event) => ({
+      kind: "event",
+      at: event.at,
+      event,
+    }));
+    return [...notes, ...facts].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  }, [items, events]);
 
   return (
     <section className="rounded-lg bg-gray-50 p-4 dark:bg-zinc-800/60">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-950 dark:text-white">
-          Action items
+          {isActivity ? "Activity" : "Action items"}
           {openCount > 0 && (
             <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
               <span className="sr-only">, </span>
-              {openCount} open {pluralize("item", openCount)}
+              {openCount} open {pluralize("note", openCount)}
             </span>
           )}
         </h3>
         {!isAdding && (
           <Button variant="secondary" size="sm" onClick={() => setIsAdding(true)}>
             <PlusIcon className="h-4 w-4" aria-hidden="true" />
-            Add
+            Add note
           </Button>
         )}
       </div>
@@ -349,24 +411,28 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({ communityId, target, enabl
             Try again
           </Button>
         </div>
-      ) : items.length === 0 ? (
+      ) : entries.length === 0 ? (
         <p className="py-2 text-sm text-gray-500 dark:text-gray-400">
-          No action items yet. Log a note when you reach out about this{" "}
+          No notes yet. Log one when you reach out about this{" "}
           {target.kind === "application" ? "application" : "milestone"}.
         </p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
-          {items.map((item) => (
-            <ActionItemRow
-              key={item.id}
-              item={item}
-              onToggle={handleToggle}
-              onUpdate={handleUpdate}
-              onDelete={handleDelete}
-              isUpdating={isUpdating}
-              isDeleting={isDeleting}
-            />
-          ))}
+          {entries.map((entry) =>
+            entry.kind === "note" ? (
+              <ActionItemRow
+                key={entry.item.id}
+                item={entry.item}
+                onToggle={handleToggle}
+                onUpdate={handleUpdate}
+                onDelete={handleDelete}
+                isUpdating={isUpdating}
+                isDeleting={isDeleting}
+              />
+            ) : (
+              <EventRow key={`${entry.event.label}-${entry.at}`} event={entry.event} />
+            )
+          )}
         </ul>
       )}
     </section>

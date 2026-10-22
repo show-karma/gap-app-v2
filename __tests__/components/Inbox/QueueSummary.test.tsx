@@ -28,7 +28,7 @@ describe("QueueSummary", () => {
 
     render(<QueueSummary communityId="filecoin" target={target} />);
 
-    expect(screen.getByRole("region", { name: "AI brief" })).toHaveTextContent("");
+    expect(screen.getByRole("region", { name: "AI summary" })).toHaveTextContent("");
     expect(document.querySelector("[aria-busy='true']")).toBeInTheDocument();
   });
 
@@ -46,7 +46,7 @@ describe("QueueSummary", () => {
     render(<QueueSummary communityId="filecoin" target={target} />);
 
     expect(screen.getByText("The team has not replied since 1 March.")).toBeInTheDocument();
-    expect(screen.getByText(/written/)).toBeInTheDocument();
+    expect(screen.getByText(/AI summary from the timeline/)).toBeInTheDocument();
   });
 
   it("should_offer_a_retry_on_error", () => {
@@ -70,7 +70,7 @@ describe("QueueSummary", () => {
 
     render(<QueueSummary communityId="filecoin" target={target} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Rewrite brief" }));
+    fireEvent.click(screen.getByRole("button", { name: "Regenerate summary" }));
     expect(refresh).toHaveBeenCalled();
   });
 
@@ -80,9 +80,9 @@ describe("QueueSummary", () => {
     render(<QueueSummary communityId="filecoin" target={target} />);
 
     expect(mockUseQueueSummary).toHaveBeenLastCalledWith("filecoin", target, { enabled: false });
-    expect(screen.queryByRole("button", { name: "Rewrite brief" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Regenerate summary" })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Write brief" }));
+    fireEvent.click(screen.getByRole("button", { name: "Summarize" }));
 
     expect(mockUseQueueSummary).toHaveBeenLastCalledWith("filecoin", target, { enabled: true });
   });
@@ -91,7 +91,7 @@ describe("QueueSummary", () => {
     mockUseQueueSummary.mockReturnValue(state());
 
     render(<QueueSummary communityId="filecoin" target={target} enabled={false} />);
-    fireEvent.click(screen.getByRole("button", { name: "Write brief" }));
+    fireEvent.click(screen.getByRole("button", { name: "Summarize" }));
 
     expect(mockUseQueueSummary).toHaveBeenLastCalledWith("filecoin", target, { enabled: false });
   });

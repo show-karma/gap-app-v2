@@ -39,7 +39,7 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
 
   return (
     <section
-      aria-label="AI brief"
+      aria-label="AI summary"
       className={cn(
         "rounded-lg border border-purple-200 bg-purple-50/60 px-4 py-3 dark:border-purple-900/50 dark:bg-purple-900/10",
         className
@@ -59,7 +59,7 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
           ) : error ? (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Couldn&apos;t write the brief.
+                Couldn&apos;t generate the summary.
               </p>
               <Button variant="link" size="sm" className="h-auto p-0" onClick={() => refetch()}>
                 Try again
@@ -71,14 +71,13 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
                 {summary.summary}
               </p>
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                AI brief from the timeline and follow-up notes · written{" "}
-                {formatDate(summary.generatedAt)}
+                AI summary from the timeline and notes · {formatDate(summary.generatedAt)}
               </p>
             </>
           ) : (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Get a two-line brief on why this is stuck.
+                Get a quick read on where this stands.
               </p>
               <Button
                 variant="link"
@@ -86,7 +85,7 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
                 className="h-auto p-0 text-purple-700 dark:text-purple-300"
                 onClick={() => setRequested(true)}
               >
-                Write brief
+                Summarize
               </Button>
             </div>
           )}
@@ -95,8 +94,8 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Rewrite brief"
-            title="Rewrite the brief from the current facts"
+            aria-label="Regenerate summary"
+            title="Regenerate from the current facts"
             onClick={() => refresh()}
             disabled={isLoading || isRefreshing}
             className="shrink-0 text-gray-400 hover:text-purple-700 dark:text-zinc-500 dark:hover:text-purple-300"
