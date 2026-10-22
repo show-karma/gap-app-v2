@@ -70,6 +70,7 @@ export interface CommunityActionItemFilters {
   status: "pending" | "completed" | "all";
   programId?: string | null;
   projectUid?: string | null;
+  limit?: number;
 }
 
 export async function getCommunityActionItems(
@@ -79,6 +80,7 @@ export async function getCommunityActionItems(
   const query = new URLSearchParams({ page: String(filters.page), status: filters.status });
   if (filters.programId) query.set("programId", filters.programId);
   if (filters.projectUid) query.set("projectUid", filters.projectUid);
+  if (filters.limit) query.set("limit", String(filters.limit));
   const data = await api.get<ICommunityActionItemPage>(
     INDEXER.V2.MILESTONE_ACTION_ITEMS.COMMUNITY_LIST(communityId, query.toString())
   );

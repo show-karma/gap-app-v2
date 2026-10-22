@@ -2,15 +2,18 @@
 
 import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
-import React, { type FC, useCallback, useMemo, useState } from "react";
+import React, { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { NoteContent } from "@/components/Inbox/NoteContent";
+import { NoteEditor } from "@/components/Inbox/NoteEditor";
+import { subscribeOpenNote, takePendingNote } from "@/components/Inbox/noteNavigation";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { type ActionItemTarget, useActionItems } from "@/hooks/useActionItems";
-import type { IMilestoneActionItem } from "@/types/funding-platform";
+import { useCommunityActionItems } from "@/hooks/useCommunityActionItems";
+import type { ICommunityActionItem, IMilestoneActionItem } from "@/types/funding-platform";
 import { describeRelativeDay, isBeforeToday, todayCalendarDay } from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
@@ -34,6 +37,12 @@ function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
 
 interface ActionItemRowProps {
   item: IMilestoneActionItem;
+  mentionOptions: ICommunityActionItem[];
+  isLoadingMentions: boolean;
+  /** Briefly singled out after a mention elsewhere pointed here. */
+  highlighted: boolean;
+  /** Lets the section warm the mention source before the editor opens. */
+  onStartEdit: () => void;
   onToggle: (item: IMilestoneActionItem) => void;
   onUpdate: (id: string, input: { content: string; followUpAt: string }) => void;
   onDelete: (item: IMilestoneActionItem) => Promise<void>;
@@ -43,6 +52,10 @@ interface ActionItemRowProps {
 
 const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   item,
+  mentionOptions,
+  isLoadingMentions,
+  highlighted,
+  onStartEdit,
   onToggle,
   onUpdate,
   onDelete,
@@ -57,10 +70,11 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   const [editFollowUp, setEditFollowUp] = useState(isoToCalendarDay(item.followUpAt));
 
   const startEdit = useCallback(() => {
+    onStartEdit();
     setEditContent(item.content);
     setEditFollowUp(isoToCalendarDay(item.followUpAt));
     setIsEditing(true);
-  }, [item.content, item.followUpAt]);
+  }, [item.content, item.followUpAt, onStartEdit]);
 
   const cancelEdit = useCallback(() => setIsEditing(false), []);
 
@@ -74,10 +88,12 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   if (isEditing) {
     return (
       <li className="rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-        <Textarea
+        <NoteEditor
           value={editContent}
-          onChange={(event) => setEditContent(event.target.value)}
-          rows={2}
+          onChange={setEditContent}
+          mentionOptions={mentionOptions}
+          isLoadingMentions={isLoadingMentions}
+          excludeNoteId={item.id}
           aria-label="Action item note"
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -114,7 +130,15 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+    <li
+      id={`action-item-${item.id}`}
+      className={cn(
+        "flex items-start gap-3 rounded-lg border bg-white p-3 transition-colors duration-700 dark:bg-zinc-900",
+        highlighted
+          ? "border-primary-400 bg-primary-50 dark:border-primary-500 dark:bg-primary-900/20"
+          : "border-gray-200 dark:border-zinc-700"
+      )}
+    >
       <Checkbox
         checked={done}
         onCheckedChange={() => onToggle(item)}
@@ -123,14 +147,12 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
       />
 
       <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "whitespace-pre-wrap break-words text-sm",
+        <NoteContent
+          content={item.content}
+          className={
             done ? "text-gray-400 line-through dark:text-zinc-500" : "text-gray-900 dark:text-white"
-          )}
-        >
-          {item.content}
-        </p>
+          }
+        />
 
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
           {item.followUpAt && !done && (
@@ -199,6 +221,10 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
 
 const ActionItemRow = React.memo(ActionItemRowComponent);
 ActionItemRow.displayName = "ActionItemRow";
+
+const MENTION_SOURCE_FILTERS = { page: 1, status: "all" as const, limit: 100 };
+const NO_NOTES: ICommunityActionItem[] = [];
+const HIGHLIGHT_MS = 2500;
 
 /** A dated fact from the item's own lifecycle, shown between the notes. */
 export interface ActivityEvent {
@@ -322,6 +348,55 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
   const openCount = items.filter((item) => !item.completedAt).length;
   const isActivity = events !== undefined;
 
+  // The "@" typeahead needs every note in the community. Fetched the first
+  // time an editor opens, not on every panel visit.
+  const [mentionSourceWanted, setMentionSourceWanted] = useState(false);
+  const mentionSource = useCommunityActionItems(
+    communityId,
+    MENTION_SOURCE_FILTERS,
+    enabled && mentionSourceWanted
+  );
+  const mentionOptions = mentionSource.data?.items ?? NO_NOTES;
+  const openEditor = useCallback(() => {
+    setMentionSourceWanted(true);
+    setIsAdding(true);
+  }, []);
+  const startEditing = useCallback(() => setMentionSourceWanted(true), []);
+
+  // A mention elsewhere asked for one of these notes: scroll to it and single
+  // it out for a moment once it is on screen.
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noteIds = useMemo(() => items.map((item) => item.id), [items]);
+  const highlight = useCallback((noteId: string) => {
+    setHighlightedId(noteId);
+    document
+      .getElementById(`action-item-${noteId}`)
+      ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (highlightTimer.current) clearTimeout(highlightTimer.current);
+    highlightTimer.current = setTimeout(() => setHighlightedId(null), HIGHLIGHT_MS);
+  }, []);
+  useEffect(() => {
+    const pending = takePendingNote(noteIds);
+    if (pending) highlight(pending);
+  }, [noteIds, highlight]);
+  useEffect(
+    () =>
+      subscribeOpenNote((request) => {
+        if (noteIds.includes(request.noteId)) {
+          takePendingNote(noteIds);
+          highlight(request.noteId);
+        }
+      }),
+    [noteIds, highlight]
+  );
+  useEffect(
+    () => () => {
+      if (highlightTimer.current) clearTimeout(highlightTimer.current);
+    },
+    []
+  );
+
   const entries = useMemo<ActivityEntry[]>(() => {
     const notes: ActivityEntry[] = items.map((item) => ({
       kind: "note",
@@ -349,7 +424,7 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
           )}
         </h3>
         {!isAdding && (
-          <Button variant="secondary" size="sm" onClick={() => setIsAdding(true)}>
+          <Button variant="secondary" size="sm" onClick={openEditor}>
             <PlusIcon className="h-4 w-4" aria-hidden="true" />
             Add note
           </Button>
@@ -358,11 +433,12 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
 
       {isAdding && (
         <div className="mb-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-          <Textarea
+          <NoteEditor
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="e.g. Emailed the team, no response yet"
-            rows={2}
+            onChange={setDraft}
+            mentionOptions={mentionOptions}
+            isLoadingMentions={mentionSource.isLoading}
+            placeholder="e.g. Emailed the team, no response yet. Type @ to mention another note"
             aria-label="Action item note"
           />
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -423,6 +499,10 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
               <ActionItemRow
                 key={entry.item.id}
                 item={entry.item}
+                mentionOptions={mentionOptions}
+                isLoadingMentions={mentionSource.isLoading}
+                highlighted={highlightedId === entry.item.id}
+                onStartEdit={startEditing}
                 onToggle={handleToggle}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}

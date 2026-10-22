@@ -81,6 +81,12 @@ vi.mock("@/components/Inbox/QueueSummary", () => ({
   QueueSummary: () => <div data-testid="queue-summary" />,
 }));
 
+const mockUseCommunityActionItems = vi.fn(() => ({ data: undefined, isLoading: false }));
+
+vi.mock("@/hooks/useCommunityActionItems", () => ({
+  useCommunityActionItems: (...args: unknown[]) => mockUseCommunityActionItems(...args),
+}));
+
 vi.mock("@/hooks/useActionItems", () => ({
   useActionItems: () => ({
     items: [],
