@@ -68,7 +68,7 @@ describe("InboxAttentionFilter trigger", () => {
     );
 
     const trigger = screen.getByRole("button", { name: /filter by stage/i });
-    expect(within(trigger).getByText("Invoice unpaid")).toBeInTheDocument();
+    expect(within(trigger).getByText("Pending payment")).toBeInTheDocument();
     expect(within(trigger).getByText("9")).toBeInTheDocument();
     expect(within(trigger).queryByText("12")).not.toBeInTheDocument();
   });
@@ -81,8 +81,8 @@ describe("InboxAttentionFilter menu", () => {
     );
 
     const menu = openMenu();
-    expect(within(menu).getByText("Past due")).toBeInTheDocument();
-    expect(within(menu).queryByText("Invoice unpaid")).not.toBeInTheDocument();
+    expect(within(menu).getByText("Milestone overdue")).toBeInTheDocument();
+    expect(within(menu).queryByText("Pending payment")).not.toBeInTheDocument();
   });
 
   // Without it there is no way back from a filtered view.
@@ -95,7 +95,7 @@ describe("InboxAttentionFilter menu", () => {
   it("emits the reason when a stage is selected", () => {
     render(<InboxAttentionFilter {...baseProps} stats={makeStats({ invoiceUnpaid: 5 })} />);
 
-    fireEvent.click(within(openMenu()).getByText("Invoice unpaid"));
+    fireEvent.click(within(openMenu()).getByText("Pending payment"));
 
     expect(onChange).toHaveBeenCalledWith("invoice_unpaid");
   });
@@ -116,7 +116,7 @@ describe("InboxAttentionFilter menu", () => {
     );
 
     const menu = openMenu();
-    const pastDue = within(menu).getByText("Past due").closest("[cmdk-item]");
+    const pastDue = within(menu).getByText("Milestone overdue").closest("[cmdk-item]");
     expect(pastDue).not.toBeNull();
     expect(within(pastDue as HTMLElement).getByText("3")).toBeInTheDocument();
   });
@@ -179,7 +179,7 @@ describe("InboxAttentionFilter kinds", () => {
     expect(within(menu).getByText("Applications")).toBeInTheDocument();
     expect(within(menu).getByText("Milestones")).toBeInTheDocument();
     expect(within(menu).getByText("Pending review")).toBeInTheDocument();
-    expect(within(menu).getByText("Past due")).toBeInTheDocument();
+    expect(within(menu).getByText("Milestone overdue")).toBeInTheDocument();
   });
 
   it("offers only the stages of the stream the queue is narrowed to", () => {
@@ -200,7 +200,7 @@ describe("InboxAttentionFilter kinds", () => {
     expect(within(trigger).getByText("4")).toBeInTheDocument();
     const menu = openMenu();
     expect(within(menu).getByText("KYB pending")).toBeInTheDocument();
-    expect(within(menu).queryByText("Past due")).not.toBeInTheDocument();
+    expect(within(menu).queryByText("Milestone overdue")).not.toBeInTheDocument();
   });
 
   it("emits the application stage when one is selected", () => {

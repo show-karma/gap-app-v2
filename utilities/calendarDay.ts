@@ -30,7 +30,7 @@ function calendarDayOf(value: string | null | undefined): string | null {
 }
 
 /** Whole days from today to `value`: negative in the past, 0 today. */
-function daysFromToday(value: string): number | null {
+export function daysFromToday(value: string): number | null {
   const day = calendarDayOf(value);
   // Both sides parse as UTC midnight, so the difference is exact whole days.
   return day === null

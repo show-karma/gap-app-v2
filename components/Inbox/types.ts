@@ -88,4 +88,5 @@ export interface InboxStats {
   revisionRequested?: number;
   kybPending?: number;
   agreementPending?: number;
+  paperworkPending?: number;
 }

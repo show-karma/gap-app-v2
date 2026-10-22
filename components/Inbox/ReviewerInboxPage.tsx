@@ -29,6 +29,7 @@ import {
   type InboxStageFilterValue,
   OPEN_NOTES_FILTER,
 } from "./InboxAttentionFilter";
+import { InboxFiltersMenu } from "./InboxFiltersMenu";
 import { InboxHeader } from "./InboxHeader";
 import { InboxKindFilter } from "./InboxKindFilter";
 import { InboxList, type InboxKindFilter as ListKindFilter } from "./InboxList";
@@ -36,6 +37,7 @@ import { InboxMilestoneDetail } from "./InboxMilestoneDetail";
 import { InboxProgramFilter } from "./InboxProgramFilter";
 import { InboxProjectFilter } from "./InboxProjectFilter";
 import { InboxSortControl } from "./InboxSortControl";
+import { InboxViewTabs } from "./InboxViewTabs";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -126,7 +128,8 @@ export function ReviewerInboxPage({
   // caller — this flag only drives what the page renders, never what it is
   // allowed to see.
   const [attentionFilter, setAttentionFilter] = useState<InboxQueueFilter | null>(null);
-  const [inboxSort, setInboxSort] = useState<ReviewerInboxSort>("priority");
+  // Admins work the queue as a chase list, so it opens by next follow-up.
+  const [inboxSort, setInboxSort] = useState<ReviewerInboxSort>("follow_up_date");
   const [limit, setLimit] = useState(INBOX_PAGE_SIZE);
   const [kindParam, setKindParam] = useQueryState("kind");
   const queueKind: InboxKind | null =
@@ -280,6 +283,15 @@ export function ReviewerInboxPage({
     [setProjectUid, resetToNewList]
   );
 
+  const handleClearFilters = useCallback(() => {
+    void setKindParam(null);
+    void setProgramId(null);
+    void setProjectUid(null);
+    void setPendingParam(null);
+    setAttentionFilter(null);
+    resetToNewList();
+  }, [setKindParam, setProgramId, setProjectUid, setPendingParam, resetToNewList]);
+
   const handleSortChange = useCallback(
     (value: ReviewerInboxSort) => {
       setInboxSort(value);
@@ -422,17 +434,64 @@ export function ReviewerInboxPage({
       </div>
 
       {isCommunityAdmin && !showActionItems && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-gray-200 pb-3 dark:border-zinc-700">
-          <InboxKindFilter stats={stats} value={queueKind} onChange={handleKindChange} />
-          <InboxAttentionFilter
+        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-gray-200 dark:border-zinc-700">
+          <InboxViewTabs
             stats={stats}
-            value={stageFilterValue}
+            value={pendingActionItems ? null : attentionFilter}
             onChange={handleAttentionChange}
-            kind={queueKind}
           />
-          <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
-            {scopeFilterControls}
-            <InboxSortControl value={inboxSort} onChange={handleSortChange} />
+          <div className="flex items-center pb-2">
+            <InboxFiltersMenu
+              activeCount={
+                [queueKind, stageFilterValue, programId, projectUid].filter(Boolean).length
+              }
+              onClear={handleClearFilters}
+              rows={[
+                {
+                  label: "Type",
+                  control: (
+                    <InboxKindFilter stats={stats} value={queueKind} onChange={handleKindChange} />
+                  ),
+                },
+                {
+                  label: "Stage",
+                  control: (
+                    <InboxAttentionFilter
+                      stats={stats}
+                      value={stageFilterValue}
+                      onChange={handleAttentionChange}
+                      kind={queueKind}
+                    />
+                  ),
+                },
+                {
+                  label: "Program",
+                  control: (
+                    <InboxProgramFilter
+                      communityId={communityId}
+                      value={programId}
+                      onChange={handleProgramChange}
+                    />
+                  ),
+                },
+                {
+                  label: "Project",
+                  control: (
+                    <InboxProjectFilter
+                      communityId={communityId}
+                      programId={programId ? normalizeProgramId(programId) : null}
+                      value={projectUid}
+                      onChange={handleProjectChange}
+                      onlyWithActionItems={false}
+                    />
+                  ),
+                },
+                {
+                  label: "Order",
+                  control: <InboxSortControl value={inboxSort} onChange={handleSortChange} />,
+                },
+              ]}
+            />
           </div>
         </div>
       )}

@@ -47,7 +47,7 @@ describe("InboxListItem follow-up slot", () => {
       />
     );
 
-    expect(screen.getByText(/follow-up in 7 days/i)).toBeInTheDocument();
+    expect(screen.getByText(/follow up in 7 days/i)).toBeInTheDocument();
   });
 
   it("should_show_an_overdue_follow_up_date", () => {
@@ -82,9 +82,9 @@ describe("InboxListItem follow-up slot", () => {
 });
 
 describe("InboxListItem stage age", () => {
-  // The clock sits beside the stage badge as one phrase, so the number says
-  // what it counts instead of floating alone at the edge of the row.
-  it("should_render_the_days_stuck_with_the_stage_it_belongs_to", () => {
+  // The clock says what it counts in the stage's own words, so "379d unpaid"
+  // never needs the badge next to it to make sense.
+  it("should_render_the_days_stuck_in_the_stage_s_own_words", () => {
     render(
       <InboxListItem
         {...baseProps}
@@ -92,11 +92,11 @@ describe("InboxListItem stage age", () => {
       />
     );
 
-    expect(screen.getByText(/Invoice unpaid/)).toBeInTheDocument();
-    expect(screen.getByText("379 days")).toBeInTheDocument();
+    expect(screen.getByText(/Pending payment/)).toBeInTheDocument();
+    expect(screen.getByText("379d unpaid")).toBeInTheDocument();
   });
 
-  it("should_singularize_a_one_day_age", () => {
+  it("should_say_late_for_an_overdue_milestone", () => {
     render(
       <InboxListItem
         {...baseProps}
@@ -104,7 +104,7 @@ describe("InboxListItem stage age", () => {
       />
     );
 
-    expect(screen.getByText("1 day")).toBeInTheDocument();
+    expect(screen.getByText("1d late")).toBeInTheDocument();
   });
 
   it("should_show_every_open_gate_with_one_clock", () => {
@@ -121,7 +121,7 @@ describe("InboxListItem stage age", () => {
     );
 
     expect(screen.getByText(/KYB pending and Agreement pending/)).toBeInTheDocument();
-    expect(screen.getAllByText("6 days")).toHaveLength(1);
+    expect(screen.getAllByText("6d since approval")).toHaveLength(1);
   });
 
   it("should_describe_an_application_stage_in_its_own_words", () => {
@@ -137,72 +137,76 @@ describe("InboxListItem stage age", () => {
     );
 
     expect(screen.getByText(/KYB pending/)).toBeInTheDocument();
-    expect(screen.getByText("6 days")).toBeInTheDocument();
+    expect(screen.getByText("6d since approval")).toBeInTheDocument();
   });
 
   it("should_omit_the_age_when_the_feed_did_not_supply_one", () => {
     render(<InboxListItem {...baseProps} item={makeItem({ attentionReason: "invoice_unpaid" })} />);
 
-    expect(screen.queryByText(/\d+ days?$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+d /)).not.toBeInTheDocument();
   });
 });
 
 describe("InboxListItem colour", () => {
-  it("should_turn_the_stage_red_only_when_a_date_was_missed", () => {
-    const { rerender } = render(
-      <InboxListItem
-        {...baseProps}
-        item={makeItem({ attentionReason: "invoice_unpaid", stageAgeDays: 40 })}
-      />
-    );
-    expect(screen.getByText(/Invoice unpaid/)).not.toHaveClass("text-red-600");
-
-    rerender(
-      <InboxListItem
-        {...baseProps}
-        item={makeItem({ attentionReason: "invoice_unpaid", stageAgeDays: 120 })}
-      />
-    );
-    expect(screen.getByText(/Invoice unpaid/)).toHaveClass("text-red-600");
-
-    rerender(
-      <InboxListItem
-        {...baseProps}
-        item={makeItem({ attentionReason: "past_due", stageAgeDays: 3 })}
-      />
-    );
-    expect(screen.getByText(/Past due/)).toHaveClass("text-red-600");
-  });
-});
-
-describe("InboxListItem open action items", () => {
-  it("should_pluralize_the_open_item_count", () => {
-    const { rerender } = render(
-      <InboxListItem
-        {...baseProps}
-        item={makeItem({ attentionReason: "invoice_unpaid", openActionItems: 1 })}
-      />
-    );
-    expect(screen.getByText("1 open note")).toBeInTheDocument();
-
-    rerender(
-      <InboxListItem
-        {...baseProps}
-        item={makeItem({ attentionReason: "invoice_unpaid", openActionItems: 3 })}
-      />
-    );
-    expect(screen.getByText("3 open notes")).toBeInTheDocument();
-  });
-
-  // A block tied to a count is hidden when the count is zero — never "0 open".
-  it("should_hide_the_count_when_there_are_no_open_items", () => {
+  // The grantee being late is the queue's normal state; only the admin's own
+  // missed date earns red.
+  it("should_keep_the_stage_and_clock_grey_however_late_the_grantee_is", () => {
     render(
       <InboxListItem
         {...baseProps}
-        item={makeItem({ attentionReason: "invoice_unpaid", openActionItems: 0 })}
+        item={makeItem({ attentionReason: "past_due", stageAgeDays: 153 })}
       />
     );
 
-    expect(screen.queryByText(/open note/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Milestone overdue/)).not.toHaveClass("text-red-600");
+    expect(screen.getByText("153d late")).not.toHaveClass("text-red-600");
+  });
+
+  it("should_turn_only_an_overdue_follow_up_red", () => {
+    render(
+      <InboxListItem
+        {...baseProps}
+        item={makeItem({ attentionReason: "past_due", nextFollowUpAt: dayOffset(-2) })}
+      />
+    );
+
+    expect(screen.getByText("follow-up overdue")).toHaveClass("text-red-600");
+  });
+});
+
+describe("InboxListItem headline", () => {
+  it("should_lead_with_the_project_for_a_milestone", () => {
+    render(
+      <InboxListItem
+        {...baseProps}
+        item={makeItem({
+          attentionReason: "past_due",
+          project: "ProbeLab Gauge",
+          title: "Milestone 3: Expand the Dashboard",
+          subtitle: "Filecoin ProPGF Batch 2",
+        })}
+      />
+    );
+
+    expect(screen.getByText("ProbeLab Gauge")).toBeInTheDocument();
+    expect(screen.getByText("Milestone 3: Expand the Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("Batch 2")).toBeInTheDocument();
+  });
+
+  it("should_lead_with_the_application_name_and_show_the_applicant_under_it", () => {
+    render(
+      <InboxListItem
+        {...baseProps}
+        item={makeItem({
+          kind: "application",
+          attentionReason: "kyb_pending",
+          title: "Blockscout block explorer",
+          who: "test+1@example.invalid",
+        })}
+      />
+    );
+
+    expect(screen.getByText("Blockscout block explorer")).toBeInTheDocument();
+    expect(screen.getByText("test+1@example.invalid")).toBeInTheDocument();
   });
 });

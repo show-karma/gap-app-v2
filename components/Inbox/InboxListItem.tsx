@@ -1,6 +1,5 @@
 "use client";
 
-import pluralize from "pluralize";
 import React, { type FC } from "react";
 import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
 import { AiScore, DueChip, KindTag, StatusBadge } from "@/components/Inbox/InboxBadges";
@@ -13,33 +12,52 @@ import { cn } from "@/utilities/tailwind";
 /** Prints a stored calendar day in UTC — see utilities/calendarDay. */
 const formatCalendarDay = (iso: string): string => formatDate(iso, "UTC");
 
-/** Days in stage from which the clock turns red. */
-const CRITICAL_DAYS = 90;
+/**
+ * Who the row is about. The project is what the admin recognises, so it leads
+ * for a milestone; an application has no project yet, so its own name leads.
+ */
+function headline(item: InboxItem): { primary: string; secondary: string | null } {
+  if (item.kind === "milestone" && item.project) {
+    return { primary: item.project, secondary: item.title };
+  }
+  return { primary: item.title, secondary: item.who ?? null };
+}
 
-/** Stages that are red regardless of age: the deadline itself has passed. */
-const RED_STAGES = new Set<string>(["past_due"]);
+/** "Filecoin ProPGF Batch 2" → "Batch 2"; anything else stays as it is. */
+function shortProgram(name: string | undefined): string | null {
+  if (!name) return null;
+  const match = name.match(/batch\s*\d+/i);
+  return match ? match[0] : name;
+}
 
 /**
- * One sentence on where the item stands: the stage and how long it has been
- * there, then the next chase. Reads as prose, not as a row of chips, because a
- * reader scans forty of these and chips of four hues told them nothing the
- * words did not. The stage keeps its hue as a small dot, the same dot the
- * stage menu uses, so the two read as one vocabulary. Red text is reserved
- * for a missed date: a past-due milestone, a stage held past the critical
- * threshold, or an overdue follow-up.
+ * How long the item has sat in its stage, in the grantee's words rather than a
+ * stage badge: "143d late", "22d in review". Quiet grey, because the grantee
+ * being late is the queue's normal state and red would stop meaning anything.
+ */
+const Clock: FC<{ item: InboxItem }> = ({ item }) => {
+  if (!item.attentionReason || typeof item.stageAgeDays !== "number") return null;
+  const meta = ATTENTION_META[item.attentionReason];
+  return (
+    <span
+      title={meta.clockDescription}
+      className="shrink-0 text-xs tabular-nums text-gray-500 dark:text-gray-400"
+    >
+      {item.stageAgeDays}d {meta.ageSuffix}
+    </span>
+  );
+};
+
+/**
+ * The stage, as a dot and a word, then the next chase. Red is reserved for an
+ * overdue follow-up: the one date on the row that is the admin's own.
  */
 const StatusLine: FC<{ item: InboxItem }> = ({ item }) => {
   if (!item.attentionReason) return null;
   const stages = item.pendingGates?.length ? item.pendingGates : [item.attentionReason];
-  const meta = ATTENTION_META[item.attentionReason];
-  const days = item.stageAgeDays;
-  const stageRed =
-    stages.some((stage) => RED_STAGES.has(stage)) ||
-    (typeof days === "number" && days >= CRITICAL_DAYS);
   const followUp = item.nextFollowUpAt
     ? describeFollowUp(item.nextFollowUpAt, formatCalendarDay)
     : null;
-  const openNotes = item.openActionItems ?? 0;
 
   return (
     <span className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-xs text-gray-500 dark:text-gray-400">
@@ -52,58 +70,24 @@ const StatusLine: FC<{ item: InboxItem }> = ({ item }) => {
       />
       <span
         title={stages.map((stage) => ATTENTION_META[stage].description).join(" ")}
-        className={cn(
-          "font-medium",
-          stageRed ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-200"
-        )}
+        className="text-gray-700 dark:text-gray-200"
       >
         {stages.map((stage) => ATTENTION_META[stage].label).join(" and ")}
-        {typeof days === "number" && (
-          <span title={meta.clockDescription} className="font-normal tabular-nums">
-            {" "}
-            {days} {pluralize("day", days)}
-          </span>
-        )}
       </span>
-      {followUp && (
-        <>
-          <span aria-hidden="true">·</span>
-          <span
-            title={`Next follow-up ${followUp.label}`}
-            className={cn(followUp.overdue && "font-medium text-red-600 dark:text-red-400")}
-          >
-            {followUp.overdue ? "follow-up overdue" : `follow-up ${followUp.shortLabel}`}
-          </span>
-        </>
-      )}
-      {!followUp && openNotes === 0 && (
-        <>
-          <span aria-hidden="true">·</span>
-          <span>no follow-up yet</span>
-        </>
-      )}
-      {openNotes > 0 && (
-        <>
-          <span aria-hidden="true">·</span>
-          <span title="Follow-up notes logged by admins that are not marked done">
-            {openNotes} open {pluralize("note", openNotes)}
-          </span>
-        </>
+      <span aria-hidden="true">·</span>
+      {followUp ? (
+        <span
+          title={`Next follow-up ${followUp.label}`}
+          className={cn(followUp.overdue && "font-medium text-red-600 dark:text-red-400")}
+        >
+          {followUp.overdue ? "follow-up overdue" : `follow up ${followUp.shortLabel}`}
+        </span>
+      ) : (
+        <span>no follow-up yet</span>
       )}
     </span>
   );
 };
-
-/**
- * Who and where: the project for a milestone, the applicant for an
- * application, then the program when it varies across the visible rows.
- */
-function provenance(item: InboxItem, hideSubtitle: boolean): string | null {
-  const primary = item.kind === "milestone" ? item.project : item.who;
-  const secondary = !hideSubtitle ? item.subtitle : undefined;
-  const parts = [primary, secondary].filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : null;
-}
 
 /** Submitted + last-updated line for reviewer-scoped application rows. */
 const ApplicationDates: FC<{ item: InboxItem }> = ({ item }) => {
@@ -134,12 +118,11 @@ interface InboxListItemProps {
 /**
  * Master-list row in the Reviewer Inbox.
  *
- * An admin row is the title with its provenance under it, then one sentence
- * of status. No glyphs, no chips, no score: the kind is implied by the title
- * and the group, the stage is said in words, and colour appears only where a
- * date was missed. Rows are separated by hairlines rather than drawn as
- * cards. Purely presentational — selection state and handling are driven by
- * props.
+ * An admin row reads like a contact card: who (project or applicant) in bold,
+ * what underneath, the clock and the program on the right, and one line of
+ * status. No chips, no counts, no score. Rows are separated by hairlines
+ * rather than drawn as cards. Purely presentational — selection state and
+ * handling are driven by props.
  */
 const InboxListItemComponent: FC<InboxListItemProps> = ({
   item,
@@ -149,7 +132,8 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({
   hideSubtitle = false,
 }) => {
   const isAdminRow = Boolean(item.attentionReason);
-  const where = provenance(item, hideSubtitle);
+  const { primary, secondary } = headline(item);
+  const program = hideSubtitle ? null : shortProgram(item.subtitle);
 
   return (
     <Button
@@ -171,20 +155,29 @@ const InboxListItemComponent: FC<InboxListItemProps> = ({
         </span>
       )}
 
-      <span
-        className={cn(
-          "line-clamp-2 block text-sm font-semibold leading-snug",
-          selected ? "text-gray-950 dark:text-white" : "text-gray-900 dark:text-gray-100"
-        )}
-      >
-        {item.title}
-      </span>
-
-      {where && (
-        <span className="mt-0.5 block truncate text-xs text-gray-500 dark:text-gray-400">
-          {where}
+      <span className="flex items-start gap-3">
+        <span className="min-w-0 flex-1">
+          <span
+            className={cn(
+              "line-clamp-1 block text-sm font-semibold leading-snug",
+              selected ? "text-gray-950 dark:text-white" : "text-gray-900 dark:text-gray-100"
+            )}
+          >
+            {primary}
+          </span>
+          {secondary && (
+            <span className="mt-0.5 block truncate text-sm text-gray-600 dark:text-gray-300">
+              {secondary}
+            </span>
+          )}
         </span>
-      )}
+        {isAdminRow && (
+          <span className="flex shrink-0 flex-col items-end gap-0.5">
+            <Clock item={item} />
+            {program && <span className="text-xs text-gray-400 dark:text-zinc-500">{program}</span>}
+          </span>
+        )}
+      </span>
 
       {isAdminRow ? (
         <StatusLine item={item} />
