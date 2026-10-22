@@ -38,6 +38,7 @@ import { InboxProgramFilter } from "./InboxProgramFilter";
 import { InboxProjectFilter } from "./InboxProjectFilter";
 import { InboxSortControl } from "./InboxSortControl";
 import { InboxViewTabs } from "./InboxViewTabs";
+import { subscribeOpenNote } from "./noteNavigation";
 import { BUCKET_RANK } from "./statusToBucket";
 import type { InboxItem } from "./types";
 import { useInboxFeed } from "./useInboxFeed";
@@ -45,6 +46,8 @@ import { useInboxFeed } from "./useInboxFeed";
 const INBOX_PAGE_SIZE = 25;
 
 const HASH_PREFIX = "#review-";
+/** How far "open this note" will page through the queue looking for its item. */
+const FIND_LIMIT_MAX = 500;
 
 function getSelectedIdFromHash(): string | null {
   const hash = typeof window === "undefined" ? "" : window.location.hash;
@@ -291,6 +294,33 @@ export function ReviewerInboxPage({
     setAttentionFilter(null);
     resetToNewList();
   }, [setKindParam, setProgramId, setProjectUid, setPendingParam, resetToNewList]);
+
+  // Following a note mention: show the whole queue again, select the target
+  // item, and keep loading pages until it is in the list.
+  const findPending = useRef(false);
+  useEffect(
+    () =>
+      subscribeOpenNote(({ itemId }) => {
+        if (selectedIdRef.current === itemId) return;
+        findPending.current = true;
+        void setViewParam(null);
+        handleClearFilters();
+        selectItem(itemId);
+      }),
+    [setViewParam, handleClearFilters, selectItem]
+  );
+  useEffect(() => {
+    if (!findPending.current || selectedId == null || isFetching) return;
+    if (items.some((item) => item.id === selectedId)) {
+      findPending.current = false;
+      return;
+    }
+    if (totalCount != null && items.length < totalCount && limit < FIND_LIMIT_MAX) {
+      setLimit((current) => current + INBOX_PAGE_SIZE);
+      return;
+    }
+    findPending.current = false;
+  }, [selectedId, items, isFetching, totalCount, limit]);
 
   const handleSortChange = useCallback(
     (value: ReviewerInboxSort) => {

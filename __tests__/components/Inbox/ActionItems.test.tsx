@@ -3,6 +3,12 @@ import type { IMilestoneActionItem } from "@/types/funding-platform";
 
 const mockUseActionItems = vi.fn();
 
+const mockUseCommunityActionItems = vi.fn(() => ({ data: undefined, isLoading: false }));
+
+vi.mock("@/hooks/useCommunityActionItems", () => ({
+  useCommunityActionItems: (...args: unknown[]) => mockUseCommunityActionItems(...args),
+}));
+
 vi.mock("@/hooks/useActionItems", () => ({
   useActionItems: (...args: unknown[]) => mockUseActionItems(...args),
 }));
