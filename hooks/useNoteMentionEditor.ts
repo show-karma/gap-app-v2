@@ -2,14 +2,14 @@
 
 import { type RefObject, useCallback, useState } from "react";
 import { getCaretCoordinates } from "@/utilities/getCaretCoordinates";
-import { insertNoteMention, type NoteMention } from "@/utilities/noteMentions";
+import { insertNoteMention } from "@/utilities/noteMentions";
 
 export interface NoteMentionCaret {
   top: number;
   left: number;
 }
 
-const DROPDOWN_WIDTH = 320;
+const DROPDOWN_WIDTH = 640;
 
 /**
  * "@" typeahead for a plain textarea. Tracks whether a mention is being typed,
@@ -66,10 +66,10 @@ export function useNoteMentionEditor(
   );
 
   const pick = useCallback(
-    (mention: Omit<NoteMention, "raw">, content: string): string => {
+    (label: string, content: string): string => {
       const cursor = textareaRef.current?.selectionStart ?? content.length;
       close();
-      return insertNoteMention(content, cursor, mention);
+      return insertNoteMention(content, cursor, label);
     },
     [textareaRef, close]
   );
@@ -104,6 +104,7 @@ export function useNoteMentionEditor(
     isOpen,
     filterText,
     selectedIndex,
+    setSelectedIndex,
     caret,
     handleContentChange,
     handleKeyDown,

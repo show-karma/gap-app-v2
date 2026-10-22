@@ -52,18 +52,46 @@ export function buildNoteMentionToken(mention: Omit<NoteMention, "raw">): string
   return `@[${label}](note:${mention.noteId}/${mention.itemId})`;
 }
 
+/** What a mention looks like while the note is being written: "@Plumbline · M2: …". */
+export function noteMentionDisplay(label: string): string {
+  return `@${label}`;
+}
+
 /**
  * Replaces the "@filter" the admin was typing (from the last "@" before the
- * cursor up to the cursor) with the token, followed by a space.
+ * cursor up to the cursor) with the mention's display text, followed by a
+ * space. The token is only produced when the note is saved.
  */
-export function insertNoteMention(
-  content: string,
-  cursorPosition: number,
-  mention: Omit<NoteMention, "raw">
-): string {
+export function insertNoteMention(content: string, cursorPosition: number, label: string): string {
   const atIndex = content.slice(0, cursorPosition).lastIndexOf("@");
   if (atIndex === -1) return content;
-  return `${content.slice(0, atIndex)}${buildNoteMentionToken(mention)} ${content.slice(cursorPosition)}`;
+  return `${content.slice(0, atIndex)}${noteMentionDisplay(label)} ${content.slice(cursorPosition)}`;
+}
+
+/** Stored content → what the textarea shows: every token becomes "@label". */
+export function toDisplayContent(content: string): string {
+  return splitNoteMentions(content)
+    .map((segment) =>
+      segment.type === "text" ? segment.text : noteMentionDisplay(segment.mention.label)
+    )
+    .join("");
+}
+
+/**
+ * Textarea text → stored content: every "@label" the admin picked becomes
+ * its token again. Longest labels first, so a label that contains another
+ * is never split. Text that merely looks like a mention stays text.
+ */
+export function fromDisplayContent(
+  display: string,
+  known: Iterable<Omit<NoteMention, "raw">>
+): string {
+  const mentions = [...known].sort((a, b) => b.label.length - a.label.length);
+  let content = display;
+  for (const mention of mentions) {
+    content = content.split(noteMentionDisplay(mention.label)).join(buildNoteMentionToken(mention));
+  }
+  return content;
 }
 
 /** First line of the note, trimmed to a readable length. */

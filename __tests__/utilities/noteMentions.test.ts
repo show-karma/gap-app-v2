@@ -1,12 +1,14 @@
 import type { ICommunityActionItem } from "@/types/funding-platform";
 import {
   buildNoteMentionToken,
+  fromDisplayContent,
   insertNoteMention,
   matchesNoteFilter,
   noteMentionFromNote,
   noteSnippet,
   parseNoteMentions,
   splitNoteMentions,
+  toDisplayContent,
 } from "@/utilities/noteMentions";
 
 function makeNote(overrides: Partial<ICommunityActionItem> = {}): ICommunityActionItem {
@@ -62,13 +64,27 @@ describe("noteMentions", () => {
     ]);
   });
 
-  it("should_replace_the_typed_at_filter_with_the_token", () => {
+  it("should_replace_the_typed_at_filter_with_the_display_text", () => {
     const content = "Same as @plum and more";
     const cursor = "Same as @plum".length;
 
-    const next = insertNoteMention(content, cursor, { label: "L", noteId: "n1", itemId: "x" });
+    expect(insertNoteMention(content, cursor, "Plumbline · M2: hi")).toBe(
+      "Same as @Plumbline · M2: hi  and more"
+    );
+  });
 
-    expect(next).toBe("Same as @[L](note:n1/x)  and more");
+  it("should_show_tokens_as_labels_and_map_known_labels_back", () => {
+    const mention = { label: "Plumbline · M2: hi", noteId: "n1", itemId: "x" };
+    const stored = `see ${buildNoteMentionToken(mention)} now`;
+
+    const display = toDisplayContent(stored);
+
+    expect(display).toBe("see @Plumbline · M2: hi now");
+    expect(fromDisplayContent(display, [mention])).toBe(stored);
+  });
+
+  it("should_leave_unknown_at_text_alone_when_mapping_back", () => {
+    expect(fromDisplayContent("ping @erin", [])).toBe("ping @erin");
   });
 
   it("should_build_the_label_from_where_the_note_lives_and_its_first_line", () => {

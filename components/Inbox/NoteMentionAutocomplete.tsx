@@ -1,6 +1,6 @@
 "use client";
 
-import React, { type FC, useMemo } from "react";
+import React, { type FC } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import type { NoteMentionCaret } from "@/hooks/useNoteMentionEditor";
@@ -18,6 +18,8 @@ interface NoteMentionAutocompleteProps {
   caret: NoteMentionCaret | null;
   options: ICommunityActionItem[];
   isLoading: boolean;
+  /** Mouse over a row moves the highlight, so the preview follows the pointer too. */
+  onHighlight: (index: number) => void;
   onSelect: (note: ICommunityActionItem) => void;
 }
 
@@ -36,6 +38,21 @@ export function filterNoteMentionOptions(
     .slice(0, NOTE_MENTION_MAX_OPTIONS);
 }
 
+const Preview: FC<{ note: ICommunityActionItem }> = ({ note }) => (
+  <div className="flex min-h-0 flex-col gap-1 px-3 py-2.5" aria-live="polite">
+    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+      {noteLocation(note)}
+    </span>
+    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+      {note.createdByName ? `${note.createdByName} · ` : ""}
+      {formatDate(note.createdAt)} · {note.completedAt ? "done" : "open"}
+    </span>
+    <p className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+      {note.content}
+    </p>
+  </div>
+);
+
 const NoteMentionAutocompleteComponent: FC<NoteMentionAutocompleteProps> = ({
   isOpen,
   filterText,
@@ -43,38 +60,43 @@ const NoteMentionAutocompleteComponent: FC<NoteMentionAutocompleteProps> = ({
   caret,
   options,
   isLoading,
+  onHighlight,
   onSelect,
 }) => {
-  const empty = useMemo(() => !isLoading && options.length === 0, [isLoading, options.length]);
   if (!isOpen) return null;
+  const highlighted = options[selectedIndex] ?? options[0];
 
   return (
     <div
-      role="listbox"
-      aria-label="Notes to mention"
-      className="absolute z-50 w-80 max-w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+      className="absolute z-50 w-[40rem] max-w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
       style={caret ? { top: caret.top, left: caret.left } : { top: "100%", left: 0 }}
     >
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
           <Spinner className="h-4 w-4" />
         </div>
-      ) : empty ? (
+      ) : options.length === 0 ? (
         <p className="px-3 py-3 text-sm text-gray-500 dark:text-gray-400">
           {filterText ? `No notes match "${filterText}".` : "No other notes yet."}
         </p>
       ) : (
-        <ul className="m-0 max-h-72 list-none overflow-y-auto p-1">
-          {options.map((note, index) => {
-            const active = index === selectedIndex;
-            return (
-              <li key={note.id}>
+        <div className="grid grid-cols-2">
+          <div
+            role="listbox"
+            aria-label="Notes to mention"
+            className="max-h-72 overflow-y-auto border-r border-gray-200 p-1 dark:border-zinc-700"
+          >
+            {options.map((note, index) => {
+              const active = index === selectedIndex;
+              return (
                 <Button
+                  key={note.id}
                   type="button"
                   variant="ghost"
                   role="option"
                   aria-selected={active}
                   onMouseDown={(event) => event.preventDefault()}
+                  onMouseEnter={() => onHighlight(index)}
                   onClick={() => onSelect(note)}
                   className={cn(
                     "block h-auto w-full whitespace-normal rounded-md px-2 py-1.5 text-left",
@@ -87,14 +109,12 @@ const NoteMentionAutocompleteComponent: FC<NoteMentionAutocompleteProps> = ({
                   <span className="block truncate text-xs text-gray-600 dark:text-gray-300">
                     {noteSnippet(note.content)}
                   </span>
-                  <span className="block text-[11px] text-gray-400 dark:text-zinc-500">
-                    {formatDate(note.createdAt)} · {note.completedAt ? "done" : "open"}
-                  </span>
                 </Button>
-              </li>
-            );
-          })}
-        </ul>
+              );
+            })}
+          </div>
+          {highlighted && <Preview note={highlighted} />}
+        </div>
       )}
     </div>
   );

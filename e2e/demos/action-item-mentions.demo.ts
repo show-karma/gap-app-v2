@@ -89,9 +89,9 @@ test("mention another note and follow the link", async ({ page }) => {
       .first();
     targetLocation = await locationOf(option);
     await option.hover();
-    await pause(page, 600);
+    await pause(page, 2_000);
     await option.click();
-    await pause(page, 1_200);
+    await pause(page, 1_500);
     await saveNote(page);
     await followLink(page);
   });
@@ -107,9 +107,9 @@ test("mention another note and follow the link", async ({ page }) => {
       .filter({ hasNotText: DEMO_MARK })
       .first();
     await option.hover();
-    await pause(page, 600);
+    await pause(page, 2_000);
     await option.click();
-    await pause(page, 1_200);
+    await pause(page, 1_500);
     await saveNote(page);
     await followLink(page);
   });
@@ -130,9 +130,9 @@ test("mention another note and follow the link", async ({ page }) => {
       .filter({ hasNotText: DEMO_MARK })
       .first();
     await option.hover();
-    await pause(page, 600);
+    await pause(page, 2_000);
     await option.click();
-    await pause(page, 1_200);
+    await pause(page, 1_500);
     await saveNote(page);
     await followLink(page);
   });

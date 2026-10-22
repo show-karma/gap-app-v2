@@ -111,6 +111,36 @@ describe("NoteEditor", () => {
     expect(onChange).toHaveBeenLastCalledWith(
       "see @[Plumbline · Milestone 2: Chased by email](note:n1/0xms) "
     );
+    expect(textarea).toHaveValue("see @Plumbline · Milestone 2: Chased by email ");
+  });
+
+  it("should_preview_the_highlighted_note_in_full", () => {
+    render(<Harness notes={notes} onChange={vi.fn()} />);
+    const textarea = screen.getByLabelText("Note") as HTMLTextAreaElement;
+
+    typeInto(textarea, "@");
+    fireEvent.keyDown(textarea, { key: "ArrowDown" });
+
+    expect(screen.getByText("KYB sent", { selector: "p" })).toBeInTheDocument();
+  });
+
+  it("should_keep_a_mention_when_the_admin_edits_text_around_it", () => {
+    const onChange = vi.fn();
+    render(
+      <Harness
+        notes={notes}
+        onChange={onChange}
+        initial="see @[Plumbline · Milestone 2: Chased by email](note:n1/0xms) now"
+      />
+    );
+    const textarea = screen.getByLabelText("Note") as HTMLTextAreaElement;
+    expect(textarea).toHaveValue("see @Plumbline · Milestone 2: Chased by email now");
+
+    typeInto(textarea, "see @Plumbline · Milestone 2: Chased by email now, really");
+
+    expect(onChange).toHaveBeenLastCalledWith(
+      "see @[Plumbline · Milestone 2: Chased by email](note:n1/0xms) now, really"
+    );
   });
 
   it("should_pick_with_the_keyboard", () => {

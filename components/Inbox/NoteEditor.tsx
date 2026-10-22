@@ -1,6 +1,6 @@
 "use client";
 
-import React, { type FC, useCallback, useMemo, useRef } from "react";
+import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
 import {
   filterNoteMentionOptions,
   NoteMentionAutocomplete,
@@ -8,7 +8,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useNoteMentionEditor } from "@/hooks/useNoteMentionEditor";
 import type { ICommunityActionItem } from "@/types/funding-platform";
-import { noteMentionFromNote } from "@/utilities/noteMentions";
+import {
+  fromDisplayContent,
+  type NoteMention,
+  noteMentionFromNote,
+  parseNoteMentions,
+  toDisplayContent,
+} from "@/utilities/noteMentions";
 
 interface NoteEditorProps {
   value: string;
@@ -23,7 +29,13 @@ interface NoteEditorProps {
   "aria-label": string;
 }
 
-/** The note textarea with "@" mentions of other notes. */
+type KnownMention = Omit<NoteMention, "raw">;
+
+/**
+ * The note textarea with "@" mentions of other notes. The parent holds the
+ * stored form (tokens); the textarea shows "@label" instead, and every change
+ * is mapped back through the mentions picked so far.
+ */
 const NoteEditorComponent: FC<NoteEditorProps> = ({
   value,
   onChange,
@@ -37,6 +49,15 @@ const NoteEditorComponent: FC<NoteEditorProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const editor = useNoteMentionEditor(textareaRef, containerRef);
+  const [known, setKnown] = useState<Map<string, KnownMention>>(
+    () => new Map(parseNoteMentions(value).map((mention) => [mention.label, mention]))
+  );
+  const display = useMemo(() => toDisplayContent(value), [value]);
+  const commit = useCallback(
+    (nextDisplay: string, mentions: Map<string, KnownMention> = known) =>
+      onChange(fromDisplayContent(nextDisplay, mentions.values())),
+    [onChange, known]
+  );
 
   const options = useMemo(
     () => filterNoteMentionOptions(mentionOptions, editor.filterText, excludeNoteId),
@@ -47,10 +68,12 @@ const NoteEditorComponent: FC<NoteEditorProps> = ({
     (note: ICommunityActionItem) => {
       const mention = noteMentionFromNote(note);
       if (!mention) return;
-      onChange(editor.pick(mention, value));
+      const nextKnown = new Map(known).set(mention.label, mention);
+      setKnown(nextKnown);
+      commit(editor.pick(mention.label, display), nextKnown);
       textareaRef.current?.focus();
     },
-    [editor, onChange, value]
+    [editor, commit, display, known]
   );
 
   const handleKeyDown = useCallback(
@@ -68,9 +91,9 @@ const NoteEditorComponent: FC<NoteEditorProps> = ({
     <div ref={containerRef} className="relative">
       <Textarea
         ref={textareaRef}
-        value={value}
+        value={display}
         onChange={(event) => {
-          onChange(event.target.value);
+          commit(event.target.value);
           editor.handleContentChange(event.target.value);
         }}
         onKeyDown={handleKeyDown}
@@ -88,6 +111,7 @@ const NoteEditorComponent: FC<NoteEditorProps> = ({
         caret={editor.caret}
         options={options}
         isLoading={isLoadingMentions}
+        onHighlight={editor.setSelectedIndex}
         onSelect={select}
       />
     </div>
