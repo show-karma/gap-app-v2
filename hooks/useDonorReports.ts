@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type CreateReportRequest,
   createResearchReport,
+  donorResearchQueryRetry,
   getResearchReport,
   type ListReportsOptions,
   listResearchReports,
@@ -22,6 +23,7 @@ export function useDonorReports(options: ListReportsOptions = {}) {
   return useQuery<ResearchReportList>({
     queryKey: donorReportsQueryKey(options),
     queryFn: () => listResearchReports(options),
+    retry: donorResearchQueryRetry,
   });
 }
 
@@ -35,6 +37,7 @@ export function useDonorReport(reportId: string | null) {
   return useQuery<ResearchReportDetail>({
     queryKey: donorReportQueryKey(reportId ?? ""),
     queryFn: () => getResearchReport(reportId as string),
+    retry: donorResearchQueryRetry,
     enabled: !!reportId,
     refetchInterval: (query) => {
       const report = query.state.data;

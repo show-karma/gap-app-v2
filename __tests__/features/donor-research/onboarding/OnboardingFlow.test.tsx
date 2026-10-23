@@ -31,6 +31,8 @@ vi.mock("@/services/donor-research.service", () => ({
   fetchCurrentAdvisor: vi.fn(),
   onboardAdvisor: vi.fn(),
   fetchMyCounters: vi.fn(),
+  // Hooks pass this as `retry`; the tests drive failures without backoff.
+  donorResearchQueryRetry: () => false,
 }));
 
 // Controllable Privy bridge so we can simulate a logged-in email/Google

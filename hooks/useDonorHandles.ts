@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type CreateHandleRequest,
   createDonorHandle,
+  donorResearchQueryRetry,
   getDonorHandle,
   type ListHandlesOptions,
   listDonorHandles,
@@ -20,6 +21,7 @@ export function useDonorHandles(options: ListHandlesOptions = {}) {
   return useQuery<DonorHandleList>({
     queryKey: donorHandlesQueryKey(options),
     queryFn: () => listDonorHandles(options),
+    retry: donorResearchQueryRetry,
   });
 }
 
@@ -28,6 +30,7 @@ export function useDonorHandle(handleId: string | null | undefined) {
   return useQuery<DonorHandle>({
     queryKey: donorHandleQueryKey(handleId ?? ""),
     queryFn: () => getDonorHandle(handleId as string),
+    retry: donorResearchQueryRetry,
     enabled: !!handleId,
   });
 }

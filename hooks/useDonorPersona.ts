@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  donorResearchQueryRetry,
   getDonorPersona,
   refineDonorPersona,
   type UpdateDonorPersonaInput,
@@ -25,6 +26,7 @@ export function useDonorPersona(handleId: string | null | undefined) {
   return useQuery<DonorPersona | null>({
     queryKey: donorPersonaQueryKey(handleId ?? ""),
     queryFn: () => getDonorPersona(handleId as string),
+    retry: donorResearchQueryRetry,
     enabled: !!handleId,
     staleTime: PERSONA_STALE_TIME_MS,
   });

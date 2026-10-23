@@ -29,6 +29,8 @@ vi.mock("@/hooks/useDonorHandles", () => ({ useDonorHandles: () => handlesMock()
 const listReportsMock = vi.fn();
 vi.mock("@/services/donor-research.service", () => ({
   listResearchReports: () => listReportsMock(),
+  // Hooks pass this as `retry`; the tests drive failures without backoff.
+  donorResearchQueryRetry: () => false,
 }));
 
 const report = (overrides: Partial<ResearchReportListItem> = {}): ResearchReportListItem =>

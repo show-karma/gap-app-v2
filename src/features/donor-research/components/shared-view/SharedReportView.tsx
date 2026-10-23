@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/Pages/Dashboard/v3/primitives";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
-import { fetchSharedReport } from "@/services/donor-research.service";
+import { fetchSharedReport, isDonorResearchDisabledError } from "@/services/donor-research.service";
 import type { DonorResearchReportStatus, ResearchReportDetail } from "@/types/donor-research";
 import { TokenPageShell } from "../common/TokenPageShell";
 import { ReportBrief } from "../report-brief/ReportBrief";
@@ -57,7 +57,9 @@ const isTerminal = (payload: ResearchReportDetail | null): boolean =>
  */
 export function SharedReportView({ token }: SharedReportViewProps) {
   const [payload, setPayload] = useState<ResearchReportDetail | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // The raw failure (not just its message) so the kill-switch 503 can render
+  // a "paused" state instead of the "link no longer available" one.
+  const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
 
   // KTD14 advisor identity wiring (v1 best-effort).
@@ -126,10 +128,19 @@ export function SharedReportView({ token }: SharedReportViewProps) {
         hasLoaded = true;
         recoveryAttempts = 0;
         setPayload(data);
+        // A recovery poll after a failed first load (e.g. the feature was
+        // paused and is back) must clear the error, or the page stays stuck
+        // on the failure card with a payload it never renders.
+        setError(null);
         // Stop once the report reaches a terminal status — no further
         // updates will land on this unauthenticated endpoint.
         if (isTerminal(data)) stopPolling();
-      } catch {
+      } catch (e) {
+        if (cancelled) return;
+        // Track the latest failure only until something loads, so a paused
+        // feature that comes back as a real error (or vice versa) shows the
+        // right card; after that a failed poll keeps the prior payload.
+        if (!hasLoaded) setError(e);
         noteRecoveryFailure();
       }
     };
@@ -151,7 +162,7 @@ export function SharedReportView({ token }: SharedReportViewProps) {
         if (!isTerminal(data)) startPolling();
       } catch (e) {
         if (cancelled) return;
-        setError((e as Error)?.message || "Couldn't load this research.");
+        setError(e ?? new Error("Couldn't load this research."));
         // Initial load failed without a payload — keep retrying via poll.
         startPolling();
       } finally {
@@ -174,6 +185,19 @@ export function SharedReportView({ token }: SharedReportViewProps) {
           <div className="h-4 w-3/4 animate-pulse rounded-sf-tile bg-sf-skeleton" />
           <div className="h-40 animate-pulse rounded-sf-card bg-sf-skeleton" />
         </div>
+      </TokenPageShell>
+    );
+  }
+
+  if (!payload && isDonorResearchDisabledError(error)) {
+    return (
+      <TokenPageShell maxWidthClassName="max-w-xl">
+        <h1 className="sr-only">Research temporarily unavailable</h1>
+        <EmptyState
+          icon="alert"
+          title="Research temporarily unavailable"
+          body="This research is paused for maintenance. Your link still works — please check back later."
+        />
       </TokenPageShell>
     );
   }

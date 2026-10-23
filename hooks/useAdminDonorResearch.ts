@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { donorResearchQueryRetry } from "@/services/donor-research.service";
 import { type ListAdvisorsOptions, listAdvisors } from "@/services/donor-research-admin.service";
 import type { AdminAdvisorsList } from "@/types/donor-research";
 
@@ -12,5 +13,6 @@ export function useAdminAdvisors(options: ListAdvisorsOptions = {}) {
   return useQuery<AdminAdvisorsList>({
     queryKey: adminAdvisorsQueryKey(options),
     queryFn: () => listAdvisors(options),
+    retry: donorResearchQueryRetry,
   });
 }

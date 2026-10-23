@@ -2,6 +2,7 @@ import type { AdminAdvisorsList } from "@/types/donor-research";
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
+import { isDonorResearchDisabledError } from "./donor-research.service";
 
 /**
  * Staff-only donor-research admin API client. Kept separate from the
@@ -51,6 +52,8 @@ export const listAdvisors = async (
     // TODO(#1775): add zod schema
     data = await api.get<AdminAdvisorsList>(INDEXER.DONOR_RESEARCH.ADMIN_ADVISORS, { params });
   } catch (error) {
+    // Keep the kill-switch 503 typed so the page shows the paused state.
+    if (isDonorResearchDisabledError(error)) throw error;
     throw new Error(httpErrorMessage(error) || "Failed to load advisors");
   }
   if (!data) {

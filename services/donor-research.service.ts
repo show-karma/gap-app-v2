@@ -17,6 +17,7 @@ import type {
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 /**
  * Donor-research API client.
@@ -41,6 +42,17 @@ export function isDonorResearchDisabledError(error: unknown): boolean {
   if (!(error instanceof HttpError) || error.status !== 503) return false;
   const body = error.body as { error?: unknown } | undefined;
   return body?.error === DONOR_RESEARCH_DISABLED_CODE;
+}
+
+/**
+ * React Query `retry` for donor-research queries. The kill-switch 503 is a
+ * deliberate pause, not an upstream blip, so retrying it only delays the
+ * paused UI (and, on the dashboard, holds `isSettled` back for the whole
+ * backoff). Every other failure keeps the app-wide default policy.
+ */
+export function donorResearchQueryRetry(failureCount: number, error: unknown): boolean {
+  if (isDonorResearchDisabledError(error)) return false;
+  return defaultQueryOptions.retry(failureCount, error);
 }
 
 /**

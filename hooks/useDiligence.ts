@@ -10,6 +10,7 @@ import {
   submitDiligenceResponse,
   updateAdvisorEmail,
 } from "@/services/diligence.service";
+import { donorResearchQueryRetry } from "@/services/donor-research.service";
 import type {
   AskQuestionsResponse,
   CandidateDiligenceView,
@@ -68,6 +69,7 @@ export function useDiligenceTemplate(reportId?: string) {
   return useQuery<DiligenceTemplate>({
     queryKey: reportId ? reportDiligenceTemplateQueryKey(reportId) : diligenceTemplateQueryKey,
     queryFn: () => getDiligenceTemplate(reportId),
+    retry: donorResearchQueryRetry,
     staleTime: 60_000,
   });
 }
@@ -120,6 +122,7 @@ export function useCandidateDiligence(
   return useQuery<CandidateDiligenceView>({
     queryKey: candidateDiligenceQueryKey(reportId ?? "", candidateId ?? ""),
     queryFn: () => getCandidateDiligence(reportId as string, candidateId as string),
+    retry: donorResearchQueryRetry,
     enabled: enabled && !!reportId && !!candidateId,
   });
 }
@@ -138,6 +141,7 @@ export function useOutreachPreview(
   return useQuery<OutreachPreview>({
     queryKey: outreachPreviewQueryKey(reportId, candidateId, action),
     queryFn: () => getOutreachPreview(reportId, candidateId, action),
+    retry: donorResearchQueryRetry,
     enabled: enabled && !!reportId && !!candidateId,
     staleTime: 0,
     refetchOnWindowFocus: false,

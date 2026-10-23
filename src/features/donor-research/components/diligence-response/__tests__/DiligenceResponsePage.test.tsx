@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DiligenceResponseContext } from "@/types/diligence";
+import { HttpError } from "@/utilities/api/errors";
 
 const mockUseDiligenceResponseContext = vi.fn();
 
@@ -50,6 +51,32 @@ describe("DiligenceResponsePage", () => {
     expect(screen.getByText("Couldn't load this request")).toBeInTheDocument();
     screen.getByRole("button", { name: "Try again" }).click();
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the paused state (no retry, not 'invalid link') on the kill-switch 503", () => {
+    const error = new HttpError(503, {
+      endpoint: "/v2/donor-research/diligence-response/tok",
+      method: "get",
+      body: {
+        error: "donor_research_disabled",
+        message: "Donor research is temporarily disabled.",
+      },
+    });
+    mockState({ isError: true, error });
+    render(<DiligenceResponsePage token="tok" />);
+    expect(
+      screen.getByRole("heading", { level: 1, name: "This request is temporarily unavailable" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load this request")).not.toBeInTheDocument();
+    expect(screen.queryByText("This link is no longer valid")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the generic error card for a 503 without the kill-switch code", () => {
+    const error = new HttpError(503, { endpoint: "/x", method: "get" });
+    mockState({ isError: true, error });
+    render(<DiligenceResponsePage token="tok" />);
+    expect(screen.getByText("Couldn't load this request")).toBeInTheDocument();
   });
 
   it("renders the generic invalid-link state when data is null, with a document h1", () => {

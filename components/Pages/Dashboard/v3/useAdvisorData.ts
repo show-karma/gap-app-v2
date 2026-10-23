@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 import { useDonorAdvisor } from "@/hooks/useDonorAdvisor";
 import { donorReportsQueryKey } from "@/hooks/useDonorReports";
-import { listResearchReports } from "@/services/donor-research.service";
+import { donorResearchQueryRetry, listResearchReports } from "@/services/donor-research.service";
 import type {
   DonorResearchReportStatus,
   ResearchReportList,
@@ -54,6 +54,7 @@ export function useAdvisorData(authenticated: boolean): AdvisorData {
   const reportsQuery = useQuery<ResearchReportList>({
     queryKey: donorReportsQueryKey({ limit: REPORTS_LIMIT }),
     queryFn: () => listResearchReports({ limit: REPORTS_LIMIT }),
+    retry: donorResearchQueryRetry,
     enabled: isAdvisor,
     // Keep the fetched list fresh so a re-enable (e.g. auth state settling on
     // load) returns cached data instead of refetching, matching the advisor query.

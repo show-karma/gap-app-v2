@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  donorResearchQueryRetry,
   fetchCurrentAdvisor,
   fetchMyCounters,
   type OnboardAdvisorRequest,
@@ -31,6 +32,7 @@ export function useDonorAdvisor(opts: UseDonorAdvisorOptions = {}) {
   return useQuery<DonorAdvisor | null>({
     queryKey: donorAdvisorQueryKey,
     queryFn: fetchCurrentAdvisor,
+    retry: donorResearchQueryRetry,
     staleTime: 5 * 60_000, // advisor row rarely changes
     enabled: opts.enabled !== false,
   });
@@ -46,6 +48,7 @@ export function useDonorCounters(enabled: boolean) {
   return useQuery<DonorResearchCountersSnapshot>({
     queryKey: donorCountersQueryKey,
     queryFn: fetchMyCounters,
+    retry: donorResearchQueryRetry,
     enabled,
     refetchInterval: 60_000,
     staleTime: 30_000,

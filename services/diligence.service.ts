@@ -14,7 +14,11 @@ import type {
 import { api } from "@/utilities/api/client";
 import { HttpError } from "@/utilities/api/errors";
 import { DILIGENCE_ENDPOINTS } from "@/utilities/diligenceEndpoints";
-import { fetchCurrentAdvisor, onboardAdvisor } from "./donor-research.service";
+import {
+  fetchCurrentAdvisor,
+  isDonorResearchDisabledError,
+  onboardAdvisor,
+} from "./donor-research.service";
 
 /**
  * Nonprofit-diligence + advisor-intro API client (DEV-428).
@@ -47,6 +51,17 @@ function httpErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * Error for a READ path. The kill-switch 503 stays the typed `HttpError` so the
+ * page can render the paused state and `donorResearchQueryRetry` can skip it;
+ * anything else keeps the domain-message `Error` callers already expect.
+ * Mutations keep `httpErrorMessage` — their callers toast `error.message`.
+ */
+function readError(error: unknown, fallback: string): Error {
+  if (isDonorResearchDisabledError(error)) return error as Error;
+  return new Error(httpErrorMessage(error) || fallback);
+}
+
 // -- Advisor: diligence template --------------------------------------------
 
 /**
@@ -64,7 +79,7 @@ export const getDiligenceTemplate = async (reportId?: string): Promise<Diligence
     // TODO(#1775): add zod schema
     data = await api.get<DiligenceTemplate>(templateEndpoint(reportId));
   } catch (error) {
-    throw new Error(httpErrorMessage(error) || "Failed to load diligence template");
+    throw readError(error, "Failed to load diligence template");
   }
   if (!data) {
     throw new Error("Failed to load diligence template");
@@ -116,7 +131,7 @@ export const getCandidateDiligence = async (
       DILIGENCE_ENDPOINTS.CANDIDATE(reportId, candidateId)
     );
   } catch (error) {
-    throw new Error(httpErrorMessage(error) || "Failed to load candidate diligence");
+    throw readError(error, "Failed to load candidate diligence");
   }
   if (!data) {
     throw new Error("Failed to load candidate diligence");
@@ -143,7 +158,7 @@ export const getOutreachPreview = async (
       DILIGENCE_ENDPOINTS.OUTREACH_PREVIEW(reportId, candidateId, action)
     );
   } catch (error) {
-    throw new Error(httpErrorMessage(error) || "Failed to load the email preview");
+    throw readError(error, "Failed to load the email preview");
   }
   if (!data) {
     throw new Error("Failed to load the email preview");
@@ -287,7 +302,7 @@ export const fetchDiligenceResponseContext = async (
     if (error instanceof HttpError && (error.status === 404 || error.status === 410)) {
       return null;
     }
-    throw new Error(httpErrorMessage(error) || "Failed to load this diligence request");
+    throw readError(error, "Failed to load this diligence request");
   }
   if (!data) {
     throw new Error("Failed to load this diligence request");

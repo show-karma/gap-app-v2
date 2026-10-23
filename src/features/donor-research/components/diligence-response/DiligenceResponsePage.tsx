@@ -3,6 +3,7 @@
 import { KarmaLogo } from "@/components/Icons/Karma";
 import { EmptyState, ErrorState } from "@/components/Pages/Dashboard/v3/primitives";
 import { useDiligenceResponseContext } from "@/hooks/useDiligence";
+import { isDonorResearchDisabledError } from "@/services/donor-research.service";
 import { TokenPageShell } from "@/src/features/donor-research/components/common/TokenPageShell";
 import { formatDate } from "@/utilities/formatDate";
 import { DiligenceResponseForm } from "./DiligenceResponseForm";
@@ -20,6 +21,7 @@ interface DiligenceResponsePageProps {
  *
  * Three states:
  *   - loading  → skeleton
+ *   - paused   → kill switch on (503 donor_research_disabled): "check back later"
  *   - error    → generic card with a retry button
  *   - data === null (unknown OR expired token, collapsed to one case by the
  *     service) → generic "link no longer valid" card
@@ -29,7 +31,7 @@ interface DiligenceResponsePageProps {
  * cache, so a successful submit re-renders into that state).
  */
 export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
-  const { data, isLoading, isError, refetch } = useDiligenceResponseContext(token);
+  const { data, error, isLoading, isError, refetch } = useDiligenceResponseContext(token);
 
   if (isLoading) {
     return (
@@ -40,6 +42,19 @@ export function DiligenceResponsePage({ token }: DiligenceResponsePageProps) {
           <div className="mt-4 h-32 animate-pulse rounded-sf-tile bg-sf-skeleton" />
           <div className="h-32 animate-pulse rounded-sf-tile bg-sf-skeleton" />
         </div>
+      </Shell>
+    );
+  }
+
+  if (isError && isDonorResearchDisabledError(error)) {
+    return (
+      <Shell>
+        <h1 className="sr-only">This request is temporarily unavailable</h1>
+        <EmptyState
+          icon="alert"
+          title="This request is temporarily unavailable"
+          body="Research requests are paused for maintenance. Your link still works — please check back later."
+        />
       </Shell>
     );
   }
