@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { DonorResearchError } from "@/src/features/donor-research/components/common/DonorResearchError";
+import { HttpError } from "@/utilities/api/errors";
 
 const authState = { authenticated: false, login: vi.fn() };
 
@@ -76,6 +77,20 @@ describe("DonorResearchError", () => {
     rerender(<DonorResearchError error={error} reset={reset} />);
 
     await waitFor(() => expect(reset).toHaveBeenCalledOnce());
+  });
+
+  it("renders the paused screen without alerting when the backend kill switch is on", () => {
+    const error = new HttpError(503, {
+      endpoint: "/v2/donor-research/me",
+      method: "get",
+      body: { error: "donor_research_disabled" },
+    });
+
+    render(<DonorResearchError error={error} reset={vi.fn()} />);
+
+    expect(screen.getByText("Nonprofit research is temporarily unavailable")).toBeVisible();
+    expect(screen.queryByText("Try again")).not.toBeInTheDocument();
+    expect(errorManagerMock).not.toHaveBeenCalled();
   });
 
   it("keeps the retry screen for non-auth failures", () => {
