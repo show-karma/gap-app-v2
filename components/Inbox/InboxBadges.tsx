@@ -54,9 +54,9 @@ const STATUS_TONE: Record<string, Tone> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending review",
+  pending: "Submitted",
   resubmitted: "Resubmitted",
-  under_review: "Under review",
+  under_review: "In review",
   revision_requested: "Revision requested",
   approved: "Approved",
   rejected: "Declined",

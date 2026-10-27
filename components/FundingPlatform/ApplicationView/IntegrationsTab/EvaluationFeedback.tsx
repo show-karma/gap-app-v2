@@ -1,7 +1,7 @@
 "use client";
 
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
-import { type FC, useState } from "react";
+import { type FC, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -48,6 +48,13 @@ function ownFeedback(
   );
 }
 
+function missingStep(verdict: SimocracyFeedbackVerdict | null, hasNote: boolean): string | null {
+  if (verdict === null && !hasNote) return "Choose thumbs up or down and add a note to save.";
+  if (verdict === null) return "Choose thumbs up or down to save.";
+  if (!hasNote) return "Add a note to save.";
+  return null;
+}
+
 export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses: Set<string> }> = ({
   referenceNumber,
   subject,
@@ -75,12 +82,16 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
   const verdict = draftVerdict ?? mine?.verdict ?? null;
   const comment = draftComment ?? mine?.comment ?? "";
 
+  const feedbackHintId = useId();
   const othersFeedback = forSim.filter(
     (entry) => !viewerAddresses.has(entry.authorAddress) || entry !== mine
   );
 
   // A vote without a note tells the Sim nothing, so both go together on Save.
-  const canSave = verdict !== null && comment.trim().length > 0 && !submit.isPending;
+  const hasNote = comment.trim().length > 0;
+  const canSave = verdict !== null && hasNote && !submit.isPending;
+  const started = draftVerdict !== null || draftComment !== null;
+  const missing = missingStep(verdict, hasNote);
   const handleSave = () => {
     if (!verdict || !canSave) return;
     submit.mutate({ simUri, verdict, comment: comment.trim(), revision: currentRevision });
@@ -147,12 +158,19 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
               size="sm"
               onClick={handleSave}
               disabled={!canSave}
-              title={canSave ? undefined : "Pick thumbs up or down and write a note"}
+              aria-describedby={started && missing ? feedbackHintId : undefined}
               className="shrink-0 text-xs"
             >
               Save feedback
             </Button>
           </div>
+          <p
+            id={feedbackHintId}
+            aria-live="polite"
+            className="min-h-4 text-xs text-amber-700 dark:text-amber-400"
+          >
+            {started && missing ? missing : ""}
+          </p>
         </div>
       )}
 

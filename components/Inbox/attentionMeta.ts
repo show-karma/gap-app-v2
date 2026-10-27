@@ -66,8 +66,8 @@ export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
     ...GRAY,
   },
   awaiting_review: {
-    label: "In review",
-    ageSuffix: "in review",
+    label: "Awaiting verification",
+    ageSuffix: "awaiting verification",
     description: "The grantee marked the milestone complete; a reviewer has not verified it yet",
     clockDescription: "Days since the grantee marked it complete",
     ...BRAND,
@@ -87,14 +87,14 @@ export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
     ...PURPLE,
   },
   pending_review: {
-    label: "Pending review",
+    label: "Review not started",
     ageSuffix: "waiting",
     description: "The application was submitted and no reviewer has opened it yet",
     clockDescription: "Days since the application was submitted",
     ...INDIGO,
   },
   under_review: {
-    label: "Under review",
+    label: "Application in review",
     ageSuffix: "in review",
     description: "A reviewer has the application open; a decision is outstanding",
     clockDescription: "Days since the review started",
