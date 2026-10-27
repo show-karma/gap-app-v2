@@ -1,10 +1,10 @@
 "use client";
 
 import { AlertCircle, MessageSquare, RefreshCw } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
+import { useCommentDraft } from "../hooks/use-comment-draft";
 import { usePublicCommenting } from "../hooks/use-public-commenting";
 import { CommentInput } from "./CommentInput";
 import { ConnectToCommentPrompt } from "./ConnectToCommentPrompt";
@@ -39,12 +39,16 @@ export function PublicComments({
     isDeletingComment,
   } = usePublicCommenting({ referenceNumber, communityId, enabled });
 
-  const [commentValue, setCommentValue] = useState("");
+  const {
+    value: commentValue,
+    setValue: setCommentValue,
+    clear: clearDraft,
+  } = useCommentDraft(referenceNumber);
 
   const handleSubmitComment = async () => {
     if (!commentValue.trim()) return;
     await addComment(commentValue);
-    setCommentValue("");
+    clearDraft();
   };
 
   if (isLoading) {
