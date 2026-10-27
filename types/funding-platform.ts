@@ -14,7 +14,7 @@ export interface ApplicationComment {
   id: string;
   applicationId: string;
   authorAddress: string;
-  authorRole: "applicant" | "admin" | "reviewer";
+  authorRole: "applicant" | "admin" | "reviewer" | "sim";
   authorName?: string;
   content: string;
   isDeleted: boolean;
