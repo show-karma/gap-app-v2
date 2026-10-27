@@ -4,7 +4,6 @@ import {
   ChatBubbleLeftIcon,
   CheckIcon,
   PencilIcon,
-  SparklesIcon,
   TrashIcon,
   UserCircleIcon,
   XMarkIcon,
@@ -183,8 +182,6 @@ const CommentItem: FC<CommentItemProps> = ({
         return "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900";
       case "applicant":
         return "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900";
-      case "sim":
-        return "text-primary-700 dark:text-primary-300 bg-primary-100 dark:bg-primary-900/40";
       default:
         return "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700";
     }
@@ -200,9 +197,9 @@ const CommentItem: FC<CommentItemProps> = ({
               getRoleColor(comment.authorRole)
             )}
           >
-            {comment.authorRole === "admin" && <UserCircleIcon className="h-5 w-5" />}
-            {comment.authorRole === "sim" && <SparklesIcon className="h-5 w-5" />}
-            {comment.authorRole !== "admin" && comment.authorRole !== "sim" && (
+            {comment.authorRole === "admin" ? (
+              <UserCircleIcon className="h-5 w-5" />
+            ) : (
               <ChatBubbleLeftIcon className="h-5 w-5" />
             )}
           </span>
@@ -221,7 +218,7 @@ const CommentItem: FC<CommentItemProps> = ({
                     getRoleColor(comment.authorRole)
                   )}
                 >
-                  {comment.authorRole === "sim" ? "AI Sim" : comment.authorRole}
+                  {comment.authorRole}
                 </span>
                 {comment.isDeleted && (
                   <span className="ml-2 text-xs text-red-500 dark:text-red-400">(Deleted)</span>
