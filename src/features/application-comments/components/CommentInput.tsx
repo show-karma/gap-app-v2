@@ -151,7 +151,6 @@ export function CommentInput({
           placeholder={effectivePlaceholder}
           disabled={disabled || isLoading}
           minHeight={100}
-          maxHeight={200}
         />
         {enableMentions && programId && (
           <MentionAutocomplete

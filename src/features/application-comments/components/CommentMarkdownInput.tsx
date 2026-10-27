@@ -1,9 +1,10 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SafeMdEditor } from "@/components/Utilities/SafeMdEditor";
 import { cn } from "@/utilities/tailwind";
+import { useAutoGrowEditor } from "../hooks/use-auto-grow-editor";
 
 interface CommentMarkdownInputProps {
   value: string;
@@ -22,10 +23,12 @@ export function CommentMarkdownInput({
   placeholder = "Add a comment... (Markdown supported)",
   disabled = false,
   minHeight = 80,
-  maxHeight = 200,
+  maxHeight,
 }: CommentMarkdownInputProps) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const height = useAutoGrowEditor(containerRef, { minHeight, maxHeight, enabled: mounted });
 
   useEffect(() => {
     setMounted(true);
@@ -44,6 +47,7 @@ export function CommentMarkdownInput({
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: MdEditor wrapper needs keyDown for Cmd+Enter submit
     <div
+      ref={containerRef}
       className={cn(
         "rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700",
         disabled && "opacity-50 cursor-not-allowed"
@@ -62,7 +66,7 @@ export function CommentMarkdownInput({
           footers={[]}
           toolbars={[]}
           language="en-US"
-          style={{ height: minHeight, minHeight, maxHeight }}
+          style={{ height, minHeight }}
         />
       ) : (
         <div

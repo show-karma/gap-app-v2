@@ -127,7 +127,6 @@ export const CommentItem = React.memo(function CommentItem({
                     placeholder="Edit your comment... (Ctrl+Enter to save)"
                     disabled={isSaving}
                     minHeight={100}
-                    maxHeight={250}
                   />
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSave} isLoading={isSaving}>
