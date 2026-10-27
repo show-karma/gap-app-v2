@@ -4,6 +4,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
+import { isDonorResearchDisabledError } from "@/services/donor-research.service";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { DonorResearchSignInGate } from "./DonorResearchSignInGate";
@@ -27,16 +28,18 @@ export function DonorResearchError({ error, reset }: DonorResearchErrorProps) {
     error.message ?? ""
   );
 
+  const isDisabled = isDonorResearchDisabledError(error);
+
   const { authenticated } = useAuth();
 
   useEffect(() => {
     // Forward unexpected failures to Sentry/observability (errorManager
     // already drops transient network errors). Skip the signed-out case —
     // that's an expected user state, not a defect worth alerting on.
-    if (!isAuthError) {
+    if (!isAuthError && !isDisabled) {
       errorManager("Donor research section failed to load", error, { digest: error.digest });
     }
-  }, [error, isAuthError]);
+  }, [error, isAuthError, isDisabled]);
 
   useEffect(() => {
     // The signed-out screen's only action is to sign in. Once Privy
@@ -56,6 +59,25 @@ export function DonorResearchError({ error, reset }: DonorResearchErrorProps) {
   //  - Everything else: a transient/load failure that a retry can clear.
   if (isAuthError) {
     return <DonorResearchSignInGate />;
+  }
+
+  if (isDisabled) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12">
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+            <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h1 className="text-xl font-semibold text-foreground">
+            Nonprofit research is temporarily unavailable
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            We&apos;ve paused this feature for maintenance. Your reports and donor profiles are safe
+            and will be back when it resumes.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

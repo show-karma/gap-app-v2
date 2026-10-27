@@ -35,6 +35,14 @@ import { INDEXER } from "@/utilities/indexer";
 
 // -- Advisor -----------------------------------------------------------
 
+export const DONOR_RESEARCH_DISABLED_CODE = "donor_research_disabled";
+
+export function isDonorResearchDisabledError(error: unknown): boolean {
+  if (!(error instanceof HttpError) || error.status !== 503) return false;
+  const body = error.body as { error?: unknown } | undefined;
+  return body?.error === DONOR_RESEARCH_DISABLED_CODE;
+}
+
 /**
  * Fetches the current advisor row.
  *
