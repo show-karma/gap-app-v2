@@ -167,10 +167,7 @@ export const EvaluationFeedback: FC<EvaluationFeedbackProps & { viewerAddresses:
           <p
             id={feedbackHintId}
             aria-live="polite"
-            className={cn(
-              "text-xs text-amber-700 dark:text-amber-400",
-              !(started && missing) && "sr-only"
-            )}
+            className="min-h-4 text-xs text-amber-700 dark:text-amber-400"
           >
             {started && missing ? missing : ""}
           </p>

@@ -71,7 +71,7 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
                 {summary.summary}
               </p>
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                AI summary from the timeline and notes · {formatDate(summary.generatedAt)}
+                AI summary from the timeline, notes and comments · {formatDate(summary.generatedAt)}
               </p>
             </>
           ) : (
