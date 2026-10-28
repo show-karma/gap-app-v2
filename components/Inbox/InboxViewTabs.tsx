@@ -1,7 +1,7 @@
 "use client";
 
 import React, { type FC } from "react";
-import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
+import { ATTENTION_META, FOLLOW_UP_FILTER_LABEL } from "@/components/Inbox/attentionMeta";
 import { Button } from "@/components/ui/button";
 import type {
   InboxKindFilter,
@@ -69,7 +69,7 @@ const InboxViewTabsComponent: FC<InboxViewTabsProps> = ({
   ];
   const candidates: View[] = [
     { key: null, label: "All", count: all },
-    { key: "followup_due", label: "Follow-ups due", count: stats.followUpDue ?? 0 },
+    { key: "followup_due", label: FOLLOW_UP_FILTER_LABEL, count: stats.followUpDue ?? 0 },
     ...(kind !== "application" ? milestoneViews : []),
     ...(kind !== "milestone" ? applicationViews : []),
   ];

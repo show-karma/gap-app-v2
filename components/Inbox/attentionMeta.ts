@@ -66,14 +66,14 @@ export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
     ...GRAY,
   },
   awaiting_review: {
-    label: "Milestone review in progress",
+    label: "Milestone awaiting review",
     ageSuffix: "in review",
     description: "The grantee marked the milestone complete; a reviewer has not verified it yet",
     clockDescription: "Days since the grantee marked it complete",
     ...BRAND,
   },
   awaiting_invoice: {
-    label: "Pending invoice",
+    label: "Awaiting invoice",
     ageSuffix: "waiting",
     description: "The milestone is verified and the program requires an invoice, but none was sent",
     clockDescription: "Days since the milestone was verified",
@@ -142,7 +142,7 @@ export const APPLICATION_FILTER_ORDER: ApplicationAttentionReason[] = [
 
 export const FOLLOW_UP_FILTER: InboxQueueFilter = "followup_due";
 
-export const FOLLOW_UP_FILTER_LABEL = "Follow-up due";
+export const FOLLOW_UP_FILTER_LABEL = "Scheduled check-in";
 
 const APPLICATION_REASONS = new Set<string>(APPLICATION_FILTER_ORDER);
 

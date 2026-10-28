@@ -124,7 +124,7 @@ describe("InboxAttentionFilter menu", () => {
   it("omits the follow-up filter when nothing is due", () => {
     render(<InboxAttentionFilter {...baseProps} stats={makeStats({ pastDue: 1 })} />);
 
-    expect(within(openMenu()).queryByText("Follow-up due")).not.toBeInTheDocument();
+    expect(within(openMenu()).queryByText("Scheduled check-in")).not.toBeInTheDocument();
   });
 
   it("offers the follow-up filter when a follow-up is due", () => {
@@ -132,7 +132,7 @@ describe("InboxAttentionFilter menu", () => {
       <InboxAttentionFilter {...baseProps} stats={makeStats({ pastDue: 1, followUpDue: 2 })} />
     );
 
-    expect(within(openMenu()).getByText("Follow-up due")).toBeInTheDocument();
+    expect(within(openMenu()).getByText("Scheduled check-in")).toBeInTheDocument();
   });
 });
 
