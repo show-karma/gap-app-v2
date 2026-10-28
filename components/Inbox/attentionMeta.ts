@@ -73,7 +73,7 @@ export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
     ...BRAND,
   },
   awaiting_invoice: {
-    label: "Invoice due",
+    label: "Pending invoice",
     ageSuffix: "waiting",
     description: "The milestone is verified and the program requires an invoice, but none was sent",
     clockDescription: "Days since the milestone was verified",

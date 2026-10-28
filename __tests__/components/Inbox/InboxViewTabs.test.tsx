@@ -25,7 +25,7 @@ describe("InboxViewTabs", () => {
     expect(screen.getByRole("tab", { name: /Follow-ups due\s*8/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Milestone overdue\s*5/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Pending payment\s*2/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Invoice due\s*4/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Pending invoice\s*4/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /KYB pending\s*20/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Agreement pending\s*7/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /All\s*40/ })).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe("InboxViewTabs", () => {
     render(<InboxViewTabs stats={stats()} value={null} onChange={vi.fn()} kind="milestone" />);
 
     expect(screen.getByRole("tab", { name: /All\s*15/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Invoice due/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Pending invoice/ })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /KYB pending/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /Agreement pending/ })).not.toBeInTheDocument();
   });
@@ -47,7 +47,7 @@ describe("InboxViewTabs", () => {
     expect(screen.getByRole("tab", { name: /KYB pending/ })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /Milestone overdue/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /Pending payment/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: /Invoice due/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /Pending invoice/ })).not.toBeInTheDocument();
   });
 
   it("should_hide_a_view_with_nothing_behind_it", () => {
