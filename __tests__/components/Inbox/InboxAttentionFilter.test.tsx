@@ -178,7 +178,7 @@ describe("InboxAttentionFilter kinds", () => {
     const menu = openMenu();
     expect(within(menu).getByText("Applications")).toBeInTheDocument();
     expect(within(menu).getByText("Milestones")).toBeInTheDocument();
-    expect(within(menu).getByText("Review not started")).toBeInTheDocument();
+    expect(within(menu).getByText("Pending review")).toBeInTheDocument();
     expect(within(menu).getByText("Milestone overdue")).toBeInTheDocument();
   });
 
