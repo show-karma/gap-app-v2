@@ -1,5 +1,6 @@
 import type { ApplicationComment } from "@/types/funding-platform";
 import { api } from "@/utilities/api/client";
+import { HttpError } from "@/utilities/api/errors";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
@@ -32,6 +33,10 @@ export const applicationCommentsService = {
 
       return data.comments;
     } catch (error) {
+      if (error instanceof HttpError && error.status === 403) {
+        const body = error.body as { message?: string } | undefined;
+        throw new Error(body?.message ?? "You do not have access to these comments");
+      }
       console.error("Comment API Error:", error);
       throw error;
     }
