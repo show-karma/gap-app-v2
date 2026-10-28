@@ -17,6 +17,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { Badge } from "@/components/ui/badge";
 import { type EditType, editTypeConfig } from "@/constants/editTypeConfig";
 import { CommentInput } from "@/src/features/application-comments/components/CommentInput";
+import { useCommentDraft } from "@/src/features/application-comments/hooks/use-comment-draft";
 import type {
   ApplicationComment,
   FundingApplicationStatusV2,
@@ -160,7 +161,7 @@ const VersionItem: FC<VersionItemProps> = memo(
 VersionItem.displayName = "VersionItem";
 
 const CommentsTimeline: FC<CommentsTimelineProps> = ({
-  applicationId: _applicationId, // Unused but kept for interface compatibility
+  applicationId,
   application,
   comments = [],
   statusHistory = [],
@@ -179,12 +180,14 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
   referenceNumber,
 }: CommentsTimelineProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
-  const [commentContent, setCommentContent] = useState("");
+  const draft = useCommentDraft(applicationId);
+  const commentContent = draft.value;
   const commentContentRef = useRef(commentContent);
+  commentContentRef.current = commentContent;
 
   const handleCommentChange = (value: string) => {
     commentContentRef.current = value;
-    setCommentContent(value);
+    draft.setValue(value);
   };
 
   // Create field labels mapping from form schema using shared utility
@@ -202,7 +205,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     try {
       await onCommentAdd(commentContentRef.current.trim());
       commentContentRef.current = "";
-      setCommentContent("");
+      draft.clear();
     } catch (error) {
       console.error("Failed to add comment:", error);
     } finally {

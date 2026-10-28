@@ -19,6 +19,7 @@ const ACTIVITY_FILTERS: { key: ActivityFilter; label: string }[] = [
 ];
 
 import { useApplicationComments } from "../hooks/use-application-comments";
+import { useCommentDraft } from "../hooks/use-comment-draft";
 import type { CommentTimelineProps } from "../types";
 import { CommentInput } from "./CommentInput";
 import { CommentItem } from "./CommentItem";
@@ -45,7 +46,11 @@ export function CommentTimeline({
     canViewComments: true,
   });
 
-  const [newComment, setNewComment] = useState("");
+  const {
+    value: newComment,
+    setValue: setNewComment,
+    clear: clearDraft,
+  } = useCommentDraft(applicationId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filter, setFilter] = useState<ActivityFilter>("all");
@@ -74,7 +79,7 @@ export function CommentTimeline({
     setIsSubmitting(true);
     try {
       await addComment(newComment);
-      setNewComment("");
+      clearDraft();
     } finally {
       setIsSubmitting(false);
     }

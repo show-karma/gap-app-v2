@@ -3,6 +3,7 @@
 import { type FC, useRef, useState } from "react";
 import type { PendingScrollProps } from "@/components/FundingPlatform/ApplicationView/usePendingScroll";
 import { CommentInput } from "@/src/features/application-comments/components/CommentInput";
+import { useCommentDraft } from "@/src/features/application-comments/hooks/use-comment-draft";
 import type {
   ApplicationComment,
   FundingApplicationStatusV2,
@@ -52,7 +53,7 @@ export interface DiscussionTabProps extends PendingScrollProps {
  * Displays comments, status changes, and version history in reverse chronological order (newest first).
  */
 export const DiscussionTab: FC<DiscussionTabProps> = ({
-  applicationId: _applicationId,
+  applicationId,
   comments,
   statusHistory = [],
   versionHistory = [],
@@ -72,12 +73,14 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
   onPendingScrollHandled,
 }) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
-  const [commentContent, setCommentContent] = useState("");
+  const draft = useCommentDraft(applicationId);
+  const commentContent = draft.value;
   const commentContentRef = useRef(commentContent);
+  commentContentRef.current = commentContent;
 
   const handleCommentChange = (value: string) => {
     commentContentRef.current = value;
-    setCommentContent(value);
+    draft.setValue(value);
   };
 
   const handleAddComment = async () => {
@@ -85,7 +88,7 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
     try {
       await onCommentAdd(commentContentRef.current.trim());
       commentContentRef.current = "";
-      setCommentContent("");
+      draft.clear();
     } catch (error) {
       console.error("Failed to add comment:", error);
     } finally {
