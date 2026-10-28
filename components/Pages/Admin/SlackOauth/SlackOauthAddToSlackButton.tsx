@@ -30,17 +30,27 @@ export function SlackOauthAddToSlackButton({
   label = "Add to Slack",
   pendingLabel = "Connecting…",
   ariaLabel = "Add Karma to Slack",
+  onStart,
+  isPending: externalPending,
 }: {
   communitySlug: string;
   variant?: "primary" | "compact" | "subtle";
   label?: string;
   pendingLabel?: string;
   ariaLabel?: string;
+  /** Replaces the default bot-install start, e.g. for the per-user connect flow. */
+  onStart?: () => void;
+  isPending?: boolean;
 }) {
-  const { mutate, isPending } = useStartSlackInstall(communitySlug);
+  const install = useStartSlackInstall(communitySlug);
+  const isPending = externalPending ?? install.isPending;
 
   const handleClick = () => {
-    mutate(undefined, {
+    if (onStart) {
+      onStart();
+      return;
+    }
+    install.mutate(undefined, {
       onError: (err) => toast.error(err.message || "Could not start Slack install"),
     });
   };

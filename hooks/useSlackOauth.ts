@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { slackOauthService } from "@/services/slackOauth.service";
-import type { SlackOAuthRegisterWorkspaceInput, SlackOAuthWorkspace } from "@/types/slack-oauth";
+import type {
+  SlackOAuthRegisterWorkspaceInput,
+  SlackOAuthWorkspace,
+  SlackUserConnection,
+} from "@/types/slack-oauth";
 import { slackOauthKeys } from "@/utilities/queryKeys/slackOauth";
 
 /**
@@ -84,5 +88,52 @@ export function useDeleteSlackWorkspace(slug: string | undefined) {
 export function useTestSlackWorkspace(slug: string | undefined) {
   return useMutation({
     mutationFn: (uid: string) => slackOauthService.testWorkspace(requireSlug(slug), uid),
+  });
+}
+
+// ── Per-user connection ───────────────────────────────────────────────
+
+export function useSlackUserConnections(enabled = true) {
+  return useQuery<SlackUserConnection[]>({
+    queryKey: slackOauthKeys.userConnections(),
+    enabled,
+    staleTime: DEFAULT_STALE_TIME_MS,
+    queryFn: () => slackOauthService.getUserConnections(),
+  });
+}
+
+/** Same navigation pattern as `useStartSlackInstall`, for the user's own account. */
+export function useStartSlackUserConnect(slug: string | undefined) {
+  return useMutation<void, Error, void>({
+    mutationFn: async () => {
+      const authorizeUrl = await slackOauthService.getUserAuthorizeUrl(requireSlug(slug));
+      if (typeof window !== "undefined") {
+        window.location.href = authorizeUrl;
+      }
+    },
+  });
+}
+
+export function useDisconnectSlackUser() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, string, { previous?: SlackUserConnection[] }>({
+    mutationFn: (teamId: string) => slackOauthService.disconnectUser(teamId),
+    onMutate: async (teamId) => {
+      const key = slackOauthKeys.userConnections();
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<SlackUserConnection[]>(key);
+      queryClient.setQueryData<SlackUserConnection[]>(key, (current) =>
+        (current ?? []).filter((c) => c.teamId !== teamId)
+      );
+      return { previous };
+    },
+    onError: (_error, _teamId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(slackOauthKeys.userConnections(), context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: slackOauthKeys.userConnections() });
+    },
   });
 }

@@ -40,7 +40,10 @@ export function useSlackInstallResultToast(communitySlug: string | undefined) {
   // and can cause double-toasts. Reading the values into stable strings
   // here means the dep array tracks what actually matters: the URL
   // params themselves.
-  const flag = searchParams?.get("slack_install") ?? null;
+  const installFlag = searchParams?.get("slack_install") ?? null;
+  const userConnectFlag = searchParams?.get("slack_user_connect") ?? null;
+  const flag = installFlag ?? userConnectFlag;
+  const isUserConnect = installFlag === null && userConnectFlag !== null;
   const teamParam = searchParams?.get("team") ?? null;
   const queryString = searchParams?.toString() ?? "";
 
@@ -54,23 +57,33 @@ export function useSlackInstallResultToast(communitySlug: string | undefined) {
 
     handledRef.current = true;
 
+    const noun = isUserConnect ? "Slack connection" : "Slack install";
     switch (flag) {
       case "success":
-        toast.success(teamParam ? `Connected to ${teamParam}` : "Slack workspace connected");
-        if (communitySlug) {
-          queryClient.invalidateQueries({
-            queryKey: slackOauthKeys.workspace(communitySlug),
-          });
+        if (isUserConnect) {
+          toast.success(
+            teamParam
+              ? `Your Slack account is connected to ${teamParam}`
+              : "Your Slack account is connected"
+          );
+          queryClient.invalidateQueries({ queryKey: slackOauthKeys.userConnections() });
+        } else {
+          toast.success(teamParam ? `Connected to ${teamParam}` : "Slack workspace connected");
+          if (communitySlug) {
+            queryClient.invalidateQueries({
+              queryKey: slackOauthKeys.workspace(communitySlug),
+            });
+          }
         }
         break;
       case "denied":
-        toast.error("Slack install was cancelled");
+        toast.error(`${noun} was cancelled`);
         break;
       case "invalid":
-        toast.error("Slack install link was incomplete — please try again");
+        toast.error(`${noun} link was incomplete — please try again`);
         break;
       case "failed":
-        toast.error("Slack install failed. Please try again.");
+        toast.error(`${noun} failed. Please try again.`);
         break;
       default:
         // Unknown flag value — log nothing, just no-op. A regression
@@ -83,6 +96,7 @@ export function useSlackInstallResultToast(communitySlug: string | undefined) {
     // Strip the install-related params; preserve everything else.
     const params = new URLSearchParams(queryString);
     params.delete("slack_install");
+    params.delete("slack_user_connect");
     params.delete("team");
     const remaining = params.toString();
     const url = remaining ? `${window.location.pathname}?${remaining}` : window.location.pathname;
@@ -92,5 +106,5 @@ export function useSlackInstallResultToast(communitySlug: string | undefined) {
     // (singleton from QueryClientProvider). Including either in deps
     // would mean re-running on a no-op identity flip.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flag, teamParam, queryString, communitySlug]);
+  }, [flag, isUserConnect, teamParam, queryString, communitySlug]);
 }
