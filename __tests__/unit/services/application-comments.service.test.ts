@@ -51,10 +51,11 @@ vi.mock("@/utilities/auth/api-client", () => {
   };
 });
 
-// NOW import the service after mocks are configured
 import { applicationCommentsService } from "@/services/application-comments.service";
 // Import the mocked module to get access to the mock function
 import { api } from "@/utilities/api/client";
+// NOW import the service after mocks are configured
+import { HttpError } from "@/utilities/api/errors";
 
 const mockApiGet = api.get as vi.Mock;
 
@@ -152,6 +153,28 @@ describe("applicationCommentsService", () => {
           params: {},
         })
       );
+    });
+  });
+
+  describe("access denied", () => {
+    it("surfaces a 403 as a plain error with the backend message and no console noise", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockApiGet.mockRejectedValueOnce(
+        new HttpError(403, {
+          endpoint: "/v2/applications/app-123/comments",
+          method: "get",
+          body: {
+            error: "Forbidden",
+            message: "Access denied to view comments for application app-123",
+          },
+        })
+      );
+
+      await expect(applicationCommentsService.getComments("app-123")).rejects.toThrow(
+        "Access denied to view comments for application app-123"
+      );
+      expect(consoleError).not.toHaveBeenCalled();
+      consoleError.mockRestore();
     });
   });
 });

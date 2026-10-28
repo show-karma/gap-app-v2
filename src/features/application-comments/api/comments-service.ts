@@ -17,6 +17,11 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
+/** A 403 is the backend's answer, not a failure: the viewer may not see these comments. */
+function isAccessDenied(error: unknown): error is HttpError {
+  return error instanceof HttpError && error.status === 403;
+}
+
 export class CommentsService {
   /**
    * Get comments for an application (authenticated)
@@ -28,6 +33,9 @@ export class CommentsService {
       );
       return data?.comments ?? [];
     } catch (error) {
+      if (isAccessDenied(error)) {
+        throw new Error(toErrorMessage(error));
+      }
       errorManager(`Error fetching comments for application: ${applicationId}`, error);
       return [];
     }
