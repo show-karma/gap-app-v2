@@ -428,7 +428,7 @@ export function ReviewerInboxPage({
           showQueueSummary={!showActionItems}
         />
         {isCommunityAdmin && syncSelectionToHash && (
-          <div className="inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1 dark:bg-zinc-800">
+          <div className="ml-auto inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1 dark:bg-zinc-800">
             <FilterButton
               type="button"
               size="chip"
@@ -464,13 +464,14 @@ export function ReviewerInboxPage({
       </div>
 
       {isCommunityAdmin && !showActionItems && (
-        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-gray-200 dark:border-zinc-700">
+        <div className="flex items-end justify-between gap-x-4 border-b border-gray-200 dark:border-zinc-700">
           <InboxViewTabs
             stats={stats}
             value={pendingActionItems ? null : attentionFilter}
             onChange={handleAttentionChange}
+            kind={queueKind}
           />
-          <div className="flex items-center pb-2">
+          <div className="flex shrink-0 items-center pb-2">
             <InboxFiltersMenu
               activeCount={
                 [queueKind, stageFilterValue, programId, projectUid].filter(Boolean).length

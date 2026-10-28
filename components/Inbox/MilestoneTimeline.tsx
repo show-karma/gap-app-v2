@@ -85,7 +85,7 @@ const DURATION_LABELS: {
   label: string;
 }[] = [
   { key: "toDeliveryDays", label: "To delivery" },
-  { key: "inReviewDays", label: "Verification" },
+  { key: "inReviewDays", label: "In review" },
   { key: "toInvoiceDays", label: "To invoice" },
   { key: "toPaymentDays", label: "To payment" },
 ];

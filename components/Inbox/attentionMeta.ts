@@ -66,14 +66,14 @@ export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
     ...GRAY,
   },
   awaiting_review: {
-    label: "Awaiting verification",
-    ageSuffix: "awaiting verification",
+    label: "Milestone awaiting review",
+    ageSuffix: "in review",
     description: "The grantee marked the milestone complete; a reviewer has not verified it yet",
     clockDescription: "Days since the grantee marked it complete",
     ...BRAND,
   },
   awaiting_invoice: {
-    label: "Invoice due",
+    label: "Awaiting invoice",
     ageSuffix: "waiting",
     description: "The milestone is verified and the program requires an invoice, but none was sent",
     clockDescription: "Days since the milestone was verified",
@@ -87,14 +87,14 @@ export const ATTENTION_META: Record<InboxAttentionReason, AttentionMeta> = {
     ...PURPLE,
   },
   pending_review: {
-    label: "Review not started",
+    label: "Pending review",
     ageSuffix: "waiting",
     description: "The application was submitted and no reviewer has opened it yet",
     clockDescription: "Days since the application was submitted",
     ...INDIGO,
   },
   under_review: {
-    label: "Application in review",
+    label: "Under review",
     ageSuffix: "in review",
     description: "A reviewer has the application open; a decision is outstanding",
     clockDescription: "Days since the review started",
@@ -142,7 +142,7 @@ export const APPLICATION_FILTER_ORDER: ApplicationAttentionReason[] = [
 
 export const FOLLOW_UP_FILTER: InboxQueueFilter = "followup_due";
 
-export const FOLLOW_UP_FILTER_LABEL = "Follow-up due";
+export const FOLLOW_UP_FILTER_LABEL = "Scheduled check-in";
 
 const APPLICATION_REASONS = new Set<string>(APPLICATION_FILTER_ORDER);
 
