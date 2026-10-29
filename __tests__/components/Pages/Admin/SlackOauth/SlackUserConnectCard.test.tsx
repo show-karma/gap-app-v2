@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SlackUserConnectCard } from "@/components/Pages/Admin/SlackOauth/SlackUserConnectCard";
 import type { SlackUserConnection } from "@/types/slack-oauth";
@@ -47,7 +47,7 @@ describe("SlackUserConnectCard", () => {
     vi.clearAllMocks();
     mocks.useStartSlackUserConnect.mockReturnValue({ mutate: start, isPending: false });
     mocks.useStartSlackInstall.mockReturnValue({ mutate: vi.fn(), isPending: false });
-    mocks.useDisconnectSlackUser.mockReturnValue({ mutate: vi.fn() });
+    mocks.useDisconnectSlackUser.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
   });
 
   describe("loading", () => {
@@ -105,6 +105,21 @@ describe("SlackUserConnectCard", () => {
       expect(screen.getByText("Probelab")).toBeInTheDocument();
       expect(screen.getAllByRole("button", { name: /disconnect/i })).toHaveLength(2);
       expect(screen.getByRole("button", { name: "Connect another workspace" })).toBeInTheDocument();
+    });
+
+    it("disables the confirm dialog while the disconnect is pending", () => {
+      setQuery({ data: [createMockConnection()] });
+      mocks.useDisconnectSlackUser.mockReturnValue({ mutateAsync: vi.fn(), isPending: true });
+
+      render(<SlackUserConnectCard communitySlug="karma" />);
+      fireEvent.click(screen.getByRole("button", { name: /disconnect/i }));
+
+      const dialog = screen.getByRole("dialog");
+      expect(
+        within(dialog)
+          .getAllByRole("button")
+          .some((b) => b.hasAttribute("disabled"))
+      ).toBe(true);
     });
   });
 });

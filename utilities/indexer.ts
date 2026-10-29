@@ -803,10 +803,6 @@ export const INDEXER = {
     CONNECTION: (teamId: string) =>
       `/v2/slack-user-oauth/connections/${encodeURIComponent(teamId)}`,
   },
-  FOLLOW_UP_NUDGES: {
-    RUN: (communityIdOrSlug: string, dryRun: boolean) =>
-      `/v2/follow-up-nudges/${encodeURIComponent(communityIdOrSlug)}/run?dryRun=${dryRun}`,
-  },
   KNOWLEDGE_BASE: {
     LIST_SOURCES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,

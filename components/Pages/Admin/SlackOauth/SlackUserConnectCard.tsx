@@ -36,9 +36,7 @@ export function SlackUserConnectCard({ communitySlug }: { communitySlug: string 
     return (
       <Shell>
         <div className="space-y-2 px-5 py-4">
-          <p className="text-sm text-red-600 dark:text-red-400">
-            Failed to load your Slack connection.
-          </p>
+          <p className="text-sm text-destructive">Failed to load your Slack connection.</p>
           <Button
             type="button"
             variant="secondary"
@@ -124,23 +122,17 @@ const ConnectionRow = memo(function ConnectionRow({
 }: {
   connection: SlackUserConnection;
 }) {
-  const { mutate: disconnect } = useDisconnectSlackUser();
+  const { mutateAsync: disconnect, isPending } = useDisconnectSlackUser();
   const [open, setOpen] = useState(false);
 
   const handleConfirm = async () => {
-    await new Promise<void>((resolve) => {
-      disconnect(connection.teamId, {
-        onSuccess: () => {
-          toast.success(`Disconnected from ${connection.teamName}`);
-          setOpen(false);
-          resolve();
-        },
-        onError: (e) => {
-          toast.error(e.message || "Disconnect failed");
-          resolve();
-        },
-      });
-    });
+    try {
+      await disconnect(connection.teamId);
+      toast.success(`Disconnected from ${connection.teamName}`);
+      setOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error && e.message ? e.message : "Disconnect failed");
+    }
   };
 
   return (
@@ -154,7 +146,7 @@ const ConnectionRow = memo(function ConnectionRow({
       <DeleteDialog
         title={`Disconnect your Slack account from ${connection.teamName}?`}
         deleteFunction={handleConfirm}
-        isLoading={false}
+        isLoading={isPending}
         externalIsOpen={open}
         externalSetIsOpen={setOpen}
         buttonElement={{
