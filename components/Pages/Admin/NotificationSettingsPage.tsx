@@ -22,6 +22,7 @@ import type { Community } from "@/types/v2/community";
 import { KARMA_TELEGRAM_BOT_HANDLE } from "@/utilities/enviromentVars";
 import { MESSAGES } from "@/utilities/messages";
 import { SlackOauthProviderCard } from "./SlackOauth/SlackOauthProviderCard";
+import { SlackUserConnectCard } from "./SlackOauth/SlackUserConnectCard";
 
 // Modal-only — defer the bundle until the user opens it.
 const TelegramPairChatModal = dynamic(
@@ -1258,6 +1259,8 @@ function NotificationSettingsPageContent({
         </div>
 
         <SlackOauthProviderCard communitySlug={communitySlug} />
+
+        <SlackUserConnectCard communitySlug={communitySlug} />
       </section>
 
       {/* Reference section */}

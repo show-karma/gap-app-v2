@@ -1,4 +1,8 @@
-import type { SlackOAuthRegisterWorkspaceInput, SlackOAuthWorkspace } from "@/types/slack-oauth";
+import type {
+  SlackOAuthRegisterWorkspaceInput,
+  SlackOAuthWorkspace,
+  SlackUserConnection,
+} from "@/types/slack-oauth";
 import { api } from "@/utilities/api/client";
 import { HttpError, isApiError } from "@/utilities/api/errors";
 import { INDEXER } from "@/utilities/indexer";
@@ -75,5 +79,27 @@ export const slackOauthService = {
       throw new Error("Authorize URL response was empty");
     }
     return data.authorizeUrl;
+  },
+
+  /** Same shape as `getSlackAuthorizeUrl`, for the per-user connect flow. */
+  async getUserAuthorizeUrl(slug: string): Promise<string> {
+    const data = await api.get<{ authorizeUrl: string }>(
+      INDEXER.SLACK_USER_OAUTH.AUTHORIZE_URL(slug)
+    );
+    if (!data?.authorizeUrl) {
+      throw new Error("Authorize URL response was empty");
+    }
+    return data.authorizeUrl;
+  },
+
+  async getUserConnections(): Promise<SlackUserConnection[]> {
+    const data = await api.get<{ connections: SlackUserConnection[] }>(
+      INDEXER.SLACK_USER_OAUTH.CONNECTIONS
+    );
+    return data?.connections ?? [];
+  },
+
+  async disconnectUser(teamId: string): Promise<void> {
+    await api.delete(INDEXER.SLACK_USER_OAUTH.CONNECTION(teamId));
   },
 };

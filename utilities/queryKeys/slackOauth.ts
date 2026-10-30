@@ -13,4 +13,6 @@ export const slackOauthKeys = {
   all: ["slack-oauth"] as const,
 
   workspace: (slug: string | undefined) => ["slack-oauth", "workspace", slug ?? ""] as const,
+
+  userConnections: () => ["slack-oauth", "user-connections"] as const,
 };

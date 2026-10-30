@@ -37,3 +37,15 @@ export interface SlackOAuthRegisterWorkspaceInput {
   botToken: string;
   scopes?: string[];
 }
+
+/**
+ * A user's own Slack authorization, from
+ * `gap-indexer/app/modules/v2/api/controllers/slack-user-connect/mapper`.
+ * The token never leaves the server.
+ */
+export interface SlackUserConnection {
+  teamId: string;
+  teamName: string;
+  slackUserId: string;
+  connectedAt: string;
+}

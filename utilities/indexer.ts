@@ -796,6 +796,13 @@ export const INDEXER = {
     AUTHORIZE_URL: (communityIdOrSlug: string) =>
       `/v2/slack-oauth/authorize-url?communityId=${encodeURIComponent(communityIdOrSlug)}`,
   },
+  SLACK_USER_OAUTH: {
+    AUTHORIZE_URL: (communityIdOrSlug: string) =>
+      `/v2/slack-user-oauth/authorize-url?communityId=${encodeURIComponent(communityIdOrSlug)}`,
+    CONNECTIONS: "/v2/slack-user-oauth/connections",
+    CONNECTION: (teamId: string) =>
+      `/v2/slack-user-oauth/connections/${encodeURIComponent(teamId)}`,
+  },
   KNOWLEDGE_BASE: {
     LIST_SOURCES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,
