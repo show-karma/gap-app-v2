@@ -103,6 +103,7 @@ export function useActionItems(
         programId: null,
         content: input.content,
         followUpAt: input.followUpAt ?? null,
+        autoFollowUp: input.autoFollowUp,
         completedAt: null,
         completedByAddress: null,
         createdByAddress: "",
@@ -137,6 +138,9 @@ export function useActionItems(
             ...(input.content !== undefined && { content: input.content }),
             ...(input.followUpAt !== undefined && {
               followUpAt: input.followUpAt,
+            }),
+            ...(input.autoFollowUp !== undefined && {
+              autoFollowUp: input.autoFollowUp,
             }),
             // Mirror the server's transition rule locally so the checkbox and
             // the "done <date>" label agree instantly. The authoritative

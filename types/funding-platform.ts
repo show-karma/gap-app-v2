@@ -427,6 +427,8 @@ export interface IMilestoneActionItem {
   programId: string | null;
   content: string;
   followUpAt: string | null;
+  /** Opted in to the Slack follow-up nudge sent as the author. */
+  autoFollowUp: boolean;
   /** Stamped server-side when the item is marked done. */
   completedAt: string | null;
   completedByAddress: string | null;

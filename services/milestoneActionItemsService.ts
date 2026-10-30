@@ -92,6 +92,7 @@ export interface CreateMilestoneActionItemInput {
   content: string;
   /** ISO date — required; every action item must be scheduled. */
   followUpAt: string;
+  autoFollowUp: boolean;
 }
 
 export async function createMilestoneActionItem(
@@ -132,6 +133,7 @@ export interface UpdateMilestoneActionItemInput {
   content?: string;
   /** Omit to leave unchanged; null clears the follow-up date. */
   followUpAt?: string | null;
+  autoFollowUp?: boolean;
   /** The server stamps the completion timestamp — never send one. */
   completed?: boolean;
 }

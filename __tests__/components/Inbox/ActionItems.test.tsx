@@ -5,6 +5,16 @@ const mockUseActionItems = vi.fn();
 
 const mockUseCommunityActionItems = vi.fn(() => ({ data: undefined, isLoading: false }));
 
+const slackMocks = vi.hoisted(() => ({
+  useSlackUserConnections: vi.fn(),
+}));
+
+const SLACK_CONNECTED = { isLoading: false, data: [{ teamId: "T1" }] };
+
+vi.mock("@/hooks/useSlackOauth", () => ({
+  useSlackUserConnections: slackMocks.useSlackUserConnections,
+}));
+
 vi.mock("@/hooks/useCommunityActionItems", () => ({
   useCommunityActionItems: (...args: unknown[]) => mockUseCommunityActionItems(...args),
 }));
@@ -43,6 +53,7 @@ function makeItem(overrides: Partial<IMilestoneActionItem> = {}): IMilestoneActi
     programId: "992",
     content: "Emailed the team",
     followUpAt: null,
+    autoFollowUp: false,
     completedAt: null,
     completedByAddress: null,
     createdByAddress: "0xadmin",
@@ -77,6 +88,7 @@ const baseProps = { communityId: "filecoin", target: { kind: "milestone" as cons
 
 beforeEach(() => {
   vi.clearAllMocks();
+  slackMocks.useSlackUserConnections.mockReturnValue(SLACK_CONNECTED);
   setHookState();
 });
 
@@ -171,7 +183,41 @@ describe("ActionItems", () => {
     expect(createItem).toHaveBeenCalledWith({
       content: "Called them",
       followUpAt: "2026-09-25T00:00:00.000Z",
+      autoFollowUp: false,
     });
+  });
+
+  it("opts the note in to the Slack follow-up when the checkbox is ticked", () => {
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByText("Add note"));
+    fireEvent.change(screen.getByLabelText("Action item note"), {
+      target: { value: "Pinged Mahesh" },
+    });
+    fireEvent.change(screen.getByLabelText(/Next follow-up/), {
+      target: { value: "2026-09-25" },
+    });
+    fireEvent.click(screen.getByLabelText("Auto follow-up on Slack"));
+    fireEvent.click(screen.getByText("Save"));
+
+    expect(createItem).toHaveBeenCalledWith({
+      content: "Pinged Mahesh",
+      followUpAt: "2026-09-25T00:00:00.000Z",
+      autoFollowUp: true,
+    });
+  });
+
+  it("disables the Slack opt-in and points to notification settings when Slack is not connected", () => {
+    slackMocks.useSlackUserConnections.mockReturnValue({ isLoading: false, data: [] });
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByText("Add note"));
+
+    expect(screen.getByLabelText("Auto follow-up on Slack")).toBeDisabled();
+    expect(screen.getByRole("link", { name: "Connect your Slack" })).toHaveAttribute(
+      "href",
+      `/community/${baseProps.communityId}/manage/notification-settings`
+    );
   });
 
   it("requires a follow-up date before creating", () => {
@@ -192,6 +238,7 @@ describe("ActionItems", () => {
     expect(createItem).toHaveBeenCalledWith({
       content: "No response",
       followUpAt: "2026-09-25T00:00:00.000Z",
+      autoFollowUp: false,
     });
   });
 
@@ -218,7 +265,11 @@ describe("ActionItems", () => {
 
     expect(updateItem).toHaveBeenCalledWith({
       id: "ai-1",
-      input: { content: "Updated note", followUpAt: "2026-10-01T00:00:00.000Z" },
+      input: {
+        content: "Updated note",
+        followUpAt: "2026-10-01T00:00:00.000Z",
+        autoFollowUp: false,
+      },
     });
   });
 
