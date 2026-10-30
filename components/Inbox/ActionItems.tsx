@@ -1,6 +1,7 @@
 "use client";
 
 import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import pluralize from "pluralize";
 import React, { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -13,9 +14,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { type ActionItemTarget, useActionItems } from "@/hooks/useActionItems";
 import { useCommunityActionItems } from "@/hooks/useCommunityActionItems";
+import { useSlackUserConnections } from "@/hooks/useSlackOauth";
 import type { ICommunityActionItem, IMilestoneActionItem } from "@/types/funding-platform";
 import { describeRelativeDay, isBeforeToday, todayCalendarDay } from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
@@ -35,8 +38,18 @@ function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
   return isBeforeToday(item.followUpAt);
 }
 
+/**
+ * Whether the viewer can opt a note in to the Slack nudge: the DM goes out
+ * from their own Slack account, so it needs their connection, not the bot's.
+ */
+interface SlackAvailability {
+  status: "loading" | "connected" | "disconnected";
+  settingsHref: string;
+}
+
 interface ActionItemRowProps {
   item: IMilestoneActionItem;
+  slack: SlackAvailability;
   mentionOptions: ICommunityActionItem[];
   isLoadingMentions: boolean;
   /** Briefly singled out after a mention elsewhere pointed here. */
@@ -44,14 +57,82 @@ interface ActionItemRowProps {
   /** Lets the section warm the mention source before the editor opens. */
   onStartEdit: () => void;
   onToggle: (item: IMilestoneActionItem) => void;
-  onUpdate: (id: string, input: { content: string; followUpAt: string }) => void;
+  onUpdate: (id: string, input: ActionItemEditInput) => void;
   onDelete: (item: IMilestoneActionItem) => Promise<void>;
   isUpdating: boolean;
   isDeleting: boolean;
 }
 
+interface ActionItemEditInput {
+  content: string;
+  followUpAt: string;
+  autoFollowUp: boolean;
+}
+
+interface AutoFollowUpToggleProps {
+  id: string;
+  checked: boolean;
+  slack: SlackAvailability;
+  onCheckedChange: (checked: boolean) => void;
+}
+
+const AUTO_FOLLOW_UP_LABEL = "Auto follow-up on Slack";
+
+function slackAvailabilityStatus(
+  isLoading: boolean,
+  connections: unknown[] | undefined
+): SlackAvailability["status"] {
+  if (isLoading) return "loading";
+  return connections && connections.length > 0 ? "connected" : "disconnected";
+}
+
+const AutoFollowUpToggle: FC<AutoFollowUpToggleProps> = ({
+  id,
+  checked,
+  slack,
+  onCheckedChange,
+}) => {
+  // A note already opted in can always be opted out, even with Slack gone.
+  const locked = slack.status !== "connected" && !checked;
+  const hintId = `${id}-hint`;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <label
+        htmlFor={id}
+        className={cn(
+          "flex items-center gap-1.5 text-xs",
+          locked
+            ? "cursor-not-allowed text-gray-400 dark:text-zinc-500"
+            : "cursor-pointer text-gray-500 dark:text-gray-400"
+        )}
+      >
+        <Checkbox
+          id={id}
+          checked={checked}
+          disabled={locked}
+          aria-describedby={slack.status === "disconnected" ? hintId : undefined}
+          onCheckedChange={(value) => onCheckedChange(value === true)}
+        />
+        {AUTO_FOLLOW_UP_LABEL}
+      </label>
+      {slack.status === "disconnected" && (
+        <span id={hintId} className="text-xs text-gray-400 dark:text-zinc-500">
+          <Link
+            href={slack.settingsHref}
+            className="underline underline-offset-2 hover:text-gray-600 dark:hover:text-zinc-300"
+          >
+            Connect your Slack
+          </Link>{" "}
+          to enable
+        </span>
+      )}
+    </div>
+  );
+};
+
 const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   item,
+  slack,
   mentionOptions,
   isLoadingMentions,
   highlighted,
@@ -68,22 +149,28 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(item.content);
   const [editFollowUp, setEditFollowUp] = useState(isoToCalendarDay(item.followUpAt));
+  const [editAutoFollowUp, setEditAutoFollowUp] = useState(item.autoFollowUp);
 
   const startEdit = useCallback(() => {
     onStartEdit();
     setEditContent(item.content);
     setEditFollowUp(isoToCalendarDay(item.followUpAt));
+    setEditAutoFollowUp(item.autoFollowUp);
     setIsEditing(true);
-  }, [item.content, item.followUpAt, onStartEdit]);
+  }, [item.content, item.followUpAt, item.autoFollowUp, onStartEdit]);
 
   const cancelEdit = useCallback(() => setIsEditing(false), []);
 
   const saveEdit = useCallback(() => {
     const content = editContent.trim();
     if (!content || !editFollowUp) return;
-    onUpdate(item.id, { content, followUpAt: calendarDayToIso(editFollowUp) });
+    onUpdate(item.id, {
+      content,
+      followUpAt: calendarDayToIso(editFollowUp),
+      autoFollowUp: editAutoFollowUp,
+    });
     setIsEditing(false);
-  }, [editContent, editFollowUp, onUpdate, item.id]);
+  }, [editContent, editFollowUp, editAutoFollowUp, onUpdate, item.id]);
 
   if (isEditing) {
     return (
@@ -110,6 +197,12 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
             value={editFollowUp}
             onChange={(event) => setEditFollowUp(event.target.value)}
             className="h-8 w-auto"
+          />
+          <AutoFollowUpToggle
+            id={`action-item-edit-auto-follow-up-${item.id}`}
+            checked={editAutoFollowUp}
+            slack={slack}
+            onCheckedChange={setEditAutoFollowUp}
           />
           <div className="ml-auto flex gap-2">
             <Button variant="ghost" size="sm" onClick={cancelEdit}>
@@ -172,6 +265,9 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
               {overdue ? "Follow-up overdue" : "Next follow-up"} ·{" "}
               {formatDate(item.followUpAt, "UTC")} ({describeRelativeDay(item.followUpAt)})
             </span>
+          )}
+          {item.autoFollowUp && !done && (
+            <span className="text-gray-500 dark:text-gray-400">{AUTO_FOLLOW_UP_LABEL}</span>
           )}
           {done && item.completedAt && (
             <span className="text-gray-500 dark:text-zinc-400">
@@ -303,13 +399,24 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
     isDeleting,
   } = useActionItems(communityId, target, { enabled });
 
+  const slackConnections = useSlackUserConnections(enabled);
+  const slack = useMemo<SlackAvailability>(
+    () => ({
+      status: slackAvailabilityStatus(slackConnections.isLoading, slackConnections.data),
+      settingsHref: PAGES.ADMIN.NOTIFICATION_SETTINGS(communityId),
+    }),
+    [slackConnections.isLoading, slackConnections.data, communityId]
+  );
+
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState("");
   const [draftFollowUp, setDraftFollowUp] = useState("");
+  const [draftAutoFollowUp, setDraftAutoFollowUp] = useState(false);
 
   const resetDraft = useCallback(() => {
     setDraft("");
     setDraftFollowUp("");
+    setDraftAutoFollowUp(false);
     setIsAdding(false);
   }, []);
 
@@ -320,9 +427,10 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
     createItem({
       content,
       followUpAt: calendarDayToIso(draftFollowUp),
+      autoFollowUp: draftAutoFollowUp,
     });
     resetDraft();
-  }, [draft, draftFollowUp, createItem, resetDraft]);
+  }, [draft, draftFollowUp, draftAutoFollowUp, createItem, resetDraft]);
 
   const handleToggle = useCallback(
     (item: IMilestoneActionItem) => {
@@ -332,7 +440,7 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
   );
 
   const handleUpdate = useCallback(
-    (id: string, input: { content: string; followUpAt: string }) => {
+    (id: string, input: ActionItemEditInput) => {
       updateItem({ id, input });
     },
     [updateItem]
@@ -457,6 +565,12 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
               onChange={(event) => setDraftFollowUp(event.target.value)}
               className="h-8 w-auto"
             />
+            <AutoFollowUpToggle
+              id="action-item-auto-follow-up"
+              checked={draftAutoFollowUp}
+              slack={slack}
+              onCheckedChange={setDraftAutoFollowUp}
+            />
             <div className="ml-auto flex gap-2">
               <Button variant="ghost" size="sm" onClick={resetDraft}>
                 Cancel
@@ -499,6 +613,7 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
               <ActionItemRow
                 key={entry.item.id}
                 item={entry.item}
+                slack={slack}
                 mentionOptions={mentionOptions}
                 isLoadingMentions={mentionSource.isLoading}
                 highlighted={highlightedId === entry.item.id}
