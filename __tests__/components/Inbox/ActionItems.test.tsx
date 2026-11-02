@@ -43,6 +43,7 @@ vi.mock("@/components/DeleteDialog", () => ({
 
 import { ActionItems } from "@/components/Inbox/ActionItems";
 import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
 
 function makeItem(overrides: Partial<IMilestoneActionItem> = {}): IMilestoneActionItem {
   return {
@@ -216,8 +217,26 @@ describe("ActionItems", () => {
     expect(screen.getByLabelText("Auto follow-up on Slack")).toBeDisabled();
     expect(screen.getByRole("link", { name: "Connect your Slack" })).toHaveAttribute(
       "href",
-      `/community/${baseProps.communityId}/manage/notification-settings`
+      PAGES.ADMIN.NOTIFICATION_SETTINGS(baseProps.communityId)
     );
+  });
+
+  it("lets an opted-in note be switched off even when Slack is not connected", () => {
+    slackMocks.useSlackUserConnections.mockReturnValue({ isLoading: false, data: [] });
+    setHookState({ items: [makeItem({ id: "ai-1", autoFollowUp: true })] });
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByLabelText("Edit action item"));
+
+    expect(screen.getByLabelText("Auto follow-up on Slack")).not.toBeDisabled();
+    expect(screen.queryByRole("link", { name: "Connect your Slack" })).not.toBeInTheDocument();
+  });
+
+  it("labels an open note that is opted in to the Slack follow-up", () => {
+    setHookState({ items: [makeItem({ autoFollowUp: true })] });
+    render(<ActionItems {...baseProps} />);
+
+    expect(screen.getByText("Auto follow-up on Slack")).toBeInTheDocument();
   });
 
   it("requires a follow-up date before creating", () => {

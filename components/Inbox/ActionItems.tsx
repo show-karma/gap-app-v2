@@ -1,10 +1,19 @@
 "use client";
 
 import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import pluralize from "pluralize";
 import React, { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import {
+  ActionItemEditForm,
+  type ActionItemEditInput,
+} from "@/components/Inbox/ActionItemEditForm";
+import {
+  AUTO_FOLLOW_UP_LABEL,
+  AutoFollowUpToggle,
+  type SlackAvailability,
+  slackAvailabilityStatus,
+} from "@/components/Inbox/AutoFollowUpToggle";
 import { NoteContent } from "@/components/Inbox/NoteContent";
 import { NoteEditor } from "@/components/Inbox/NoteEditor";
 import { subscribeOpenNote, takePendingNote } from "@/components/Inbox/noteNavigation";
@@ -16,35 +25,21 @@ import { type ActionItemTarget, useActionItems } from "@/hooks/useActionItems";
 import { useCommunityActionItems } from "@/hooks/useCommunityActionItems";
 import { useSlackUserConnections } from "@/hooks/useSlackOauth";
 import type { ICommunityActionItem, IMilestoneActionItem } from "@/types/funding-platform";
-import { describeRelativeDay, isBeforeToday, todayCalendarDay } from "@/utilities/calendarDay";
+import {
+  calendarDayToIso,
+  describeRelativeDay,
+  isBeforeToday,
+  todayCalendarDay,
+} from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
-/** A `type="date"` value (`YYYY-MM-DD`) is a calendar day; the API stores the
- * follow-up as UTC midnight, so convert both ways without shifting the day. */
-function calendarDayToIso(day: string): string {
-  return new Date(`${day}T00:00:00.000Z`).toISOString();
-}
-
-function isoToCalendarDay(iso: string | null): string {
-  return iso ? iso.slice(0, 10) : "";
-}
-
 /** True when an open item's follow-up day falls before the viewer's today. */
 function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
   if (item.completedAt) return false;
   return isBeforeToday(item.followUpAt);
-}
-
-/**
- * Whether the viewer can opt a note in to the Slack nudge: the DM goes out
- * from their own Slack account, so it needs their connection, not the bot's.
- */
-interface SlackAvailability {
-  status: "loading" | "connected" | "disconnected";
-  settingsHref: string;
 }
 
 interface ActionItemRowProps {
@@ -63,73 +58,6 @@ interface ActionItemRowProps {
   isDeleting: boolean;
 }
 
-interface ActionItemEditInput {
-  content: string;
-  followUpAt: string;
-  autoFollowUp: boolean;
-}
-
-interface AutoFollowUpToggleProps {
-  id: string;
-  checked: boolean;
-  slack: SlackAvailability;
-  onCheckedChange: (checked: boolean) => void;
-}
-
-const AUTO_FOLLOW_UP_LABEL = "Auto follow-up on Slack";
-
-function slackAvailabilityStatus(
-  isLoading: boolean,
-  connections: unknown[] | undefined
-): SlackAvailability["status"] {
-  if (isLoading) return "loading";
-  return connections && connections.length > 0 ? "connected" : "disconnected";
-}
-
-const AutoFollowUpToggle: FC<AutoFollowUpToggleProps> = ({
-  id,
-  checked,
-  slack,
-  onCheckedChange,
-}) => {
-  // A note already opted in can always be opted out, even with Slack gone.
-  const locked = slack.status !== "connected" && !checked;
-  const hintId = `${id}-hint`;
-  return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <label
-        htmlFor={id}
-        className={cn(
-          "flex items-center gap-1.5 text-xs",
-          locked
-            ? "cursor-not-allowed text-gray-400 dark:text-zinc-500"
-            : "cursor-pointer text-gray-500 dark:text-gray-400"
-        )}
-      >
-        <Checkbox
-          id={id}
-          checked={checked}
-          disabled={locked}
-          aria-describedby={slack.status === "disconnected" ? hintId : undefined}
-          onCheckedChange={(value) => onCheckedChange(value === true)}
-        />
-        {AUTO_FOLLOW_UP_LABEL}
-      </label>
-      {slack.status === "disconnected" && (
-        <span id={hintId} className="text-xs text-gray-400 dark:text-zinc-500">
-          <Link
-            href={slack.settingsHref}
-            className="underline underline-offset-2 hover:text-gray-600 dark:hover:text-zinc-300"
-          >
-            Connect your Slack
-          </Link>{" "}
-          to enable
-        </span>
-      )}
-    </div>
-  );
-};
-
 const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   item,
   slack,
@@ -147,78 +75,33 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   const overdue = isFollowUpOverdue(item);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(item.content);
-  const [editFollowUp, setEditFollowUp] = useState(isoToCalendarDay(item.followUpAt));
-  const [editAutoFollowUp, setEditAutoFollowUp] = useState(item.autoFollowUp);
 
   const startEdit = useCallback(() => {
     onStartEdit();
-    setEditContent(item.content);
-    setEditFollowUp(isoToCalendarDay(item.followUpAt));
-    setEditAutoFollowUp(item.autoFollowUp);
     setIsEditing(true);
-  }, [item.content, item.followUpAt, item.autoFollowUp, onStartEdit]);
+  }, [onStartEdit]);
 
   const cancelEdit = useCallback(() => setIsEditing(false), []);
 
-  const saveEdit = useCallback(() => {
-    const content = editContent.trim();
-    if (!content || !editFollowUp) return;
-    onUpdate(item.id, {
-      content,
-      followUpAt: calendarDayToIso(editFollowUp),
-      autoFollowUp: editAutoFollowUp,
-    });
-    setIsEditing(false);
-  }, [editContent, editFollowUp, editAutoFollowUp, onUpdate, item.id]);
+  const saveEdit = useCallback(
+    (input: ActionItemEditInput) => {
+      onUpdate(item.id, input);
+      setIsEditing(false);
+    },
+    [onUpdate, item.id]
+  );
 
   if (isEditing) {
     return (
-      <li className="rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-        <NoteEditor
-          value={editContent}
-          onChange={setEditContent}
-          mentionOptions={mentionOptions}
-          isLoadingMentions={isLoadingMentions}
-          excludeNoteId={item.id}
-          aria-label="Action item note"
-        />
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <label
-            htmlFor={`action-item-edit-follow-up-${item.id}`}
-            className="text-xs text-gray-500 dark:text-gray-400"
-          >
-            Next follow-up <span className="text-red-500">*</span>
-          </label>
-          <Input
-            id={`action-item-edit-follow-up-${item.id}`}
-            type="date"
-            required
-            value={editFollowUp}
-            onChange={(event) => setEditFollowUp(event.target.value)}
-            className="h-8 w-auto"
-          />
-          <AutoFollowUpToggle
-            id={`action-item-edit-auto-follow-up-${item.id}`}
-            checked={editAutoFollowUp}
-            slack={slack}
-            onCheckedChange={setEditAutoFollowUp}
-          />
-          <div className="ml-auto flex gap-2">
-            <Button variant="ghost" size="sm" onClick={cancelEdit}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={saveEdit}
-              disabled={!editContent.trim() || !editFollowUp || isUpdating}
-              isLoading={isUpdating}
-            >
-              Save
-            </Button>
-          </div>
-        </div>
-      </li>
+      <ActionItemEditForm
+        item={item}
+        slack={slack}
+        mentionOptions={mentionOptions}
+        isLoadingMentions={isLoadingMentions}
+        isSaving={isUpdating}
+        onCancel={cancelEdit}
+        onSave={saveEdit}
+      />
     );
   }
 

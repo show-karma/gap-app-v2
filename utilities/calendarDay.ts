@@ -57,3 +57,13 @@ export function describeRelativeDay(value: string): string {
   if (delta === -1) return "yesterday";
   return delta > 0 ? `in ${delta} days` : `${-delta} days ago`;
 }
+
+/** A `type="date"` value (`YYYY-MM-DD`) is a calendar day; the API stores it as
+ * UTC midnight, so convert both ways without shifting the day. */
+export function calendarDayToIso(day: string): string {
+  return new Date(`${day}T00:00:00.000Z`).toISOString();
+}
+
+export function isoToCalendarDay(iso: string | null): string {
+  return iso ? iso.slice(0, 10) : "";
+}
