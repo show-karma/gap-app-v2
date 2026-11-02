@@ -1,8 +1,9 @@
 "use client";
 
 import { type FC, useCallback, useState } from "react";
-import { AutoFollowUpToggle, type SlackAvailability } from "@/components/Inbox/AutoFollowUpToggle";
+import { AutoFollowUpToggle } from "@/components/Inbox/AutoFollowUpToggle";
 import { NoteEditor } from "@/components/Inbox/NoteEditor";
+import type { SlackAvailability } from "@/components/Inbox/slackAvailability";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ICommunityActionItem, IMilestoneActionItem } from "@/types/funding-platform";

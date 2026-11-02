@@ -8,15 +8,15 @@ import {
   ActionItemEditForm,
   type ActionItemEditInput,
 } from "@/components/Inbox/ActionItemEditForm";
-import {
-  AUTO_FOLLOW_UP_LABEL,
-  AutoFollowUpToggle,
-  type SlackAvailability,
-  slackAvailabilityStatus,
-} from "@/components/Inbox/AutoFollowUpToggle";
+import { AutoFollowUpToggle } from "@/components/Inbox/AutoFollowUpToggle";
 import { NoteContent } from "@/components/Inbox/NoteContent";
 import { NoteEditor } from "@/components/Inbox/NoteEditor";
 import { subscribeOpenNote, takePendingNote } from "@/components/Inbox/noteNavigation";
+import {
+  AUTO_FOLLOW_UP_LABEL,
+  type SlackAvailability,
+  slackAvailabilityStatus,
+} from "@/components/Inbox/slackAvailability";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
