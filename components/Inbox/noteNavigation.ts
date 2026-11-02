@@ -33,3 +33,25 @@ export function takePendingNote(noteIds: string[]): string | null {
   }
   return null;
 }
+
+/**
+ * A suggested follow-up asks the Activity list to open its editor with the
+ * text and date already in place. Nothing is saved until the admin does.
+ */
+export interface NoteDraftRequest {
+  content: string;
+  /** Calendar day, YYYY-MM-DD. */
+  followUpAt: string;
+}
+
+export const NOTE_DRAFT_EVENT = "inbox:note-draft";
+
+export function requestNoteDraft(request: NoteDraftRequest): void {
+  window.dispatchEvent(new CustomEvent<NoteDraftRequest>(NOTE_DRAFT_EVENT, { detail: request }));
+}
+
+export function subscribeNoteDraft(listener: (request: NoteDraftRequest) => void): () => void {
+  const handler = (event: Event) => listener((event as CustomEvent<NoteDraftRequest>).detail);
+  window.addEventListener(NOTE_DRAFT_EVENT, handler);
+  return () => window.removeEventListener(NOTE_DRAFT_EVENT, handler);
+}

@@ -37,6 +37,7 @@ describe("QueueSummary", () => {
       state({
         summary: {
           summary: "The team has not replied since 1 March.",
+          followUp: null,
           generatedAt: "2024-03-10T12:00:00.000Z",
           cached: true,
         },
@@ -47,6 +48,59 @@ describe("QueueSummary", () => {
 
     expect(screen.getByText("The team has not replied since 1 March.")).toBeInTheDocument();
     expect(screen.getByText(/AI summary from the timeline/)).toBeInTheDocument();
+  });
+
+  it("should_offer_the_suggested_follow_up_to_copy_and_to_log", () => {
+    mockUseQueueSummary.mockReturnValue(
+      state({
+        summary: {
+          summary: "Delivery is still owed.",
+          followUp: {
+            to: "the grantee",
+            message: "Hi, could you share a date for Milestone 3?",
+            note: "Asked the grantee for a delivery date on Milestone 3.",
+            followUpAt: "2024-03-13",
+          },
+          generatedAt: "2024-03-10T12:00:00.000Z",
+          cached: false,
+        },
+      })
+    );
+    const drafts: unknown[] = [];
+    window.addEventListener("inbox:note-draft", (event) =>
+      drafts.push((event as CustomEvent).detail)
+    );
+
+    render(<QueueSummary communityId="filecoin" target={target} />);
+
+    expect(screen.getByText(/Suggested follow-up/)).toBeInTheDocument();
+    expect(screen.getByText(/to the grantee/)).toBeInTheDocument();
+    expect(screen.getByText("Hi, could you share a date for Milestone 3?")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Use as note" }));
+    expect(drafts).toEqual([
+      {
+        content: "Asked the grantee for a delivery date on Milestone 3.",
+        followUpAt: "2024-03-13",
+      },
+    ]);
+  });
+
+  it("should_show_only_the_brief_when_there_is_nothing_to_chase", () => {
+    mockUseQueueSummary.mockReturnValue(
+      state({
+        summary: {
+          summary: "All clear.",
+          followUp: null,
+          generatedAt: "2024-03-10T12:00:00.000Z",
+          cached: false,
+        },
+      })
+    );
+
+    render(<QueueSummary communityId="filecoin" target={target} />);
+
+    expect(screen.queryByText(/Suggested follow-up/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Copy message" })).not.toBeInTheDocument();
   });
 
   it("should_offer_a_retry_on_error", () => {
@@ -63,7 +117,12 @@ describe("QueueSummary", () => {
     const refresh = vi.fn();
     mockUseQueueSummary.mockReturnValue(
       state({
-        summary: { summary: "Old brief.", generatedAt: "2024-03-01T00:00:00.000Z", cached: true },
+        summary: {
+          summary: "Old brief.",
+          followUp: null,
+          generatedAt: "2024-03-01T00:00:00.000Z",
+          cached: true,
+        },
         refresh,
       })
     );

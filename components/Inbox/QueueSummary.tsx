@@ -1,11 +1,19 @@
 "use client";
 
-import { ArrowPathIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  ClipboardDocumentIcon,
+  PencilSquareIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 import React, { type FC, useState } from "react";
+import { requestNoteDraft } from "@/components/Inbox/noteNavigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ActionItemTarget } from "@/hooks/useActionItems";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useQueueSummary } from "@/hooks/useQueueSummary";
+import { calendarDayToIso } from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
@@ -36,6 +44,8 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
     target,
     { enabled: enabled && requested }
   );
+  const [, copy] = useCopyToClipboard();
+  const followUp = summary?.followUp ?? null;
 
   return (
     <section
@@ -73,6 +83,44 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                 AI summary from the timeline, notes and comments · {formatDate(summary.generatedAt)}
               </p>
+              {followUp && (
+                <div className="mt-3 border-t border-purple-200/70 pt-3 dark:border-purple-900/50">
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                    Suggested follow-up
+                    <span className="font-normal text-gray-500 dark:text-gray-400">
+                      {" "}
+                      · to {followUp.to} · check again{" "}
+                      {formatDate(calendarDayToIso(followUp.followUpAt), "UTC")}
+                    </span>
+                  </p>
+                  <blockquote className="mt-1.5 whitespace-pre-wrap rounded-md border border-gray-200 bg-white px-3 py-2 text-sm leading-relaxed text-gray-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-100">
+                    {followUp.message}
+                  </blockquote>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void copy(followUp.message, "Message copied")}
+                    >
+                      <ClipboardDocumentIcon className="h-4 w-4" aria-hidden="true" />
+                      Copy message
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        requestNoteDraft({
+                          content: followUp.note,
+                          followUpAt: followUp.followUpAt,
+                        })
+                      }
+                    >
+                      <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
+                      Use as note
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

@@ -11,7 +11,11 @@ import {
 import { AutoFollowUpToggle } from "@/components/Inbox/AutoFollowUpToggle";
 import { NoteContent } from "@/components/Inbox/NoteContent";
 import { NoteEditor } from "@/components/Inbox/NoteEditor";
-import { subscribeOpenNote, takePendingNote } from "@/components/Inbox/noteNavigation";
+import {
+  subscribeNoteDraft,
+  subscribeOpenNote,
+  takePendingNote,
+} from "@/components/Inbox/noteNavigation";
 import {
   AUTO_FOLLOW_UP_LABEL,
   type SlackAvailability,
@@ -352,6 +356,23 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
     setMentionSourceWanted(true);
     setIsAdding(true);
   }, []);
+
+  // The AI summary offers a follow-up; it lands here as an unsaved draft.
+  useEffect(
+    () =>
+      subscribeNoteDraft((request) => {
+        setDraft(request.content);
+        setDraftFollowUp(request.followUpAt);
+        openEditor();
+        requestAnimationFrame(() =>
+          document
+            .getElementById("action-item-follow-up")
+            ?.closest("section")
+            ?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+        );
+      }),
+    [openEditor]
+  );
   const startEditing = useCallback(() => setMentionSourceWanted(true), []);
 
   // A mention elsewhere asked for one of these notes: scroll to it and single
