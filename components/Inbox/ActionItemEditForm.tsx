@@ -35,7 +35,7 @@ export const ActionItemEditForm: FC<ActionItemEditFormProps> = ({
   onSave,
 }) => {
   const [content, setContent] = useState(item.content);
-  const [followUp, setFollowUp] = useState(isoToCalendarDay(item.followUpAt));
+  const [followUp, setFollowUp] = useState(() => isoToCalendarDay(item.followUpAt));
   const [autoFollowUp, setAutoFollowUp] = useState(item.autoFollowUp);
 
   const save = useCallback(() => {
