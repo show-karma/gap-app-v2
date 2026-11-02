@@ -4,30 +4,37 @@ import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import React, { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import {
+  ActionItemEditForm,
+  type ActionItemEditInput,
+} from "@/components/Inbox/ActionItemEditForm";
+import { AutoFollowUpToggle } from "@/components/Inbox/AutoFollowUpToggle";
 import { NoteContent } from "@/components/Inbox/NoteContent";
 import { NoteEditor } from "@/components/Inbox/NoteEditor";
 import { subscribeOpenNote, takePendingNote } from "@/components/Inbox/noteNavigation";
+import {
+  AUTO_FOLLOW_UP_LABEL,
+  type SlackAvailability,
+  slackAvailabilityStatus,
+} from "@/components/Inbox/slackAvailability";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { type ActionItemTarget, useActionItems } from "@/hooks/useActionItems";
 import { useCommunityActionItems } from "@/hooks/useCommunityActionItems";
+import { useSlackUserConnections } from "@/hooks/useSlackOauth";
 import type { ICommunityActionItem, IMilestoneActionItem } from "@/types/funding-platform";
-import { describeRelativeDay, isBeforeToday, todayCalendarDay } from "@/utilities/calendarDay";
+import {
+  calendarDayToIso,
+  describeRelativeDay,
+  isBeforeToday,
+  todayCalendarDay,
+} from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
-
-/** A `type="date"` value (`YYYY-MM-DD`) is a calendar day; the API stores the
- * follow-up as UTC midnight, so convert both ways without shifting the day. */
-function calendarDayToIso(day: string): string {
-  return new Date(`${day}T00:00:00.000Z`).toISOString();
-}
-
-function isoToCalendarDay(iso: string | null): string {
-  return iso ? iso.slice(0, 10) : "";
-}
 
 /** True when an open item's follow-up day falls before the viewer's today. */
 function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
@@ -37,6 +44,7 @@ function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
 
 interface ActionItemRowProps {
   item: IMilestoneActionItem;
+  slack: SlackAvailability;
   mentionOptions: ICommunityActionItem[];
   isLoadingMentions: boolean;
   /** Briefly singled out after a mention elsewhere pointed here. */
@@ -44,7 +52,7 @@ interface ActionItemRowProps {
   /** Lets the section warm the mention source before the editor opens. */
   onStartEdit: () => void;
   onToggle: (item: IMilestoneActionItem) => void;
-  onUpdate: (id: string, input: { content: string; followUpAt: string }) => void;
+  onUpdate: (id: string, input: ActionItemEditInput) => void;
   onDelete: (item: IMilestoneActionItem) => Promise<void>;
   isUpdating: boolean;
   isDeleting: boolean;
@@ -52,6 +60,7 @@ interface ActionItemRowProps {
 
 const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   item,
+  slack,
   mentionOptions,
   isLoadingMentions,
   highlighted,
@@ -66,66 +75,33 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   const overdue = isFollowUpOverdue(item);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(item.content);
-  const [editFollowUp, setEditFollowUp] = useState(isoToCalendarDay(item.followUpAt));
 
   const startEdit = useCallback(() => {
     onStartEdit();
-    setEditContent(item.content);
-    setEditFollowUp(isoToCalendarDay(item.followUpAt));
     setIsEditing(true);
-  }, [item.content, item.followUpAt, onStartEdit]);
+  }, [onStartEdit]);
 
   const cancelEdit = useCallback(() => setIsEditing(false), []);
 
-  const saveEdit = useCallback(() => {
-    const content = editContent.trim();
-    if (!content || !editFollowUp) return;
-    onUpdate(item.id, { content, followUpAt: calendarDayToIso(editFollowUp) });
-    setIsEditing(false);
-  }, [editContent, editFollowUp, onUpdate, item.id]);
+  const saveEdit = useCallback(
+    (input: ActionItemEditInput) => {
+      onUpdate(item.id, input);
+      setIsEditing(false);
+    },
+    [onUpdate, item.id]
+  );
 
   if (isEditing) {
     return (
-      <li className="rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-        <NoteEditor
-          value={editContent}
-          onChange={setEditContent}
-          mentionOptions={mentionOptions}
-          isLoadingMentions={isLoadingMentions}
-          excludeNoteId={item.id}
-          aria-label="Action item note"
-        />
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <label
-            htmlFor={`action-item-edit-follow-up-${item.id}`}
-            className="text-xs text-gray-500 dark:text-gray-400"
-          >
-            Next follow-up <span className="text-red-500">*</span>
-          </label>
-          <Input
-            id={`action-item-edit-follow-up-${item.id}`}
-            type="date"
-            required
-            value={editFollowUp}
-            onChange={(event) => setEditFollowUp(event.target.value)}
-            className="h-8 w-auto"
-          />
-          <div className="ml-auto flex gap-2">
-            <Button variant="ghost" size="sm" onClick={cancelEdit}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={saveEdit}
-              disabled={!editContent.trim() || !editFollowUp || isUpdating}
-              isLoading={isUpdating}
-            >
-              Save
-            </Button>
-          </div>
-        </div>
-      </li>
+      <ActionItemEditForm
+        item={item}
+        slack={slack}
+        mentionOptions={mentionOptions}
+        isLoadingMentions={isLoadingMentions}
+        isSaving={isUpdating}
+        onCancel={cancelEdit}
+        onSave={saveEdit}
+      />
     );
   }
 
@@ -172,6 +148,9 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
               {overdue ? "Follow-up overdue" : "Next follow-up"} ·{" "}
               {formatDate(item.followUpAt, "UTC")} ({describeRelativeDay(item.followUpAt)})
             </span>
+          )}
+          {item.autoFollowUp && !done && (
+            <span className="text-gray-500 dark:text-gray-400">{AUTO_FOLLOW_UP_LABEL}</span>
           )}
           {done && item.completedAt && (
             <span className="text-gray-500 dark:text-zinc-400">
@@ -303,13 +282,24 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
     isDeleting,
   } = useActionItems(communityId, target, { enabled });
 
+  const slackConnections = useSlackUserConnections(enabled);
+  const slack = useMemo<SlackAvailability>(
+    () => ({
+      status: slackAvailabilityStatus(slackConnections.isLoading, slackConnections.data),
+      settingsHref: PAGES.ADMIN.NOTIFICATION_SETTINGS(communityId),
+    }),
+    [slackConnections.isLoading, slackConnections.data, communityId]
+  );
+
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState("");
   const [draftFollowUp, setDraftFollowUp] = useState("");
+  const [draftAutoFollowUp, setDraftAutoFollowUp] = useState(false);
 
   const resetDraft = useCallback(() => {
     setDraft("");
     setDraftFollowUp("");
+    setDraftAutoFollowUp(false);
     setIsAdding(false);
   }, []);
 
@@ -320,9 +310,10 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
     createItem({
       content,
       followUpAt: calendarDayToIso(draftFollowUp),
+      autoFollowUp: draftAutoFollowUp,
     });
     resetDraft();
-  }, [draft, draftFollowUp, createItem, resetDraft]);
+  }, [draft, draftFollowUp, draftAutoFollowUp, createItem, resetDraft]);
 
   const handleToggle = useCallback(
     (item: IMilestoneActionItem) => {
@@ -332,7 +323,7 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
   );
 
   const handleUpdate = useCallback(
-    (id: string, input: { content: string; followUpAt: string }) => {
+    (id: string, input: ActionItemEditInput) => {
       updateItem({ id, input });
     },
     [updateItem]
@@ -457,6 +448,12 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
               onChange={(event) => setDraftFollowUp(event.target.value)}
               className="h-8 w-auto"
             />
+            <AutoFollowUpToggle
+              id="action-item-auto-follow-up"
+              checked={draftAutoFollowUp}
+              slack={slack}
+              onCheckedChange={setDraftAutoFollowUp}
+            />
             <div className="ml-auto flex gap-2">
               <Button variant="ghost" size="sm" onClick={resetDraft}>
                 Cancel
@@ -499,6 +496,7 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
               <ActionItemRow
                 key={entry.item.id}
                 item={entry.item}
+                slack={slack}
                 mentionOptions={mentionOptions}
                 isLoadingMentions={mentionSource.isLoading}
                 highlighted={highlightedId === entry.item.id}

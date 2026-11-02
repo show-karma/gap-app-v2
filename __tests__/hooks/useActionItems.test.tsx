@@ -26,6 +26,7 @@ const makeItem = (overrides: Partial<IMilestoneActionItem> = {}): IMilestoneActi
   programId: "774",
   content: "Emailed the team",
   followUpAt: null,
+  autoFollowUp: false,
   completedAt: null,
   completedByAddress: null,
   createdByAddress: "0x1",
@@ -59,7 +60,11 @@ describe("useActionItems", () => {
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
 
     act(() => {
-      result.current.createItem({ content: "Pinged on Slack", followUpAt: null });
+      result.current.createItem({
+        content: "Pinged on Slack",
+        followUpAt: null,
+        autoFollowUp: false,
+      });
     });
 
     await waitFor(() => expect(result.current.items).toHaveLength(2));
@@ -89,7 +94,7 @@ describe("useActionItems", () => {
     await waitFor(() => expect(result.current.items).toHaveLength(1));
 
     await act(async () => {
-      result.current.createItem({ content: "will fail", followUpAt: null });
+      result.current.createItem({ content: "will fail", followUpAt: null, autoFollowUp: false });
     });
 
     await waitFor(() => expect(result.current.items).toHaveLength(1));
