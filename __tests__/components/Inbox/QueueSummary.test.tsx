@@ -75,7 +75,10 @@ describe("QueueSummary", () => {
 
     expect(screen.getByText(/Suggested follow-up/)).toBeInTheDocument();
     expect(screen.getByText(/to the grantee/)).toBeInTheDocument();
-    expect(screen.getByText("Hi, could you share a date for Milestone 3?")).toBeInTheDocument();
+    const message = screen.getByRole("textbox", { name: "Suggested message" });
+    expect(message).toHaveValue("Hi, could you share a date for Milestone 3?");
+    fireEvent.change(message, { target: { value: "Hi Yiannis, any date for Milestone 3?" } });
+    expect(message).toHaveValue("Hi Yiannis, any date for Milestone 3?");
     fireEvent.click(screen.getByRole("button", { name: "Use as note" }));
     expect(drafts).toEqual([
       {
