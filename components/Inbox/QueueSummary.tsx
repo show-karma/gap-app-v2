@@ -125,11 +125,12 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
             </div>
           ) : summary ? (
             <>
-              <p className="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
+              <p className="whitespace-pre-line text-sm leading-relaxed text-gray-800 dark:text-gray-100">
                 {summary.summary}
               </p>
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                AI summary from the timeline, notes and comments · {formatDate(summary.generatedAt)}
+                AI summary from the timeline, notes, Sim evaluations and comments ·{" "}
+                {formatDate(summary.generatedAt)}
               </p>
               {followUp && (
                 <FollowUpDraft key={summary.generatedAt} target={target} followUp={followUp} />
