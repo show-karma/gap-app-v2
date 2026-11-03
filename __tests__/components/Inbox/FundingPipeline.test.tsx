@@ -47,7 +47,9 @@ describe("FundingPipeline", () => {
       />
     );
 
-    expect(within(step("Milestone due")).getByText("Due Mar 30, 2026")).toBeInTheDocument();
+    expect(
+      within(step("Milestone due")).getByText("Due Mar 30, 2026 · 77 days late")
+    ).toBeInTheDocument();
     expect(step("Milestone due")).toHaveAttribute("aria-current", "step");
     expect(within(step("Review")).getByText("Not verified")).toBeInTheDocument();
   });
@@ -92,7 +94,9 @@ describe("FundingPipeline", () => {
       />
     );
 
-    expect(within(step("Milestone due")).getByText("Rejected Feb 1, 2026")).toBeInTheDocument();
+    expect(
+      within(step("Milestone due")).getByText("Rejected Feb 1, 2026 · 77 days late")
+    ).toBeInTheDocument();
     expect(step("Milestone due")).toHaveAttribute("aria-current", "step");
     expect(within(step("Review")).getByText("Not verified")).toBeInTheDocument();
   });
@@ -132,5 +136,26 @@ describe("FundingPipeline", () => {
     expect(within(step("Invoice due")).getByText("No invoice")).toBeInTheDocument();
     expect(within(step("Payment due")).getByText("Paid Aug 7, 2026")).toBeInTheDocument();
     expect(screen.queryByRole("listitem", { current: "step" })).not.toBeInTheDocument();
+  });
+
+  it("should_keep_review_open_when_the_invoice_arrived_before_verification", () => {
+    render(
+      <FundingPipeline
+        timeline={timeline({
+          events: [
+            { type: "completed", at: "2026-09-28T00:00:00.000Z" },
+            { type: "invoice_received", at: "2026-09-28T00:00:00.000Z" },
+          ],
+          attentionReason: "awaiting_review",
+        })}
+      />
+    );
+
+    expect(within(step("Milestone due")).getByText("Submitted Sep 28, 2026")).toBeInTheDocument();
+    expect(within(step("Review")).getByText("Not verified")).toBeInTheDocument();
+    expect(step("Review")).toHaveAttribute("aria-current", "step");
+    expect(within(step("Invoice due")).getByText("Received Sep 28, 2026")).toBeInTheDocument();
+    expect(within(step("Payment due")).getByText("Not paid")).toBeInTheDocument();
+    expect(step("Payment due")).not.toHaveAttribute("aria-current");
   });
 });

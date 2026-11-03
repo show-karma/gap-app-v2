@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckIcon } from "@heroicons/react/24/solid";
+import pluralize from "pluralize";
 import React, { type FC } from "react";
 import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
 import type { IMilestoneTimeline, MilestoneTimelineEventType } from "@/types/funding-platform";
@@ -13,6 +14,7 @@ interface Step {
   label: string;
   state: StepState;
   detail: string;
+  late?: boolean;
 }
 
 const STEP_LABELS = ["Milestone due", "Review", "Invoice due", "Payment due"] as const;
@@ -34,12 +36,22 @@ function latestAt(
 
 const day = (iso: string) => formatDate(iso, "UTC");
 
+const CURRENT_STEP_BY_REASON: Partial<
+  Record<NonNullable<IMilestoneTimeline["attentionReason"]>, number>
+> = {
+  past_due: 0,
+  awaiting_review: 1,
+  awaiting_invoice: 2,
+  invoice_unpaid: 3,
+};
+
 /**
  * The four payment steps of a milestone as one row, from the same timeline
- * the activity log reads. A step counts as passed once it or any later step
- * has happened, so a payment recorded without an invoice does not leave the
- * invoice step hanging; the first step not yet passed is current. A rejection
- * after the latest delivery sends the milestone back to the first step.
+ * the activity log reads. A step is passed only by its own event; the one
+ * exception is a payment recorded with no invoice on file, which closes the
+ * invoice step. The current step is the queue stage when the item has one,
+ * otherwise the first step not yet passed. A rejection after the latest
+ * delivery sends the milestone back to the first step.
  */
 function buildSteps(timeline: IMilestoneTimeline): Step[] {
   const completedAt = latestAt(timeline, "completed");
@@ -49,15 +61,17 @@ function buildSteps(timeline: IMilestoneTimeline): Step[] {
   const invoiceReceivedAt = latestAt(timeline, "invoice_received");
   const paidAt = latestAt(timeline, "payment_disbursed");
   const override = timeline.invoice?.paymentStatusOverride;
+  const paidWithoutInvoice = Boolean(paidAt) && !invoiceReceivedAt && !invoiceSentAt;
 
-  const happened = [
+  const done = [
     Boolean(completedAt) && !rejectedAt,
     Boolean(verifiedAt),
-    Boolean(invoiceReceivedAt),
+    Boolean(invoiceReceivedAt) || paidWithoutInvoice,
     Boolean(paidAt),
   ];
-  const done = happened.map((_, index) => happened.slice(index).some(Boolean));
-  const current = done.indexOf(false);
+  const current =
+    (timeline.attentionReason && CURRENT_STEP_BY_REASON[timeline.attentionReason]) ??
+    done.indexOf(false);
 
   const details = [
     rejectedAt
@@ -67,12 +81,12 @@ function buildSteps(timeline: IMilestoneTimeline): Step[] {
         : timeline.dueDate
           ? `Due ${day(timeline.dueDate)}`
           : "No due date",
-    verifiedAt ? `Verified ${day(verifiedAt)}` : done[1] ? "Verified" : "Not verified",
+    verifiedAt ? `Verified ${day(verifiedAt)}` : "Not verified",
     invoiceReceivedAt
       ? `Received ${day(invoiceReceivedAt)}`
       : invoiceSentAt
         ? `Requested ${day(invoiceSentAt)}`
-        : done[2]
+        : paidWithoutInvoice
           ? "No invoice"
           : "Not received",
     paidAt
@@ -82,10 +96,17 @@ function buildSteps(timeline: IMilestoneTimeline): Step[] {
         : "Not paid",
   ];
 
+  const overdue =
+    timeline.attentionReason === "past_due" && typeof timeline.stageAgeDays === "number"
+      ? `${timeline.stageAgeDays} ${pluralize("day", timeline.stageAgeDays)} late`
+      : null;
+  if (overdue && !done[0]) details[0] = `${details[0]} · ${overdue}`;
+
   return STEP_LABELS.map((label, index) => ({
     label,
     detail: details[index],
     state: done[index] ? "done" : index === current ? "current" : "pending",
+    late: index === 0 && Boolean(overdue) && !done[0],
   }));
 }
 
@@ -140,9 +161,11 @@ const FundingPipelineComponent: FC<{ timeline: IMilestoneTimeline }> = ({ timeli
           <span
             className={cn(
               "text-[11px]",
-              step.state === "current"
-                ? "text-gray-900 dark:text-gray-100"
-                : "text-gray-500 dark:text-gray-400"
+              step.late
+                ? "text-red-600 dark:text-red-400"
+                : step.state === "current"
+                  ? "text-gray-900 dark:text-gray-100"
+                  : "text-gray-500 dark:text-gray-400"
             )}
           >
             {step.detail}
