@@ -448,13 +448,10 @@ export interface ICommunityActionItem extends IMilestoneActionItem {
 
 /** Two-sentence AI brief on why a queue item is where it is. */
 export interface IQueueFollowUpSuggestion {
-  /** Who owes the blocking step, e.g. "the grantee". */
   to: string;
-  /** Ready to paste into Slack or email. */
   message: string;
-  /** Internal note recording the nudge. */
   note: string;
-  /** ISO-8601 day to check again. */
+  /** Calendar day, YYYY-MM-DD. */
   followUpAt: string;
 }
 

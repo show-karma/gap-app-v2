@@ -15,7 +15,6 @@ import type { ActionItemTarget } from "@/hooks/useActionItems";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useQueueSummary } from "@/hooks/useQueueSummary";
 import type { IQueueFollowUpSuggestion } from "@/types/funding-platform";
-import { calendarDayToIso } from "@/utilities/calendarDay";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
@@ -27,7 +26,10 @@ interface QueueSummaryProps {
   className?: string;
 }
 
-const FollowUpDraft: FC<{ followUp: IQueueFollowUpSuggestion }> = ({ followUp }) => {
+const FollowUpDraft: FC<{ target: ActionItemTarget; followUp: IQueueFollowUpSuggestion }> = ({
+  target,
+  followUp,
+}) => {
   const [edited, setEdited] = useState<string | null>(null);
   const message = edited ?? followUp.message;
   const [, copy] = useCopyToClipboard();
@@ -37,8 +39,7 @@ const FollowUpDraft: FC<{ followUp: IQueueFollowUpSuggestion }> = ({ followUp })
         Suggested follow-up
         <span className="font-normal text-gray-500 dark:text-gray-400">
           {" "}
-          · to {followUp.to} · check again{" "}
-          {formatDate(calendarDayToIso(followUp.followUpAt), "UTC")}
+          · to {followUp.to} · check again {formatDate(followUp.followUpAt, "UTC")}
         </span>
       </p>
       <Textarea
@@ -62,7 +63,7 @@ const FollowUpDraft: FC<{ followUp: IQueueFollowUpSuggestion }> = ({ followUp })
           variant="outline"
           size="sm"
           onClick={() =>
-            requestNoteDraft({ content: followUp.note, followUpAt: followUp.followUpAt })
+            requestNoteDraft({ target, content: followUp.note, followUpAt: followUp.followUpAt })
           }
         >
           <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
@@ -130,7 +131,9 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                 AI summary from the timeline, notes and comments · {formatDate(summary.generatedAt)}
               </p>
-              {followUp && <FollowUpDraft key={summary.generatedAt} followUp={followUp} />}
+              {followUp && (
+                <FollowUpDraft key={summary.generatedAt} target={target} followUp={followUp} />
+              )}
             </>
           ) : (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

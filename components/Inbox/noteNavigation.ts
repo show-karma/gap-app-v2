@@ -1,3 +1,4 @@
+import type { ActionItemTarget } from "@/hooks/useActionItems";
 /**
  * Following a note mention crosses component boundaries: the chip lives deep
  * in the Activity list, the queue selection lives on the page. A DOM event
@@ -34,11 +35,8 @@ export function takePendingNote(noteIds: string[]): string | null {
   return null;
 }
 
-/**
- * A suggested follow-up asks the Activity list to open its editor with the
- * text and date already in place. Nothing is saved until the admin does.
- */
 export interface NoteDraftRequest {
+  target: ActionItemTarget;
   content: string;
   /** Calendar day, YYYY-MM-DD. */
   followUpAt: string;

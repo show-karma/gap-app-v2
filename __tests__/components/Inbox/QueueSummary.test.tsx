@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { subscribeNoteDraft } from "@/components/Inbox/noteNavigation";
 import { QueueSummary } from "@/components/Inbox/QueueSummary";
 
 const mockUseQueueSummary = vi.fn();
@@ -67,9 +68,7 @@ describe("QueueSummary", () => {
       })
     );
     const drafts: unknown[] = [];
-    window.addEventListener("inbox:note-draft", (event) =>
-      drafts.push((event as CustomEvent).detail)
-    );
+    const unsubscribe = subscribeNoteDraft((request) => drafts.push(request));
 
     render(<QueueSummary communityId="filecoin" target={target} />);
 
@@ -82,10 +81,12 @@ describe("QueueSummary", () => {
     fireEvent.click(screen.getByRole("button", { name: "Use as note" }));
     expect(drafts).toEqual([
       {
+        target,
         content: "Asked the grantee for a delivery date on Milestone 3.",
         followUpAt: "2024-03-13",
       },
     ]);
+    unsubscribe();
   });
 
   it("should_show_only_the_brief_when_there_is_nothing_to_chase", () => {
