@@ -28,7 +28,8 @@ interface QueueSummaryProps {
 }
 
 const FollowUpDraft: FC<{ followUp: IQueueFollowUpSuggestion }> = ({ followUp }) => {
-  const [message, setMessage] = useState(followUp.message);
+  const [edited, setEdited] = useState<string | null>(null);
+  const message = edited ?? followUp.message;
   const [, copy] = useCopyToClipboard();
   return (
     <div className="mt-3 border-t border-purple-200/70 pt-3 dark:border-purple-900/50">
@@ -43,7 +44,7 @@ const FollowUpDraft: FC<{ followUp: IQueueFollowUpSuggestion }> = ({ followUp })
       <Textarea
         aria-label="Suggested message"
         value={message}
-        onChange={(event) => setMessage(event.target.value)}
+        onChange={(event) => setEdited(event.target.value)}
         rows={4}
         className="mt-1.5 min-h-0 resize-y bg-white leading-relaxed text-gray-800 dark:bg-zinc-900 dark:text-gray-100"
       />
