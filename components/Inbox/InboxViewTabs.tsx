@@ -49,6 +49,11 @@ const InboxViewTabsComponent: FC<InboxViewTabsProps> = ({
   const milestoneViews: View[] = [
     { key: "past_due", label: ATTENTION_META.past_due.label, count: stats.pastDue ?? 0 },
     {
+      key: "awaiting_review",
+      label: ATTENTION_META.awaiting_review.label,
+      count: stats.awaitingReview ?? 0,
+    },
+    {
       key: "invoice_unpaid",
       label: ATTENTION_META.invoice_unpaid.label,
       count: stats.invoiceUnpaid ?? 0,

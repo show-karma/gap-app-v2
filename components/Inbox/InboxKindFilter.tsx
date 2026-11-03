@@ -28,7 +28,7 @@ const InboxKindFilterComponent: FC<InboxKindFilterProps> = ({ stats, value, onCh
   const options: { key: Kind | null; label: string; count: number }[] = [
     { key: null, label: ALL_LABEL, count: stats.applications + stats.milestones },
     { key: "application", label: "Applications", count: stats.applications },
-    { key: "milestone", label: "Milestones", count: stats.milestones },
+    { key: "milestone", label: "Approved Projects", count: stats.milestones },
   ];
   const selected = options.find((option) => option.key === value) ?? options[0];
   const active = selected.key !== null;

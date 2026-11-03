@@ -18,6 +18,7 @@ import pluralize from "pluralize";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
 import { ActionItems, type ActivityEvent } from "@/components/Inbox/ActionItems";
 import { ATTENTION_META } from "@/components/Inbox/attentionMeta";
+import { FundingPipeline } from "@/components/Inbox/FundingPipeline";
 import { EVENT_META } from "@/components/Inbox/MilestoneTimeline";
 import { QueueSummary } from "@/components/Inbox/QueueSummary";
 import { describeFollowUp } from "@/components/Inbox/stageAge";
@@ -669,6 +670,7 @@ export function InboxMilestoneDetail({
       >
         {activePanelTab === "followup" && showAdminTools && (
           <div className="space-y-4">
+            {timeline && <FundingPipeline timeline={timeline} />}
             <QueueSummary
               communityId={communityId}
               target={{ kind: "milestone", id: milestoneUid }}

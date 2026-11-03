@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 
 // --- Hook mocks -------------------------------------------------------------
@@ -68,9 +68,12 @@ vi.mock("@/hooks/useAuth", () => ({
 // The admin operations block (timeline + action items) mounts only for
 // community admins and does its own fetching. Stubbed here so this suite keeps
 // asserting the detail pane itself; those components have their own tests.
+import type { IMilestoneTimeline } from "@/types/funding-platform";
+
+let mockTimeline: IMilestoneTimeline | null = null;
 vi.mock("@/hooks/useMilestoneAdminTimeline", () => ({
   useMilestoneAdminTimeline: () => ({
-    timeline: null,
+    timeline: mockTimeline,
     isLoading: false,
     error: null,
     refetch: vi.fn(),
@@ -79,6 +82,10 @@ vi.mock("@/hooks/useMilestoneAdminTimeline", () => ({
 
 vi.mock("@/components/Inbox/QueueSummary", () => ({
   QueueSummary: () => <div data-testid="queue-summary" />,
+}));
+
+vi.mock("@/components/Inbox/ActionItems", () => ({
+  ActionItems: () => <div data-testid="action-items" />,
 }));
 
 const mockUseCommunityActionItems = vi.fn(() => ({ data: undefined, isLoading: false }));
@@ -189,6 +196,7 @@ const baseProps = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockTimeline = null;
   capturedVerificationOptions = {};
   mockUseIsReviewerType.mockReturnValue(false);
   mockUsePermissionContext.mockReturnValue({ isCommunityAdmin: false, isLoading: false });
@@ -351,6 +359,46 @@ describe("InboxMilestoneDetail", () => {
 
     expect(mockRefetch).toHaveBeenCalled();
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["reviewer-inbox"] });
+  });
+
+  it("shows the funding pipeline in the Follow-up tab once the timeline loads", () => {
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: makeData([makeMilestone()]),
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+    mockTimeline = {
+      milestoneUid: "ms-1",
+      milestoneTitle: "M1",
+      grantUid: "grant-1",
+      grantTitle: "G",
+      projectUid: "proj-1",
+      projectTitle: "Proj",
+      projectSlug: "p",
+      programId: "959",
+      currentStatus: "completed",
+      dueDate: "2026-09-30T00:00:00.000Z",
+      attentionReason: "awaiting_review",
+      stageAgeDays: 4,
+      events: [{ type: "completed", at: "2026-09-28T00:00:00.000Z" }],
+      stageDurations: {
+        toDeliveryDays: 10,
+        inReviewDays: null,
+        toInvoiceDays: null,
+        toPaymentDays: null,
+      },
+      invoice: null,
+    };
+
+    render(<InboxMilestoneDetail {...baseProps} showAdminTools />);
+
+    const pipeline = screen.getByRole("list", { name: "Funding pipeline" });
+    expect(within(pipeline).getByText("Submitted Sep 28")).toBeInTheDocument();
+    expect(within(pipeline).getByText("Review").closest("li")).toHaveAttribute(
+      "aria-current",
+      "step"
+    );
   });
 
   it("renders Milestone and Comments tabs for a selected milestone", () => {

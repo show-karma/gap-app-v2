@@ -23,9 +23,9 @@ describe("InboxKindFilter", () => {
   it("should_name_the_selected_stream_on_the_trigger", () => {
     render(<InboxKindFilter stats={stats} value="milestone" onChange={vi.fn()} />);
 
-    expect(screen.getByRole("button", { name: "Filter by type: Milestones" })).toHaveTextContent(
-      "9"
-    );
+    expect(
+      screen.getByRole("button", { name: "Filter by type: Approved Projects" })
+    ).toHaveTextContent("9");
   });
 
   it("should_list_each_stream_with_its_count_and_emit_the_choice", () => {
@@ -34,7 +34,7 @@ describe("InboxKindFilter", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Filter by type: All types" }));
     const applications = screen.getByRole("option", { name: /Applications\s*4/ });
-    expect(screen.getByRole("option", { name: /Milestones\s*9/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Approved Projects\s*9/ })).toBeInTheDocument();
 
     fireEvent.click(applications);
     expect(onChange).toHaveBeenCalledWith("application");
