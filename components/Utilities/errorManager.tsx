@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { type ApiError, isApiError, isTransientApiError } from "@/utilities/api/errors";
 import { reportApiFailure } from "@/utilities/api/report";
+import { reportClientError } from "@/utilities/clientErrorReport";
 import {
   type AttestationContext,
   isAttestationFailure,
@@ -182,6 +183,10 @@ export const errorManager = (
   // reportApiFailure's per-endpoint fingerprinting (§C: "above the existing
   // checks"; isTransientApiError intentionally broadens the snippet's
   // error.expected to also suppress retryable 5xx).
+  if (!errorContains(error, "reject")) {
+    reportClientError(errorMessage, error, extra);
+  }
+
   if (isApiError(error)) {
     handleApiError(error, errorMessage, extra, toastError);
     return;

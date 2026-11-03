@@ -19,6 +19,7 @@ import {
 import * as milestoneEvents from "@/utilities/analytics/emitters/milestone";
 import { isApiError } from "@/utilities/api/errors";
 import { getLinkedWalletAddresses } from "@/utilities/auth/compare-all-wallets";
+import { reportClientError } from "@/utilities/clientErrorReport";
 import { notifyIndexer } from "@/utilities/indexer-notification";
 import {
   describeMilestoneFailure,
@@ -138,11 +139,18 @@ export const useMilestoneCompletionVerification = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const { address, chain } = useAccount();
-  const { user } = usePrivyBridge();
+  const { user, wallets } = usePrivyBridge();
   const { switchChainAsync } = useWallet();
   const { startAttestation, showLoading, showSuccess, showError, changeStepperStep, dismiss } =
     useAttestationToast();
-  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  const {
+    setupChainAndWallet,
+    smartWalletAddress,
+    hasEmbeddedWallet,
+    hasExternalWallet,
+    signerStatus,
+    isSmartWalletReady,
+  } = useSetupChainAndWallet();
 
   // AbortController owns the in-flight verification's polling loop (refreshed at
   // every verifyMilestone call, aborted on cleanup) so post-unmount state updates
@@ -437,22 +445,43 @@ export const useMilestoneCompletionVerification = ({
       programId,
     });
 
-    // Wallet not ready / user-state guidance, not a defect.
-    if (failure.expected) return;
+    const label = action === "verify" ? "Error verifying milestone" : "Error completing milestone";
+    const context = {
+      milestoneUID: milestone.uid,
+      projectUid: projectUID,
+      chainId: milestone.chainId,
+      programId,
+      step,
+      failureKind: failure.kind,
+      expected: failure.expected,
+      address,
+      signer: {
+        attestationAddress: smartWalletAddress,
+        hasEmbeddedWallet,
+        hasExternalWallet,
+        signerStatus,
+        isGaslessAvailable: isSmartWalletReady,
+        walletChainId: chain?.id,
+      },
+      privy: {
+        linkedAccountTypes: user?.linkedAccounts?.map((account) => account.type),
+        wallets: wallets.map((wallet) => ({
+          walletClientType: wallet.walletClientType,
+          connectorType: wallet.connectorType,
+          chainId: wallet.chainId,
+          address: wallet.address,
+        })),
+      },
+    };
 
-    errorManager(
-      action === "verify" ? "Error verifying milestone" : "Error completing milestone",
-      error,
-      {
-        milestoneUID: milestone.uid,
-        projectUid: projectUID,
-        chainId: milestone.chainId,
-        programId,
-        step,
-        failureKind: failure.kind,
-        address,
-      }
-    );
+    // Wallet not ready / user-state guidance, not a defect: kept out of Sentry
+    // but still mirrored to the server log so a stuck user leaves a trace.
+    if (failure.expected) {
+      reportClientError(label, error, context);
+      return;
+    }
+
+    errorManager(label, error, context);
   };
 
   const verifyMilestone = async (

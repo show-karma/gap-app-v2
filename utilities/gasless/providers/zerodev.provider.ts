@@ -8,6 +8,7 @@ import { getEntryPoint, KERNEL_V3_3, KernelVersionToAddressesMap } from "@zerode
 import { KernelEIP1193Provider } from "@zerodev/sdk/providers";
 import { BrowserProvider, type Signer } from "ethers";
 import { createPublicClient, http } from "viem";
+import { reportClientError } from "@/utilities/clientErrorReport";
 import type {
   ChainGaslessConfig,
   CreateClientParams,
@@ -79,6 +80,7 @@ export class ZeroDevProvider implements IGaslessProvider {
       return this.createRegularClient(params, publicClient, zeroDevRpcUrl);
     } catch (error) {
       console.error("[ZeroDev] Failed to create client:", error);
+      reportClientError("[ZeroDev] Failed to create client", error, { chainId });
       throw new GaslessProviderError(
         `Failed to create ZeroDev client for chain ${chainId}`,
         "zerodev",
@@ -103,6 +105,9 @@ export class ZeroDevProvider implements IGaslessProvider {
 
     if (!signer.signAuthorization) {
       console.warn("[ZeroDev] Signer does not support EIP-7702 signAuthorization");
+      reportClientError("[ZeroDev] Signer does not support EIP-7702 signAuthorization", null, {
+        chainId,
+      });
       return null;
     }
 
