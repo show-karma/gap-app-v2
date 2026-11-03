@@ -120,7 +120,7 @@ const InboxAttentionFilterComponent: FC<InboxAttentionFilterProps> = ({
 
     const candidates: StageGroup[] = [
       ...(kind !== "milestone" ? [{ heading: "Applications", options: applications }] : []),
-      ...(kind !== "application" ? [{ heading: "Milestones", options: milestones }] : []),
+      ...(kind !== "application" ? [{ heading: "Approved Projects", options: milestones }] : []),
       { heading: "Follow-ups", options: followUp },
     ];
 

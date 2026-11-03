@@ -11,6 +11,7 @@ const stats = (overrides: Partial<IReviewerInboxStats> = {}): IReviewerInboxStat
   milestones: 15,
   followUpDue: 8,
   pastDue: 5,
+  awaitingReview: 3,
   invoiceUnpaid: 2,
   awaitingInvoice: 4,
   kybPending: 20,
@@ -24,6 +25,7 @@ describe("InboxViewTabs", () => {
 
     expect(screen.getByRole("tab", { name: /Scheduled check-in\s*8/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Milestone overdue\s*5/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Milestone awaiting review\s*3/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Pending payment\s*2/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Awaiting invoice\s*4/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /KYB pending\s*20/ })).toBeInTheDocument();
@@ -62,6 +64,7 @@ describe("InboxViewTabs", () => {
         stats={stats({
           followUpDue: 0,
           pastDue: 0,
+          awaitingReview: 0,
           invoiceUnpaid: 0,
           awaitingInvoice: 0,
           kybPending: 0,
