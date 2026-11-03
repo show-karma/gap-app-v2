@@ -35,6 +35,27 @@ describe("reportClientError", () => {
     await Promise.resolve();
   });
 
+  it("unwraps the nested provider response that ethers hides under info/error", () => {
+    const rpcResponse = { code: -32603, message: "UserOperation reverted: AA23 reverted" };
+    const wrapped = Object.assign(new Error("could not coalesce error"), {
+      code: "UNKNOWN_ERROR",
+      info: { error: rpcResponse, payload: { method: "eth_sendUserOperation" } },
+    });
+    reportClientError("Error verifying milestone", wrapped);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string
+    );
+    expect(body.error.message).toBe("could not coalesce error");
+    expect(body.error.info.error.message).toBe("UserOperation reverted: AA23 reverted");
+    expect(body.error.info.error.code).toBe(-32603);
+  });
+
+  it("stops unwrapping at a bounded depth on self-referencing errors", () => {
+    const loop: Record<string, unknown> = { message: "loop" };
+    loop.cause = loop;
+    expect(() => reportClientError("x", loop)).not.toThrow();
+  });
+
   it("serializes non-Error values", () => {
     reportClientError("x", "plain string failure");
     const body = JSON.parse(

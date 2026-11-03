@@ -142,7 +142,14 @@ export const useMilestoneCompletionVerification = ({
   const { switchChainAsync } = useWallet();
   const { startAttestation, showLoading, showSuccess, showError, changeStepperStep, dismiss } =
     useAttestationToast();
-  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  const {
+    setupChainAndWallet,
+    smartWalletAddress,
+    hasEmbeddedWallet,
+    hasExternalWallet,
+    signerStatus,
+    isSmartWalletReady,
+  } = useSetupChainAndWallet();
 
   // AbortController owns the in-flight verification's polling loop (refreshed at
   // every verifyMilestone call, aborted on cleanup) so post-unmount state updates
@@ -451,6 +458,14 @@ export const useMilestoneCompletionVerification = ({
         step,
         failureKind: failure.kind,
         address,
+        signer: {
+          attestationAddress: smartWalletAddress,
+          hasEmbeddedWallet,
+          hasExternalWallet,
+          signerStatus,
+          isGaslessAvailable: isSmartWalletReady,
+          walletChainId: chain?.id,
+        },
       }
     );
   };

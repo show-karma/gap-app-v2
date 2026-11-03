@@ -1,19 +1,47 @@
 const MAX_STACK_CHARS = 2_000;
 const MAX_EXTRA_CHARS = 4_000;
 
-type SerializedError = { name?: string; message?: string; stack?: string; code?: unknown };
+const NESTED_KEYS = [
+  "info",
+  "error",
+  "cause",
+  "originalError",
+  "details",
+  "data",
+  "reason",
+  "shortMessage",
+] as const;
+const MAX_DEPTH = 4;
 
-const serializeError = (error: unknown): SerializedError => {
-  if (error && typeof error === "object") {
-    const e = error as { name?: unknown; message?: unknown; stack?: unknown; code?: unknown };
-    return {
-      name: typeof e.name === "string" ? e.name : undefined,
-      message: typeof e.message === "string" ? e.message : String(error),
-      stack: typeof e.stack === "string" ? e.stack.slice(0, MAX_STACK_CHARS) : undefined,
-      code: e.code,
-    };
+type SerializedError = Record<string, unknown>;
+
+/**
+ * ethers wraps the provider's real response inside `info`/`error`, viem inside
+ * `cause`/`details`, and our ApiError inside `originalError`. The top-level
+ * message ("could not coalesce error") says nothing on its own, so the nested
+ * chain is what makes a report actionable.
+ */
+const serializeError = (error: unknown, depth = 0): SerializedError => {
+  if (!error || typeof error !== "object") {
+    return { message: String(error) };
   }
-  return { message: String(error) };
+  const e = error as Record<string, unknown>;
+  const out: SerializedError = {
+    name: typeof e.name === "string" ? e.name : undefined,
+    message: typeof e.message === "string" ? e.message : undefined,
+    code: e.code,
+    status: e.status,
+  };
+  if (depth === 0 && typeof e.stack === "string") {
+    out.stack = e.stack.slice(0, MAX_STACK_CHARS);
+  }
+  if (depth >= MAX_DEPTH) return out;
+  for (const key of NESTED_KEYS) {
+    const value = e[key];
+    if (value === undefined || value === null) continue;
+    out[key] = typeof value === "object" ? serializeError(value, depth + 1) : value;
+  }
+  return out;
 };
 
 const serializeExtra = (extra: unknown): string | undefined => {
