@@ -11,6 +11,11 @@ const slackMocks = vi.hoisted(() => ({
 
 const SLACK_CONNECTED = { isLoading: false, data: [{ teamId: "T1" }] };
 
+vi.mock("@/utilities/enviromentVars", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/utilities/enviromentVars")>();
+  return { ...actual, envVars: { ...actual.envVars, SLACK_FOLLOW_UP_ENABLED: true } };
+});
+
 vi.mock("@/hooks/useSlackOauth", () => ({
   useSlackUserConnections: slackMocks.useSlackUserConnections,
 }));

@@ -10,6 +10,11 @@ const mocks = vi.hoisted(() => ({
   useStartSlackInstall: vi.fn(),
 }));
 
+vi.mock("@/utilities/enviromentVars", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/utilities/enviromentVars")>();
+  return { ...actual, envVars: { ...actual.envVars, SLACK_FOLLOW_UP_ENABLED: true } };
+});
+
 vi.mock("@/hooks/useSlackOauth", () => ({
   useSlackUserConnections: mocks.useSlackUserConnections,
   useStartSlackUserConnect: mocks.useStartSlackUserConnect,

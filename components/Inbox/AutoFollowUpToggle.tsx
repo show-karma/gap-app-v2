@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { AUTO_FOLLOW_UP_LABEL, type SlackAvailability } from "@/components/Inbox/slackAvailability";
 import { Checkbox } from "@/components/ui/checkbox";
+import { envVars } from "@/utilities/enviromentVars";
 import { cn } from "@/utilities/tailwind";
 
 interface AutoFollowUpToggleProps {
@@ -19,6 +20,7 @@ export const AutoFollowUpToggle: FC<AutoFollowUpToggleProps> = ({
   slack,
   onCheckedChange,
 }) => {
+  if (!envVars.SLACK_FOLLOW_UP_ENABLED) return null;
   // A note already opted in can always be opted out, even with Slack gone.
   const locked = slack.status !== "connected" && !checked;
   const showHint = locked && slack.status === "disconnected";

@@ -12,6 +12,7 @@ import {
   useStartSlackUserConnect,
 } from "@/hooks/useSlackOauth";
 import type { SlackUserConnection } from "@/types/slack-oauth";
+import { envVars } from "@/utilities/enviromentVars";
 import { SlackOauthAddToSlackButton } from "./SlackOauthAddToSlackButton";
 
 /**
@@ -21,6 +22,11 @@ import { SlackOauthAddToSlackButton } from "./SlackOauthAddToSlackButton";
  * surface.
  */
 export function SlackUserConnectCard({ communitySlug }: { communitySlug: string }) {
+  if (!envVars.SLACK_FOLLOW_UP_ENABLED) return null;
+  return <SlackUserConnectCardContent communitySlug={communitySlug} />;
+}
+
+function SlackUserConnectCardContent({ communitySlug }: { communitySlug: string }) {
   const query = useSlackUserConnections();
 
   if (query.isLoading) {

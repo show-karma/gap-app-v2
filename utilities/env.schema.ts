@@ -54,6 +54,7 @@ export const clientSchema = z.object({
 
   // Testing
   NEXT_PUBLIC_E2E_AUTH_BYPASS: booleanEnvVar,
+  NEXT_PUBLIC_SLACK_FOLLOW_UP_ENABLED: booleanEnvVar,
 
   // Sanity Blog CMS
   NEXT_PUBLIC_SANITY_PROJECT_ID: z.string().optional().default(""),
