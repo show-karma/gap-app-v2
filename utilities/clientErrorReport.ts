@@ -105,7 +105,7 @@ export const reportClientError = (errorMessage: string, error: unknown, extra?: 
       headers: { "Content-Type": "application/json" },
       body,
       keepalive: true,
-    }).catch(() => undefined);
+    }).then(undefined, () => undefined);
   } catch {
     // SUPPRESSED: reporting must never break the caller; there is no second sink to fall back to.
   }
