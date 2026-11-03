@@ -17,60 +17,70 @@ interface Step {
 
 const STEP_LABELS = ["Milestone due", "Review", "Invoice due", "Payment due"] as const;
 
-function lastEventAt(
+/** The latest event of a type, or of a type after a given moment. */
+function latestAt(
   timeline: IMilestoneTimeline,
-  type: MilestoneTimelineEventType
+  type: MilestoneTimelineEventType,
+  after?: string
 ): string | undefined {
-  for (let i = timeline.events.length - 1; i >= 0; i -= 1) {
-    if (timeline.events[i].type === type) return timeline.events[i].at;
+  let found: string | undefined;
+  for (const event of timeline.events) {
+    if (event.type !== type) continue;
+    if (after && event.at <= after) continue;
+    if (!found || event.at > found) found = event.at;
   }
-  return undefined;
+  return found;
 }
 
-const day = (iso: string) => formatDate(iso, "UTC", "MMM D");
+const day = (iso: string) => formatDate(iso, "UTC");
 
 /**
  * The four payment steps of a milestone as one row, from the same timeline
- * the activity log reads. Each step shows the date it happened or what it is
- * waiting on; the first step not yet passed is marked current.
+ * the activity log reads. A step counts as passed once it or any later step
+ * has happened, so a payment recorded without an invoice does not leave the
+ * invoice step hanging; the first step not yet passed is current. A rejection
+ * after the latest delivery sends the milestone back to the first step.
  */
 function buildSteps(timeline: IMilestoneTimeline): Step[] {
-  const completedAt = lastEventAt(timeline, "completed");
-  const verifiedAt = lastEventAt(timeline, "verified");
-  const rejectedAt = lastEventAt(timeline, "rejected");
-  const invoiceSentAt = lastEventAt(timeline, "invoice_sent");
-  const invoiceReceivedAt = lastEventAt(timeline, "invoice_received");
-  const paidAt = lastEventAt(timeline, "payment_disbursed");
+  const completedAt = latestAt(timeline, "completed");
+  const rejectedAt = latestAt(timeline, "rejected", completedAt);
+  const verifiedAt = latestAt(timeline, "verified", completedAt);
+  const invoiceSentAt = latestAt(timeline, "invoice_sent");
+  const invoiceReceivedAt = latestAt(timeline, "invoice_received");
+  const paidAt = latestAt(timeline, "payment_disbursed");
+  const override = timeline.invoice?.paymentStatusOverride;
 
-  const details: string[] = [
-    completedAt
-      ? `Submitted ${day(completedAt)}`
-      : timeline.dueDate
-        ? `Due ${day(timeline.dueDate)}`
-        : "No due date",
-    verifiedAt
-      ? `Verified ${day(verifiedAt)}`
-      : rejectedAt
-        ? `Rejected ${day(rejectedAt)}`
-        : "Not verified",
-    invoiceReceivedAt
-      ? `Received ${day(invoiceReceivedAt)}`
-      : invoiceSentAt
-        ? `Requested ${day(invoiceSentAt)}`
-        : "Not received",
-    paidAt
-      ? `Paid ${day(paidAt)}`
-      : timeline.invoice?.paymentStatusOverride
-        ? `Marked ${timeline.invoice.paymentStatusOverride}`
-        : "Not paid",
-  ];
-  const done = [
-    Boolean(completedAt),
+  const happened = [
+    Boolean(completedAt) && !rejectedAt,
     Boolean(verifiedAt),
     Boolean(invoiceReceivedAt),
     Boolean(paidAt),
   ];
+  const done = happened.map((_, index) => happened.slice(index).some(Boolean));
   const current = done.indexOf(false);
+
+  const details = [
+    rejectedAt
+      ? `Rejected ${day(rejectedAt)}`
+      : completedAt
+        ? `Submitted ${day(completedAt)}`
+        : timeline.dueDate
+          ? `Due ${day(timeline.dueDate)}`
+          : "No due date",
+    verifiedAt ? `Verified ${day(verifiedAt)}` : done[1] ? "Verified" : "Not verified",
+    invoiceReceivedAt
+      ? `Received ${day(invoiceReceivedAt)}`
+      : invoiceSentAt
+        ? `Requested ${day(invoiceSentAt)}`
+        : done[2]
+          ? "No invoice"
+          : "Not received",
+    paidAt
+      ? `Paid ${day(paidAt)}`
+      : override
+        ? `Marked ${override.replace(/_/g, " ")}`
+        : "Not paid",
+  ];
 
   return STEP_LABELS.map((label, index) => ({
     label,

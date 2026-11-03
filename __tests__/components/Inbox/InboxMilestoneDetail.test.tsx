@@ -394,7 +394,7 @@ describe("InboxMilestoneDetail", () => {
     render(<InboxMilestoneDetail {...baseProps} showAdminTools />);
 
     const pipeline = screen.getByRole("list", { name: "Funding pipeline" });
-    expect(within(pipeline).getByText("Submitted Sep 28")).toBeInTheDocument();
+    expect(within(pipeline).getByText("Submitted Sep 28, 2026")).toBeInTheDocument();
     expect(within(pipeline).getByText("Review").closest("li")).toHaveAttribute(
       "aria-current",
       "step"

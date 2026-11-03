@@ -401,7 +401,11 @@ export function InboxMilestoneDetail({
       moveTabFocus(event, panelTabs, (next) => setActivePanelTab(next)),
     [panelTabs]
   );
-  const { timeline } = useMilestoneAdminTimeline(communityId, milestoneUid, {
+  const {
+    timeline,
+    isLoading: isTimelineLoading,
+    error: timelineError,
+  } = useMilestoneAdminTimeline(communityId, milestoneUid, {
     enabled: showAdminTools,
   });
   const activityEvents = useMemo<ActivityEvent[]>(
@@ -670,7 +674,18 @@ export function InboxMilestoneDetail({
       >
         {activePanelTab === "followup" && showAdminTools && (
           <div className="space-y-4">
-            {timeline && <FundingPipeline timeline={timeline} />}
+            {timeline ? (
+              <FundingPipeline timeline={timeline} />
+            ) : isTimelineLoading ? (
+              <output
+                aria-label="Loading funding pipeline"
+                className="block h-[88px] animate-pulse rounded-lg bg-gray-100 dark:bg-zinc-800"
+              />
+            ) : timelineError ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Couldn&apos;t load the funding pipeline.
+              </p>
+            ) : null}
             <QueueSummary
               communityId={communityId}
               target={{ kind: "milestone", id: milestoneUid }}

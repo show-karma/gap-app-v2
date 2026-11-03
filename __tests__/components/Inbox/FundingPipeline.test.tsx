@@ -32,9 +32,9 @@ describe("FundingPipeline", () => {
   it("should_date_each_passed_step_and_mark_the_first_open_one_current", () => {
     render(<FundingPipeline timeline={timeline()} />);
 
-    expect(within(step("Milestone due")).getByText("Submitted May 21")).toBeInTheDocument();
-    expect(within(step("Review")).getByText("Verified Jun 29")).toBeInTheDocument();
-    expect(within(step("Invoice due")).getByText("Received Aug 7")).toBeInTheDocument();
+    expect(within(step("Milestone due")).getByText("Submitted May 21, 2026")).toBeInTheDocument();
+    expect(within(step("Review")).getByText("Verified Jun 29, 2026")).toBeInTheDocument();
+    expect(within(step("Invoice due")).getByText("Received Aug 7, 2026")).toBeInTheDocument();
     expect(within(step("Payment due")).getByText("Not paid")).toBeInTheDocument();
     expect(step("Payment due")).toHaveAttribute("aria-current", "step");
     expect(step("Review")).not.toHaveAttribute("aria-current");
@@ -47,7 +47,7 @@ describe("FundingPipeline", () => {
       />
     );
 
-    expect(within(step("Milestone due")).getByText("Due Mar 30")).toBeInTheDocument();
+    expect(within(step("Milestone due")).getByText("Due Mar 30, 2026")).toBeInTheDocument();
     expect(step("Milestone due")).toHaveAttribute("aria-current", "step");
     expect(within(step("Review")).getByText("Not verified")).toBeInTheDocument();
   });
@@ -75,7 +75,62 @@ describe("FundingPipeline", () => {
       />
     );
 
-    expect(within(step("Invoice due")).getByText("Requested Jul 1")).toBeInTheDocument();
+    expect(within(step("Invoice due")).getByText("Requested Jul 1, 2026")).toBeInTheDocument();
     expect(within(step("Payment due")).getByText("Marked pending")).toBeInTheDocument();
+  });
+
+  it("should_send_a_rejected_milestone_back_to_the_first_step_until_it_is_resubmitted", () => {
+    render(
+      <FundingPipeline
+        timeline={timeline({
+          events: [
+            { type: "completed", at: "2026-01-10T00:00:00.000Z" },
+            { type: "rejected", at: "2026-02-01T00:00:00.000Z" },
+          ],
+          attentionReason: "past_due",
+        })}
+      />
+    );
+
+    expect(within(step("Milestone due")).getByText("Rejected Feb 1, 2026")).toBeInTheDocument();
+    expect(step("Milestone due")).toHaveAttribute("aria-current", "step");
+    expect(within(step("Review")).getByText("Not verified")).toBeInTheDocument();
+  });
+
+  it("should_ignore_a_rejection_that_predates_the_latest_delivery", () => {
+    render(
+      <FundingPipeline
+        timeline={timeline({
+          events: [
+            { type: "completed", at: "2026-01-10T00:00:00.000Z" },
+            { type: "rejected", at: "2026-02-01T00:00:00.000Z" },
+            { type: "completed", at: "2026-03-01T00:00:00.000Z" },
+          ],
+          attentionReason: "awaiting_review",
+        })}
+      />
+    );
+
+    expect(within(step("Milestone due")).getByText("Submitted Mar 1, 2026")).toBeInTheDocument();
+    expect(step("Review")).toHaveAttribute("aria-current", "step");
+  });
+
+  it("should_pass_the_invoice_step_when_payment_was_recorded_without_one", () => {
+    render(
+      <FundingPipeline
+        timeline={timeline({
+          events: [
+            { type: "completed", at: "2026-05-21T00:00:00.000Z" },
+            { type: "verified", at: "2026-06-29T00:00:00.000Z" },
+            { type: "payment_disbursed", at: "2026-08-07T00:00:00.000Z" },
+          ],
+          attentionReason: null,
+        })}
+      />
+    );
+
+    expect(within(step("Invoice due")).getByText("No invoice")).toBeInTheDocument();
+    expect(within(step("Payment due")).getByText("Paid Aug 7, 2026")).toBeInTheDocument();
+    expect(screen.queryByRole("listitem", { current: "step" })).not.toBeInTheDocument();
   });
 });
