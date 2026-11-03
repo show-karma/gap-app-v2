@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-
 const MAX_BODY_BYTES = 32_768;
 
 const isSameOrigin = (request: Request): boolean => {
