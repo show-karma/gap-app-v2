@@ -26,7 +26,7 @@ describe("reportClientError", () => {
     expect(body.errorMessage).toBe("Error verifying milestone");
     expect(body.error.message).toBe("could not coalesce error");
     expect(body.error.name).toBe("Error");
-    expect(JSON.parse(body.extra)).toEqual({ milestoneUID: "0xabc", chainId: 8453 });
+    expect(body.extra).toEqual({ milestoneUID: "0xabc", chainId: 8453 });
   });
 
   it("never throws when fetch rejects", async () => {
@@ -66,6 +66,35 @@ describe("reportClientError", () => {
     expect(body.browser.injectedWallet).toEqual(
       expect.objectContaining({ isMetaMask: true, providers: 2 })
     );
+  });
+
+  it("redacts secrets by key name and by value shape, and strips the query string", () => {
+    vi.stubGlobal("location", {
+      origin: "https://app.filpgf.io",
+      pathname: "/manage/action-items",
+      href: "https://app.filpgf.io/manage/action-items?token=abc#review-0x1",
+    });
+    const jwt =
+      "eyJhbGciOiJFUzI1NiJ9.eyJzdWIiOiJkaWQ6cHJpdnk6YWJjIn0.c2lnbmF0dXJlLXNpZ25hdHVyZS1zaWc";
+    const wrapped = Object.assign(new Error(`request failed: Bearer ${jwt}`), {
+      originalError: {
+        config: { headers: { Authorization: `Bearer ${jwt}` } },
+        data: { apiKey: "karma_abc123" },
+      },
+    });
+    reportClientError("x", wrapped, {
+      authorization: "Bearer zzz",
+      note: `key karma_fakekey01 here`,
+    });
+    const raw = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string;
+    expect(raw).not.toContain(jwt);
+    expect(raw).not.toContain("karma_abc123");
+    expect(raw).not.toContain("karma_fakekey01");
+    expect(raw).not.toContain("token=abc");
+    const body = JSON.parse(raw);
+    expect(body.url).toBe("https://app.filpgf.io/manage/action-items");
+    expect(body.extra.authorization).toBe("[redacted]");
+    expect(body.error.originalError.data.apiKey).toBe("[redacted]");
   });
 
   it("serializes non-Error values", () => {

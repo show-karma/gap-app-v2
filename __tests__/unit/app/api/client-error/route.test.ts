@@ -21,6 +21,19 @@ describe("POST /api/client-error", () => {
     );
   });
 
+  it("rejects cross-origin posts with 403", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const res = await POST(
+      new Request("http://localhost/api/client-error", {
+        method: "POST",
+        body: "{}",
+        headers: { origin: "https://evil.example", host: "app.filpgf.io" },
+      })
+    );
+    expect(res.status).toBe(403);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   it("rejects malformed JSON with 400", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     const res = await post("{not json");
