@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
 
 const mockUseActionItems = vi.fn();
@@ -186,6 +186,68 @@ describe("ActionItems", () => {
       followUpAt: "2026-09-25T00:00:00.000Z",
       autoFollowUp: false,
     });
+  });
+
+  it("opens the editor pre-filled when a follow-up suggestion is used", () => {
+    render(<ActionItems {...baseProps} />);
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent("inbox:note-draft", {
+          detail: {
+            target: baseProps.target,
+            content: "Asked the grantee for a date.",
+            followUpAt: "2026-09-25",
+          },
+        })
+      );
+    });
+
+    expect(screen.getByLabelText("Action item note")).toHaveValue("Asked the grantee for a date.");
+    expect(screen.getByLabelText(/Next follow-up/)).toHaveValue("2026-09-25");
+    expect(createItem).not.toHaveBeenCalled();
+  });
+
+  it("keeps what the admin already typed when a suggestion arrives", () => {
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByText("Add note"));
+    fireEvent.change(screen.getByLabelText("Action item note"), {
+      target: { value: "Pinged Mahesh" },
+    });
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent("inbox:note-draft", {
+          detail: {
+            target: baseProps.target,
+            content: "Asked for a date.",
+            followUpAt: "2026-09-25",
+          },
+        })
+      );
+    });
+
+    expect(screen.getByLabelText("Action item note")).toHaveValue(
+      "Pinged Mahesh\n\nAsked for a date."
+    );
+  });
+
+  it("ignores a suggestion meant for another item", () => {
+    render(<ActionItems {...baseProps} />);
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent("inbox:note-draft", {
+          detail: {
+            target: { kind: "application", id: "APP-9" },
+            content: "Asked for a date.",
+            followUpAt: "2026-09-25",
+          },
+        })
+      );
+    });
+
+    expect(screen.queryByLabelText("Action item note")).not.toBeInTheDocument();
   });
 
   it("opts the note in to the Slack follow-up when the checkbox is ticked", () => {

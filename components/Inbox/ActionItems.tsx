@@ -11,7 +11,11 @@ import {
 import { AutoFollowUpToggle } from "@/components/Inbox/AutoFollowUpToggle";
 import { NoteContent } from "@/components/Inbox/NoteContent";
 import { NoteEditor } from "@/components/Inbox/NoteEditor";
-import { subscribeOpenNote, takePendingNote } from "@/components/Inbox/noteNavigation";
+import {
+  subscribeNoteDraft,
+  subscribeOpenNote,
+  takePendingNote,
+} from "@/components/Inbox/noteNavigation";
 import {
   AUTO_FOLLOW_UP_LABEL,
   type SlackAvailability,
@@ -352,6 +356,26 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
     setMentionSourceWanted(true);
     setIsAdding(true);
   }, []);
+
+  const sectionRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    let frame = 0;
+    const unsubscribe = subscribeNoteDraft((request) => {
+      if (request.target.kind !== target.kind || request.target.id !== target.id) return;
+      setDraft((typed) =>
+        typed.trim() ? `${typed.trimEnd()}\n\n${request.content}` : request.content
+      );
+      setDraftFollowUp((chosen) => chosen || request.followUpAt);
+      openEditor();
+      frame = requestAnimationFrame(() =>
+        sectionRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+      );
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      unsubscribe();
+    };
+  }, [openEditor, target.kind, target.id]);
   const startEditing = useCallback(() => setMentionSourceWanted(true), []);
 
   // A mention elsewhere asked for one of these notes: scroll to it and single
@@ -403,7 +427,7 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
   }, [items, events]);
 
   return (
-    <section className="rounded-lg bg-gray-50 p-4 dark:bg-zinc-800/60">
+    <section ref={sectionRef} className="rounded-lg bg-gray-50 p-4 dark:bg-zinc-800/60">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-950 dark:text-white">
           {isActivity ? "Activity" : "Action items"}

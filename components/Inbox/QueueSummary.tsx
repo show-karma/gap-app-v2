@@ -1,11 +1,20 @@
 "use client";
 
-import { ArrowPathIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  ClipboardDocumentIcon,
+  PencilSquareIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 import React, { type FC, useState } from "react";
+import { requestNoteDraft } from "@/components/Inbox/noteNavigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import type { ActionItemTarget } from "@/hooks/useActionItems";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useQueueSummary } from "@/hooks/useQueueSummary";
+import type { IQueueFollowUpSuggestion } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
@@ -16,6 +25,54 @@ interface QueueSummaryProps {
   enabled?: boolean;
   className?: string;
 }
+
+const FollowUpDraft: FC<{ target: ActionItemTarget; followUp: IQueueFollowUpSuggestion }> = ({
+  target,
+  followUp,
+}) => {
+  const [edited, setEdited] = useState<string | null>(null);
+  const message = edited ?? followUp.message;
+  const [, copy] = useCopyToClipboard();
+  return (
+    <div className="mt-3 border-t border-purple-200/70 pt-3 dark:border-purple-900/50">
+      <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
+        Suggested follow-up
+        <span className="font-normal text-gray-500 dark:text-gray-400">
+          {" "}
+          · to {followUp.to} · check again {formatDate(followUp.followUpAt, "UTC")}
+        </span>
+      </p>
+      <Textarea
+        aria-label="Suggested message"
+        value={message}
+        onChange={(event) => setEdited(event.target.value)}
+        rows={4}
+        className="mt-1.5 min-h-0 resize-y bg-white leading-relaxed text-gray-800 dark:bg-zinc-900 dark:text-gray-100"
+      />
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!message.trim()}
+          onClick={() => void copy(message, "Message copied")}
+        >
+          <ClipboardDocumentIcon className="h-4 w-4" aria-hidden="true" />
+          Copy message
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            requestNoteDraft({ target, content: followUp.note, followUpAt: followUp.followUpAt })
+          }
+        >
+          <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
+          Use as note
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 /**
  * Two sentences on why the item is where it is, above the full timeline and
@@ -36,6 +93,7 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
     target,
     { enabled: enabled && requested }
   );
+  const followUp = summary?.followUp ?? null;
 
   return (
     <section
@@ -73,6 +131,9 @@ const QueueSummaryComponent: FC<QueueSummaryProps> = ({
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                 AI summary from the timeline, notes and comments · {formatDate(summary.generatedAt)}
               </p>
+              {followUp && (
+                <FollowUpDraft key={summary.generatedAt} target={target} followUp={followUp} />
+              )}
             </>
           ) : (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

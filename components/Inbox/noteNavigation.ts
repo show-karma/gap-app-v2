@@ -1,3 +1,4 @@
+import type { ActionItemTarget } from "@/hooks/useActionItems";
 /**
  * Following a note mention crosses component boundaries: the chip lives deep
  * in the Activity list, the queue selection lives on the page. A DOM event
@@ -32,4 +33,23 @@ export function takePendingNote(noteIds: string[]): string | null {
     return taken;
   }
   return null;
+}
+
+export interface NoteDraftRequest {
+  target: ActionItemTarget;
+  content: string;
+  /** Calendar day, YYYY-MM-DD. */
+  followUpAt: string;
+}
+
+export const NOTE_DRAFT_EVENT = "inbox:note-draft";
+
+export function requestNoteDraft(request: NoteDraftRequest): void {
+  window.dispatchEvent(new CustomEvent<NoteDraftRequest>(NOTE_DRAFT_EVENT, { detail: request }));
+}
+
+export function subscribeNoteDraft(listener: (request: NoteDraftRequest) => void): () => void {
+  const handler = (event: Event) => listener((event as CustomEvent<NoteDraftRequest>).detail);
+  window.addEventListener(NOTE_DRAFT_EVENT, handler);
+  return () => window.removeEventListener(NOTE_DRAFT_EVENT, handler);
 }
