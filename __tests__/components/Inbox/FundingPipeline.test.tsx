@@ -35,7 +35,7 @@ describe("FundingPipeline", () => {
     expect(within(step("Milestone due")).getByText("Submitted May 21, 2026")).toBeInTheDocument();
     expect(within(step("Review")).getByText("Verified Jun 29, 2026")).toBeInTheDocument();
     expect(within(step("Invoice due")).getByText("Received Aug 7, 2026")).toBeInTheDocument();
-    expect(within(step("Payment due")).getByText("Not paid")).toBeInTheDocument();
+    expect(within(step("Payment due")).getByText("Not paid · 77 days unpaid")).toBeInTheDocument();
     expect(step("Payment due")).toHaveAttribute("aria-current", "step");
     expect(step("Review")).not.toHaveAttribute("aria-current");
   });
@@ -70,7 +70,7 @@ describe("FundingPipeline", () => {
             receivedBy: null,
             fileUrl: null,
             paymentStatusOverride: "pending",
-            paymentStatusOverrideDate: null,
+            paymentStatusOverrideDate: "2026-10-19T05:36:24.000Z",
             paymentStatusOverrideBy: null,
           },
         })}
@@ -78,7 +78,9 @@ describe("FundingPipeline", () => {
     );
 
     expect(within(step("Invoice due")).getByText("Requested Jul 1, 2026")).toBeInTheDocument();
-    expect(within(step("Payment due")).getByText("Marked pending")).toBeInTheDocument();
+    expect(
+      within(step("Payment due")).getByText("Marked pending Oct 19, 2026 · 77 days unpaid")
+    ).toBeInTheDocument();
   });
 
   it("should_send_a_rejected_milestone_back_to_the_first_step_until_it_is_resubmitted", () => {
@@ -152,7 +154,9 @@ describe("FundingPipeline", () => {
     );
 
     expect(within(step("Milestone due")).getByText("Submitted Sep 28, 2026")).toBeInTheDocument();
-    expect(within(step("Review")).getByText("Not verified")).toBeInTheDocument();
+    expect(
+      within(step("Review")).getByText("Not verified · 77 days in review")
+    ).toBeInTheDocument();
     expect(step("Review")).toHaveAttribute("aria-current", "step");
     expect(within(step("Invoice due")).getByText("Received Sep 28, 2026")).toBeInTheDocument();
     expect(within(step("Payment due")).getByText("Not paid")).toBeInTheDocument();

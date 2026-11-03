@@ -92,21 +92,26 @@ function buildSteps(timeline: IMilestoneTimeline): Step[] {
     paidAt
       ? `Paid ${day(paidAt)}`
       : override
-        ? `Marked ${override.replace(/_/g, " ")}`
+        ? `Marked ${override.replace(/_/g, " ")}${
+            timeline.invoice?.paymentStatusOverrideDate
+              ? ` ${day(timeline.invoice.paymentStatusOverrideDate)}`
+              : ""
+          }`
         : "Not paid",
   ];
 
-  const overdue =
-    timeline.attentionReason === "past_due" && typeof timeline.stageAgeDays === "number"
-      ? `${timeline.stageAgeDays} ${pluralize("day", timeline.stageAgeDays)} late`
+  const reason = timeline.attentionReason;
+  const age =
+    reason && typeof timeline.stageAgeDays === "number"
+      ? `${timeline.stageAgeDays} ${pluralize("day", timeline.stageAgeDays)} ${ATTENTION_META[reason].ageSuffix}`
       : null;
-  if (overdue && !done[0]) details[0] = `${details[0]} · ${overdue}`;
+  if (age && current >= 0 && !done[current]) details[current] = `${details[current]} · ${age}`;
 
   return STEP_LABELS.map((label, index) => ({
     label,
     detail: details[index],
     state: done[index] ? "done" : index === current ? "current" : "pending",
-    late: index === 0 && Boolean(overdue) && !done[0],
+    late: index === current && Boolean(age) && !done[index],
   }));
 }
 
@@ -161,11 +166,13 @@ const FundingPipelineComponent: FC<{ timeline: IMilestoneTimeline }> = ({ timeli
           <span
             className={cn(
               "text-[11px]",
-              step.late
+              step.late && timeline.attentionReason === "past_due"
                 ? "text-red-600 dark:text-red-400"
-                : step.state === "current"
-                  ? "text-gray-900 dark:text-gray-100"
-                  : "text-gray-500 dark:text-gray-400"
+                : step.late
+                  ? "text-amber-600 dark:text-amber-300"
+                  : step.state === "current"
+                    ? "text-gray-900 dark:text-gray-100"
+                    : "text-gray-500 dark:text-gray-400"
             )}
           >
             {step.detail}
