@@ -446,7 +446,7 @@ export interface ICommunityActionItem extends IMilestoneActionItem {
   applicationTitle: string | null;
 }
 
-/** Two-sentence AI brief on why a queue item is where it is. */
+/** The suggested follow-up that comes with the AI brief. */
 export interface IQueueFollowUpSuggestion {
   to: string;
   message: string;
