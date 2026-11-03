@@ -29,7 +29,7 @@ describe("POST /api/client-error", () => {
 
   it("rejects oversized bodies with 413", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const res = await post(JSON.stringify({ stack: "x".repeat(9_000) }));
+    const res = await post(JSON.stringify({ stack: "x".repeat(40_000) }));
     expect(res.status).toBe(413);
     expect(spy).not.toHaveBeenCalled();
   });

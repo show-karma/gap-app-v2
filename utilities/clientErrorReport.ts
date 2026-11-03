@@ -1,5 +1,5 @@
 const MAX_STACK_CHARS = 2_000;
-const MAX_EXTRA_CHARS = 4_000;
+const MAX_EXTRA_CHARS = 16_000;
 
 const NESTED_KEYS = [
   "info",
@@ -58,6 +58,35 @@ const serializeExtra = (extra: unknown): string | undefined => {
  * logs. Sentry stays the primary sink; this is the fallback that still works
  * when the Sentry quota is exhausted. Fire-and-forget: never throws, never awaited.
  */
+type InjectedProvider = {
+  isMetaMask?: boolean;
+  isRabby?: boolean;
+  isCoinbaseWallet?: boolean;
+  isBraveWallet?: boolean;
+  isPhantom?: boolean;
+  providers?: unknown[];
+};
+
+const injectedWalletFlags = (): Record<string, unknown> | undefined => {
+  const eth = (window as unknown as { ethereum?: InjectedProvider }).ethereum;
+  if (!eth) return undefined;
+  return {
+    isMetaMask: eth.isMetaMask,
+    isRabby: eth.isRabby,
+    isCoinbaseWallet: eth.isCoinbaseWallet,
+    isBraveWallet: eth.isBraveWallet,
+    isPhantom: eth.isPhantom,
+    providers: Array.isArray(eth.providers) ? eth.providers.length : undefined,
+  };
+};
+
+const browserEnv = () => ({
+  userAgent: navigator.userAgent,
+  language: navigator.language,
+  online: navigator.onLine,
+  injectedWallet: injectedWalletFlags(),
+});
+
 export const reportClientError = (errorMessage: string, error: unknown, extra?: unknown): void => {
   if (typeof window === "undefined" || typeof fetch !== "function") return;
 
@@ -67,6 +96,7 @@ export const reportClientError = (errorMessage: string, error: unknown, extra?: 
     extra: serializeExtra(extra),
     url: window.location.href,
     at: new Date().toISOString(),
+    browser: browserEnv(),
   });
 
   try {
@@ -77,6 +107,6 @@ export const reportClientError = (errorMessage: string, error: unknown, extra?: 
       keepalive: true,
     }).catch(() => undefined);
   } catch {
-    // Reporting must never break the caller.
+    // SUPPRESSED: reporting must never break the caller; there is no second sink to fall back to.
   }
 };

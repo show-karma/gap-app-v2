@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const MAX_BODY_BYTES = 8_192;
+const MAX_BODY_BYTES = 32_768;
 
 export async function POST(request: Request) {
   const raw = await request.text();

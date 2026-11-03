@@ -56,6 +56,18 @@ describe("reportClientError", () => {
     expect(() => reportClientError("x", loop)).not.toThrow();
   });
 
+  it("attaches browser environment and injected wallet flags", () => {
+    vi.stubGlobal("ethereum", { isMetaMask: true, providers: [{}, {}] });
+    reportClientError("x", new Error("y"));
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string
+    );
+    expect(typeof body.browser.userAgent).toBe("string");
+    expect(body.browser.injectedWallet).toEqual(
+      expect.objectContaining({ isMetaMask: true, providers: 2 })
+    );
+  });
+
   it("serializes non-Error values", () => {
     reportClientError("x", "plain string failure");
     const body = JSON.parse(
