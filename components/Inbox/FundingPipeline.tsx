@@ -1,5 +1,6 @@
 "use client";
 
+import { ClockIcon } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import pluralize from "pluralize";
 import React, { type FC } from "react";
@@ -19,8 +20,6 @@ interface Step {
   label: string;
   state: StepState;
   detail: string;
-  /** The current step carries the stage age; red when the delivery itself is late. */
-  tone?: "late" | "waiting";
 }
 
 const STEP_LABELS = ["Milestone due", "Review", "Invoice due", "Payment due"] as const;
@@ -139,37 +138,40 @@ function buildSteps(timeline: IMilestoneTimeline): Step[] {
 
   return STEP_LABELS.map((label, index) => {
     const isCurrent = index === current && !done[index];
-    const withAge = isCurrent && age;
     return {
       label,
-      detail: withAge ? `${details[index]} · ${age}` : details[index],
+      detail: isCurrent && age ? `${details[index]} · ${age}` : details[index],
       state: done[index] ? "done" : isCurrent ? "current" : "pending",
-      ...(withAge && { tone: timeline.attentionReason === "past_due" ? "late" : "waiting" }),
     };
   });
 }
 
-const DETAIL_TONE: Record<NonNullable<Step["tone"]>, string> = {
-  late: "text-red-600 dark:text-red-400",
-  waiting: "text-amber-600 dark:text-amber-300",
+const DOT_CLASS: Record<StepState, string> = {
+  done: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+  current: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+  pending: "bg-gray-200 dark:bg-zinc-700",
 };
 
-const Connector: FC<{ passed: boolean; side: "left" | "right" }> = ({ passed, side }) => (
+const LINE_CLASS: Record<StepState, string> = {
+  done: "bg-green-400 dark:bg-green-700",
+  current: "bg-red-400 dark:bg-red-700",
+  pending: "bg-gray-200 dark:bg-zinc-700",
+};
+
+/** The line into a step takes that step's colour: green behind a passed step, red into the current one. */
+const Connector: FC<{ state: StepState; side: "left" | "right" }> = ({ state, side }) => (
   <span
     aria-hidden="true"
     className={cn(
-      "absolute top-3 hidden h-px sm:block",
+      "absolute top-[11px] hidden h-0.5 sm:block",
       side === "left" ? "left-0 right-1/2" : "left-1/2 right-0",
-      passed ? "bg-green-600" : "bg-gray-200 dark:bg-zinc-700"
+      LINE_CLASS[state]
     )}
   />
 );
 
 const FundingPipelineComponent: FC<{ timeline: IMilestoneTimeline }> = ({ timeline }) => {
   const steps = buildSteps(timeline);
-  const currentDot = timeline.attentionReason
-    ? ATTENTION_META[timeline.attentionReason].dotClass
-    : "bg-gray-400";
 
   return (
     <ol
@@ -182,29 +184,33 @@ const FundingPipelineComponent: FC<{ timeline: IMilestoneTimeline }> = ({ timeli
           aria-current={step.state === "current" ? "step" : undefined}
           className="relative flex min-w-0 flex-col items-center px-1 text-center"
         >
-          {index > 0 && <Connector side="left" passed={steps[index - 1].state === "done"} />}
-          {index < steps.length - 1 && <Connector side="right" passed={step.state === "done"} />}
+          {index > 0 && <Connector side="left" state={step.state} />}
+          {index < steps.length - 1 && <Connector side="right" state={steps[index + 1].state} />}
           <span
             className={cn(
               "relative z-10 flex h-6 w-6 items-center justify-center rounded-full",
-              step.state === "done" && "bg-green-600 text-white",
-              step.state === "current" && cn("text-white", currentDot),
-              step.state === "pending" && "bg-gray-200 dark:bg-zinc-700"
+              DOT_CLASS[step.state]
             )}
           >
             {step.state === "done" && <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" />}
+            {step.state === "current" && <ClockIcon className="h-4 w-4" aria-hidden="true" />}
           </span>
-          <span className="mt-1.5 text-xs font-medium text-gray-900 dark:text-gray-100">
+          <span
+            className={cn(
+              "mt-1.5 text-xs font-medium",
+              step.state === "current"
+                ? "text-red-700 dark:text-red-300"
+                : "text-gray-900 dark:text-gray-100"
+            )}
+          >
             {step.label}
           </span>
           <span
             className={cn(
               "text-[11px]",
-              step.tone
-                ? DETAIL_TONE[step.tone]
-                : step.state === "current"
-                  ? "text-gray-900 dark:text-gray-100"
-                  : "text-gray-500 dark:text-gray-400"
+              step.state === "current"
+                ? "text-red-600 dark:text-red-400"
+                : "text-gray-500 dark:text-gray-400"
             )}
           >
             {step.detail}
