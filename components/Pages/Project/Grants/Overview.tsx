@@ -8,6 +8,11 @@ import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpda
 import { TrackTags } from "@/components/TrackTags";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { TOKEN_ADDRESSES, TOKENS } from "@/config/tokens";
+import { getTokenByAddressAndChain } from "@/constants/supportedTokens";
+import { usePayoutConfigByGrantPublic } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import type { PayoutGrantConfig } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { useGrantStore } from "@/store/grant";
 import { useOwnerStore } from "@/store/owner";
 import markdownStyles from "@/styles/markdown.module.css";
@@ -50,17 +55,57 @@ const isValidAmount = (grant?: { amount?: string; details?: { amount?: string } 
 
   return formatCurrency(+amountToFormat);
 };
+const getPayoutTokenSymbol = (tokenAddress: string, chainID: number) => {
+  const listed = getTokenByAddressAndChain(tokenAddress, chainID)?.symbol;
+  if (listed) return listed;
+  const isUsdc = Object.entries(TOKEN_ADDRESSES.usdc).some(
+    ([usdcChainID, usdcAddress]) =>
+      Number(usdcChainID) === chainID && usdcAddress.toLowerCase() === tokenAddress.toLowerCase()
+  );
+  return isUsdc ? TOKENS.usdc.symbol : undefined;
+};
+
+type GrantAmountSource = { amount?: string; details?: { amount?: string } };
+
+const resolveTotalGrantAmount = (
+  grant: GrantAmountSource | undefined,
+  payoutConfig:
+    | Pick<PayoutGrantConfig, "totalGrantAmount" | "tokenAddress" | "chainID">
+    | null
+    | undefined
+) => {
+  const ownAmount = isValidAmount(grant);
+  const payoutTotal = Number(payoutConfig?.totalGrantAmount);
+  if (!payoutConfig?.totalGrantAmount || !(payoutTotal > 0)) return ownAmount;
+
+  const ownRaw = grant?.amount ?? grant?.details?.amount;
+  const ownNumber = ownRaw ? Number.parseFloat(ownRaw.replace(/,/g, "")) : Number.NaN;
+  if (ownAmount && ownNumber === payoutTotal) return ownAmount;
+
+  const symbol =
+    payoutConfig.tokenAddress && payoutConfig.chainID
+      ? getPayoutTokenSymbol(payoutConfig.tokenAddress, payoutConfig.chainID)
+      : undefined;
+  return isValidAmount({
+    details: {
+      amount: symbol ? `${payoutConfig.totalGrantAmount} ${symbol}` : payoutConfig.totalGrantAmount,
+    },
+  });
+};
+
 export const GrantOverview = () => {
   const grant = useGrantStore((state) => state.grant);
   const loading = useGrantStore((state) => state.loading);
   const refreshGrant = useGrantStore((state) => state.refreshGrant);
   const _isOwner = useOwnerStore((state) => state.isOwner);
 
+  const { data: payoutConfig, isLoading: isAmountLoading } = usePayoutConfigByGrantPublic(
+    grant?.uid ?? "",
+    { enabled: !!grant?.uid }
+  );
+  const totalGrantAmount = resolveTotalGrantAmount(grant, payoutConfig);
+
   const grantData: { stat?: number | string; title: string }[] = [
-    {
-      stat: isValidAmount(grant),
-      title: "Total Grant Amount",
-    },
     {
       stat: grant?.details?.startDate
         ? formatDate(new Date(grant?.details?.startDate).getTime())
@@ -178,6 +223,20 @@ export const GrantOverview = () => {
                     <span className="text-base font-semibold">Details</span>
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                   </ExternalLink>
+                </div>
+              ) : null}
+              {totalGrantAmount || isAmountLoading ? (
+                <div className="flex flex-row items-center justify-between gap-2">
+                  <h4 className="text-gray-500 font-semibold text-base dark:text-gray-300">
+                    Total Grant Amount
+                  </h4>
+                  {totalGrantAmount && !isAmountLoading ? (
+                    <p className="text-base font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                      {totalGrantAmount}
+                    </p>
+                  ) : (
+                    <Skeleton className="h-6 w-24" />
+                  )}
                 </div>
               ) : null}
               {grantData.map((data) =>
