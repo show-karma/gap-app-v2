@@ -143,6 +143,23 @@ describe("MilestonesList — allocation amount display", () => {
     expect(amounts[0].textContent).not.toMatch(/^\$/);
   });
 
+  it("ignores a hex placeholder stored as the grant currency and uses the payout token", () => {
+    mockPayoutConfig.data = {
+      tokenAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      chainID: 8453,
+      milestoneAllocations: [{ milestoneUID: "0xm1", amount: "80000" }],
+    };
+
+    const grantWithPlaceholder: Grant = {
+      ...baseGrant,
+      details: { title: "My Grant", currency: "0x0" },
+    } as unknown as Grant;
+
+    renderWithQueryClient(<MilestonesList grant={grantWithPlaceholder} />);
+
+    expect(screen.getAllByTestId("allocation-amount")[0]).toHaveTextContent("80,000 USDC");
+  });
+
   it("should_preserve_embedded_token_in_amount_even_when_grant_has_different_currency", () => {
     mockPayoutConfig.data = {
       milestoneAllocations: [{ milestoneUID: "0xm1", amount: "30000 OP" }],
