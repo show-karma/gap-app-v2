@@ -25,6 +25,28 @@ vi.mock("@/store/owner", () => ({
   ),
 }));
 
+const mockPayoutConfigQuery = {
+  data: undefined as any,
+  isLoading: false,
+};
+const mockUsePayoutConfigByGrantPublic = vi.fn(
+  (_grantUID: string, _options?: { enabled?: boolean }) => mockPayoutConfigQuery
+);
+
+vi.mock("@/src/features/payout-disbursement/hooks/use-payout-disbursement", () => ({
+  usePayoutConfigByGrantPublic: (grantUID: string, options?: { enabled?: boolean }) =>
+    mockUsePayoutConfigByGrantPublic(grantUID, options),
+}));
+
+const mockGetTokenByAddressAndChain = vi.fn(
+  (_address: string, _chainId: number): { symbol: string } | undefined => ({ symbol: "USDC" })
+);
+
+vi.mock("@/constants/supportedTokens", () => ({
+  getTokenByAddressAndChain: (address: string, chainId: number) =>
+    mockGetTokenByAddressAndChain(address, chainId),
+}));
+
 // Mock heavy/external dependencies
 vi.mock("@/components/Pages/Grants/MilestonesAndUpdates", () => ({
   GrantCompletionCard: () => <div data-testid="grant-completion-card" />,
@@ -113,6 +135,8 @@ describe("GrantOverview", () => {
     vi.clearAllMocks();
     mockGrantStore.grant = createMockGrant();
     mockGrantStore.loading = false;
+    mockPayoutConfigQuery.data = undefined;
+    mockPayoutConfigQuery.isLoading = false;
   });
 
   describe("Network display", () => {
@@ -155,6 +179,137 @@ describe("GrantOverview", () => {
       render(<GrantOverview />);
 
       expect(screen.getByText("Total Grant Amount")).toBeInTheDocument();
+    });
+  });
+  describe("Total Grant Amount source", () => {
+    const grantWithoutAmount = () =>
+      createMockGrant({
+        details: { title: "Test Grant", description: "desc", amount: "", currency: "" },
+      });
+
+    it("shows the grant's own amount when there is no payout config total", () => {
+      mockPayoutConfigQuery.data = null;
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("1000.00")).toBeInTheDocument();
+    });
+
+    it("prefers the payout config total over the grant's own amount", () => {
+      mockPayoutConfigQuery.data = { totalGrantAmount: "40000", tokenAddress: null, chainID: 8453 };
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("40000.00")).toBeInTheDocument();
+      expect(screen.queryByText("1000.00")).not.toBeInTheDocument();
+    });
+
+    it("labels the payout total with the payout token, not the grant's currency field", () => {
+      mockGrantStore.grant = createMockGrant({
+        details: { title: "Test Grant", description: "desc", amount: "3000 DAI", currency: "0x0" },
+      });
+      mockPayoutConfigQuery.data = {
+        totalGrantAmount: "7230",
+        tokenAddress: "0xtoken",
+        chainID: 10,
+      };
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("7230.00 USDC")).toBeInTheDocument();
+    });
+
+    it("recognises USDC on a chain missing from the donation token list", () => {
+      mockGetTokenByAddressAndChain.mockReturnValueOnce(undefined);
+      mockPayoutConfigQuery.data = {
+        totalGrantAmount: "7230",
+        tokenAddress: "0xCEBA9300F2B948710D2653DD7B07F33A8B32118C",
+        chainID: 42220,
+      };
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("7230.00 USDC")).toBeInTheDocument();
+    });
+
+    it("shows no symbol for an unknown payout token", () => {
+      mockGetTokenByAddressAndChain.mockReturnValueOnce(undefined);
+      mockPayoutConfigQuery.data = {
+        totalGrantAmount: "7230",
+        tokenAddress: "0xunknown",
+        chainID: 10,
+      };
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("7230.00")).toBeInTheDocument();
+    });
+
+    it("keeps the grant's own text when the payout total is the same number", () => {
+      mockGrantStore.grant = createMockGrant({
+        details: { title: "Test Grant", description: "desc", amount: "58000 USD" },
+      });
+      mockPayoutConfigQuery.data = {
+        totalGrantAmount: "58000",
+        tokenAddress: "USD",
+        chainID: 8453,
+      };
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("58000.00 USD")).toBeInTheDocument();
+    });
+
+    it("holds the grant's own amount back while the payout config loads", () => {
+      mockPayoutConfigQuery.isLoading = true;
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("Total Grant Amount")).toBeInTheDocument();
+      expect(screen.queryByText("1000.00")).not.toBeInTheDocument();
+    });
+
+    it("shows the payout config total when the grant amount is empty", () => {
+      mockGrantStore.grant = grantWithoutAmount();
+      mockPayoutConfigQuery.data = { totalGrantAmount: "40000", tokenAddress: null, chainID: 8453 };
+
+      render(<GrantOverview />);
+
+      expect(mockUsePayoutConfigByGrantPublic).toHaveBeenCalledWith("0xgrant123", {
+        enabled: true,
+      });
+      expect(screen.getByText("40000.00")).toBeInTheDocument();
+    });
+
+    it("appends the payout token symbol when the config has a token", () => {
+      mockGrantStore.grant = grantWithoutAmount();
+      mockPayoutConfigQuery.data = {
+        totalGrantAmount: "40000",
+        tokenAddress: "0xtoken",
+        chainID: 10,
+      };
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("40000.00 USDC")).toBeInTheDocument();
+    });
+
+    it("keeps the row with a placeholder while the payout config loads", () => {
+      mockGrantStore.grant = grantWithoutAmount();
+      mockPayoutConfigQuery.isLoading = true;
+
+      render(<GrantOverview />);
+
+      expect(screen.getByText("Total Grant Amount")).toBeInTheDocument();
+    });
+
+    it("hides the row when neither source has an amount", () => {
+      mockGrantStore.grant = grantWithoutAmount();
+      mockPayoutConfigQuery.data = { totalGrantAmount: "0", tokenAddress: null, chainID: 8453 };
+
+      render(<GrantOverview />);
+
+      expect(screen.queryByText("Total Grant Amount")).not.toBeInTheDocument();
     });
   });
 });
