@@ -10,6 +10,7 @@ import type { Grant } from "@/types/v2/grant";
 import type { UnifiedMilestone, ProjectUpdate as V2ProjectUpdate } from "@/types/v2/roadmap";
 import { normalizeTimestamp } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
+import { isHexAddress } from "@/utilities/isHexAddress";
 import { buildGrantMilestoneOrderMap } from "@/utilities/milestones/assignGrantMilestoneOrder";
 import { isCancelledMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { cn } from "@/utilities/tailwind";
@@ -66,7 +67,9 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   // Resolve currency: prefer grant details, fall back to token lookup from payout config
   const grantCurrency = useMemo(() => {
-    if (grant.details?.currency) return grant.details.currency;
+    if (grant.details?.currency && !isHexAddress(grant.details.currency)) {
+      return grant.details.currency;
+    }
     if (payoutConfig?.tokenAddress && payoutConfig?.chainID) {
       const token = getTokenByAddressAndChain(payoutConfig.tokenAddress, payoutConfig.chainID);
       return token?.symbol;
