@@ -1,4 +1,5 @@
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
+import type { FollowUpTarget } from "./follow-up-target";
 
 // V2 Status Types
 export type FundingApplicationStatusV2 =
@@ -429,6 +430,8 @@ export interface IMilestoneActionItem {
   followUpAt: string | null;
   /** Opted in to the Slack follow-up nudge sent as the author. */
   autoFollowUp: boolean;
+  /** Where the nudge goes; empty until suggested or chosen. */
+  followUpTargets: FollowUpTarget[];
   /** Stamped server-side when the item is marked done. */
   completedAt: string | null;
   completedByAddress: string | null;

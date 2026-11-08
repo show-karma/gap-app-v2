@@ -9,6 +9,7 @@ import {
   type ActionItemEditInput,
 } from "@/components/Inbox/ActionItemEditForm";
 import { AutoFollowUpToggle } from "@/components/Inbox/AutoFollowUpToggle";
+import { FollowUpTargets } from "@/components/Inbox/FollowUpTargets";
 import { NoteContent } from "@/components/Inbox/NoteContent";
 import { NoteEditor } from "@/components/Inbox/NoteEditor";
 import {
@@ -17,7 +18,6 @@ import {
   takePendingNote,
 } from "@/components/Inbox/noteNavigation";
 import {
-  AUTO_FOLLOW_UP_LABEL,
   type SlackAvailability,
   slackAvailabilityStatus,
 } from "@/components/Inbox/slackAvailability";
@@ -48,6 +48,8 @@ function isFollowUpOverdue(item: IMilestoneActionItem): boolean {
 
 interface ActionItemRowProps {
   item: IMilestoneActionItem;
+  communityId: string;
+  target: ActionItemTarget;
   slack: SlackAvailability;
   mentionOptions: ICommunityActionItem[];
   isLoadingMentions: boolean;
@@ -64,6 +66,8 @@ interface ActionItemRowProps {
 
 const ActionItemRowComponent: FC<ActionItemRowProps> = ({
   item,
+  communityId,
+  target,
   slack,
   mentionOptions,
   isLoadingMentions,
@@ -154,7 +158,7 @@ const ActionItemRowComponent: FC<ActionItemRowProps> = ({
             </span>
           )}
           {item.autoFollowUp && !done && (
-            <span className="text-gray-500 dark:text-gray-400">{AUTO_FOLLOW_UP_LABEL}</span>
+            <FollowUpTargets communityId={communityId} target={target} item={item} slack={slack} />
           )}
           {done && item.completedAt && (
             <span className="text-gray-500 dark:text-zinc-400">
@@ -520,6 +524,8 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
               <ActionItemRow
                 key={entry.item.id}
                 item={entry.item}
+                communityId={communityId}
+                target={target}
                 slack={slack}
                 mentionOptions={mentionOptions}
                 isLoadingMentions={mentionSource.isLoading}
