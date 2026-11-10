@@ -24,7 +24,7 @@ export type ActionItemTarget =
   | { kind: "application"; id: string };
 
 /** Placeholder id for an item that exists only in the optimistic cache. */
-const OPTIMISTIC_ID_PREFIX = "optimistic-";
+export const OPTIMISTIC_ID_PREFIX = "optimistic-";
 
 /**
  * Reads and mutates the admin follow-up log on a milestone or an application.
@@ -104,6 +104,7 @@ export function useActionItems(
         content: input.content,
         followUpAt: input.followUpAt ?? null,
         autoFollowUp: input.autoFollowUp,
+        followUpTargets: [],
         completedAt: null,
         completedByAddress: null,
         createdByAddress: "",

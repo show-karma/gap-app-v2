@@ -211,6 +211,16 @@ export const INDEXER = {
         `/v2/milestone-action-items/${communityId}/items/${id}`,
       DELETE: (communityId: string, id: string) =>
         `/v2/milestone-action-items/${communityId}/items/${id}`,
+      FOLLOW_UP_SUGGEST: (communityId: string, id: string) =>
+        `/v2/milestone-action-items/${communityId}/items/${id}/follow-up/suggest`,
+      FOLLOW_UP_TARGETS: (communityId: string, id: string) =>
+        `/v2/milestone-action-items/${communityId}/items/${id}/follow-up/targets`,
+      FOLLOW_UP_WORKSPACES: (communityId: string, id: string) =>
+        `/v2/milestone-action-items/${communityId}/items/${id}/follow-up/workspaces`,
+      FOLLOW_UP_CHANNELS: (communityId: string, id: string, qs: string) =>
+        `/v2/milestone-action-items/${communityId}/items/${id}/follow-up/channels?${qs}`,
+      FOLLOW_UP_MEMBERS: (communityId: string, id: string, qs: string) =>
+        `/v2/milestone-action-items/${communityId}/items/${id}/follow-up/members?${qs}`,
     },
     AUTH: {
       PERMISSIONS: (params?: {

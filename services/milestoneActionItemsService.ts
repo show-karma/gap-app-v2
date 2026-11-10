@@ -1,4 +1,11 @@
 import type {
+  FollowUpChannel,
+  FollowUpMember,
+  FollowUpTarget,
+  FollowUpTargetInput,
+  FollowUpWorkspace,
+} from "@/types/follow-up-target";
+import type {
   ICommunityActionItemPage,
   IMilestoneActionItem,
   IMilestoneTimeline,
@@ -157,4 +164,66 @@ export async function updateMilestoneActionItem(
 
 export async function deleteMilestoneActionItem(communityId: string, id: string): Promise<void> {
   await api.delete(INDEXER.V2.MILESTONE_ACTION_ITEMS.DELETE(communityId, id));
+}
+
+export async function suggestFollowUpTargets(
+  communityId: string,
+  id: string
+): Promise<FollowUpTarget[]> {
+  const data = await api.post<{ targets: FollowUpTarget[] }>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_SUGGEST(communityId, id)
+  );
+  if (!data) throw new Error("Failed to suggest follow-up targets");
+  return data.targets;
+}
+
+export async function setFollowUpTargets(
+  communityId: string,
+  id: string,
+  targets: FollowUpTargetInput[]
+): Promise<FollowUpTarget[]> {
+  const data = await api.put<{ targets: FollowUpTarget[] }>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_TARGETS(communityId, id),
+    { targets }
+  );
+  if (!data) throw new Error("Failed to save follow-up targets");
+  return data.targets;
+}
+
+export async function getFollowUpWorkspaces(
+  communityId: string,
+  id: string
+): Promise<FollowUpWorkspace[]> {
+  const data = await api.get<{ workspaces: FollowUpWorkspace[] }>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_WORKSPACES(communityId, id)
+  );
+  if (!data) throw new Error("Failed to fetch Slack workspaces");
+  return data.workspaces;
+}
+
+export async function getFollowUpChannels(
+  communityId: string,
+  id: string,
+  teamId: string
+): Promise<FollowUpChannel[]> {
+  const query = new URLSearchParams({ teamId });
+  const data = await api.get<{ channels: FollowUpChannel[] }>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_CHANNELS(communityId, id, query.toString())
+  );
+  if (!data) throw new Error("Failed to fetch Slack channels");
+  return data.channels;
+}
+
+export async function searchFollowUpMembers(
+  communityId: string,
+  id: string,
+  teamId: string,
+  q: string
+): Promise<FollowUpMember[]> {
+  const query = new URLSearchParams({ teamId, q });
+  const data = await api.get<{ members: FollowUpMember[] }>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_MEMBERS(communityId, id, query.toString())
+  );
+  if (!data) throw new Error("Failed to search Slack members");
+  return data.members;
 }

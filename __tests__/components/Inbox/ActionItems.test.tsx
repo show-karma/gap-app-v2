@@ -20,7 +20,17 @@ vi.mock("@/hooks/useCommunityActionItems", () => ({
 }));
 
 vi.mock("@/hooks/useActionItems", () => ({
+  OPTIMISTIC_ID_PREFIX: "optimistic-",
   useActionItems: (...args: unknown[]) => mockUseActionItems(...args),
+}));
+
+const followUpMocks = vi.hoisted(() => ({
+  suggest: { mutate: vi.fn(), isPending: false, isError: false },
+  set: { mutate: vi.fn(), isPending: false, error: null, reset: vi.fn() },
+}));
+
+vi.mock("@/hooks/useFollowUpTargets", () => ({
+  useFollowUpTargets: () => followUpMocks,
 }));
 
 // DeleteDialog opens a Radix dialog; stub it to a plain trigger so these tests
@@ -55,6 +65,7 @@ function makeItem(overrides: Partial<IMilestoneActionItem> = {}): IMilestoneActi
     content: "Emailed the team",
     followUpAt: null,
     autoFollowUp: false,
+    followUpTargets: [],
     completedAt: null,
     completedByAddress: null,
     createdByAddress: "0xadmin",
