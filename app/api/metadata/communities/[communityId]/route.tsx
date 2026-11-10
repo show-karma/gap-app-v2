@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
 import { SITE_URL } from "@/utilities/meta";
+import { getOgBackgroundImage } from "@/utilities/og-background";
 import { getCommunityDetails, getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 // App router includes @vercel/og.
 // No need to install it.
@@ -16,9 +17,10 @@ export async function GET(
   const communityId = (await context.params).communityId;
   // getCommunityStats now rejects on indexer failure; degrade the social card gracefully
   // (render without the stats column) rather than letting OG generation throw a 500.
-  const [community, communityStats] = await Promise.all([
+  const [community, communityStats, backgroundImage] = await Promise.all([
     getCommunityDetails(communityId),
     getCommunityStats(communityId).catch(() => null),
+    getOgBackgroundImage(),
   ]);
 
   if (!community) {
@@ -84,7 +86,7 @@ export async function GET(
       <div
         tw="bg-white w-full h-full flex flex-row justify-between items-center pr-[42px] pl-[68px]"
         style={{
-          backgroundImage: `url(${SITE_URL}/assets/previews/background.png)`,
+          backgroundImage,
         }}
       >
         <div tw="flex flex-col items-start justify-start w-[520px] pb-[40px]">

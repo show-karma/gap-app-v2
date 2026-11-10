@@ -8,6 +8,7 @@ import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { SITE_URL } from "@/utilities/meta";
+import { getOgBackgroundImage } from "@/utilities/og-background";
 
 export async function GET(
   _request: NextRequest,
@@ -17,9 +18,10 @@ export async function GET(
   // Fetch directly instead of via getProjectCachedData: that helper throws
   // notFound()/redirect(), which would turn this image endpoint into a 404
   // page or an HTML redirect and make the branded fallback below unreachable.
-  const [project, grants] = await Promise.all([
+  const [project, grants, backgroundImage] = await Promise.all([
     getProject(projectId).catch(() => null),
     getProjectGrants(projectId).catch(() => []),
+    getOgBackgroundImage(),
   ]);
   if (!project) {
     return new ImageResponse(
@@ -94,7 +96,7 @@ export async function GET(
       <div
         tw="bg-white w-full h-full flex flex-row justify-between items-center pr-[42px] pl-[68px]"
         style={{
-          backgroundImage: `url(${SITE_URL}/assets/previews/background.png)`,
+          backgroundImage,
         }}
       >
         <div tw="flex flex-col items-start justify-center mt-8 w-[520px] pb-[80px]">

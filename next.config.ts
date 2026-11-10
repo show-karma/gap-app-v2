@@ -186,6 +186,14 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // The OG card background became a JPEG. Deployments built before that
+      // still fetch the PNG from the canonical origin; without this they would
+      // render white card text on no background.
+      {
+        source: "/assets/previews/background.png",
+        destination: "/assets/previews/background.jpg",
+        permanent: true,
+      },
       // The foundations landing page became the homepage.
       {
         source: "/foundations",
