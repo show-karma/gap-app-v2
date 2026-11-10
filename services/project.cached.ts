@@ -12,7 +12,9 @@ import type { Project as ProjectResponse } from "@/types/v2/project";
 import type { UpdatesApiResponse } from "@/types/v2/roadmap";
 import { buildDehydratedState } from "@/utilities/cache/hydration-seed";
 import { projectTag } from "@/utilities/cache/tags";
+import { replaceInlineCommunityLogos } from "@/utilities/community-logo.server";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
@@ -75,7 +77,15 @@ export async function getProjectUpdatesCached(
   // Third arg, not second: the second is `milestoneStatus`. Without
   // `isAuthorized: false` this reaches TokenManager -> cookies() *inside* the
   // cache scope, which Next rejects outright.
-  return getProjectUpdates(projectIdOrSlug, undefined, { isAuthorized: false });
+  const updates = await getProjectUpdates(projectIdOrSlug, undefined, { isAuthorized: false });
+
+  // A community logo stored inline repeats in every grant item of the feed,
+  // and this feed is seeded into every project tab. Link the logo instead of
+  // embedding it — see utilities/community-logo.server.ts.
+  return replaceInlineCommunityLogos(updates, async (slug) => {
+    const community = await getCommunityDetailsCached(slug);
+    return community?.details?.logoUrl ?? community?.details?.imageURL;
+  });
 }
 
 /**
