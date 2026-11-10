@@ -1,6 +1,8 @@
 /**
  * @vitest-environment node
  */
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import * as Sentry from "@sentry/nextjs";
 import {
   getOgBackgroundImage,
@@ -58,5 +60,21 @@ describe("getOgBackgroundImage", () => {
       error,
       expect.objectContaining({ tags: expect.objectContaining({ asset: "og-background" }) })
     );
+  });
+});
+
+describe("legacy background.png", () => {
+  it("permanently redirects to the JPEG so older deployments keep their card background", () => {
+    const source = readFileSync(
+      path.resolve(__dirname, "..", "..", "..", "next.config.ts"),
+      "utf8"
+    );
+    const blockRe =
+      /\{\s*source:\s*["']\/assets\/previews\/background\.png["']\s*,\s*destination:\s*["']([^"']+)["']\s*,\s*permanent:\s*(true|false)\s*,?\s*\}/;
+    const match = source.match(blockRe);
+
+    expect(match, "a redirect for /assets/previews/background.png should exist").not.toBeNull();
+    expect(match?.[1]).toBe(OG_BACKGROUND_PATH);
+    expect(match?.[2]).toBe("true");
   });
 });
