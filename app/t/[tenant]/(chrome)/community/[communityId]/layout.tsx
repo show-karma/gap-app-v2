@@ -9,6 +9,8 @@ import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/uti
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { FALLBACK_PROGRAM_PAIRS, withPrerenderFallback } from "@/utilities/prerender-samples";
 import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
+import { RenderClockProvider } from "@/utilities/render-clock-context";
+import { getRenderClock } from "@/utilities/render-clock-server";
 import { reportCanonicalMismatchIfAny } from "@/utilities/sentry/reportCanonicalMismatch";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
@@ -155,8 +157,16 @@ export default async function Layout(props: { children: React.ReactNode; params:
   // sometimes yield a uid.
   const community = await getCommunityDetailsCached(communityId);
 
+  // The render clock lives here, not in the root layout: every component that
+  // judges a deadline or seeds a timestamp on first paint (programs, funding
+  // opportunities, the project grid) renders under this layout, and keeping
+  // the clock out of every other route keeps their cached output free of a
+  // value that changes on its own. __tests__/architecture/render-clock-scope
+  // fails if a consumer appears outside this subtree.
+  const renderedAt = await getRenderClock();
+
   return (
-    <>
+    <RenderClockProvider renderedAt={renderedAt}>
       <CommunityAnalyticsGroup
         uid={community?.uid ?? null}
         slug={community?.details?.slug ?? null}
@@ -165,6 +175,6 @@ export default async function Layout(props: { children: React.ReactNode; params:
         <WhitelabelJsonLd tenant={tenantConfig} url={canonicalUrl} />
       )}
       {children}
-    </>
+    </RenderClockProvider>
   );
 }

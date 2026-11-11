@@ -1,5 +1,9 @@
 import { hydrate, QueryClient } from "@tanstack/react-query";
-import { buildDehydratedState, stabilizeSeedTimestamps } from "@/utilities/cache/hydration-seed";
+import {
+  buildDehydratedState,
+  SEED_TIMESTAMP,
+  stabilizeSeedTimestamps,
+} from "@/utilities/cache/hydration-seed";
 
 /**
  * The hydration seed is serialized into cached pages. React Query stamps every
@@ -17,15 +21,16 @@ describe("buildDehydratedState", () => {
     vi.useRealTimers();
   });
 
-  it("is byte-identical when rebuilt from the same data within the hour", async () => {
+  it("is byte-identical when rebuilt from the same data, however much later", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(Date.parse("2026-11-10T14:05:00.000Z"));
     const first = await buildDehydratedState(seedProject);
-    vi.setSystemTime(Date.parse("2026-11-10T14:47:31.250Z"));
+    vi.setSystemTime(Date.parse("2026-11-13T09:47:31.250Z"));
     const second = await buildDehydratedState(seedProject);
 
     expect(JSON.stringify(second)).toBe(JSON.stringify(first));
-    expect(first.queries[0].state.dataUpdatedAt).toBe(Date.parse("2026-11-10T14:00:00.000Z"));
+    expect(first.queries[0].state.dataUpdatedAt).toBe(SEED_TIMESTAMP);
+    expect(first.queries[0].state.data).toEqual({ name: "Karma" });
   });
 });
 
@@ -65,6 +70,19 @@ describe("stabilizeSeedTimestamps", () => {
     expect(stable.queries[0].state.dataUpdatedAt).toBe(STAMP);
     expect(stable.queries[0].state.errorUpdatedAt).toBe(0);
     expect(stable.queries[0].state.data).toBe(1);
+  });
+
+  it("hydrates as usable data that the client refetches on mount", async () => {
+    const client = new QueryClient();
+    const seed = await buildDehydratedState(seedProject);
+
+    hydrate(client, seed);
+
+    const query = client.getQueryCache().find({ queryKey: ["project", "karma"] });
+    expect(query?.state.status).toBe("success");
+    expect(query?.state.data).toEqual({ name: "Karma" });
+    // staleTime is one minute (defaultQueryOptions): a seed with no fetch time is past it.
+    expect(query?.isStaleByTime(60_000)).toBe(true);
   });
 
   it("never lets the older-looking seed overwrite data the client fetched itself", async () => {
