@@ -16,6 +16,7 @@ import type {
   SmartAccountClient,
 } from "../types";
 import { GaslessProviderError } from "../types";
+import { withStuckNonceRecovery } from "../utils/stuckNonceRecovery";
 import { withUserOpSerialization } from "../utils/userOpQueue";
 
 /**
@@ -29,6 +30,12 @@ const ENTRYPOINT = getEntryPoint("0.7");
 const KERNEL_VERSION = KERNEL_V3_3;
 
 /**
+ * Bundler vendors behind ZeroDev's RPC that keep their own mempool. Used to
+ * route around a vendor still holding a stale op for the same sender/nonce.
+ */
+const ALTERNATE_BUNDLER_PROVIDERS = ["PIMLICO"] as const;
+
+/**
  * ZeroDev gasless provider implementation.
  * Uses ZeroDev's Kernel smart accounts with EIP-7702 support.
  */
@@ -38,8 +45,35 @@ export class ZeroDevProvider implements IGaslessProvider {
   /**
    * Gets the ZeroDev RPC URL for bundler and paymaster.
    */
-  private getRpcUrl(chainId: number, projectId: string): string {
-    return `https://rpc.zerodev.app/api/v3/${projectId}/chain/${chainId}`;
+  private getRpcUrl(chainId: number, projectId: string, provider?: string): string {
+    const base = `https://rpc.zerodev.app/api/v3/${projectId}/chain/${chainId}`;
+    return provider ? `${base}?provider=${provider}` : base;
+  }
+
+  private buildAlternateClients(
+    client: SmartAccountClient,
+    chainId: number,
+    config: ChainGaslessConfig
+  ): Array<{ label: string; build: () => SmartAccountClient }> {
+    const projectId = config.zerodev?.projectId;
+    if (!projectId) {
+      return [];
+    }
+    return ALTERNATE_BUNDLER_PROVIDERS.map((provider) => ({
+      label: provider,
+      build: () => {
+        const rpcUrl = this.getRpcUrl(chainId, projectId, provider);
+        return createKernelAccountClient({
+          account: client.account,
+          chain: config.chain,
+          paymaster: createZeroDevPaymasterClient({
+            chain: config.chain,
+            transport: http(rpcUrl),
+          }),
+          bundlerTransport: http(rpcUrl),
+        });
+      },
+    }));
   }
 
   /**
@@ -209,7 +243,11 @@ export class ZeroDevProvider implements IGaslessProvider {
     // so concurrent attestations (e.g. deleting several milestones in a row)
     // can't submit two ops on the same nonce and trip the bundler's AA25 guard.
     const kernelProvider = withUserOpSerialization(
-      new KernelEIP1193Provider(client),
+      withStuckNonceRecovery(new KernelEIP1193Provider(client), {
+        client,
+        chainId,
+        alternateClients: this.buildAlternateClients(client, chainId, config),
+      }),
       client.account?.address
     );
 
