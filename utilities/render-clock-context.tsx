@@ -6,7 +6,8 @@ const RenderClockCtx = createContext<number | null>(null);
 
 /**
  * Hands the server's cached clock (`getRenderClock()`) to the client tree.
- * Rendered once, by the root layout.
+ * Rendered by the community layout, the only subtree whose first paint judges
+ * deadlines; see __tests__/architecture/render-clock-scope.test.ts.
  */
 export function RenderClockProvider({
   renderedAt,

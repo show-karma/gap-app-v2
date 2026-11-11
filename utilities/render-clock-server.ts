@@ -31,13 +31,15 @@ export function quantizeRenderTime(epochMs: number): number {
  *
  * — unless the read happens inside a cache scope, where it is prerendered as
  * part of the cached value. That is what this function is: one clock read,
- * cached, that the root layout hands to every Client Component through
+ * cached, that the community layout hands to its Client Components through
  * `RenderClockProvider`. Anything that needs "now" during render on a
- * Cache-class route reads `useRenderNow()` instead of the clock.
+ * Cache-class route reads `useRenderNow()` instead of the clock — and must
+ * render under that layout (__tests__/architecture/render-clock-scope).
  *
  * The value is rounded to `RENDER_CLOCK_RESOLUTION_MS` so that it only changes
- * once an hour: it is serialized into every route's payload, and a value that
- * changed every minute made every regeneration of every page a new write.
+ * once an hour: it is serialized into the payload of every route that reads
+ * it, and a value that changed every minute made every regeneration a new
+ * write.
  * `cacheLife("minutes")` still refreshes it promptly after the hour turns.
  */
 export async function getRenderClock(): Promise<number> {

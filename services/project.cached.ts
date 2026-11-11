@@ -31,9 +31,10 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * `getProjectCached` instead, so the fetch is cached and the routing decision
  * stays live.
  *
- * `cacheLife("minutes")` is `{ stale: 300, revalidate: 60, expire: 3600 }` —
- * the 60s revalidate is exactly the `export const revalidate = 60` the project
- * layout carried before the flag, so the CDN cadence is unchanged.
+ * Every loader here uses `PROJECT_PAGE_CACHE_LIFE`. Its 60s revalidate is
+ * exactly the `export const revalidate = 60` the project layout carried before
+ * the flag, so pages under traffic stay as fresh as before. Its `expire` is
+ * long on purpose — see the constant.
  *
  * Grants, impacts and updates all take an explicit `isAuthorized: false`. Both default it to
  * `true`, which routes through `TokenManager` → `cookies()`; that is a request
@@ -43,9 +44,37 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * anonymous/public view, which is precisely what crawlers see".
  */
 
+/**
+ * Cache lifetime for everything a project page reads.
+ *
+ * `stale` and `revalidate` are the `"minutes"` preset's: a page requested more
+ * than a minute after it was cached is served from the cache and rebuilt in
+ * the background, so readers under normal traffic see data at most a minute
+ * behind.
+ *
+ * `expire` is a week instead of the preset's hour. The page's ISR entry takes
+ * the smallest `expire` of everything it read, and once that passes the next
+ * request rebuilds the page synchronously and stores it again — an ISR write
+ * even when nothing changed. Project pages are mostly visited every few hours
+ * or days, so with an hour almost every visit was one of those writes. Within
+ * a week the visit instead triggers a background revalidation, and a
+ * revalidation that produces the same bytes is not stored again.
+ *
+ * Trade-off: the first visitor after a long quiet period gets the page as it
+ * was last rendered — up to a week old in the worst case — while the
+ * background rebuild refreshes it for the next one. With JavaScript, the
+ * client refetches the seeded queries on mount, so the visible data catches
+ * up right away; crawlers and no-JS readers see the cached page.
+ */
+export const PROJECT_PAGE_CACHE_LIFE = {
+  stale: 300,
+  revalidate: 60,
+  expire: 7 * 24 * 60 * 60,
+} as const;
+
 export async function getProjectCached(projectIdOrSlug: string): Promise<ProjectResponse | null> {
   "use cache";
-  cacheLife("minutes");
+  cacheLife(PROJECT_PAGE_CACHE_LIFE);
   cacheTag(projectTag(projectIdOrSlug));
 
   return getProject(projectIdOrSlug);
@@ -53,7 +82,7 @@ export async function getProjectCached(projectIdOrSlug: string): Promise<Project
 
 export async function getProjectGrantsCached(projectIdOrSlug: string): Promise<Grant[]> {
   "use cache";
-  cacheLife("minutes");
+  cacheLife(PROJECT_PAGE_CACHE_LIFE);
   cacheTag(projectTag(projectIdOrSlug));
 
   return getProjectGrants(projectIdOrSlug, { isAuthorized: false });
@@ -61,7 +90,7 @@ export async function getProjectGrantsCached(projectIdOrSlug: string): Promise<G
 
 export async function getProjectImpactsCached(projectIdOrSlug: string): Promise<ProjectImpact[]> {
   "use cache";
-  cacheLife("minutes");
+  cacheLife(PROJECT_PAGE_CACHE_LIFE);
   cacheTag(projectTag(projectIdOrSlug));
 
   return getProjectImpacts(projectIdOrSlug, { isAuthorized: false });
@@ -71,7 +100,7 @@ export async function getProjectUpdatesCached(
   projectIdOrSlug: string
 ): Promise<UpdatesApiResponse> {
   "use cache";
-  cacheLife("minutes");
+  cacheLife(PROJECT_PAGE_CACHE_LIFE);
   cacheTag(projectTag(projectIdOrSlug));
 
   // Third arg, not second: the second is `milestoneStatus`. Without
@@ -99,7 +128,7 @@ export async function getProjectUpdatesCached(
  */
 export async function getProjectSeedCached(projectIdOrSlug: string): Promise<DehydratedState> {
   "use cache";
-  cacheLife("minutes");
+  cacheLife(PROJECT_PAGE_CACHE_LIFE);
   cacheTag(projectTag(projectIdOrSlug));
 
   return buildDehydratedState(async (queryClient) => {
@@ -133,7 +162,7 @@ export async function getProjectUpdatesSeedCached(
   projectIdOrSlug: string
 ): Promise<DehydratedState> {
   "use cache";
-  cacheLife("minutes");
+  cacheLife(PROJECT_PAGE_CACHE_LIFE);
   cacheTag(projectTag(projectIdOrSlug));
 
   return buildDehydratedState(async (queryClient) => {
