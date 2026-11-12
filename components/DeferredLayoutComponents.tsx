@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
+import { vercelAnalyticsEnabled } from "@/utilities/deployment-env";
 import { isAskKarmaPathname } from "@/utilities/pages";
 
 const Toaster = dynamic(() => import("react-hot-toast").then((mod) => mod.Toaster), { ssr: false });
@@ -99,12 +100,19 @@ export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutCompon
   // nothing from a crawler and DEV-612's no-JS visibility rule does not apply —
   // the fallback is `null` because the bubble renders nothing on the server
   // either way.
+  //
+  // Vercel Web Analytics and Speed Insights load their scripts from Vercel's
+  // edge (`/_vercel/...`), which exists only on Vercel. Anywhere else they
+  // would 404 on every page, so they mount only when the build says it is a
+  // Vercel deployment (NEXT_PUBLIC_VERCEL_ANALYTICS, set by next.config.ts).
+  const showVercelAnalytics = vercelAnalyticsEnabled();
+
   return (
     <>
       <Toaster {...toasterConfig} />
       <ProgressBarWrapper />
-      <Analytics />
-      <SpeedInsights />
+      {showVercelAnalytics ? <Analytics /> : null}
+      {showVercelAnalytics ? <SpeedInsights /> : null}
       <HotjarAnalytics />
       <AiReferrerTracker />
       <AnalyticsProvider />
