@@ -10,6 +10,8 @@
     "build:debug-memory": "next build --experimental-debug-memory-usage",
     "build:widget": "vite build --config widget/vite.config.ts",
     "start": "next start",
+    "cf:build": "cross-env KARMA_BUILD_TARGET=cloudflare NODE_OPTIONS=--max-old-space-size=4096 opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare preview",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
@@ -179,6 +181,7 @@
     "@lhci/cli": "^0.15.1",
     "@mswjs/interceptors": "^0.41.0",
     "@next/playwright": "16.4.6",
+    "@opennextjs/cloudflare": "1.20.16",
     "@playwright/test": "^1.58.2",
     "@storybook/addon-a11y": "^10.0.5",
     "@storybook/addon-docs": "^10.0.5",
@@ -228,7 +231,8 @@
     "typescript": "5.9.3",
     "vite": "7.3.2",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.0.7"
+    "vitest": "^4.0.7",
+    "wrangler": "4.148.0"
   },
   "resolutions": {
     "@noble/hashes": "^1.4.0",

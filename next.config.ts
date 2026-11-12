@@ -46,6 +46,11 @@ const removeImports = require("next-remove-imports")();
 // report `app_version: "unknown"`.
 const { version: APP_VERSION } = require("./package.json");
 
+// Set only by `pnpm cf:build` (the Cloudflare Workers spike, see
+// docs/cloudflare-opennext-feasibility.md). Vercel and the CI standalone build
+// never set it, so everything gated on it is a no-op there.
+const isCloudflareBuild = process.env.KARMA_BUILD_TARGET === "cloudflare";
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -99,6 +104,14 @@ const nextConfig: NextConfig = {
   // still win. Requires cacheComponents and does nothing without it.
   partialPrefetching: true,
   experimental: {
+    // Workers only. Next inflates the PPR resume data cache with
+    // `maxOutputLength` = 5 x maxPostponedStateSize (100 MB by default, so
+    // 500 MB), and workerd's node:zlib rejects anything above 128 MiB with a
+    // RangeError. The resume then fails and every route with a postponed
+    // shell (/project/*, /community/*) is served as the bare static shell:
+    // no <title>, no content, still a 200. 20 MB keeps the inflate cap at
+    // 100 MB; real postponed states here are 9-24 KB.
+    ...(isCloudflareBuild ? { maxPostponedStateSize: "20mb" as const } : {}),
     // app/global-not-found.tsx is the 404 for everything the router cannot
     // match. The flag still exists in 16.3.3 and defaults to false; without it
     // the file is ignored and Next serves its own unbranded 404.

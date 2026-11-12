@@ -53,6 +53,9 @@
     "tests/**/*",
     "e2e/**/*",
     "widget/vite.config.ts",
-    "widget/tailwind.config.ts"
+    "widget/tailwind.config.ts",
+    "cloudflare/**/*",
+    ".open-next/**/*",
+    ".wrangler/**/*"
   ]
 }

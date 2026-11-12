@@ -1,0 +1,35 @@
+// SPIKE: local-only. Used by `opennextjs-cloudflare preview` / `wrangler dev`,
+// where every binding below is simulated by miniflare and persisted under
+// .wrangler/state. No account_id on purpose: nothing here is deployed.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gap-app-v2-spike",
+  "main": "cloudflare/worker.ts",
+  // Must not be newer than the bundled workerd (wrangler 4.148.0 → 2026-10-06).
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    // Self-reference used by the cache layer; must match "name".
+    { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-spike" }
+  ],
+  "r2_buckets": [
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "gap-app-v2-spike-opennext-cache" }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
+      { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] }
+  ],
+  "images": { "binding": "IMAGES" },
+  // Replaces the Vercel cron for /api/cron/warm-sitemaps (see cloudflare/worker.ts).
+  "triggers": { "crons": ["0 */6 * * *"] },
+  "observability": { "enabled": true }
+}

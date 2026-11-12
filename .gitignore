@@ -80,3 +80,8 @@ public/knowledge/*.md
 
 # QA / dogfood run artifacts (screenshots, videos, captured auth state)
 dogfood-output/
+
+# Cloudflare spike (opennextjs-cloudflare build output, wrangler local state)
+/.open-next
+/.wrangler
+.dev.vars*
