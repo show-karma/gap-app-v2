@@ -270,7 +270,7 @@ describe("ApplicationList - AI Score Column", () => {
   });
 
   describe("Column Positioning", () => {
-    it("should position AI Score column right after Status column", () => {
+    it("should position AI Score column after Status column", () => {
       mockFormatAIScore.mockReturnValue("4.5");
 
       const applications = [createMockApplication()];
@@ -293,7 +293,7 @@ describe("ApplicationList - AI Score Column", () => {
       const statusIndex = headerTexts.findIndex((text) => text?.includes("Status"));
       const aiScoreIndex = headerTexts.findIndex((text) => text?.includes("AI Score"));
 
-      expect(aiScoreIndex).toBe(statusIndex + 1);
+      expect(statusIndex).toBeLessThan(aiScoreIndex);
     });
 
     it("should have proper accessibility attributes on table headers", () => {

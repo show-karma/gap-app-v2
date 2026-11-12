@@ -154,7 +154,7 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
                   Inviting...
                 </>
               ) : (
-                title
+                "Invite Grantee"
               )}
             </Button>
           </DialogFooter>

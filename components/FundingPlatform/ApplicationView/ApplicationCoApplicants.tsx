@@ -5,7 +5,7 @@ import { type FC, useState } from "react";
 import InviteGranteeModal from "@/components/FundingPlatform/ApplicationView/InviteGranteeModal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type GranteeContact, useGranteeContacts } from "@/hooks/useGranteeContacts";
+import { useCoApplicants } from "@/hooks/useCoApplicants";
 import { useInviteApplicationGrantee } from "@/hooks/useInviteApplicationGrantee";
 import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
 
@@ -14,29 +14,15 @@ interface ApplicationCoApplicantsProps {
   referenceNumber: string;
 }
 
-function coApplicantsOf(contacts: GranteeContact[]): GranteeContact[] {
-  const seen = new Set<string>();
-  const ordered = [...contacts].sort(
-    (a, b) => Number(b.kind === "applicant") - Number(a.kind === "applicant")
-  );
-  return ordered.filter((contact) => {
-    const key = (contact.email || contact.address).trim().toLowerCase();
-    if (key && seen.has(key)) return false;
-    if (key) seen.add(key);
-    return contact.kind === "member";
-  });
-}
-
 export const ApplicationCoApplicants: FC<ApplicationCoApplicantsProps> = ({
   communityId,
   referenceNumber,
 }) => {
-  const { data = [], isLoading, isError, refetch } = useGranteeContacts(referenceNumber);
+  const { coApplicants, isLoading, isError, refetch } = useCoApplicants(referenceNumber);
   const access = useApplicationAccess(communityId, referenceNumber);
   const { inviteGrantee, isInviting } = useInviteApplicationGrantee(referenceNumber);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const coApplicants = coApplicantsOf(data);
   const canAdd = !access.isLoading && (access.isOwner || access.canAdminister);
 
   return (
