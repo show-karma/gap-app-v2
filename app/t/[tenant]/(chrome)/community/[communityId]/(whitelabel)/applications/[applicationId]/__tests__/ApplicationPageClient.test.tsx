@@ -63,14 +63,14 @@ describe("ApplicationPageClient edit access", () => {
   });
 
   it("lets an application team member edit", () => {
-    mockAccess.mockReturnValue({ isOwner: false, accessRole: "APPLICANT" });
+    mockAccess.mockReturnValue({ isApplicant: true });
     renderPage();
     expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Back to Dashboard/ })).toBeInTheDocument();
   });
 
   it("hides edit from viewers without applicant access", () => {
-    mockAccess.mockReturnValue({ isOwner: false, accessRole: "NONE" });
+    mockAccess.mockReturnValue({ isApplicant: false });
     renderPage();
     expect(screen.queryByRole("link", { name: "Edit" })).not.toBeInTheDocument();
   });

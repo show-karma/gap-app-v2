@@ -73,19 +73,19 @@ export function ApplicationPageClient({
 
   // Use authenticated backend check for ownership
   // (SSR-fetched ownerAddress may be sanitized to "")
-  const { isOwner: isBackendOwner, accessRole } = useApplicationAccess(
+  const { isApplicant: isBackendApplicant } = useApplicationAccess(
     communityId,
     application?.referenceNumber
   );
   const isApplicant = useMemo(() => {
     if (!application) return false;
-    if (isBackendOwner || accessRole === "APPLICANT") return true;
+    if (isBackendApplicant) return true;
     // Privy userId ownership as safety net (for edge cases)
     if (user?.id && application.userId && user.id === application.userId) {
       return true;
     }
     return false;
-  }, [isBackendOwner, accessRole, user?.id, application]);
+  }, [isBackendApplicant, user?.id, application]);
 
   const canOwnerEdit = useMemo(() => {
     if (!editableStatuses.includes(application.status)) return false;

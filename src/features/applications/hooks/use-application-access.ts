@@ -61,6 +61,7 @@ export interface UseApplicationAccessReturn {
   canReview: boolean;
   canAdminister: boolean;
   isOwner: boolean;
+  isApplicant: boolean;
   accessRole: ApplicationAccessRole;
 }
 
@@ -142,6 +143,7 @@ export function useApplicationAccess(
     canReview: accessInfo?.canReview ?? false,
     canAdminister: accessInfo?.canAdminister ?? false,
     isOwner: accessInfo?.isOwner ?? false,
+    isApplicant: !!accessInfo?.isOwner || accessInfo?.accessRole === "APPLICANT",
     accessRole: accessInfo?.accessRole ?? "NONE",
   };
 }
