@@ -35,7 +35,6 @@ interface InviteGranteeModalProps {
   onInviteGrantee: (data: InvitedGrantee) => Promise<unknown>;
   isInviting?: boolean;
   onInvited: (grantee: InvitedGrantee) => void;
-  title?: string;
 }
 
 const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
@@ -44,7 +43,6 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
   onInviteGrantee,
   isInviting = false,
   onInvited,
-  title = "Invite Grantee",
 }) => {
   const {
     register,
@@ -91,10 +89,10 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
         )}
       >
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>Add co-applicant</DialogTitle>
           <DialogDescription>
-            Add a grantee to this application&apos;s team. They&apos;ll be able to receive
-            @-mentions and notifications about this application.
+            Add a co-applicant to this application. They&apos;ll be able to view and edit it, and
+            receive @-mentions and notifications about it.
           </DialogDescription>
         </DialogHeader>
 
@@ -115,7 +113,7 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
             <Input
               id="grantee-name"
               {...register("name")}
-              placeholder="Grantee name"
+              placeholder="Co-applicant name"
               disabled={isInviting}
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
@@ -132,7 +130,7 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
               id="grantee-email"
               type="email"
               {...register("email")}
-              placeholder="grantee@example.com"
+              placeholder="co-applicant@example.com"
               disabled={isInviting}
             />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
@@ -151,10 +149,10 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
               {isInviting ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2 border-2" />
-                  Inviting...
+                  Adding...
                 </>
               ) : (
-                "Invite Grantee"
+                "Add co-applicant"
               )}
             </Button>
           </DialogFooter>
