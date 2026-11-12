@@ -85,6 +85,26 @@ export async function setupWhitelabelContext(
   }
 
   const base = new URL(baseURL);
+
+  // The login saved in storageState (privy:token and friends) lives in the base
+  // origin's localStorage. Copy it to the tenant origin so a test that logs in
+  // and then browses a tenant keeps its session there.
+  const { origins } = await page.context().storageState();
+  const baseStorage = origins.find((o) => o.origin === base.origin)?.localStorage ?? [];
+  if (baseStorage.length > 0) {
+    await page.addInitScript(
+      ({ domain, items }) => {
+        if (window.location.hostname !== domain) return;
+        for (const { name, value } of items) {
+          if (window.localStorage.getItem(name) === null) {
+            window.localStorage.setItem(name, value);
+          }
+        }
+      },
+      { domain: tenant.domain, items: baseStorage }
+    );
+  }
+
   await page.route(`${base.origin}/**`, async (route) => {
     const request = route.request();
     if (!request.isNavigationRequest() || request.frame() !== page.mainFrame()) {
