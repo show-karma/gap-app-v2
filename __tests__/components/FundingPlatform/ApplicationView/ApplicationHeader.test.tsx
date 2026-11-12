@@ -95,14 +95,14 @@ describe("ApplicationHeader", () => {
       const application = createMockApplication();
       renderWithProviders(<ApplicationHeader application={application} />);
 
-      expect(screen.getByText(/Submitted:/)).toBeInTheDocument();
+      expect(screen.getByText("Submitted")).toBeInTheDocument();
     });
 
     it("should render last updated date", () => {
       const application = createMockApplication();
       renderWithProviders(<ApplicationHeader application={application} />);
 
-      expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
+      expect(screen.getByText("Last updated")).toBeInTheDocument();
     });
   });
 

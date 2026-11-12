@@ -132,6 +132,17 @@ describe("ApplicationAccessRole", () => {
       expect(result.current.isOwner).toBe(true);
     });
 
+    it("APPLICANT who is not the owner (team or project member) is an applicant", async () => {
+      mockApiGet.mockResolvedValue({ ...makeAccessInfo("APPLICANT"), isOwner: false });
+
+      const { result } = renderHook(() => useApplicationAccess("optimism", "REF-001"), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.isOwner).toBe(false);
+      expect(result.current.isApplicant).toBe(true);
+    });
+
     it("NONE cannot view, edit, review, or administer", async () => {
       mockApiGet.mockResolvedValue(makeAccessInfo("NONE"));
 
