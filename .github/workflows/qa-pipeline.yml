@@ -567,7 +567,7 @@ jobs:
     # adds no wall clock on the happy path.
     needs: [gate-check, qa-plan, build, review-gate]
     if: needs.review-gate.outputs.approved == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright has no Chromium build for ubuntu-latest (26.04) yet
     # 18 min covers: setup (~3m) + single 14m claude attempt + cleanup (~1m).
     # Single attempt only — retrying a hung claude on the same prompt almost
     # always re-hangs and wastes another 14m. Better to fail fast and let the
@@ -965,7 +965,7 @@ jobs:
       needs.gate-check.outputs.should_run == 'true' &&
       needs.dogfood-plan.outputs.should_run == 'true' &&
       needs.review-gate.outputs.approved == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright has no Chromium build for ubuntu-latest (26.04) yet
     # 22 min covers the worst case: ~5 min cold-cache setup (pnpm install +
     # Playwright) + the artifact wait's ~17.5-min budget (in practice the
     # wait fail-fasts once the build job concludes, i.e. by the build's
@@ -1137,7 +1137,7 @@ jobs:
   dogfood:
     needs: [gate-check, build, dogfood-plan, dogfood-auth-prep]
     if: needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright has no Chromium build for ubuntu-latest (26.04) yet
     # Hard cap is 12 min — the agent is told to wrap up at 6 min and
     # hard-stop at 7 min (BUDGET_S=420). Slack covers download/server
     # start before the agent runs.

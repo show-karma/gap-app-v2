@@ -128,7 +128,7 @@ jobs:
 
   playwright:
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright has no Chromium build for ubuntu-latest (26.04) yet
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -240,7 +240,7 @@ jobs:
   # the suite cannot quietly lower the bar it is measured against.
   instant-navigations:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.instant_nav == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright has no Chromium build for ubuntu-latest (26.04) yet
     timeout-minutes: 20
 
     steps:
