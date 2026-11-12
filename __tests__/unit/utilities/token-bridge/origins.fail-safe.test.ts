@@ -199,6 +199,13 @@ describe("token bridge allowlist — negative origin fixtures", () => {
     }
   );
 
+  it("skips an unparsable allowlist pattern instead of matching through it", () => {
+    expect(isAllowedBridgeOrigin("https://www.filpgf.io", ["not a url"])).toBe(false);
+    expect(isAllowedBridgeOrigin("https://www.filpgf.io", ["*", "https://www.filpgf.io"])).toBe(
+      true
+    );
+  });
+
   it("never lists the bare *.vercel.app wildcard in a production frame-ancestors", () => {
     productionBuild();
     expect(allTokenBridgeOrigins()).not.toContain("https://*.vercel.app");
