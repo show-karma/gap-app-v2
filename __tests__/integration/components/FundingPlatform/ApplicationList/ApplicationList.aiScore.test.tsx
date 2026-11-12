@@ -270,7 +270,7 @@ describe("ApplicationList - AI Score Column", () => {
   });
 
   describe("Column Positioning", () => {
-    it("should position AI Score column after Status column and before Created Date", () => {
+    it("should position AI Score column right after Status column", () => {
       mockFormatAIScore.mockReturnValue("4.5");
 
       const applications = [createMockApplication()];
@@ -292,10 +292,8 @@ describe("ApplicationList - AI Score Column", () => {
 
       const statusIndex = headerTexts.findIndex((text) => text?.includes("Status"));
       const aiScoreIndex = headerTexts.findIndex((text) => text?.includes("AI Score"));
-      const createdDateIndex = headerTexts.findIndex((text) => text?.includes("Created Date"));
 
-      expect(statusIndex).toBeLessThan(aiScoreIndex);
-      expect(aiScoreIndex).toBeLessThan(createdDateIndex);
+      expect(aiScoreIndex).toBe(statusIndex + 1);
     });
 
     it("should have proper accessibility attributes on table headers", () => {

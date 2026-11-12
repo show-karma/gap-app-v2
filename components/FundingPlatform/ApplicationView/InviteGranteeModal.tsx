@@ -35,6 +35,7 @@ interface InviteGranteeModalProps {
   onInviteGrantee: (data: InvitedGrantee) => Promise<unknown>;
   isInviting?: boolean;
   onInvited: (grantee: InvitedGrantee) => void;
+  title?: string;
 }
 
 const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
@@ -43,6 +44,7 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
   onInviteGrantee,
   isInviting = false,
   onInvited,
+  title = "Invite Grantee",
 }) => {
   const {
     register,
@@ -89,7 +91,7 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
         )}
       >
         <DialogHeader>
-          <DialogTitle>Invite Grantee</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             Add a grantee to this application&apos;s team. They&apos;ll be able to receive
             @-mentions and notifications about this application.
@@ -152,7 +154,7 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
                   Inviting...
                 </>
               ) : (
-                "Invite Grantee"
+                title
               )}
             </Button>
           </DialogFooter>

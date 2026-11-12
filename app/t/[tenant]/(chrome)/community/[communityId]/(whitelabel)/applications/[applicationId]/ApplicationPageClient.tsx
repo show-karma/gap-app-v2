@@ -73,19 +73,19 @@ export function ApplicationPageClient({
 
   // Use authenticated backend check for ownership
   // (SSR-fetched ownerAddress may be sanitized to "")
-  const { isOwner: isBackendOwner } = useApplicationAccess(
+  const { isOwner: isBackendOwner, accessRole } = useApplicationAccess(
     communityId,
     application?.referenceNumber
   );
-  const isOwner = useMemo(() => {
+  const isApplicant = useMemo(() => {
     if (!application) return false;
-    if (isBackendOwner) return true;
+    if (isBackendOwner || accessRole === "APPLICANT") return true;
     // Privy userId ownership as safety net (for edge cases)
     if (user?.id && application.userId && user.id === application.userId) {
       return true;
     }
     return false;
-  }, [isBackendOwner, user?.id, application]);
+  }, [isBackendOwner, accessRole, user?.id, application]);
 
   const canOwnerEdit = useMemo(() => {
     if (!editableStatuses.includes(application.status)) return false;
@@ -99,7 +99,7 @@ export function ApplicationPageClient({
 
   // Admins can edit anytime (except approved), owners follow deadline rules
   const showEditButton =
-    (isAdmin && application.status !== "approved") || (isOwner && canOwnerEdit);
+    (isAdmin && application.status !== "approved") || (isApplicant && canOwnerEdit);
 
   const programName =
     program?.name || program?.metadata?.title || `Program ${application.programId}`;
@@ -125,7 +125,7 @@ export function ApplicationPageClient({
     !canUseComments && !!program?.applicationConfig?.formSchema?.settings?.showCommentsOnPublicPage;
   const hasCommentsSurface = canUseComments || showPublicComments;
 
-  const viewerRole: ApplicationViewerRole = isOwner
+  const viewerRole: ApplicationViewerRole = isApplicant
     ? "owner"
     : isAdminOrReviewer
       ? "reviewer"
@@ -156,12 +156,15 @@ export function ApplicationPageClient({
     application.programId,
     application.referenceNumber
   );
-  const backHref = isOwner
+  const backHref = isApplicant
     ? PAGES.DASHBOARD
     : `${PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId)}?programId=${application.programId}`;
 
   const postApprovalPending =
-    isOwner && application.status === "approved" && hasPostApprovalSchema && !hasPostApprovalData;
+    isApplicant &&
+    application.status === "approved" &&
+    hasPostApprovalSchema &&
+    !hasPostApprovalData;
 
   const fieldCount = Object.keys(application.applicationData ?? {}).length;
 
@@ -264,7 +267,7 @@ export function ApplicationPageClient({
         className="inline-flex w-fit items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        {isOwner ? "Back to Dashboard" : "Back to Browse Applications"}
+        {isApplicant ? "Back to Dashboard" : "Back to Browse Applications"}
       </Link>
 
       <ApplicationHeader
@@ -287,7 +290,7 @@ export function ApplicationPageClient({
           {hasTabs && activeTab === "milestones" && hasMilestones && (
             <MilestonesTab
               application={application}
-              isOwner={isOwner}
+              isOwner={isApplicant}
               invoiceRequired={
                 (program?.metadata as Record<string, unknown>)?.invoiceRequired === true
               }
@@ -298,7 +301,7 @@ export function ApplicationPageClient({
               communityId={communityId}
               application={application}
               program={program}
-              isOwner={isOwner}
+              isOwner={isApplicant}
             />
           )}
           {hasTabs && activeTab === "comments" && commentsSection}

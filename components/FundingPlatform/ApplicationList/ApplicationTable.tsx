@@ -143,20 +143,6 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
               onSort={onSortChange}
             />
           )}
-          <SortableTableHeader
-            label="Created Date"
-            sortKey="createdAt"
-            currentSortKey={sortBy}
-            currentSortDirection={sortOrder}
-            onSort={onSortChange}
-          />
-          <SortableTableHeader
-            label="Last Update"
-            sortKey="updatedAt"
-            currentSortKey={sortBy}
-            currentSortDirection={sortOrder}
-            onSort={onSortChange}
-          />
           {showAppReviewersColumn && (
             <th
               scope="col"
