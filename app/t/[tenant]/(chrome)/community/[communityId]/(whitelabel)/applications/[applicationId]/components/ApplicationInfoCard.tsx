@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
+import type { ReactNode } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { formatDate } from "@/utilities/formatDate";
@@ -13,6 +14,7 @@ interface ApplicationInfoCardProps {
   applicantEmail?: string;
   ownerAddress?: string;
   canViewApplicant: boolean;
+  coApplicants?: ReactNode;
 }
 
 function deriveApplicant(email?: string, ownerAddress?: string) {
@@ -38,6 +40,7 @@ export function ApplicationInfoCard({
   applicantEmail,
   ownerAddress,
   canViewApplicant,
+  coApplicants,
 }: ApplicationInfoCardProps) {
   const [copiedText, copy] = useCopyToClipboard();
   const isCopied = copiedText === referenceNumber;
@@ -112,6 +115,8 @@ export function ApplicationInfoCard({
           </div>
         </>
       )}
+
+      {coApplicants}
     </div>
   );
 }

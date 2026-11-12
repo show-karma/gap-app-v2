@@ -1,6 +1,7 @@
 "use client";
 
 import type { Application, FundingProgram } from "@/types/whitelabel-entities";
+import { ApplicationCoApplicantsSection } from "./ApplicationCoApplicantsSection";
 import { ApplicationInfoCard } from "./ApplicationInfoCard";
 import { ApplicationKycCard } from "./ApplicationKycCard";
 import { ApplicationStatusStepper } from "./ApplicationStatusStepper";
@@ -72,6 +73,14 @@ export function ApplicationSidebar({
         applicantEmail={application.applicantEmail}
         ownerAddress={application.ownerAddress}
         canViewApplicant={canViewApplicant}
+        coApplicants={
+          canViewApplicant && (
+            <ApplicationCoApplicantsSection
+              communityId={communityId}
+              referenceNumber={application.referenceNumber}
+            />
+          )
+        }
       />
 
       {/* KYC/KYB verification is applicant identity data — shown only to the
