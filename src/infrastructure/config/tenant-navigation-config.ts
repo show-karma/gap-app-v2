@@ -259,7 +259,9 @@ export const tenantNavigation: Record<TenantId, TenantNavigation> = {
      * Blog sits to the right of Connect, matching the landing site's header
      * (filecoin-grants `src/data/nav.ts`). The two are meant to read as one.
      */
-    itemsAfterSocialLinks: [{ label: "Blog", href: "https://www.filpgf.io/blog/", isExternal: true }],
+    itemsAfterSocialLinks: [
+      { label: "Blog", href: "https://www.filpgf.io/blog/", isExternal: true },
+    ],
     socialLinks: {
       twitter: "https://twitter.com/Filecoin",
       discord: "https://discord.gg/yeQ2hcd2TD",
