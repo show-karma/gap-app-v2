@@ -204,3 +204,46 @@ describe("token bridge allowlist — negative origin fixtures", () => {
     expect(allTokenBridgeOrigins()).not.toContain("https://*.vercel.app");
   });
 });
+
+describe("token bridge allowlist — platform-neutral deployment variables", () => {
+  it.each([
+    ["APP_ENV", "preview"],
+    ["NEXT_PUBLIC_APP_ENV", "preview"],
+  ] as const)("relaxes on a preview identified by %s alone", (key, value) => {
+    productionBuild({ [key]: value });
+    expectRelaxed();
+  });
+
+  it.each([
+    ["APP_ENV", "production"],
+    ["NEXT_PUBLIC_APP_ENV", "production"],
+    ["APP_ENV", "development"],
+    ["NEXT_PUBLIC_APP_ENV", "development"],
+  ] as const)("stays restricted when %s=%s", (key, value) => {
+    productionBuild({ [key]: value });
+    expectRestricted();
+  });
+
+  it("lets a neutral 'production' win over a Vercel 'preview'", () => {
+    productionBuild({
+      APP_ENV: "production",
+      NEXT_PUBLIC_APP_ENV: "production",
+      VERCEL_ENV: "preview",
+      NEXT_PUBLIC_VERCEL_ENV: "preview",
+    });
+    expectRestricted();
+  });
+
+  it.each(["staging", "Preview", "prod", "undefined"])(
+    "treats an unknown neutral value (%j) as unknown, even when Vercel says preview",
+    (value) => {
+      productionBuild({ APP_ENV: value, VERCEL_ENV: "preview", NEXT_PUBLIC_VERCEL_ENV: "preview" });
+      expectRestricted();
+    }
+  );
+
+  it("falls back to Vercel's variables when the neutral ones are empty", () => {
+    productionBuild({ APP_ENV: "", NEXT_PUBLIC_APP_ENV: "", VERCEL_ENV: "preview" });
+    expectRelaxed();
+  });
+});
