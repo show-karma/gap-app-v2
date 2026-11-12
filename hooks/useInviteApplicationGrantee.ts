@@ -30,7 +30,7 @@ export function useInviteApplicationGrantee(referenceNumber: string | undefined)
         { memberEmail: email, memberName: name }
       );
       if (!response) {
-        throw new Error("Failed to invite grantee");
+        throw new Error("Failed to add co-applicant");
       }
       return response;
     },
@@ -40,10 +40,10 @@ export function useInviteApplicationGrantee(referenceNumber: string | undefined)
           queryKey: QUERY_KEYS.APPLICATIONS.GRANTEE_CONTACTS(referenceNumber),
         });
       }
-      toast.success("Grantee invited successfully");
+      toast.success("Co-applicant added");
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "Failed to invite grantee";
+      const message = error instanceof Error ? error.message : "Failed to add co-applicant";
       toast.error(message);
     },
   });

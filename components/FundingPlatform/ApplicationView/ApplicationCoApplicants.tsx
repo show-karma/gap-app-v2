@@ -80,7 +80,6 @@ export const ApplicationCoApplicants: FC<ApplicationCoApplicantsProps> = ({
           onInviteGrantee={inviteGrantee}
           isInviting={isInviting}
           onInvited={() => setIsAddOpen(false)}
-          title="Add co-applicant"
         />
       )}
     </div>
