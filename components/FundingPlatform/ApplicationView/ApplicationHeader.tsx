@@ -52,6 +52,7 @@ export interface ApplicationHeaderProps {
   kycStatus?: KycStatusResponse | null;
   /** Whether KYC is enabled for the community */
   isKycEnabled?: boolean;
+  coApplicants?: ReactNode;
 }
 
 export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
@@ -62,6 +63,7 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
   connectedToTabs = false,
   kycStatus,
   isKycEnabled = false,
+  coApplicants,
 }) => {
   const StatusIcon = statusIcons[application.status] || ClockIcon;
   const projectTitle = getProjectTitle(application);
@@ -105,35 +107,40 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
         </div>
 
         {/* Metadata row */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
+        <dl className="mt-5 flex flex-wrap gap-x-10 gap-y-4 text-sm">
           {application.applicantEmail && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-500 dark:text-gray-500">Submitted by:</span>
-              <span className="text-gray-900 dark:text-gray-200">{application.applicantEmail}</span>
+            <div className="min-w-0">
+              <dt className="text-xs text-gray-500 dark:text-gray-400">Submitted by</dt>
+              <dd className="mt-1 break-all text-gray-900 dark:text-gray-200">
+                {application.applicantEmail}
+              </dd>
             </div>
           )}
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-500 dark:text-gray-500">Submitted:</span>
-            <span className="text-gray-900 dark:text-gray-200">
+          <div>
+            <dt className="text-xs text-gray-500 dark:text-gray-400">Submitted</dt>
+            <dd className="mt-1 text-gray-900 dark:text-gray-200">
               {formatDate(application.createdAt)}
-            </span>
+            </dd>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-500 dark:text-gray-500">Last updated:</span>
-            <span className="text-gray-900 dark:text-gray-200">
+          <div>
+            <dt className="text-xs text-gray-500 dark:text-gray-400">Last updated</dt>
+            <dd className="mt-1 text-gray-900 dark:text-gray-200">
               {formatDate(application.updatedAt)}
-            </span>
+            </dd>
           </div>
           {isKycEnabled && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-500 dark:text-gray-500">KYC/KYB:</span>
-              <KycStatusBadgeWithActions
-                status={kycStatus ?? null}
-                applicationReference={application.referenceNumber}
-              />
+            <div>
+              <dt className="text-xs text-gray-500 dark:text-gray-400">KYC/KYB</dt>
+              <dd className="mt-1">
+                <KycStatusBadgeWithActions
+                  status={kycStatus ?? null}
+                  applicationReference={application.referenceNumber}
+                />
+              </dd>
             </div>
           )}
-        </div>
+          {coApplicants}
+        </dl>
       </div>
 
       {/* Actions row - only if there are status actions */}

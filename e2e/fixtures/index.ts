@@ -5,7 +5,7 @@ import { mock404, mockError, mockJson, setupApiMocks } from "./api-mocks";
 import { type LoginOptions, loginAs, logout } from "./auth";
 import { type RpcFailureOptions, rpcFixture } from "./rpc.fixture";
 import { type WalletConfig, walletFixture } from "./wallet.fixture";
-import { setupWhitelabelContext, TENANTS, type TenantConfig } from "./whitelabel";
+import { isLocalTestHost, setupWhitelabelContext, TENANTS, type TenantConfig } from "./whitelabel";
 
 type RouteHandler = (route: import("@playwright/test").Route) => Promise<void> | void;
 
@@ -40,8 +40,17 @@ export const test = base.extend<{
     await use((overrides?: Record<string, RouteHandler>) => setupApiMocks(page, overrides));
   },
 
-  withTenant: async ({ page }, use) => {
-    await use((slug: string) => setupWhitelabelContext(page, slug));
+  withTenant: async ({ page, baseURL }, use, testInfo) => {
+    // Tenant domains only resolve to a local server (see tenantHostResolverRules).
+    // Against a remote BASE_URL the redirect would leave for the real tenant site.
+    const localBaseURL = baseURL && isLocalTestHost(new URL(baseURL).hostname) ? baseURL : null;
+    await use(async (slug: string) => {
+      if (!localBaseURL) {
+        testInfo.skip(true, "withTenant needs a local server");
+        throw new Error("unreachable: testInfo.skip throws");
+      }
+      return setupWhitelabelContext(page, slug, localBaseURL);
+    });
   },
 
   // Delegate to walletFixture's implementation

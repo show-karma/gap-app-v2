@@ -2,6 +2,7 @@
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
+import { ApplicationCoApplicants } from "@/components/FundingPlatform/ApplicationView/ApplicationCoApplicants";
 import ApplicationDetailSkeleton from "@/components/FundingPlatform/ApplicationView/ApplicationDetailSkeleton";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
 import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/ApplicationTab";
@@ -304,6 +305,12 @@ export default function ApplicationDetailView({
         connectedToTabs={!milestoneReviewUrl && !selectedStatus}
         kycStatus={kycStatus}
         isKycEnabled={isKycEnabled}
+        coApplicants={
+          <ApplicationCoApplicants
+            communityId={communityId}
+            referenceNumber={application.referenceNumber}
+          />
+        }
         statusActions={
           showStatusActions ? (
             <HeaderActions

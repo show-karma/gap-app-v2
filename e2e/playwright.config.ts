@@ -5,6 +5,7 @@ const isAnvil = !!process.env.ANVIL;
 const hasTestAccount = !!process.env.QA_TEST_EMAIL;
 
 import path from "node:path";
+import { isLocalTestHost, tenantHostResolverRules } from "./fixtures/whitelabel";
 
 const STORAGE_STATE_PATH = path.join(__dirname, ".auth", "user.json");
 
@@ -21,6 +22,17 @@ const isRemoteTarget = (() => {
     return true;
   } catch {
     return true;
+  }
+})();
+
+// Separate from isRemoteTarget, which only decides whether to boot webServer:
+// the tenant resolver rules must follow exactly the hosts withTenant treats as
+// local (isLocalTestHost), or a tenant test could reach the real tenant site.
+const isLocalTarget = (() => {
+  try {
+    return isLocalTestHost(new URL(baseURL).hostname);
+  } catch {
+    return false;
   }
 })();
 
@@ -64,6 +76,11 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 800 },
+        // Resolve tenant domains to the local server so withTenant can browse
+        // them with their real Host header (see e2e/fixtures/whitelabel.ts).
+        ...(isLocalTarget
+          ? { launchOptions: { args: [tenantHostResolverRules("127.0.0.1")] } }
+          : {}),
         // Reuse Privy auth session from setup project in CI
         ...(hasTestAccount ? { storageState: STORAGE_STATE_PATH } : {}),
       },

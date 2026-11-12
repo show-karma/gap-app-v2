@@ -9,7 +9,6 @@ import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { FundingApplicationStatusV2, IFundingApplication } from "@/types/funding-platform";
 import type { KycStatusResponse } from "@/types/kyc";
-import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
@@ -191,12 +190,6 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
             )}
           </td>
         )}
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-          {formatDate(application.createdAt)}
-        </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-          {formatDate(application.updatedAt)}
-        </td>
         {showAppReviewersColumn && (
           <td className="px-4 py-4 text-sm">
             {/* biome-ignore lint/a11y/noStaticElementInteractions: This div only stops event propagation, interactivity is handled by the dropdown */}
