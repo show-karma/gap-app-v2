@@ -5,6 +5,7 @@ const isAnvil = !!process.env.ANVIL;
 const hasTestAccount = !!process.env.QA_TEST_EMAIL;
 
 import path from "node:path";
+import { tenantHostResolverRules } from "./fixtures/whitelabel";
 
 const STORAGE_STATE_PATH = path.join(__dirname, ".auth", "user.json");
 
@@ -64,6 +65,11 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 800 },
+        // Resolve tenant domains to the local server so withTenant can browse
+        // them with their real Host header (see e2e/fixtures/whitelabel.ts).
+        ...(isRemoteTarget
+          ? {}
+          : { launchOptions: { args: [tenantHostResolverRules("127.0.0.1")] } }),
         // Reuse Privy auth session from setup project in CI
         ...(hasTestAccount ? { storageState: STORAGE_STATE_PATH } : {}),
       },
