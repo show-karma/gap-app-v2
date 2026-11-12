@@ -8,6 +8,7 @@ import {
   installChunkRecoveryListeners,
   shouldDropChunkErrorEvent,
 } from "./utilities/chunkRecovery";
+import { isProductionDeployment } from "./utilities/deployment-env";
 import { isChunkLoadError } from "./utilities/isChunkLoadError";
 import {
   isBrowserExtensionOnlyError,
@@ -22,7 +23,7 @@ import {
 import { isIndexedDbInternalError } from "./utilities/sentry/walletStorageErrors";
 
 Sentry.init({
-  enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
+  enabled: isProductionDeployment(),
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   ignoreErrors: sentryIgnoreErrors,
   // Browser-extension content scripts (wallet extensions and similar) inject

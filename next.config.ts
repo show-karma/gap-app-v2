@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import {
+  deploymentBuildEnv,
+  isPreviewDeployment,
+  isVercelPlatform,
+} from "./utilities/deployment-env";
 import { NONPROFITS_ORIGIN } from "./utilities/domains";
 import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
@@ -54,6 +59,9 @@ const nextConfig: NextConfig = {
   // utilities/analytics/client.ts).
   env: {
     NEXT_PUBLIC_APP_VERSION: APP_VERSION,
+    // NEXT_PUBLIC_VERCEL_ANALYTICS, plus NEXT_PUBLIC_APP_ENV when only APP_ENV
+    // is configured. See utilities/deployment-env.ts.
+    ...deploymentBuildEnv(),
   },
   // Cap per-page static generation at 2 min. The app has no
   // generateStaticParams and builds in ~5 min, so nothing legitimately
@@ -74,7 +82,7 @@ const nextConfig: NextConfig = {
   // step (copyTracedFiles) opens that exact path and dies with ENOENT.
   // CI still gets the bundle: VERCEL is unset on GitHub Actions, which is
   // where build-main.yml and e2e-tests.yml pack .next/standalone.
-  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
+  ...(isVercelPlatform() ? {} : { output: "standalone" as const }),
   turbopack: {
     resolveAlias: {
       // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
@@ -365,8 +373,8 @@ const withSentry = withSentryConfig(
 
 // The Sentry SDK is switched OFF at runtime on every non-production
 // deployment — sentry.server.config.ts, sentry.edge.config.ts and
-// instrumentation-client.ts all set `enabled: NEXT_PUBLIC_VERCEL_ENV ===
-// "production"`. Preview builds were still paying the full build-time cost
+// instrumentation-client.ts all set `enabled: isProductionDeployment()`
+// (utilities/deployment-env.ts). Preview builds were still paying the full build-time cost
 // of the Sentry plugin (source map generation/processing/upload plus
 // reactComponentAnnotation, an SWC transform applied to every component in
 // the tree) to produce artifacts for an SDK that never initializes on those
@@ -381,7 +389,6 @@ const withSentry = withSentryConfig(
 // variable is missing or holds anything else — including a production build
 // or a local build — Sentry stays fully enabled, so production
 // instrumentation can never be dropped by accident.
-const isPreviewBuild =
-  process.env.VERCEL_ENV === "preview" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+const isPreviewBuild = isPreviewDeployment();
 
 export default isPreviewBuild ? bundleAnalyzer : withSentry;

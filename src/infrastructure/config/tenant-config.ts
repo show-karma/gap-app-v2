@@ -3,6 +3,7 @@
 // is needed. If this changes, implement getIndexerUrl(tenantId) here and
 // thread it as `opts.baseURL` on the affected `api.*` calls.
 import { getHedgeyContractAddress } from "@/src/features/claim-funds/lib/hedgey-contract";
+import { deploymentEnv } from "@/utilities/deployment-env";
 import { tokenBridgeOriginsFor } from "@/utilities/token-bridge/origins";
 import { getTenantTheme } from "../theme/config";
 import type {
@@ -76,9 +77,8 @@ function getTenantAssets(tenantId: TenantId): TenantAssets {
   };
 }
 
-const isDev =
-  process.env.NEXT_PUBLIC_VERCEL_ENV === "development" ||
-  process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+const currentDeploymentEnv = deploymentEnv();
+const isDev = currentDeploymentEnv === "development" || currentDeploymentEnv === "preview";
 
 export const programsChainId = isDev ? 11155111 : 42161;
 
