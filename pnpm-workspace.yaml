@@ -14,6 +14,7 @@ allowBuilds:
   # Fetch a platform binary at install time — REQUIRED, no binary otherwise.
   '@sentry/cli': true # downloads the sentry-cli binary (sourcemap upload)
   esbuild: true # install.js downloads/links the platform binary
+  workerd: true # install.js links the platform binary (esbuild pattern); used by wrangler/miniflare
 
   # Native addons: load a shipped prebuild if present, else compile.
   # `true` is the safe/conservative choice (guarantees a working binary).
