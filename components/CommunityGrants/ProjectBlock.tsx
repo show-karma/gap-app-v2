@@ -1,7 +1,7 @@
 import { ArrowUpRightIcon } from "lucide-react";
-import Link from "next/link";
 import pluralize from "pluralize";
 import { memo } from "react";
+import { IntentPrefetchLink } from "@/src/components/navigation/IntentPrefetchLink";
 import type { CommunityProject } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
@@ -19,7 +19,7 @@ function ProjectBlockComponent({ project }: ProjectBlockProps) {
       data-testid="project-block"
       className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
     >
-      <Link
+      <IntentPrefetchLink
         href={projectPath}
         className="grid min-h-36 grid-cols-[112px_minmax(0,1fr)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset lg:grid-cols-[152px_minmax(0,1fr)]"
       >
@@ -63,7 +63,7 @@ function ProjectBlockComponent({ project }: ProjectBlockProps) {
             ) : null}
           </div>
         </div>
-      </Link>
+      </IntentPrefetchLink>
     </article>
   );
 }

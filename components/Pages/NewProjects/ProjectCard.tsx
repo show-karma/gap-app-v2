@@ -1,5 +1,5 @@
-import Link from "next/link";
 import pluralize from "pluralize";
+import { IntentPrefetchLink } from "@/src/components/navigation/IntentPrefetchLink";
 import type { ProjectFromList } from "@/types/project";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -30,7 +30,7 @@ const pickColor = (index: number) => {
 
 export const ProjectCard = ({ project, index }: ProjectCardProps) => {
   return (
-    <Link
+    <IntentPrefetchLink
       id="project-card"
       href={PAGES.PROJECT.OVERVIEW(project?.slug || project?.uid)}
       className="flex w-full max-w-full max-sm:w-[320px] relative flex-col items-start justify-between gap-1 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
@@ -95,6 +95,6 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
           </p>
         </div>
       </div>
-    </Link>
+    </IntentPrefetchLink>
   );
 };

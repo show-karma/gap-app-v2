@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import Link, { useLinkStatus } from "next/link";
+import { useLinkStatus } from "next/link";
 import pluralize from "pluralize";
+import { IntentPrefetchLink } from "@/src/components/navigation/IntentPrefetchLink";
 import type { Grant } from "@/types/v2/grant";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -213,7 +214,7 @@ export const GrantCard = ({
   const projectPath = PAGES.PROJECT.OVERVIEW(grant.project?.details?.slug || grant.refUID || "");
 
   return (
-    <Link
+    <IntentPrefetchLink
       href={projectPath}
       className={cn(
         "flex h-full w-full max-w-[620px] max-sm:w-[320px] relative rounded-2xl border border-zinc-200 p-2 transition-all duration-300 ease-in-out hover:opacity-80",
@@ -227,6 +228,6 @@ export const GrantCard = ({
         hideCategories={hideCategories}
         actionSlot={actionSlot}
       />
-    </Link>
+    </IntentPrefetchLink>
   );
 };
