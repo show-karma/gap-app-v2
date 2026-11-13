@@ -1,11 +1,11 @@
 "use client";
 
 import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
 import type { ComponentProps } from "react";
 import { memo, useEffect, useMemo, useState } from "react";
 import remarkGfm from "remark-gfm";
 import { Streamdown } from "streamdown";
+import { code } from "@/utilities/markdown-code-highlighter";
 import { cn } from "@/utilities/tailwind";
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;

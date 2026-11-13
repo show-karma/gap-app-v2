@@ -8,6 +8,9 @@
   // Must not be newer than the bundled workerd (wrangler 4.148.0 → 2026-10-06).
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Only the uncompressed upload counts against the 64 MiB limit, and the 1 s startup
+  // budget scales with script size; minifying takes ~25% off both.
+  "minify": true,
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
