@@ -1,10 +1,13 @@
+import { deploymentEnv } from "@/utilities/deployment-env";
 import { appOrigin } from "@/utilities/domains";
 
 const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
 
 export const envVars = {
   isDev,
-  VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+  // production | preview | development, from NEXT_PUBLIC_APP_ENV with
+  // NEXT_PUBLIC_VERCEL_ENV as the fallback. See utilities/deployment-env.ts.
+  DEPLOYMENT_ENV: deploymentEnv(),
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   // Optional override for funding-platform link targets: "true" forces external tenant
   // domains, "false" forces same-origin links. Unset = runtime-host heuristic

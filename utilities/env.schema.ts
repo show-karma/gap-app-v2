@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEPLOYMENT_ENVS } from "./deployment-env";
 
 // --- Helpers ---
 
@@ -8,6 +9,9 @@ const booleanEnvVar = z
   .optional()
   .default(false);
 
+/** production | preview | development — see utilities/deployment-env.ts. */
+const deploymentEnvVar = z.enum(DEPLOYMENT_ENVS).optional();
+
 // --- Client env schema (NEXT_PUBLIC_* vars, inlined at build time) ---
 
 /** Zod schema for validating NEXT_PUBLIC_* client-side environment variables. */
@@ -16,7 +20,14 @@ export const clientSchema = z.object({
   NEXT_PUBLIC_GAP_INDEXER_URL: z.string().url(),
   NEXT_PUBLIC_PRIVY_APP_ID: z.string().min(1),
 
-  NEXT_PUBLIC_VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
+  // Deployment environment. The neutral variable wins; Vercel's is the
+  // fallback for deployments that do not set it. See utilities/deployment-env.ts.
+  NEXT_PUBLIC_APP_ENV: deploymentEnvVar,
+  NEXT_PUBLIC_VERCEL_ENV: deploymentEnvVar,
+  // Stamped by next.config.ts at build time ("true" on Vercel). Gates the
+  // Vercel Web Analytics and Speed Insights scripts; anything but "true" is
+  // off, so a malformed value is not worth failing startup over.
+  NEXT_PUBLIC_VERCEL_ANALYTICS: z.string().optional(),
 
   // RPC URLs
   NEXT_PUBLIC_RPC_MAINNET: z.string().min(1).optional(),
@@ -67,6 +78,11 @@ export const clientSchema = z.object({
 export const serverSchema = z.object({
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
   ANALYZE: booleanEnvVar,
+  // Server-side deployment environment; same precedence as the client pair.
+  APP_ENV: deploymentEnvVar,
+  VERCEL_ENV: deploymentEnvVar,
+  // Vercel's per-deployment hostname. Optional fallback for the app's own
+  // origin; other platforms leave it unset. See platformDeploymentOrigin().
   VERCEL_URL: z.string().min(1).optional(),
 
   // Sanity Blog CMS — server-only secrets
