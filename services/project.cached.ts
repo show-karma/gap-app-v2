@@ -31,10 +31,9 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * `getProjectCached` instead, so the fetch is cached and the routing decision
  * stays live.
  *
- * Every loader here uses `PROJECT_PAGE_CACHE_LIFE`. Its 60s revalidate is
- * exactly the `export const revalidate = 60` the project layout carried before
- * the flag, so pages under traffic stay as fresh as before. Its `expire` is
- * long on purpose — see the constant.
+ * Every loader here uses `PROJECT_PAGE_CACHE_LIFE`: a day before revalidating,
+ * a week before expiring. That is only safe because of the tags below; see the
+ * constant.
  *
  * Every entry is also tagged with the project's uid and slug, whichever id the
  * route used (`tagProject`). The indexer reports changed projects by uid to
@@ -52,28 +51,31 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 /**
  * Cache lifetime for everything a project page reads.
  *
- * `stale` and `revalidate` are the `"minutes"` preset's: a page requested more
- * than a minute after it was cached is served from the cache and rebuilt in
- * the background, so readers under normal traffic see data at most a minute
- * behind.
+ * `revalidate` is a day. Edits do not wait for it: gap-indexer reports every
+ * write to a project or its grants to `app/api/cache/projects/revalidate`,
+ * which expires the project's entries at once (`tagAndSetLifetime` makes sure
+ * every entry carries the project's uid). The day is only the bound for a
+ * change no notice covered: a failed notice after its retries, or data the
+ * indexer's repositories do not write (a community's name or logo, a member's
+ * profile, one-off maintenance scripts).
  *
- * `expire` is a week instead of the preset's hour. The page's ISR entry takes
- * the smallest `expire` of everything it read, and once that passes the next
- * request rebuilds the page synchronously and stores it again — an ISR write
- * even when nothing changed. Project pages are mostly visited every few hours
- * or days, so with an hour almost every visit was one of those writes. Within
- * a week the visit instead triggers a background revalidation, and a
- * revalidation that produces the same bytes is not stored again.
+ * Why not shorter: a project page is visited every day or two, so with a
+ * 60-second revalidate nearly every visit rebuilt it in the background and
+ * stored it again, an ISR write with nothing changed. With a day, a revisit
+ * is served from the cache.
  *
- * Trade-off: the first visitor after a long quiet period gets the page as it
- * was last rendered — up to a week old in the worst case — while the
- * background rebuild refreshes it for the next one. With JavaScript, the
- * client refetches the seeded queries on mount, so the visible data catches
- * up right away; crawlers and no-JS readers see the cached page.
+ * `expire` is a week: past `revalidate` the page is still served from the
+ * cache while it rebuilds in the background, instead of being rebuilt
+ * synchronously and written again. With JavaScript, the client refetches the
+ * seeded queries on mount, so a visitor sees current data right away; crawlers
+ * and no-JS readers see the cached page.
+ *
+ * `stale` (300 s) is the client router's: how long a visited page is reused on
+ * back/forward navigation in the same tab.
  */
 export const PROJECT_PAGE_CACHE_LIFE = {
   stale: 300,
-  revalidate: 60,
+  revalidate: 24 * 60 * 60,
   expire: 7 * 24 * 60 * 60,
 } as const;
 
