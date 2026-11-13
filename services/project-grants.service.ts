@@ -14,6 +14,14 @@ interface GetProjectGrantsOptions {
    */
   isAuthorized?: boolean;
   signal?: AbortSignal;
+  /**
+   * Throw instead of returning an empty result when the request fails for any
+   * reason other than a 404. The cached SSR loaders (`services/project.cached.ts`)
+   * pass `true`: an error thrown inside `"use cache"` is not stored, while an
+   * empty result would be served as the project's data for the whole cache
+   * lifetime.
+   */
+  rethrow?: boolean;
 }
 
 /**
@@ -32,7 +40,7 @@ export const getProjectGrants = async (
   projectIdOrSlug: string,
   options: GetProjectGrantsOptions = {}
 ): Promise<Grant[]> => {
-  const { isAuthorized = true, signal } = options;
+  const { isAuthorized = true, signal, rethrow = false } = options;
 
   let data: Grant | Grant[] | null;
   try {
@@ -50,6 +58,7 @@ export const getProjectGrants = async (
     errorManager(`Project Grants API Error: ${error}`, error, {
       context: "project-grants.service",
     });
+    if (rethrow) throw error;
     return [];
   }
 

@@ -3,6 +3,7 @@
 import Avatar from "boring-avatars";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { isCommunityLogoPath } from "@/utilities/community-logo-route";
 import { cn } from "@/utilities/tailwind";
 
 interface ProfilePictureProps {
@@ -21,6 +22,9 @@ const AVATAR_COLORS = ["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"];
 
 const isValidUrl = (url?: string): boolean => {
   if (!url) return false;
+  // A community logo the server links instead of inlining. Other relative
+  // paths stay invalid, as before.
+  if (isCommunityLogoPath(url)) return true;
   try {
     new URL(url);
     return true;

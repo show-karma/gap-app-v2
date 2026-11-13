@@ -8,6 +8,7 @@ import { useUrlBuilder } from "@/hooks/use-url-builder";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { toWhitelabelRouteAlias } from "@/utilities/whitelabel-routes";
+import { usePrefetchOnIntent } from "./usePrefetchOnIntent";
 
 export type CustomLinkProps = Omit<LinkProps, "href"> &
   Omit<ComponentProps<"a">, "href"> & {
@@ -15,10 +16,28 @@ export type CustomLinkProps = Omit<LinkProps, "href"> &
     useBuilder?: boolean;
     disabled?: boolean;
     communityFallback?: string;
+    /** Prefetch only on hover, focus or touch. For links repeated in dense grids; see `usePrefetchOnIntent`. */
+    prefetchOnIntent?: boolean;
   };
 
 export const Link = forwardRef<HTMLAnchorElement, CustomLinkProps>(
-  ({ href, useBuilder = true, disabled = false, className, communityFallback, ...props }, ref) => {
+  (
+    {
+      href,
+      useBuilder = true,
+      disabled = false,
+      className,
+      communityFallback,
+      prefetchOnIntent = false,
+      ...props
+    },
+    ref
+  ) => {
+    const intent = usePrefetchOnIntent({
+      onMouseEnter: props.onMouseEnter,
+      onFocus: props.onFocus,
+      onTouchStart: props.onTouchStart,
+    });
     const { isWhitelabel, communitySlug } = useWhitelabel();
     let urlBuilded = useUrlBuilder(href, communityFallback, useBuilder);
 
@@ -49,7 +68,15 @@ export const Link = forwardRef<HTMLAnchorElement, CustomLinkProps>(
       );
     }
 
-    return <NextLink ref={ref} href={urlBuilded} className={className} {...props} />;
+    return (
+      <NextLink
+        ref={ref}
+        href={urlBuilded}
+        className={className}
+        {...props}
+        {...(prefetchOnIntent ? intent : {})}
+      />
+    );
   }
 );
 

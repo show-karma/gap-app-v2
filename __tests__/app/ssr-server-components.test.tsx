@@ -77,7 +77,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   return {
     ...actual,
     HydrationBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    dehydrate: vi.fn(() => ({})),
+    dehydrate: vi.fn(() => ({ mutations: [], queries: [] })),
   };
 });
 

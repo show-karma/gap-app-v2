@@ -92,6 +92,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
       <div className="flex justify-end mt-auto pt-2">
         <Link
           href={PAGES.COMMUNITY.ALL_GRANTS(slug || community.uid)}
+          prefetchOnIntent
           className="flex items-center justify-center w-full lg:w-20 h-10 text-sm font-semibold rounded flex-shrink-0"
         >
           <span>Go</span>

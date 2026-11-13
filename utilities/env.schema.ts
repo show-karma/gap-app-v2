@@ -89,6 +89,11 @@ export const serverSchema = z.object({
   SANITY_VIEWER_TOKEN: z.string().optional().default(""),
   SANITY_WEBHOOK_SECRET: z.string().optional().default(""),
   SANITY_PREVIEW_SECRET: z.string().optional().default(""),
+
+  // Shared with gap-indexer (same name there): verifies its project-changed
+  // notices on /api/cache/projects/revalidate. Unset: every notice is refused
+  // and project pages refresh on their cache lifetime alone.
+  PROJECT_CACHE_REVALIDATION_SECRET: z.string().optional().default(""),
 });
 
 // --- Validation ---
