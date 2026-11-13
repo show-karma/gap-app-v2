@@ -13,7 +13,14 @@
   "minify": true,
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // The static Sanity Studio build: the worker adds its headers and the
+    // index.html fallback for client-side Studio routes (cloudflare/worker.ts).
+    "run_worker_first": ["/admin/studio", "/admin/studio/*"],
+    // Required by OpenNext once run_worker_first is set: public files are only
+    // served at their exact path, as Next.js does, so nothing bypasses proxy.ts.
+    "html_handling": "none",
+    "not_found_handling": "none"
   },
   "services": [
     // Self-reference used by the cache layer; must match "name".

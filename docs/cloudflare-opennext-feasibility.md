@@ -37,6 +37,22 @@ O que mudaria o veredito para "viável com ressalvas":
 - **Tamanho atual: 73,9 MiB descomprimido** (limite 64). Falta ~10 MiB. O Studio servido como build estático (~13 MiB) fecharia a conta, e aguarda decisão.
 - **Memória local:** o `wrangler dev` deste app usa 6–7 GB, e um build ~9 GB. Na máquina compartilhada, rodar os dois juntos travou o servidor. Rode sempre um de cada vez, com `systemd-run --scope -p MemoryMax=…`.
 
+### Atualização de 13/11 (noite): Studio estático, Worker abaixo de 64 MiB
+
+- **Tamanho: 63,0 MiB descomprimido** (limite 64; folga de ~1 MiB). Parse local ~0,9 s (limite de startup 1 s, ainda a validar no `startup_time_ms` real).
+- **Sanity Studio estático, mesmo endereço.** No build Cloudflare a rota do Next fica de fora:
+  - os arquivos dela se chamam `*.studio.tsx` e só o build fora da Cloudflare põe `studio.tsx` em `pageExtensions`;
+  - um `next build` normal (caminho da Vercel) continua listando `/t/[tenant]/admin/studio/[[...tool]]`.
+- **Como o Studio é gerado e servido:**
+  - `pnpm cf:build:studio` (`sanity build`, config em `sanity.cli.ts`) gera 7 MB em `.open-next/assets/admin/studio`;
+  - o Worker responde por `/admin/studio/*` (`run_worker_first`), devolve o `index.html` nas rotas do Studio e aplica `X-Frame-Options: SAMEORIGIN`, CSP `frame-ancestors 'self'` e `X-Robots-Tag: noindex, nofollow`;
+  - verificado no browser: o app do Studio sobe e roteia. Sem `projectId` local ele mostra "Connect this studio to your project"; com o projeto real, falta confirmar se o Sanity exige registrar o Studio auto-hospedado.
+- **React 19.2.1 → 19.2.8** (publicado em 21/07/2026, dentro do `minimum-release-age`): o `sanity build` recusa React < 19.2.2. Só React e react-dom mudaram no lockfile.
+- **Ainda pendente no Studio estático:**
+  - o favicon padrão do Sanity aponta para `/static/favicon.svg` (404);
+  - os redirects de host canônico do `proxy.ts` não passam por `/admin/studio`;
+  - os domínios de preview precisam entrar no CORS do projeto Sanity.
+
 ### Correção de 13/11
 
 A primeira versão deste relatório media o B1 contra "10 MiB gzip". A [documentação atual de limites](https://developers.cloudflare.com/workers/platform/limits/) diz outra coisa:

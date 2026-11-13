@@ -54,6 +54,13 @@ const isCloudflareBuild = process.env.KARMA_BUILD_TARGET === "cloudflare";
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The Sanity Studio route files are named `*.studio.tsx`. Vercel and the CI
+  // build compile them as the /admin/studio route; the Cloudflare build leaves
+  // them out and serves a static `sanity build` of the same Studio instead, so
+  // its ~13 MiB never reach the Worker bundle (docs/cloudflare-opennext-feasibility.md).
+  pageExtensions: isCloudflareBuild
+    ? ["tsx", "ts", "jsx", "js"]
+    : ["tsx", "ts", "jsx", "js", "studio.tsx"],
   // Stamped into the client bundle at build time so every analytics event
   // carries the release it came from (see the `app_version` super property in
   // utilities/analytics/client.ts).
