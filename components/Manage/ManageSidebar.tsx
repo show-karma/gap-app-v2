@@ -14,6 +14,7 @@ import {
   Globe,
   Home,
   LayoutGrid,
+  LayoutPanelTop,
   ListTodo,
   Mail,
   ShieldAlert,
@@ -105,6 +106,12 @@ const NAV_GROUPS: NavGroup[] = [
         matchSegment: "portfolio-reports",
         label: "Portfolio Reports",
         icon: FileText,
+      },
+      {
+        href: PAGES.ADMIN.PANELS,
+        matchSegment: "panels",
+        label: "Panels",
+        icon: LayoutPanelTop,
       },
       {
         href: PAGES.ADMIN.CONTROL_CENTER,
