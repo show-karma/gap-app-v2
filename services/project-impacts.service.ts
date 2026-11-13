@@ -33,6 +33,14 @@ interface GetProjectImpactsOptions {
    */
   isAuthorized?: boolean;
   signal?: AbortSignal;
+  /**
+   * Throw instead of returning an empty result when the request fails for any
+   * reason other than a 404. The cached SSR loaders (`services/project.cached.ts`)
+   * pass `true`: an error thrown inside `"use cache"` is not stored, while an
+   * empty result would be served as the project's data for the whole cache
+   * lifetime.
+   */
+  rethrow?: boolean;
 }
 
 /**
@@ -45,7 +53,7 @@ export const getProjectImpacts = async (
   projectIdOrSlug: string,
   options: GetProjectImpactsOptions = {}
 ): Promise<ProjectImpact[]> => {
-  const { isAuthorized = true, signal } = options;
+  const { isAuthorized = true, signal, rethrow = false } = options;
 
   let data: ProjectImpact[] | null;
   try {
@@ -68,6 +76,7 @@ export const getProjectImpacts = async (
     errorManager(`Project Impacts API Error: ${error}`, error, {
       context: "project-impacts.service",
     });
+    if (rethrow) throw error;
     return [];
   }
 

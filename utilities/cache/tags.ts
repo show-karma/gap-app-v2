@@ -7,12 +7,11 @@
  * `cacheLife` window. Building them here rather than inline means the producer
  * and a future consumer cannot drift apart on the string.
  *
- * NOTE: nothing calls `revalidateTag` with these yet. The only revalidation
- * webhook in the app is `app/api/blog/revalidate/route.ts`, which is blog-only
- * and works by path. So today these tags are the hook, not a working
- * invalidation path — the loaders still self-heal on the `cacheLife` window
- * (60s revalidate). Wiring an indexer-side webhook to `revalidateTag` is the
- * other half and is not part of this PR.
+ * Project tags are the only ones with an invalidator today: gap-indexer reports
+ * changed projects to `app/api/cache/projects/revalidate`, which calls
+ * `revalidateTag(projectTag(uid))`. The others are hooks: nothing calls
+ * `revalidateTag` with them yet, so those loaders still refresh on their
+ * `cacheLife` window alone.
  *
  * Prefixes are namespaced so two entity kinds can never collide on a bare id.
  */
@@ -23,8 +22,12 @@ export const communityTag = (slug: string): string => `community:${slug}`;
 /** One community's project list, which changes far more often than the community. */
 export const communityProjectsTag = (slug: string): string => `community-projects:${slug}`;
 
-/** One project, by uid or slug — whichever the caller routed on. */
-export const projectTag = (projectIdOrSlug: string): string => `project:${projectIdOrSlug}`;
+/**
+ * One project, by uid or slug. Lower-cased because uids arrive in either case
+ * (routes, API responses, the indexer's notices) and a tag must match exactly.
+ */
+export const projectTag = (projectIdOrSlug: string): string =>
+  `project:${projectIdOrSlug.toLowerCase()}`;
 
 /** One funding program, by the composite id the registry uses. */
 export const programTag = (programId: string): string => `program:${programId}`;
