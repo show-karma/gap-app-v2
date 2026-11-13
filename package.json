@@ -13,6 +13,7 @@
     "cf:build": "cross-env KARMA_BUILD_TARGET=cloudflare NODE_OPTIONS=--max-old-space-size=4096 opennextjs-cloudflare build && pnpm cf:build:studio",
     "cf:build:studio": "cross-env SANITY_TELEMETRY_DISABLED=1 sanity build .open-next/assets/admin/studio --yes",
     "cf:preview": "opennextjs-cloudflare preview",
+    "cf:size": "node scripts/check-worker-size.mjs",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
