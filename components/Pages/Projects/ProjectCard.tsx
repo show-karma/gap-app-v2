@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { useMemo } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { IntentPrefetchLink } from "@/src/components/navigation/IntentPrefetchLink";
 import type { Project } from "@/types/v2/project";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -35,7 +35,7 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
   const roadmapItemsCount = stats?.roadmapItemsCount ?? 0;
 
   return (
-    <Link
+    <IntentPrefetchLink
       href={PAGES.PROJECT.OVERVIEW(details.slug)}
       aria-label={`View ${details.title} project details`}
       className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg"
@@ -89,6 +89,6 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
           </div>
         </div>
       </div>
-    </Link>
+    </IntentPrefetchLink>
   );
 };
