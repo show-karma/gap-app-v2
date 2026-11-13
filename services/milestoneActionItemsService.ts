@@ -100,6 +100,8 @@ export interface CreateMilestoneActionItemInput {
   /** ISO date — required; every action item must be scheduled. */
   followUpAt: string;
   autoFollowUp: boolean;
+  /** Recipients the author saw or picked before saving. */
+  followUpTargets?: FollowUpTargetInput[];
 }
 
 export async function createMilestoneActionItem(
@@ -190,12 +192,33 @@ export async function setFollowUpTargets(
   return data.targets;
 }
 
+/** Suggests recipients for a note that is not saved yet; nothing is stored. */
+export async function suggestDraftFollowUpTargets(
+  communityId: string,
+  target: { kind: "milestone" | "application"; id: string },
+  content: string
+): Promise<FollowUpTarget[]> {
+  const parent =
+    target.kind === "application"
+      ? { applicationReference: target.id }
+      : { milestoneUid: target.id };
+  const data = await api.post<{ targets: FollowUpTarget[] }>(
+    INDEXER.V2.MILESTONE_ACTION_ITEMS.DRAFT_FOLLOW_UP_SUGGEST(communityId),
+    { content, ...parent }
+  );
+  if (!data) throw new Error("Failed to suggest follow-up targets");
+  return data.targets;
+}
+
+/** `itemId` is the saved note whose author's Slack is used; without one, the caller's. */
 export async function getFollowUpWorkspaces(
   communityId: string,
-  id: string
+  itemId: string | undefined
 ): Promise<FollowUpWorkspace[]> {
   const data = await api.get<{ workspaces: FollowUpWorkspace[] }>(
-    INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_WORKSPACES(communityId, id)
+    itemId
+      ? INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_WORKSPACES(communityId, itemId)
+      : INDEXER.V2.MILESTONE_ACTION_ITEMS.DRAFT_FOLLOW_UP_WORKSPACES(communityId)
   );
   if (!data) throw new Error("Failed to fetch Slack workspaces");
   return data.workspaces;
@@ -203,12 +226,14 @@ export async function getFollowUpWorkspaces(
 
 export async function getFollowUpChannels(
   communityId: string,
-  id: string,
+  itemId: string | undefined,
   teamId: string
 ): Promise<FollowUpChannel[]> {
-  const query = new URLSearchParams({ teamId });
+  const query = new URLSearchParams({ teamId }).toString();
   const data = await api.get<{ channels: FollowUpChannel[] }>(
-    INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_CHANNELS(communityId, id, query.toString())
+    itemId
+      ? INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_CHANNELS(communityId, itemId, query)
+      : INDEXER.V2.MILESTONE_ACTION_ITEMS.DRAFT_FOLLOW_UP_CHANNELS(communityId, query)
   );
   if (!data) throw new Error("Failed to fetch Slack channels");
   return data.channels;
@@ -216,13 +241,15 @@ export async function getFollowUpChannels(
 
 export async function searchFollowUpMembers(
   communityId: string,
-  id: string,
+  itemId: string | undefined,
   teamId: string,
   q: string
 ): Promise<FollowUpMember[]> {
-  const query = new URLSearchParams({ teamId, q });
+  const query = new URLSearchParams({ teamId, q }).toString();
   const data = await api.get<{ members: FollowUpMember[] }>(
-    INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_MEMBERS(communityId, id, query.toString())
+    itemId
+      ? INDEXER.V2.MILESTONE_ACTION_ITEMS.FOLLOW_UP_MEMBERS(communityId, itemId, query)
+      : INDEXER.V2.MILESTONE_ACTION_ITEMS.DRAFT_FOLLOW_UP_MEMBERS(communityId, query)
   );
   if (!data) throw new Error("Failed to search Slack members");
   return data.members;

@@ -9,7 +9,8 @@ import {
   type ActionItemEditInput,
 } from "@/components/Inbox/ActionItemEditForm";
 import { AutoFollowUpToggle } from "@/components/Inbox/AutoFollowUpToggle";
-import { FollowUpTargets } from "@/components/Inbox/FollowUpTargets";
+import { DraftFollowUpTargets, FollowUpTargets } from "@/components/Inbox/FollowUpTargets";
+import { serverErrorMessage, toFollowUpTargetInputs } from "@/components/Inbox/followUpTargetLabel";
 import { NoteContent } from "@/components/Inbox/NoteContent";
 import { NoteEditor } from "@/components/Inbox/NoteEditor";
 import {
@@ -27,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { type ActionItemTarget, useActionItems } from "@/hooks/useActionItems";
 import { useCommunityActionItems } from "@/hooks/useCommunityActionItems";
+import { useDraftFollowUpTargets } from "@/hooks/useFollowUpTargets";
 import { useSlackUserConnections } from "@/hooks/useSlackOauth";
 import type { ICommunityActionItem, IMilestoneActionItem } from "@/types/funding-platform";
 import {
@@ -303,25 +305,54 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
   const [draft, setDraft] = useState("");
   const [draftFollowUp, setDraftFollowUp] = useState("");
   const [draftAutoFollowUp, setDraftAutoFollowUp] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const draftFollowUpTargets = useDraftFollowUpTargets(
+    communityId,
+    target,
+    draft,
+    isAdding && draftAutoFollowUp && slack.status === "connected"
+  );
+  const { reset: resetDraftTargets } = draftFollowUpTargets;
 
   const resetDraft = useCallback(() => {
     setDraft("");
     setDraftFollowUp("");
     setDraftAutoFollowUp(false);
+    setCreateError(null);
+    resetDraftTargets();
     setIsAdding(false);
-  }, []);
+  }, [resetDraftTargets]);
 
   const handleCreate = useCallback(() => {
     const content = draft.trim();
     if (!content || !draftFollowUp) return;
 
-    createItem({
-      content,
-      followUpAt: calendarDayToIso(draftFollowUp),
-      autoFollowUp: draftAutoFollowUp,
-    });
+    const followUpTargets = draftAutoFollowUp ? draftFollowUpTargets.targets : [];
+    const followUpAt = draftFollowUp;
+    const picked = draftFollowUpTargets.targets;
+    createItem(
+      {
+        content,
+        followUpAt: calendarDayToIso(draftFollowUp),
+        autoFollowUp: draftAutoFollowUp,
+        ...(followUpTargets.length > 0 && {
+          followUpTargets: toFollowUpTargetInputs(followUpTargets),
+          followUpPreview: followUpTargets,
+        }),
+      },
+      {
+        onError: (error) => {
+          setDraft(content);
+          setDraftFollowUp(followUpAt);
+          setDraftAutoFollowUp(draftAutoFollowUp);
+          if (picked.length > 0) draftFollowUpTargets.pick(picked);
+          setCreateError(serverErrorMessage(error, "Couldn't save the note. Try again."));
+          setIsAdding(true);
+        },
+      }
+    );
     resetDraft();
-  }, [draft, draftFollowUp, draftAutoFollowUp, createItem, resetDraft]);
+  }, [draft, draftFollowUp, draftAutoFollowUp, draftFollowUpTargets, createItem, resetDraft]);
 
   const handleToggle = useCallback(
     (item: IMilestoneActionItem) => {
@@ -482,6 +513,13 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
               slack={slack}
               onCheckedChange={setDraftAutoFollowUp}
             />
+            {draftAutoFollowUp && slack.status === "connected" && (
+              <DraftFollowUpTargets
+                communityId={communityId}
+                slack={slack}
+                draft={draftFollowUpTargets}
+              />
+            )}
             <div className="ml-auto flex gap-2">
               <Button variant="ghost" size="sm" onClick={resetDraft}>
                 Cancel
@@ -496,6 +534,11 @@ const ActionItemsComponent: FC<ActionItemsProps> = ({
               </Button>
             </div>
           </div>
+          {createError && (
+            <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+              {createError}
+            </p>
+          )}
         </div>
       )}
 
