@@ -85,3 +85,4 @@ dogfood-output/
 /.open-next
 /.wrangler
 .dev.vars*
+/.sanity
