@@ -10,8 +10,18 @@ import { cn } from "@/utilities/tailwind";
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-const lazyMath = () => import("@streamdown/math").then((m) => m.math);
-const lazyMermaid = () => import("@streamdown/mermaid").then((m) => m.mermaid);
+// Both plugins only ever load in the browser (from the effect below). The
+// `typeof window` guard is a build-time constant on the server, so the server
+// bundle drops these imports entirely instead of carrying ~4.6 MB of mermaid,
+// cytoscape and KaTeX chunks it never runs.
+const lazyMath = () =>
+  typeof window === "undefined"
+    ? Promise.resolve(undefined)
+    : import("@streamdown/math").then((m) => m.math);
+const lazyMermaid = () =>
+  typeof window === "undefined"
+    ? Promise.resolve(undefined)
+    : import("@streamdown/mermaid").then((m) => m.mermaid);
 
 // `@streamdown/cjk` injects its own CJK-aware GFM strikethrough plugin
 // (`remarkGfmStrikethroughCjkFriendly`) via `remarkPluginsAfter`, and it

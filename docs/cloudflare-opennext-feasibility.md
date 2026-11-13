@@ -53,6 +53,31 @@ O que mudaria o veredito para "viável com ressalvas":
   - os redirects de host canônico do `proxy.ts` não passam por `/admin/studio`;
   - os domínios de preview precisam entrar no CORS do projeto Sanity.
 
+### Atualização de 13/11 (madrugada): 59,7 MiB, B3 corrigido de verdade, custo
+
+- **Tamanho: 59,68 MiB descomprimido** (era 63,0; limite 64, folga de ~4,3 MiB).
+  - Mermaid, cytoscape e KaTeX saíram do servidor (−3,5 MB no handler). Os dois plugins do Streamdown só carregam no browser, a partir de um `useEffect` em `src/components/ai-elements/message-response.tsx`. O `import()` deles agora fica atrás de `typeof window === "undefined"`, que o Next fixa como constante no build do servidor, e o código morto sai do bundle. Vale também para a Vercel.
+  - Um `turbopack.resolveAlias` com condição `node` não funcionou: a documentação do Next 16 diz que só a condição `browser` é suportada.
+  - **Trava de tamanho:** `pnpm cf:size` (`scripts/check-worker-size.mjs`) roda `wrangler deploy --dry-run`, que só empacota localmente e não envia nada. Ele soma os módulos que seriam enviados e falha acima de 62 MiB (`WORKER_SIZE_BUDGET_MIB` muda o orçamento). É para entrar no CI logo depois do `cf:build`.
+- **B3 (e a falha intermitente de tenants) tinha uma segunda causa: o Sentry.**
+  - **Sintoma:** com o #1318, uma onda de 25 requests concorrentes num isolate novo deu **17–18 erros 500 em 25**. Todos eram `Next.js encountered the unstable value crypto.randomUUID() while prerendering`, em `/t/[tenant]/project/[projectId]`, `/communities` e `/community/[communityId]`. A revalidação em background tinha o mesmo erro. Em sequência e com o cache já cheio, nada falhava, por isso o problema escapou às medições anteriores.
+  - **Causa:** o Sentry gera ids de trace e span com `crypto.randomUUID()`. Para não abortar o prerender do Cache Components, o `@sentry/nextjs` roda essas chamadas dentro de um snapshot do AsyncLocalStorage tirado quando o módulo do servidor é avaliado (`prepareSafeIdGeneratorContext`, símbolo global `__SENTRY_SAFE_RANDOM_ID_WRAPPER__`). No Node isso acontece na inicialização, fora de qualquer request. No Worker o módulo é avaliado sob demanda, dentro do primeiro request que chega a ele, e o snapshot pode capturar o prerender desse request. A partir daí, as chamadas "protegidas" rodam dentro de um prerender.
+  - **Correção:** `cloudflare/worker.ts` registra o runner no nível do módulo, antes de qualquer request, com um snapshot vazio. Um setter vazio impede o Sentry de trocá-lo.
+  - **A/B com estado local limpo nas duas rodadas, 4 ondas de 25 cada:**
+
+    | | 200 | 307 esperado | 500 | sem resposta |
+    |---|---|---|---|---|
+    | sem correção | 27 | 4 | 56 | 13 |
+    | com correção | 96 | 4 | 0 | 0 |
+
+  - **Com a correção:** 17 revalidações em background terminaram com `outcome: ok`, e o log ficou sem nenhum erro (1.915 linhas, todas `info`). Duas ondas depois de o cache vencer deram 50/50.
+  - É um problema a reportar ao Sentry (`@sentry/nextjs` em runtimes que avaliam módulos sob demanda).
+- **Studio estático, pendências fechadas:**
+  - em host alias (`karmahq.xyz`, `gap.karmahq.xyz`…), `/admin/studio/*` responde 308 para `www.karmahq.org` com path e query, usando `isAliasHost` e `canonicalUrl` de `utilities/domains.ts`;
+  - o `sanity build` escreve os links de favicon e manifest na raiz (`/static/…`) mesmo com `basePath`, e o Worker os reescreve com `HTMLRewriter` para `/admin/studio/static/…`. Os ícones agora respondem 200;
+  - continua pendente o CORS dos domínios de preview no projeto Sanity, e se o Sanity exige registrar o Studio auto-hospedado.
+- **Regressão local:** tenants 200 com título certo (`app.opgrants.io`, `grantsapp.scroll.io`, `grants.filecoin.io`, `app.filpgf.io`); `/project/tally`, `/project/gitcoin` e `/community/optimism` com título; `tsc`, Biome e os testes do `message-response` passam.
+
 ### Correção de 13/11
 
 A primeira versão deste relatório media o B1 contra "10 MiB gzip". A [documentação atual de limites](https://developers.cloudflare.com/workers/platform/limits/) diz outra coisa:
@@ -265,16 +290,61 @@ Nada abaixo foi alterado neste spike. Os itens de segurança estão marcados com
 - `fetchFromLocalApi` (`utilities/fetchFromServer.ts`) não tem nenhum consumidor.
 - O pnpm troca o peer opcional `@cloudflare/workers-types` do `frames.js` (aviso "Conflicting peer dependencies"). Só tipos, sem efeito em runtime.
 
+## Custo: Vercel hoje × Cloudflare para o `gap-app-v2`
+
+**Fontes:**
+- **Uso:** a medição da thread de custos da Vercel, ciclo de 20/09 a 20/10/2026, por item e por projeto.
+- **Preços:** as páginas de preço da Cloudflare consultadas em 13/11/2026 ([Workers e Durable Objects](https://developers.cloudflare.com/workers/platform/pricing/), [R2](https://developers.cloudflare.com/r2/pricing/), [Images](https://developers.cloudflare.com/images/pricing/)).
+- **Natureza da estimativa:** nada roda na Cloudflare de verdade, então todo número do lado Cloudflare é **inferido**.
+
+**Na Vercel, o que é do `gap-app-v2`** (por ciclo):
+
+| Item | Total do time | Parte do gap | Gap |
+|------|---------------|--------------|-----|
+| Funções | US$ 78 | 96–99% | ≈ US$ 76; com o Fluid ligado em 10/11, a thread estimou ≈ US$ 30–40 |
+| Rede (transferência, requests) | US$ 56 | 77–97% | ≈ US$ 43–54 |
+| ISR | US$ 27 | 93–99% | ≈ US$ 26 |
+| Observability | US$ 30 | 78–98% | ≈ US$ 23–29 |
+| Build CPU | US$ 82 | ~16% | ≈ US$ 14 |
+| **Total** | | | **≈ US$ 140–160** (≈ US$ 185 antes do Fluid) |
+
+**Os assentos (US$ 160) não mudam:** o `karma-compass-web` continua na Vercel.
+
+**Na Cloudflare** (por mês):
+
+| Item | Preço | Estimativa | Premissa |
+|------|-------|------------|----------|
+| Plano Workers Paid | US$ 5 | US$ 5 | |
+| Requests | 10M incluídos, depois US$ 0,30/M | US$ 0–1 | ≈ 7M/ciclo hoje no time inteiro; assets estáticos não contam |
+| CPU | 30M ms incluídos, depois US$ 0,02/M ms | US$ 2–15 | 20 a 100 ms de CPU por invocação, em média; **não medido**, é a maior incerteza |
+| Cache ISR no R2 | US$ 4,50/M escritas (1M grátis), US$ 0,36/M leituras (10M grátis) | US$ 26–32 | 6,7M escritas/ciclo, o volume de set/out na Vercel, que vem do `cacheComponents` + `partialPrefetching` |
+| Tag cache e fila (Durable Objects) | 1M requests incluídos, depois US$ 0,15/M | US$ 0–2 | opennextjs-cloudflare#1103 relata volume alto do `DOShardedTagCache` |
+| `next/image` (Images binding) | 5.000 transformações únicas grátis, depois US$ 0,50/mil | US$ 0–10 | volume de imagens únicas desconhecido |
+| Transferência | não cobrada | US$ 0 | |
+| Logs | 20M eventos incluídos | US$ 0 | a Cloudflare troca o preço de Workers Logs em 01/12/2026 e ainda não publicou os valores |
+| Builds | no CI | US$ 0 | o `cf:build` precisa de máquina ≥ 16 GB |
+| **Total** | | **≈ US$ 35–65** | |
+
+**Economia bruta: ≈ US$ 80–120 por mês.** O ISR é o único item grande que não some: ele só muda de fornecedor. Ele cai junto em qualquer uma das plataformas se as gravações diminuírem (ver a nota de ISR Writes × `partialPrefetching`).
+
+**O contrato muda quando a economia aparece:**
+- **Compromisso:** US$ 2.410 por ano, com contrato até ago/2027. Até 10/11 já tinham sido consumidos US$ 1.151,70.
+- **Com o gap na Vercel:** no ritmo atual (≈ US$ 425/ciclo), o compromisso acaba por volta de fev/2027.
+- **Sem o gap:** o time cairia para ≈ US$ 270–285/ciclo, e o compromisso duraria até ~abr/2027 se a migração fosse imediata.
+- **Até o compromisso acabar,** sair da Vercel não economiza nada, porque o valor é devido de qualquer forma.
+- **Depois dele,** se o excedente for cobrado a preço de tabela (não sei os termos), a migração evitaria ≈ US$ 1.000 até ago/2027, já descontando ≈ 9 meses de Cloudflare. Depois da renovação, a economia seria de ≈ US$ 1.000–1.400 por ano, mais o que der para reduzir no compromisso.
+- **Comparação com o esforço:** a migração custa as semanas de trabalho estimadas abaixo.
+
 ## Estimativa do trabalho restante (uma pessoa)
 
 | Frente | Esforço | Risco |
 |--------|---------|-------|
-| B2/B3: aplicar o PR #1318 como `pnpm patch` revisado e validar (tenants, revalidação, ondas concorrentes após invalidar tag); depois trocar pelo release oficial | ~1 semana + espera do release | médio; usar código não lançado exige exceção na política de dependências |
-| B1: Studio fora, Shiki fino, Mermaid no cliente, `@sentry/cloudflare`, `minify`; medir `startup_time_ms` real; se faltar folga, web3 fora do SSR ou divisão em Workers | 2–4 semanas | médio a alto; o startup é o risco maior |
+| B2/B3: feitos no local (patch #1318 + runner do Sentry em `cloudflare/worker.ts`). Falta revisar o patch, reportar o caso do Sentry e trocar pelo release oficial do #1318 | ~3 dias + espera do release | médio; usar código não lançado exige exceção na política de dependências |
+| B1: feito até 59,7 MiB (Studio estático, Shiki fino, Mermaid/KaTeX só no cliente, `minify`, trava `cf:size`). Falta medir o `startup_time_ms` real; se ele passar de 1 s, web3 fora do SSR | 2 dias a 2 semanas, conforme o startup | médio; o startup é o risco maior |
 | Trocas de plataforma do inventário (variável neutra de ambiente, geo, IP 🔒, analytics, og-background, token bridge 🔒) | ~1 semana | médio (as de segurança precisam de revisão) |
 | CI/CD, secrets, R2/DO/Images provisionados, Cron, observabilidade, teste de carga | ~2 semanas | médio |
 | Domínios: zonas `karmahq.org`/`.xyz` hoje no Route 53, tenants externos (`app.filpgf.io` na Namecheap, `grantsapp.scroll.io` na Cloudflare da própria Scroll) via Cloudflare for SaaS; cutover com rollback | ~1–2 semanas, dependendo dos donos dos domínios | médio |
-| **Total** | **~7–10 semanas**, mais a espera do release do #1318 | |
+| **Total** | **~5–8 semanas**, mais a espera do release do #1318 | |
 
 Primeiro passo sugerido: uma fase de 1–2 semanas para provar que B1–B3 caem.
 Ela inclui aplicar o #1318 como patch, fazer a dieta de bundle e medir o startup real num Worker não produtivo em `workers.dev`.
@@ -290,9 +360,10 @@ cat > .dev.vars <<'EOF'
 CRON_SECRET=local-cron-secret
 SANITY_WEBHOOK_SECRET=local-webhook-secret
 EOF
+pnpm cf:size                                      # tamanho exato do upload; falha acima de 62 MiB
 pnpm cf:preview                                   # popula o R2 local e sobe http://localhost:8787
-curl -H "Host: app.opgrants.io" http://localhost:8787/                 # B2: trava
+curl -H "Host: app.opgrants.io" http://localhost:8787/                 # tenant (B2)
 curl "http://localhost:8787/cdn-cgi/handler/scheduled?cron=0+*/6+*+*+*" # Cron Trigger
 ```
 
-Tamanho do upload: depois do `cf:preview`, `gzip -6` em `.wrangler/tmp/dev-*/worker.js` e nos `*.wasm`/`*.bin` ao lado.
+Tamanho do upload: `pnpm cf:size`. Rode build, preview e `cf:size` um de cada vez, com `systemd-run --scope -p MemoryMax=…`.
