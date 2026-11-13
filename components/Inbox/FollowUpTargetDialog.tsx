@@ -3,7 +3,11 @@
 import { HashtagIcon, LockClosedIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { type FC, useMemo, useState } from "react";
-import { toFollowUpTargetInput } from "@/components/Inbox/followUpTargetLabel";
+import {
+  previewFollowUpTarget,
+  serverErrorMessage,
+  toFollowUpTargetInputs,
+} from "@/components/Inbox/followUpTargetLabel";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,36 +37,32 @@ import {
 import type {
   FollowUpChannel,
   FollowUpMember,
+  FollowUpTarget,
   FollowUpTargetInput,
   FollowUpWorkspace,
 } from "@/types/follow-up-target";
-import type { IMilestoneActionItem } from "@/types/funding-platform";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 type Mode = "dm" | "channel" | "thread";
 
+type PickInput = Exclude<FollowUpTargetInput, { kind: "unresolved" }>;
+
 interface FollowUpTargetDialogProps {
   communityId: string;
-  item: IMilestoneActionItem;
-  /** Index into `item.followUpTargets` being replaced. */
+  /** The saved note; absent while the note is still being written. */
+  itemId?: string;
+  targets: FollowUpTarget[];
+  /** Index into `targets` being replaced; past the end adds one. */
   replaceIndex: number;
   isSaving: boolean;
   error: Error | null;
   onClose: () => void;
-  onSave: (targets: FollowUpTargetInput[]) => void;
+  /** The full new list, as inputs for the server and as previews to show. */
+  onSave: (inputs: FollowUpTargetInput[], targets: FollowUpTarget[]) => void;
 }
 
 const SLACK_PERMALINK = /^https:\/\/[a-z0-9-]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d{16}/i;
-
-function saveErrorMessage(error: Error): string {
-  const body = (error as { body?: unknown }).body;
-  if (body && typeof body === "object" && "message" in body) {
-    const message = (body as { message?: unknown }).message;
-    if (typeof message === "string" && message.trim()) return message;
-  }
-  return "Couldn't save that destination. Try again.";
-}
 
 /**
  * Picks where one follow-up goes: another person, a channel the author is in,
@@ -71,16 +71,18 @@ function saveErrorMessage(error: Error): string {
  */
 export const FollowUpTargetDialog: FC<FollowUpTargetDialogProps> = ({
   communityId,
-  item,
+  itemId,
+  targets,
   replaceIndex,
   isSaving,
   error,
   onClose,
   onSave,
 }) => {
-  const current = item.followUpTargets[replaceIndex];
+  const current = targets[replaceIndex];
   const personName = current?.personName;
-  const workspaces = useFollowUpWorkspaces(communityId, item.id, true);
+  const fieldId = `follow-up-permalink-${itemId ?? "draft"}`;
+  const workspaces = useFollowUpWorkspaces(communityId, itemId, true);
   const [teamId, setTeamId] = useState<string | undefined>(
     current && "teamId" in current ? current.teamId : undefined
   );
@@ -97,25 +99,35 @@ export const FollowUpTargetDialog: FC<FollowUpTargetDialogProps> = ({
   const [channel, setChannel] = useState<FollowUpChannel | null>(null);
   const [permalink, setPermalink] = useState("");
 
-  const choice = useMemo<FollowUpTargetInput | null>(() => {
+  const choice = useMemo<{ input: PickInput; label: string } | null>(() => {
     if (!activeTeamId) return null;
     if (mode === "dm" && member)
-      return { kind: "dm", teamId: activeTeamId, slackUserId: member.slackUserId, personName };
+      return {
+        input: { kind: "dm", teamId: activeTeamId, slackUserId: member.slackUserId, personName },
+        label: member.displayName,
+      };
     if (mode === "channel" && channel)
-      return { kind: "channel", teamId: activeTeamId, channelId: channel.channelId, personName };
+      return {
+        input: { kind: "channel", teamId: activeTeamId, channelId: channel.channelId, personName },
+        label: channel.name,
+      };
     if (mode === "thread" && SLACK_PERMALINK.test(permalink.trim()))
-      return { kind: "thread", teamId: activeTeamId, permalink: permalink.trim(), personName };
+      return {
+        input: { kind: "thread", teamId: activeTeamId, permalink: permalink.trim(), personName },
+        label: "",
+      };
     return null;
   }, [activeTeamId, mode, member, channel, permalink, personName]);
 
   const save = () => {
     if (!choice) return;
-    const others = item.followUpTargets
-      .map((entry, index) => (index === replaceIndex ? null : toFollowUpTargetInput(entry)))
-      .filter((entry): entry is FollowUpTargetInput => entry !== null);
-    const next = [...others];
-    next.splice(Math.min(replaceIndex, next.length), 0, choice);
-    onSave(next);
+    const next = targets.filter((_, index) => index !== replaceIndex);
+    next.splice(
+      Math.min(replaceIndex, next.length),
+      0,
+      previewFollowUpTarget(choice.input, choice.label)
+    );
+    onSave(toFollowUpTargetInputs(next), next);
   };
 
   return (
@@ -185,7 +197,7 @@ export const FollowUpTargetDialog: FC<FollowUpTargetDialogProps> = ({
               <TabsContent value="dm" className="mt-3">
                 <MemberPicker
                   communityId={communityId}
-                  itemId={item.id}
+                  itemId={itemId}
                   teamId={activeTeamId}
                   selected={member}
                   initialQuery={personName ?? ""}
@@ -197,7 +209,7 @@ export const FollowUpTargetDialog: FC<FollowUpTargetDialogProps> = ({
                 {workspace.canPickDestination ? (
                   <ChannelPicker
                     communityId={communityId}
-                    itemId={item.id}
+                    itemId={itemId}
                     teamId={activeTeamId}
                     selected={channel}
                     onSelect={setChannel}
@@ -208,16 +220,13 @@ export const FollowUpTargetDialog: FC<FollowUpTargetDialogProps> = ({
               </TabsContent>
 
               <TabsContent value="thread" className="mt-3 flex flex-col gap-2">
-                <label
-                  htmlFor={`follow-up-permalink-${item.id}`}
-                  className="text-xs text-gray-600 dark:text-gray-300"
-                >
+                <label htmlFor={fieldId} className="text-xs text-gray-600 dark:text-gray-300">
                   Paste the message link. In Slack, open the message menu and choose{" "}
                   <span className="font-medium">Copy link</span>. The follow-up is posted as a reply
                   in that thread.
                 </label>
                 <Input
-                  id={`follow-up-permalink-${item.id}`}
+                  id={fieldId}
                   value={permalink}
                   onChange={(event) => setPermalink(event.target.value)}
                   placeholder="https://your-team.slack.com/archives/C…/p…"
@@ -236,7 +245,7 @@ export const FollowUpTargetDialog: FC<FollowUpTargetDialogProps> = ({
 
         {error && (
           <p role="alert" className="text-xs text-red-600 dark:text-red-400">
-            {saveErrorMessage(error)}
+            {serverErrorMessage(error, "Couldn't save that destination. Try again.")}
           </p>
         )}
 
@@ -255,7 +264,7 @@ export const FollowUpTargetDialog: FC<FollowUpTargetDialogProps> = ({
 
 const MemberPicker: FC<{
   communityId: string;
-  itemId: string;
+  itemId: string | undefined;
   teamId: string | undefined;
   selected: FollowUpMember | null;
   initialQuery: string;
@@ -309,7 +318,7 @@ const MemberPicker: FC<{
 
 const ChannelPicker: FC<{
   communityId: string;
-  itemId: string;
+  itemId: string | undefined;
   teamId: string | undefined;
   selected: FollowUpChannel | null;
   onSelect: (channel: FollowUpChannel) => void;

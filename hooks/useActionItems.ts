@@ -11,6 +11,7 @@ import {
   type UpdateMilestoneActionItemInput,
   updateMilestoneActionItem,
 } from "@/services/milestoneActionItemsService";
+import type { FollowUpTarget } from "@/types/follow-up-target";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
 
 interface UseActionItemsOptions {
@@ -22,6 +23,11 @@ interface UseActionItemsOptions {
 export type ActionItemTarget =
   | { kind: "milestone"; id: string }
   | { kind: "application"; id: string };
+
+/** A note being saved, with the recipients to show on its row until the server answers. */
+export type CreateActionItemDraft = CreateMilestoneActionItemInput & {
+  followUpPreview?: FollowUpTarget[];
+};
 
 /** Placeholder id for an item that exists only in the optimistic cache. */
 export const OPTIMISTIC_ID_PREFIX = "optimistic-";
@@ -86,7 +92,7 @@ export function useActionItems(
   }, [queryClient, queryKey, communityId]);
 
   const createMutation = useMutation({
-    mutationFn: (input: CreateMilestoneActionItemInput) =>
+    mutationFn: ({ followUpPreview: _preview, ...input }: CreateActionItemDraft) =>
       targetKind === "application"
         ? createApplicationActionItem(communityId, targetId as string, input)
         : createMilestoneActionItem(communityId, targetId as string, input),
@@ -104,7 +110,7 @@ export function useActionItems(
         content: input.content,
         followUpAt: input.followUpAt ?? null,
         autoFollowUp: input.autoFollowUp,
-        followUpTargets: [],
+        followUpTargets: input.followUpPreview ?? [],
         completedAt: null,
         completedByAddress: null,
         createdByAddress: "",
