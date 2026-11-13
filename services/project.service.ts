@@ -63,7 +63,21 @@ export const checkSlugExists = async (slug: string): Promise<boolean> => {
   }
 };
 
-export const getProject = async (projectIdOrSlug: string): Promise<ProjectResponse | null> => {
+interface GetProjectOptions {
+  /**
+   * Throw instead of returning `null` when the request fails for any reason
+   * other than a 404, so `null` only ever means "no such project". The cached
+   * SSR loader passes `true`: an error thrown inside `"use cache"` is not
+   * stored, while a `null` would render the project as missing for the whole
+   * cache lifetime.
+   */
+  rethrow?: boolean;
+}
+
+export const getProject = async (
+  projectIdOrSlug: string,
+  { rethrow = false }: GetProjectOptions = {}
+): Promise<ProjectResponse | null> => {
   try {
     // TODO(#1775): add zod schema
     return await api.get<ProjectResponse>(
@@ -79,6 +93,7 @@ export const getProject = async (projectIdOrSlug: string): Promise<ProjectRespon
     errorManager(`Project API Error: ${error}`, error, {
       context: "project.service",
     });
+    if (rethrow) throw error;
     return null;
   }
 };
