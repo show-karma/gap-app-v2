@@ -6,25 +6,31 @@
   Bindings (R2, Durable Objects, Images, Cron) só na simulação do `wrangler dev`/miniflare.
 - Comparação: o mesmo build servido por `node .next/standalone/server.js` (o equivalente a `next start` que o CI usa).
 
-## Veredito: inviável no estado atual
+## Veredito: inviável no estado atual, com caminho conhecido
 
-A app builda e a maior parte das rotas funciona no Worker, mas há quatro bloqueios. Três não têm correção curta:
+A app builda e a maior parte das rotas funciona no Worker, mas há quatro bloqueios:
 
 | # | Bloqueio | Gravidade | Correção conhecida |
 |---|----------|-----------|--------------------|
-| B1 | **Worker com 22,85 MiB gzip**, contra o limite de 10 MiB do plano pago | Impede o deploy | Não há corte único que baste; ver [Bundle](#bundle) |
-| B2 | **Todo domínio whitelabel trava** (`app.opgrants.io`, `grantsapp.scroll.io`, `app.filpgf.io`…): HTML de página nunca responde e o runtime cancela o request | Derruba os tenants | Nenhuma; o contorno testado (pré-renderizar todos os tenants) quebra o build |
-| B3 | **Revalidação ISR em background falha sempre** (fila DO → prerender on-demand dá `crypto.randomUUID()` / timeout), então páginas com `revalidate` ficam velhas até o próximo deploy | Conteúdo congelado | Nenhuma |
+| B1 | **Worker grande demais**: 109,2 MiB descomprimido (81,8 MiB minificado) contra o limite de 64 MiB; parse do script em 1,7–1,9 s contra o limite de startup de 1 s | Impede o deploy | Dieta de bundle; ver [Bundle](#bundle) |
+| B2 | **Todo domínio whitelabel trava** (`app.opgrants.io`, `grantsapp.scroll.io`, `app.filpgf.io`…): HTML de página nunca responde e o runtime cancela o request | Derruba os tenants | PR upstream ainda aberto (opennextjs-cloudflare#1318); ver [diagnóstico](#diagnóstico-do-b2b3-causa-conhecida-upstream) |
+| B3 | **Revalidação ISR em background falha sempre** (fila DO → prerender on-demand dá `crypto.randomUUID()` / timeout), então páginas com `revalidate` ficam velhas até o próximo deploy | Conteúdo congelado | Mesmo PR #1318 |
 | B4 | Resume do PPR quebrava: `/project/*` e `/community/*` saíam só com o shell estático (sem `<title>`, sem conteúdo, mas status 200) | Corrigido neste branch | `experimental.maxPostponedStateSize: "20mb"` só no build Cloudflare |
 
-B2 e B3 têm o mesmo sintoma de fundo: **o Next 16.4 não consegue pré-renderizar shell de Cache Components dentro do workerd em runtime**. O próprio Next avisa em cada isolate:
-*"Next.js cannot guarantee that Cache Components will run as expected due to the current runtime's implementation of `setTimeout()`"*.
+B2 e B3 têm a mesma causa: **o render em estágios do Cache Components não funciona no workerd quando o shell é gerado em runtime**.
 O que vem pronto do build (shells do tenant `karma`) é servido bem. O que precisa ser gerado em runtime (shells de outros tenants, revalidação) falha.
 Como a app inteira depende de `cacheComponents` + `partialPrefetching` e de shells por tenant gerados sob demanda (decisão D3 em `app/t/[tenant]/layout.tsx`), isso atinge o núcleo da arquitetura atual.
 
 O que mudaria o veredito para "viável com ressalvas":
-1. Correção upstream (Next/OpenNext/workerd) do prerender de Cache Components em runtime no workerd, cobrindo B2 e B3.
-2. Uma dieta de bundle que leve o Worker abaixo de 10 MiB. Ela exige mais do que remover dependências; ver abaixo.
+1. O PR #1318 do OpenNext (ou um backport dele via `pnpm patch`, como outros times já usam em produção) resolver B2 e B3 aqui.
+2. Uma dieta de bundle que leve o Worker a ~40 MiB minificado, para caber em 64 MiB **e** no startup de 1 s.
+
+### Correção de 13/11
+
+A primeira versão deste relatório media o B1 contra "10 MiB gzip". A [documentação atual de limites](https://developers.cloudflare.com/workers/platform/limits/) diz outra coisa:
+*"There is no compressed size limit. Only the uncompressed bundle size counts."*
+Os limites que valem são 64 MiB descomprimido (Free e Paid), startup de 1 s (parse + escopo global) e 128 MB de memória por isolate.
+Os números de gzip abaixo ficam só como referência.
 
 ## Versões e exceção de `minimum-release-age`
 
@@ -79,18 +85,26 @@ A etapa do OpenNext em si custa ~35 s e ~4,6 GB por cima do `next build`. Uma m�
 
 ## Bundle
 
-| Artefato | Cru | gzip -6 |
-|----------|-----|---------|
+O limite que vale é o **Total Upload descomprimido: 64 MiB**. O gzip não é limite (ver a correção de 13/11).
+
+| Artefato | Descomprimido | gzip -6 (referência) |
+|----------|---------------|----------------------|
 | `.open-next/server-functions/default/handler.mjs` | 84,0 MB | 19,4 MiB |
-| `worker.js` empacotado pelo wrangler | 112,9 MB | 22,26 MiB |
-| `resvg.wasm` + `yoga.wasm` + fonte Geist (OG) | 1,58 MB | 0,59 MiB |
-| **Total do upload do Worker** | | **22,85 MiB** (limite pago: 10 MiB; free: 3 MiB) |
-| O mesmo com `esbuild --minify` (medido no build 1.20.6) | 84,6 MB | ≈ 20,8 MiB |
+| `worker.js` empacotado pelo wrangler | 107,7 MiB | 22,26 MiB |
+| `resvg.wasm` + `yoga.wasm` + fonte Geist (OG) | 1,50 MiB | 0,59 MiB |
+| **Total Upload do Worker** | **109,2 MiB** (limite: 64 MiB) | 22,85 MiB |
+| O mesmo com `esbuild --minify` | **81,8 MiB** (faltam 17,8 MiB, 22%) | ≈ 20,8 MiB |
 | Build sem plugin do Sentry | | 22,70 MiB (−0,15) |
+
+Startup: o limite é 1 s para parse + escopo global.
+Medido com `vm.SourceTextModule` no Node 24 (o mesmo V8), num AMD EPYC Genoa: **1,7–1,9 s** para o `worker.js` sem minificar e **1,6–1,7 s** minificado.
+É uma aproximação local, mas indica que o startup aperta antes do tamanho.
+O valor real só aparece no `startup_time_ms` de um `wrangler versions upload`, que exige conta Cloudflare.
+A memória por isolate (128 MB) também só dá para validar lá; o próprio fonte do script ocupa 80 MiB.
 
 Os assets estáticos (`.open-next/assets`, 88 MB) e o cache pré-renderizado (66 MB, vai para o R2) não contam no limite.
 
-Composição do handler, estimada pelos source maps do Turbopack (fração por fonte em cada chunk × gzip do chunk):
+Composição do handler, estimada pelos source maps do Turbopack (fração por fonte em cada chunk × gzip do chunk; o tamanho descomprimido de cada grupo está na lista de cortes abaixo):
 
 | Grupo | gzip estimado | % |
 |-------|---------------|---|
@@ -106,15 +120,17 @@ Composição do handler, estimada pelos source maps do Turbopack (fração por f
 **40% dos bytes dos chunks do Turbopack são módulos repetidos**: o mesmo módulo aparece em vários chunks das camadas RSC/SSR de entradas diferentes (21,4 de 53,2 MB mapeados).
 Os maiores repetidos são sanity, Privy, viem, Next e Sentry.
 
-O que daria para cortar, em ordem de retorno (estimativas, nada aplicado):
-1. **Tirar o Sanity Studio do app** (hospedar em `*.sanity.studio` ou num Worker próprio): cerca de −4 MiB.
-2. **Shiki com bundle fino** (`shiki/core` + 3–5 linguagens) ou só no cliente: cerca de −1,5 MiB.
-3. **Mermaid/katex só no cliente** (`dynamic(..., { ssr: false })`): cerca de −1 MiB.
-4. **Trocar `@sentry/nextjs`-modo-Node por `@sentry/cloudflare`** no servidor: cerca de −1 MiB (o SDK Node arrasta OpenTelemetry).
-5. **Tirar providers web3 do SSR** (Privy/wagmi só no cliente): até −4 MiB, mas mexe no bootstrap de auth.
+O que daria para cortar, em ordem de retorno (tamanho descomprimido de cada grupo no handler; estimativas, nada aplicado):
+1. **Tirar o Sanity Studio do app** (hospedar em `*.sanity.studio` ou num Worker próprio): cerca de −14 MB.
+2. **Shiki com bundle fino** (`shiki/core` + 3–5 linguagens) ou só no cliente: cerca de −9 MB.
+3. **Trocar `@sentry/nextjs`-modo-Node por `@sentry/cloudflare`** no servidor: cerca de −5 MB (o SDK Node arrasta OpenTelemetry).
+4. **Mermaid/katex só no cliente** (`dynamic(..., { ssr: false })`): cerca de −4 MB.
+5. **Tirar providers web3 do SSR** (Privy/wagmi só no cliente): até −14 MB, mas mexe no bootstrap de auth.
 
-Somando 1–4 chega-se a ~15 MiB, ainda acima do limite. Com o 5 fica perto de 10–11 MiB, sem folga para crescer.
-Na prática, caber exige **dividir a app em mais de um Worker** (Studio, OG/imagens, rotas de API e o app em si) ou uma reestruturação grande do que roda no SSR.
+Com 1–4 e `minify: true`, o Worker iria de 81,8 para ~50 MiB: **cabe nos 64 MiB**.
+Pela medição local (~20 ms por MiB), o parse ainda ficaria perto de 1 s.
+Para ter folga no startup, falta um destes: o item 5 (→ ~37 MiB), carregar o handler como módulo separado sob demanda (a testar), ou dividir a app em mais de um Worker com service bindings.
+O build do adaptador já gera funções separadas (`config.functions`), mas o roteamento entre Workers teria de ser nosso.
 
 ## Testes: Worker (`wrangler dev`, build final) × Node standalone (mesmo build)
 
@@ -134,6 +150,7 @@ Os tempos do Worker são do workerd local, não da edge, e servem só para compa
 | **Revalidação ISR em background** | ✅ sem erros no log | ❌ **B3** | fila DO → `HEAD /t/karma/blog` etc.: `crypto.randomUUID() while prerendering`, `TimeoutError`, *"failed after 6 retries"*; 14 eventos de Sentry vazios por rodada |
 | RSC `_rsc` (nav, prefetch, segment prefetch `/_tree`) | ✅ | ✅ | 307 de cache-buster seguido de 200 `text/x-component` nos dois |
 | Navegação no cliente (Playwright: communities → comunidade → projeto) | ✅ | ✅ | soft nav (sem reload), título/h1 corretos; 49 prefetches parciais por segmento no Worker, 37 no Node, todos 200 |
+| Carga direta de documento no browser, hidratação (`/project/tally`, `gitcoin`, `agora`, `/community/optimism`) | ✅ | ✅ com B4 | h1 visível e hidratado nas 4, nenhum `div[hidden][id^="S:"]` sobrando, nenhum React #419. No Worker, 1 React #418 (texto divergente) em `/project/agora`, sem par no Node; bate com opennextjs-cloudflare#1321 |
 | OG `api/metadata/projects/gitcoin`, `communities/optimism`, `knowledge`, `scanner/og/[slug]` | ✅ | ✅ | PNG 1200×630, visualmente idênticos (encoder diferente). No Worker, `og-background.ts` não acha `public/…/background.jpg` no fs (`/bundle/public/…`), cai no fallback por CDN e manda 1 evento ao Sentry por isolate |
 | `next/image` (local e remoto) | ✅ | ⚠️ inconclusivo | o binding `IMAGES` simulado levou 52–134 s ou estourou 30 s; numa rodada respondeu 200 em 241 ms mas **sem `Cache-Control`**. Em produção é Cloudflare Images (cobrado por transformação) |
 | `sitemap_index.xml` + filhos | ✅ | ✅ | 4 `<loc>`, sitemap estático com 44 |
@@ -151,15 +168,40 @@ O Next 16.4 descomprime o "resume data cache" do PPR com `inflateSync(…, { max
 O `node:zlib` do workerd rejeita qualquer valor acima de 134217728 (128 MiB). Reproduzido isoladamente num Worker mínimo: 500 e 256 MB dão `RangeError`; 128 MB ou menos funciona.
 O resume falha e o Next serve o shell estático com 200.
 Com `maxPostponedStateSize: "20mb"` o limite vira 100 MB e tudo volta. Os states reais aqui têm 9–24 KB.
-Vale abrir issue no Next (ou no OpenNext, para setar isso por padrão).
 
-### Diagnóstico do B2/B3 (aberto)
+Já é conhecido upstream: opennextjs-cloudflare#1349 e #1225 descrevem o mesmo `RangeError` e a mesma correção (`25mb`).
+A #1349 relata um segundo problema que aparece depois desta correção. O OpenNext re-empacota o servidor com esbuild sem `keepNames`, os nomes de componentes que colidem mudam (`io` → `io2`) e o resume é descartado (*"Expected the resume to render <io> … rendered <io2>"*).
+Aqui o log do build final não tem nenhum desses erros e a hidratação passou. Se aparecer, a correção relatada é um `pnpm patch` com `keepNames: true` no `bundle-server` do adaptador.
 
-- Descartado: **Sentry**. Um build sem o plugin e com o SDK desligado tem o mesmo travamento.
-- Descartado: **compartilhamento de promise entre requests**. Trava também como 1º request de um isolate novo.
-- Descartado: **B4**. Continua com a correção aplicada.
-- Correlação: só falha o que exige gerar shell de Cache Components em runtime: tenants (só o shell `karma` é pré-renderizado, decisão D3) e a revalidação em background.
-- Contorno testado: no build Cloudflare, `generateStaticParams` devolvendo todos os tenants. O build subiu de 537 para 3022 páginas e **falhou** em `/t/karma/projects` com *"A `use cache` function took too long during prerendering"* (o indexer não aguenta a carga). Revertido.
+### Diagnóstico do B2/B3: causa conhecida upstream
+
+**Causa** (opennextjs-cloudflare PR #1318, *"run Cache Components staged renders correctly on workerd"*):
+- O Next renderiza uma página de Cache Components em estágios e detecta o fim de cada estágio com `process.nextTick`.
+- No workerd, `process.nextTick` é uma microtask (cloudflare/workerd#7687), então o estágio termina cedo.
+- Isso corrompe todo prerender feito **em runtime**: shells de tenants que não vieram do build (B2) e a regeneração de shells na revalidação (B3).
+- O PR troca o `runInSequentialTasks` do Next por uma implementação para workerd.
+
+**Por que vira travamento** (opennextjs-cloudflare#1468): o wrapper `cloudflare-node` só resolve a resposta quando os headers são escritos. Se o render falha antes do primeiro chunk, a promise nunca resolve e o runtime cancela o request. Um comentário reproduz isso com Next 16.4.5 + `cacheComponents` + adaptador 1.20.16.
+
+**Estado em 13/11/2026:**
+- O PR está aberto, não mergeado, e foi atualizado em 12/11.
+- Os mantenedores disseram em 5/11 que outras correções vêm antes.
+- Dois times relatam backport via `pnpm patch` em produção desde 3/11. Um deles descreve o mesmo sintoma do B3: o 1º request depois de expirar um shell dava *"Worker's code had hung"*, e o patch resolveu.
+
+**O que foi descartado aqui:**
+- **Sentry**: um build sem o plugin e com o SDK desligado tem o mesmo travamento.
+- **Compartilhamento de promise entre requests**: trava também como 1º request de um isolate novo.
+- **B4**: continua com a correção aplicada.
+
+O aviso de `setTimeout()` que o Next imprime é outro detalhe do mesmo módulo: o `_idleStart`, propriedade só dos timers do Node, não existe no workerd. Ele é só um alerta.
+
+**Contorno testado:** no build Cloudflare, `generateStaticParams` devolvendo todos os tenants. O build subiu de 537 para 3022 páginas e **falhou** em `/t/karma/projects` com *"A `use cache` function took too long during prerendering"* (o indexer não aguenta a carga). Revertido.
+Isso também não resolveria o B3.
+
+Outras issues abertas no adaptador que tocam o que a app usa:
+- #1455: memória retida em prerender de ISR em runtime (~1,4 MB por render), relevante com o limite de 128 MB.
+- #1103: volume de requests e duração cobrada do `DOShardedTagCache`, relevante para o objetivo de custo.
+- #1321: hidratação #418 intermitente.
 
 ## Dependências de `VERCEL_*` / `@vercel/*` e o que viraria
 
@@ -199,16 +241,16 @@ Nada abaixo foi alterado neste spike. Os itens de segurança estão marcados com
 
 | Frente | Esforço | Risco |
 |--------|---------|-------|
-| B2/B3: isolar o prerender em runtime no workerd, reportar e esperar a correção upstream (ou redesenhar shells de tenant sem render on-demand) | 1–3 semanas + espera upstream | **alto**, fora do nosso controle |
-| B1: levar o Worker abaixo de 10 MiB (separar Studio/OG/API em Workers próprios, client-only para Shiki/Mermaid/web3, `@sentry/cloudflare`) | 3–5 semanas | **alto**; pode não fechar sem dividir a app |
+| B2/B3: aplicar o PR #1318 como `pnpm patch` revisado e validar (tenants, revalidação, ondas concorrentes após invalidar tag); depois trocar pelo release oficial | ~1 semana + espera do release | médio; usar código não lançado exige exceção na política de dependências |
+| B1: Studio fora, Shiki fino, Mermaid no cliente, `@sentry/cloudflare`, `minify`; medir `startup_time_ms` real; se faltar folga, web3 fora do SSR ou divisão em Workers | 2–4 semanas | médio a alto; o startup é o risco maior |
 | Trocas de plataforma do inventário (variável neutra de ambiente, geo, IP 🔒, analytics, og-background, token bridge 🔒) | ~1 semana | médio (as de segurança precisam de revisão) |
-| CI/CD, secrets, R2/DO/Images provisionados, custom domains (`.org` + aliases `.xyz`), Cron, observabilidade, teste de carga, cutover com rollback | 2 semanas | médio |
-| **Total** | **~7–11 semanas**, das quais 4–8 com risco alto | |
+| CI/CD, secrets, R2/DO/Images provisionados, Cron, observabilidade, teste de carga | ~2 semanas | médio |
+| Domínios: zonas `karmahq.org`/`.xyz` hoje no Route 53, tenants externos (`app.filpgf.io` na Namecheap, `grantsapp.scroll.io` na Cloudflare da própria Scroll) via Cloudflare for SaaS; cutover com rollback | ~1–2 semanas, dependendo dos donos dos domínios | médio |
+| **Total** | **~7–10 semanas**, mais a espera do release do #1318 | |
 
-Sugestão: não seguir com a migração agora.
-Os próximos passos baratos que mudariam esse quadro são:
-1. Abrir issues upstream com os reproduzíveis de B2/B3 e B4.
-2. Medir quanto o Worker diminui só com o Studio fora e o Shiki fino (1–2 dias). Esse número diz se o B1 tem solução sem dividir a app.
+Primeiro passo sugerido: uma fase de 1–2 semanas para provar que B1–B3 caem.
+Ela inclui aplicar o #1318 como patch, fazer a dieta de bundle e medir o startup real num Worker não produtivo em `workers.dev`.
+Para isso é preciso uma conta Cloudflare, só para `wrangler versions upload`, sem DNS.
 
 ## Como reproduzir
 
