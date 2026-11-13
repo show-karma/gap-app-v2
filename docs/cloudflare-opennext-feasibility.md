@@ -25,6 +25,18 @@ O que mudaria o veredito para "viável com ressalvas":
 1. O PR #1318 do OpenNext (ou um backport dele via `pnpm patch`, como outros times já usam em produção) resolver B2 e B3 aqui.
 2. Uma dieta de bundle que leve o Worker a ~40 MiB minificado, para caber em 64 MiB **e** no startup de 1 s.
 
+### Atualização de 13/11 (tarde): patch #1318 aplicado
+
+- **B2 e B3 resolvidos no local** com o backport do opennextjs-cloudflare PR #1318 como `pnpm patch` (`patches/@opennextjs__cloudflare@1.20.16.patch`):
+  - os 4 tenants (`app.opgrants.io`, `grantsapp.scroll.io`, `app.filpgf.io`, `founders.polygon.technology`) respondem 200 no 1º request;
+  - 4 ondas concorrentes após invalidar o tag do blog: 100/100 respostas 200;
+  - revalidações em background: 200, sem `crypto.randomUUID()` com o isolate quente. Antes do reboot, a 1ª revalidação de algumas rotas num isolate frio ainda falhou uma vez e passou na retentativa.
+- **Shiki enxuto:** `utilities/markdown-code-highlighter.ts` substitui o `@streamdown/code` com `shiki/core` e 16 linguagens: −8,5 MB.
+- **`minify: true`** no wrangler.
+- **Sentry edge descartado.** Apontar o `@sentry/nextjs` do servidor para o build `workerd` dele tirava 7 MB, mas fazia o prerender em runtime falhar sempre com `crypto.randomUUID()`: tenants em 500 e revalidação nunca concluída. O Sentry continua no SDK Node.
+- **Tamanho atual: 73,9 MiB descomprimido** (limite 64). Falta ~10 MiB. O Studio servido como build estático (~13 MiB) fecharia a conta, e aguarda decisão.
+- **Memória local:** o `wrangler dev` deste app usa 6–7 GB, e um build ~9 GB. Na máquina compartilhada, rodar os dois juntos travou o servidor. Rode sempre um de cada vez, com `systemd-run --scope -p MemoryMax=…`.
+
 ### Correção de 13/11
 
 A primeira versão deste relatório media o B1 contra "10 MiB gzip". A [documentação atual de limites](https://developers.cloudflare.com/workers/platform/limits/) diz outra coisa:

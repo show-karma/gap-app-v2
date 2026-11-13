@@ -84,19 +84,6 @@ const nextConfig: NextConfig = {
     resolveAlias: {
       // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
       "markdown-it": "markdown-it/dist/index.cjs.js",
-      // Workers only. Turbopack resolves the server side of @sentry/nextjs with the Node
-      // conditions, which pulls @sentry/node and OpenTelemetry (~6 MB) into the Worker.
-      // The package's own `workerd` export is its edge build, which detects OpenNext on
-      // Cloudflare and reports with `runtime: cloudflare`; point the server at it and keep
-      // the browser build for the client.
-      ...(isCloudflareBuild
-        ? {
-            "@sentry/nextjs": {
-              browser: "./node_modules/@sentry/nextjs/build/esm/index.client.js",
-              default: "./node_modules/@sentry/nextjs/build/esm/edge/index.js",
-            },
-          }
-        : {}),
     },
   },
   // Cache Components. A route now combines a prerendered shell with dynamic
