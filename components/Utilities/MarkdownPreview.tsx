@@ -34,7 +34,7 @@ interface MarkdownPreviewProps {
 }
 
 type StreamdownType = typeof import("streamdown").Streamdown;
-type CodePluginType = typeof import("@streamdown/code").code;
+type CodePluginType = typeof import("@/utilities/markdown-code-highlighter").code;
 type RemarkBreaksType = typeof import("remark-breaks").default;
 type RemarkGfmType = typeof import("remark-gfm").default;
 
@@ -204,7 +204,7 @@ export const MarkdownPreview = ({
   useEffect(() => {
     Promise.all([
       import("streamdown").then((m) => m.Streamdown),
-      import("@streamdown/code").then((m) => m.code),
+      import("@/utilities/markdown-code-highlighter").then((m) => m.code),
       import("remark-breaks").then((m) => m.default),
       import("remark-gfm").then((m) => m.default),
       import("streamdown/styles.css" as string),

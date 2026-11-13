@@ -12,29 +12,36 @@ packages:
 # install/postinstall script, not by inferring from the package name.
 allowBuilds:
   # Fetch a platform binary at install time — REQUIRED, no binary otherwise.
-  '@sentry/cli': true # downloads the sentry-cli binary (sourcemap upload)
-  esbuild: true # install.js downloads/links the platform binary
-  workerd: true # install.js links the platform binary (esbuild pattern); used by wrangler/miniflare
-
+  
   # Native addons: load a shipped prebuild if present, else compile.
   # `true` is the safe/conservative choice (guarantees a working binary).
   '@parcel/watcher': true # scripts/build-from-source.js (prebuild fallback)
-  bufferutil: true # node-gyp-build
-  classic-level: true # node-gyp-build
-  keccak: true # node-gyp-build || exit 0
-  secp256k1: true # node-gyp-build || exit 0
-  sharp: true # install/check.js — uses prebuilt libvips, builds only if missing
-  utf-8-validate: true # node-gyp-build
 
   # No build needed: advisory/cosmetic postinstalls (print-only, no file
   # writes, no codegen). Skipping them is safe and silences the warning.
   '@reown/appkit': false # scripts/appkit-version-check.js — "outdated" notice
+  '@sentry/cli': true # downloads the sentry-cli binary (sourcemap upload)
   '@vercel/speed-insights': false # reads .env/next.config, prints warnings only
+  bufferutil: true # node-gyp-build
+  classic-level: true # node-gyp-build
   core-js-pure: false # sponsor message (wrapped in try/catch)
   es5-ext: false # sponsor message (|| exit 0)
-  protobufjs: false # scripts/postinstall — version-scheme WARN to stderr only
+  esbuild: true # install.js downloads/links the platform binary
+  keccak: true # node-gyp-build || exit 0
   # msw postinstall is a no-op unless package.json defines `msw.workerDirectory`
   # (it would then run `msw init`). gap-app-v2 sets neither that field nor a
   # committed mockServiceWorker.js, so there is nothing to build. If you later
   # add `msw.workerDirectory`, flip this to true.
   msw: false
+  protobufjs: false # scripts/postinstall — version-scheme WARN to stderr only
+  secp256k1: true # node-gyp-build || exit 0
+  sharp: true # install/check.js — uses prebuilt libvips, builds only if missing
+  utf-8-validate: true # node-gyp-build
+  workerd: true # install.js links the platform binary (esbuild pattern); used by wrangler/miniflare
+# SPIKE (spike/cloudflare-opennext): backport of opennextjs/opennextjs-cloudflare#1318
+# (commit 9dbb209, unreleased, approved for this spike on 2026-11-13). Next.js finds the
+# end of each Cache Components render stage with process.nextTick, which workerd runs as
+# a microtask, so runtime prerenders hang or render incomplete. Drop this entry once a
+# released @opennextjs/cloudflare contains the fix.
+patchedDependencies:
+  '@opennextjs/cloudflare@1.20.16': patches/@opennextjs__cloudflare@1.20.16.patch

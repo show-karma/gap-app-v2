@@ -24,6 +24,11 @@ overrides:
   uuid@>=13.0.0 <13.0.1: 13.0.1
   ws@>=8.0.0 <8.20.1: 8.20.1
 
+patchedDependencies:
+  '@opennextjs/cloudflare@1.20.16':
+    hash: 62bb1f856e3ec1b7721d7f30347e1f65e48ee3883bc33265b52df4fadf7ff87f
+    path: patches/@opennextjs__cloudflare@1.20.16.patch
+
 importers:
 
   .:
@@ -412,7 +417,7 @@ importers:
         version: 16.4.6(@playwright/test@1.58.2)
       '@opennextjs/cloudflare':
         specifier: 1.20.16
-        version: 1.20.16(encoding@0.1.13)(next@16.4.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@20.2.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.92.1))(wrangler@4.148.0(@types/node@20.2.5)(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        version: 1.20.16(patch_hash=62bb1f856e3ec1b7721d7f30347e1f65e48ee3883bc33265b52df4fadf7ff87f)(encoding@0.1.13)(next@16.4.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@20.2.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.92.1))(wrangler@4.148.0(@types/node@20.2.5)(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
@@ -22650,7 +22655,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opennextjs/cloudflare@1.20.16(encoding@0.1.13)(next@16.4.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@20.2.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.92.1))(wrangler@4.148.0(@types/node@20.2.5)(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
+  '@opennextjs/cloudflare@1.20.16(patch_hash=62bb1f856e3ec1b7721d7f30347e1f65e48ee3883bc33265b52df4fadf7ff87f)(encoding@0.1.13)(next@16.4.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@20.2.5)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.92.1))(wrangler@4.148.0(@types/node@20.2.5)(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
     dependencies:
       '@ast-grep/napi': 0.45.3
       '@dotenvx/dotenvx': 2.38.2

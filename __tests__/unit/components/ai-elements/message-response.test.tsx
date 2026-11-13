@@ -22,7 +22,7 @@ vi.mock("streamdown", () => ({
 vi.mock("@streamdown/math", () => ({ math: {} }));
 vi.mock("@streamdown/mermaid", () => ({ mermaid: {} }));
 vi.mock("@streamdown/cjk", () => ({ cjk: { remarkPluginsAfter: [] } }));
-vi.mock("@streamdown/code", () => ({ code: {} }));
+vi.mock("@/utilities/markdown-code-highlighter", () => ({ code: {} }));
 
 describe("MessageResponse memo comparator", () => {
   it("re-renders and forwards the new mode when only `mode` changes (#1462)", () => {
