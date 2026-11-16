@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { AccessCodeInput } from "@/src/features/applications/components/AccessCodeInput";
 import { AccessCodeModal } from "@/src/features/applications/components/AccessCodeModal";
@@ -23,6 +24,13 @@ const GATED_ACCESS_CODE_STORAGE_KEY_PREFIX = "gap:gated-access-code";
 function getGatedAccessCodeStorageKey(communityId: string, programId: string): string {
   return `${GATED_ACCESS_CODE_STORAGE_KEY_PREFIX}:${communityId}:${programId}`;
 }
+
+const applicantEmailSchema = z.string().email();
+
+const isAccessCodeError = (message: string) => {
+  const normalized = message.toLowerCase();
+  return normalized.includes("access code") || normalized.includes("incorrect");
+};
 
 interface ApplicationFormClientProps {
   communityId: string;
@@ -46,7 +54,7 @@ export function ApplicationFormClient({
   const { isWhitelabel, communitySlug } = useWhitelabel();
   const { authenticated } = useAuth();
 
-  const { submit } = useApplicationSubmit(communityId);
+  const { submit, isSavingDraft } = useApplicationSubmit(communityId);
 
   // In whitelabel mode, strip /community/<slug> prefix from paths for clean URLs
   const toPath = (path: string) => {
@@ -197,6 +205,27 @@ export function ApplicationFormClient({
     });
   }, [canStart, programId, communityId, authenticated]);
 
+  const clearFormRestoreKey = () => {
+    try {
+      window.sessionStorage.removeItem(`gap:application-form-auth:${programId}:default`);
+    } catch {
+      // SUPPRESSED: sessionStorage throws in private mode; the restore key is best-effort
+    }
+  };
+
+  const handleCreateError = (error: unknown, fallback: string) => {
+    const errorMessage = error instanceof Error ? error.message : fallback;
+
+    if (isAccessCodeError(errorMessage)) {
+      setUnlockedAccessCode(null);
+      clearPersistedAccessCode();
+      setAccessCodeError(errorMessage);
+      setShowAccessCodeModal(true);
+    } else {
+      toast.error(errorMessage);
+    }
+  };
+
   const handleSubmit = async (
     data: ApplicationFormData,
     aiEvaluation?: { evaluation: string; promptId: string }
@@ -210,28 +239,36 @@ export function ApplicationFormClient({
         aiEvaluation,
         unlockedAccessCode ?? undefined
       );
-      // Clear draft key on success to prevent form restoration
-      try {
-        window.sessionStorage.removeItem(`gap:application-form-auth:${programId}:default`);
-      } catch {
-        // Ignore
-      }
+      clearFormRestoreKey();
       const appId = application.referenceNumber || application.id;
       router.push(toPath(PAGES.COMMUNITY.APPLICATION_SUCCESS(communityId, appId)));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to submit application";
+      handleCreateError(error, "Failed to submit application");
+    }
+  };
 
-      if (
-        errorMessage.toLowerCase().includes("access code") ||
-        errorMessage.toLowerCase().includes("incorrect")
-      ) {
-        setUnlockedAccessCode(null);
-        clearPersistedAccessCode();
-        setAccessCodeError(errorMessage);
-        setShowAccessCodeModal(true);
-      } else {
-        toast.error(errorMessage);
-      }
+  const handleSaveDraft = async (data: ApplicationFormData) => {
+    const applicantEmail = getApplicantEmail(data);
+    if (!applicantEmailSchema.safeParse(applicantEmail).success) {
+      toast.error("Add your email address before saving a draft");
+      return;
+    }
+
+    try {
+      const application = await submit(
+        programId,
+        data,
+        applicantEmail,
+        undefined,
+        unlockedAccessCode ?? undefined,
+        { saveAsDraft: true }
+      );
+      clearFormRestoreKey();
+      toast.success("Draft saved");
+      const appId = application.referenceNumber || application.id;
+      router.push(toPath(PAGES.COMMUNITY.APPLICATION_EDIT(communityId, appId)));
+    } catch (error) {
+      handleCreateError(error, "Failed to save draft");
     }
   };
 
@@ -299,6 +336,8 @@ export function ApplicationFormClient({
         questions={questions}
         formSchema={formSchema}
         onSubmit={handleSubmit}
+        onSaveDraft={(data) => void handleSaveDraft(data)}
+        isSavingDraft={isSavingDraft}
         isDisabled={effectiveDisabled}
         programName={programName}
       />

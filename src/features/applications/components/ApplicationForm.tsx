@@ -31,6 +31,8 @@ interface ApplicationFormProps {
     aiEvaluation?: { evaluation: string; promptId: string }
   ) => Promise<void>;
   onCancel?: () => void;
+  onSaveDraft?: (data: ApplicationFormData) => void;
+  isSavingDraft?: boolean;
   onDataChange?: (data: Partial<ApplicationFormData>) => void;
   hideActions?: boolean;
   isDisabled?: boolean;
@@ -45,6 +47,8 @@ export function ApplicationForm({
   initialData,
   onSubmit,
   onCancel,
+  onSaveDraft,
+  isSavingDraft = false,
   onDataChange,
   hideActions = false,
   isDisabled = false,
@@ -148,6 +152,27 @@ export function ApplicationForm({
     }
   };
 
+  const toLabeledFormData = (data: ApplicationFormData): ApplicationFormData => {
+    const labeledFormData: ApplicationFormData = {};
+    questions.forEach((question) => {
+      const key = question.label || question.id;
+      const value = data[question.id];
+      const hasValue =
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        !(Array.isArray(value) && value.length === 0);
+      if (hasValue) {
+        labeledFormData[key] = value;
+      }
+    });
+    return labeledFormData;
+  };
+
+  const handleSaveDraft = onSaveDraft
+    ? () => onSaveDraft(toLabeledFormData(getValues()))
+    : undefined;
+
   const handleSubmit = async (data: ApplicationFormData) => {
     if (!authenticated) {
       pendingSubmitRef.current = true;
@@ -169,20 +194,7 @@ export function ApplicationForm({
             }
           : undefined;
 
-      const labeledFormData: Record<string, unknown> = {};
-      questions.forEach((question) => {
-        const key = question.label || question.id;
-        const value = data[question.id];
-        const hasValue =
-          value !== undefined &&
-          value !== null &&
-          value !== "" &&
-          !(Array.isArray(value) && value.length === 0);
-        if (hasValue) {
-          labeledFormData[key] = value;
-        }
-      });
-      await onSubmit(labeledFormData, aiEvaluationData);
+      await onSubmit(toLabeledFormData(data), aiEvaluationData);
       clearPersistedFormStateForAuth();
     } catch (error) {
       captureWithContext(error, COMPONENT_TAG, "application-form-submit-failed", { programId });
@@ -308,7 +320,7 @@ export function ApplicationForm({
             <ApplicationFormSection
               questions={questions}
               control={control}
-              disabled={isSubmitting || isDisabled}
+              disabled={isSubmitting || isSavingDraft || isDisabled}
               trigger={trigger}
             />
 
@@ -326,6 +338,8 @@ export function ApplicationForm({
                 onLogin={handleLogin}
                 onScore={handleScore}
                 onRescore={handleRescore}
+                onSaveDraft={handleSaveDraft}
+                savingDraft={isSavingDraft}
               />
             )}
           </form>

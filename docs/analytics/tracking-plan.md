@@ -170,6 +170,7 @@ down. The verifier's role is on their Mixpanel profile.
 | `application_started` | The apply form mounts. | `program_id`, `community_id`, `is_authenticated` | Program conversion |
 | `application_submitted` | The application POST succeeds. | `program_id`, `community_id`, `time_to_submit_s` | Program conversion |
 | `application_submit_failed` | That POST throws. | `error_code`, `program_id` | Program conversion |
+| `application_draft_saved` | An applicant saves a draft: creating it from the apply page, or updating it from the edit page. | `program_id`, `community_id`, `is_new` | Program conversion |
 | `post_approval_submitted` | Post-approval details are accepted. | `application_id`, `program_id` | Program conversion |
 | `post_approval_submit_failed` | That submission throws. | `error_code`, `application_id`, `program_id` | Program conversion |
 | `application_status_changed` | An admin or reviewer writes a new status. | `application_id`, `to` | Program conversion |
@@ -183,6 +184,10 @@ unauthenticated visitor never has one.
 
 `time_to_submit_s` is measured within one page session and is null when the form
 was not started in that session (a reload, a resumed draft).
+
+A draft save never fires `application_submitted`. Submitting a draft from the
+edit page does, with `time_to_submit_s` null: that is the draft's real
+submission moment, and its start was not seen in that page session.
 
 `application_status_changed` carries no `from` and no `actor_role`. The status
 write goes through one service call shared by four screens, none of which hand

@@ -1,0 +1,197 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import toast from "react-hot-toast";
+import { applicationKeys } from "@/src/lib/query-keys";
+import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
+import { track } from "@/utilities/analytics/client";
+import { ApplicationEditClient } from "../ApplicationEditClient";
+
+const mockApi = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn() }));
+const mockPush = vi.hoisted(() => vi.fn());
+const mockRefresh = vi.hoisted(() => vi.fn());
+
+vi.mock("@/utilities/api/client", () => ({ api: mockApi }));
+vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
+}));
+vi.mock("@/src/core/rbac", () => ({ useIsFundingPlatformAdmin: () => false }));
+vi.mock("@/src/features/applications/hooks/use-application-status-history", () => ({
+  useApplicationStatusHistory: () => ({ statusHistory: [] }),
+}));
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ authenticated: true, login: vi.fn() }),
+}));
+vi.mock("@/hooks/useRealTimeAIEvaluation", () => ({
+  useRealTimeAIEvaluation: () => ({
+    evaluation: null,
+    evaluationResponse: null,
+    isLoading: false,
+    error: null,
+    triggerEvaluation: vi.fn(),
+    clearEvaluation: vi.fn(),
+  }),
+}));
+vi.mock("@/src/components/navigation/Link", () => ({
+  Link: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
+const REFERENCE = "APP-1";
+
+function createProgram(enableRealTimeEvaluation = false): FundingProgram {
+  return {
+    programId: "program-1",
+    name: "Test Program",
+    metadata: { endsAt: "2999-01-01T00:00:00.000Z" },
+    applicationConfig: {
+      isEnabled: true,
+      formSchema: {
+        fields: [
+          { id: "projectName", type: "text", label: "Project name", required: true },
+          { id: "summary", type: "text", label: "Summary", required: false },
+        ],
+        aiConfig: { enableRealTimeEvaluation },
+      },
+    },
+  } as unknown as FundingProgram;
+}
+
+function createApplication(status: ApplicationStatus): Application {
+  return {
+    referenceNumber: REFERENCE,
+    programId: "program-1",
+    status,
+    applicationData: { summary: "Imported summary" },
+    statusHistory: [],
+  } as unknown as Application;
+}
+
+function renderEdit(status: ApplicationStatus, program = createProgram()) {
+  mockApi.get.mockResolvedValue(program);
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <ApplicationEditClient communityId="filecoin" application={createApplication(status)} />
+    </QueryClientProvider>
+  );
+  return queryClient;
+}
+
+describe("ApplicationEditClient", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockApi.put.mockResolvedValue({ referenceNumber: REFERENCE });
+  });
+
+  describe("draft application", () => {
+    it("shows Save draft alongside the submit button", async () => {
+      renderEdit("draft");
+      expect(await screen.findByTestId("save-draft-btn")).toHaveTextContent("Save draft");
+      expect(screen.getByTestId("submit-application-btn")).toBeInTheDocument();
+    });
+
+    it("saves partial work with saveAsDraft without running required-field validation", async () => {
+      renderEdit("draft");
+      fireEvent.click(await screen.findByTestId("save-draft-btn"));
+
+      await waitFor(() => {
+        expect(mockApi.put).toHaveBeenCalledWith(`/v2/funding-applications/${REFERENCE}`, {
+          applicationData: { Summary: "Imported summary" },
+          saveAsDraft: true,
+        });
+      });
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Draft saved"));
+      expect(mockPush).not.toHaveBeenCalled();
+      expect(track).toHaveBeenCalledTimes(1);
+      expect(track).toHaveBeenCalledWith("application_draft_saved", {
+        program_id: "program-1",
+        community_id: "filecoin",
+        is_new: false,
+      });
+    });
+
+    it("keeps full validation on submit", async () => {
+      renderEdit("draft");
+      fireEvent.click(await screen.findByTestId("submit-application-btn"));
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/required/i).length).toBeGreaterThan(0);
+      });
+      expect(mockApi.put).not.toHaveBeenCalled();
+    });
+
+    it("submits without saveAsDraft and confirms the submission", async () => {
+      renderEdit("draft");
+      fireEvent.change(await screen.findByLabelText(/Project name/), {
+        target: { value: "My project" },
+      });
+      fireEvent.click(screen.getByTestId("submit-application-btn"));
+
+      await waitFor(() => {
+        expect(mockApi.put).toHaveBeenCalledWith(`/v2/funding-applications/${REFERENCE}`, {
+          applicationData: { "Project name": "My project", Summary: "Imported summary" },
+        });
+      });
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Application submitted"));
+      expect(mockPush).toHaveBeenCalledWith(`/community/filecoin/applications/${REFERENCE}`);
+      expect(track).toHaveBeenCalledTimes(1);
+      expect(track).toHaveBeenCalledWith("application_submitted", {
+        program_id: "program-1",
+        community_id: "filecoin",
+        time_to_submit_s: null,
+      });
+    });
+
+    it("hands the submitted application to the detail page without a stale cache", async () => {
+      const submitted = { referenceNumber: REFERENCE, status: "pending" };
+      mockApi.put.mockResolvedValue(submitted);
+      const queryClient = renderEdit("draft");
+      fireEvent.change(await screen.findByLabelText(/Project name/), {
+        target: { value: "My project" },
+      });
+      fireEvent.click(screen.getByTestId("submit-application-btn"));
+
+      await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
+      expect(queryClient.getQueryData(applicationKeys.detail("filecoin", REFERENCE, true))).toEqual(
+        submitted
+      );
+    });
+
+    it("keeps Save draft available before the AI feedback step", async () => {
+      renderEdit("draft", createProgram(true));
+      expect(await screen.findByTestId("get-ai-feedback-btn")).toBeInTheDocument();
+      expect(screen.getByTestId("save-draft-btn")).toBeEnabled();
+    });
+  });
+
+  describe("non-draft application", () => {
+    it("shows only the submit button", async () => {
+      renderEdit("pending");
+      expect(await screen.findByTestId("submit-application-btn")).toBeInTheDocument();
+      expect(screen.queryByTestId("save-draft-btn")).not.toBeInTheDocument();
+    });
+
+    it("never sends saveAsDraft and keeps the existing toast", async () => {
+      renderEdit("pending");
+      fireEvent.change(await screen.findByLabelText(/Project name/), {
+        target: { value: "My project" },
+      });
+      fireEvent.click(screen.getByTestId("submit-application-btn"));
+
+      await waitFor(() => {
+        expect(mockApi.put).toHaveBeenCalledWith(`/v2/funding-applications/${REFERENCE}`, {
+          applicationData: { "Project name": "My project", Summary: "Imported summary" },
+        });
+      });
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith("Application updated successfully")
+      );
+      expect(track).not.toHaveBeenCalled();
+    });
+  });
+});
