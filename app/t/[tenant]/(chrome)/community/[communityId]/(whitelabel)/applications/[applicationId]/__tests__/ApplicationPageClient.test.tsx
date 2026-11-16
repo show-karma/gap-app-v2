@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Application } from "@/types/whitelabel-entities";
+import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import { ApplicationPageClient } from "../ApplicationPageClient";
 
 const mockAccess = vi.fn();
@@ -51,9 +51,23 @@ const application = {
   updatedAt: "2026-11-10T00:00:00.000Z",
 } as unknown as Application;
 
-function renderPage() {
+const PAST_DEADLINE = "2020-01-01T00:00:00.000Z";
+const FUTURE_DEADLINE = "2999-01-01T00:00:00.000Z";
+
+function renderPage({
+  status = "pending",
+  endsAt,
+}: {
+  status?: ApplicationStatus;
+  endsAt?: string;
+} = {}) {
+  const program = endsAt ? ({ metadata: { endsAt } } as unknown as FundingProgram) : null;
   return render(
-    <ApplicationPageClient communityId="filecoin" application={application} program={null} />
+    <ApplicationPageClient
+      communityId="filecoin"
+      application={{ ...application, status }}
+      program={program}
+    />
   );
 }
 
@@ -73,5 +87,26 @@ describe("ApplicationPageClient edit access", () => {
     mockAccess.mockReturnValue({ isApplicant: false });
     renderPage();
     expect(screen.queryByRole("link", { name: "Edit" })).not.toBeInTheDocument();
+  });
+
+  describe("draft applications", () => {
+    beforeEach(() => {
+      mockAccess.mockReturnValue({ isApplicant: true });
+    });
+
+    it("lets the owner edit a draft before the deadline", () => {
+      renderPage({ status: "draft", endsAt: FUTURE_DEADLINE });
+      expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
+    });
+
+    it("hides edit on a draft once the deadline has passed, like pending", () => {
+      renderPage({ status: "draft", endsAt: PAST_DEADLINE });
+      expect(screen.queryByRole("link", { name: "Edit" })).not.toBeInTheDocument();
+    });
+
+    it("still allows editing a revision request after the deadline", () => {
+      renderPage({ status: "revision_requested", endsAt: PAST_DEADLINE });
+      expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
+    });
   });
 });

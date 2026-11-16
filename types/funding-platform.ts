@@ -3,6 +3,7 @@ import type { FollowUpTarget } from "./follow-up-target";
 
 // V2 Status Types
 export type FundingApplicationStatusV2 =
+  | "draft"
   | "pending"
   | "under_review"
   | "revision_requested"
@@ -233,6 +234,7 @@ export interface IFundingApplication {
 // V2 Application Statistics
 export interface IApplicationStatistics {
   totalApplications: number;
+  draftApplications?: number;
   pendingApplications: number;
   approvedApplications: number;
   rejectedApplications: number;
@@ -285,6 +287,7 @@ export interface IApplicationSubmitRequest {
 
 export interface IApplicationUpdateRequest {
   applicationData: Record<string, any>;
+  saveAsDraft?: boolean;
 }
 
 export interface IApplicationStatusUpdateRequest {

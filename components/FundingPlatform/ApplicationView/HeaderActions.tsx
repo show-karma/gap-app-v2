@@ -7,6 +7,7 @@ import { Can } from "@/src/core/rbac/components/can";
 import { Permission } from "@/src/core/rbac/types";
 
 export type ApplicationStatus =
+  | "draft"
   | "pending"
   | "under_review"
   | "revision_requested"
@@ -25,6 +26,7 @@ interface StatusTransition {
 // Presentation only (label/style/permission + display order). Which transitions
 // are actually offered comes from the shared adjacency in `statusTransitions`.
 const STATUS_TRANSITION_ACTIONS: Record<ApplicationStatus, StatusTransition[]> = {
+  draft: [],
   pending: [
     {
       targetStatus: "under_review",

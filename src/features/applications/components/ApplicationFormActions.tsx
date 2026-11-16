@@ -9,6 +9,8 @@ interface ApplicationFormActionsProps {
   onLogin: () => void;
   onScore: () => void;
   onRescore: () => void;
+  onSaveDraft?: () => void;
+  savingDraft?: boolean;
 }
 
 export function ApplicationFormActions({
@@ -17,7 +19,13 @@ export function ApplicationFormActions({
   onLogin,
   onScore,
   onRescore,
+  onSaveDraft,
+  savingDraft = false,
 }: ApplicationFormActionsProps) {
+  const canSubmit = mode.kind === "submit" || mode.kind === "evaluate-or-submit";
+  const showSaveDraft = onSaveDraft !== undefined && canSubmit;
+  const submitting = canSubmit && mode.submitting;
+
   return (
     <div className="mt-6 rounded-lg border bg-card p-4">
       <div className="flex justify-between items-center">
@@ -27,6 +35,19 @@ export function ApplicationFormActions({
           </Button>
         )}
         <div className="flex items-center gap-2 ml-auto">
+          {showSaveDraft && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSaveDraft}
+              isLoading={savingDraft}
+              disabled={savingDraft || submitting}
+              data-testid="save-draft-btn"
+            >
+              Save draft
+            </Button>
+          )}
+
           {mode.kind === "login" && (
             <Button type="button" onClick={onLogin}>
               Login to submit
@@ -59,7 +80,7 @@ export function ApplicationFormActions({
               </button>
               <Button
                 type="submit"
-                disabled={mode.submitting || mode.scoringPending}
+                disabled={mode.submitting || mode.scoringPending || savingDraft}
                 isLoading={mode.submitting}
                 data-testid="submit-application-btn"
               >
@@ -71,7 +92,7 @@ export function ApplicationFormActions({
           {mode.kind === "submit" && (
             <Button
               type="submit"
-              disabled={mode.submitting}
+              disabled={mode.submitting || savingDraft}
               isLoading={mode.submitting}
               data-testid="submit-application-btn"
             >

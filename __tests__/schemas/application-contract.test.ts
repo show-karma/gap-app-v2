@@ -131,6 +131,7 @@ describe("Application API Contract", () => {
 
     it("accepts all valid status values", () => {
       const validStatuses = [
+        "draft",
         "pending",
         "under_review",
         "revision_requested",

@@ -21,6 +21,7 @@ interface NextStepCardProps {
   /** owner, approved, post-approval form configured but not yet submitted. */
   postApprovalPending: boolean;
   editHref: string;
+  canEdit?: boolean;
   reviewHref: string;
   onGoToMilestones?: () => void;
   onGoToPostApproval?: () => void;
@@ -44,6 +45,7 @@ function getDescriptor(props: NextStepCardProps): NextStepDescriptor | null {
     hasMilestones,
     postApprovalPending,
     editHref,
+    canEdit = true,
     reviewHref,
     onGoToMilestones,
     onGoToPostApproval,
@@ -61,6 +63,18 @@ function getDescriptor(props: NextStepCardProps): NextStepDescriptor | null {
   }
 
   switch (status) {
+    case "draft":
+      if (!canEdit) {
+        return {
+          title: "Draft not submitted",
+          copy: "This draft wasn't submitted before the program deadline.",
+        };
+      }
+      return {
+        title: "Draft — not submitted yet",
+        copy: "Your application is saved as a draft. Review it and submit it to enter the review queue.",
+        cta: { kind: "link", label: "Review and submit", Icon: Pencil, href: editHref },
+      };
     case "pending":
       return {
         title: "Application submitted",

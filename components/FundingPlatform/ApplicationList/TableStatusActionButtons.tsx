@@ -32,6 +32,7 @@ interface TableStatusTransition {
 // transitions are actually offered comes from the shared adjacency in
 // `statusTransitions`.
 const TABLE_STATUS_ACTIONS: Record<FundingApplicationStatusV2, TableStatusTransition[]> = {
+  draft: [],
   pending: [
     {
       targetStatus: "under_review",

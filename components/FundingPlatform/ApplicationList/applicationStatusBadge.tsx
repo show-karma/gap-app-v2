@@ -6,6 +6,7 @@ import { cn } from "@/utilities/tailwind";
  * applications table row and the "My Applications" inbox list item.
  */
 const applicationStatusColors: Record<string, string> = {
+  draft: "bg-muted text-muted-foreground",
   pending: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   resubmitted: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   under_review: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
