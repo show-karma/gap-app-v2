@@ -22,10 +22,12 @@ function parseRank(value: string): number | null {
 
 /**
  * Owner-only editor for a community's public-directory listing: whether it
- * shows up in `GET /v2/communities` (`public`) and its position there
- * (`rank`, sorted DESC). Reuses the live `useCommunityConfig` hooks; only
- * `{ public, rank }` are ever PUT so the masked `slackWebhookUrls` the GET
- * returns are never written back.
+ * shows up in `GET /v2/communities` (`public`), its position there
+ * (`rank`, sorted DESC) and whether projects may add grants outside an
+ * existing program (`disableCustomGrants`). Reuses the live
+ * `useCommunityConfig` hooks; only `{ public, rank, disableCustomGrants }` are
+ * ever PUT so the masked `slackWebhookUrls` the GET returns are never written
+ * back.
  */
 export function CommunityListingControls({ slug, communityName }: CommunityListingControlsProps) {
   const { data: config, isLoading } = useCommunityConfig(slug);
@@ -117,22 +119,17 @@ export function CommunityListingControls({ slug, communityName }: CommunityListi
         {mutation.isPending && <Spinner className="h-3.5 w-3.5 border-2" />}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id={disableCustomGrantsCheckboxId}
-            checked={disableCustomGrants}
-            onCheckedChange={(checked) => handleDisableCustomGrantsChange(checked === true)}
-            disabled={mutation.isPending}
-            aria-label={`Only allow grants from existing programs for ${communityName}`}
-          />
-          <Label htmlFor={disableCustomGrantsCheckboxId} className="cursor-pointer">
-            Only allow grants from existing programs
-          </Label>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Hides "Add new" in the program picker when projects add a grant.
-        </p>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id={disableCustomGrantsCheckboxId}
+          checked={disableCustomGrants}
+          onCheckedChange={(checked) => handleDisableCustomGrantsChange(checked === true)}
+          disabled={mutation.isPending}
+          aria-label={`Only allow grants from existing programs for ${communityName}`}
+        />
+        <Label htmlFor={disableCustomGrantsCheckboxId} className="cursor-pointer">
+          Only allow grants from existing programs
+        </Label>
       </div>
 
       <div className="flex flex-col gap-1">
