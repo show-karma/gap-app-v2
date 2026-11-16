@@ -37,6 +37,7 @@ export function CommunityListingControls({ slug, communityName }: CommunityListi
   // indexer directory filter `config.public !== false`.
   const isPublic = config?.public !== false;
   const serverRank = config?.rank ?? 0;
+  const disableCustomGrants = config?.disableCustomGrants === true;
 
   // The rank field is uncontrolled: typing writes straight to the DOM (no
   // re-render), and the debounced save reads the parsed value. `defaultValue`
@@ -74,7 +75,21 @@ export function CommunityListingControls({ slug, communityName }: CommunityListi
     mutation.mutate({ slug, config: { public: checked, rank: typed ?? serverRank } });
   };
 
+  const handleDisableCustomGrantsChange = (checked: boolean) => {
+    commitRank.cancel();
+    const typed = parseRank(rankInputRef.current?.value ?? "");
+    mutation.mutate({
+      slug,
+      config: {
+        public: isPublic,
+        rank: typed ?? serverRank,
+        disableCustomGrants: checked,
+      },
+    });
+  };
+
   const publicCheckboxId = `community-public-${slug}`;
+  const disableCustomGrantsCheckboxId = `community-disable-custom-grants-${slug}`;
   const rankInputId = `community-rank-${slug}`;
 
   if (isLoading) {
@@ -100,6 +115,24 @@ export function CommunityListingControls({ slug, communityName }: CommunityListi
           Publicly listed
         </Label>
         {mutation.isPending && <Spinner className="h-3.5 w-3.5 border-2" />}
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id={disableCustomGrantsCheckboxId}
+            checked={disableCustomGrants}
+            onCheckedChange={(checked) => handleDisableCustomGrantsChange(checked === true)}
+            disabled={mutation.isPending}
+            aria-label={`Only allow grants from existing programs for ${communityName}`}
+          />
+          <Label htmlFor={disableCustomGrantsCheckboxId} className="cursor-pointer">
+            Only allow grants from existing programs
+          </Label>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Hides "Add new" in the program picker when projects add a grant.
+        </p>
       </div>
 
       <div className="flex flex-col gap-1">
