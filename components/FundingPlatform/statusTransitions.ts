@@ -10,6 +10,7 @@ const ALLOWED_STATUS_TRANSITIONS: Record<
   FundingApplicationStatusV2,
   readonly FundingApplicationStatusV2[]
 > = {
+  draft: [],
   pending: ["under_review"],
   resubmitted: ["under_review"],
   under_review: ["revision_requested", "approved", "rejected"],
