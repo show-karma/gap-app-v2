@@ -307,6 +307,7 @@ export function ApplicationForm({
           <form
             ref={formRef}
             id={formId}
+            noValidate
             data-testid="application-form"
             onSubmit={(event) => {
               // handleSubmit rethrows on failure so RHF marks the submit as
