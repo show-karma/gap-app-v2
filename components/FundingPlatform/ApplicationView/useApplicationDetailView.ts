@@ -123,6 +123,7 @@ export function useApplicationDetailView({
   // the buttons' busy/disabled look so the first click never appears dead.
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const isCheckingStatusRef = useRef(false);
+  const isSubmittingStatusRef = useRef(false);
 
   const {
     application,
@@ -236,7 +237,8 @@ export function useApplicationDetailView({
     approvedAmount?: string,
     approvedCurrency?: string
   ) => {
-    if (!selectedStatus || isUpdatingStatus) return;
+    if (!selectedStatus || isUpdatingStatus || isSubmittingStatusRef.current) return;
+    isSubmittingStatusRef.current = true;
     try {
       await handleStatusChange(selectedStatus, reason, approvedAmount, approvedCurrency);
       setSelectedStatus(null);
@@ -252,6 +254,8 @@ export function useApplicationDetailView({
       if (isStatusConflictError(error)) {
         setSelectedStatus(null);
       }
+    } finally {
+      isSubmittingStatusRef.current = false;
     }
   };
 
