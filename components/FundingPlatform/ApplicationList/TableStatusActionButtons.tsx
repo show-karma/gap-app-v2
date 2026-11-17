@@ -56,7 +56,7 @@ const TABLE_STATUS_ACTIONS: Record<FundingApplicationStatusV2, TableStatusTransi
       icon: CheckIcon,
       className:
         "px-2 py-1 text-sm border bg-transparent text-green-600 font-medium border-green-200 dark:border-green-700 dark:text-green-400 flex items-center gap-1",
-      permission: Permission.APPLICATION_APPROVE,
+      permission: Permission.APPLICATION_CHANGE_STATUS,
     },
     {
       targetStatus: "rejected",
@@ -64,7 +64,7 @@ const TABLE_STATUS_ACTIONS: Record<FundingApplicationStatusV2, TableStatusTransi
       icon: XMarkIcon,
       className:
         "px-2 py-1 text-sm border bg-transparent text-red-600 font-medium border-red-200 dark:border-red-700 dark:text-red-400 flex items-center gap-1",
-      permission: Permission.APPLICATION_REJECT,
+      permission: Permission.APPLICATION_CHANGE_STATUS,
     },
   ],
   revision_requested: [
