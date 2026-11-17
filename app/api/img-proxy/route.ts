@@ -67,6 +67,15 @@ const isBlockedHost = (hostname: string): boolean => {
   return false;
 };
 
+// The body comes from an arbitrary host and is served on the app origin. An
+// SVG opened as a document can run script, so the response is sandboxed: it
+// still renders inside <img>, but never executes or loads anything.
+const UNTRUSTED_CONTENT_HEADERS = {
+  "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+  "X-Content-Type-Options": "nosniff",
+  "Cross-Origin-Resource-Policy": "same-origin",
+} as const;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const imageUrl = searchParams.get("url");
@@ -117,6 +126,7 @@ export async function GET(request: Request) {
       headers: {
         "Content-Type": contentType,
         "Content-Length": imageBuffer.byteLength.toString(),
+        ...UNTRUSTED_CONTENT_HEADERS,
       },
     });
   } catch (_error: unknown) {
