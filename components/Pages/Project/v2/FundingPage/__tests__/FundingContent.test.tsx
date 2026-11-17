@@ -1,7 +1,28 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import type { ReactNode } from "react";
 import type { Project } from "@/types/v2/project";
 import { FundingContent } from "../FundingContent";
+
+// Expose the `prefetch` value Next's Link receives; the real Link only
+// prefetches in production builds, so the prop is what we can assert.
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({
+    children,
+    href,
+    prefetch,
+    ...props
+  }: {
+    children: ReactNode;
+    href: string;
+    prefetch?: unknown;
+  }) => (
+    <a href={href} data-prefetch={String(prefetch)} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -172,6 +193,28 @@ describe("FundingContent", () => {
       communitiesMock.communities = [{ uid: "community-1" }];
       render(<FundingContent project={mockProject} />);
       expect(screen.getByTestId("add-funding-button")).toBeInTheDocument();
+    });
+  });
+
+  describe("Prefetch", () => {
+    // A project with many grants would otherwise prefetch every grant page as
+    // the list scrolls into view; each prefetch renders and stores a page.
+    it("does not prefetch a grant page until the visitor shows intent", () => {
+      render(<FundingContent project={mockProject} />);
+
+      for (const card of screen.getAllByTestId("grant-card")) {
+        expect(card).toHaveAttribute("data-prefetch", "false");
+      }
+    });
+
+    it("prefetches only the grant card the visitor hovers", () => {
+      render(<FundingContent project={mockProject} />);
+      const [hovered, other] = screen.getAllByTestId("grant-card");
+
+      fireEvent.mouseEnter(hovered);
+
+      expect(hovered).toHaveAttribute("data-prefetch", "null");
+      expect(other).toHaveAttribute("data-prefetch", "false");
     });
   });
 

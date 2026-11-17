@@ -8,6 +8,7 @@ import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { IntentPrefetchLink } from "@/src/components/navigation/IntentPrefetchLink";
 import { useOwnerStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
 import type { Grant } from "@/types/v2/grant";
@@ -123,7 +124,7 @@ function GrantCard({
   const progressPercent = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
 
   return (
-    <Link
+    <IntentPrefetchLink
       href={PAGES.PROJECT.GRANT(project.details?.slug || project.uid || "", grant.uid)}
       className={cn(
         "flex flex-col gap-3 p-4 rounded-xl border transition-all hover:shadow-md",
@@ -196,7 +197,7 @@ function GrantCard({
           </span>
         </div>
       )}
-    </Link>
+    </IntentPrefetchLink>
   );
 }
 
