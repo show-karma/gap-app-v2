@@ -60,14 +60,14 @@ const STATUS_TRANSITION_ACTIONS: Record<ApplicationStatus, StatusTransition[]> =
       label: "Approve",
       className:
         "border border-emerald-600 text-emerald-700 bg-green-100 hover:bg-green-200 dark:text-white dark:bg-emerald-900 dark:hover:bg-emerald-800",
-      permission: Permission.APPLICATION_APPROVE,
+      permission: Permission.APPLICATION_CHANGE_STATUS,
     },
     {
       targetStatus: "rejected",
       label: "Reject",
       className:
         "border border-red-600 text-red-700 bg-red-100 hover:bg-red-200 dark:text-white dark:bg-red-900 dark:hover:bg-red-800",
-      permission: Permission.APPLICATION_REJECT,
+      permission: Permission.APPLICATION_CHANGE_STATUS,
     },
   ],
   revision_requested: [
