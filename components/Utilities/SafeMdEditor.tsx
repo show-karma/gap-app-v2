@@ -3,7 +3,7 @@
 import "md-editor-rt/lib/style.css";
 import type { EditorProps } from "md-editor-rt";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect } from "react";
+import { useCallback, useDeferredValue, useEffect } from "react";
 import { normalizeNullInputEventData } from "@/components/Utilities/utils/normalize-null-input-event-data";
 
 // The ONLY place in the app allowed to value-import `md-editor-rt`. Every
@@ -73,5 +73,19 @@ export function SafeMdEditor({ value, onInput, ...rest }: SafeMdEditorProps) {
     [onInput]
   );
 
-  return <MdEditor {...rest} value={value ?? ""} onInput={handleInput} />;
+  // Sentry 7853602321 (React #185, "Maximum update depth exceeded"): every
+  // keystroke echoes the editor's own text back as `value`, and md-editor-rt
+  // answers each new value with a passive-effect setState that never bails out
+  // (`buildFinished: false`). A keystroke commits on the SyncLane, so React
+  // flushes that effect inside the commit and the commit ends with work still
+  // pending. Keys arriving faster than React can render that work (a snippet
+  // expander or dictation tool typing one character per millisecond) stack 50
+  // such commits and React throws. Deferring the value keeps the urgent
+  // keystroke render from touching md-editor-rt's props. CodeMirror already
+  // holds the text, and the value catches up in a background render. Value
+  // changes that come from outside (a form reset, a restored draft) still
+  // reach the editor that way, a moment later.
+  const editorValue = useDeferredValue(value ?? "");
+
+  return <MdEditor {...rest} value={editorValue} onInput={handleInput} />;
 }
