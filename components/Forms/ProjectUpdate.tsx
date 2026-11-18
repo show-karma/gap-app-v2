@@ -41,6 +41,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { toWalletGuidanceError } from "@/utilities/wallet/accountAuthorization";
@@ -677,6 +678,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
             if (alreadyExists) {
               retries = 0;
+              // The profile's feed is keyed by the URL (usually the slug) and
+              // observed statically, so invalidation never reaches it. Put the
+              // feed we just read into it before anything says "success".
+              await refreshProjectQueries(queryClient, {
+                identifiers: [projectUid, projectSlug],
+                updates: updatesData,
+                families: ["project-updates"],
+              });
               projectEvents.emitProjectUpdatePosted(projectUid, data.deliverables, data.text);
               showSuccess(
                 isEditMode ? "Activity updated successfully!" : MESSAGES.PROJECT_UPDATE_FORM.SUCCESS

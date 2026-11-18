@@ -8,7 +8,7 @@ import { type ChatMessage, type LimitReason, useAgentChatStore } from "@/store/a
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 import { PAGES } from "@/utilities/pages";
-import { createProjectQueryPredicate } from "@/utilities/queryKeys";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 
 interface SSEEvent {
   type: string;
@@ -455,9 +455,7 @@ export function useAgentStream() {
         if (hasApprovedWrite) {
           const ctx = useAgentChatStore.getState().agentContext;
           if (ctx?.projectId) {
-            queryClient.invalidateQueries({
-              predicate: createProjectQueryPredicate(ctx.projectId),
-            });
+            void refreshProjectQueries(queryClient, { identifiers: [ctx.projectId] });
             if (newSlugRef.current && newSlugRef.current !== ctx.projectId) {
               router.replace(PAGES.PROJECT.OVERVIEW(newSlugRef.current));
             }

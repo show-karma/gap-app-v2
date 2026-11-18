@@ -39,7 +39,7 @@ import {
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { createProjectQueryPredicate } from "@/utilities/queryKeys";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
@@ -371,6 +371,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
 
+                // The grants poll above refreshed only the grants query; the
+                // profile feed (milestones live there) is observed statically,
+                // so refresh it explicitly now that the form has closed.
+                await refreshProjectQueries(queryClient, {
+                  identifiers: [project?.uid, project?.details?.slug],
+                });
+
                 // Let the share dialog render before any route transition.
                 if (pathname !== targetPath) {
                   setTimeout(() => {
@@ -489,6 +496,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 );
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
+
+                // The grants poll above refreshed only the grants query; the
+                // profile feed (milestones live there) is observed statically,
+                // so refresh it explicitly now that the form has closed.
+                await refreshProjectQueries(queryClient, {
+                  identifiers: [project?.uid, project?.details?.slug],
+                });
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -549,12 +563,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         });
         toast.success("Invoice submitted successfully", { id: loadingToastId });
 
-        await queryClient.invalidateQueries({
-          predicate: createProjectQueryPredicate(project?.uid || ""),
-        });
-
         cancelEditing(false);
         parentSetIsUpdating?.(false);
+
+        // After closing: a forced feed refetch swaps the feed for a skeleton.
+        await refreshProjectQueries(queryClient, {
+          identifiers: [project?.uid, project?.details?.slug],
+        });
       } catch (invoiceError) {
         errorManager("Invoice-only submission failed", invoiceError, {
           grantUID,
@@ -599,8 +614,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         toast.success("Invoice submitted successfully");
 
         // Invalidate project grants and updates so milestone.invoiceInfo is fresh
-        await queryClient.invalidateQueries({
-          predicate: createProjectQueryPredicate(project?.uid || ""),
+        await refreshProjectQueries(queryClient, {
+          identifiers: [project?.uid, project?.details?.slug],
         });
       } catch (invoiceError) {
         errorManager("Invoice submission failed after milestone update", invoiceError);

@@ -11,8 +11,8 @@ import type { AttestationStep } from "@/hooks/useAttestationToast";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { queryClient } from "@/utilities/query-client";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 function _getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -135,15 +135,15 @@ export const updateProject = async (
             changeStepperStep("indexed");
             showSuccess("Project updated successfully!");
 
-            // Invalidate React Query cache to force refresh of project data
-            await Promise.all([
-              queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.PROJECT.DETAILS(project.uid),
-              }),
-              queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.PROJECT.DETAILS(project.details?.slug || ""),
-              }),
-            ]);
+            // Write the indexed project straight into the cache. Invalidation
+            // cannot reach the profile's statically-observed queries, and
+            // `project.details.slug` already holds the NEW slug here, so the
+            // old-slug page is found through the uid.
+            await refreshProjectQueries(queryClient, {
+              identifiers: [project.uid, project.details?.slug],
+              project: fetchedProject,
+              families: ["project"],
+            });
 
             closeModal();
             return;

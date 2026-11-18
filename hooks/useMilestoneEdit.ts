@@ -14,8 +14,9 @@ import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { queryClient } from "@/utilities/query-client";
-import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -129,14 +130,11 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     // Project caches are keyed by slug in some places and by UID in others
     // (`useProjectGrants` uses the UID), so both identifiers have to be swept
     // or the revoked milestone stays actionable until a hard reload.
-    const projectIdentifiers = Array.from(new Set([projectSlug, projectUid].filter(Boolean)));
-    for (const identifier of projectIdentifiers) {
-      invalidations.push(
-        queryClient.invalidateQueries({
-          predicate: createProjectQueryPredicate(identifier),
-        })
-      );
-    }
+    // Not invalidateQueries: the profile observes these statically and
+    // invalidation skips them.
+    invalidations.push(
+      refreshProjectQueries(queryClient, { identifiers: [projectSlug, projectUid] })
+    );
 
     if (options?.programId) {
       const reportKey = QUERY_KEYS.COMMUNITY.REPORT_MILESTONES("", 0, "", "", [])[0];
