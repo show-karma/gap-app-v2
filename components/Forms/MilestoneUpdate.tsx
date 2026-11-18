@@ -211,6 +211,14 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
     useAttestationToast();
   const project = useProjectStore((state) => state.project);
+  // The profile observes the activity feed (where milestones show) statically,
+  // which invalidation skips, so each successful save refreshes it explicitly
+  // once the form has closed — a feed refetch must not unmount it mid-flow.
+  const refreshProfile = (families: Parameters<typeof refreshProjectQueries>[1]["families"]) =>
+    refreshProjectQueries(queryClient, {
+      identifiers: [project?.uid, project?.details?.slug],
+      families,
+    });
 
   // Fetch grants using dedicated hook
   const { grants, refetch: refetchGrants } = useProjectGrants(project?.uid || "");
@@ -371,13 +379,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
 
-                // The grants poll above refreshed only the grants query; the
-                // profile feed (milestones live there) is observed statically,
-                // so refresh it explicitly now that the form has closed.
-                await refreshProjectQueries(queryClient, {
-                  identifiers: [project?.uid, project?.details?.slug],
-                  families: ["project-updates"],
-                });
+                // The grants poll above already refreshed the grants.
+                await refreshProfile(["project-updates"]);
 
                 // Let the share dialog render before any route transition.
                 if (pathname !== targetPath) {
@@ -498,13 +501,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
 
-                // The grants poll above refreshed only the grants query; the
-                // profile feed (milestones live there) is observed statically,
-                // so refresh it explicitly now that the form has closed.
-                await refreshProjectQueries(queryClient, {
-                  identifiers: [project?.uid, project?.details?.slug],
-                  families: ["project-updates"],
-                });
+                // The grants poll above already refreshed the grants.
+                await refreshProfile(["project-updates"]);
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -568,11 +566,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         cancelEditing(false);
         parentSetIsUpdating?.(false);
 
-        // After closing: a forced feed refetch swaps the feed for a skeleton.
-        await refreshProjectQueries(queryClient, {
-          identifiers: [project?.uid, project?.details?.slug],
-          families: ["project-updates", "project-grants"],
-        });
+        await refreshProfile(["project-updates", "project-grants"]);
       } catch (invoiceError) {
         errorManager("Invoice-only submission failed", invoiceError, {
           grantUID,
@@ -617,10 +611,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         toast.success("Invoice submitted successfully");
 
         // Invalidate project grants and updates so milestone.invoiceInfo is fresh
-        await refreshProjectQueries(queryClient, {
-          identifiers: [project?.uid, project?.details?.slug],
-          families: ["project-updates", "project-grants"],
-        });
+        await refreshProfile(["project-updates", "project-grants"]);
       } catch (invoiceError) {
         errorManager("Invoice submission failed after milestone update", invoiceError);
         // Surface the backend's specific reason; the milestone update
