@@ -13,6 +13,11 @@ import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
 
 // Mock next/navigation (hook uses useRouter internally)
+const mockRefreshProjectQueries = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/utilities/queries/refreshProjectQueries", () => ({
+  refreshProjectQueries: (...args: unknown[]) => mockRefreshProjectQueries(...args),
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(() => ({
     push: vi.fn(),
@@ -161,6 +166,7 @@ describe("useAgentStream", () => {
   beforeEach(() => {
     globalThis.fetch = mockFetch as unknown as typeof fetch;
     mockFetch.mockReset();
+    mockRefreshProjectQueries.mockClear();
     mockGetToken.mockResolvedValue("mock-token-123");
     wrapper = createWrapper();
 
@@ -1062,7 +1068,6 @@ describe("useAgentStream", () => {
       });
 
       mockFetch.mockResolvedValue(createStreamResponse(""));
-      const invalidateSpy = vi.spyOn(testQueryClient, "invalidateQueries");
 
       const { result } = renderHook(() => useAgentStream(), { wrapper });
 
@@ -1070,9 +1075,9 @@ describe("useAgentStream", () => {
         await result.current.sendMessage("Confirm changes");
       });
 
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ predicate: expect.any(Function) })
-      );
+      expect(mockRefreshProjectQueries).toHaveBeenCalledWith(testQueryClient, {
+        identifiers: ["proj-123"],
+      });
     });
 
     it("should not invalidate queries when no approved writes exist", async () => {
@@ -1091,6 +1096,7 @@ describe("useAgentStream", () => {
       });
 
       expect(invalidateSpy).not.toHaveBeenCalled();
+      expect(mockRefreshProjectQueries).not.toHaveBeenCalled();
     });
 
     it("should invalidate program queries when programId is in context", async () => {

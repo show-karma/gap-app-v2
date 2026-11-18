@@ -11,8 +11,8 @@ import type {
 } from "@/services/milestones";
 import { useGrantMilestoneVerifyAccess } from "@/src/core/rbac/hooks/use-resource-access";
 import { useProjectStore } from "@/store";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { queryClient } from "@/utilities/query-client";
-import { createProjectQueryPredicate } from "@/utilities/queryKeys";
 import { MilestoneVerificationForm } from "./MilestoneVerificationForm";
 
 export interface VerifiableGrantMilestoneParams {
@@ -99,10 +99,10 @@ export const VerifyGrantMilestonePanel: FC<VerifyGrantMilestonePanelProps> = ({
     onSuccess: async () => {
       onClose();
       onVerified?.();
-      const predicate = createProjectQueryPredicate(
-        project?.details?.slug || verifiable?.projectUID || ""
-      );
-      await queryClient.invalidateQueries({ predicate });
+      await refreshProjectQueries(queryClient, {
+        identifiers: [project?.details?.slug, project?.uid, verifiable?.projectUID],
+        families: ["project-updates", "project-grants"],
+      });
     },
   });
 

@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -14,7 +13,6 @@ interface ProjectUpdateFormBlockProps {
 
 export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormBlockProps) => {
   const project = useProjectStore((state) => state.project);
-  const queryClient = useQueryClient();
 
   // Fetch updates using dedicated hook
   const { rawData, isLoading } = useProjectUpdates(project?.uid || "");
@@ -35,29 +33,11 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
     }
   }, [updateId, currentUpdateId]);
 
-  // Clean up on success - invalidate cache, wait for refetch, then close
-  const handleSuccess = async () => {
-    // invalidateQueries marks the cache stale AND triggers a background refetch.
-    // Awaiting it ensures the refetch completes before we close the dialog,
-    // so the updates list shows the new activity immediately.
-    // Invalidate every cached project-updates query for this project — the hook
-    // is keyed by whichever identifier the page used (uid on the project page,
-    // slug on the funding page), so a single-key invalidation can miss the
-    // surface the user is currently viewing.
-    const uid = project?.uid?.toLowerCase();
-    const slug = project?.details?.slug?.toLowerCase();
-    try {
-      await queryClient.invalidateQueries({
-        predicate: (query) => {
-          if (query.queryKey[0] !== "project-updates") return false;
-          const id = (query.queryKey[1] as string | undefined)?.toLowerCase();
-          return id === uid || id === slug;
-        },
-      });
-    } finally {
-      // Always close the dialog — the next mount will refetch if invalidation failed.
-      onClose?.();
-    }
+  // ProjectUpdateForm has already written the indexed feed into every cached
+  // project-updates query (uid and slug keys alike) before calling this, so
+  // closing is all that is left.
+  const handleSuccess = () => {
+    onClose?.();
   };
 
   // Show loading state while fetching data in edit mode

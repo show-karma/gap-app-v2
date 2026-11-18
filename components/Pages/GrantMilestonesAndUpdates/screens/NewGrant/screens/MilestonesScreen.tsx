@@ -21,6 +21,7 @@ import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { Milestone } from "../Milestone";
@@ -272,6 +273,12 @@ export const MilestonesScreen: React.FC = () => {
               }
 
               await refetchGrants();
+              // Grants were refetched above; the profile feed is observed
+              // statically, so it needs an explicit refresh.
+              void refreshProjectQueries(queryClient, {
+                identifiers: [selectedProject.uid, selectedProject.details?.slug],
+                families: ["project-updates"],
+              });
               setTimeout(() => {
                 setIsStepper(false);
                 router.push(

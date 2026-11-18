@@ -272,18 +272,13 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           previousData={grantMilestone.milestone.completed?.data}
           cancelEditing={async (editing: boolean) => {
             handleEditing(editing);
-            // Refresh the activities list after successful editing
+            // The form refreshes the activity feed itself on every successful
+            // save (see refreshProjectQueries in MilestoneUpdateForm); a second
+            // refresh from here would only race it. Clear the legacy key.
             if (!editing) {
-              // Invalidate all relevant caches
-              await Promise.all([
-                queryClient.invalidateQueries({
-                  queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId as string),
-                }),
-                queryClient.invalidateQueries({
-                  queryKey: ["projectMilestones", project?.uid],
-                }),
-                refetch(),
-              ]);
+              await queryClient.invalidateQueries({
+                queryKey: ["projectMilestones", project?.uid],
+              });
             }
           }}
         />

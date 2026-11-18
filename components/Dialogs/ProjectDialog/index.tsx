@@ -856,10 +856,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           if (shouldRefresh) {
             refreshProject();
           } else {
-            const project = res.details?.slug || res.uid;
-            router.push(PAGES.PROJECT.OVERVIEW(project));
-            router.refresh();
+            router.push(PAGES.PROJECT.OVERVIEW(res.details?.slug || res.uid));
           }
+          // Either way: re-render server-rendered tabs (About's description).
+          router.refresh();
         }, 1500);
       });
     } catch (error: any) {
