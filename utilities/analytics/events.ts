@@ -178,6 +178,12 @@ export interface AnalyticsEventMap {
     time_to_submit_s: number | null;
   };
   application_submit_failed: FailureProps & { program_id: string };
+  /** `is_new` is true when the save creates the draft (apply page), false when it updates one. */
+  application_draft_saved: {
+    program_id: string;
+    community_id: string;
+    is_new: boolean;
+  };
   post_approval_submitted: { application_id: string; program_id: string };
   post_approval_submit_failed: FailureProps & { application_id: string; program_id: string };
   /**
@@ -336,6 +342,7 @@ export const ANALYTICS_EVENT_NAMES = [
   "application_started",
   "application_submitted",
   "application_submit_failed",
+  "application_draft_saved",
   "post_approval_submitted",
   "post_approval_submit_failed",
   "application_status_changed",

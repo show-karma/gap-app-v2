@@ -1,28 +1,34 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
+import { useDebounce } from "@/hooks/use-debounce";
 import type { ActionItemTarget } from "@/hooks/useActionItems";
 import {
   getFollowUpChannels,
   getFollowUpWorkspaces,
   searchFollowUpMembers,
   setFollowUpTargets,
+  suggestDraftFollowUpTargets,
   suggestFollowUpTargets,
 } from "@/services/milestoneActionItemsService";
 import type { FollowUpTarget, FollowUpTargetInput } from "@/types/follow-up-target";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
 
 const STALE_MS = 60_000;
+const DRAFT_SUGGEST_DELAY_MS = 800;
+const DRAFT = "draft";
 
 export const followUpTargetKeys = {
-  workspaces: (communityId: string, itemId: string) =>
-    ["follow-up-workspaces", communityId, itemId] as const,
-  channels: (communityId: string, itemId: string, teamId: string) =>
-    ["follow-up-channels", communityId, itemId, teamId] as const,
-  members: (communityId: string, itemId: string, teamId: string, q: string) =>
-    ["follow-up-members", communityId, itemId, teamId, q] as const,
+  workspaces: (communityId: string, itemId: string | undefined) =>
+    ["follow-up-workspaces", communityId, itemId ?? DRAFT] as const,
+  channels: (communityId: string, itemId: string | undefined, teamId: string) =>
+    ["follow-up-channels", communityId, itemId ?? DRAFT, teamId] as const,
+  members: (communityId: string, itemId: string | undefined, teamId: string, q: string) =>
+    ["follow-up-members", communityId, itemId ?? DRAFT, teamId, q] as const,
+  draftSuggestion: (communityId: string, target: ActionItemTarget, content: string) =>
+    ["follow-up-draft-suggestion", communityId, target.kind, target.id, content] as const,
 };
 
 /**
@@ -69,7 +75,11 @@ export function useFollowUpTargets(communityId: string, target: ActionItemTarget
   return { suggest, set };
 }
 
-export function useFollowUpWorkspaces(communityId: string, itemId: string, enabled: boolean) {
+export function useFollowUpWorkspaces(
+  communityId: string,
+  itemId: string | undefined,
+  enabled: boolean
+) {
   return useQuery({
     queryKey: followUpTargetKeys.workspaces(communityId, itemId),
     queryFn: () => getFollowUpWorkspaces(communityId, itemId),
@@ -80,7 +90,7 @@ export function useFollowUpWorkspaces(communityId: string, itemId: string, enabl
 
 export function useFollowUpChannels(
   communityId: string,
-  itemId: string,
+  itemId: string | undefined,
   teamId: string | undefined,
   enabled: boolean
 ) {
@@ -95,7 +105,7 @@ export function useFollowUpChannels(
 
 export function useFollowUpMembers(
   communityId: string,
-  itemId: string,
+  itemId: string | undefined,
   teamId: string | undefined,
   q: string,
   enabled: boolean
@@ -107,4 +117,43 @@ export function useFollowUpMembers(
     staleTime: STALE_MS,
     placeholderData: (previous) => previous,
   });
+}
+
+/**
+ * Who an unsaved note's follow-up would go to. The note text is suggested on
+ * once the author stops typing; a pick from the dialog replaces the
+ * suggestion and stops further suggesting, the same rule a saved note follows.
+ */
+export function useDraftFollowUpTargets(
+  communityId: string,
+  target: ActionItemTarget,
+  content: string,
+  enabled: boolean
+) {
+  const [picked, setPicked] = useState<FollowUpTarget[] | null>(null);
+  const text = content.trim();
+  const settled = useDebounce(text, DRAFT_SUGGEST_DELAY_MS);
+  const suggesting = enabled && picked === null && text.length > 0;
+
+  const suggestion = useQuery({
+    queryKey: followUpTargetKeys.draftSuggestion(communityId, target, settled),
+    queryFn: () => suggestDraftFollowUpTargets(communityId, target, settled),
+    enabled: suggesting && settled.length > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+    placeholderData: (previous) => previous,
+  });
+
+  let targets: FollowUpTarget[] = [];
+  if (picked) targets = picked;
+  else if (suggesting) targets = suggestion.data ?? [];
+
+  return {
+    targets,
+    isFinding: suggesting && (settled !== text || suggestion.isFetching),
+    isError: suggesting && settled === text && suggestion.isError && !suggestion.isFetching,
+    retry: () => suggestion.refetch(),
+    pick: setPicked,
+    reset: () => setPicked(null),
+  };
 }

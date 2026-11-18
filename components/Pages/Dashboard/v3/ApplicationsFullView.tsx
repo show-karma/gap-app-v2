@@ -60,6 +60,7 @@ function StatTilesSkeleton() {
 
 const STATUS_OPTIONS: Array<{ value: ApplicationStatus | "all"; label: string }> = [
   { value: "all", label: "All statuses" },
+  { value: "draft", label: "Draft" },
   { value: "pending", label: "Pending" },
   { value: "resubmitted", label: "Resubmitted" },
   { value: "under_review", label: "Under review" },

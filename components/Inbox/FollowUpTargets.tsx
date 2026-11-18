@@ -2,6 +2,7 @@
 
 import { ArrowRightIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import type React from "react";
 import { type FC, useEffect, useRef, useState } from "react";
 import { FollowUpTargetDialog } from "@/components/Inbox/FollowUpTargetDialog";
 import { describeFollowUpTarget } from "@/components/Inbox/followUpTargetLabel";
@@ -9,7 +10,7 @@ import { AUTO_FOLLOW_UP_LABEL, type SlackAvailability } from "@/components/Inbox
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { type ActionItemTarget, OPTIMISTIC_ID_PREFIX } from "@/hooks/useActionItems";
-import { useFollowUpTargets } from "@/hooks/useFollowUpTargets";
+import { type useDraftFollowUpTargets, useFollowUpTargets } from "@/hooks/useFollowUpTargets";
 import type { FollowUpTarget } from "@/types/follow-up-target";
 import type { IMilestoneActionItem } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
@@ -77,7 +78,8 @@ export const FollowUpTargets: FC<FollowUpTargetsProps> = ({ communityId, target,
       {editing !== null && (
         <FollowUpTargetDialog
           communityId={communityId}
-          item={item}
+          itemId={item.id}
+          targets={targets}
           replaceIndex={editing}
           isSaving={set.isPending}
           error={set.error}
@@ -93,6 +95,94 @@ export const FollowUpTargets: FC<FollowUpTargetsProps> = ({ communityId, target,
     </span>
   );
 };
+
+type DraftFollowUp = ReturnType<typeof useDraftFollowUpTargets>;
+
+/**
+ * The same "→ who" line for a note that is still being written, shown beside
+ * the opt-in box: suggested from the text as the author types, or picked by
+ * hand, and saved together with the note.
+ */
+export const DraftFollowUpTargets: FC<{
+  communityId: string;
+  slack: SlackAvailability;
+  draft: DraftFollowUp;
+}> = ({ communityId, slack, draft }) => {
+  const [editing, setEditing] = useState<number | null>(null);
+  const { targets, isFinding, isError } = draft;
+
+  let content: React.ReactNode;
+  if (isFinding && targets.length === 0) {
+    content = (
+      <span className="inline-flex items-center gap-1 text-gray-500 dark:text-zinc-400">
+        <Spinner className="h-3 w-3" />
+        Finding who to message…
+      </span>
+    );
+  } else if (isError) {
+    content = (
+      <>
+        <ChooseChip onClick={() => setEditing(0)} />
+        <Button
+          variant="link"
+          size="sm"
+          onClick={draft.retry}
+          className="h-auto p-0 text-[11px] font-normal text-gray-500 dark:text-gray-400"
+        >
+          Couldn&apos;t suggest a recipient. Try again
+        </Button>
+      </>
+    );
+  } else if (targets.length === 0) {
+    content = <ChooseChip onClick={() => setEditing(0)} />;
+  } else {
+    content = targets.map((entry, index) => (
+      <TargetChip
+        key={`${entry.kind}-${index}`}
+        target={entry}
+        slack={slack}
+        onChange={() => setEditing(index)}
+      />
+    ));
+  }
+
+  return (
+    <span
+      aria-live="polite"
+      className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-gray-500 dark:text-gray-400"
+    >
+      <ArrowRightIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+      {content}
+      {isFinding && targets.length > 0 && <Spinner className="h-3 w-3" />}
+      {editing !== null && (
+        <FollowUpTargetDialog
+          communityId={communityId}
+          targets={targets}
+          replaceIndex={editing}
+          isSaving={false}
+          error={null}
+          onClose={() => setEditing(null)}
+          onSave={(_inputs, next) => {
+            draft.pick(next);
+            setEditing(null);
+          }}
+        />
+      )}
+    </span>
+  );
+};
+
+const ChooseChip: FC<{ onClick: () => void }> = ({ onClick }) => (
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={onClick}
+    className="h-auto gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-normal leading-4 text-amber-800 hover:border-amber-400 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300"
+  >
+    <ExclamationTriangleIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+    Choose who to message
+  </Button>
+);
 
 const TargetChip: FC<{
   target: FollowUpTarget;

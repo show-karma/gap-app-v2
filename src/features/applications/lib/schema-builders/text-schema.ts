@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
+import { INVALID_URL_MESSAGE, isValidWebUrl } from "../url-input";
 
 const MAX_PATTERN_LENGTH = 500;
 
@@ -120,27 +121,12 @@ export function buildEmailSchema(q: ApplicationQuestion) {
 }
 
 export function buildUrlSchema(q: ApplicationQuestion) {
-  if (q.required) {
-    return z
-      .union([z.string(), z.undefined(), z.null()])
-      .refine((val) => val !== undefined && val !== null && val !== "", {
-        message: "This field is required",
-      })
-      .refine(
-        (val) => {
-          if (typeof val === "string" && val.length > 0) {
-            return z.string().url().safeParse(val).success;
-          }
-          return true;
-        },
-        { message: "Please enter a valid URL" }
-      );
-  }
-
-  return z.union([
-    z.string().url("Please enter a valid URL"),
-    z.literal(""),
-    z.null(),
-    z.undefined(),
-  ]);
+  return z
+    .union([z.string(), z.undefined(), z.null()])
+    .refine((val) => !q.required || (val !== undefined && val !== null && val !== ""), {
+      message: "This field is required",
+    })
+    .refine((val) => typeof val !== "string" || val === "" || isValidWebUrl(val.trim()), {
+      message: INVALID_URL_MESSAGE,
+    });
 }

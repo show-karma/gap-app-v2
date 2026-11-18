@@ -23,6 +23,7 @@ const CommunityConfigSchema = z
     public: z.boolean().optional(),
     rank: z.number().optional(),
     disableReviewerEmails: z.boolean().optional(),
+    disableCustomGrants: z.boolean().optional(),
     /**
      * Paired Telegram chats the platform-owned Karma bot will post to.
      * Bot token is platform-owned (server env), no longer per-community.
@@ -97,7 +98,10 @@ export const useCommunityConfigMutation = () => {
       ]);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(["community-config", slug], config);
+      queryClient.setQueryData(["community-config", slug], {
+        ...(previousConfig ?? {}),
+        ...config,
+      });
 
       // Return a context object with the snapshotted value
       return { previousConfig: previousConfig ?? null };

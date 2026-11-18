@@ -42,6 +42,7 @@ interface ApplicationPageClientProps {
 }
 
 const editableStatuses: ApplicationStatus[] = [
+  "draft",
   "pending",
   "revision_requested",
   "rejected",
@@ -328,6 +329,7 @@ export function ApplicationPageClient({
             hasMilestones={hasMilestones}
             postApprovalPending={postApprovalPending}
             editHref={editHref}
+            canEdit={showEditButton}
             reviewHref={reviewHref}
             statusHistory={statusHistory}
             onGoToMilestones={() => setActiveTab("milestones")}

@@ -8,6 +8,7 @@ import { Permission } from "@/src/core/rbac/types";
 
 // Define the possible application statuses
 type ApplicationStatus =
+  | "draft"
   | "pending"
   | "under_review"
   | "revision_requested"
@@ -27,6 +28,7 @@ interface StatusTransition {
 // Presentation only (label/style/permission + display order). Which transitions
 // are actually offered comes from the shared adjacency in `statusTransitions`.
 const STATUS_TRANSITION_ACTIONS: Record<ApplicationStatus, StatusTransition[]> = {
+  draft: [],
   pending: [
     {
       targetStatus: "under_review",
@@ -58,14 +60,14 @@ const STATUS_TRANSITION_ACTIONS: Record<ApplicationStatus, StatusTransition[]> =
       label: "Approve",
       className:
         "border border-emerald-600 text-emerald-700 bg-green-100 hover:bg-green-200 dark:text-white dark:bg-emerald-900 dark:hover:bg-emerald-800",
-      permission: Permission.APPLICATION_APPROVE,
+      permission: Permission.APPLICATION_CHANGE_STATUS,
     },
     {
       targetStatus: "rejected",
       label: "Reject",
       className:
         "border border-red-600 text-red-700 bg-red-100 hover:bg-red-200 dark:text-white dark:bg-red-900 dark:hover:bg-red-800",
-      permission: Permission.APPLICATION_REJECT,
+      permission: Permission.APPLICATION_CHANGE_STATUS,
     },
   ],
   revision_requested: [

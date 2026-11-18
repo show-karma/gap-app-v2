@@ -16,9 +16,11 @@ export interface UseApplicationSubmitReturn {
     data: ApplicationFormData,
     applicantEmail: string,
     aiEvaluation?: { evaluation: string; promptId: string },
-    accessCode?: string
+    accessCode?: string,
+    options?: { saveAsDraft?: boolean }
   ) => Promise<Application>;
   isSubmitting: boolean;
+  isSavingDraft: boolean;
   error: Error | null;
 }
 

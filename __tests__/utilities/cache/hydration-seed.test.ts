@@ -95,11 +95,22 @@ describe("stabilizeSeedTimestamps", () => {
           queryFn: async () => ({ name: "from the cached page" }),
         });
       }),
-      0
+      SEED_TIMESTAMP
     );
 
     hydrate(client, seed);
 
     expect(client.getQueryData(["project", "karma"])).toEqual({ name: "fresh from the client" });
+  });
+
+  it("fills a query the client started but has not resolved yet", async () => {
+    const client = new QueryClient();
+    // A pending query with no data, as a component that mounted first leaves it.
+    client.getQueryCache().build(client, { queryKey: ["project", "karma"] });
+    const seed = await buildDehydratedState(seedProject);
+
+    hydrate(client, seed);
+
+    expect(client.getQueryData(["project", "karma"])).toEqual({ name: "Karma" });
   });
 });

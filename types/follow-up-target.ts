@@ -52,10 +52,27 @@ export type FollowUpTarget =
   | FollowUpThreadTarget
   | FollowUpUnresolvedTarget;
 
+/**
+ * A recipient as sent to the server. A `dm` carrying `matchedBy` is a
+ * suggestion the author kept; an `unresolved` entry records that nobody was
+ * found, so the note keeps saying so after it is saved.
+ */
 export type FollowUpTargetInput =
-  | { kind: "dm"; teamId: string; slackUserId: string; personName?: string }
+  | {
+      kind: "dm";
+      teamId: string;
+      slackUserId: string;
+      personName?: string;
+      matchedBy?: Exclude<FollowUpMatchedBy, "manual">;
+    }
   | { kind: "channel"; teamId: string; channelId: string; personName?: string }
-  | { kind: "thread"; teamId: string; permalink: string; personName?: string };
+  | { kind: "thread"; teamId: string; permalink: string; personName?: string }
+  | {
+      kind: "unresolved";
+      reason: "not_found" | "ambiguous";
+      candidates: string[];
+      personName?: string;
+    };
 
 export interface FollowUpWorkspace {
   teamId: string;

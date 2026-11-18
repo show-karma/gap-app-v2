@@ -12,6 +12,7 @@ export const ApplicationListStatsBar: FC<ApplicationListStatsBarProps> = ({ stat
 
   const statsMap = [
     { title: "Total Applications", value: stats.totalApplications || 0 },
+    { title: "Draft", value: stats.draftApplications || 0 },
     { title: "Pending Review", value: stats.pendingApplications || 0 },
     { title: "Revision Requested", value: stats.revisionRequestedApplications || 0 },
     { title: "Under Review", value: stats.underReviewApplications || 0 },
@@ -20,7 +21,7 @@ export const ApplicationListStatsBar: FC<ApplicationListStatsBarProps> = ({ stat
   ];
 
   return (
-    <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-4">
       {statsMap.map((item) => (
         <div
           key={item.title}

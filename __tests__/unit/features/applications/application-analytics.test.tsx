@@ -120,6 +120,52 @@ describe("useApplicationSubmit", () => {
   });
 });
 
+describe("useApplicationSubmit — save as draft", () => {
+  const saveDraftOnce = async () => {
+    const { result } = renderHook(() => useApplicationSubmit("gitcoin"), { wrapper });
+    await act(async () => {
+      await result.current
+        .submit("prog-1", {}, "applicant@example.test", undefined, "code-1", { saveAsDraft: true })
+        .catch(() => undefined);
+    });
+  };
+
+  it("creates the application as a draft, passing the access code through", async () => {
+    apiClient.api.post.mockResolvedValue({ id: "app-1", referenceNumber: "APP-1" });
+
+    await saveDraftOnce();
+
+    expect(apiClient.api.post).toHaveBeenCalledWith("/v2/funding-applications/prog-1", {
+      programId: "prog-1",
+      applicationData: {},
+      applicantEmail: "applicant@example.test",
+      accessCode: "code-1",
+      saveAsDraft: true,
+    });
+  });
+
+  it("reports a new draft and never a submission", async () => {
+    apiClient.api.post.mockResolvedValue({ id: "app-1", referenceNumber: "APP-1" });
+
+    await saveDraftOnce();
+
+    expect(eventNames()).toEqual(["application_draft_saved"]);
+    expect(propsOf("application_draft_saved")).toEqual({
+      program_id: "prog-1",
+      community_id: "gitcoin",
+      is_new: true,
+    });
+  });
+
+  it("does not report a failed submission when a draft save fails", async () => {
+    apiClient.api.post.mockRejectedValue(new Error("Server is down"));
+
+    await saveDraftOnce();
+
+    expect(eventNames()).toEqual([]);
+  });
+});
+
 describe("usePostApprovalSubmit", () => {
   const submitOnce = async () => {
     const { result } = renderHook(() => usePostApprovalSubmit("gitcoin", "APP-1", application), {

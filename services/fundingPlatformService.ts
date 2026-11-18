@@ -151,6 +151,7 @@ export type FundingProgram = {
   communityUID?: string;
   metrics?: {
     totalApplications: number;
+    draftApplications?: number;
     pendingApplications: number;
     approvedApplications: number;
     rejectedApplications: number;

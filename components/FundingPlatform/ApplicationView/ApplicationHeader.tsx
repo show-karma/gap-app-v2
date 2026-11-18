@@ -16,6 +16,7 @@ import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjectTitle";
 
 const statusColors: Record<string, string> = {
+  draft: "bg-muted text-muted-foreground border-border",
   pending:
     "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
   under_review:
@@ -31,6 +32,7 @@ const statusColors: Record<string, string> = {
 };
 
 const statusIcons: Record<string, typeof ClockIcon> = {
+  draft: ClockIcon,
   pending: ClockIcon,
   under_review: ClockIcon,
   revision_requested: ExclamationTriangleIcon,

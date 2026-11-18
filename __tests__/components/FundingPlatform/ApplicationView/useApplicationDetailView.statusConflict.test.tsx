@@ -242,6 +242,29 @@ describe("useApplicationDetailView status conflict", () => {
     expect(mockToastError).toHaveBeenCalledTimes(1);
   });
 
+  it("should_send_a_single_update_when_confirm_is_clicked_again_before_the_first_settles", async () => {
+    let resolveUpdate: () => void = () => undefined;
+    const pendingUpdate = new Promise<void>((resolve) => {
+      resolveUpdate = resolve;
+    });
+    mockUpdateStatusAsync.mockReturnValue(pendingUpdate);
+    const { result } = renderDetailView();
+
+    await act(async () => {
+      await result.current.handleStatusChangeClick("approved");
+    });
+
+    await act(async () => {
+      const first = result.current.handleStatusChangeConfirm();
+      const second = result.current.handleStatusChangeConfirm();
+      const third = result.current.handleStatusChangeConfirm();
+      resolveUpdate();
+      await Promise.all([first, second, third]);
+    });
+
+    expect(mockUpdateStatusAsync).toHaveBeenCalledTimes(1);
+  });
+
   it("should_ignore_a_confirm_that_arrives_while_an_update_is_in_flight", async () => {
     mockIsUpdatingStatus = true;
     const { result } = renderDetailView();

@@ -49,7 +49,8 @@ const createMockProgram = (overrides: Partial<FundingProgram> = {}): FundingProg
     },
     applicationConfig: { isEnabled: true },
     metrics: {
-      totalApplications: 5,
+      totalApplications: 8,
+      draftApplications: 3,
       pendingApplications: 2,
       approvedApplications: 1,
       rejectedApplications: 1,
@@ -127,5 +128,16 @@ describe("FundingPlatformPage — URL navigation regression (#1547)", () => {
     const applicationsLink = screen.getByRole("link", { name: /Applications/i });
 
     expect(applicationsLink).toHaveAttribute("href", expectedHref);
+  });
+
+  it("shows the draft count in the summary and in the program breakdown", () => {
+    render(<FundingPlatformPage />);
+
+    const draftLabels = screen.getAllByText("Draft");
+    expect(draftLabels).toHaveLength(2);
+    const breakdownCell = draftLabels
+      .map((label) => label.parentElement)
+      .find((cell) => cell?.textContent === "3Draft");
+    expect(breakdownCell).toBeDefined();
   });
 });

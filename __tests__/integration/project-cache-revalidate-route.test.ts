@@ -121,6 +121,31 @@ describe("POST /api/cache/projects/revalidate", () => {
     expect(revalidateTagMock).not.toHaveBeenCalled();
   });
 
+  it("stops reading an oversized body that declares no length", async () => {
+    // A streamed body carries no Content-Length, so only counting the bytes
+    // as they arrive can catch it.
+    const chunk = new TextEncoder().encode("x".repeat(10 * 1024));
+    let chunksPulled = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        chunksPulled++;
+        controller.enqueue(chunk);
+      },
+    });
+    const request = new Request("https://www.karmahq.org/api/cache/projects/revalidate", {
+      method: "POST",
+      headers: { "x-karma-signature": sign("") },
+      body,
+      duplex: "half",
+    } as RequestInit) as unknown as NextRequest;
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(413);
+    expect(chunksPulled).toBeLessThan(5);
+    expect(revalidateTagMock).not.toHaveBeenCalled();
+  });
+
   it("answers 500 so the indexer retries when revalidation fails", async () => {
     revalidateTagMock.mockImplementation(() => {
       throw new Error("cache unavailable");
