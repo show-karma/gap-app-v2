@@ -241,6 +241,7 @@
   "resolutions": {
     "@noble/hashes": "^1.4.0",
     "@noble/curves": "^1.4.2",
+    "@gelatonetwork/relay-sdk>ethers": "6.11.0",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "axios@<0.34.0": "0.34.0",
