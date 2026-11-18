@@ -6,6 +6,7 @@ import { applicationKeys } from "@/src/lib/query-keys";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import { track } from "@/utilities/analytics/client";
 import { ApplicationEditClient } from "../ApplicationEditClient";
+import program1508FormSchema from "./__fixtures__/program-1508-form-schema.json";
 
 const mockApi = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn() }));
 const mockPush = vi.hoisted(() => vi.fn());
@@ -166,6 +167,79 @@ describe("ApplicationEditClient", () => {
       renderEdit("draft", createProgram(true));
       expect(await screen.findByTestId("get-ai-feedback-btn")).toBeInTheDocument();
       expect(screen.getByTestId("save-draft-btn")).toBeEnabled();
+    });
+  });
+
+  describe("re-rendering with program 1508's form", () => {
+    const SAVED_NAME = "Saved project name";
+    const TYPED_NAME = "Typed but not yet saved";
+
+    function create1508Program(): FundingProgram {
+      return {
+        programId: "1508",
+        name: "Filecoin ProPGF Kernel 2027",
+        metadata: { endsAt: "2999-01-01T00:00:00.000Z" },
+        applicationConfig: { isEnabled: true, formSchema: program1508FormSchema },
+      } as unknown as FundingProgram;
+    }
+
+    function create1508Application(): Application {
+      return {
+        referenceNumber: REFERENCE,
+        programId: "1508",
+        status: "draft",
+        applicationData: { field_kernel2027_02: SAVED_NAME },
+        statusHistory: [],
+      } as unknown as Application;
+    }
+
+    function render1508Edit() {
+      mockApi.get.mockResolvedValue(create1508Program());
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      });
+      const application = create1508Application();
+      const tree = () => (
+        <QueryClientProvider client={queryClient}>
+          <ApplicationEditClient communityId="filecoin" application={application} />
+        </QueryClientProvider>
+      );
+      const utils = render(tree());
+      return { rerenderSameProps: () => utils.rerender(tree()) };
+    }
+
+    async function typeProjectName() {
+      const input = await screen.findByLabelText(/1\.1 Project Name/);
+      expect(input).toHaveValue(SAVED_NAME);
+      fireEvent.change(input, { target: { value: TYPED_NAME } });
+      expect(input).toHaveValue(TYPED_NAME);
+      return input;
+    }
+
+    it("keeps unsaved typing when the page re-renders with the same application", async () => {
+      const { rerenderSameProps } = render1508Edit();
+      const input = await typeProjectName();
+
+      rerenderSameProps();
+
+      await waitFor(() => expect(screen.getByLabelText(/1\.1 Project Name/)).toBe(input));
+      expect(input).toHaveValue(TYPED_NAME);
+    });
+
+    it("keeps unsaved typing while a draft save is in flight", async () => {
+      mockApi.put.mockReturnValue(new Promise(() => {}));
+      render1508Edit();
+      const input = await typeProjectName();
+
+      fireEvent.click(screen.getByTestId("save-draft-btn"));
+
+      await waitFor(() => expect(screen.queryByTestId("save-draft-btn")).not.toBeInTheDocument());
+      expect(mockApi.put).toHaveBeenCalledTimes(1);
+      expect(mockApi.put.mock.calls[0][1]).toMatchObject({
+        applicationData: { "1.1 Project Name": TYPED_NAME },
+        saveAsDraft: true,
+      });
+      expect(input).toHaveValue(TYPED_NAME);
     });
   });
 

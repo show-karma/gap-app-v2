@@ -3,7 +3,7 @@
 import "md-editor-rt/lib/style.css";
 import type { EditorProps } from "md-editor-rt";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect } from "react";
+import { useCallback, useDeferredValue, useEffect } from "react";
 import { normalizeNullInputEventData } from "@/components/Utilities/utils/normalize-null-input-event-data";
 
 // The ONLY place in the app allowed to value-import `md-editor-rt`. Every
@@ -73,5 +73,7 @@ export function SafeMdEditor({ value, onInput, ...rest }: SafeMdEditorProps) {
     [onInput]
   );
 
-  return <MdEditor {...rest} value={value ?? ""} onInput={handleInput} />;
+  const editorValue = useDeferredValue(value ?? "");
+
+  return <MdEditor {...rest} value={editorValue} onInput={handleInput} />;
 }
