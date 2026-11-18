@@ -1,3 +1,4 @@
+import { isWalletUnauthorizedError } from "@/utilities/wallet/accountAuthorization";
 import { isProviderConflictError } from "@/utilities/wallet/providerConflict";
 
 /**
@@ -32,6 +33,14 @@ export function isRetryableChainError(error: unknown): boolean {
   // burn three attempts before giving up. Classify it out first.
   // See utilities/wallet/providerConflict.ts.
   if (isProviderConflictError(error)) {
+    return false;
+  }
+
+  // Same shape, same reason: a wallet that refuses the account (EIP-1193
+  // 4100 — locked, or the account isn't connected to this site) also arrives
+  // as "could not coalesce error", and stays refused until the user acts in
+  // the wallet. See utilities/wallet/accountAuthorization.ts.
+  if (isWalletUnauthorizedError(error)) {
     return false;
   }
 

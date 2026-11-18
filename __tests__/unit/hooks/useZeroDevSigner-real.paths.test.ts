@@ -535,4 +535,82 @@ describe("useZeroDevSigner (real hook) — signer-selection paths", () => {
       expect(embeddedWallet.switchChain).not.toHaveBeenCalled();
     });
   });
+  // =========================================================================
+  // getAttestationSigner — external wallet authorization (EIP-1193 4100)
+  // =========================================================================
+
+  // Privy can list the linked MetaMask while the extension refuses to sign for
+  // it (locked, or that account isn't connected to the site). Before this fix
+  // the signer was built anyway and eth_sendTransaction failed with 4100.
+  describe("getAttestationSigner — external wallet account authorization", () => {
+    function externalProvider(accounts: string[], requested: string[] | Error) {
+      return {
+        request: vi.fn(async ({ method }: { method: string }) => {
+          if (method === "eth_accounts") return accounts;
+          if (method === "eth_requestAccounts") {
+            if (requested instanceof Error) throw requested;
+            return requested;
+          }
+          return undefined;
+        }),
+      };
+    }
+
+    function useProvider(provider: ReturnType<typeof externalProvider>) {
+      mockPrivyState.wallets[0].getEthereumProvider = vi.fn().mockResolvedValue(provider);
+    }
+
+    it("signs without prompting when the account is already authorized", async () => {
+      setupExternalWalletUser();
+      const provider = externalProvider([EXTERNAL_WALLET_ADDRESS], []);
+      useProvider(provider);
+      mockViemCreateWalletClient.mockReturnValue({ fake: "client" });
+      mockWalletClientToSigner.mockResolvedValue({ fake: "signer" });
+
+      const { result } = renderHook(() => useZeroDevSigner());
+      await expect(result.current.getAttestationSigner(10)).resolves.toEqual({ fake: "signer" });
+
+      expect(provider.request).not.toHaveBeenCalledWith({ method: "eth_requestAccounts" });
+    });
+
+    it("prompts to unlock/connect when the wallet exposes no accounts, then signs", async () => {
+      setupExternalWalletUser();
+      const provider = externalProvider([], [EXTERNAL_WALLET_ADDRESS]);
+      useProvider(provider);
+      mockViemCreateWalletClient.mockReturnValue({ fake: "client" });
+      mockWalletClientToSigner.mockResolvedValue({ fake: "signer" });
+
+      const { result } = renderHook(() => useZeroDevSigner());
+      await expect(result.current.getAttestationSigner(10)).resolves.toEqual({ fake: "signer" });
+
+      expect(provider.request).toHaveBeenCalledWith({ method: "eth_requestAccounts" });
+    });
+
+    it("throws account-not-authorized and never falls back to wagmi when another account is connected", async () => {
+      setupExternalWalletUser();
+      const other = "0x3333333333333333333333333333333333333333";
+      useProvider(externalProvider([other], [other]));
+
+      const { result } = renderHook(() => useZeroDevSigner());
+      await expect(result.current.getAttestationSigner(10)).rejects.toMatchObject({
+        name: "SignerUnavailableError",
+        reason: "account-not-authorized",
+        expected: true,
+      });
+
+      expect(mockViemCreateWalletClient).not.toHaveBeenCalled();
+      expect(mockSafeGetWalletClient).not.toHaveBeenCalled();
+    });
+
+    it("rethrows a cancelled connect prompt without the wagmi fallback", async () => {
+      setupExternalWalletUser();
+      const rejection = Object.assign(new Error("User rejected the request."), { code: 4001 });
+      useProvider(externalProvider([], rejection));
+
+      const { result } = renderHook(() => useZeroDevSigner());
+      await expect(result.current.getAttestationSigner(10)).rejects.toBe(rejection);
+
+      expect(mockSafeGetWalletClient).not.toHaveBeenCalled();
+    });
+  });
 });

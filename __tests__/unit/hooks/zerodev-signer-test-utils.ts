@@ -104,6 +104,12 @@ export function createExternalWallet(address = EXTERNAL_WALLET_ADDRESS): MockWal
     address,
     walletClientType: "metamask",
     switchChain: vi.fn().mockResolvedValue(undefined),
-    getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+    // Authorized by default: the extension lists the linked account, the way
+    // an unlocked MetaMask connected to this site does (eth_accounts).
+    getEthereumProvider: vi.fn().mockResolvedValue({
+      request: vi.fn(async ({ method }: { method: string }) =>
+        method === "eth_accounts" || method === "eth_requestAccounts" ? [address] : undefined
+      ),
+    }),
   };
 }
