@@ -155,15 +155,19 @@ export default async function Layout(props: { children: React.ReactNode; params:
   // as two different groups. The slug comes from the same resolved entity for
   // the same reason: it is the readable label, and reading it off the URL would
   // sometimes yield a uid.
-  const community = await getCommunityDetailsCached(communityId);
-
+  //
   // The render clock lives here, not in the root layout: every component that
   // judges a deadline or seeds a timestamp on first paint (programs, funding
   // opportunities, the project grid) renders under this layout, and keeping
   // the clock out of every other route keeps their cached output free of a
   // value that changes on its own. __tests__/architecture/render-clock-scope
   // fails if a consumer appears outside this subtree.
-  const renderedAt = await getRenderClock();
+  //
+  // Neither read depends on the other, so they run together.
+  const [community, renderedAt] = await Promise.all([
+    getCommunityDetailsCached(communityId),
+    getRenderClock(),
+  ]);
 
   return (
     <RenderClockProvider renderedAt={renderedAt}>
