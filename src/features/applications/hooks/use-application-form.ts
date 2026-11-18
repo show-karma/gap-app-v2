@@ -43,6 +43,8 @@ export function useApplicationForm(
     mode: "onSubmit",
   });
 
+  // Resets on every new `initialData` identity, so callers must memoize it;
+  // an inline object would wipe the applicant's typing on each re-render.
   useEffect(() => {
     if (options?.initialData && Object.keys(options.initialData).length > 0) {
       reset(options.initialData);

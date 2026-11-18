@@ -1,0 +1,371 @@
+{
+  "id": "kernel-2027-application",
+  "title": "Kernel 2027 Application",
+  "fields": [
+    {
+      "id": "field_kernel2027_01",
+      "type": "section_header",
+      "label": "1. Team details",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": false
+      }
+    },
+    {
+      "id": "field_kernel2027_02",
+      "type": "text",
+      "label": "1.1 Project Name",
+      "required": true,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_03",
+      "type": "karma_profile_link",
+      "label": "Karma Profile",
+      "required": false,
+      "private": false,
+      "placeholder": "Search for your Karma project profile...",
+      "description": "Select the Karma project this renewal belongs to.",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_04",
+      "type": "text",
+      "label": "1.2 Organization",
+      "required": true,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_05",
+      "type": "text",
+      "label": "1.3 Point of contact (name, role)",
+      "required": true,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_06",
+      "type": "email",
+      "label": "Email Address",
+      "required": true,
+      "private": true,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": false
+      }
+    },
+    {
+      "id": "field_kernel2027_07",
+      "type": "text",
+      "label": "Slack / Telegram handle",
+      "required": false,
+      "private": true,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_09",
+      "type": "section_header",
+      "label": "2. Project details",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": false
+      }
+    },
+    {
+      "id": "field_kernel2027_10",
+      "type": "textarea",
+      "label": "2.1 What it does, in one sentence",
+      "required": true,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_11",
+      "type": "url",
+      "label": "2.2 Project Github",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_12",
+      "type": "url",
+      "label": "2.3 Project Website",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_36",
+      "type": "textarea",
+      "label": "Other links and notes",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_1794310409989_t9q4de3",
+      "type": "textarea",
+      "label": "2.4 Kernel function(s) you maintain",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "If you're new to the concept of Kernel Functions, take a moment to explore them [https://www.filpgf.io/kernel/]() and identify which function(s) best align with your scope of work.",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_1794573297732_j17sqes",
+      "type": "textarea",
+      "label": "2.5 Who depends on this work",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "*It helps us understand what would break if your work stopped, and where one failure would affect many teams.*",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_1794573297732_ydlpl2i",
+      "type": "textarea",
+      "label": "2.6 What this work depends on",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "*It shows the risks outside your control, such as an upstream team or a single hosting provider. Prioritise what is close to the network — other Filecoin clients, protocols, services, storage providers, or ProPGF-funded work — over generic infrastructure that isn't specific to Filecoin. If a generic dependency really is a single point of failure, include it.\n*",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_16",
+      "type": "select",
+      "label": "2.7 Open Source Status",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      },
+      "options": ["Fully Open Source", "Partial", "Not Open Source"]
+    },
+    {
+      "id": "field_1794573297732_31omt42",
+      "type": "metric",
+      "label": "2.9 Monitored metrics",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "These are the numbers ProPGF measures each month and publishes on filpgf.io. This gives us insight into the health of your project.  ",
+      "validation": {
+        "minMetrics": 1,
+        "maxMetrics": null
+      },
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_19",
+      "type": "section_header",
+      "label": "3. Scope of work",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": false
+      }
+    },
+    {
+      "id": "field_1794573297732_wv69oot",
+      "type": "radio",
+      "label": "3.1 Cadence",
+      "required": true,
+      "private": false,
+      "placeholder": "",
+      "description": "*Each period's work is tied to one payment. A deliverable can be ongoing maintenance, specific features you plan to ship, or both. We are flexible on cadence: choose monthly, quarterly or another rhythm that suits your work. Quarterly is shown as an example. Since milestone is tied to a payment, so your cadence sets when you invoice and get paid. It also tells us what to expect from you, and when.*",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      },
+      "options": ["Monthly", "Quarterly"]
+    },
+    {
+      "id": "field_1794573297732_lh0500g",
+      "type": "milestone",
+      "label": "3.2 Scope of work and payments",
+      "required": true,
+      "private": false,
+      "placeholder": "",
+      "description": "*One period per milestone: what you will deliver, metric targets and the payment tied to it. Think of milestones as simply work done in the period.*",
+      "validation": {
+        "minMilestones": 4,
+        "maxMilestones": null
+      },
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_22",
+      "type": "textarea",
+      "label": "3.3 Out of scope",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_23",
+      "type": "section_header",
+      "label": "4. Budget and costs",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": false
+      }
+    },
+    {
+      "id": "field_kernel2027_24",
+      "type": "textarea",
+      "label": "4.1 Budget and costs",
+      "required": true,
+      "private": false,
+      "placeholder": "",
+      "description": "Cost line, monthly and annual USD, notes.",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_25",
+      "type": "text",
+      "label": "4.2 Payments still due on the current grant in Q1 2027",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_26",
+      "type": "text",
+      "label": "4.3 Total Funding Requested 2027 (USD) (this does not include what has been committed already)",
+      "required": true,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    },
+    {
+      "id": "field_kernel2027_28",
+      "type": "section_header",
+      "label": "5. Team",
+      "required": false,
+      "private": false,
+      "placeholder": "",
+      "description": "",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": false
+      }
+    },
+    {
+      "id": "field_1794312552834_p0tde03",
+      "type": "textarea",
+      "label": "5.1 Team and FTEs on this grant",
+      "required": true,
+      "private": true,
+      "placeholder": "",
+      "description": "The people behind this work and how much of their time this grant covers. 1.0 FTE is one person full-time; 0.5 is half-time. This section is private and is for funders: it helps us understand what the Kernel costs to run, in people and time, across all teams.",
+      "validation": {},
+      "aiEvaluation": {
+        "includeInEvaluation": true
+      }
+    }
+  ],
+  "aiConfig": {
+    "aiModel": "",
+    "enableRealTimeEvaluation": false,
+    "langfusePromptId": "",
+    "internalLangfusePromptId": ""
+  }
+}

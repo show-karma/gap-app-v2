@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { ApplicationForm } from "@/src/features/applications/components/ApplicationForm";
@@ -63,14 +64,24 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
   const { submit, saveDraft, isSavingDraft } = useApplicationUpdate(communityId, application);
 
   const formSchema = program?.applicationConfig?.formSchema;
-  const questions = formSchema ? transformFormSchemaToQuestions(formSchema) : [];
+  const questions = useMemo(
+    () => (formSchema ? transformFormSchemaToQuestions(formSchema) : []),
+    [formSchema]
+  );
 
-  const initialData = formSchema
-    ? (transformDataForDisplay(
-        application.applicationData as Record<string, unknown>,
-        questions
-      ) as ApplicationFormData)
-    : undefined;
+  // Must keep its identity across re-renders: useApplicationForm resets the
+  // form whenever `initialData` changes, so rebuilding it on every render
+  // (saving a draft, a status-history refetch) wiped unsaved typing.
+  const initialData = useMemo(
+    () =>
+      formSchema
+        ? (transformDataForDisplay(
+            application.applicationData as Record<string, unknown>,
+            questions
+          ) as ApplicationFormData)
+        : undefined,
+    [formSchema, application.applicationData, questions]
+  );
 
   const handleSubmit = async (data: ApplicationFormData) => {
     await submit(transformDataForSubmission(data));
