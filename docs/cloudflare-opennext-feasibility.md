@@ -22,19 +22,49 @@ O Worker sobe, cabe no limite e serve todas as rotas certas, tenants incluídos.
 
 | # | Problema | Evidência | Gravidade |
 |---|----------|-----------|-----------|
-| R1 | **Quase todo request cai num isolate novo**, e cada isolate novo carrega o servidor Next inteiro: 1,5–3,5 s de CPU e 2–7 s de TTFB por request, contra ~0,2 s na Vercel | header `x-karma-isolate`: 2 de 24 requests sequenciais, 1 de 14 sem carregar o Next e 1 de 12 multiplexados numa conexão HTTP/2 reaproveitaram isolate; `/api/geo` (rota trivial) gasta 1,5–2 s de CPU | Bloqueia latência **e** custo |
+| R1 | **Quase todo request cai num isolate novo**, porque o heap do app (134–145 MiB) passa do limite de 128 MiB e a Cloudflare descarta o isolate em silêncio. Cada isolate novo carrega o servidor Next inteiro: 1,5–3,5 s de CPU e 2–7 s de TTFB por request, contra ~0,2 s na Vercel | header `x-karma-isolate`: 2 de 24 requests sequenciais, 1 de 14 sem carregar o Next e 1 de 12 multiplexados numa conexão HTTP/2 reaproveitaram isolate; `/api/geo` (rota trivial) gasta 1,5–2 s de CPU | Bloqueia latência **e** custo |
 | R2 | **Shell de `/project/*` e `/community/*` do host Karma não se regenera em runtime**: `Route "/t/[tenant]/project/[projectId]": Next.js encountered uncached or runtime data during prerendering` | cache R2 vazio: 8 de 9 requests sequenciais deram 500, com o patch #1318 antigo **e** com o head novo; tenants e blog passam | Alto: qualquer perda de entrada no R2 ou regeneração do shell vira 500 |
 | R3 | 1ª onda concorrente depois de um deploy: 2 de 25 com 500 (`/community/optimism`, mesmo erro do R2) | ondas 2–4 com 25/25 | Médio; mesma causa do R2 |
 
 `startup_time_ms` **não** é o problema: 27–59 ms em 10 uploads, contra o limite de 1 s. Por isso não parei antes do corte de web3.
 O número é baixo porque o `worker.js` do OpenNext só importa o handler de 57 MiB dentro do primeiro `fetch` de cada isolate. O parse acontece então dentro do request e aparece como CPU do request, não como startup (ver R1).
 
-**Hipótese para o R1 (não confirmada):** o isolate passa dos 128 MB e é descartado ao fim de cada request.
-- O fonte do script sozinho tem 57 MiB. O spike já tinha alertado que a memória "só dá para validar lá".
-- Nenhum dos mais de 2.000 eventos dos Workers Logs teve outcome `exceededMemory`/`exceededCpu`; todos são `ok`.
-- `process.memoryUsage()` no Workers é stub (devolve 0), e o Workers Logs não expõe memória por isolate. Não há como medir daqui.
-- Vale perguntar ao suporte da Cloudflare, ou medir com um Worker mínimo do mesmo tamanho.
-- Se a hipótese estiver certa, os cortes que já estavam na lista (web3 fora do SSR, −14 MB; dividir a app em mais de um Worker) passam a ser obrigatórios, não só folga.
+**Causa do R1, confirmada (18/11, noite): memória.** O isolate do app passa de 128 MiB de heap assim que o Next atende o primeiro request. A Cloudflare então descarta o isolate ao fim do request, sem erro e sem registro.
+
+1. **O limite, medido na plataforma.** Subi versões temporárias do próprio `gap-app-v2-staging-test`: um script mínimo, com stubs dos dois Durable Objects, que guarda N MiB de heap no 1º request. Foram 25 requests sequenciais por variante, e a versão do app foi restaurada no fim (`44f4b750`).
+
+   | Heap retido pelo script | Requests que reaproveitaram isolate | Isolates distintos |
+   |---|---|---|
+   | ~0 | 13 / 25 | 12 |
+   | 64 / 100 / 110 / 120 MiB | 6 / 6 / 10 / 7 | 19 / 19 / 15 / 18 |
+   | 124 MiB | 14 / 25 | 11 |
+   | **130 MiB** | **0 / 25** | **25** |
+   | **140 MiB** | **0 / 25** | **25** |
+   | ~0, mas com fonte de 57 MiB (comentários) | 10 / 25 | 15 |
+
+   - O corte fica entre 124 e 130 MiB: é o limite de 128 MiB.
+   - Acima dele, todos os requests responderam 200, e os Workers Logs registram `outcome: ok`, level `info`. A plataforma não dá nenhum sinal.
+   - O tamanho do fonte, sozinho, não impede reuso.
+   - O script mínimo também espalha os requests por ~12 isolates no colo IAD. O reuso de 2 em 24 do app não é efeito de roteamento.
+
+2. **O heap do app, medido no workerd local.** Mesmo build, `wrangler dev`, leitura do `Runtime.getHeapUsage` pelo inspector logo depois de um `HeapProfiler.takeHeapSnapshot`, que força GC completo:
+
+   | Momento | Heap usado |
+   |---|---|
+   | Script avaliado, nenhum request de página (`/__karma/isolate`) | **118,3 MiB** |
+   | Depois do 1º request que passa pelo Next (`/communities`) | 133,8 MiB |
+   | Depois de `/`, `/project/gitcoin`, `/community/optimism` | 134,1–134,6 MiB |
+   | Depois da rota OG | 143,9 MiB |
+   | Regime (mais 12 requests) | **145,1 MiB** |
+
+   - Só avaliar o script já consome 118 MiB, encostado no limite. Qualquer página passa dele em 6 a 17 MiB.
+   - O `HeapProfiler.collectGarbage` não responde no workerd, por isso o GC foi forçado pelo snapshot.
+   - Os números são locais, mas é o mesmo V8 e o mesmo script. A calibração acima mostra que o limite remoto bate com o heap do V8.
+
+**Consequência:** o corte necessário não é de tamanho do upload, é de heap residente.
+- É preciso tirar pelo menos ~20 MiB do que fica carregado depois do 1º request, e mais para ter folga em concorrência.
+- Os candidatos que já estavam na lista mexem exatamente no código avaliado: web3 fora do SSR (até −14 MB de código), `@sentry/cloudflare` no lugar do SDK Node (−5 MB, que já falhou uma vez) e dividir a app em mais de um Worker.
+- Medir cada corte com o mesmo procedimento: heap local por inspector, depois reuso na conta com `x-karma-isolate`.
 
 **Custo, com o que foi medido:** a estimativa anterior supunha 20–100 ms de CPU por invocação; o medido é 1,5–3,5 s.
 Com ~7M requests por ciclo, 2 s de média dariam ~14 bilhões de ms de CPU, ≈ US$ 280/mês só de CPU, acima dos ≈ US$ 140–160 do gap na Vercel.
@@ -68,7 +98,7 @@ Por rota, requests sequenciais (quase todos em isolate frio). CPU e wall vêm do
 
 - A Vercel responde do CDN (`x-vercel-cache: HIT`). No Worker não existe CDN na frente: todo request executa o Worker.
 - O HTML de `/community/optimism` e `/project/gitcoin` sai ~50% maior no Worker. Não investigado.
-- **Memória por request:** não mensurável (ver hipótese do R1). Nenhum `exceededMemory`.
+- **Memória:** o `process.memoryUsage()` do Workers é stub, e o Workers Logs não expõe memória. O heap foi medido no workerd local pelo inspector (ver a causa do R1): 134–145 MiB depois que o Next carrega. Nenhum `exceededMemory` nos logs, mesmo acima do limite.
 
 Tenants pelo header de teste `x-karma-test-host` (sem DNS; `cloudflare/worker.ts`, só com `TEST_WORKER=1`):
 
@@ -144,7 +174,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 
 ### Próximos passos sugeridos
 
-1. **R1 primeiro:** confirmar com a Cloudflare (ou com um Worker mínimo de 57 MiB) se o isolate é descartado por memória. Se for, cortar web3 do SSR e/ou dividir em Workers menores, e medir de novo o reuso com `x-karma-isolate`.
+1. **R1 primeiro (causa confirmada: heap acima de 128 MiB):** reduzir o heap residente em ≥ 20 MiB (web3 fora do SSR, Sentry, dividir em Workers) e medir cada corte: heap local pelo inspector, depois reuso na conta com `x-karma-isolate`.
 2. **R2:** reproduzir no Node com o shell de fallback ausente, para saber se é a app (dado fora de `"use cache"` antes do `<Suspense>` em `/t/[tenant]/project/[projectId]` só no host Karma) ou o adaptador. Tenants não falham, o que aponta para algo específico do tenant `karma`.
 3. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 
