@@ -29,7 +29,7 @@ O Worker sobe, cabe no limite e serve todas as rotas certas, tenants incluídos.
 `startup_time_ms` **não** é o problema: 27–59 ms em 10 uploads, contra o limite de 1 s. Por isso não parei antes do corte de web3.
 O número é baixo porque o `worker.js` do OpenNext só importa o handler de 57 MiB dentro do primeiro `fetch` de cada isolate. O parse acontece então dentro do request e aparece como CPU do request, não como startup (ver R1).
 
-**Causa do R1, confirmada (18/11, noite): memória.** O isolate do app passa de 128 MiB de heap assim que o Next atende o primeiro request. A Cloudflare então descarta o isolate ao fim do request, sem erro e sem registro.
+**Causa do R1, confirmada (18/11, noite): memória.** O isolate do app passava de 128 MiB de heap. A Cloudflare então descarta o isolate ao fim do request, sem erro e sem registro. Metade desse heap era o fonte do script guardado em UTF-16 por causa de 1.543 caracteres não Latin-1 em regex (item 3); isso está corrigido.
 
 1. **O limite, medido na plataforma.** Subi versões temporárias do próprio `gap-app-v2-staging-test`: um script mínimo, com stubs dos dois Durable Objects, que guarda N MiB de heap no 1º request. Foram 25 requests sequenciais por variante, e a versão do app foi restaurada no fim (`44f4b750`).
 
@@ -47,24 +47,49 @@ O número é baixo porque o `worker.js` do OpenNext só importa o handler de 57 
    - O tamanho do fonte, sozinho, não impede reuso.
    - O script mínimo também espalha os requests por ~12 isolates no colo IAD. O reuso de 2 em 24 do app não é efeito de roteamento.
 
-2. **O heap do app, medido no workerd local.** Mesmo build, `wrangler dev`, leitura do `Runtime.getHeapUsage` pelo inspector logo depois de um `HeapProfiler.takeHeapSnapshot`, que força GC completo:
-
-   | Momento | Heap usado |
-   |---|---|
-   | Script avaliado, nenhum request de página (`/__karma/isolate`) | **118,3 MiB** |
-   | Depois do 1º request que passa pelo Next (`/communities`) | 133,8 MiB |
-   | Depois de `/`, `/project/gitcoin`, `/community/optimism` | 134,1–134,6 MiB |
-   | Depois da rota OG | 143,9 MiB |
-   | Regime (mais 12 requests) | **145,1 MiB** |
-
-   - Só avaliar o script já consome 118 MiB, encostado no limite. Qualquer página passa dele em 6 a 17 MiB.
+2. **O heap do app, medido no workerd local.** Mesmo build, `wrangler dev`, leitura do `Runtime.getHeapUsage` pelo inspector logo depois de um `HeapProfiler.takeHeapSnapshot`, que força GC completo.
    - O `HeapProfiler.collectGarbage` não responde no workerd, por isso o GC foi forçado pelo snapshot.
+   - O proxy do inspector exige `Origin: http://localhost`.
    - Os números são locais, mas é o mesmo V8 e o mesmo script. A calibração acima mostra que o limite remoto bate com o heap do V8.
 
-**Consequência:** o corte necessário não é de tamanho do upload, é de heap residente.
-- É preciso tirar pelo menos ~20 MiB do que fica carregado depois do 1º request, e mais para ter folga em concorrência.
-- Os candidatos que já estavam na lista mexem exatamente no código avaliado: web3 fora do SSR (até −14 MB de código), `@sentry/cloudflare` no lugar do SDK Node (−5 MB, que já falhou uma vez) e dividir a app em mais de um Worker.
-- Medir cada corte com o mesmo procedimento: heap local por inspector, depois reuso na conta com `x-karma-isolate`.
+3. **De onde vinham 57 MiB: o fonte em UTF-16.**
+   - O V8 guarda o fonte de um script com 1 byte por caractere quando todos são Latin-1 (≤ U+00FF), e com 2 bytes por caractere se houver um único fora disso.
+   - O `worker.js` tinha 1.543 caracteres acima de U+00FF, todos em **literais de regex**: os modos legados do CodeMirror (palavras-chave do Gherkin em dezenas de idiomas, glifos do APL), travessões e reticências de tipografia.
+   - O esbuild escapa strings, templates e identificadores para ASCII, mas **nunca escapa regex**, nem com `charset: "ascii"` (testado em 0.27.7, 0.28.1 e 0.28.2).
+   - Resultado: 57 Mi caracteres × 2 bytes ≈ 114 MiB de heap só para o texto do script.
+   - **Correção:** `scripts/build-worker-bundle.mjs` (`pnpm cf:size`) gera o bundle exato do upload, faz o parse com acorn e reescreve só os caracteres dentro de literais de regex (e comentários) como `\uXXXX`, que significam o mesmo em qualquer regex, com ou sem flag `u`. Se sobrar algum caractere acima de U+00FF fora disso, o build **falha**. `pnpm cf:upload` envia esse arquivo como está (`--no-bundle`).
+
+   Heap no workerd local, mesmo build, antes e depois da correção. Na tabela "antes", as páginas responderam 404, porque o proxy não reconheceu o host `127.0.0.1`. Na "depois", com `localhost`, todas renderizaram 200:
+
+   | Momento | Antes (UTF-16, páginas em 404) | Depois (Latin-1, páginas em 200) |
+   |---|---|---|
+   | Script avaliado, nenhuma página | **118,3 MiB** | **61,1 MiB** |
+   | Depois de `/communities` | 133,8 MiB | 77,3 MiB |
+   | Depois de `/` | 134,1 MiB | 77,6 MiB |
+   | Depois de `/project/gitcoin` | 134,4 MiB | **108,8 MiB** (+31 MiB nessa página) |
+   | Depois de `/community/optimism` | 134,6 MiB | 110,0 MiB |
+   | Depois da rota OG | 143,9 MiB | 118,5 MiB |
+   | Depois de `/blog` | | 127,6 MiB |
+   | Regime (mais 12 requests) | **145,1 MiB** | **123,9 MiB** |
+
+   Na conta, com o bundle Latin-1 (versão `2e64cdc0`):
+
+   | | Antes | Depois |
+   |---|---|---|
+   | Requests sequenciais que reaproveitaram isolate | 2 / 24 | **12 / 24** (script mínimo: 13 / 25) |
+   | Tenants que reaproveitaram isolate | | 17 / 24, TTFB p50 0,53 s |
+   | 4 ondas de 25, cache do build | 84 × 200, 2 × 500, 14 resets | **100 × 200** |
+   | p50 da onda depois da 1ª | 5–9 s | **0,7–1,3 s** |
+   | CPU por invocação, p50 / média | ~2,7 s | **474 ms / 1,3 s** (39% abaixo de 200 ms) |
+   | Erros nos Workers Logs | | 0 em 148 invocações |
+   | Vida máxima de um isolate | | 9 requests, 157 s, 4–6 rotas diferentes |
+
+**Consequência:** a correção Latin-1 devolve ~57 MiB, e o Worker passa a reaproveitar isolate como um script mínimo.
+- A folga, porém, é pequena: um isolate que passa por todos os tipos de rota fica em ~124 MiB, contra o limite de 128.
+- Sob concorrência ou com rotas novas, ele volta a ser descartado de vez em quando.
+- Por isso o corte de web3 fora do SSR continua necessário. A página de projeto sozinha soma 31 MiB, e é a candidata óbvia.
+- A média de CPU (1,3 s) ainda é puxada pelos ~25 isolates frios que este teste cria. Com tráfego contínuo a fração de frios cai, mas isso não dá para medir daqui.
+- Medir cada corte com o mesmo procedimento: heap local pelo inspector (com `localhost`), depois reuso na conta com `x-karma-isolate`.
 
 **Custo, com o que foi medido:** a estimativa anterior supunha 20–100 ms de CPU por invocação; o medido é 1,5–3,5 s.
 Com ~7M requests por ciclo, 2 s de média dariam ~14 bilhões de ms de CPU, ≈ US$ 280/mês só de CPU, acima dos ≈ US$ 140–160 do gap na Vercel.
@@ -247,7 +272,7 @@ O que mudaria o veredito para "viável com ressalvas":
 - **Tamanho: 59,68 MiB descomprimido** (era 63,0; limite 64, folga de ~4,3 MiB).
   - Mermaid, cytoscape e KaTeX saíram do servidor (−3,5 MB no handler). Os dois plugins do Streamdown só carregam no browser, a partir de um `useEffect` em `src/components/ai-elements/message-response.tsx`. O `import()` deles agora fica atrás de `typeof window === "undefined"`, que o Next fixa como constante no build do servidor, e o código morto sai do bundle. Vale também para a Vercel.
   - Um `turbopack.resolveAlias` com condição `node` não funcionou: a documentação do Next 16 diz que só a condição `browser` é suportada.
-  - **Trava de tamanho:** `pnpm cf:size` (`scripts/check-worker-size.mjs`) roda `wrangler deploy --dry-run`, que só empacota localmente e não envia nada. Ele soma os módulos que seriam enviados e falha acima de 62 MiB (`WORKER_SIZE_BUDGET_MIB` muda o orçamento). É para entrar no CI logo depois do `cf:build`.
+  - **Trava de tamanho:** `pnpm cf:size` (hoje `scripts/build-worker-bundle.mjs`) roda `wrangler deploy --dry-run`, que só empacota localmente e não envia nada. Ele soma os módulos que seriam enviados e falha acima de 62 MiB (`WORKER_SIZE_BUDGET_MIB` muda o orçamento). É para entrar no CI logo depois do `cf:build`.
 - **B3 (e a falha intermitente de tenants) tinha uma segunda causa: o Sentry.**
   - **Sintoma:** com o #1318, uma onda de 25 requests concorrentes num isolate novo deu **17–18 erros 500 em 25**. Todos eram `Next.js encountered the unstable value crypto.randomUUID() while prerendering`, em `/t/[tenant]/project/[projectId]`, `/communities` e `/community/[communityId]`. A revalidação em background tinha o mesmo erro. Em sequência e com o cache já cheio, nada falhava, por isso o problema escapou às medições anteriores.
   - **Causa:** o Sentry gera ids de trace e span com `crypto.randomUUID()`. Para não abortar o prerender do Cache Components, o `@sentry/nextjs` roda essas chamadas dentro de um snapshot do AsyncLocalStorage tirado quando o módulo do servidor é avaliado (`prepareSafeIdGeneratorContext`, símbolo global `__SENTRY_SAFE_RANDOM_ID_WRAPPER__`). No Node isso acontece na inicialização, fora de qualquer request. No Worker o módulo é avaliado sob demanda, dentro do primeiro request que chega a ele, e o snapshot pode capturar o prerender desse request. A partir daí, as chamadas "protegidas" rodam dentro de um prerender.
