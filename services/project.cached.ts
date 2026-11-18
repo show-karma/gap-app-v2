@@ -12,7 +12,9 @@ import type { Project as ProjectResponse } from "@/types/v2/project";
 import type { UpdatesApiResponse } from "@/types/v2/roadmap";
 import { buildDehydratedState } from "@/utilities/cache/hydration-seed";
 import { projectTag } from "@/utilities/cache/tags";
+import { replaceInlineCommunityLogos } from "@/utilities/community-logo.server";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
@@ -29,9 +31,14 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * `getProjectCached` instead, so the fetch is cached and the routing decision
  * stays live.
  *
- * `cacheLife("minutes")` is `{ stale: 300, revalidate: 60, expire: 3600 }` —
- * the 60s revalidate is exactly the `export const revalidate = 60` the project
- * layout carried before the flag, so the CDN cadence is unchanged.
+ * Every loader here uses `PROJECT_PAGE_CACHE_LIFE`: a day before revalidating,
+ * a week before expiring. That is only safe because of the tags below; see the
+ * constant.
+ *
+ * Every entry is also tagged with the project's uid and slug, whichever id the
+ * route used (`tagProject`). The indexer reports changed projects by uid to
+ * `app/api/cache/projects/revalidate`, so one `revalidateTag(projectTag(uid))`
+ * has to reach the entries of a page opened by slug as well.
  *
  * Grants, impacts and updates all take an explicit `isAuthorized: false`. Both default it to
  * `true`, which routes through `TokenManager` → `cookies()`; that is a request
@@ -41,41 +48,121 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * anonymous/public view, which is precisely what crawlers see".
  */
 
+/**
+ * Cache lifetime for everything a project page reads.
+ *
+ * `revalidate` is a day. Edits do not wait for it: gap-indexer reports every
+ * write to a project or its grants to `app/api/cache/projects/revalidate`,
+ * which expires the project's entries at once (`tagAndSetLifetime` makes sure
+ * every entry carries the project's uid). The day is only the bound for a
+ * change no notice covered: a failed notice after its retries, or data the
+ * indexer's repositories do not write (a community's name or logo, a member's
+ * profile, one-off maintenance scripts).
+ *
+ * Why not shorter: a project page is visited every day or two, so with a
+ * 60-second revalidate nearly every visit rebuilt it in the background and
+ * stored it again, an ISR write with nothing changed. With a day, a revisit
+ * is served from the cache.
+ *
+ * `expire` is a week: past `revalidate` the page is still served from the
+ * cache while it rebuilds in the background, instead of being rebuilt
+ * synchronously and written again. With JavaScript, the client refetches the
+ * seeded queries on mount, so a visitor sees current data right away; crawlers
+ * and no-JS readers see the cached page.
+ *
+ * `stale` (300 s) is the client router's: how long a visited page is reused on
+ * back/forward navigation in the same tab.
+ */
+export const PROJECT_PAGE_CACHE_LIFE = {
+  stale: 300,
+  revalidate: 24 * 60 * 60,
+  expire: 7 * 24 * 60 * 60,
+} as const;
+
+/**
+ * Tags the current cache entry with every id the project is known by: the id
+ * the route used, the uid and the slug. Must run inside a `"use cache"` scope.
+ */
+function tagProject(projectIdOrSlug: string, project: ProjectResponse | null): void {
+  const ids = new Set([projectIdOrSlug, project?.uid, project?.details?.slug]);
+  for (const id of ids) {
+    if (id) cacheTag(projectTag(id));
+  }
+}
+
+/**
+ * Tags a loader's entry with the project's ids and sets its lifetime. For the
+ * loaders whose own response does not carry the project's ids (grants, impacts,
+ * updates, the seeds), it reads the cached project entry, which the layout has
+ * normally loaded already.
+ *
+ * If the project cannot be identified (the read failed or there is no such
+ * project), the entry gets only the routed id's tag, and so it is kept for
+ * minutes, not the project-page lifetime: a notice from the indexer would not
+ * reach it. The loader itself carries on, as before.
+ */
+/** One `cacheLife` call per invocation, as Next requires. */
+function setLifetime(projectIdentified: boolean): void {
+  if (projectIdentified) cacheLife(PROJECT_PAGE_CACHE_LIFE);
+  else cacheLife("minutes");
+}
+
+async function tagAndSetLifetime(projectIdOrSlug: string): Promise<void> {
+  let project: ProjectResponse | null = null;
+  try {
+    project = await getProjectCached(projectIdOrSlug);
+  } catch {
+    // SUPPRESSED: getProject has already reported the failure to Sentry, and
+    // this loader must not fail because the tag lookup did.
+  }
+  tagProject(projectIdOrSlug, project);
+  setLifetime(project !== null);
+}
+
 export async function getProjectCached(projectIdOrSlug: string): Promise<ProjectResponse | null> {
   "use cache";
-  cacheLife("minutes");
-  cacheTag(projectTag(projectIdOrSlug));
 
-  return getProject(projectIdOrSlug);
+  const project = await getProject(projectIdOrSlug, { rethrow: true });
+  tagProject(projectIdOrSlug, project);
+  // A missing project is cached briefly: the slug may be about to exist (a
+  // project being created right now), and no notice arrives for an id the
+  // indexer has never seen.
+  setLifetime(project !== null);
+  return project;
 }
 
 export async function getProjectGrantsCached(projectIdOrSlug: string): Promise<Grant[]> {
   "use cache";
-  cacheLife("minutes");
-  cacheTag(projectTag(projectIdOrSlug));
+  await tagAndSetLifetime(projectIdOrSlug);
 
-  return getProjectGrants(projectIdOrSlug, { isAuthorized: false });
+  return getProjectGrants(projectIdOrSlug, { isAuthorized: false, rethrow: true });
 }
 
 export async function getProjectImpactsCached(projectIdOrSlug: string): Promise<ProjectImpact[]> {
   "use cache";
-  cacheLife("minutes");
-  cacheTag(projectTag(projectIdOrSlug));
+  await tagAndSetLifetime(projectIdOrSlug);
 
-  return getProjectImpacts(projectIdOrSlug, { isAuthorized: false });
+  return getProjectImpacts(projectIdOrSlug, { isAuthorized: false, rethrow: true });
 }
 
 export async function getProjectUpdatesCached(
   projectIdOrSlug: string
 ): Promise<UpdatesApiResponse> {
   "use cache";
-  cacheLife("minutes");
-  cacheTag(projectTag(projectIdOrSlug));
+  await tagAndSetLifetime(projectIdOrSlug);
 
   // Third arg, not second: the second is `milestoneStatus`. Without
   // `isAuthorized: false` this reaches TokenManager -> cookies() *inside* the
   // cache scope, which Next rejects outright.
-  return getProjectUpdates(projectIdOrSlug, undefined, { isAuthorized: false });
+  const updates = await getProjectUpdates(projectIdOrSlug, undefined, { isAuthorized: false });
+
+  // A community logo stored inline repeats in every grant item of the feed,
+  // and this feed is seeded into every project tab. Link the logo instead of
+  // embedding it — see utilities/community-logo.server.ts.
+  return replaceInlineCommunityLogos(updates, async (slug) => {
+    const community = await getCommunityDetailsCached(slug);
+    return community?.details?.logoUrl ?? community?.details?.imageURL;
+  });
 }
 
 /**
@@ -89,8 +176,7 @@ export async function getProjectUpdatesCached(
  */
 export async function getProjectSeedCached(projectIdOrSlug: string): Promise<DehydratedState> {
   "use cache";
-  cacheLife("minutes");
-  cacheTag(projectTag(projectIdOrSlug));
+  await tagAndSetLifetime(projectIdOrSlug);
 
   return buildDehydratedState(async (queryClient) => {
     try {
@@ -123,8 +209,7 @@ export async function getProjectUpdatesSeedCached(
   projectIdOrSlug: string
 ): Promise<DehydratedState> {
   "use cache";
-  cacheLife("minutes");
-  cacheTag(projectTag(projectIdOrSlug));
+  await tagAndSetLifetime(projectIdOrSlug);
 
   return buildDehydratedState(async (queryClient) => {
     await queryClient.prefetchQuery({

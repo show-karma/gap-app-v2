@@ -34,6 +34,24 @@ vi.mock("boring-avatars", () => ({
 
 describe("ProfilePicture", () => {
   describe("Image Rendering", () => {
+    it("should render a same-origin path, such as a linked community logo", () => {
+      render(
+        <ProfilePicture imageURL="/api/community-logo/gitcoin/0123456789abcdef" name="Gitcoin" />
+      );
+
+      expect(screen.getByAltText("Gitcoin")).toHaveAttribute(
+        "src",
+        "/api/community-logo/gitcoin/0123456789abcdef"
+      );
+    });
+
+    it("should not treat a protocol-relative URL as a same-origin path", () => {
+      render(<ProfilePicture imageURL="//evil.example/x.png" name="Evil" />);
+
+      expect(screen.queryByAltText("Evil")).not.toBeInTheDocument();
+      expect(screen.getByTestId("boring-avatar")).toBeInTheDocument();
+    });
+
     it("should render image when valid imageURL is provided", () => {
       render(<ProfilePicture imageURL="https://example.com/image.jpg" name="John Doe" />);
 
