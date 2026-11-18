@@ -1,4 +1,4 @@
-// Worker entry for the Cloudflare spike.
+// Worker entry for the Cloudflare Workers build.
 //
 // Wraps the worker that `opennextjs-cloudflare build` generates in
 // .open-next/worker.js and adds what it lacks:

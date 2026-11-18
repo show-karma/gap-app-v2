@@ -236,7 +236,10 @@ describe("template coverage of app/", () => {
 
   const isTenantMount = (dir: string): boolean => TENANT_MOUNT_DIRS.has(relative(APP_DIR, dir));
 
-  const isPageFile = (name: string): boolean => /^page\.(?:t|j)sx?$/.test(name);
+  // `page.studio.tsx` is the Sanity Studio route: next.config.ts compiles it
+  // everywhere except the Cloudflare build, which serves a static Studio at the
+  // same URL, so it still produces page views.
+  const isPageFile = (name: string): boolean => /^page\.(?:studio\.)?(?:t|j)sx?$/.test(name);
 
   /**
    * Every URL a `page` file answers, as its `app/`-relative route. A directory

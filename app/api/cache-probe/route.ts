@@ -1,4 +1,9 @@
-// SPIKE ONLY (spike/cloudflare-opennext) -- never merge.
+// Cache and error probe for non-production Workers deployments.
+//
+// Answers 404 unless the runtime variable CACHE_PROBE_ENABLED is "1", which only
+// the Cloudflare test Worker sets (`wrangler versions upload --var`); Vercel and
+// production never do. Remove it once the Cloudflare migration is verified
+// (docs/cloudflare-opennext-feasibility.md).
 //
 // Makes the `"use cache"` composable cache observable: the cached function
 // returns the moment it ran, tagged with the same tag the Sanity webhook
@@ -19,8 +24,11 @@ async function cachedStamp(): Promise<{ renderedAt: string; nonce: number }> {
 
 export async function GET(request: Request): Promise<NextResponse> {
   await connection();
+  if (process.env.CACHE_PROBE_ENABLED !== "1") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   if (new URL(request.url).searchParams.get("throw") === "1") {
-    throw new Error("spike sentry probe: unhandled route error");
+    throw new Error("cache probe: unhandled route error");
   }
   const stamp = await cachedStamp();
   return NextResponse.json({ ...stamp, servedAt: new Date().toISOString() });

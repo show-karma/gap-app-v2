@@ -1,9 +1,20 @@
-// SPIKE: local-only. Used by `opennextjs-cloudflare preview` / `wrangler dev`,
-// where every binding below is simulated by miniflare and persisted under
-// .wrangler/state. No account_id on purpose: nothing here is deployed.
+// Cloudflare Workers config for gap-app-v2 (@opennextjs/cloudflare).
+//
+// This is the NON-PRODUCTION test Worker: it lives only on *.workers.dev. It has
+// no routes, zones or custom domains, and it must not get any here. The
+// production Worker gets its own config when the cutover is planned
+// (docs/cloudflare-opennext-feasibility.md).
+//
+// No account_id on purpose: wrangler reads CLOUDFLARE_ACCOUNT_ID from the
+// environment. `pnpm cf:preview` / `wrangler dev` simulate every binding below
+// locally under .wrangler/state.
+//
+// Runtime secrets (CRON_SECRET, SANITY_WEBHOOK_SECRET, ...) go through
+// `wrangler secret put`, never through `vars` and never through a .env at build
+// time: OpenNext copies the build's .env into the Worker bundle.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "gap-app-v2-spike",
+  "name": "gap-app-v2-staging-test",
   "main": "cloudflare/worker.ts",
   // Must not be newer than the bundled workerd (wrangler 4.148.0 → 2026-10-06).
   "compatibility_date": "2026-09-01",
@@ -11,6 +22,8 @@
   // Only the uncompressed upload counts against the 64 MiB limit, and the 1 s startup
   // budget scales with script size; minifying takes ~25% off both.
   "minify": true,
+  "workers_dev": true,
+  "preview_urls": true,
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
@@ -24,10 +37,13 @@
   },
   "services": [
     // Self-reference used by the cache layer; must match "name".
-    { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-spike" }
+    { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging-test" }
   ],
   "r2_buckets": [
-    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "gap-app-v2-spike-opennext-cache" }
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "gap-app-v2-staging-test-opennext-cache"
+    }
   ],
   "durable_objects": {
     "bindings": [
@@ -35,11 +51,17 @@
       { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
     ]
   },
-  "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] }
-  ],
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] }],
   "images": { "binding": "IMAGES" },
-  // Replaces the Vercel cron for /api/cron/warm-sitemaps (see cloudflare/worker.ts).
-  "triggers": { "crons": ["0 */6 * * *"] },
-  "observability": { "enabled": true }
+  // Server-side deployment environment (utilities/deployment-env.ts). "preview"
+  // matches the Vercel staging deployment: Sepolia programs, Sentry off.
+  "vars": { "APP_ENV": "preview" },
+  // No Cron Trigger on the test Worker. /api/cron/warm-sitemaps fetches the
+  // sitemaps on SITE_URL, the production host, so a test Worker running it would
+  // load production every six hours. The scheduled() handler in
+  // cloudflare/worker.ts stays and is exercised locally with
+  // /cdn-cgi/handler/scheduled; the production config re-adds
+  // "triggers": { "crons": ["0 */6 * * *"] }.
+  "triggers": { "crons": [] },
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
 }

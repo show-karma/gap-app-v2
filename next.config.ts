@@ -51,7 +51,7 @@ const removeImports = require("next-remove-imports")();
 // report `app_version: "unknown"`.
 const { version: APP_VERSION } = require("./package.json");
 
-// Set only by `pnpm cf:build` (the Cloudflare Workers spike, see
+// Set only by `pnpm cf:build` (the Cloudflare Workers build, see
 // docs/cloudflare-opennext-feasibility.md). Vercel and the CI standalone build
 // never set it, so everything gated on it is a no-op there.
 const isCloudflareBuild = process.env.KARMA_BUILD_TARGET === "cloudflare";

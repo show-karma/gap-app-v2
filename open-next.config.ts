@@ -1,8 +1,7 @@
 // Cloudflare Workers build config for @opennextjs/cloudflare.
 //
-// SPIKE (feasibility test, branch spike/cloudflare-opennext). Nothing here is
-// deployed: it only drives `opennextjs-cloudflare build` and the local
-// `wrangler dev` / miniflare simulation. See
+// Drives `opennextjs-cloudflare build` for the Worker in wrangler.jsonc and the
+// local `wrangler dev` / miniflare simulation. See
 // docs/cloudflare-opennext-feasibility.md for the findings.
 //
 // Cache layout, per https://opennext.js.org/cloudflare/caching:
