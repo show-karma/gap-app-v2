@@ -124,7 +124,11 @@ describe("useZeroDevSigner", () => {
           walletClientType: "metamask",
           address: LINKED_ADDRESS,
           switchChain: vi.fn().mockResolvedValue(undefined),
-          getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+          getEthereumProvider: vi.fn().mockResolvedValue({
+            request: vi.fn(async ({ method }: { method: string }) =>
+              method === "eth_accounts" ? [LINKED_ADDRESS] : undefined
+            ),
+          }),
         },
       ];
       const fakeSigner = { fake: true };

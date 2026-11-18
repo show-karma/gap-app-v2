@@ -43,6 +43,7 @@ import { PAGES } from "@/utilities/pages";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
+import { toWalletGuidanceError } from "@/utilities/wallet/accountAuthorization";
 import {
   describeProviderConflict,
   detectInjectedProviderConflict,
@@ -225,7 +226,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet, hasEmbeddedWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, hasEmbeddedWallet, smartWalletAddress } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const router = useRouter();
   const pathname = usePathname();
@@ -716,6 +717,19 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       })();
     } catch (error) {
       projectEvents.emitProjectUpdateFailed(project?.uid, error);
+      // The wallet is locked, or the signing account isn't connected to this
+      // site (EIP-1193 4100). Expected user state: say what to do in the
+      // wallet, and keep it out of Sentry (errorManager breadcrumbs it).
+      const walletGuidance = toWalletGuidanceError(error, smartWalletAddress);
+      if (walletGuidance) {
+        showError(walletGuidance.message);
+        errorManager(
+          `Wallet not ready to sign project activity for project ${project?.uid}`,
+          walletGuidance,
+          { projectUID: project?.uid, reason: walletGuidance.reason }
+        );
+        return;
+      }
       // A wallet-provider conflict is not "try again shortly" — the browser is
       // broken, not the network, and retrying is what this user already did
       // twice before giving up. Name the conflicting extensions and point at a
