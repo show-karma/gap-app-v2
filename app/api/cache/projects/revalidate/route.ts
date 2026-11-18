@@ -39,8 +39,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (declaredLength > MAX_NOTICE_BYTES) {
     return NextResponse.json({ ok: false, error: "Payload too large" }, { status: 413 });
   }
-  const rawBody = await request.text();
-  if (Buffer.byteLength(rawBody) > MAX_NOTICE_BYTES) {
+  const rawBody = await readBodyWithin(request, MAX_NOTICE_BYTES);
+  if (rawBody === null) {
     return NextResponse.json({ ok: false, error: "Payload too large" }, { status: 413 });
   }
 
@@ -72,4 +72,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     Sentry.captureException(error, { tags: { route: ROUTE } });
     return NextResponse.json({ ok: false, error: "Revalidation failed" }, { status: 500 });
   }
+}
+
+/**
+ * The request body as text, or `null` once it passes `maxBytes`.
+ *
+ * Counts bytes as they arrive and stops reading at the limit. `request.text()`
+ * would buffer the whole body first, and the Content-Length check above does
+ * not cover a body that declares no length, all before the signature is
+ * checked.
+ */
+async function readBodyWithin(request: Request, maxBytes: number): Promise<string | null> {
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
 }
