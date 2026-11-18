@@ -85,7 +85,6 @@ export function dispatchInputAndCollectErrors(
 export const LENGTH_CRASH =
   /Cannot read properties of null|reading 'length'|reading "length"|null is not an object|evaluating '[a-zA-Z0-9_$]*\.length'/;
 
-/** The slice of CodeMirror's EditorView the burst-typing tests drive. */
 export interface TestEditorView {
   state: {
     doc: { toString(): string };
@@ -94,13 +93,6 @@ export interface TestEditorView {
   dispatch(transaction: object): void;
 }
 
-/**
- * Returns the EditorView behind a `.cm-content` element. `@codemirror/view` is
- * only a transitive dependency, so `EditorView.findFromDOM` cannot be imported
- * here; this reads the same back-reference it does (`cmTile.view` since
- * @codemirror/view 6.39, `cmView.view` before) and fails loudly if a future
- * CodeMirror moves it.
- */
 export function getEditorView(content: Element): TestEditorView {
   const host = content as Element & {
     cmTile?: { view?: TestEditorView };

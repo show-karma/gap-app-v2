@@ -69,9 +69,6 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
     [formSchema]
   );
 
-  // Must keep its identity across re-renders: useApplicationForm resets the
-  // form whenever `initialData` changes, so rebuilding it on every render
-  // (saving a draft, a status-history refetch) wiped unsaved typing.
   const initialData = useMemo(
     () =>
       formSchema

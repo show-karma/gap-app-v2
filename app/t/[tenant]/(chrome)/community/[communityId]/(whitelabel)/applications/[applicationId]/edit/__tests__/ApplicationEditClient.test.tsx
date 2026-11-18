@@ -170,10 +170,6 @@ describe("ApplicationEditClient", () => {
     });
   });
 
-  // Program 1508 (Filecoin ProPGF Kernel 2027), where Sentry 7853602321 was
-  // reported. Every re-render of ApplicationEditClient used to rebuild
-  // `initialData`, and useApplicationForm reset the form whenever that
-  // object's identity changed — wiping whatever the applicant had typed.
   describe("re-rendering with program 1508's form", () => {
     const SAVED_NAME = "Saved project name";
     const TYPED_NAME = "Typed but not yet saved";
@@ -231,15 +227,12 @@ describe("ApplicationEditClient", () => {
     });
 
     it("keeps unsaved typing while a draft save is in flight", async () => {
-      // Never settles, so isSavingDraft stays true and the page re-renders
-      // exactly once into the saving state.
       mockApi.put.mockReturnValue(new Promise(() => {}));
       render1508Edit();
       const input = await typeProjectName();
 
       fireEvent.click(screen.getByTestId("save-draft-btn"));
 
-      // The page has re-rendered into the saving state: the button is now a spinner.
       await waitFor(() => expect(screen.queryByTestId("save-draft-btn")).not.toBeInTheDocument());
       expect(mockApi.put).toHaveBeenCalledTimes(1);
       expect(mockApi.put.mock.calls[0][1]).toMatchObject({
