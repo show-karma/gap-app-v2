@@ -5,8 +5,167 @@
 - Escopo: tudo local. Nenhuma conta Cloudflare, nenhum `wrangler deploy`/`versions upload`, nenhum DNS, Vercel ou secret.
   Bindings (R2, Durable Objects, Images, Cron) só na simulação do `wrangler dev`/miniflare.
 - Comparação: o mesmo build servido por `node .next/standalone/server.js` (o equivalente a `next start` que o CI usa).
+- **18/11/2026:** primeiro teste numa conta Cloudflare real, abaixo. As seções seguintes são o registro do spike local de 12–13/11.
 
-## Veredito: inviável no estado atual, com caminho conhecido
+## Teste em conta real (18/11/2026)
+
+- Branch `feat/cloudflare-workers` (base `migration-cloudflare`, que já tem o main atual e as variáveis neutras do #2205).
+- Conta Cloudflare "Karma" (Workers Paid). Worker de teste `gap-app-v2-staging-test`, só em `https://gap-app-v2-staging-test.dawn-sound-c6f7.workers.dev`.
+  Sem rotas, zonas, DNS, custom domains, crons nem mudança na Vercel (conferido pela API ao final: `workers/domains` vazio, `schedules` vazio).
+- Variáveis de staging, as mesmas que a Vercel staging usa: indexer `https://stagapi.karmahq.org`, `NEXT_PUBLIC_ENV=staging`, `APP_ENV`/`NEXT_PUBLIC_APP_ENV=preview` (Sentry desligado, como na staging), Sanity `tc4p00d9/production`.
+  O build rodou **sem `.env`** no diretório (variáveis só pelo ambiente do processo). Conferido: nenhum `.env` em `.open-next/server-functions/default/`.
+- Comparação: `staging.karmahq.org` (Vercel) nas mesmas URLs, no mesmo horário e do mesmo cliente (dev box, colo IAD).
+
+### Veredito: precisa de cortes (não está pronto para staging)
+
+O Worker sobe, cabe no limite e serve todas as rotas certas, tenants incluídos. Três problemas impedem usar como staging de verdade:
+
+| # | Problema | Evidência | Gravidade |
+|---|----------|-----------|-----------|
+| R1 | **Quase todo request cai num isolate novo**, e cada isolate novo carrega o servidor Next inteiro: 1,5–3,5 s de CPU e 2–7 s de TTFB por request, contra ~0,2 s na Vercel | header `x-karma-isolate`: 2 de 24 requests sequenciais, 1 de 14 sem carregar o Next e 1 de 12 multiplexados numa conexão HTTP/2 reaproveitaram isolate; `/api/geo` (rota trivial) gasta 1,5–2 s de CPU | Bloqueia latência **e** custo |
+| R2 | **Shell de `/project/*` e `/community/*` do host Karma não se regenera em runtime**: `Route "/t/[tenant]/project/[projectId]": Next.js encountered uncached or runtime data during prerendering` | cache R2 vazio: 8 de 9 requests sequenciais deram 500, com o patch #1318 antigo **e** com o head novo; tenants e blog passam | Alto: qualquer perda de entrada no R2 ou regeneração do shell vira 500 |
+| R3 | 1ª onda concorrente depois de um deploy: 2 de 25 com 500 (`/community/optimism`, mesmo erro do R2) | ondas 2–4 com 25/25 | Médio; mesma causa do R2 |
+
+`startup_time_ms` **não** é o problema: 27–59 ms em 10 uploads, contra o limite de 1 s. Por isso não parei antes do corte de web3.
+O número é baixo porque o `worker.js` do OpenNext só importa o handler de 57 MiB dentro do primeiro `fetch` de cada isolate. O parse acontece então dentro do request e aparece como CPU do request, não como startup (ver R1).
+
+**Hipótese para o R1 (não confirmada):** o isolate passa dos 128 MB e é descartado ao fim de cada request.
+- O fonte do script sozinho tem 57 MiB. O spike já tinha alertado que a memória "só dá para validar lá".
+- Nenhum dos mais de 2.000 eventos dos Workers Logs teve outcome `exceededMemory`/`exceededCpu`; todos são `ok`.
+- `process.memoryUsage()` no Workers é stub (devolve 0), e o Workers Logs não expõe memória por isolate. Não há como medir daqui.
+- Vale perguntar ao suporte da Cloudflare, ou medir com um Worker mínimo do mesmo tamanho.
+- Se a hipótese estiver certa, os cortes que já estavam na lista (web3 fora do SSR, −14 MB; dividir a app em mais de um Worker) passam a ser obrigatórios, não só folga.
+
+**Custo, com o que foi medido:** a estimativa anterior supunha 20–100 ms de CPU por invocação; o medido é 1,5–3,5 s.
+Com ~7M requests por ciclo, 2 s de média dariam ~14 bilhões de ms de CPU, ≈ US$ 280/mês só de CPU, acima dos ≈ US$ 140–160 do gap na Vercel.
+A conta só fecha se o R1 for resolvido, com reuso de isolate e CPU de request na casa das dezenas de ms.
+
+### Números medidos
+
+Build e tamanho:
+
+| Item | Valor |
+|------|-------|
+| `pnpm cf:build` | ok; compile 74 s, TypeScript 65 s, 426 páginas estáticas |
+| `pnpm cf:size` | **58,72 MiB** (orçamento 62, limite 64); `worker.js` 57,21 MiB |
+| Upload real (`wrangler versions upload`) | 60.141 KiB descomprimido / 15.504 KiB gzip |
+| `Worker Startup Time` | **27–59 ms** (10 uploads) |
+
+Por rota, requests sequenciais (quase todos em isolate frio). CPU e wall vêm dos Workers Logs; TTFB é do cliente. Versão `a08a69ce`, cache R2 populado com o build:
+
+| Rota | Status Worker / Vercel | CPU p50 (máx) | Wall p50 | TTFB Worker p50 | TTFB Vercel p50 | HTML Worker / Vercel |
+|------|------------------------|---------------|----------|-----------------|-----------------|----------------------|
+| `/` | 200 / 200 | 3.201 ms (7.646) | 3.928 ms | 4,47 s | 0,22 s (HIT) | 224 / 223 KB |
+| `/communities` | 200 / 200 | 2.530 ms (6.098) | 3.488 ms | 4,29 s | 0,21 s (HIT) | 58 / 57 KB |
+| `/community/optimism` | 200 / 200 | 3.525 ms | 5.493 ms | 7,06 s | 0,26 s | 232 / 157 KB |
+| `/project/gitcoin` | 200 / 200 | 3.336 ms (5.618) | 4.476 ms | 6,18 s | 0,22 s (HIT) | 177 / 116 KB |
+| `/project/tally` | 404 / 404 | 41 ms | 188 ms | 1,96 s | 0,18 s | o projeto não existe no indexer de staging; paridade |
+| 404 (rota inexistente) | 404 / 404 | 1.987 ms | 2.189 ms | 3,58 s | 0,23 s | 5,7 / 5,7 KB |
+| OG `/api/metadata/projects/gitcoin` | 200 / 200 | 2.652 ms | 3.189 ms | 4,79 s | 0,18 s (2,8 s no MISS) | PNG 173 / 149 KB |
+| `/sitemap_index.xml` | 200 / 200 | 1.826 ms | 2.037 ms | 3,59 s | 0,17 s | 507 / 507 B |
+| `/api/geo` | 200 | 1.500–2.000 ms | ~2.000 ms | 3,4 s | | |
+| `/__karma/isolate` (não carrega o Next) | 200 | | | 1,5–2,5 s frio, **0,16 s quente** | | |
+
+- A Vercel responde do CDN (`x-vercel-cache: HIT`). No Worker não existe CDN na frente: todo request executa o Worker.
+- O HTML de `/community/optimism` e `/project/gitcoin` sai ~50% maior no Worker. Não investigado.
+- **Memória por request:** não mensurável (ver hipótese do R1). Nenhum `exceededMemory`.
+
+Tenants pelo header de teste `x-karma-test-host` (sem DNS; `cloudflare/worker.ts`, só com `TEST_WORKER=1`):
+
+| Host | `/` | `/communities` | `/project/gitcoin` |
+|------|-----|----------------|--------------------|
+| `app.opgrants.io` | 200 "Optimism Funding Opportunities" | 200 | 200 |
+| `grantsapp.scroll.io` | 200 "Scroll Funding Opportunities" | 200 | 200 |
+| `app.filpgf.io` | 200 "Filecoin Funding Opportunities" | 200 | 200 |
+| `founders.polygon.technology` | 200 "Polygon Funding Opportunities" | 200 | 200 |
+
+O B2 está resolvido na conta real: nenhum tenant travou, e a marca ficou estável por host nas duas rodadas.
+O `Host` não pode ser trocado direto no `workers.dev`: a Cloudflare roteia pelo Host, e `Host: grantsapp.scroll.io` iria para a zona da própria Scroll.
+
+Concorrência, 4 ondas de 25 requests (mistura de Karma, tenants, OG, sitemap e blog):
+
+| Rodada | Cache | Patch #1318 | 200 | 500 | Outros |
+|--------|-------|-------------|-----|-----|--------|
+| 1 | R2 vazio (prefixo novo), isolates novos | `9dbb209` | 93 | 7 | |
+| 2 | R2 vazio, isolates novos | `9dbb209` | 76 | 22 | 2 resets |
+| 3 | R2 do build, isolates novos | `4879fe2` | 84 | 2 (1ª onda) | 12 resets (1ª onda), 2 (2ª) |
+| Vercel staging (só rotas Karma, 2 ondas) | | | 50 | 0 | p50 1,07 s → 0,25 s |
+
+- Todos os 500 têm o erro do R2.
+- Os resets só aparecem no cliente HTTP/1.1 do harness, entre 6 e 30 s. A mesma onda fria com `curl` (HTTP/2) deu 25/25. Parte desses requests consta como 200 nos logs. Considero inconclusivo, não falha do Worker.
+- Sob concorrência há reuso (13–19 isolates para 25 requests). Mas requests concorrentes num isolate dividem a mesma thread, então a latência não melhora (p50 5–9 s).
+- O erro do Sentry (`crypto.randomUUID()` no prerender) não apareceu. O Sentry está desligado em preview, então essa correção ficou sem prova na conta real.
+
+Revalidação:
+
+| Teste | Resultado |
+|-------|-----------|
+| Por tag (`/api/cache-probe` + webhook assinado em `/api/blog/revalidate`) | ✅ mesmo carimbo em 3 isolates diferentes (tag cache DO compartilhado); assinatura errada → 401; certa → 200; 1ª leitura stale (`"max"` = SWR), 2ª em diante fresca |
+| Em background pela fila DO (`/blog` depois de vencer) | ✅ `HEAD /t/karma/blog` → 200, duas vezes, sem erro (o B3 do spike está resolvido nessa rota) |
+| Shell de `/project/*` e `/community/*` regenerado em runtime | ❌ R2 |
+
+Erros nos Workers Logs:
+
+| Erro | Situação |
+|------|----------|
+| `Invalid client environment variables: NEXT_PUBLIC_GAP_INDEXER_URL … received undefined` + `Failed to prepare server` em todo request | **Corrigido** neste branch (`fix(env)`): `utilities/env.ts` validava o `process.env` de runtime, que no Worker não tem as `NEXT_PUBLIC_*`. No spike não apareceu porque o `.env` ia copiado para o bundle. Derrubava o `instrumentation.ts` e todo módulo que importa `clientEnv` (Sanity, blog, revalidação) |
+| `encountered uncached or runtime data during prerendering` | Aberto (R2/R3) |
+| `` `body` unknown or invalid utility `` (warn, rota OG) | inofensivo, aviso do Tailwind do Satori |
+
+Os Workers Logs perdem a 1ª linha de erros longos (chegam só o stack e a dica do Next). Para a mensagem completa use `wrangler tail`.
+O Sentry está desligado em preview, por decisão (paridade com a staging). O conector do Sentry também não está autenticado nesta sessão.
+
+Outros achados:
+- **`next/image`** funciona pelo binding `IMAGES`, mas responde **sem `Cache-Control`**, com PNG ~40% maior que o da Vercel e em 2,4–3,8 s. Toda transformação é cobrada.
+- **Cache regional:** a Cache API é no-op em `*.workers.dev`, então o `withRegionalCache` não atua neste teste: toda leitura vai ao R2. Num custom domain ele atua; não medido.
+- **`opennextjs-cloudflare populateCache remote` falha nesta máquina:** o proxy local do workerd recusa conexão (`ECONNREFUSED 127.0.0.1`). O cache foi populado pela API REST do R2, com as mesmas chaves que o adaptador calcula.
+  Um `wrangler deploy` em projeto OpenNext delega para `opennextjs-cloudflare deploy`; com `OPEN_NEXT_DEPLOY=true` ele faz o deploy direto.
+- **Token com filtro de IP:** a dev box sai por IPv6 e o token só aceita o IPv4. Os comandos rodaram com `NODE_OPTIONS="--dns-result-order=ipv4first --no-network-family-autoselection"` e `curl -4`.
+- **R2 precisou ser habilitado no dashboard** antes do primeiro bucket (`code 10042`).
+
+### Patch #1318 atualizado
+
+O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 16/11 o mantenedor apontou que, no workerd, I/O pode completar entre dois callbacks de timer e *"uncached data can end up cached"*. Os commits `f501eb5` e `4879fe2` mantêm os estágios num único task e usam o checkpoint de microtask do workerd (`unhandled_rejection_after_microtask_checkpoint`, ligado por padrão a partir da compat date 2026-03-03; a nossa é 2026-09-01).
+Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio.
+O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
+
+### Recursos criados na conta (para apagar depois)
+
+| Recurso | Nome / id | Como apagar |
+|---------|-----------|-------------|
+| Worker | `gap-app-v2-staging-test` (10 versões; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
+| Durable Object namespace | `DOQueueHandler` (`4d12b229b92f46bd9e3fab1654293533`) | sai com o Worker |
+| Durable Object namespace | `DOShardedTagCache` (`bdaf59a42cd845d78aae9b62fe746262`) | sai com o Worker |
+| Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/`, `wave-empty-2/`, `wave-empty-3/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
+| Secret | `SANITY_WEBHOOK_SECRET` no Worker (valor de teste aleatório, não é o da Sanity) | sai com o Worker |
+
+O subdomínio `dawn-sound-c6f7.workers.dev` já existia na conta. Nenhum outro Worker, KV, D1, rota, domínio ou cron foi criado.
+A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, criado pela tentativa do `populateCache` (não aparece em `workers/scripts`).
+
+### Próximos passos sugeridos
+
+1. **R1 primeiro:** confirmar com a Cloudflare (ou com um Worker mínimo de 57 MiB) se o isolate é descartado por memória. Se for, cortar web3 do SSR e/ou dividir em Workers menores, e medir de novo o reuso com `x-karma-isolate`.
+2. **R2:** reproduzir no Node com o shell de fallback ausente, para saber se é a app (dado fora de `"use cache"` antes do `<Suspense>` em `/t/[tenant]/project/[projectId]` só no host Karma) ou o adaptador. Tenants não falham, o que aponta para algo específico do tenant `karma`.
+3. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
+
+### Como repetir na conta
+
+```bash
+cd gap-app-v2
+mv .env /algum/lugar/fora   # o build não pode ter .env: o OpenNext o copia para o bundle
+set -a; . /caminho/build-env.staging; set +a   # só NEXT_PUBLIC_* e APP_ENV=preview
+pnpm cf:build && pnpm cf:size
+export CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_API_TOKEN=… OPEN_NEXT_DEPLOY=true \
+  NODE_OPTIONS="--dns-result-order=ipv4first --no-network-family-autoselection"
+# popular o R2 com .open-next/cache (populateCache remote, ou a API REST do R2)
+npx wrangler versions upload --var CACHE_PROBE_ENABLED:1 --var TEST_WORKER:1
+npx wrangler versions deploy <version-id>@100% --yes
+curl -H "x-karma-test-host: app.opgrants.io" https://gap-app-v2-staging-test.<subdomínio>.workers.dev/
+```
+
+## Spike local (12–13/11)
+
+### Veredito: inviável no estado atual, com caminho conhecido
 
 A app builda e a maior parte das rotas funciona no Worker, mas há quatro bloqueios:
 
@@ -114,7 +273,7 @@ Conferido no metafile do esbuild: nenhum deles entra no bundle do Worker.
 - `cloudflare/worker.ts`: embrulha o `.open-next/worker.js` gerado e adiciona o `scheduled()` do Cron Trigger. Ele chama `/api/cron/warm-sitemaps` pelo próprio `fetch` do Worker, com o mesmo `Bearer CRON_SECRET` que a Vercel manda.
 - `next.config.ts`: `KARMA_BUILD_TARGET=cloudflare` (setado só por `pnpm cf:build`) liga `experimental.maxPostponedStateSize: "20mb"` (ver B4). Vercel e o build standalone do CI não mudam. O adaptador já força `output: "standalone"`.
 - `package.json`: `cf:build` / `cf:preview`. `tsconfig.json` exclui `cloudflare/`, `.open-next/` e `.wrangler/`. `.gitignore` cobre `.open-next`, `.wrangler` e `.dev.vars`.
-- `app/api/spike-cache-probe/route.ts`: **rota só do spike, não mergear**.
+- `app/api/cache-probe/route.ts` (era `spike-cache-probe`): responde 404 a menos que `CACHE_PROBE_ENABLED=1`, que só o Worker de teste define. Remover quando a migração estiver verificada.
   - Devolve um carimbo de `"use cache"` com `cacheTag("blog-list")`, o tag que o webhook do Sanity invalida.
   - `?throw=1` gera um erro não tratado, para testar o Sentry.
 
@@ -198,7 +357,7 @@ Os tempos do Worker são do workerd local, não da edge, e servem só para compa
 | Projeto com link sem url `/project/gitcoin`, `/project/tally` | ✅ | ✅ só com B4 | sem B4: shell vazio, `Failed to parse postponed state … RangeError` |
 | Projeto moderno `/project/agora` | ✅ | ✅ só com B4 | |
 | 404 (rota e projeto inexistentes) | ✅ 404 | ✅ 404 | `global-not-found` renderiza igual |
-| `"use cache"` + `revalidateTag` (`/api/spike-cache-probe` + webhook assinado em `/api/blog/revalidate`) | ✅ | ✅ | hit → webhook 200 (assinatura ruim → 401) → 1ª leitura stale → 2ª fresca → hit. Comportamento idêntico ao Node |
+| `"use cache"` + `revalidateTag` (`/api/cache-probe` + webhook assinado em `/api/blog/revalidate`) | ✅ | ✅ | hit → webhook 200 (assinatura ruim → 401) → 1ª leitura stale → 2ª fresca → hit. Comportamento idêntico ao Node |
 | ISR / pré-renderizado (blog, sitemap estático) servido do cache | ✅ | ✅ | entradas populadas no R2 local (513) |
 | **Revalidação ISR em background** | ✅ sem erros no log | ❌ **B3** | fila DO → `HEAD /t/karma/blog` etc.: `crypto.randomUUID() while prerendering`, `TimeoutError`, *"failed after 6 retries"*; 14 eventos de Sentry vazios por rodada |
 | RSC `_rsc` (nav, prefetch, segment prefetch `/_tree`) | ✅ | ✅ | 307 de cache-buster seguido de 200 `text/x-component` nos dois |
