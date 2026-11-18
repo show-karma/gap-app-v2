@@ -17,6 +17,7 @@ const statusOptions: Array<{
   label: string;
 }> = [
   { value: "all", label: "All Statuses" },
+  { value: "draft", label: "Draft" },
   { value: "pending", label: "Pending" },
   { value: "resubmitted", label: "Resubmitted" },
   { value: "approved", label: "Approved" },

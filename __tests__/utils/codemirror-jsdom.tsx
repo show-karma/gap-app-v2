@@ -85,6 +85,26 @@ export function dispatchInputAndCollectErrors(
 export const LENGTH_CRASH =
   /Cannot read properties of null|reading 'length'|reading "length"|null is not an object|evaluating '[a-zA-Z0-9_$]*\.length'/;
 
+export interface TestEditorView {
+  state: {
+    doc: { toString(): string };
+    replaceSelection(text: string): object;
+  };
+  dispatch(transaction: object): void;
+}
+
+export function getEditorView(content: Element): TestEditorView {
+  const host = content as Element & {
+    cmTile?: { view?: TestEditorView };
+    cmView?: { view?: TestEditorView };
+  };
+  const view = host.cmTile?.view ?? host.cmView?.view;
+  if (!view) {
+    throw new Error("No EditorView found on .cm-content; CodeMirror internals changed");
+  }
+  return view;
+}
+
 /** Waits for CodeMirror to mount its content DOM inside the given container. */
 export async function waitForEditorContent(container: HTMLElement): Promise<Element> {
   let content: Element | null = null;

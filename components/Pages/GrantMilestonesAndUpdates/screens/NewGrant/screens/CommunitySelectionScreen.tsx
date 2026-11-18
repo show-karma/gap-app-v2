@@ -68,6 +68,10 @@ export const CommunitySelectionScreen: React.FC = () => {
     fetchCommunitiesData();
   }, [flowType]);
 
+  const selectedCommunity = allCommunities.find(
+    (community) => community.uid.toLowerCase() === formData.community?.toLowerCase()
+  );
+
   // Note: React Query automatically handles cache invalidation when params change
   // No need for manual reset
 
@@ -207,7 +211,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               }
               communityUID={formData.community}
               chainId={communityNetworkId}
-              canAdd={flowType === "grant"}
+              canAdd={flowType === "grant" && !selectedCommunity?.disableCustomGrants}
               setValue={(field: string, value?: string, _options?: { shouldValidate: boolean }) => {
                 if (field === "programId" && !isEditing) {
                   updateFormData({ programId: value });

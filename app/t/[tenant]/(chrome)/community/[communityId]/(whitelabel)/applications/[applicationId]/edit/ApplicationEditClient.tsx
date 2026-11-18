@@ -1,13 +1,14 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import { useMemo } from "react";
 import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { ApplicationForm } from "@/src/features/applications/components/ApplicationForm";
 import { useApplicationStatusHistory } from "@/src/features/applications/hooks/use-application-status-history";
+import { useApplicationUpdate } from "@/src/features/applications/hooks/use-application-update";
 import {
   transformDataForDisplay,
   transformDataForSubmission,
@@ -24,7 +25,6 @@ interface ApplicationEditClientProps {
 
 export function ApplicationEditClient({ communityId, application }: ApplicationEditClientProps) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const isAdmin = useIsFundingPlatformAdmin();
 
   // The SSR fetch is tokenless, so the backend strips the private revision
@@ -48,7 +48,7 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
   } = useQuery({
     queryKey: ["application", "program", application.programId],
     queryFn: () =>
-      // TODO(#1775): add zod schema
+      // TODO: add zod schema
       api.get<FundingProgram>(`/v2/funding-program-configs/${application.programId}`),
     staleTime: 1000 * 60 * 10,
   });
@@ -61,39 +61,27 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
   const isDisabled =
     !isAdmin && (!program?.applicationConfig?.isEnabled || (isDeadlinePassed && !isRevision));
 
-  const updateMutation = useMutation({
-    mutationFn: (applicationData: Record<string, unknown>) =>
-      // TODO(#1775): add zod schema
-      api.put<Application>(`/v2/funding-applications/${application.referenceNumber}`, {
-        applicationData,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["application", application.referenceNumber],
-      });
-      toast.success(
-        isRevision ? "Application resubmitted for review" : "Application updated successfully"
-      );
-      router.push(`/community/${communityId}/applications/${application.referenceNumber}`);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update application");
-    },
-  });
+  const { submit, saveDraft, isSavingDraft } = useApplicationUpdate(communityId, application);
 
   const formSchema = program?.applicationConfig?.formSchema;
-  const questions = formSchema ? transformFormSchemaToQuestions(formSchema) : [];
+  const questions = useMemo(
+    () => (formSchema ? transformFormSchemaToQuestions(formSchema) : []),
+    [formSchema]
+  );
 
-  const initialData = formSchema
-    ? (transformDataForDisplay(
-        application.applicationData as Record<string, unknown>,
-        questions
-      ) as ApplicationFormData)
-    : undefined;
+  const initialData = useMemo(
+    () =>
+      formSchema
+        ? (transformDataForDisplay(
+            application.applicationData as Record<string, unknown>,
+            questions
+          ) as ApplicationFormData)
+        : undefined,
+    [formSchema, application.applicationData, questions]
+  );
 
   const handleSubmit = async (data: ApplicationFormData) => {
-    const submissionData = transformDataForSubmission(data);
-    await updateMutation.mutateAsync(submissionData);
+    await submit(transformDataForSubmission(data));
   };
 
   // Loading
@@ -208,6 +196,8 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
           onCancel={() =>
             router.push(`/community/${communityId}/applications/${application.referenceNumber}`)
           }
+          onSaveDraft={saveDraft}
+          isSavingDraft={isSavingDraft}
           isDisabled={isDisabled}
           programName={programName}
         />

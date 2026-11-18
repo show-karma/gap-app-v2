@@ -126,6 +126,9 @@ vi.mock("@/utilities/queryKeys", () => ({
 vi.mock("@/utilities/query-client", () => ({
   queryClient: { invalidateQueries: vi.fn(), refetchQueries: vi.fn(), setQueryData: vi.fn() },
 }));
+vi.mock("@/utilities/queries/refreshProjectQueries", () => ({
+  refreshProjectQueries: vi.fn().mockResolvedValue(undefined),
+}));
 // Resolve immediately: the edit hook polls for the new milestone, and the
 // analytics assertions are about what the terminal legs carry, not the poll.
 vi.mock("@/utilities/retries", () => ({ retryUntilConditionMet: vi.fn().mockResolvedValue(true) }));

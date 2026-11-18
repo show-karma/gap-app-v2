@@ -12,6 +12,7 @@ interface Overrides {
   viewerRole?: ApplicationViewerRole;
   hasMilestones?: boolean;
   postApprovalPending?: boolean;
+  canEdit?: boolean;
   onGoToMilestones?: () => void;
   onGoToPostApproval?: () => void;
   onViewActivity?: () => void;
@@ -25,6 +26,7 @@ function renderCard(overrides: Overrides = {}) {
       hasMilestones={overrides.hasMilestones ?? false}
       postApprovalPending={overrides.postApprovalPending ?? false}
       editHref="/edit"
+      canEdit={overrides.canEdit}
       reviewHref="/review"
       onGoToMilestones={overrides.onGoToMilestones}
       onGoToPostApproval={overrides.onGoToPostApproval}
@@ -65,6 +67,21 @@ describe("NextStepCard", () => {
       "href",
       "/edit"
     );
+  });
+
+  it("asks the owner to review and submit a draft", () => {
+    renderCard({ status: "draft" });
+    expect(screen.getByText("Draft — not submitted yet")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /review and submit/i })).toHaveAttribute(
+      "href",
+      "/edit"
+    );
+  });
+
+  it("drops the draft CTA when the owner can no longer edit it", () => {
+    renderCard({ status: "draft", canEdit: false });
+    expect(screen.getByText("Draft not submitted")).toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("offers the milestones CTA for an approved application with milestones", () => {

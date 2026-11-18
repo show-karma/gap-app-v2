@@ -26,6 +26,8 @@ import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
+import { queryClient } from "@/utilities/query-client";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -183,6 +185,12 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
               });
               showSuccess(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
               afterSubmit?.();
+              // The poll read the service directly; the cached grants and the
+              // profile feed (observed statically) still hold the old data.
+              void refreshProjectQueries(queryClient, {
+                identifiers: [project.uid, project.details?.slug],
+                families: ["project-updates", "project-grants"],
+              });
               setTimeout(() => {
                 const targetPath = PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                   project.details?.slug || project.uid,

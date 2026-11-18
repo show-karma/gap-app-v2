@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   routerPush: vi.fn(),
   submit: vi.fn(),
   toastError: vi.fn(),
+  toastSuccess: vi.fn(),
   searchParams: new URLSearchParams(),
   isStaff: false as boolean | null,
   isCommunityAdmin: false,
@@ -24,6 +25,7 @@ const mocks = vi.hoisted(() => ({
         ai?: { evaluation: string; promptId: string }
       ) => Promise<void>)
     | null,
+  capturedOnSaveDraft: null as ((data: Record<string, unknown>) => void) | null,
   modalState: null as { isOpen: boolean; error: string | null } | null,
 }));
 
@@ -68,13 +70,16 @@ vi.mock("@/src/features/applications/hooks/use-application-submit", () => ({
 vi.mock("@/src/features/applications/components/ApplicationForm", () => ({
   ApplicationForm: ({
     onSubmit,
+    onSaveDraft,
   }: {
     onSubmit: (
       data: Record<string, unknown>,
       ai?: { evaluation: string; promptId: string }
     ) => Promise<void>;
+    onSaveDraft?: (data: Record<string, unknown>) => void;
   }) => {
     mocks.capturedOnSubmit = onSubmit;
+    mocks.capturedOnSaveDraft = onSaveDraft ?? null;
     return <div data-testid="application-form">Form Body</div>;
   },
 }));
@@ -88,7 +93,10 @@ vi.mock("@/src/features/applications/components/AccessCodeModal", () => ({
 
 vi.mock("react-hot-toast", () => ({
   __esModule: true,
-  default: { error: (msg: string) => mocks.toastError(msg) },
+  default: {
+    error: (msg: string) => mocks.toastError(msg),
+    success: (msg: string) => mocks.toastSuccess(msg),
+  },
 }));
 
 const mockApiPost = api.post as unknown as ReturnType<typeof vi.fn>;
@@ -130,6 +138,8 @@ function resetMocks() {
   mocks.routerPush.mockReset();
   mocks.submit.mockReset();
   mocks.toastError.mockReset();
+  mocks.toastSuccess.mockReset();
+  mocks.capturedOnSaveDraft = null;
   mocks.searchParams = new URLSearchParams();
   mocks.isStaff = false;
   mocks.isCommunityAdmin = false;
@@ -510,6 +520,148 @@ describe("ApplicationFormClient", () => {
         undefined,
         "good-code"
       );
+    });
+  });
+
+  describe("save draft flow", () => {
+    async function unlockGatedForm() {
+      mockApiPost.mockResolvedValue({ valid: true });
+      render(
+        <Wrapper>
+          <ApplicationFormClient
+            {...gatedProps}
+            questions={[{ id: "email", type: "email", label: "Email", required: true } as never]}
+          />
+        </Wrapper>
+      );
+      const input = await screen.findByPlaceholderText("Enter your access code");
+      fireEvent.change(input, { target: { value: "good-code" } });
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: /unlock application/i }));
+      });
+      await waitFor(() => {
+        expect(screen.getByTestId("application-form")).toBeInTheDocument();
+      });
+    }
+
+    it("offers Save draft to the form", () => {
+      render(
+        <Wrapper>
+          <ApplicationFormClient {...openProps} />
+        </Wrapper>
+      );
+
+      expect(mocks.capturedOnSaveDraft).toEqual(expect.any(Function));
+    });
+
+    it("creates the draft with the access code and opens its edit page", async () => {
+      await unlockGatedForm();
+      window.sessionStorage.setItem(`gap:application-form-auth:${PROGRAM_ID}:default`, "{}");
+      mocks.submit.mockResolvedValueOnce({ id: "app-1", referenceNumber: "APP-DRAFT" });
+
+      await act(async () => {
+        mocks.capturedOnSaveDraft?.({ Email: "user@example.com" });
+      });
+
+      await waitFor(() => {
+        expect(mocks.routerPush).toHaveBeenCalledWith(
+          `/community/${COMMUNITY_ID}/applications/APP-DRAFT/edit`
+        );
+      });
+      expect(mocks.submit).toHaveBeenCalledWith(
+        PROGRAM_ID,
+        { Email: "user@example.com" },
+        "user@example.com",
+        undefined,
+        "good-code",
+        { saveAsDraft: true }
+      );
+      expect(mocks.toastSuccess).toHaveBeenCalledWith("Draft saved");
+      expect(
+        window.sessionStorage.getItem(`gap:application-form-auth:${PROGRAM_ID}:default`)
+      ).toBeNull();
+    });
+
+    it("saves partial work: only the email is needed", async () => {
+      render(
+        <Wrapper>
+          <ApplicationFormClient
+            {...openProps}
+            questions={
+              [
+                { id: "email", type: "email", label: "Email", required: true },
+                { id: "name", type: "text", label: "Project name", required: true },
+              ] as never
+            }
+          />
+        </Wrapper>
+      );
+      mocks.submit.mockResolvedValueOnce({ id: "app-1", referenceNumber: "APP-DRAFT" });
+
+      await act(async () => {
+        mocks.capturedOnSaveDraft?.({ Email: "user@example.com" });
+      });
+
+      await waitFor(() => {
+        expect(mocks.submit).toHaveBeenCalledWith(
+          PROGRAM_ID,
+          { Email: "user@example.com" },
+          "user@example.com",
+          undefined,
+          undefined,
+          { saveAsDraft: true }
+        );
+      });
+    });
+
+    it.each([
+      ["missing", {}],
+      ["invalid", { Email: "not-an-email" }],
+    ])("blocks the save when the email is %s", async (_case, data) => {
+      render(
+        <Wrapper>
+          <ApplicationFormClient {...openProps} />
+        </Wrapper>
+      );
+
+      await act(async () => {
+        mocks.capturedOnSaveDraft?.(data);
+      });
+
+      expect(mocks.toastError).toHaveBeenCalledWith("Add your email address before saving a draft");
+      expect(mocks.submit).not.toHaveBeenCalled();
+      expect(mocks.routerPush).not.toHaveBeenCalled();
+    });
+
+    it("reopens the access-code modal when the draft save hits an access-code error", async () => {
+      await unlockGatedForm();
+      mocks.submit.mockRejectedValueOnce(new Error("Access code is invalid"));
+
+      await act(async () => {
+        mocks.capturedOnSaveDraft?.({ Email: "user@example.com" });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Enter your access code")).toBeInTheDocument();
+      });
+      expect(window.sessionStorage.getItem(STORAGE_KEY)).toBeNull();
+      expect(mocks.routerPush).not.toHaveBeenCalled();
+    });
+
+    it("toasts other draft save errors", async () => {
+      render(
+        <Wrapper>
+          <ApplicationFormClient {...openProps} />
+        </Wrapper>
+      );
+      mocks.submit.mockRejectedValueOnce(new Error("Server is down"));
+
+      await act(async () => {
+        mocks.capturedOnSaveDraft?.({ Email: "user@example.com" });
+      });
+
+      await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("Server is down"));
+      expect(mocks.routerPush).not.toHaveBeenCalled();
     });
   });
 

@@ -77,4 +77,19 @@ describe("isRetryableChainError", () => {
       expect(isRetryableChainError(timeout)).toBe(true);
     });
   });
+  // A wallet that refuses the signing account (MetaMask locked, or the account
+  // not connected to the site) answers eth_sendTransaction with EIP-1193 4100,
+  // which ethers also wraps as "could not coalesce error". Resending cannot fix
+  // it until the user acts in the wallet.
+  describe("wallet authorization refusals (EIP-1193 4100) are never retryable", () => {
+    it("returns false for the ethers wrapper around a 4100", () => {
+      const refused = Object.assign(
+        new Error(
+          'could not coalesce error (error={ "code": 4100, "message": "The requested account and/or method has not been authorized by the user." }, code=UNKNOWN_ERROR, version=6.11.0)'
+        ),
+        { code: "UNKNOWN_ERROR", error: { code: 4100 } }
+      );
+      expect(isRetryableChainError(refused)).toBe(false);
+    });
+  });
 });

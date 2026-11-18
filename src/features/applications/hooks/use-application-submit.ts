@@ -17,12 +17,14 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
       applicantEmail,
       aiEvaluation,
       accessCode,
+      saveAsDraft,
     }: {
       programId: string;
       data: ApplicationFormData;
       applicantEmail: string;
       aiEvaluation?: { evaluation: string; promptId: string };
       accessCode?: string;
+      saveAsDraft?: boolean;
     }) => {
       const body: Record<string, unknown> = {
         programId,
@@ -31,22 +33,32 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
       };
       if (aiEvaluation) body.aiEvaluation = aiEvaluation;
       if (accessCode) body.accessCode = accessCode;
+      if (saveAsDraft) body.saveAsDraft = true;
 
-      // TODO(#1775): add zod schema
+      // TODO: add zod schema
       const response = await api.post<Application>(`/v2/funding-applications/${programId}`, body);
       if (!response) {
         throw new Error("Failed to submit application");
       }
       return response;
     },
-    onSuccess: (_application, { programId }) => {
+    onSuccess: (_application, { programId, saveAsDraft }) => {
+      if (saveAsDraft) {
+        track("application_draft_saved", {
+          program_id: programId,
+          community_id: communityId,
+          is_new: true,
+        });
+        return;
+      }
       track("application_submitted", {
         program_id: programId,
         community_id: communityId,
         time_to_submit_s: secondsSinceApplicationStarted(programId),
       });
     },
-    onError: (error, { programId }) => {
+    onError: (error, { programId, saveAsDraft }) => {
+      if (saveAsDraft) return;
       track("application_submit_failed", {
         program_id: programId,
         error_code: toErrorCode(error),
@@ -60,7 +72,8 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
       data: ApplicationFormData,
       applicantEmail: string,
       aiEvaluation?: { evaluation: string; promptId: string },
-      accessCode?: string
+      accessCode?: string,
+      options?: { saveAsDraft?: boolean }
     ): Promise<Application> => {
       return submitMutation.mutateAsync({
         programId,
@@ -68,6 +81,7 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
         applicantEmail,
         aiEvaluation,
         accessCode,
+        saveAsDraft: options?.saveAsDraft,
       });
     },
     [submitMutation]
@@ -76,6 +90,7 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
   return {
     submit,
     isSubmitting: submitMutation.isPending,
+    isSavingDraft: submitMutation.isPending && submitMutation.variables?.saveAsDraft === true,
     error: (submitMutation.error as Error | null) ?? null,
   };
 }

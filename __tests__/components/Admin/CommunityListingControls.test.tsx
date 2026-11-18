@@ -54,7 +54,7 @@ describe("CommunityListingControls", () => {
       setConfig(null);
       renderControls();
 
-      expect(screen.getByRole("checkbox")).toBeChecked();
+      expect(screen.getByRole("checkbox", { name: /public listing/i })).toBeChecked();
       expect(screen.getByRole("spinbutton")).toHaveValue(0);
     });
 
@@ -62,7 +62,7 @@ describe("CommunityListingControls", () => {
       setConfig({ rank: 3 });
       renderControls();
 
-      expect(screen.getByRole("checkbox")).toBeChecked();
+      expect(screen.getByRole("checkbox", { name: /public listing/i })).toBeChecked();
       expect(screen.getByRole("spinbutton")).toHaveValue(3);
     });
 
@@ -70,7 +70,7 @@ describe("CommunityListingControls", () => {
       setConfig({ public: false, rank: 7 });
       renderControls();
 
-      expect(screen.getByRole("checkbox")).not.toBeChecked();
+      expect(screen.getByRole("checkbox", { name: /public listing/i })).not.toBeChecked();
       expect(screen.getByRole("spinbutton")).toHaveValue(7);
     });
   });
@@ -80,7 +80,7 @@ describe("CommunityListingControls", () => {
       setConfig({ public: true, rank: 4 });
       renderControls();
 
-      fireEvent.click(screen.getByRole("checkbox"));
+      fireEvent.click(screen.getByRole("checkbox", { name: /public listing/i }));
 
       expect(mockMutate).toHaveBeenCalledTimes(1);
       expect(mockMutate).toHaveBeenCalledWith({
@@ -96,7 +96,7 @@ describe("CommunityListingControls", () => {
 
       // Type a new rank but do not wait for the debounce to fire.
       fireEvent.change(screen.getByRole("spinbutton"), { target: { value: "9" } });
-      fireEvent.click(screen.getByRole("checkbox"));
+      fireEvent.click(screen.getByRole("checkbox", { name: /public listing/i }));
 
       // The public save fires immediately with the typed-but-unsaved rank.
       expect(mockMutate).toHaveBeenCalledTimes(1);
@@ -164,13 +164,52 @@ describe("CommunityListingControls", () => {
     });
   });
 
+  describe("only allow grants from existing programs toggle", () => {
+    const disableCustomGrantsCheckbox = () =>
+      screen.getByRole("checkbox", { name: /only allow grants from existing programs/i });
+
+    it("is unchecked when the config does not enable it", () => {
+      setConfig({ public: true, rank: 2 });
+      renderControls();
+
+      expect(disableCustomGrantsCheckbox()).not.toBeChecked();
+    });
+
+    it("is checked when the config enables it", () => {
+      setConfig({ public: true, rank: 2, disableCustomGrants: true });
+      renderControls();
+
+      expect(disableCustomGrantsCheckbox()).toBeChecked();
+    });
+
+    it("saves immediately, carrying the current public flag and rank", () => {
+      setConfig({ public: false, rank: 5 });
+      renderControls();
+
+      fireEvent.click(disableCustomGrantsCheckbox());
+
+      expect(mockMutate).toHaveBeenCalledWith({
+        slug: "filecoin",
+        config: { public: false, rank: 5, disableCustomGrants: true },
+      });
+    });
+
+    it("is disabled while a save is in flight", () => {
+      setConfig({ public: true, rank: 1 });
+      setMutation({ isPending: true });
+      renderControls();
+
+      expect(disableCustomGrantsCheckbox()).toBeDisabled();
+    });
+  });
+
   describe("pending state", () => {
     it("disables both controls while a save is in flight", () => {
       setConfig({ public: true, rank: 1 });
       setMutation({ isPending: true });
       renderControls();
 
-      expect(screen.getByRole("checkbox")).toBeDisabled();
+      expect(screen.getByRole("checkbox", { name: /public listing/i })).toBeDisabled();
       expect(screen.getByRole("spinbutton")).toBeDisabled();
     });
   });

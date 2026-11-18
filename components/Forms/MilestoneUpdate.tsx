@@ -39,7 +39,7 @@ import {
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { createProjectQueryPredicate } from "@/utilities/queryKeys";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
@@ -211,6 +211,12 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
     useAttestationToast();
   const project = useProjectStore((state) => state.project);
+  // Invalidation skips the profile's statically-observed feed; saves refresh it.
+  const refreshProfile = (families: Parameters<typeof refreshProjectQueries>[1]["families"]) =>
+    refreshProjectQueries(queryClient, {
+      identifiers: [project?.uid, project?.details?.slug],
+      families,
+    });
 
   // Fetch grants using dedicated hook
   const { grants, refetch: refetchGrants } = useProjectGrants(project?.uid || "");
@@ -371,6 +377,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
 
+                await refreshProfile(["project-updates"]);
+
                 // Let the share dialog render before any route transition.
                 if (pathname !== targetPath) {
                   setTimeout(() => {
@@ -489,6 +497,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 );
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
+
+                await refreshProfile(["project-updates"]);
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -549,12 +559,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         });
         toast.success("Invoice submitted successfully", { id: loadingToastId });
 
-        await queryClient.invalidateQueries({
-          predicate: createProjectQueryPredicate(project?.uid || ""),
-        });
-
         cancelEditing(false);
         parentSetIsUpdating?.(false);
+
+        await refreshProfile(["project-updates", "project-grants"]);
       } catch (invoiceError) {
         errorManager("Invoice-only submission failed", invoiceError, {
           grantUID,
@@ -599,9 +607,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         toast.success("Invoice submitted successfully");
 
         // Invalidate project grants and updates so milestone.invoiceInfo is fresh
-        await queryClient.invalidateQueries({
-          predicate: createProjectQueryPredicate(project?.uid || ""),
-        });
+        await refreshProfile(["project-updates", "project-grants"]);
       } catch (invoiceError) {
         errorManager("Invoice submission failed after milestone update", invoiceError);
         // Surface the backend's specific reason; the milestone update

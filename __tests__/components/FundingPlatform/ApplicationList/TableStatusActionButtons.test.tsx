@@ -314,6 +314,14 @@ describe("TableStatusActionButtons", () => {
 
       expect(container.firstChild).toBeNull();
     });
+
+    it("should validate that draft has no transitions (empty array)", () => {
+      const { container } = render(
+        <TableStatusActionButtons {...defaultProps} currentStatus="draft" />
+      );
+
+      expect(container.firstChild).toBeNull();
+    });
   });
 
   describe("Button Rendering for Each Status", () => {

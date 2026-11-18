@@ -20,6 +20,11 @@ interface StatusPresentation {
 }
 
 const TIMELINE_STATUS_CONFIG: Record<FundingApplicationStatusV2, StatusPresentation> = {
+  draft: {
+    icon: ClockIcon,
+    color: "text-muted-foreground bg-muted",
+    label: "Draft",
+  },
   pending: {
     icon: ClockIcon,
     color: "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900",
