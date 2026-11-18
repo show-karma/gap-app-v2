@@ -61,8 +61,8 @@ const cachedProjectOf = (query: Query): Partial<Project> | undefined => {
  *   before the write cannot land after the fresh data and revert it;
  * - fresh data in hand (`project`, `updates`) is written with `setQueryData`;
  * - other observed queries are fetched directly (`query.fetch()` is not gated
- *   on `staleTime`). Those fetches are awaited unless paused offline; a failure
- *   is swallowed, since the write itself already succeeded;
+ *   on `staleTime`). Those fetches are awaited until they settle or pause; a
+ *   failure is swallowed, since the write itself already succeeded;
  * - unobserved queries are removed, because a static observer mounting later
  *   would show them as-is and never refetch.
  *
@@ -140,13 +140,25 @@ export async function refreshProjectQueries(
     queryClient.setQueryData(queryKey, data);
   }
 
-  const refetches = toRefetch.map((query) => {
-    const promise = query.fetch().catch(() => undefined);
-    // A fetch paused while offline resolves only on reconnect; do not hold the
-    // caller's follow-up work (navigation, invoice submission) hostage to it.
-    return query.state.fetchStatus === "paused" ? Promise.resolve() : promise;
+  // A fetch that pauses — offline or unfocused, at the start or before a retry —
+  // resolves only once that clears; never hold the caller's follow-up work
+  // (navigation, invoice submission) hostage to it.
+  await Promise.all(toRefetch.map((query) => settledOrPaused(queryCache, query, query.fetch())));
+}
+
+/** Resolves when `promise` settles or `query` pauses, whichever comes first. */
+function settledOrPaused(queryCache: QueryCache, query: Query, promise: Promise<unknown>) {
+  return new Promise<void>((resolve) => {
+    function done() {
+      unsubscribe();
+      resolve();
+    }
+    const unsubscribe = queryCache.subscribe((event) => {
+      if (event.query === query && query.state.fetchStatus === "paused") done();
+    });
+    if (query.state.fetchStatus === "paused") done();
+    promise.then(done, done);
   });
-  await Promise.all(refetches);
 }
 
 function collectIdentifiers(queryCache: QueryCache, input: RefreshProjectQueriesInput) {

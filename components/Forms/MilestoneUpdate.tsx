@@ -211,9 +211,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
     useAttestationToast();
   const project = useProjectStore((state) => state.project);
-  // The profile observes the activity feed (where milestones show) statically,
-  // which invalidation skips, so each successful save refreshes it explicitly
-  // once the form has closed — a feed refetch must not unmount it mid-flow.
+  // Invalidation skips the profile's statically-observed feed; saves refresh it.
   const refreshProfile = (families: Parameters<typeof refreshProjectQueries>[1]["families"]) =>
     refreshProjectQueries(queryClient, {
       identifiers: [project?.uid, project?.details?.slug],
@@ -379,7 +377,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
 
-                // The grants poll above already refreshed the grants.
                 await refreshProfile(["project-updates"]);
 
                 // Let the share dialog render before any route transition.
@@ -501,7 +498,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
 
-                // The grants poll above already refreshed the grants.
                 await refreshProfile(["project-updates"]);
               }
               retries -= 1;

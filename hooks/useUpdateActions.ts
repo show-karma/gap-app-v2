@@ -57,13 +57,13 @@ export const useUpdateActions = (update: UpdateType) => {
   // Function to refresh data after successful deletion
   const refreshDataAfterDeletion = async () => {
     try {
-      // Refresh the feed and the grants (grant updates and milestones live in
-      // both) under the uid, the slug and the URL id alike. Not
+      // Refresh what a deletion can remove (activities, grant updates and
+      // milestones, impacts) under the uid, the slug and the URL id alike. Not
       // invalidateQueries: the profile observes these statically and
       // invalidation skips them.
       await refreshProjectQueries(queryClient, {
         identifiers: [project?.uid, project?.details?.slug, projectId as string | undefined],
-        families: ["project-updates", "project-grants"],
+        families: ["project-updates", "project-grants", "project-impacts"],
       });
 
       // Force a router refresh to update components that use direct API calls

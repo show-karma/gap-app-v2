@@ -311,6 +311,35 @@ describe("refreshProjectQueries — requests already in flight", () => {
   });
 });
 
+describe("refreshProjectQueries — a refetch that pauses before a retry", () => {
+  it("returns once the refetch pauses, without waiting for reconnect", async () => {
+    queryClient.setQueryData(updatesKey(SLUG), makeUpdates(["a"]));
+    // Online when the fetch starts; the first attempt fails and the connection
+    // drops before the retry, so the retry pauses rather than runs.
+    const observer = new QueryObserver<UpdatesApiResponse>(queryClient, {
+      queryKey: updatesKey(SLUG),
+      queryFn: async () => {
+        onlineManager.setOnline(false);
+        throw new Error("network blip");
+      },
+      staleTime: PRERENDER_SAFE_STALE_TIME,
+      retry: 1,
+      retryDelay: 10,
+    });
+    unsubscribers.push(observer.subscribe(() => {}));
+    try {
+      const outcome = await Promise.race([
+        refreshProjectQueries(queryClient, { identifiers: [SLUG] }).then(() => "returned"),
+        new Promise((r) => setTimeout(() => r("blocked"), 300)),
+      ]);
+      expect(outcome).toBe("returned");
+      expect(queryClient.getQueryState(updatesKey(SLUG))?.fetchStatus).toBe("paused");
+    } finally {
+      onlineManager.setOnline(true);
+    }
+  });
+});
+
 describe("refreshProjectQueries — identifiers never cross projects", () => {
   const OTHER_UID = "0x00000000000000000000000000000000000000b2";
   const other = (slug: string) =>

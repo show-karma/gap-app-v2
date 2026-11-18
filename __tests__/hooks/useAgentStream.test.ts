@@ -1075,8 +1075,6 @@ describe("useAgentStream", () => {
         await result.current.sendMessage("Confirm changes");
       });
 
-      // Not invalidateQueries: the project profile observes its queries
-      // statically, which invalidation skips.
       expect(mockRefreshProjectQueries).toHaveBeenCalledWith(testQueryClient, {
         identifiers: ["proj-123"],
       });

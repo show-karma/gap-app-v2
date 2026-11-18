@@ -678,9 +678,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
             if (alreadyExists) {
               retries = 0;
-              // The profile's feed is keyed by the URL (usually the slug) and
-              // observed statically, so invalidation never reaches it. Put the
-              // feed we just read into it before anything says "success".
+              // The page's feed is observed statically; write it before "success".
               await refreshProjectQueries(queryClient, {
                 identifiers: [projectUid, projectSlug],
                 updates: updatesData,
