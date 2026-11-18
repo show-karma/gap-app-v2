@@ -6,6 +6,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   Cog6ToothIcon,
+  DocumentTextIcon,
   EyeIcon as EyeIconOutline,
   ListBulletIcon,
   MagnifyingGlassIcon,
@@ -134,6 +135,7 @@ function FundingPlatformContent() {
       return {
         totalPrograms: 0,
         totalApplications: 0,
+        draft: 0,
         approved: 0,
         rejected: 0,
         pending: 0,
@@ -148,6 +150,7 @@ function FundingPlatformContent() {
         return {
           totalPrograms: acc.totalPrograms + 1,
           totalApplications: acc.totalApplications + (programStats?.totalApplications || 0),
+          draft: acc.draft + (programStats?.draftApplications || 0),
           approved: acc.approved + (programStats?.approvedApplications || 0),
           rejected: acc.rejected + (programStats?.rejectedApplications || 0),
           pending: acc.pending + (programStats?.pendingApplications || 0),
@@ -159,6 +162,7 @@ function FundingPlatformContent() {
       {
         totalPrograms: 0,
         totalApplications: 0,
+        draft: 0,
         approved: 0,
         rejected: 0,
         pending: 0,
@@ -234,6 +238,15 @@ function FundingPlatformContent() {
       alwaysShow: true,
     },
     {
+      title: "Draft",
+      value: formatCurrency(statistics.draft),
+      rawValue: statistics.draft,
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
+      icon: <DocumentTextIcon className="h-5 w-5 text-muted-foreground" />,
+      alwaysShow: false,
+    },
+    {
       title: "Approved",
       value: formatCurrency(statistics.approved),
       rawValue: statistics.approved,
@@ -290,6 +303,7 @@ function FundingPlatformContent() {
   };
 
   const applicationProgress = (program: FundingProgram) => {
+    const draftApplications = program.metrics?.draftApplications || 0;
     const approvedApplications = program.metrics?.approvedApplications || 0;
     const rejectedApplications = program.metrics?.rejectedApplications || 0;
     const pendingApplications = program.metrics?.pendingApplications || 0;
@@ -297,6 +311,12 @@ function FundingPlatformContent() {
     const underReviewApplications = program.metrics?.underReviewApplications || 0;
 
     return [
+      {
+        title: "Draft",
+        value: draftApplications,
+        color: "text-muted-foreground",
+        bgColor: "bg-muted-foreground",
+      },
       {
         title: "Approved",
         value: approvedApplications,
@@ -606,11 +626,11 @@ function FundingPlatformContent() {
 
                   {/* Application Status Breakdown */}
                   <div className="mb-3">
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-6 gap-1">
                       {applicationProgress(program).map((item) => (
                         <div key={item.title} className="text-center">
                           <p className={cn("text-xs font-bold", item.color)}>{item.value}</p>
-                          <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                          <p className="text-[10px] whitespace-nowrap text-gray-500 dark:text-gray-400">
                             {item.title}
                           </p>
                         </div>

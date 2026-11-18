@@ -23,6 +23,8 @@ import { api } from "@/utilities/api/client";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
+import { queryClient } from "@/utilities/query-client";
 import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
@@ -98,8 +100,13 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             return !fetchedMilestone?.completed;
           },
           async () => {
-            // Refresh both React Query cache and Zustand store
+            // Refresh both React Query cache and Zustand store, and the
+            // statically-observed profile feed the milestone also appears in.
             await refreshGrant();
+            void refreshProjectQueries(queryClient, {
+              identifiers: [project?.uid, project?.details?.slug],
+              families: ["project-updates"],
+            });
             callbackFn?.();
           }
         );

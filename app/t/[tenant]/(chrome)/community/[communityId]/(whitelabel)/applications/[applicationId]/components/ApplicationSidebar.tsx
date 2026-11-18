@@ -17,6 +17,7 @@ interface ApplicationSidebarProps {
   hasMilestones: boolean;
   postApprovalPending: boolean;
   editHref: string;
+  canEdit: boolean;
   reviewHref: string;
   /**
    * Status history with `reason` bodies already gated for the current viewer.
@@ -39,6 +40,7 @@ export function ApplicationSidebar({
   hasMilestones,
   postApprovalPending,
   editHref,
+  canEdit,
   reviewHref,
   statusHistory,
   onGoToMilestones,
@@ -53,6 +55,7 @@ export function ApplicationSidebar({
         hasMilestones={hasMilestones}
         postApprovalPending={postApprovalPending}
         editHref={editHref}
+        canEdit={canEdit}
         reviewHref={reviewHref}
         onGoToMilestones={onGoToMilestones}
         onGoToPostApproval={onGoToPostApproval}

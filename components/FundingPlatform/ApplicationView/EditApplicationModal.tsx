@@ -91,6 +91,7 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
         applicationId: application.referenceNumber || application.id,
         // biome-ignore lint/suspicious/noExplicitAny: ApplicationSubmission interface uses Record<string, any>
         applicationData: applicationData as Record<string, any>,
+        ...(application.status === "draft" ? { saveAsDraft: true } : {}),
       });
       onSuccess?.();
       handleClose();

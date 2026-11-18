@@ -32,7 +32,12 @@ import {
 } from "@/utilities/gasless";
 import { appNetwork } from "@/utilities/network";
 import { wait } from "@/utilities/wait";
-import { SignerUnavailableError } from "@/utilities/wallet/signerReadiness";
+import { ensureAccountAuthorized } from "@/utilities/wallet/accountAuthorization";
+import {
+  isSignerUnavailableError,
+  isUserRejectionError,
+  SignerUnavailableError,
+} from "@/utilities/wallet/signerReadiness";
 import {
   selectUsableWallet,
   type WalletStateSnapshot,
@@ -463,6 +468,11 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         try {
           await externalWallet.switchChain(targetChainId);
           const provider = await externalWallet.getEthereumProvider();
+          // Privy can list the linked wallet while the extension refuses to
+          // sign for it (locked, or that account isn't connected to this
+          // site). Ask now, so the user gets an unlock/connect prompt instead
+          // of a 4100 at eth_sendTransaction.
+          await ensureAccountAuthorized(provider, externalWallet.address);
           const chain = resolveChain(targetChainId);
           if (!chain) {
             throw new Error(`Unsupported chain: ${targetChainId}`);
@@ -478,6 +488,12 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
           }
           return signer;
         } catch (setupError) {
+          // The user cancelled the prompt, or the wallet will not expose the
+          // linked account: the wagmi fallback talks to the same extension and
+          // cannot do better (and must never sign as some other account).
+          if (isSignerUnavailableError(setupError) || isUserRejectionError(setupError)) {
+            throw setupError;
+          }
           // Don't say "Privy provider failed" here — the failure can be
           // anything inside the external-wallet setup (switchChain, the
           // chain catalog lookup, the WalletClient build). Privy is just

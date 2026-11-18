@@ -69,6 +69,7 @@ export const ApplicationListFilterBar: FC<ApplicationListFilterBarProps> = ({
           className={inputClass}
         >
           <option value="">All Statuses</option>
+          <option value="draft">Draft</option>
           <option value="pending">Pending</option>
           <option value="resubmitted">Resubmitted</option>
           <option value="under_review">Under Review</option>

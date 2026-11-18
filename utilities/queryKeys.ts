@@ -41,6 +41,11 @@ const PROJECT_QUERY_PREFIXES = [
  * Use explicit invalidation when:
  * - Only 1-2 specific queries need invalidation
  * - You need fine-grained control over what gets invalidated
+ *
+ * NOT for the project profile: it observes its queries with
+ * `staleTime: "static"`, and `invalidateQueries` skips those. After a write
+ * that the profile shows, use `refreshProjectQueries`
+ * (utilities/queries/refreshProjectQueries.ts) instead.
  */
 export const createProjectQueryPredicate = (projectIdOrSlug: string) => {
   return (query: Query): boolean => {

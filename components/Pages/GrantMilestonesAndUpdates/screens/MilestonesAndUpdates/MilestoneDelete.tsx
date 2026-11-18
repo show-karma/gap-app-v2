@@ -14,6 +14,8 @@ import type { GrantMilestone } from "@/types/v2/grant";
 import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
+import { queryClient } from "@/utilities/query-client";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 
@@ -90,6 +92,11 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         // This ensures the UI updates and the user sees the current state
         await refetchGrants();
         await refreshGrant();
+        // The statically-observed profile feed needs an explicit refresh.
+        void refreshProjectQueries(queryClient, {
+          identifiers: [project?.uid, project?.details?.slug],
+          families: ["project-updates"],
+        });
       };
       if (!isOnChainAuthorized) {
         await performOffChainRevoke({

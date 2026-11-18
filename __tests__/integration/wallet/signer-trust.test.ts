@@ -77,12 +77,21 @@ import { WALLET_READY_TIMEOUT_MS } from "../../../utilities/wallet/waitForUsable
 const EMBEDDED = "0xEmbedded1111111111111111111111111111111111";
 const FOREIGN_METAMASK = "0x9b75AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
+/** An unlocked extension that has this site connected to `address`. */
+function authorizedProvider(address: string) {
+  return {
+    request: vi.fn(async ({ method }: { method: string }) =>
+      method === "eth_accounts" ? [address] : undefined
+    ),
+  };
+}
+
 function foreignMetaMask() {
   return {
     address: FOREIGN_METAMASK,
     walletClientType: "metamask",
     switchChain: vi.fn().mockResolvedValue(undefined),
-    getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+    getEthereumProvider: vi.fn().mockResolvedValue(authorizedProvider(FOREIGN_METAMASK)),
   };
 }
 
@@ -174,7 +183,7 @@ describe("useZeroDevSigner — linked-wallet signing trust (issue #1574)", () =>
       address: FOREIGN_METAMASK,
       walletClientType: "metamask",
       switchChain: vi.fn().mockResolvedValue(undefined),
-      getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+      getEthereumProvider: vi.fn().mockResolvedValue(authorizedProvider(FOREIGN_METAMASK)),
     };
     mockPrivyState.user = {
       linkedAccounts: [{ type: "wallet", address: FOREIGN_METAMASK }],
@@ -235,7 +244,7 @@ describe("useZeroDevSigner — linked-wallet signing trust (issue #1574)", () =>
       address: LINKED_EXTERNAL,
       walletClientType: "metamask",
       switchChain: vi.fn().mockResolvedValue(undefined),
-      getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn() }),
+      getEthereumProvider: vi.fn().mockResolvedValue(authorizedProvider(LINKED_EXTERNAL)),
     };
     mockPrivyState.user = {
       linkedAccounts: [

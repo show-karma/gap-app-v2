@@ -24,14 +24,26 @@ type SignerUnavailableReason =
   /** Email/social login user whose embedded wallet hasn't been created yet. */
   | "embedded-wallet-provisioning"
   /** Wallets are hydrated and the user simply has no usable wallet connected. */
-  | "no-wallet-connected";
+  | "no-wallet-connected"
+  /**
+   * The wallet extension has not authorized the signing account for this site
+   * (EIP-1193 code 4100): it is locked, or the account linked to the login is
+   * not among the accounts connected to this origin.
+   */
+  | "account-not-authorized";
 
 const REASON_MESSAGES: Record<SignerUnavailableReason, string> = {
   "wallets-hydrating": "Your wallet is still being prepared. Please try again in a moment.",
   "embedded-wallet-provisioning":
     "Your wallet is still being prepared. Please try again in a moment.",
   "no-wallet-connected": "No wallet is connected. Please connect your wallet and try again.",
+  "account-not-authorized":
+    "Your wallet hasn't authorized this site to use the account you signed in with. Unlock your wallet, connect or switch to that account, and try again.",
 };
+
+function shortAddress(address: string): string {
+  return address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
+}
 
 /**
  * Thrown by `getAttestationSigner` when no usable wallet exists after the
@@ -44,8 +56,16 @@ export class SignerUnavailableError extends Error {
   /** Marks this as an expected user/lifecycle state — never report to Sentry. */
   public readonly expected = true as const;
 
-  constructor(public readonly reason: SignerUnavailableReason) {
-    super(REASON_MESSAGES[reason]);
+  constructor(
+    public readonly reason: SignerUnavailableReason,
+    /** The account the wallet must expose, when known — named in the message. */
+    address?: string | null
+  ) {
+    super(
+      reason === "account-not-authorized" && address
+        ? `Your wallet hasn't authorized this site to use the account you signed in with (${shortAddress(address)}). Unlock your wallet, connect or switch to that account, and try again.`
+        : REASON_MESSAGES[reason]
+    );
     this.name = "SignerUnavailableError";
   }
 }

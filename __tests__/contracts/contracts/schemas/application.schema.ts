@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const fundingApplicationStatusSchema = z.enum([
+  "draft",
   "pending",
   "under_review",
   "revision_requested",

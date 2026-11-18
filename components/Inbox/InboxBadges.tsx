@@ -38,6 +38,7 @@ const TONE_BADGE: Record<Tone, string> = {
 /** Maps a raw status string to a visual tone and a humanized label. */
 const STATUS_TONE: Record<string, Tone> = {
   // applications
+  draft: "slate",
   pending: "blue",
   resubmitted: "blue",
   under_review: "pink",
@@ -54,6 +55,7 @@ const STATUS_TONE: Record<string, Tone> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
+  draft: "Draft",
   pending: "Pending review",
   resubmitted: "Resubmitted",
   under_review: "Under review",

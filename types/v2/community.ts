@@ -10,6 +10,7 @@ export interface Community {
   };
   createdAt?: string;
   updatedAt?: string;
+  disableCustomGrants?: boolean;
 }
 
 export interface ProjectUpdatesBreakdown {

@@ -29,8 +29,24 @@ const followUpMocks = vi.hoisted(() => ({
   set: { mutate: vi.fn(), isPending: false, error: null, reset: vi.fn() },
 }));
 
+const draftFollowUp = vi.hoisted(() => ({
+  hook: vi.fn(),
+  state: {
+    targets: [] as unknown[],
+    isFinding: false,
+    isError: false,
+    retry: () => undefined,
+    pick: () => undefined,
+    reset: () => undefined,
+  },
+}));
+
 vi.mock("@/hooks/useFollowUpTargets", () => ({
   useFollowUpTargets: () => followUpMocks,
+  useDraftFollowUpTargets: (...args: unknown[]) => {
+    draftFollowUp.hook(...args);
+    return draftFollowUp.state;
+  },
 }));
 
 // DeleteDialog opens a Radix dialog; stub it to a plain trigger so these tests
@@ -76,6 +92,16 @@ function makeItem(overrides: Partial<IMilestoneActionItem> = {}): IMilestoneActi
   };
 }
 
+const SUGGESTED_DM = {
+  kind: "dm" as const,
+  teamId: "T1",
+  slackUserId: "U_MAHESH",
+  displayName: "Mahesh",
+  matchedBy: "program_reviewer" as const,
+  personName: "Mahesh",
+  source: "suggested" as const,
+};
+
 const createItem = vi.fn();
 const updateItem = vi.fn();
 const deleteItem = vi.fn();
@@ -101,6 +127,8 @@ const baseProps = { communityId: "filecoin", target: { kind: "milestone" as cons
 beforeEach(() => {
   vi.clearAllMocks();
   slackMocks.useSlackUserConnections.mockReturnValue(SLACK_CONNECTED);
+  draftFollowUp.state.targets = [];
+  draftFollowUp.state.isError = false;
   setHookState();
 });
 
@@ -192,11 +220,14 @@ describe("ActionItems", () => {
     });
     fireEvent.click(screen.getByText("Save"));
 
-    expect(createItem).toHaveBeenCalledWith({
-      content: "Called them",
-      followUpAt: "2026-09-25T00:00:00.000Z",
-      autoFollowUp: false,
-    });
+    expect(createItem).toHaveBeenCalledWith(
+      {
+        content: "Called them",
+        followUpAt: "2026-09-25T00:00:00.000Z",
+        autoFollowUp: false,
+      },
+      expect.any(Object)
+    );
   });
 
   it("opens the editor pre-filled when a follow-up suggestion is used", () => {
@@ -274,11 +305,103 @@ describe("ActionItems", () => {
     fireEvent.click(screen.getByLabelText("Auto follow-up on Slack"));
     fireEvent.click(screen.getByText("Save"));
 
-    expect(createItem).toHaveBeenCalledWith({
-      content: "Pinged Mahesh",
-      followUpAt: "2026-09-25T00:00:00.000Z",
-      autoFollowUp: true,
+    expect(createItem).toHaveBeenCalledWith(
+      {
+        content: "Pinged Mahesh",
+        followUpAt: "2026-09-25T00:00:00.000Z",
+        autoFollowUp: true,
+      },
+      expect.any(Object)
+    );
+  });
+
+  it("shows who the follow-up goes to before the note is saved", () => {
+    draftFollowUp.state.targets = [SUGGESTED_DM];
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByText("Add note"));
+    fireEvent.click(screen.getByLabelText("Auto follow-up on Slack"));
+
+    expect(
+      screen.getByRole("button", { name: "Change follow-up destination, currently Mahesh" })
+    ).toBeInTheDocument();
+  });
+
+  it("asks who to message when the opted-in draft has no recipient yet", () => {
+    draftFollowUp.state.targets = [];
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByText("Add note"));
+    fireEvent.click(screen.getByLabelText("Auto follow-up on Slack"));
+
+    expect(screen.getByRole("button", { name: /Choose who to message/ })).toBeInTheDocument();
+  });
+
+  it("still lets the author pick a recipient when the suggestion fails", () => {
+    draftFollowUp.state.isError = true;
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByText("Add note"));
+    fireEvent.click(screen.getByLabelText("Auto follow-up on Slack"));
+
+    expect(screen.getByRole("button", { name: /Choose who to message/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Try again/ })).toBeInTheDocument();
+    draftFollowUp.state.isError = false;
+  });
+
+  it("suggests from the draft text only while the note is opted in", () => {
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByText("Add note"));
+    fireEvent.change(screen.getByLabelText("Action item note"), {
+      target: { value: "Pinged Mahesh" },
     });
+    expect(draftFollowUp.hook).toHaveBeenLastCalledWith(
+      baseProps.communityId,
+      baseProps.target,
+      "Pinged Mahesh",
+      false
+    );
+
+    fireEvent.click(screen.getByLabelText("Auto follow-up on Slack"));
+
+    expect(draftFollowUp.hook).toHaveBeenLastCalledWith(
+      baseProps.communityId,
+      baseProps.target,
+      "Pinged Mahesh",
+      true
+    );
+  });
+
+  it("saves the shown recipient together with the note", () => {
+    draftFollowUp.state.targets = [SUGGESTED_DM];
+    render(<ActionItems {...baseProps} />);
+
+    fireEvent.click(screen.getByText("Add note"));
+    fireEvent.change(screen.getByLabelText("Action item note"), {
+      target: { value: "Pinged Mahesh" },
+    });
+    fireEvent.change(screen.getByLabelText(/Next follow-up/), {
+      target: { value: "2026-09-25" },
+    });
+    fireEvent.click(screen.getByLabelText("Auto follow-up on Slack"));
+    fireEvent.click(screen.getByText("Save"));
+
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        followUpTargets: [
+          {
+            kind: "dm",
+            teamId: "T1",
+            slackUserId: "U_MAHESH",
+            personName: "Mahesh",
+            matchedBy: "program_reviewer",
+          },
+        ],
+        followUpPreview: [SUGGESTED_DM],
+      }),
+      expect.any(Object)
+    );
   });
 
   it("disables the Slack opt-in and points to notification settings when Slack is not connected", () => {
@@ -327,11 +450,14 @@ describe("ActionItems", () => {
       target: { value: "2026-09-25" },
     });
     fireEvent.click(screen.getByText("Save"));
-    expect(createItem).toHaveBeenCalledWith({
-      content: "No response",
-      followUpAt: "2026-09-25T00:00:00.000Z",
-      autoFollowUp: false,
-    });
+    expect(createItem).toHaveBeenCalledWith(
+      {
+        content: "No response",
+        followUpAt: "2026-09-25T00:00:00.000Z",
+        autoFollowUp: false,
+      },
+      expect.any(Object)
+    );
   });
 
   it("edits an item's note and follow-up date", () => {

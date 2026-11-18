@@ -75,7 +75,12 @@ describe("useZeroDevSigner", () => {
 
   describe("getAttestationSigner - external wallet (Case 3)", () => {
     it("creates viem WalletClient from Privy provider and converts to signer", async () => {
-      const mockProvider = { request: vi.fn() };
+      // Unlocked and connected to this site: eth_accounts lists the account.
+      const mockProvider = {
+        request: vi.fn(async ({ method }: { method: string }) =>
+          method === "eth_accounts" ? [mockExternalWallet.address] : undefined
+        ),
+      };
       mockGetEthereumProvider.mockResolvedValue(mockProvider);
 
       const mockViemClient = { account: mockExternalWallet.address };
@@ -100,7 +105,12 @@ describe("useZeroDevSigner", () => {
     });
 
     it("does not call wagmi getWalletClient when Privy provider succeeds", async () => {
-      const mockProvider = { request: vi.fn() };
+      // Unlocked and connected to this site: eth_accounts lists the account.
+      const mockProvider = {
+        request: vi.fn(async ({ method }: { method: string }) =>
+          method === "eth_accounts" ? [mockExternalWallet.address] : undefined
+        ),
+      };
       mockGetEthereumProvider.mockResolvedValue(mockProvider);
       mockCreateWalletClient.mockReturnValue({});
       mockWalletClientToSigner.mockResolvedValue({ _isSigner: true });

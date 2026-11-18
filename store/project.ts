@@ -3,6 +3,7 @@ import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
 import type { TeamProfile } from "@/types/team-profile";
 import type { Project as ProjectResponse } from "@/types/v2/project";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { queryClient } from "@/utilities/query-client";
 import { useGrantStore } from "./grant";
 
@@ -42,9 +43,16 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
     }
 
-    await queryClient.invalidateQueries({ queryKey: ["project"] });
-
     set({ project: refreshedProject });
+
+    // The profile observes the project statically, which invalidation skips,
+    // so the refreshed copy is written into its queries directly.
+    await refreshProjectQueries(queryClient, {
+      identifiers: [project.uid, project.details?.slug],
+      project: refreshedProject,
+      families: ["project"],
+    });
+    await queryClient.invalidateQueries({ queryKey: ["project"] });
 
     return refreshedProject;
   },
