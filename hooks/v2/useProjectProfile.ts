@@ -31,7 +31,13 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
   isUpdatesError: boolean;
   /** Whether the updates query has returned, even if it returned zero items */
   hasUpdatesData: boolean;
-  /** Whether the updates/milestones are being re-fetched (e.g., during filter change) */
+  /**
+   * Whether the feed is fetching data it has nothing to show for yet: the first
+   * load, or a filter change (the previous filter's items are only a
+   * placeholder). A background refresh of the feed already on screen — e.g.
+   * after the owner saves an activity — does not count, so it never swaps the
+   * feed, and any dialog opened from it, for a skeleton.
+   */
   isUpdating: boolean;
   /** Refetch all project data */
   refetch: () => Promise<void>;
@@ -94,6 +100,7 @@ export function useProjectProfile(
     rawData: updatesRawData,
     isLoading: isUpdatesLoading,
     isFetching: isUpdatesFetching,
+    isPlaceholderData: isUpdatesPlaceholder,
     error: updatesError,
     refetch: refetchUpdates,
   } = useProjectUpdates(projectId, milestoneStatus, filters, { isAuthorized, prerenderSafe });
@@ -131,7 +138,7 @@ export function useProjectProfile(
     isLoading,
     isProjectLoading,
     isSecondaryLoading,
-    isUpdating: isUpdatesFetching,
+    isUpdating: isUpdatesFetching && (isUpdatesPlaceholder || updatesRawData === undefined),
     isError,
     error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     // Surfaced separately from the core-project `isError` above: the updates

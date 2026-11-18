@@ -376,6 +376,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 // so refresh it explicitly now that the form has closed.
                 await refreshProjectQueries(queryClient, {
                   identifiers: [project?.uid, project?.details?.slug],
+                  families: ["project-updates"],
                 });
 
                 // Let the share dialog render before any route transition.
@@ -502,6 +503,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 // so refresh it explicitly now that the form has closed.
                 await refreshProjectQueries(queryClient, {
                   identifiers: [project?.uid, project?.details?.slug],
+                  families: ["project-updates"],
                 });
               }
               retries -= 1;
@@ -569,6 +571,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         // After closing: a forced feed refetch swaps the feed for a skeleton.
         await refreshProjectQueries(queryClient, {
           identifiers: [project?.uid, project?.details?.slug],
+          families: ["project-updates", "project-grants"],
         });
       } catch (invoiceError) {
         errorManager("Invoice-only submission failed", invoiceError, {
@@ -616,6 +619,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         // Invalidate project grants and updates so milestone.invoiceInfo is fresh
         await refreshProjectQueries(queryClient, {
           identifiers: [project?.uid, project?.details?.slug],
+          families: ["project-updates", "project-grants"],
         });
       } catch (invoiceError) {
         errorManager("Invoice submission failed after milestone update", invoiceError);

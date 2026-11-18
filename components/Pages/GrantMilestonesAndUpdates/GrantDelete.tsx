@@ -16,6 +16,8 @@ import { api } from "@/utilities/api/client";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
+import { queryClient } from "@/utilities/query-client";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shortAddress } from "@/utilities/shortAddress";
 
@@ -88,8 +90,13 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           1500
         );
 
-        // Always refresh the UI after the operation
+        // Always refresh the UI after the operation. Grants come back through
+        // their own refetch; the statically-observed feed needs an explicit one.
         await refetchGrants();
+        void refreshProjectQueries(queryClient, {
+          identifiers: [project?.uid, project?.details?.slug],
+          families: ["project-updates"],
+        });
 
         // Redirect if the grant was deleted and there are other grants
         if (shouldRedirect) {

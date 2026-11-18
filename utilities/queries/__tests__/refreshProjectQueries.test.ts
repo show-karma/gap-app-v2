@@ -8,7 +8,7 @@
  * a successful write was a silent no-op. These tests pin the observer to
  * `"static"` exactly as the layout does and assert what the reader sees.
  */
-import { QueryClient, QueryObserver } from "@tanstack/react-query";
+import { onlineManager, QueryClient, QueryObserver } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Project } from "@/types/v2/project";
 import type { UpdatesApiResponse } from "@/types/v2/roadmap";
@@ -243,5 +243,125 @@ describe("refreshProjectQueries — fresh activity feed in hand", () => {
       "done",
       "done too",
     ]);
+  });
+});
+
+/** A promise the test resolves by hand, to hold a request in flight. */
+function deferred<T>() {
+  let resolve: (value: T) => void = () => {};
+  const promise = new Promise<T>((r) => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
+
+describe("refreshProjectQueries — requests already in flight", () => {
+  it("an older response that resolves after the write does not revert it", async () => {
+    queryClient.setQueryData(QUERY_KEYS.PROJECT.DETAILS(SLUG), makeProject("old"));
+    const older = deferred<Project>();
+    const observer = observeStatic(QUERY_KEYS.PROJECT.DETAILS(SLUG), () => older.promise);
+    // A request that left before the write landed (e.g. a refetch on mount).
+    void observer.refetch();
+
+    await refreshProjectQueries(queryClient, {
+      identifiers: [SLUG],
+      project: makeProject("new"),
+      families: ["project"],
+    });
+    older.resolve(makeProject("old"));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(observer.getCurrentResult().data?.details.description).toBe("new");
+  });
+
+  it("replaces a first load in flight instead of joining it", async () => {
+    const calls: Array<ReturnType<typeof deferred<UpdatesApiResponse>>> = [];
+    const observer = observeStatic(updatesKey(SLUG), () => {
+      const call = deferred<UpdatesApiResponse>();
+      calls.push(call);
+      return call.promise;
+    });
+    expect(calls).toHaveLength(1); // the mount's first load, still pending
+
+    const refreshed = refreshProjectQueries(queryClient, { identifiers: [SLUG] });
+    await vi.waitFor(() => expect(calls).toHaveLength(2));
+    calls[1].resolve(makeUpdates(["after the write"]));
+    await refreshed;
+    calls[0].resolve(makeUpdates(["before the write"]));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(observer.getCurrentResult().data?.projectUpdates.map((u) => u.title)).toEqual([
+      "after the write",
+    ]);
+  });
+
+  it("does not wait for a refetch paused offline", async () => {
+    queryClient.setQueryData(updatesKey(SLUG), makeUpdates(["a"]));
+    observeStatic(updatesKey(SLUG), async () => makeUpdates(["a", "b"]));
+    onlineManager.setOnline(false);
+    try {
+      const outcome = await Promise.race([
+        refreshProjectQueries(queryClient, { identifiers: [SLUG] }).then(() => "returned"),
+        new Promise((r) => setTimeout(() => r("blocked"), 200)),
+      ]);
+      expect(outcome).toBe("returned");
+    } finally {
+      onlineManager.setOnline(true);
+    }
+  });
+});
+
+describe("refreshProjectQueries — identifiers never cross projects", () => {
+  const OTHER_UID = "0x00000000000000000000000000000000000000b2";
+  const other = (slug: string) =>
+    ({ uid: OTHER_UID, details: { slug, description: "B's" } }) as unknown as Project;
+
+  it("does not adopt another project's uid through a slug it now claims", async () => {
+    // A is still cached under its old slug; B's cached record now claims it.
+    queryClient.setQueryData(QUERY_KEYS.PROJECT.DETAILS("old-slug"), makeProject("A", "old-slug"));
+    queryClient.setQueryData(QUERY_KEYS.PROJECT.DETAILS(OTHER_UID), other("old-slug"));
+    const otherFn = vi.fn().mockResolvedValue(other("old-slug"));
+    const byOtherUid = observeStatic(QUERY_KEYS.PROJECT.DETAILS(OTHER_UID), otherFn);
+    const byOldSlug = observeStatic(QUERY_KEYS.PROJECT.DETAILS("old-slug"), vi.fn());
+
+    await refreshProjectQueries(queryClient, {
+      identifiers: [UID],
+      project: makeProject("A edited", "new-slug"),
+      families: ["project"],
+    });
+
+    // A's own old-slug entry is refreshed; B's entry is neither written nor refetched.
+    expect(byOldSlug.getCurrentResult().data?.details.description).toBe("A edited");
+    expect(byOtherUid.getCurrentResult().data?.details.description).toBe("B's");
+    expect(otherFn).not.toHaveBeenCalled();
+  });
+
+  it("never writes one project's data over another project's cached entry", async () => {
+    queryClient.setQueryData(QUERY_KEYS.PROJECT.DETAILS("taken-slug"), other("taken-slug"));
+    const byTakenSlug = observeStatic(QUERY_KEYS.PROJECT.DETAILS("taken-slug"), async () =>
+      other("taken-slug")
+    );
+
+    await refreshProjectQueries(queryClient, {
+      identifiers: [UID, "taken-slug"],
+      project: makeProject("A edited"),
+      families: ["project"],
+    });
+
+    expect(byTakenSlug.getCurrentResult().data?.uid).toBe(OTHER_UID);
+  });
+
+  it("expands nothing when a slug is ambiguous across cached projects", async () => {
+    queryClient.setQueryData(QUERY_KEYS.PROJECT.DETAILS(UID), makeProject("A", "shared"));
+    queryClient.setQueryData(QUERY_KEYS.PROJECT.DETAILS(OTHER_UID), other("shared"));
+    const aFn = vi.fn().mockResolvedValue(makeProject("A", "shared"));
+    const bFn = vi.fn().mockResolvedValue(other("shared"));
+    observeStatic(QUERY_KEYS.PROJECT.DETAILS(UID), aFn);
+    observeStatic(QUERY_KEYS.PROJECT.DETAILS(OTHER_UID), bFn);
+
+    await refreshProjectQueries(queryClient, { identifiers: ["shared"], families: ["project"] });
+
+    expect(aFn).not.toHaveBeenCalled();
+    expect(bFn).not.toHaveBeenCalled();
   });
 });

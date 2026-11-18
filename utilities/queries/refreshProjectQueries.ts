@@ -1,4 +1,4 @@
-import type { Query, QueryClient } from "@tanstack/react-query";
+import type { Query, QueryCache, QueryClient, QueryKey } from "@tanstack/react-query";
 import type { Project } from "@/types/v2/project";
 import type { UpdatesApiResponse } from "@/types/v2/roadmap";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -19,7 +19,10 @@ type ProjectProfileQueryFamily = (typeof PROJECT_PROFILE_QUERY_FAMILIES)[number]
 interface RefreshProjectQueriesInput {
   /** Any uid or slug the project is known by. Matched case-insensitively. */
   identifiers: ReadonlyArray<string | null | undefined>;
-  /** Limit the refresh to these families. Defaults to all of them. */
+  /**
+   * Limit the refresh to these families. Defaults to all of them; pass only
+   * what the write changed, since each family refetched is a request.
+   */
   families?: ReadonlyArray<ProjectProfileQueryFamily>;
   /** The project as just re-read after the write. Written as-is, no refetch. */
   project?: Project | null;
@@ -32,6 +35,11 @@ const normalize = (id: string) => id.trim().toLowerCase();
 /** `projectUpdatesQueryKey(id)` with no status or filters: every slot after the id is null. */
 const isUnfilteredUpdatesKey = (key: readonly unknown[]) =>
   key.length > 2 && key.slice(2).every((part) => part === null);
+
+const cachedProjectOf = (query: Query): Partial<Project> | undefined => {
+  const data = query.state.data as Partial<Project> | undefined;
+  return typeof data?.uid === "string" ? data : undefined;
+};
 
 /**
  * Put a write's result into every cached project-profile query, after the
@@ -49,26 +57,29 @@ const isUnfilteredUpdatesKey = (key: readonly unknown[]) =>
  * So, for every query in `families` whose key is `[family, id, ...]` with `id`
  * one of the project's identifiers:
  *
+ * - any request already in flight is cancelled first, so a response that left
+ *   before the write cannot land after the fresh data and revert it;
  * - fresh data in hand (`project`, `updates`) is written with `setQueryData`;
  * - other observed queries are fetched directly (`query.fetch()` is not gated
- *   on `staleTime`), and awaited — a failed refetch is swallowed, since the
- *   write itself already succeeded and the old data stays on screen;
+ *   on `staleTime`). Those fetches are awaited unless paused offline; a failure
+ *   is swallowed, since the write itself already succeeded;
  * - unobserved queries are removed, because a static observer mounting later
  *   would show them as-is and never refetch.
  *
  * Pages key the project by whatever the URL holds (slug or uid) while flows
- * usually know the uid, so the identifiers are widened with the uid and slug of
- * any cached project details that match one of them.
+ * usually know the uid, so the identifiers are widened with the slugs of the
+ * cached project details that share the project's uid — never with another
+ * project's identifiers.
  */
 export async function refreshProjectQueries(
   queryClient: QueryClient,
   input: RefreshProjectQueriesInput
 ): Promise<void> {
+  const queryCache = queryClient.getQueryCache();
   const families = new Set<string>(input.families ?? PROJECT_PROFILE_QUERY_FAMILIES);
-  const ids = collectIdentifiers(queryClient, input);
+  const { ids, uid } = collectIdentifiers(queryCache, input);
   if (ids.size === 0) return;
 
-  const queryCache = queryClient.getQueryCache();
   const matches = (query: Query) => {
     const [family, id] = query.queryKey;
     return typeof family === "string" && families.has(family) && typeof id === "string"
@@ -76,63 +87,104 @@ export async function refreshProjectQueries(
       : false;
   };
 
-  const written = new Set<string>();
+  const writes = new Map<string, { queryKey: QueryKey; data: unknown }>();
+  const addWrite = (queryKey: QueryKey, data: unknown) => {
+    writes.set(JSON.stringify(queryKey), { queryKey, data });
+  };
 
   if (input.project && families.has("project")) {
     const { project } = input;
-    const keys = [
-      QUERY_KEYS.PROJECT.DETAILS(project.uid),
-      ...(project.details?.slug ? [QUERY_KEYS.PROJECT.DETAILS(project.details.slug)] : []),
-      ...queryCache
-        .findAll({ queryKey: ["project"] })
-        .filter((query) => query.queryKey.length === 2 && matches(query))
-        .map((query) => query.queryKey),
-    ];
-    for (const key of keys) {
-      queryClient.setQueryData(key, project);
-      written.add(queryCache.find({ queryKey: key, exact: true })?.queryHash ?? "");
+    addWrite(QUERY_KEYS.PROJECT.DETAILS(project.uid), project);
+    if (project.details?.slug) addWrite(QUERY_KEYS.PROJECT.DETAILS(project.details.slug), project);
+    for (const query of queryCache.findAll({ queryKey: ["project"] })) {
+      if (query.queryKey.length !== 2 || !matches(query)) continue;
+      // A slug can move between projects; never overwrite another project's entry.
+      const cachedUid = cachedProjectOf(query)?.uid;
+      if (cachedUid && normalize(cachedUid) !== uid) continue;
+      addWrite(query.queryKey, project);
     }
   }
 
   if (input.updates && families.has("project-updates")) {
     for (const query of queryCache.findAll({ queryKey: ["project-updates"] })) {
-      if (!matches(query) || !isUnfilteredUpdatesKey(query.queryKey)) continue;
-      queryClient.setQueryData(query.queryKey, input.updates);
-      written.add(query.queryHash);
+      if (matches(query) && isUnfilteredUpdatesKey(query.queryKey)) {
+        addWrite(query.queryKey, input.updates);
+      }
     }
   }
 
-  const refetches: Promise<unknown>[] = [];
+  const isWritten = (query: Query) => writes.has(JSON.stringify(query.queryKey));
+  const toRefetch: Query[] = [];
   for (const query of queryCache.getAll()) {
-    if (written.has(query.queryHash) || !matches(query)) continue;
+    if (isWritten(query) || !matches(query)) continue;
     if (query.getObserversCount() === 0) {
       queryCache.remove(query);
     } else if (query.isDisabled()) {
       query.invalidate();
     } else {
-      refetches.push(query.fetch(undefined, { cancelRefetch: true }).catch(() => undefined));
+      toRefetch.push(query);
     }
   }
+
+  // Cancel (and revert) anything in flight on the keys we are about to write or
+  // refetch. Without this an older response overwrites the written data, and a
+  // first load still in flight would be joined by `fetch()` rather than replaced.
+  await Promise.all([
+    ...[...writes.values()].map(({ queryKey }) =>
+      queryClient.cancelQueries({ queryKey, exact: true })
+    ),
+    ...toRefetch.map((query) => query.cancel({ revert: true })),
+  ]);
+
+  for (const { queryKey, data } of writes.values()) {
+    queryClient.setQueryData(queryKey, data);
+  }
+
+  const refetches = toRefetch.map((query) => {
+    const promise = query.fetch().catch(() => undefined);
+    // A fetch paused while offline resolves only on reconnect; do not hold the
+    // caller's follow-up work (navigation, invoice submission) hostage to it.
+    return query.state.fetchStatus === "paused" ? Promise.resolve() : promise;
+  });
   await Promise.all(refetches);
 }
 
-function collectIdentifiers(queryClient: QueryClient, input: RefreshProjectQueriesInput) {
-  const ids = new Set<string>();
-  const add = (id: unknown) => {
-    if (typeof id === "string" && id.trim()) ids.add(normalize(id));
+function collectIdentifiers(queryCache: QueryCache, input: RefreshProjectQueriesInput) {
+  const given = new Set<string>();
+  const add = (set: Set<string>, id: unknown) => {
+    if (typeof id === "string" && id.trim()) set.add(normalize(id));
   };
+  for (const id of input.identifiers) add(given, id);
+  add(given, input.project?.uid);
+  add(given, input.project?.details?.slug);
 
-  input.identifiers.forEach(add);
-  add(input.project?.uid);
-  add(input.project?.details?.slug);
-  if (ids.size === 0) return ids;
+  const cached = queryCache
+    .findAll({ queryKey: ["project"] })
+    .map(cachedProjectOf)
+    .filter((project): project is Partial<Project> & { uid: string } => project !== undefined);
 
-  for (const query of queryClient.getQueryCache().findAll({ queryKey: ["project"] })) {
-    const data = query.state.data as Partial<Project> | undefined;
-    const aliases = [data?.uid, data?.details?.slug];
-    if (aliases.some((alias) => typeof alias === "string" && ids.has(normalize(alias)))) {
-      aliases.forEach(add);
+  // Anchor on ONE uid: the fresh project's, else a given identifier that is a
+  // cached project's uid, else the uid of the single cached project a given
+  // slug names. Ambiguity anchors nothing rather than guessing.
+  const unique = (values: string[]) => {
+    const set = new Set(values);
+    return set.size === 1 ? [...set][0] : undefined;
+  };
+  const uid =
+    (input.project?.uid ? normalize(input.project.uid) : undefined) ??
+    unique(cached.map((p) => normalize(p.uid)).filter((id) => given.has(id))) ??
+    unique(
+      cached
+        .filter((p) => p.details?.slug && given.has(normalize(p.details.slug)))
+        .map((p) => normalize(p.uid))
+    );
+
+  const ids = new Set(given);
+  if (uid) {
+    ids.add(uid);
+    for (const project of cached) {
+      if (normalize(project.uid) === uid) add(ids, project.details?.slug);
     }
   }
-  return ids;
+  return { ids, uid };
 }

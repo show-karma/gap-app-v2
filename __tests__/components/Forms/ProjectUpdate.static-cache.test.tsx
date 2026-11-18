@@ -15,6 +15,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
+import { projectUpdatesQueryKey } from "@/hooks/v2/useProjectUpdates";
 import type { UpdatesApiResponse } from "@/types/v2/roadmap";
 import { PRERENDER_SAFE_STALE_TIME } from "@/utilities/queries/prerenderStaleTime";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -101,14 +102,17 @@ const mockProjectUpdatesData = {
   projectUpdates: [],
 };
 const mockRefetchUpdates = vi.fn().mockResolvedValue({ data: mockProjectUpdatesData });
-vi.mock("@/hooks/v2/useProjectUpdates", () => ({
+// Partial: the real `projectUpdatesQueryKey` builds the page's key below, so a
+// change to the key shape fails this test instead of passing it by accident.
+vi.mock("@/hooks/v2/useProjectUpdates", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/v2/useProjectUpdates")>()),
   useProjectUpdates: vi.fn(() => ({
     rawData: mockProjectUpdatesData,
     refetch: mockRefetchUpdates,
   })),
 }));
 
-const mockProjectGrants: any[] = [];
+const mockProjectGrants: unknown[] = [];
 vi.mock("@/hooks/v2/useProjectGrants", () => ({
   useProjectGrants: vi.fn(() => ({
     grants: mockProjectGrants,
@@ -144,7 +148,9 @@ const mockProject = {
 };
 
 vi.mock("@/store", () => ({
-  useProjectStore: vi.fn((selector: (state: any) => any) => selector({ project: mockProject })),
+  useProjectStore: vi.fn((selector: (state: { project: typeof mockProject }) => unknown) =>
+    selector({ project: mockProject })
+  ),
 }));
 
 vi.mock("@/store/modals/shareDialog", () => ({
@@ -164,7 +170,7 @@ vi.mock("@/utilities/api/client", () => ({
 }));
 
 vi.mock("@/utilities/formatDate", () => ({
-  formatDate: vi.fn((date: any) => "2024-01-01"),
+  formatDate: vi.fn(() => "2024-01-01"),
 }));
 
 vi.mock("@/utilities/impact", () => ({
@@ -220,9 +226,15 @@ vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: (string | boolean | undefined | null)[]) => classes.filter(Boolean).join(" "),
 }));
 
+interface FakeProjectUpdate {
+  attest: typeof mockAttest;
+  chainID: number;
+  uid: string;
+}
+
 const mockAttest = vi.fn().mockResolvedValue({ tx: [{ hash: "0xabc" }] });
 vi.mock("@show-karma/karma-gap-sdk", () => ({
-  ProjectUpdate: vi.fn(function (this: any) {
+  ProjectUpdate: vi.fn(function (this: FakeProjectUpdate) {
     this.attest = mockAttest;
     this.chainID = 10;
     this.uid = "new-update-uid";
@@ -246,14 +258,18 @@ vi.mock("@/components/Utilities/Button", () => ({
     type?: string;
     className?: string;
   }) => (
-    <button onClick={onClick} disabled={disabled || isLoading} type={type as any}>
+    <button
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      type={type as "button" | "submit" | "reset" | undefined}
+    >
       {isLoading ? "Loading..." : children}
     </button>
   ),
 }));
 
 vi.mock("@/components/Utilities/DatePicker", () => ({
-  DatePicker: ({ placeholder }: { placeholder: string; [key: string]: any }) => (
+  DatePicker: ({ placeholder }: { placeholder: string }) => (
     <button data-testid="date-picker">{placeholder}</button>
   ),
 }));
@@ -302,22 +318,15 @@ vi.mock("@/components/Utilities/errorManager", () => ({
 // ProjectUpdate imports OutputsSection from the direct module path (not the
 // barrel), so mock that path; keep the barrel mock for any barrel consumers.
 vi.mock("@/components/Forms/Outputs/OutputsSection", () => ({
-  OutputsSection: ({ labelStyle }: { labelStyle: string; [key: string]: any }) => (
-    <div data-testid="outputs-section">Outputs Section</div>
-  ),
+  OutputsSection: () => <div data-testid="outputs-section">Outputs Section</div>,
 }));
 vi.mock("@/components/Forms/Outputs", () => ({
-  OutputsSection: ({ labelStyle }: { labelStyle: string; [key: string]: any }) => (
-    <div data-testid="outputs-section">Outputs Section</div>
-  ),
+  OutputsSection: () => <div data-testid="outputs-section">Outputs Section</div>,
 }));
 
 vi.mock("@/utilities/analytics/client", () => ({ track: vi.fn() }));
 
 // --- Helpers ---
-
-const updatesKey = (id: string) =>
-  ["project-updates", id, null, null, null, null, null, null] as const;
 
 const feed = (titles: string[], uids: string[]): UpdatesApiResponse =>
   ({
@@ -341,11 +350,11 @@ describe("ProjectUpdateForm — the profile feed shows the new activity without 
       walletSigner: {},
       gapClient: { findSchema: vi.fn(() => ({ uid: "schema-1" })) },
     });
-    vi.mocked(MockedProjectUpdate).mockImplementation(function (this: any) {
+    vi.mocked(MockedProjectUpdate).mockImplementation(function (this: FakeProjectUpdate) {
       this.attest = mockAttest;
       this.chainID = 10;
       this.uid = "new-update-uid";
-    } as any);
+    } as unknown as typeof MockedProjectUpdate);
   });
 
   afterEach(() => {
@@ -360,9 +369,9 @@ describe("ProjectUpdateForm — the profile feed shows the new activity without 
     // What the layout holds: the project (lets a uid be resolved to its slug)
     // and the hydrated feed, observed statically under the page's identifier.
     queryClient.setQueryData(QUERY_KEYS.PROJECT.DETAILS(pageId), mockProject);
-    queryClient.setQueryData(updatesKey(pageId), feed(["Older"], ["old-uid"]));
+    queryClient.setQueryData(projectUpdatesQueryKey(pageId), feed(["Older"], ["old-uid"]));
     const pageFeed = new QueryObserver<UpdatesApiResponse>(queryClient, {
-      queryKey: updatesKey(pageId),
+      queryKey: projectUpdatesQueryKey(pageId),
       queryFn: async () => {
         throw new Error("the page's own feed must not need a network round-trip");
       },

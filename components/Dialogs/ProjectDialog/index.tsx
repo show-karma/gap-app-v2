@@ -855,6 +855,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           dismiss();
           if (shouldRefresh) {
             refreshProject();
+            // Client-side caches are already updated; this re-renders the
+            // server-rendered tabs (About renders the description on the server).
+            router.refresh();
           } else {
             const project = res.details?.slug || res.uid;
             router.push(PAGES.PROJECT.OVERVIEW(project));

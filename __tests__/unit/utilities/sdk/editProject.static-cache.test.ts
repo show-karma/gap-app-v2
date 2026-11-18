@@ -25,10 +25,15 @@ import { updateProject } from "@/utilities/sdk/projects/editProject";
 
 const UID = "0x00000000000000000000000000000000000000aa";
 
-const projectResponse = (description: string, slug: string, lastDetailsUpdate: string) =>
+const projectResponse = (
+  description: string,
+  slug: string,
+  lastDetailsUpdate: string,
+  updatedAt = lastDetailsUpdate
+) =>
   ({
     uid: UID,
-    updatedAt: "t0",
+    updatedAt,
     details: { title: "Title", slug, description, lastDetailsUpdate },
   }) as unknown as ProjectResponse;
 
@@ -63,7 +68,7 @@ function observeStatic(id: string) {
   return observer;
 }
 
-async function runUpdate(title: string, nextSlug: string) {
+async function runUpdate(title: string, nextSlug: string, showSuccess = vi.fn()) {
   const gap = { generateSlug: vi.fn().mockResolvedValue(nextSlug) };
   await updateProject(
     sdkProject("my-project"),
@@ -75,7 +80,7 @@ async function runUpdate(title: string, nextSlug: string) {
     vi.fn(),
     vi.fn(),
     vi.fn(),
-    vi.fn()
+    showSuccess
   );
 }
 
@@ -110,6 +115,23 @@ describe("updateProject — the profile shows the edit without a reload", () => 
 
     expect(bySlug.getCurrentResult().data?.details.description).toBe("new description");
     expect(byUid.getCurrentResult().data?.details.description).toBe("new description");
+  });
+
+  it("does not report or cache success before the details are indexed", async () => {
+    const bySlug = observeStatic("my-project");
+    const showSuccess = vi.fn();
+    // A member change last moved the project's updatedAt, not its details.
+    const notYetIndexed = projectResponse("old", "my-project", "t0", "t5");
+    mockGetProject
+      .mockResolvedValueOnce(notYetIndexed) // "before" snapshot
+      .mockResolvedValueOnce(notYetIndexed) // first poll: edit not indexed yet
+      .mockResolvedValue(projectResponse("new description", "my-project", "t6", "t6"));
+
+    await runUpdate("Title", "my-project", showSuccess);
+
+    expect(mockGetProject).toHaveBeenCalledTimes(3);
+    expect(showSuccess).toHaveBeenCalledTimes(1);
+    expect(bySlug.getCurrentResult().data?.details.description).toBe("new description");
   });
 
   it("title change: the old slug's page and the new slug's entry both carry the edit", async () => {

@@ -131,7 +131,17 @@ export const updateProject = async (
         if (exists) {
           // eslint-disable-next-line no-await-in-loop
           const fetchedProject = await getProject(project.uid);
-          if (fetchedProject?.details.lastDetailsUpdate !== projectBefore?.updatedAt) {
+          // The indexer stamps `details.lastDetailsUpdate` only when the details
+          // themselves change. Comparing it with the top-level `updatedAt` (as
+          // this used to) passes before indexing whenever something else — a
+          // member or ownership change — last moved `updatedAt`, and the
+          // unchanged project was then reported, and cached, as the edit.
+          const lastDetailsUpdate = fetchedProject?.details?.lastDetailsUpdate;
+          if (
+            fetchedProject &&
+            lastDetailsUpdate &&
+            lastDetailsUpdate !== projectBefore?.details?.lastDetailsUpdate
+          ) {
             changeStepperStep("indexed");
             showSuccess("Project updated successfully!");
 

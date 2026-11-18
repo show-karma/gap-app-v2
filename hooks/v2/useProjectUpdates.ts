@@ -447,6 +447,7 @@ export function useProjectUpdates(
     data,
     isLoading,
     isFetching,
+    isPlaceholderData,
     error,
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
@@ -510,6 +511,7 @@ export function useProjectUpdates(
     rawData,
     isLoading,
     isFetching,
+    isPlaceholderData,
     error,
     refetch,
   };

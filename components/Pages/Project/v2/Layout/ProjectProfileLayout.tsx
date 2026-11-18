@@ -189,8 +189,10 @@ export function ProjectProfileLayout({
     }
   };
 
-  // Error state
-  if (isError && !isLoading) {
+  // Error state — only when there is no project to show. A failed background
+  // refetch keeps the cached project, which must stay on screen rather than
+  // turn into "not found".
+  if (isError && !isLoading && !project) {
     return (
       <div
         className="flex flex-col items-center justify-center gap-6 w-full min-h-[60vh] px-4"

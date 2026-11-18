@@ -101,6 +101,7 @@ export const VerifyGrantMilestonePanel: FC<VerifyGrantMilestonePanelProps> = ({
       onVerified?.();
       await refreshProjectQueries(queryClient, {
         identifiers: [project?.details?.slug, project?.uid, verifiable?.projectUID],
+        families: ["project-updates", "project-grants"],
       });
     },
   });

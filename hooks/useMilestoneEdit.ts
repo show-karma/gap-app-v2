@@ -133,7 +133,10 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     // Not invalidateQueries: the profile observes these statically and
     // invalidation skips them.
     invalidations.push(
-      refreshProjectQueries(queryClient, { identifiers: [projectSlug, projectUid] })
+      refreshProjectQueries(queryClient, {
+        identifiers: [projectSlug, projectUid],
+        families: ["project-updates", "project-grants"],
+      })
     );
 
     if (options?.programId) {

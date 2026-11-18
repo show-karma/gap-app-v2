@@ -39,8 +39,8 @@ import {
 import { isMilestoneEditable } from "@/utilities/milestones/isMilestoneEditable";
 import { normalizeMilestoneDueDateMs } from "@/utilities/milestones/milestoneDueDate";
 import { openGrantInvoice } from "@/utilities/milestones/openGrantInvoice";
-import { refreshProjectQueries } from "@/utilities/queries/refreshProjectQueries";
 import { queryClient } from "@/utilities/query-client";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { ReadMore } from "@/utilities/ReadMore";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -272,19 +272,13 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           previousData={grantMilestone.milestone.completed?.data}
           cancelEditing={async (editing: boolean) => {
             handleEditing(editing);
-            // Refresh the activities list after successful editing
+            // The form refreshes the activity feed itself on every successful
+            // save (see refreshProjectQueries in MilestoneUpdateForm); a second
+            // refresh from here would only race it. Clear the legacy key.
             if (!editing) {
-              // Invalidate all relevant caches
-              await Promise.all([
-                refreshProjectQueries(queryClient, {
-                  identifiers: [projectId as string, project?.uid, project?.details?.slug],
-                  families: ["project-updates"],
-                }),
-                queryClient.invalidateQueries({
-                  queryKey: ["projectMilestones", project?.uid],
-                }),
-                refetch(),
-              ]);
+              await queryClient.invalidateQueries({
+                queryKey: ["projectMilestones", project?.uid],
+              });
             }
           }}
         />
@@ -304,9 +298,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
               handleEditing(false);
               // Refresh the activities list when canceling editing
               await Promise.all([
-                refreshProjectQueries(queryClient, {
-                  identifiers: [projectId as string, project?.uid, project?.details?.slug],
-                  families: ["project-updates"],
+                queryClient.invalidateQueries({
+                  queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId as string),
                 }),
                 queryClient.invalidateQueries({
                   queryKey: ["projectMilestones", project?.uid],
