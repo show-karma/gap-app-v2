@@ -84,12 +84,45 @@ O número é baixo porque o `worker.js` do OpenNext só importa o handler de 57 
    | Erros nos Workers Logs | | 0 em 148 invocações |
    | Vida máxima de um isolate | | 9 requests, 157 s, 4–6 rotas diferentes |
 
-**Consequência:** a correção Latin-1 devolve ~57 MiB, e o Worker passa a reaproveitar isolate como um script mínimo.
-- A folga, porém, é pequena: um isolate que passa por todos os tipos de rota fica em ~124 MiB, contra o limite de 128.
-- Sob concorrência ou com rotas novas, ele volta a ser descartado de vez em quando.
-- Por isso o corte de web3 fora do SSR continua necessário. A página de projeto sozinha soma 31 MiB, e é a candidata óbvia.
+**Consequência:** a correção Latin-1 devolve ~57 MiB, e o Worker passa a reaproveitar isolate como um script mínimo. A folga, porém, ficou pequena, e por isso o heap restante foi investigado (itens 4 e 5).
 - A média de CPU (1,3 s) ainda é puxada pelos ~25 isolates frios que este teste cria. Com tráfego contínuo a fração de frios cai, mas isso não dá para medir daqui.
 - Medir cada corte com o mesmo procedimento: heap local pelo inspector (com `localhost`), depois reuso na conta com `x-karma-isolate`.
+
+4. **O que sobrava no heap (19/11).** Snapshot de um isolate quente, depois de todas as rotas:
+
+   | O quê | MiB |
+   |---|---|
+   | Fonte do script (Latin-1) | 57,2 |
+   | **Memória WASM do resvg e do yoga** (imagens OG) | **31,2** (16,0 + 15,2) |
+   | Código compilado (bytecode, código de máquina) | 26 |
+   | Arrays, objetos, resto | ~12 |
+
+   - **O `Runtime.getHeapUsage` não inclui a memória WASM**, e o limite da Cloudflare inclui (heap JS + WebAssembly). Os números de heap das tabelas acima não contam esses 31 MiB.
+   - A memória WASM só aparece em isolates que renderizaram uma imagem OG. Ela nunca diminui.
+   - As OG são buscadas por crawlers de redes sociais, não por browsers, então a fração do tráfego deve ser pequena (não medida).
+   - Isolar as OG em outro Worker não é caminho suportado: o adaptador gera "functions" separadas, mas o template do Worker só carrega a `default`.
+
+5. **O culpado da página de projeto: tabelas de ENS montadas no carregamento.**
+   - O diff de snapshots (objetos novos por id, entre `/communities` e `/project/gitcoin`) mostrava 30,8 MiB novos, dos quais **~10 MiB eram as tabelas de um `Set`**.
+   - A cadeia de retenção bate com o `@adraffy/ens-normalize` (grupos com Sets `P`/`V`, `VALID`, `MAPPED`).
+   - A versão 1.9.2 monta essas tabelas no carregamento do módulo; da 1.10 em diante, só na 1ª normalização.
+   - Quem trazia a 1.9.2: `@show-karma/karma-gap-sdk` → `@gelatonetwork/relay-sdk@5.6.0` → `ethers@6.7.0`, uma 2ª cópia do ethers ao lado da 6.11.0 do app.
+   - **Correção:** uma resolution `"@gelatonetwork/relay-sdk>ethers": "6.11.0"`. O relay SDK só usa APIs estáveis do ethers 6, e o app nem usa o caminho do Gelato. Saem do bundle o `ethers@6.7.0` e o `ens-normalize@1.9.2` (−0,43 MiB).
+
+   Heap no workerd local, isolate novo, cache populado:
+
+   | Passo | Antes | Depois |
+   |---|---|---|
+   | Script avaliado | 61,1 MiB | 60,6 MiB |
+   | `/communities` | 77,3 MiB | 76,8 MiB |
+   | `/project/gitcoin` | 108,8 MiB (+31) | **95,3 MiB (+18,5)** |
+   | `/community/optimism` | 110,0 MiB | **96,8 MiB** |
+   | `/blog` | 127,6 MiB | **96,9 MiB** |
+
+   - O que sobra na página de projeto (18,1 MiB de objetos novos) é espalhado. São 8,7 MiB de código compilado de muitos módulos: EAS SDK com ABIs e bytecode de contratos, Karma SDK, markdown-it, mime-db. Não há mais uma estrutura grande isolada; cortar mais exige não avaliar esses módulos no servidor (o corte de web3, deixado de lado por enquanto).
+   - **Na conta (versão `67f4fa0c`), a diferença não aparece nas rodadas normais:** sequencial 9/24 reuso (antes 12/24), tenants 21/24 (antes 17/24), ondas 100/100 nas duas, CPU p50 665 ms (antes 474). Está dentro do ruído, porque esse tráfego raramente leva um isolate por todas as rotas.
+   - Um A/B ciclando todas as rotas, OG incluída, saiu inconclusivo: os isolates da versão nova já estavam quentes da rodada anterior, e os da antiga começaram frios.
+   - O ganho confirmado é o local: **~27 MiB a menos num isolate quente**, que passa a ficar em ~97 MiB de heap JS, ou ~128 MiB com a memória WASM das OG.
 
 **Custo, com o que foi medido:** a estimativa anterior supunha 20–100 ms de CPU por invocação; o medido é 1,5–3,5 s.
 Com ~7M requests por ciclo, 2 s de média dariam ~14 bilhões de ms de CPU, ≈ US$ 280/mês só de CPU, acima dos ≈ US$ 140–160 do gap na Vercel.
