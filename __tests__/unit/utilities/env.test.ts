@@ -279,3 +279,14 @@ describe("env validation", () => {
     });
   });
 });
+
+describe("clientEnvSource", () => {
+  it("lists every client schema key, so each one is inlined at build time", async () => {
+    vi.stubEnv("NEXT_PUBLIC_GAP_INDEXER_URL", "https://indexer.example.com");
+    vi.stubEnv("NEXT_PUBLIC_PRIVY_APP_ID", "test-privy-id");
+    vi.resetModules();
+    const { clientEnvSource } = await import("@/utilities/env");
+    expect(Object.keys(clientEnvSource).sort()).toEqual(Object.keys(clientSchema.shape).sort());
+    vi.unstubAllEnvs();
+  });
+});
