@@ -46,7 +46,12 @@ Object.defineProperty(globalThis, SENTRY_SAFE_RANDOM_ID_WRAPPER, {
 });
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
-type Env = { ASSETS: Fetcher; CRON_SECRET?: string; CRON_WARM_ORIGIN?: string };
+type Env = {
+  ASSETS: Fetcher;
+  CRON_SECRET?: string;
+  CRON_WARM_ORIGIN?: string;
+  TEST_WORKER?: string;
+};
 type Context = { waitUntil(promise: Promise<unknown>): void };
 type LinkElement = {
   getAttribute(name: string): string | null;
@@ -102,10 +107,70 @@ async function serveStudio(request: Request, env: Env): Promise<Response> {
   return withHeaders;
 }
 
+// Test Worker only: everything gated on TEST_WORKER = "1", which only the
+// *.workers.dev test Worker sets. Never set it on a Worker with a custom domain.
+//
+// - x-karma-test-host stands in for the Host header. proxy.ts picks the tenant
+//   from the Host, and on *.workers.dev the Host cannot be anything else:
+//   Cloudflare routes on it, so `Host: grantsapp.scroll.io` would reach Scroll's
+//   own zone. With it, whitelabel tenants can be exercised without DNS.
+// - x-karma-isolate on every response names the isolate and counts the requests
+//   it has served, which shows whether Cloudflare reuses isolates.
+const TEST_HOST_HEADER = "x-karma-test-host";
+// Workers forbid random values and a meaningful clock in global scope, so the
+// isolate is named and timed on its first request.
+let isolateId = "";
+let isolateFirstRequestAt = 0;
+let isolateRequests = 0;
+let nextServerLoaded = false;
+const ISOLATE_PROBE_PATH = "/__karma/isolate";
+
+function isTestWorker(env: Env): boolean {
+  return env.TEST_WORKER === "1";
+}
+
+function withIsolateHeader(response: Response): Response {
+  const tagged = new Response(response.body, response);
+  tagged.headers.set(
+    "x-karma-isolate",
+    `${isolateId};n=${isolateRequests};age=${Date.now() - isolateFirstRequestAt}`
+  );
+  return tagged;
+}
+
+function withTestHost(request: Request, env: Env): Request {
+  const testHost = isTestWorker(env) ? request.headers.get(TEST_HOST_HEADER) : null;
+  if (!testHost) return request;
+  const url = new URL(request.url);
+  url.hostname = testHost;
+  const headers = new Headers(request.headers);
+  headers.delete(TEST_HOST_HEADER);
+  headers.set("host", testHost);
+  return new Request(url, {
+    method: request.method,
+    headers,
+    body: request.body,
+    redirect: "manual",
+  });
+}
+
 export default {
-  fetch(request: Request, env: Env, ctx: Context): Promise<Response> {
+  async fetch(incoming: Request, env: Env, ctx: Context): Promise<Response> {
+    const request = withTestHost(incoming, env);
     if (isStudioPath(new URL(request.url).pathname)) return serveStudio(request, env);
-    return openNextHandler.fetch(request, env, ctx);
+    if (!isTestWorker(env)) return openNextHandler.fetch(request, env, ctx);
+    if (!isolateId) {
+      isolateId = crypto.randomUUID().slice(0, 8);
+      isolateFirstRequestAt = Date.now();
+    }
+    isolateRequests++;
+    // Answers without loading the Next.js server, to tell isolate reuse apart
+    // from what the server costs once it is loaded.
+    if (new URL(request.url).pathname === ISOLATE_PROBE_PATH) {
+      return withIsolateHeader(Response.json({ nextLoaded: nextServerLoaded }));
+    }
+    nextServerLoaded = true;
+    return withIsolateHeader(await openNextHandler.fetch(request, env, ctx));
   },
 
   async scheduled(

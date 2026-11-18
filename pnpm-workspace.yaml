@@ -39,7 +39,7 @@ allowBuilds:
   # add `msw.workerDirectory`, flip this to true.
   msw: false
 
-# Backport of opennextjs/opennextjs-cloudflare#1318 (commit 9dbb209, unreleased;
+# Backport of opennextjs/opennextjs-cloudflare#1318 (head 4879fe2 of 2026-11-18, unreleased;
 # exception approved 2026-11-13). Next.js finds the end of each Cache Components
 # render stage with process.nextTick, which workerd runs as a microtask, so
 # runtime prerenders on Workers hang or render incomplete. Drop this entry once a
