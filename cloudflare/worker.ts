@@ -51,8 +51,8 @@ Object.defineProperty(globalThis, SENTRY_SAFE_RANDOM_ID_WRAPPER, {
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type Env = {
   ASSETS: Fetcher;
-  NEXT_INC_CACHE_R2_BUCKET: OgImageBucket;
-  CF_VERSION_METADATA: { id: string };
+  NEXT_INC_CACHE_R2_BUCKET?: OgImageBucket;
+  CF_VERSION_METADATA?: { id: string };
   CRON_SECRET?: string;
   CRON_WARM_ORIGIN?: string;
   TEST_WORKER?: string;
@@ -164,12 +164,20 @@ function handle(request: Request, env: Env, ctx: Context): Promise<Response> {
     nextServerLoaded = true;
     return openNextHandler.fetch(rendered, env, ctx);
   };
-  if (request.method !== "GET" || !isOgImagePath(new URL(request.url).pathname)) {
+  // Without the bucket or the version binding (a config that left one out),
+  // OG images are drawn every time rather than failing.
+  const deploymentId = env.CF_VERSION_METADATA?.id;
+  if (
+    request.method !== "GET" ||
+    !isOgImagePath(new URL(request.url).pathname) ||
+    !env.NEXT_INC_CACHE_R2_BUCKET ||
+    !deploymentId
+  ) {
     return render(request);
   }
   return serveOgImage(request, {
     bucket: env.NEXT_INC_CACHE_R2_BUCKET,
-    deploymentId: env.CF_VERSION_METADATA.id,
+    deploymentId,
     render,
     waitUntil: (promise) => ctx.waitUntil(promise),
     onError: (error) => console.error("OG image cache:", error),

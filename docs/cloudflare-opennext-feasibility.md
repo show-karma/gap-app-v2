@@ -318,13 +318,15 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 
 | Recurso | Nome / id | Como apagar |
 |---------|-----------|-------------|
-| Worker | `gap-app-v2-staging-test` (várias versões, inclusive as de calibração de memória; a ativa é `80b00e2c`, com o cache das OG; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
+| Worker | `gap-app-v2-staging-test` (várias versões, inclusive as de calibração de memória; a ativa é `2c3dde96`, com o cache das OG; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
 | Durable Object namespace | `DOQueueHandler` (`4d12b229b92f46bd9e3fab1654293533`) | sai com o Worker |
 | Durable Object namespace | `DOShardedTagCache` (`bdaf59a42cd845d78aae9b62fe746262`) | sai com o Worker |
 | Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/` a `wave-empty-4/`, `og-images/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
 | Secret | `SANITY_WEBHOOK_SECRET` no Worker (valor de teste aleatório, não é o da Sanity) | sai com o Worker |
 
-**Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, vazio, com a regra de ciclo de vida `expire-og-images` (`og-images/`, 8 dias). Nenhum Worker usa ele ainda.
+**Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, vazio, com duas regras de ciclo de vida. Nenhum Worker usa ele ainda.
+- `expire-og-images`: `og-images/`, 8 dias.
+- `expire-incremental-cache`: `incremental-cache/`, 30 dias. Cada deploy grava o cache sob um build id novo e nunca apaga o anterior (chave `incremental-cache/<buildId>/<sha256>.<tipo>`). A regra conta a idade do objeto, não do build: uma entrada do build atual que não foi regravada em 30 dias some e é renderizada de novo no próximo request. O teste com prefixo vazio (`wave-empty-4`, tudo 200) é o pior caso disso, e um shell de fallback que sumir é lido dos assets (#2224). 30 dias também limita até onde um rollback acha o cache da versão antiga.
 
 O subdomínio `dawn-sound-c6f7.workers.dev` já existia na conta. Nenhum outro Worker, KV, D1, rota, domínio ou cron foi criado.
 A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, criado pela tentativa do `populateCache` (não aparece em `workers/scripts`).
@@ -333,7 +335,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 
 1. **R1 primeiro (causa confirmada: heap acima de 128 MiB):** reduzir o heap residente em ≥ 20 MiB (web3 fora do SSR, Sentry, dividir em Workers) e medir cada corte: heap local pelo inspector, depois reuso na conta com `x-karma-isolate`.
 2. **R2 corrigido** (shell de fallback nos assets). Issue aberta no Next.js: [vercel/next.js#102041](https://github.com/vercel/next.js/issues/102041), com reprodução mínima (só acontece com `partialPrefetching: true`). Se o Next corrigir, a cópia dos shells pode sair.
-3. **PNG das imagens OG guardado no R2** (feito; ver "PNG das imagens OG guardado no R2"). O bucket de produção `gap-app-v2-opennext-cache` já existe com a regra de ciclo de vida de `og-images/`; a config de produção deve ligá-lo como `NEXT_INC_CACHE_R2_BUCKET`.
+3. **PNG das imagens OG guardado no R2** (feito; ver "PNG das imagens OG guardado no R2"). O bucket de produção `gap-app-v2-opennext-cache` já existe, com regras de ciclo de vida para `og-images/` e `incremental-cache/`; a config de produção deve ligá-lo como `NEXT_INC_CACHE_R2_BUCKET` e manter o binding `version_metadata`.
 4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 
 ### Como repetir na conta
