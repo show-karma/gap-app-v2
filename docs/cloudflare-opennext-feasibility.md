@@ -280,7 +280,33 @@ O limite, calibrado com versões mínimas temporárias do Worker de teste (heap 
 | `/community/optimism` | 161 ms | 94 ms |
 | `/`, `/blog`, `/communities`, sitemap | 26–51 ms | 9–25 ms |
 
-A correção é guardar o PNG: Cache API no `cloudflare/worker.ts` respeitando o `s-maxage` (só funciona num custom domain, é no-op em `*.workers.dev`), ou no R2 com chave pela URL (funciona aqui também, mas precisa de expiração própria).
+### PNG das imagens OG guardado no R2 (19/11)
+
+**Corrigido: um acerto no cache custa 0–2 ms de CPU, contra 2,4–4,6 s de uma renderização.**
+O `cloudflare/worker.ts` responde as rotas OG pelo `cloudflare/og-image-cache.ts` antes de chamar o Next:
+
+- **Onde fica:** no bucket do cache incremental, sob `og-images/`. Nenhum recurso novo; só o binding `CF_VERSION_METADATA` no `wrangler.jsonc`, que não cria nada na conta.
+- **Chave:** id da versão do Worker + host + caminho + query. Um deploy novo começa vazio, como o CDN da Vercel, então uma mudança no desenho do card aparece na hora.
+- **Validade:** a do próprio `Cache-Control` da rota. Fresco por `s-maxage`, depois servido por mais `stale-while-revalidate` enquanto é redesenhado em segundo plano (uma vez por isolate). As rotas continuam decidindo: 1 dia para projeto e comunidade, 1 hora para o scanner, 7 dias para o knowledge.
+- **O que não entra:** qualquer resposta que não seja 200, imagem, `public` com `s-maxage` e sem `Set-Cookie`. URL com chave acima de 1.024 bytes (limite do R2) é desenhada toda vez. Erro de leitura ou escrita no R2 cai no Next, como se o cache não existisse.
+- **Rotas cobertas:** lista fixa em `OG_IMAGE_PATH_PREFIXES` (`/api/metadata/projects/`, `/communities/`, `/knowledge`, `/api/scanner/og/`). Rota OG nova precisa entrar nela. O `proxy.ts` não roda em `/api`, então responder antes do Next não pula nada.
+- **Header de diagnóstico:** `x-karma-og-cache: HIT | STALE | MISS`, mais `age`.
+
+Medido na conta, versão `80b00e2c`, 4 URLs × 3 rodadas (Workers Logs):
+
+| Request | CPU | Wall no Worker |
+|---|---|---|
+| MISS (1º de cada URL, isolates frios) | 2.380–4.574 ms | 3,7–7,1 s |
+| HIT (14 requests) | **0–2 ms** | 158–529 ms (leitura do R2) |
+
+Os PNGs servidos do R2 têm o mesmo hash do MISS. Os objetos no bucket carregam o `Cache-Control` original e o `s-maxage`/`stale-while-revalidate` em metadados. O STALE e a expiração foram cobertos por teste unitário (não dá para esperar um dia na conta).
+O tempo total no cliente num HIT ainda variou de 0,4 a 3,9 s: os lentos caíram em isolates novos (`n=1` no `x-karma-isolate`) e pagaram a partida do script de 58 MiB, não o cache. Isso é o R1, não a OG.
+
+Custo: leitura no R2 a US$ 0,36 por milhão e escrita a US$ 4,50 por milhão, contra ~US$ 15 por milhão de OG em CPU (743 ms × US$ 0,02 por milhão de ms).
+Ressalvas:
+- **Prefixos de deploys antigos ficam no bucket.** Por isso o bucket de produção, `gap-app-v2-opennext-cache`, já foi criado (19/11) com a regra de ciclo de vida `expire-og-images`: objetos sob `og-images/` expiram em 8 dias. No bucket de teste ela não foi criada; ele sai inteiro na limpeza.
+- **O card de "projeto não encontrado" também fica guardado por 1 dia**, porque a rota manda `s-maxage=86400` nele. É o mesmo comportamento da Vercel hoje; um projeto recém-criado ou um erro passageiro do indexer mostra o card genérico até expirar.
+- **A query do knowledge vira chave**, então URLs inventadas geram escritas no R2. Hoje elas já geram uma renderização inteira cada; a regra de ciclo de vida limita o armazenamento.
 
 ### Patch #1318 atualizado
 
@@ -292,11 +318,15 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 
 | Recurso | Nome / id | Como apagar |
 |---------|-----------|-------------|
-| Worker | `gap-app-v2-staging-test` (várias versões, inclusive as de calibração de memória; a ativa é `2438303b`; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
+| Worker | `gap-app-v2-staging-test` (várias versões, inclusive as de calibração de memória; a ativa é `2c3dde96`, com o cache das OG; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
 | Durable Object namespace | `DOQueueHandler` (`4d12b229b92f46bd9e3fab1654293533`) | sai com o Worker |
 | Durable Object namespace | `DOShardedTagCache` (`bdaf59a42cd845d78aae9b62fe746262`) | sai com o Worker |
-| Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/` a `wave-empty-4/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
+| Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/` a `wave-empty-4/`, `og-images/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
 | Secret | `SANITY_WEBHOOK_SECRET` no Worker (valor de teste aleatório, não é o da Sanity) | sai com o Worker |
+
+**Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, vazio, com duas regras de ciclo de vida. Nenhum Worker usa ele ainda.
+- `expire-og-images`: `og-images/`, 8 dias.
+- `expire-incremental-cache`: `incremental-cache/`, 30 dias. Cada deploy grava o cache sob um build id novo e nunca apaga o anterior (chave `incremental-cache/<buildId>/<sha256>.<tipo>`). A regra conta a idade do objeto, não do build: uma entrada do build atual que não foi regravada em 30 dias some e é renderizada de novo no próximo request. O teste com prefixo vazio (`wave-empty-4`, tudo 200) é o pior caso disso, e um shell de fallback que sumir é lido dos assets (#2224). 30 dias também limita até onde um rollback acha o cache da versão antiga.
 
 O subdomínio `dawn-sound-c6f7.workers.dev` já existia na conta. Nenhum outro Worker, KV, D1, rota, domínio ou cron foi criado.
 A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, criado pela tentativa do `populateCache` (não aparece em `workers/scripts`).
@@ -305,7 +335,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 
 1. **R1 primeiro (causa confirmada: heap acima de 128 MiB):** reduzir o heap residente em ≥ 20 MiB (web3 fora do SSR, Sentry, dividir em Workers) e medir cada corte: heap local pelo inspector, depois reuso na conta com `x-karma-isolate`.
 2. **R2 corrigido** (shell de fallback nos assets). Issue aberta no Next.js: [vercel/next.js#102041](https://github.com/vercel/next.js/issues/102041), com reprodução mínima (só acontece com `partialPrefetching: true`). Se o Next corrigir, a cópia dos shells pode sair.
-3. **Guardar o PNG das imagens OG** (743 ms de CPU por request hoje; ver "Memória WASM das imagens OG"). A memória WASM delas não é problema.
+3. **PNG das imagens OG guardado no R2** (feito; ver "PNG das imagens OG guardado no R2"). O bucket de produção `gap-app-v2-opennext-cache` já existe, com regras de ciclo de vida para `og-images/` e `incremental-cache/`; a config de produção deve ligá-lo como `NEXT_INC_CACHE_R2_BUCKET` e manter o binding `version_metadata`.
 4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 
 ### Como repetir na conta
