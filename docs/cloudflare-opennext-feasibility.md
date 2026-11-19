@@ -314,6 +314,31 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Isolate novo do Worker do Next: onde vai o tempo (19/11)
+
+O que precisa do Next paga o isolate novo dele: 2–6 s numa rota fria. Perfil de CPU do 1º request de um isolate novo no workerd local (`/api/geo`, bundle do deploy, profiler ligado antes do request):
+
+| Onde | ms |
+|---|---|
+| Função auxiliar do esbuild que inicializa o `handler.mjs` (`__esm`), tempo próprio | **1.918** |
+| Corpo do `handler.mjs` e inicialização do Next (instrumentação, Sentry, manifests) | ~360 |
+| Render e resposta | ~100 |
+
+**O que se sabe:**
+- O tempo próprio da função auxiliar é o V8 compilando a função que embrulha o `handler.mjs` inteiro (~54 MB, 3.270 arquivos), porque o corpo dela só roda depois e roda em 9 ms.
+- Dos 54 MB, **37,6 MiB são chunks de SSR** do Turbopack, com blocos grandes parecidos entre grupos de rotas (cinco `[root-of-the-server]` de ~1,35 MiB).
+
+**O que não se confirmou:**
+- Um sintético com o mesmo volume (48 MB em 3.000 módulos, numa função só, inclusive `async` como o top-level await) compila em ~0,05 s no 1º request.
+- Não há `eval` direto no bundle.
+- Então não é só o tamanho; algo no código real impede o V8 de reaproveitar a análise prévia. Não está explicado.
+
+**Próximos experimentos:**
+1. Subir o `handler.mjs` como módulo ES separado no upload, sem embrulhar. Exige resolver os imports de WASM por caminho absoluto e o `createRequire`, que o bundling do wrangler trata hoje.
+2. Bisseccionar o bundle real: remover metades dos chunks de SSR até achar o que torna a compilação cara.
+3. Medir no Cloudflare, que pode ter cache de código diferente do local. Pendente do token.
+4. Diminuir os chunks de SSR (web3 fora do SSR), que reduz o custo proporcionalmente, seja qual for a causa.
+
 ### Dois Workers: roteamento e servidor do Next (19/11)
 
 **Por quê:** mesmo com a interceptação, um isolate novo levava 1,7–2,7 s até o 1º byte, só para subir o script de 57 MB, embora a página viesse do cache.
@@ -393,7 +418,7 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 - A página guardada bate com a da Vercel (título, ~116 KiB, mesmo conteúdo).
 - CPU num isolate quente: **36–64 ms** com a página no cache, contra 150–560 ms renderizando.
 - Num isolate novo continua em 1,6–3,9 s, porque mesmo para servir do cache o servidor do Next inteiro é carregado.
-- Pendência: `/community/<id>/impact` não ganha entrada. Até o pedido da fila recebe o shell genérico, e a fila registra erro. Na Vercel a página sai do cache. O Worker reenvia a mesma página no máximo a cada 10 min por isolate.
+- `/community/<id>/impact` não ganha entrada, e é esperado: a página tem partes adiadas por desenho. Até a gerada no build (`community/gitcoin/impact`) tem estado `postponed`, então o Next a resume em todo request, como na Vercel, onde o `STALE` se refere só ao shell. A fila tenta à toa e registra erro; o Worker reenvia a mesma página no máximo a cada 10 min por isolate.
 
 **O que sobra é o isolate novo:**
 - Mesmo uma resposta que não carrega o Next (`/__karma/isolate`) leva 1,3–2,6 s num isolate novo, o custo de subir o script de 57 MB.

@@ -35,9 +35,11 @@ const RSC_HEADER = "rsc";
 
 const DAY_MS = 86_400_000;
 // Requests for the same URL inside this window are not queued again by this
-// isolate; the queue dedupes across isolates. A page whose render never gets
-// stored (on staging, /community/<id>/impact: Next answers even the queue's
-// request with the fallback shell) is otherwise sent again on every visit.
+// isolate; the queue dedupes across isolates. A page that is partially
+// prerendered by design never gets an entry of its own: /community/<id>/impact
+// is postponed even when generated at build, so Next resumes it on every
+// request, and the queue's render answers with a shell again. Without this
+// window such a page would be queued on every visit.
 const REQUEUE_AFTER_MS = 600_000;
 // OpenNext's default; the queue keeps one Durable Object per shard.
 const QUEUE_SHARDS = 10;
