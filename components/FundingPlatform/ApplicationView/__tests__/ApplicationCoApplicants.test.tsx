@@ -118,5 +118,24 @@ describe("ApplicationCoApplicants", () => {
       fireEvent.click(screen.getByRole("button", { name: /Add co-applicant/ }));
       expect(screen.getByRole("dialog", { name: "Add co-applicant" })).toBeInTheDocument();
     });
+
+    it("stops an admin from re-adding someone who is already a co-applicant", async () => {
+      mockAccess.mockReturnValue({ isLoading: false, isOwner: false, canAdminister: true });
+      mockQuery({
+        data: [
+          owner,
+          { kind: "member", role: "Member", name: "Bo", email: "bo@x.org", address: "0x2" },
+        ],
+      });
+      render(<ApplicationCoApplicants communityId="filecoin" referenceNumber="APP-1" />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Add co-applicant/ }));
+      fireEvent.change(screen.getByLabelText("Name *"), { target: { value: "Bo" } });
+      fireEvent.change(screen.getByLabelText("Email *"), { target: { value: "bo@x.org" } });
+      fireEvent.click(screen.getByRole("button", { name: "Add co-applicant" }));
+
+      expect(await screen.findByText("This person is already a co-applicant.")).toBeInTheDocument();
+      expect(inviteGrantee).not.toHaveBeenCalled();
+    });
   });
 });

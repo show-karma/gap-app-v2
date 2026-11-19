@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusIcon } from "@heroicons/react/20/solid";
-import { type FC, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import InviteGranteeModal from "@/components/FundingPlatform/ApplicationView/InviteGranteeModal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +22,10 @@ export const ApplicationCoApplicants: FC<ApplicationCoApplicantsProps> = ({
   const access = useApplicationAccess(communityId, referenceNumber);
   const { inviteGrantee, isInviting } = useInviteApplicationGrantee(referenceNumber);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const coApplicantEmails = useMemo(
+    () => coApplicants.map((contact) => contact.email).filter((email): email is string => !!email),
+    [coApplicants]
+  );
 
   const canAdd = !access.isLoading && (access.isOwner || access.canAdminister);
 
@@ -80,6 +84,7 @@ export const ApplicationCoApplicants: FC<ApplicationCoApplicantsProps> = ({
           onInviteGrantee={inviteGrantee}
           isInviting={isInviting}
           onInvited={() => setIsAddOpen(false)}
+          existingEmails={coApplicantEmails}
         />
       )}
     </div>
