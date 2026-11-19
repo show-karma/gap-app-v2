@@ -314,6 +314,39 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Páginas de projeto e comunidade com cache próprio (19/11)
+
+**Sintoma:** no Worker, `/project/<id>` e `/community/<id>` (e as subpáginas) respondiam `private, no-store` e `x-nextjs-postponed: 1` a cada request, renderizadas por inteiro. Na Vercel as mesmas páginas saem do CDN (`HIT`, 0,2–0,3 s). Só as páginas geradas no build (três projetos, `community/gitcoin`) saíam do cache.
+
+**Causa:**
+- Com `partialPrefetching`, a 1ª visita a uma URL que não foi gerada no build recebe o shell genérico da rota. Em background, o Next deveria renderizar o shell daquela URL e guardar.
+- O Next só faz esse passo fora do "minimal mode" (`app-page-runtime.js`: `!isMinimalMode && ... nextConfig.partialPrefetching`). Em minimal mode ele deixa isso para a plataforma, e a Vercel faz (`x-vercel-cache: PRERENDER` na 1ª visita).
+- O OpenNext roda o Next em minimal mode e não faz o passo, então essas páginas nunca ganhavam entrada própria.
+
+**Correção (`cloudflare/shell-upgrade.ts`):**
+- Quando a resposta é o shell genérico, o Worker manda a página para a fila de revalidação do OpenNext (`NEXT_CACHE_DO_QUEUE`). É o mesmo caminho de uma página vencida, com a mesma deduplicação.
+- A fila pede a página com `x-prerender-revalidate` e `x-isr: 1`, o Next renderiza e guarda, e as visitas seguintes são `HIT`.
+- Com `x-isr: 1` o OpenNext pula o `proxy.ts`, então a fila precisa do caminho interno (`/t/karma/project/gitcoin`). Pelo caminho público a resposta é 404. O `proxy.ts` informa esse caminho no cabeçalho `x-karma-rewritten-path`, que o Worker lê e remove antes de responder.
+- A fila desistia de um render depois de 10 s, e um isolate novo passa disso. `NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS` foi para 30 s nos dois Workers.
+
+**Resultado no staging** (versão `aba572f8`):
+- A 1ª visita continua com o shell. Da 2ª em diante, `HIT`/`STALE`.
+- A página guardada bate com a da Vercel (título, ~116 KiB, mesmo conteúdo).
+- CPU num isolate quente: **36–64 ms** com a página no cache, contra 150–560 ms renderizando.
+- Num isolate novo continua em 1,6–3,9 s, porque mesmo para servir do cache o servidor do Next inteiro é carregado.
+- Pendência: `/community/<id>/impact` não ganha entrada. Até o pedido da fila recebe o shell genérico, e a fila registra erro. Na Vercel a página sai do cache. O Worker reenvia a mesma página no máximo a cada 10 min por isolate.
+
+**O que sobra é o isolate novo:**
+- Mesmo uma resposta que não carrega o Next (`/__karma/isolate`) leva 1,3–2,6 s num isolate novo, o custo de subir o script de 57 MB.
+- `enableCacheInterception` (responder do cache no middleware, sem carregar o servidor) economizaria só a parte do Next. Ela também serve o HTML guardado sem resumir as partes adiadas, e 277 das 397 entradas de página do build têm partes adiadas. Precisaria de um patch que mande essas entradas para o Next.
+- O ganho grande é diminuir o script (R1).
+
+**Erro de deploy encontrado no caminho:**
+- `wrangler versions upload` sem o arquivo gera o bundle de novo a partir de `cloudflare/worker.ts` e perde a correção Latin-1.
+- O Worker de teste ficou assim de `80b00e2c` a `2c3dde96`: 0 de 30 isolates reaproveitados, contra 18 de 30 com o bundle certo (`193a0522`).
+- Subir sempre `.open-next/upload/worker.js --no-bundle --no-minify`.
+- Para conferir, baixar `content/v2` e contar os caracteres acima de U+00FF na parte `worker.js`; tem que dar 0.
+
 ### Worker de staging (19/11)
 
 `gap-app-v2-staging`, em `https://gap-app-v2-staging.dawn-sound-c6f7.workers.dev`. É o mesmo build do Worker de teste, configurado como ficará em produção:
@@ -369,6 +402,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 3. **PNG das imagens OG guardado no R2** (feito; ver "PNG das imagens OG guardado no R2"). O bucket de produção `gap-app-v2-opennext-cache` já existe, com regras de ciclo de vida para `og-images/` e `incremental-cache/`; a config de produção deve ligá-lo como `NEXT_INC_CACHE_R2_BUCKET` e manter o binding `version_metadata`.
 4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 5. **Worker de staging no ar** (ver "Worker de staging (19/11)"). Falta um host próprio: o DNS do `karmahq.org` e do `.xyz` está no Route 53 e a conta não tem zona, então só `workers.dev` por ora.
+6. **Páginas de projeto e comunidade com cache próprio** (feito; ver a seção). Falta `/community/<id>/impact`, e o custo do isolate novo continua no R1.
 
 ### Como repetir na conta
 
