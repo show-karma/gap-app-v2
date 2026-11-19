@@ -27,6 +27,13 @@ export const KARMA_TENANT_PARAM = "karma";
 export const TENANT_ROUTE_PREFIX = "/t";
 
 /**
+ * Response header carrying the internal path a page request was rewritten to.
+ * The Cloudflare Worker reads it to have that page cached under its own path,
+ * and removes it before the response leaves (cloudflare/shell-upgrade.ts).
+ */
+export const REWRITTEN_PATH_HEADER = "x-karma-rewritten-path";
+
+/**
  * The tenant param for a request host.
  *
  * The value for a whitelabel host is its config `domain`, not the community

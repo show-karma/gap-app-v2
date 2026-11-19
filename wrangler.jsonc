@@ -72,7 +72,12 @@
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   // Server-side deployment environment (utilities/deployment-env.ts). "preview"
   // matches the Vercel staging deployment: Sepolia programs, Sentry off.
-  "vars": { "APP_ENV": "preview" },
+  // NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS: the revalidation queue gives up
+  // on a render after 10 s by default, and a page rendered in a new isolate
+  // (loading the Next server first) can take longer, so it would never be
+  // stored. That includes the first render of each project and community page
+  // (cloudflare/shell-upgrade.ts).
+  "vars": { "APP_ENV": "preview", "NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS": "30000" },
   // No Cron Trigger on the test Worker. /api/cron/warm-sitemaps fetches the
   // sitemaps on SITE_URL, the production host, so a test Worker running it would
   // load production every six hours. The scheduled() handler in
@@ -104,7 +109,7 @@
       },
       "images": { "binding": "IMAGES" },
       "version_metadata": { "binding": "CF_VERSION_METADATA" },
-      "vars": { "APP_ENV": "preview" },
+      "vars": { "APP_ENV": "preview", "NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS": "30000" },
       // Same reason as the test Worker: the warm-up loads production sitemaps.
       "triggers": { "crons": [] }
     }

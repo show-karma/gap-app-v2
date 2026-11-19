@@ -47,6 +47,7 @@ import { proxy } from "@/proxy";
 import { CANONICAL_HOST, CANONICAL_ORIGIN } from "@/utilities/domains";
 import {
   KARMA_TENANT_PARAM,
+  REWRITTEN_PATH_HEADER,
   TENANT_ROUTE_PREFIX,
   tenantNotFoundPathname,
 } from "@/utilities/tenant-param";
@@ -104,6 +105,16 @@ describe("tenant rewrite on the canonical host", () => {
     // A rewrite, not a redirect: the browser URL is unchanged.
     expect(response.headers.get("location")).toBeNull();
     expect(response.status).toBe(200);
+  });
+
+  // The Cloudflare Worker caches each project and community page under this
+  // path (cloudflare/shell-upgrade.ts); without it they are never cached there.
+  it("reports the internal path, without the query, for the Worker", async () => {
+    const response = await proxy(createRequest(CANONICAL_HOST, "/project/gitcoin", "tab=1"));
+
+    expect(response.headers.get(REWRITTEN_PATH_HEADER)).toBe(
+      `${TENANT_ROUTE_PREFIX}/${KARMA_TENANT_PARAM}/project/gitcoin`
+    );
   });
 
   it("preserves the query string across the rewrite", async () => {
