@@ -314,6 +314,32 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Interceptação de cache (19/11)
+
+**O que é:** `enableCacheInterception` faz a camada de roteamento do OpenNext (o middleware, 3,5 MB) responder uma página que está inteira no cache. O servidor do Next (57 MB) não é carregado nem renderiza.
+
+**Por que estava desligada:** a interceptação servia o HTML guardado sem olhar se a entrada tinha partes adiadas (`postponed`). Com `cacheComponents`, 277 das 397 entradas de página do build têm. Servido sozinho, o shell delas ficaria sem as partes renderizadas por request.
+
+**Correções** (patch em `@opennextjs/aws` 4.1.15, `patches/@opennextjs__aws@4.1.15.patch`, ainda não reportado upstream):
+1. Entrada com `meta.postponed` vai para o servidor, que retoma o render.
+2. O Next 16 põe no `routes-manifest` rotas que só o prerender conhece, como `/t/karma/project/[projectId]` (tenant fixo) ao lado de `/t/[tenant]/project/[projectId]`. O interceptor pegava a primeira rota resolvida, a variante sem página, e não achava chave nenhuma. Toda página de projeto e de comunidade ia para o Next, inclusive as geradas no build. Agora ele pega a primeira rota que tem página, nos dois ramos (pré-renderizada e guardada em runtime).
+
+**Resultado no Worker de teste** (versão `26862271`), 8 rotas × 2 rodadas, quase todas em isolate novo:
+
+| | Antes | Depois |
+|---|---|---|
+| CPU de uma página no cache, isolate novo | 1,6–3,9 s | **16–127 ms** (mediana 76) |
+| Páginas servidas sem o Next | `/`, `/communities` | também projeto, comunidade, subpáginas e `/blog` |
+| Erros nos Workers Logs | | 0 |
+
+- As revalidações em background (páginas `STALE`) custaram 115–458 ms cada.
+- Conteúdo igual (títulos conferidos). A resposta mantém CSP, `x-frame-options` e o `X-Robots-Tag` que o `proxy.ts` põe. A navegação RSC também sai do cache.
+- **O que não muda: a latência de um isolate novo.**
+  - Dentro do isolate o request leva 69–530 ms, mas o TTFB fica em 1,7–2,7 s, por causa da subida do script de 57 MB antes do 1º request.
+  - Isso aparece como tempo total, não como CPU nos logs.
+  - Diminuir isso é o que a divisão em dois Workers resolveria (o frontal teria só o middleware).
+- No `workers.dev` o cache regional (Cache API) não funciona, então toda leitura vai ao R2 e cada checagem de tag ao Durable Object. Num domínio próprio, esse tempo de espera cai.
+
 ### Páginas de projeto e comunidade com cache próprio (19/11)
 
 **Sintoma:** no Worker, `/project/<id>` e `/community/<id>` (e as subpáginas) respondiam `private, no-store` e `x-nextjs-postponed: 1` a cada request, renderizadas por inteiro. Na Vercel as mesmas páginas saem do CDN (`HIT`, 0,2–0,3 s). Só as páginas geradas no build (três projetos, `community/gitcoin`) saíam do cache.
@@ -338,7 +364,7 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 
 **O que sobra é o isolate novo:**
 - Mesmo uma resposta que não carrega o Next (`/__karma/isolate`) leva 1,3–2,6 s num isolate novo, o custo de subir o script de 57 MB.
-- `enableCacheInterception` (responder do cache no middleware, sem carregar o servidor) economizaria só a parte do Next. Ela também serve o HTML guardado sem resumir as partes adiadas, e 277 das 397 entradas de página do build têm partes adiadas. Precisaria de um patch que mande essas entradas para o Next.
+- A interceptação de cache resolveu a CPU disso; ver "Interceptação de cache (19/11)". O tempo de subida do script continua.
 - O ganho grande é diminuir o script (R1).
 
 **Erro de deploy encontrado no caminho:**
@@ -403,6 +429,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 5. **Worker de staging no ar** (ver "Worker de staging (19/11)"). Falta um host próprio: o DNS do `karmahq.org` e do `.xyz` está no Route 53 e a conta não tem zona, então só `workers.dev` por ora.
 6. **Páginas de projeto e comunidade com cache próprio** (feito; ver a seção). Falta `/community/<id>/impact`, e o custo do isolate novo continua no R1.
+7. **Interceptação de cache** (feito; ver a seção): página no cache custa ~76 ms de CPU mesmo em isolate novo. A latência do isolate novo continua; o próximo passo é dividir em Worker frontal + Worker do Next.
 
 ### Como repetir na conta
 
