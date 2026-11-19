@@ -1,0 +1,143 @@
+name: Deploy to Cloudflare staging
+
+# The Cloudflare Workers copy of the Vercel staging deployment (staging.yml),
+# built from the same code with the same environment: the Vercel "preview"
+# variables, read with `vercel pull`. It deploys two Workers, the Next server
+# first and then the public routing Worker (wrangler.app.jsonc, wrangler.jsonc,
+# docs/cloudflare-opennext-feasibility.md):
+#   gap-app-v2-staging-app  (no public URL)
+#   gap-app-v2-staging      (https://gap-app-v2-staging.dawn-sound-c6f7.workers.dev)
+#
+# Runs on pushes to migration-cloudflare while the migration is in progress;
+# move it to `main` together with staging.yml at the cutover.
+#
+# Needs:
+#   secrets.CLOUDFLARE_API_TOKEN  "Edit Cloudflare Workers" template, Karma account only
+#   vars.CLOUDFLARE_ACCOUNT_ID
+#   secrets.VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID (already used by staging.yml)
+
+on:
+  push:
+    branches:
+      - migration-cloudflare
+  workflow_dispatch:
+
+# One deploy at a time; a newer push waits instead of racing the R2 upload.
+concurrency:
+  group: cloudflare-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+  WRANGLER_SEND_METRICS: 'false'
+  STAGING_URL: https://gap-app-v2-staging.dawn-sound-c6f7.workers.dev
+  R2_BUCKET: gap-app-v2-staging-opennext-cache
+  VERCEL_ENV_FILE: .vercel/.env.preview.local
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare staging
+    # Skipped, not failed, until the Cloudflare account is configured for the repo.
+    if: github.repository == 'show-karma/gap-app-v2' && vars.CLOUDFLARE_ACCOUNT_ID != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check the Cloudflare credentials
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Set secrets.CLOUDFLARE_API_TOKEN and vars.CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Pull the Vercel preview environment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes vercel@latest pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Export the build variables
+        # NEXT_PUBLIC_* only, into the step environment. Never a .env at the app
+        # root: OpenNext copies it into the Worker bundle.
+        run: |
+          node scripts/cf-vercel-env.mjs build "$VERCEL_ENV_FILE"
+          {
+            echo "NEXT_PUBLIC_APP_ENV=preview"
+            echo "APP_ENV=preview"
+          } >> "$GITHUB_ENV"
+
+      - name: Refuse a .env in the bundle
+        run: |
+          # The files OpenNext copies or inlines into the Worker; .env.example is fine.
+          for f in .env .env.local .env.production .env.production.local; do
+            if [ -e "$f" ]; then
+              echo "::error::$f is at the app root; OpenNext would put it in the Worker bundle."
+              exit 1
+            fi
+          done
+
+      - name: Build
+        run: pnpm cf:build
+
+      - name: Bundle and check both Workers
+        # Latin-1 and size budgets; deploy these files as they are, never re-bundled.
+        run: pnpm cf:size
+
+      - name: Upload the incremental cache to R2
+        run: node scripts/cf-populate-r2.mjs "$R2_BUCKET"
+
+      - name: Deploy the Next server Worker
+        env:
+          OPEN_NEXT_DEPLOY: 'true'
+        run: >
+          npx wrangler deploy .open-next/upload-app/next-server.js
+          --config wrangler.app.jsonc --env staging --no-bundle --no-minify
+          --message "${{ github.sha }}"
+
+      - name: Deploy the routing Worker
+        env:
+          OPEN_NEXT_DEPLOY: 'true'
+        run: >
+          npx wrangler deploy .open-next/upload/worker.js
+          --env staging --no-bundle --no-minify
+          --message "${{ github.sha }}"
+
+      - name: Copy the runtime secrets from Vercel
+        # The route handlers that read them run in the Next server Worker; the
+        # routing Worker's cron handler also sends CRON_SECRET.
+        run: |
+          node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --config wrangler.app.jsonc --env staging
+          CF_SECRETS=CRON_SECRET node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --env staging
+
+      - name: Remove the pulled environment
+        if: always()
+        run: rm -rf .vercel
+
+      - name: Smoke test
+        run: |
+          fail=0
+          for path in / /communities /api/geo /sitemap_index.xml /admin/studio; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$STAGING_URL$path")
+            echo "$status $path"
+            [ "$status" = "200" ] || fail=1
+          done
+          exit $fail
