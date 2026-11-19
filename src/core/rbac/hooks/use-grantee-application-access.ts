@@ -61,8 +61,8 @@ export function useGranteeApplicationAccess({
   const isResolving = isEnabled ? query.isPending : false;
 
   const applications = query.data?.applications ?? [];
-  // Use the server total, not applications.length (the page is limited to 1).
-  const applicationCount = query.data?.pagination?.total ?? applications.length;
+  // The API names the count `totalCount`; applications.length is capped by limit=1.
+  const applicationCount = query.data?.pagination?.totalCount ?? applications.length;
 
   return {
     isResolving,
