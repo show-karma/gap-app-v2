@@ -16,8 +16,14 @@
 //   latency; D1 is the low-traffic option.
 // - revalidation queue: Durable Object, so stale-while-revalidate refreshes
 //   are deduplicated instead of firing one background render per request.
-// - cache interception stays off: it is incompatible with partial
-//   prerendering, which `cacheComponents` turns on for every route.
+// - cache interception is on: a page the cache holds in full is answered by
+//   the routing layer, before the Next server is loaded or rendered. That
+//   saves the server's load in a new isolate (1.6–3.9 s of CPU) and its render
+//   in a warm one. A partially prerendered page (an entry with postponed
+//   state) still goes to the server, which resumes it: served alone, its shell
+//   would never get the parts rendered per request. That check is a patch
+//   (patches/@opennextjs__aws@4.1.15.patch); unpatched, interception is
+//   incompatible with `cacheComponents`.
 import { defineCloudflareConfig } from "@opennextjs/cloudflare";
 import r2IncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cache/r2-incremental-cache";
 import { withRegionalCache } from "@opennextjs/cloudflare/overrides/incremental-cache/regional-cache";
@@ -33,5 +39,5 @@ export default defineCloudflareConfig({
   ),
   tagCache: doShardedTagCache({ baseShardSize: 12, regionalCache: true }),
   queue: doQueue,
-  enableCacheInterception: false,
+  enableCacheInterception: true,
 });
