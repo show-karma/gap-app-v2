@@ -5,6 +5,11 @@
 // production Worker gets its own config when the cutover is planned
 // (docs/cloudflare-opennext-feasibility.md).
 //
+// Already created for it: the R2 bucket `gap-app-v2-opennext-cache`, with the
+// lifecycle rule `expire-og-images` (objects under og-images/ expire after 8
+// days, so the OG image cache of past deployments does not pile up). Bind it
+// as NEXT_INC_CACHE_R2_BUCKET there.
+//
 // No account_id on purpose: wrangler reads CLOUDFLARE_ACCOUNT_ID from the
 // environment. `pnpm cf:preview` / `wrangler dev` simulate every binding below
 // locally under .wrangler/state.

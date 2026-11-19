@@ -304,7 +304,7 @@ O tempo total no cliente num HIT ainda variou de 0,4 a 3,9 s: os lentos caíram 
 
 Custo: leitura no R2 a US$ 0,36 por milhão e escrita a US$ 4,50 por milhão, contra ~US$ 15 por milhão de OG em CPU (743 ms × US$ 0,02 por milhão de ms).
 Ressalvas:
-- **Prefixos de deploys antigos ficam no bucket.** Na produção, pôr uma regra de ciclo de vida no R2 apagando `og-images/` depois de ~8 dias. No bucket de teste ela não foi criada; ele sai inteiro na limpeza.
+- **Prefixos de deploys antigos ficam no bucket.** Por isso o bucket de produção, `gap-app-v2-opennext-cache`, já foi criado (19/11) com a regra de ciclo de vida `expire-og-images`: objetos sob `og-images/` expiram em 8 dias. No bucket de teste ela não foi criada; ele sai inteiro na limpeza.
 - **O card de "projeto não encontrado" também fica guardado por 1 dia**, porque a rota manda `s-maxage=86400` nele. É o mesmo comportamento da Vercel hoje; um projeto recém-criado ou um erro passageiro do indexer mostra o card genérico até expirar.
 - **A query do knowledge vira chave**, então URLs inventadas geram escritas no R2. Hoje elas já geram uma renderização inteira cada; a regra de ciclo de vida limita o armazenamento.
 
@@ -324,6 +324,8 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 | Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/` a `wave-empty-4/`, `og-images/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
 | Secret | `SANITY_WEBHOOK_SECRET` no Worker (valor de teste aleatório, não é o da Sanity) | sai com o Worker |
 
+**Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, vazio, com a regra de ciclo de vida `expire-og-images` (`og-images/`, 8 dias). Nenhum Worker usa ele ainda.
+
 O subdomínio `dawn-sound-c6f7.workers.dev` já existia na conta. Nenhum outro Worker, KV, D1, rota, domínio ou cron foi criado.
 A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, criado pela tentativa do `populateCache` (não aparece em `workers/scripts`).
 
@@ -331,7 +333,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 
 1. **R1 primeiro (causa confirmada: heap acima de 128 MiB):** reduzir o heap residente em ≥ 20 MiB (web3 fora do SSR, Sentry, dividir em Workers) e medir cada corte: heap local pelo inspector, depois reuso na conta com `x-karma-isolate`.
 2. **R2 corrigido** (shell de fallback nos assets). Issue aberta no Next.js: [vercel/next.js#102041](https://github.com/vercel/next.js/issues/102041), com reprodução mínima (só acontece com `partialPrefetching: true`). Se o Next corrigir, a cópia dos shells pode sair.
-3. **PNG das imagens OG guardado no R2** (feito; ver "PNG das imagens OG guardado no R2"). Na produção, falta a regra de ciclo de vida em `og-images/`.
+3. **PNG das imagens OG guardado no R2** (feito; ver "PNG das imagens OG guardado no R2"). O bucket de produção `gap-app-v2-opennext-cache` já existe com a regra de ciclo de vida de `og-images/`; a config de produção deve ligá-lo como `NEXT_INC_CACHE_R2_BUCKET`.
 4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 
 ### Como repetir na conta
