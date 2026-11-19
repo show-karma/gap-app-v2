@@ -19,9 +19,9 @@ const COMMUNITY = "test-community";
 
 const makeApp = (referenceNumber: string) => ({ referenceNumber });
 
-const makeResponse = (apps: Array<{ referenceNumber: string }>, total: number) => ({
+const makeResponse = (apps: Array<{ referenceNumber: string }>, totalCount: number) => ({
   applications: apps,
-  pagination: { page: 1, limit: 1, total, totalPages: 1 },
+  pagination: { page: 1, limit: 1, totalCount, totalPages: totalCount },
   statusCounts: {},
 });
 
@@ -86,8 +86,8 @@ describe("useGranteeApplicationAccess", () => {
     });
   });
 
-  it("uses pagination.total (not applications.length) so a multi-application user goes to the dashboard", async () => {
-    // limit=1 returns a single application, but total reports the real count.
+  it("uses pagination.totalCount (not applications.length) so a multi-application user goes to the dashboard", async () => {
+    // limit=1 returns a single application, but totalCount reports the real count.
     mockFetchUserApplications.mockResolvedValue(makeResponse([makeApp("REF-1")], 3));
 
     const { result } = renderHook(
