@@ -1,6 +1,10 @@
 // Cloudflare Workers config for gap-app-v2 (@opennextjs/cloudflare).
 //
-// Two NON-PRODUCTION Workers, both only on *.workers.dev, with no routes, zones
+// The routing Worker. Each deployment is two Workers: this one, public, and the
+// Next server Worker in wrangler.app.jsonc, which only this one calls (through
+// the NEXT_SERVER service binding). Deploy the Next server first.
+//
+// Two NON-PRODUCTION deployments, both only on *.workers.dev, with no routes, zones
 // or custom domains, and they must not get any here:
 // - the top level is the test Worker, `gap-app-v2-staging-test`, for experiments;
 // - `env.staging` (below) is `gap-app-v2-staging`, a standing staging copy.
@@ -51,7 +55,9 @@
   },
   "services": [
     // Self-reference used by the cache layer; must match "name".
-    { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging-test" }
+    { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging-test" },
+    // The Next server Worker (wrangler.app.jsonc), for what the cache cannot answer.
+    { "binding": "NEXT_SERVER", "service": "gap-app-v2-staging-test-app" }
   ],
   "r2_buckets": [
     {
@@ -94,7 +100,10 @@
     // Bindings are not inherited from the top level, so every one is repeated.
     "staging": {
       "name": "gap-app-v2-staging",
-      "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging" }],
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging" },
+        { "binding": "NEXT_SERVER", "service": "gap-app-v2-staging-app" }
+      ],
       "r2_buckets": [
         {
           "binding": "NEXT_INC_CACHE_R2_BUCKET",
