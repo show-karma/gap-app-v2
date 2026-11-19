@@ -314,6 +314,29 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Worker de staging (19/11)
+
+`gap-app-v2-staging`, em `https://gap-app-v2-staging.dawn-sound-c6f7.workers.dev`. É o mesmo build do Worker de teste, configurado como ficará em produção:
+
+- **Config:** `env.staging` no `wrangler.jsonc`. O build não depende do ambiente: os bindings entram no upload (`wrangler deploy .open-next/upload/worker.js --no-bundle --no-minify --env staging`). O 1º deploy precisa ser `wrangler deploy`, não `versions upload`, porque cria os Durable Objects.
+- **Diferenças para o Worker de teste:** sem `TEST_WORKER` (sem `x-karma-isolate` nem `x-karma-test-host`) e sem `CACHE_PROBE_ENABLED`. Bucket R2 próprio, populado com o cache do build (406 objetos).
+- **Variáveis:** as `NEXT_PUBLIC_*` de staging no build (indexer de staging), `APP_ENV=preview` no runtime.
+- **Sem secrets de runtime.** A API da Vercel recusou ler as variáveis do projeto (403), e nenhum deles faz falta num host `workers.dev`: `CRON_SECRET` (sem cron, pelo mesmo motivo do Worker de teste), `SANITY_WEBHOOK_SECRET` e `PROJECT_CACHE_REVALIDATION_SECRET` (o Sanity e o indexer chamam o staging da Vercel, não este host), `SANITY_PREVIEW_SECRET`/`SANITY_VIEWER_TOKEN` (preview de rascunho do blog) e `FIRECRAWL_API_KEY`. Entram por `wrangler secret put --env staging` quando o staging tiver host próprio.
+- **Sem host próprio:** o DNS de `karmahq.org` e `karmahq.xyz` está no Route 53 (AWS), e um Worker só atende num domínio cuja zona está na Cloudflare. Um CNAME para `*.workers.dev` não funciona. Os tenants whitelabel não são testáveis aqui (o Worker de teste continua com `x-karma-test-host` para isso).
+
+Primeira rodada, versão `d2df8ace`, 10 rotas em sequência, duas vezes:
+
+| | Resultado |
+|---|---|
+| Status | todos certos nas duas rodadas (9 × 200, `/nao-existe` 404), 0 erros nos Workers Logs |
+| Startup | 32 ms; código 58,3 MiB |
+| Página em isolate novo | 2,0–7,1 s de CPU (o carregamento do Next, ver R1) |
+| Página em isolate quente | 97–161 ms de CPU (`/blog`, `sitemap_index.xml`, `/t/karma/blog`) |
+| Imagem OG da 2ª rodada | `HIT` do R2, 2 ms de CPU |
+| Studio | 1–3 ms de CPU |
+
+Com tráfego só meu, a maior parte das páginas cai em isolate novo, como no Worker de teste. A conta de custo (R1) continua dependendo de tráfego real, que este host não recebe.
+
 ### Recursos criados na conta (para apagar depois)
 
 | Recurso | Nome / id | Como apagar |
@@ -323,6 +346,14 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 | Durable Object namespace | `DOShardedTagCache` (`bdaf59a42cd845d78aae9b62fe746262`) | sai com o Worker |
 | Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/` a `wave-empty-4/`, `og-images/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
 | Secret | `SANITY_WEBHOOK_SECRET` no Worker (valor de teste aleatório, não é o da Sanity) | sai com o Worker |
+
+**Não apagar na limpeza (staging, criado em 19/11):**
+
+| Recurso | Nome / id |
+|---------|-----------|
+| Worker | `gap-app-v2-staging` (`env.staging` no `wrangler.jsonc`; 1ª versão `d2df8ace`; só `workers.dev`) |
+| Durable Object namespaces | `DOQueueHandler` e `DOShardedTagCache` do `gap-app-v2-staging` (saem com o Worker) |
+| Bucket R2 | `gap-app-v2-staging-opennext-cache`, com as mesmas duas regras do bucket de produção (`og-images/` 8 dias, `incremental-cache/` 30 dias) |
 
 **Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, vazio, com duas regras de ciclo de vida. Nenhum Worker usa ele ainda.
 - `expire-og-images`: `og-images/`, 8 dias.
@@ -337,6 +368,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 2. **R2 corrigido** (shell de fallback nos assets). Issue aberta no Next.js: [vercel/next.js#102041](https://github.com/vercel/next.js/issues/102041), com reprodução mínima (só acontece com `partialPrefetching: true`). Se o Next corrigir, a cópia dos shells pode sair.
 3. **PNG das imagens OG guardado no R2** (feito; ver "PNG das imagens OG guardado no R2"). O bucket de produção `gap-app-v2-opennext-cache` já existe, com regras de ciclo de vida para `og-images/` e `incremental-cache/`; a config de produção deve ligá-lo como `NEXT_INC_CACHE_R2_BUCKET` e manter o binding `version_metadata`.
 4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
+5. **Worker de staging no ar** (ver "Worker de staging (19/11)"). Falta um host próprio: o DNS do `karmahq.org` e do `.xyz` está no Route 53 e a conta não tem zona, então só `workers.dev` por ora.
 
 ### Como repetir na conta
 
