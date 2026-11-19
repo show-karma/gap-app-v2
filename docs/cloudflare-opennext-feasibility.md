@@ -97,10 +97,9 @@ O número é baixo porque o `worker.js` do OpenNext só importa o handler de 57 
    | Código compilado (bytecode, código de máquina) | 26 |
    | Arrays, objetos, resto | ~12 |
 
-   - **O `Runtime.getHeapUsage` não inclui a memória WASM**, e o limite da Cloudflare inclui (heap JS + WebAssembly). Os números de heap das tabelas acima não contam esses 31 MiB.
+   - **O `Runtime.getHeapUsage` não inclui a memória WASM.** Os números de heap das tabelas acima não contam esses 31 MiB.
    - A memória WASM só aparece em isolates que renderizaram uma imagem OG. Ela nunca diminui.
-   - As OG são buscadas por crawlers de redes sociais, não por browsers, então a fração do tráfego deve ser pequena (não medida).
-   - Isolar as OG em outro Worker não é caminho suportado: o adaptador gera "functions" separadas, mas o template do Worker só carrega a `default`.
+   - **Medido depois (19/11): esses 31 MiB não fazem o isolate ser descartado.** A memória WASM não entra na linha de ~128 MiB do heap JS; ver "Memória WASM das imagens OG".
 
 5. **O culpado da página de projeto: tabelas de ENS montadas no carregamento.**
    - O diff de snapshots (objetos novos por id, entre `/communities` e `/project/gitcoin`) mostrava 30,8 MiB novos, dos quais **~10 MiB eram as tabelas de um `Set`**.
@@ -122,7 +121,7 @@ O número é baixo porque o `worker.js` do OpenNext só importa o handler de 57 
    - O que sobra na página de projeto (18,1 MiB de objetos novos) é espalhado. São 8,7 MiB de código compilado de muitos módulos: EAS SDK com ABIs e bytecode de contratos, Karma SDK, markdown-it, mime-db. Não há mais uma estrutura grande isolada; cortar mais exige não avaliar esses módulos no servidor (o corte de web3, deixado de lado por enquanto).
    - **Na conta (versão `67f4fa0c`), a diferença não aparece nas rodadas normais:** sequencial 9/24 reuso (antes 12/24), tenants 21/24 (antes 17/24), ondas 100/100 nas duas, CPU p50 665 ms (antes 474). Está dentro do ruído, porque esse tráfego raramente leva um isolate por todas as rotas.
    - Um A/B ciclando todas as rotas, OG incluída, saiu inconclusivo: os isolates da versão nova já estavam quentes da rodada anterior, e os da antiga começaram frios.
-   - O ganho confirmado é o local: **~27 MiB a menos num isolate quente**, que passa a ficar em ~97 MiB de heap JS, ou ~128 MiB com a memória WASM das OG.
+   - O ganho confirmado é o local: **~27 MiB a menos num isolate quente**, que passa a ficar em ~97 MiB de heap JS. Os 31 MiB de WASM das OG ficam fora dessa conta e não derrubam o isolate (ver "Memória WASM das imagens OG").
 
 **Custo, com o que foi medido:** a estimativa anterior supunha 20–100 ms de CPU por invocação; o medido é 1,5–3,5 s.
 Com ~7M requests por ciclo, 2 s de média dariam ~14 bilhões de ms de CPU, ≈ US$ 280/mês só de CPU, acima dos ≈ US$ 140–160 do gap na Vercel.
@@ -239,6 +238,50 @@ Medido na conta, versão `2438303b`, com um prefixo R2 novo e vazio (`NEXT_INC_C
 
 No workerd local, com o estado vazio: `/project/gitcoin`, `/community/optimism`, `/project/gitcoin/about`, `/communities` e `/blog` com 200 e título certo.
 
+### Memória WASM das imagens OG (19/11)
+
+**Conclusão: os 31 MiB de WASM das OG não derrubam o reuso de isolate. O custo das OG no Worker é CPU, não memória.**
+
+O que são os 31 MiB (medido no Node com o mesmo `next/og` e o `sharp` bloqueado, para usar o resvg como no Worker; os números batem com o snapshot do workerd):
+
+| Instância | Memória | Por quê |
+|---|---|---|
+| yoga (layout do Satori) | 16,00 MiB | é a memória **inicial** que o binário declara (256 páginas). O yoga usa ~0,13 MiB num card nosso |
+| resvg (rasterização) | 14,75 MiB | cresce no 1º render e para aí. Sem imagem nenhuma no card fica em 7,6 MiB: o canvas de 1200×630 tem 2,9 MiB por camada, e cada imagem recortada pede outra camada do mesmo tamanho. Os ícones têm 36×36 px, então não é decodificação |
+
+O limite, calibrado com versões mínimas temporárias do Worker de teste (heap JS retido por um array + um `WebAssembly.Memory` escrito por inteiro, 25 requests sequenciais, reuso pelo id do isolate):
+
+| Heap JS | WASM | Isolates reaproveitados |
+|---|---|---|
+| 90 MiB | 0 | 12 / 25 |
+| 90 MiB | 48 MiB | 10 / 25 |
+| 90 MiB | 80 MiB | 13 / 25 |
+| 120 MiB | 0 | 15 / 25 |
+| 120 MiB | 32 MiB | 12 / 25 |
+| 120 MiB | 64 MiB | 12 / 25 |
+| 60 MiB | 120 MiB | 11 / 25 |
+| 10 MiB | 100 MiB | 12 / 25 |
+| **90 MiB** | **100 MiB** | **0 / 25** |
+| **90 MiB** | **120 MiB** | **0 / 25** |
+| 90 MiB | 200 MiB | a alocação falha no 1º request |
+| (antes) 130 MiB | 0 | 0 / 25 |
+
+- A memória WASM não soma na linha de ~128 MiB do heap JS. Há uma linha combinada mais alta: 184 MiB (120 + 64) ainda reaproveita, 190 MiB (90 + 100) não.
+- O app fica em ~97 MiB de heap JS + 31 MiB de WASM num isolate quente, longe das duas linhas.
+- **No app, versão `2438303b`:** um ciclo sequencial com OG (`/`, `/communities`, `/project/gitcoin`, `/community/optimism`, OG, `/blog`, sitemap; 2 × 42 requests) reaproveitou 30 e 38 requests, contra 40 e 40 sem a OG, dentro do ruído. Um isolate renderizou a OG no 4º e no 12º request e serviu projeto e comunidade até o 15º.
+- **Correção disponível e não aplicada:** reescrever as páginas iniciais do `yoga.wasm` de 256 para 2. O yoga foi compilado com crescimento de memória (máximo 32.768 páginas) e cresce sozinho: 1,69 MiB num layout de 3.000 caixas, PNG idêntico byte a byte ao original. Economiza 15,9 MiB por isolate que renderiza OG, mas é um patch binário num arquivo interno do Next. Só vale se a memória voltar a apertar.
+
+**O que pesa de verdade: CPU, porque nada guarda a resposta.** As rotas OG mandam `Cache-Control: s-maxage=86400`, e na Vercel o CDN guarda o PNG por um dia. No Worker, a resposta não passa pelo cache da Cloudflare, então todo request de crawler renderiza a imagem de novo. Medido nos Workers Logs, mesmo ciclo, isolates quentes e frios misturados:
+
+| Rota | CPU p50 | Mínimo |
+|---|---|---|
+| OG `/api/metadata/projects/gitcoin` | **743 ms** | 250 ms |
+| `/project/gitcoin` | 234 ms | 99 ms |
+| `/community/optimism` | 161 ms | 94 ms |
+| `/`, `/blog`, `/communities`, sitemap | 26–51 ms | 9–25 ms |
+
+A correção é guardar o PNG: Cache API no `cloudflare/worker.ts` respeitando o `s-maxage` (só funciona num custom domain, é no-op em `*.workers.dev`), ou no R2 com chave pela URL (funciona aqui também, mas precisa de expiração própria).
+
 ### Patch #1318 atualizado
 
 O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 16/11 o mantenedor apontou que, no workerd, I/O pode completar entre dois callbacks de timer e *"uncached data can end up cached"*. Os commits `f501eb5` e `4879fe2` mantêm os estágios num único task e usam o checkpoint de microtask do workerd (`unhandled_rejection_after_microtask_checkpoint`, ligado por padrão a partir da compat date 2026-03-03; a nossa é 2026-09-01).
@@ -249,7 +292,7 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 
 | Recurso | Nome / id | Como apagar |
 |---------|-----------|-------------|
-| Worker | `gap-app-v2-staging-test` (várias versões, a ativa é `2438303b`; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
+| Worker | `gap-app-v2-staging-test` (várias versões, inclusive as de calibração de memória; a ativa é `2438303b`; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
 | Durable Object namespace | `DOQueueHandler` (`4d12b229b92f46bd9e3fab1654293533`) | sai com o Worker |
 | Durable Object namespace | `DOShardedTagCache` (`bdaf59a42cd845d78aae9b62fe746262`) | sai com o Worker |
 | Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/` a `wave-empty-4/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
@@ -261,8 +304,9 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 ### Próximos passos sugeridos
 
 1. **R1 primeiro (causa confirmada: heap acima de 128 MiB):** reduzir o heap residente em ≥ 20 MiB (web3 fora do SSR, Sentry, dividir em Workers) e medir cada corte: heap local pelo inspector, depois reuso na conta com `x-karma-isolate`.
-2. **R2 corrigido** (shell de fallback nos assets). Falta abrir uma issue no Next.js: um shell de fallback que falta no cache vira 500 em vez de ser gerado; reproduz no `next start`.
-3. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
+2. **R2 corrigido** (shell de fallback nos assets). Issue aberta no Next.js: [vercel/next.js#102041](https://github.com/vercel/next.js/issues/102041), com reprodução mínima (só acontece com `partialPrefetching: true`). Se o Next corrigir, a cópia dos shells pode sair.
+3. **Guardar o PNG das imagens OG** (743 ms de CPU por request hoje; ver "Memória WASM das imagens OG"). A memória WASM delas não é problema.
+4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 
 ### Como repetir na conta
 
