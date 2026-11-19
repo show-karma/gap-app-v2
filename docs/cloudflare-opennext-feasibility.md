@@ -23,8 +23,8 @@ O Worker sobe, cabe no limite e serve todas as rotas certas, tenants incluídos.
 | # | Problema | Evidência | Gravidade |
 |---|----------|-----------|-----------|
 | R1 | **Quase todo request cai num isolate novo**, porque o heap do app (134–145 MiB) passa do limite de 128 MiB e a Cloudflare descarta o isolate em silêncio. Cada isolate novo carrega o servidor Next inteiro: 1,5–3,5 s de CPU e 2–7 s de TTFB por request, contra ~0,2 s na Vercel | header `x-karma-isolate`: 2 de 24 requests sequenciais, 1 de 14 sem carregar o Next e 1 de 12 multiplexados numa conexão HTTP/2 reaproveitaram isolate; `/api/geo` (rota trivial) gasta 1,5–2 s de CPU | Bloqueia latência **e** custo |
-| R2 | **Shell de `/project/*` e `/community/*` do host Karma não se regenera em runtime**: `Route "/t/[tenant]/project/[projectId]": Next.js encountered uncached or runtime data during prerendering` | cache R2 vazio: 8 de 9 requests sequenciais deram 500, com o patch #1318 antigo **e** com o head novo; tenants e blog passam | Alto: qualquer perda de entrada no R2 ou regeneração do shell vira 500 |
-| R3 | 1ª onda concorrente depois de um deploy: 2 de 25 com 500 (`/community/optimism`, mesmo erro do R2) | ondas 2–4 com 25/25 | Médio; mesma causa do R2 |
+| R2 | **Shell de `/project/*` e `/community/*` do host Karma não se regenera em runtime**: `Route "/t/[tenant]/project/[projectId]": Next.js encountered uncached or runtime data during prerendering` | cache R2 vazio: 8 de 9 requests sequenciais deram 500, com o patch #1318 antigo **e** com o head novo; tenants e blog passam | **Corrigido (19/11)**: é o Next, não o Worker; o shell agora vai junto nos assets (ver "R2 e R3: causa e correção") |
+| R3 | 1ª onda concorrente depois de um deploy: 2 de 25 com 500 (`/community/optimism`, mesmo erro do R2) | ondas 2–4 com 25/25 | **Não se repete** desde a correção do R1: ondas 100/100 em 3 rodadas, uma delas com o R2 vazio |
 
 `startup_time_ms` **não** é o problema: 27–59 ms em 10 uploads, contra o limite de 1 s. Por isso não parei antes do corte de web3.
 O número é baixo porque o `worker.js` do OpenNext só importa o handler de 57 MiB dentro do primeiro `fetch` de cada isolate. O parse acontece então dentro do request e aparece como CPU do request, não como startup (ver R1).
@@ -190,14 +190,14 @@ Revalidação:
 |-------|-----------|
 | Por tag (`/api/cache-probe` + webhook assinado em `/api/blog/revalidate`) | ✅ mesmo carimbo em 3 isolates diferentes (tag cache DO compartilhado); assinatura errada → 401; certa → 200; 1ª leitura stale (`"max"` = SWR), 2ª em diante fresca |
 | Em background pela fila DO (`/blog` depois de vencer) | ✅ `HEAD /t/karma/blog` → 200, duas vezes, sem erro (o B3 do spike está resolvido nessa rota) |
-| Shell de `/project/*` e `/community/*` regenerado em runtime | ❌ R2 |
+| Shell de `/project/*` e `/community/*` ausente do R2 | ✅ servido da cópia do build nos assets (R2 corrigido) |
 
 Erros nos Workers Logs:
 
 | Erro | Situação |
 |------|----------|
 | `Invalid client environment variables: NEXT_PUBLIC_GAP_INDEXER_URL … received undefined` + `Failed to prepare server` em todo request | **Corrigido** neste branch (`fix(env)`): `utilities/env.ts` validava o `process.env` de runtime, que no Worker não tem as `NEXT_PUBLIC_*`. No spike não apareceu porque o `.env` ia copiado para o bundle. Derrubava o `instrumentation.ts` e todo módulo que importa `clientEnv` (Sanity, blog, revalidação) |
-| `encountered uncached or runtime data during prerendering` | Aberto (R2/R3) |
+| `encountered uncached or runtime data during prerendering` | **Corrigido** (R2): zero ocorrências na rodada com o R2 vazio |
 | `` `body` unknown or invalid utility `` (warn, rota OG) | inofensivo, aviso do Tailwind do Satori |
 
 Os Workers Logs perdem a 1ª linha de erros longos (chegam só o stack e a dica do Next). Para a mensagem completa use `wrangler tail`.
@@ -211,20 +211,48 @@ Outros achados:
 - **Token com filtro de IP:** a dev box sai por IPv6 e o token só aceita o IPv4. Os comandos rodaram com `NODE_OPTIONS="--dns-result-order=ipv4first --no-network-family-autoselection"` e `curl -4`.
 - **R2 precisou ser habilitado no dashboard** antes do primeiro bucket (`code 10042`).
 
+### R2 e R3: causa e correção (19/11)
+
+**Causa: o Next não consegue gerar um shell de fallback em runtime nesta app.** Não é o Worker nem o patch #1318.
+
+- Com Cache Components, toda rota dinâmica tem um shell de fallback: a parte estática renderizada com os params desconhecidos (`/t/[tenant]/project/[projectId]`). Numa página ainda fora do cache, o Next serve esse shell e transmite o resto.
+- Se o shell também não está no cache, o Next o renderiza no request. Esse render falha: o layout de `[projectId]` lê `params` fora de `<Suspense>`, o que um shell não pode fazer. Resultado: `NEXT_STATIC_GEN_BAILOUT` e 500.
+- No build o mesmo shell é gerado sem erro (HTML vazio, tudo adiado).
+- **Reproduzido no `next start` puro**, sem Cloudflare: apagando de `.next/server/app` os shells `t/karma/project/[projectId].*` e `t/[tenant]/project/[projectId].*`, `/project/gitcoin` dá 500 com o mesmo erro. Com só o shell `karma` apagado passa, porque o Next procura o shell genérico.
+- Evidência no workerd (`--var NEXT_PRIVATE_DEBUG_CACHE:1 --var OPEN_NEXT_DEBUG:true`): o Next busca a página, depois o shell genérico; os dois faltam; só um `"use cache"` roda antes do erro, os loaders do projeto nem chegam a rodar. O agendador do #1318 usou 16 de 56 checkpoints e não deixou nada pendente.
+- Na Vercel isso não acontece porque a saída do build é imutável e o shell sempre existe. Aqui o cache é o R2, preenchido num passo separado depois do build. O shell falta quando esse passo não rodou ou falhou, num prefixo novo, num bucket esvaziado, ou num erro de leitura (o cache R2 trata erro como miss).
+- O R3 (2 de 25 com 500 na 1ª onda depois de um deploy, com o R2 populado) era efeito do R1: na mesma onda houve 12 resets de isolate. Nas duas rodadas depois da correção do UTF-16 as ondas deram 100/100, sem nenhum erro de prerender nos logs.
+
+**Correção: o shell vai junto com o Worker.**
+
+- `scripts/ship-fallback-shells.mjs` (parte do `pnpm cf:build`) copia os shells do build para os assets do Worker, em `cdn-cgi/_next_cache/<buildId>/`, que só o Worker lê. São as entradas do cache de rotas com um segmento `[param]` no caminho: 253 arquivos, 15 MiB. Os assets não contam no limite de 64 MiB.
+- `cloudflare/shell-fallback-cache.ts` envolve o cache R2: quando um shell falta no R2, lê a cópia dos assets (o cache de assets estáticos do próprio adaptador). Qualquer outra entrada continua só no R2, e uma página que falta é renderizada normalmente.
+- A cópia é a do build, igual ao que o R2 teria depois do deploy. Quando o Next grava um shell mais novo (depois de uma revalidação por tag), o R2 passa a ter a entrada e a cópia não é mais lida.
+
+Medido na conta, versão `2438303b`, com um prefixo R2 novo e vazio (`NEXT_INC_CACHE_R2_PREFIX=wave-empty-4`) e isolates novos:
+
+| | Antes (R2 vazio) | Depois (R2 vazio) |
+|---|---|---|
+| Sequencial (`/project/gitcoin`, `/community/optimism`…) | 8 de 9 com 500 | todas certas (200; 404 só onde a staging não tem o projeto) |
+| 4 ondas de 25 | 76–93 de 100 | **100 de 100** |
+| Erros de prerender nos Workers Logs | em todo 500 | **0** (106 respostas 200, 2 404 esperados, nenhum erro) |
+
+No workerd local, com o estado vazio: `/project/gitcoin`, `/community/optimism`, `/project/gitcoin/about`, `/communities` e `/blog` com 200 e título certo.
+
 ### Patch #1318 atualizado
 
 O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 16/11 o mantenedor apontou que, no workerd, I/O pode completar entre dois callbacks de timer e *"uncached data can end up cached"*. Os commits `f501eb5` e `4879fe2` mantêm os estágios num único task e usam o checkpoint de microtask do workerd (`unhandled_rejection_after_microtask_checkpoint`, ligado por padrão a partir da compat date 2026-03-03; a nossa é 2026-09-01).
-Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio.
+Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
 ### Recursos criados na conta (para apagar depois)
 
 | Recurso | Nome / id | Como apagar |
 |---------|-----------|-------------|
-| Worker | `gap-app-v2-staging-test` (10 versões; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
+| Worker | `gap-app-v2-staging-test` (várias versões, a ativa é `2438303b`; `workers.dev` ligado) | `wrangler delete gap-app-v2-staging-test` |
 | Durable Object namespace | `DOQueueHandler` (`4d12b229b92f46bd9e3fab1654293533`) | sai com o Worker |
 | Durable Object namespace | `DOShardedTagCache` (`bdaf59a42cd845d78aae9b62fe746262`) | sai com o Worker |
-| Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/`, `wave-empty-2/`, `wave-empty-3/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
+| Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/` a `wave-empty-4/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
 | Secret | `SANITY_WEBHOOK_SECRET` no Worker (valor de teste aleatório, não é o da Sanity) | sai com o Worker |
 
 O subdomínio `dawn-sound-c6f7.workers.dev` já existia na conta. Nenhum outro Worker, KV, D1, rota, domínio ou cron foi criado.
@@ -233,7 +261,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 ### Próximos passos sugeridos
 
 1. **R1 primeiro (causa confirmada: heap acima de 128 MiB):** reduzir o heap residente em ≥ 20 MiB (web3 fora do SSR, Sentry, dividir em Workers) e medir cada corte: heap local pelo inspector, depois reuso na conta com `x-karma-isolate`.
-2. **R2:** reproduzir no Node com o shell de fallback ausente, para saber se é a app (dado fora de `"use cache"` antes do `<Suspense>` em `/t/[tenant]/project/[projectId]` só no host Karma) ou o adaptador. Tenants não falham, o que aponta para algo específico do tenant `karma`.
+2. **R2 corrigido** (shell de fallback nos assets). Falta abrir uma issue no Next.js: um shell de fallback que falta no cache vira 500 em vez de ser gerado; reproduz no `next start`.
 3. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 
 ### Como repetir na conta
