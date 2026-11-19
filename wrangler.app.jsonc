@@ -1,0 +1,98 @@
+// Cloudflare Workers config for the Next server Worker of gap-app-v2.
+//
+// The app runs as two Workers built from one `pnpm cf:build`:
+// - the routing Worker (wrangler.jsonc, cloudflare/worker.ts): public, runs
+//   proxy.ts and the routing layer, and answers every page the cache holds in full;
+// - this one (cloudflare/next-server.ts): the Next server, for everything else.
+//   Only the routing Worker calls it, over its NEXT_SERVER service binding.
+//
+// Why: the Next server is 57 MiB of script, and a new isolate pays to start the
+// whole script before its first request (1.3–2.6 s). In one Worker that cost hit
+// every new isolate, even for a cached page; split, only requests that need Next
+// pay it (docs/cloudflare-opennext-feasibility.md).
+//
+// It has no public URL on purpose: the routing Worker hands it requests with
+// internal routing headers (resolved routes, initial URL) that it trusts. So no
+// workers.dev, no preview URLs, no routes.
+//
+// Deploy this Worker first: the routing Worker's service binding needs it to exist.
+// The Durable Objects live in the routing Worker and are bound here by script name.
+// Bindings are not inherited by `env.staging`, so every one is repeated there.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gap-app-v2-staging-test-app",
+  "main": "cloudflare/next-server.ts",
+  // Same runtime as the routing Worker (wrangler.jsonc); the build reads that file.
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "minify": true,
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    // The Next server reads the build's cache files from the assets (the
+    // static-assets incremental cache and the fallback shells,
+    // cloudflare/shell-fallback-cache.ts). Nothing is served from here
+    // directly: every request reaches the Worker.
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "services": [
+    // The cache layer's self-reference points at the public routing Worker, so a
+    // request it makes goes through proxy.ts like any other.
+    { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging-test" }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "gap-app-v2-staging-test-opennext-cache"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "NEXT_CACHE_DO_QUEUE",
+        "class_name": "DOQueueHandler",
+        "script_name": "gap-app-v2-staging-test"
+      },
+      {
+        "name": "NEXT_TAG_CACHE_DO_SHARDED",
+        "class_name": "DOShardedTagCache",
+        "script_name": "gap-app-v2-staging-test"
+      }
+    ]
+  },
+  "images": { "binding": "IMAGES" },
+  "vars": { "APP_ENV": "preview" },
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "env": {
+    "staging": {
+      "name": "gap-app-v2-staging-app",
+      "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging" }],
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "gap-app-v2-staging-opennext-cache"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "NEXT_CACHE_DO_QUEUE",
+            "class_name": "DOQueueHandler",
+            "script_name": "gap-app-v2-staging"
+          },
+          {
+            "name": "NEXT_TAG_CACHE_DO_SHARDED",
+            "class_name": "DOShardedTagCache",
+            "script_name": "gap-app-v2-staging"
+          }
+        ]
+      },
+      "images": { "binding": "IMAGES" },
+      "vars": { "APP_ENV": "preview" }
+    }
+  }
+}

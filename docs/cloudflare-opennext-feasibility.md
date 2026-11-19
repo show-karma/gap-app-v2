@@ -314,6 +314,39 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Dois Workers: roteamento e servidor do Next (19/11)
+
+**Por quê:** mesmo com a interceptação, um isolate novo levava 1,7–2,7 s até o 1º byte, só para subir o script de 57 MB, embora a página viesse do cache.
+
+**Como:**
+- O OpenNext já separa o roteamento (o "middleware", que roda o `proxy.ts` e a interceptação de cache) do servidor do Next. Ele passa o resultado do roteamento ao servidor num request com cabeçalhos internos (rotas resolvidas, URL inicial), o mesmo formato que usa na AWS com middleware externo.
+- **Worker de roteamento** (`wrangler.jsonc`, `cloudflare/worker.ts` + `cloudflare/front-handler.ts`):
+  - é público; tem os Durable Objects, o cache das imagens OG, o Studio e o `next/image`;
+  - `cloudflare/front-handler.ts` reproduz o `.open-next/worker.js`, menos o último passo: o que o roteamento não responde vai pelo service binding `NEXT_SERVER`;
+  - **2,64 MiB** (608 KiB gzip).
+- **Worker do Next** (`wrangler.app.jsonc`, `cloudflare/next-server.ts`):
+  - sem URL pública (`workers_dev` e `preview_urls` desligados), porque confia nos cabeçalhos internos do roteamento;
+  - liga os Durable Objects do outro Worker por `script_name`, e o mesmo R2 e os mesmos assets;
+  - importa o servidor dentro do request, como o OpenNext: o módulo inicia o Next com top-level await (instrumentação, Sentry), e o escopo global de um Worker não permite I/O. Com import estático, as rotas de API davam `TypeError: uf(...) is not a function`;
+  - **55,7 MiB**.
+- `pnpm cf:size` monta e confere os dois bundles: Latin-1, orçamento de 8 MiB para o roteamento e 62 MiB para o Next.
+- O deploy sobe o Worker do Next primeiro, porque o service binding exige que ele exista.
+
+**Resultado no Worker de teste** (roteamento `c4e61c0a`, Next `6c5e7395`), 8 páginas × 2 rodadas:
+
+| | Um Worker, com interceptação | Dois Workers |
+|---|---|---|
+| TTFB de página no cache (mediana) | ~2 s | **0,66 s** |
+| TTFB num isolate novo | 1,7–2,7 s | **0,5–1,35 s** (mediana 1,03) |
+| CPU do roteamento por request | mediana 76 ms | mediana 69 ms, máx. 215 |
+| Requests que chegaram ao Worker do Next | | só as revalidações em background (`STALE`) |
+| Erros / 5xx | 0 | 0 |
+
+- Rotas de API, imagens OG, sitemap, `robots.txt`, 404, POST (corpo preservado), navegação RSC, Studio e tenants (`app.opgrants.io`, `grantsapp.scroll.io` via `x-karma-test-host`) respondem certo nos dois Workers.
+- O que precisa do Next ainda paga o isolate novo dele: 4–6 s numa rota de API fria. A diferença é que agora só esses requests pagam isso.
+- No `workers.dev` não há o cache regional, então o resto do tempo é R2 e Durable Object.
+- O staging também está dividido: `gap-app-v2-staging` + `gap-app-v2-staging-app`.
+
 ### Interceptação de cache (19/11)
 
 **O que é:** `enableCacheInterception` faz a camada de roteamento do OpenNext (o middleware, 3,5 MB) responder uma página que está inteira no cache. O servidor do Next (57 MB) não é carregado nem renderiza.
@@ -405,12 +438,14 @@ Com tráfego só meu, a maior parte das páginas cai em isolate novo, como no Wo
 | Durable Object namespace | `DOShardedTagCache` (`bdaf59a42cd845d78aae9b62fe746262`) | sai com o Worker |
 | Bucket R2 | `gap-app-v2-staging-test-opennext-cache` (prefixos `incremental-cache/`, `wave-empty-1/` a `wave-empty-4/`, `og-images/`) | esvaziar e `wrangler r2 bucket delete gap-app-v2-staging-test-opennext-cache` |
 | Secret | `SANITY_WEBHOOK_SECRET` no Worker (valor de teste aleatório, não é o da Sanity) | sai com o Worker |
+| Worker | `gap-app-v2-staging-test-app` (o servidor do Next do Worker de teste, sem URL pública) | `wrangler delete gap-app-v2-staging-test-app`, antes do Worker de teste |
 
 **Não apagar na limpeza (staging, criado em 19/11):**
 
 | Recurso | Nome / id |
 |---------|-----------|
 | Worker | `gap-app-v2-staging` (`env.staging` no `wrangler.jsonc`; 1ª versão `d2df8ace`; só `workers.dev`) |
+| Worker | `gap-app-v2-staging-app` (o servidor do Next do staging, `env.staging` no `wrangler.app.jsonc`, sem URL pública) |
 | Durable Object namespaces | `DOQueueHandler` e `DOShardedTagCache` do `gap-app-v2-staging` (saem com o Worker) |
 | Bucket R2 | `gap-app-v2-staging-opennext-cache`, com as mesmas duas regras do bucket de produção (`og-images/` 8 dias, `incremental-cache/` 30 dias) |
 
@@ -429,7 +464,8 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 5. **Worker de staging no ar** (ver "Worker de staging (19/11)"). Falta um host próprio: o DNS do `karmahq.org` e do `.xyz` está no Route 53 e a conta não tem zona, então só `workers.dev` por ora.
 6. **Páginas de projeto e comunidade com cache próprio** (feito; ver a seção). Falta `/community/<id>/impact`, e o custo do isolate novo continua no R1.
-7. **Interceptação de cache** (feito; ver a seção): página no cache custa ~76 ms de CPU mesmo em isolate novo. A latência do isolate novo continua; o próximo passo é dividir em Worker frontal + Worker do Next.
+7. **Interceptação de cache** (feito; ver a seção): página no cache custa ~76 ms de CPU mesmo em isolate novo. 
+8. **Dois Workers** (feito; ver "Dois Workers: roteamento e servidor do Next"): página do cache em 0,66 s de TTFB mediano. Falta medir com tráfego real e um domínio próprio (cache regional).
 
 ### Como repetir na conta
 

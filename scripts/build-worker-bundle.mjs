@@ -19,20 +19,22 @@
 // flag. Anything non-Latin-1 left outside a regex or a comment is an error, so
 // a new dependency cannot silently double the heap again.
 //
-// Steps:
-//  1. `wrangler deploy --dry-run --outdir .open-next/upload` bundles the Worker
-//     exactly as an upload would, and sends nothing.
-//  2. The regex literals of .open-next/upload/worker.js are escaped in place.
-//  3. The upload is measured against the size budget (62 MiB by default,
-//     WORKER_SIZE_BUDGET_MIB to change it; the platform limit is 64 MiB).
+// The app is two Workers (wrangler.jsonc, the routing Worker, and
+// wrangler.app.jsonc, the Next server Worker). For each:
+//  1. `wrangler deploy --dry-run --config <file> --outdir <dir>` bundles it
+//     exactly as an upload would, and sends nothing;
+//  2. the regex literals of the bundle (<dir>/<entry>.js) are escaped in place;
+//  3. the upload is measured against its size budget: 8 MiB for the routing
+//     Worker (ROUTING_WORKER_SIZE_BUDGET_MIB), 62 MiB for the Next server
+//     (WORKER_SIZE_BUDGET_MIB); the platform limit is 64 MiB.
 //
-// Upload this file as it is, without bundling it again:
+// Upload these files as they are, never bundling again (`pnpm cf:upload`):
+//   wrangler versions upload .open-next/upload-app/next-server.js --config wrangler.app.jsonc --no-bundle --no-minify
 //   wrangler versions upload .open-next/upload/worker.js --no-bundle --no-minify
-// (`pnpm cf:upload`). Re-bundling would be harmless but pointless, and only
-// this file has been checked.
+// Re-bundling drops the Latin-1 rewrite, and the Worker silently goes back to
+// a new isolate on every request.
 //
 // Usage: pnpm cf:size            (after pnpm cf:build)
-//        WORKER_SIZE_BUDGET_MIB=63 pnpm cf:size
 import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -150,22 +152,24 @@ function filesUnder(dir) {
   });
 }
 
-function main() {
-  const budgetMib = Number(process.env.WORKER_SIZE_BUDGET_MIB ?? 62);
-  const outDir = path.resolve(".open-next/upload");
-
+/**
+ * Bundles one Worker with `wrangler deploy --dry-run`, makes it Latin-1 and checks
+ * its size. Returns false when it is over its budget.
+ */
+function buildWorker({ label, config, outDir, entry, budgetMib }) {
   rmSync(outDir, { recursive: true, force: true });
-  execFileSync("wrangler", ["deploy", "--dry-run", "--outdir", outDir], {
+  execFileSync("wrangler", ["deploy", "--dry-run", "--config", config, "--outdir", outDir], {
     stdio: "inherit",
     // Without it wrangler hands an OpenNext project over to `opennextjs-cloudflare deploy`.
     env: { ...process.env, OPEN_NEXT_DEPLOY: "true" },
   });
 
-  const workerPath = path.join(outDir, "worker.js");
+  // wrangler names the bundle after the entry file.
+  const workerPath = path.join(outDir, entry);
   const { source, escaped } = makeLatin1(readFileSync(workerPath, "utf8"));
   writeFileSync(workerPath, source);
   process.stdout.write(
-    `\nWorker source is Latin-1: ${escaped} characters escaped in regex literals and comments.\n`
+    `\n${label}: source is Latin-1, ${escaped} characters escaped in regex literals and comments.\n`
   );
 
   // Source maps and the README wrangler writes next to the bundle are not Worker code.
@@ -179,18 +183,40 @@ function main() {
     .slice(0, 5);
 
   process.stdout.write(
-    `Worker code: ${totalMib.toFixed(2)} MiB uncompressed ` +
+    `${label} code: ${totalMib.toFixed(2)} MiB uncompressed ` +
       `(budget ${budgetMib} MiB, platform limit ${PLATFORM_LIMIT_MIB} MiB)\n`
   );
   for (const { file, mib } of largest) process.stdout.write(`  ${mib.toFixed(2)} MiB  ${file}\n`);
 
   if (totalMib > budgetMib) {
-    process.stderr.write(
-      `\nThe Worker is over its ${budgetMib} MiB budget. Keep browser-only libraries out of ` +
-        "the server bundle (see docs/cloudflare-opennext-feasibility.md).\n"
-    );
-    process.exit(1);
+    process.stderr.write(`\n${label} is over its ${budgetMib} MiB budget.\n`);
+    return false;
   }
+  return true;
+}
+
+function main() {
+  const results = [
+    // The routing Worker. Its whole point is to start fast, so a small budget
+    // catches anything that pulls the Next server (or a large library) into it.
+    buildWorker({
+      label: "Routing Worker",
+      config: "wrangler.jsonc",
+      outDir: path.resolve(".open-next/upload"),
+      entry: "worker.js",
+      budgetMib: Number(process.env.ROUTING_WORKER_SIZE_BUDGET_MIB ?? 8),
+    }),
+    // The Next server Worker. Keep browser-only libraries out of the server
+    // bundle (see docs/cloudflare-opennext-feasibility.md).
+    buildWorker({
+      label: "Next server Worker",
+      config: "wrangler.app.jsonc",
+      outDir: path.resolve(".open-next/upload-app"),
+      entry: "next-server.js",
+      budgetMib: Number(process.env.WORKER_SIZE_BUDGET_MIB ?? 62),
+    }),
+  ];
+  if (results.includes(false)) process.exit(1);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
