@@ -493,6 +493,10 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
+          # The type check inside `next build` outgrew Node 20's default heap
+          # (~4 GB here) and fails with "JavaScript heap out of memory" on some
+          # runs. 6 GB, as in pr-tests.yml, fits the 16 GB runner.
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Assemble standalone bundle
         # Next.js standalone output is self-contained (server.js + traced
