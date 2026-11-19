@@ -24,6 +24,7 @@ allowBuilds:
   secp256k1: true # node-gyp-build || exit 0
   sharp: true # install/check.js — uses prebuilt libvips, builds only if missing
   utf-8-validate: true # node-gyp-build
+  workerd: true # install.js links the platform binary (esbuild pattern); used by wrangler/miniflare
 
   # No build needed: advisory/cosmetic postinstalls (print-only, no file
   # writes, no codegen). Skipping them is safe and silences the warning.
@@ -37,3 +38,11 @@ allowBuilds:
   # committed mockServiceWorker.js, so there is nothing to build. If you later
   # add `msw.workerDirectory`, flip this to true.
   msw: false
+
+# Backport of opennextjs/opennextjs-cloudflare#1318 (head 4879fe2 of 2026-11-18, unreleased;
+# exception approved 2026-11-13). Next.js finds the end of each Cache Components
+# render stage with process.nextTick, which workerd runs as a microtask, so
+# runtime prerenders on Workers hang or render incomplete. Drop this entry once a
+# released @opennextjs/cloudflare contains the fix.
+patchedDependencies:
+  '@opennextjs/cloudflare@1.20.16': patches/@opennextjs__cloudflare@1.20.16.patch
