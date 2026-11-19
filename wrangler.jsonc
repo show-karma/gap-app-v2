@@ -56,6 +56,9 @@
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] }],
   "images": { "binding": "IMAGES" },
+  // Its id scopes the OG image cache to the deployment (cloudflare/og-image-cache.ts),
+  // which also keeps its PNGs in NEXT_INC_CACHE_R2_BUCKET, under og-images/.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
   // Server-side deployment environment (utilities/deployment-env.ts). "preview"
   // matches the Vercel staging deployment: Sepolia programs, Sentry off.
   "vars": { "APP_ENV": "preview" },
