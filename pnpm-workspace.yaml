@@ -45,4 +45,12 @@ allowBuilds:
 # runtime prerenders on Workers hang or render incomplete. Drop this entry once a
 # released @opennextjs/cloudflare contains the fix.
 patchedDependencies:
+  # Cache interception (open-next.config.ts) serves a cached page before the Next
+  # server loads. Two fixes in cacheInterceptor.js, not reported upstream yet:
+  # - a partially prerendered page (postponed state) goes to the server, which resumes
+  #   it, instead of being served as its bare shell;
+  # - a page under a dynamic route is found even when the first matching route is a
+  #   prerender-only one with no page (`/t/karma/project/[projectId]`), both for pages
+  #   generated at build and for those cached at runtime.
+  '@opennextjs/aws@4.1.15': patches/@opennextjs__aws@4.1.15.patch
   '@opennextjs/cloudflare@1.20.16': patches/@opennextjs__cloudflare@1.20.16.patch
