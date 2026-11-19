@@ -314,6 +314,27 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Staging pelo CI e tenants whitelabel (19/11)
+
+**Deploy automático** (`.github/workflows/cloudflare-staging.yml`):
+- Roda a cada push em `migration-cloudflare`. Na virada, vai para `main` junto com o `staging.yml`.
+- Usa o mesmo ambiente do staging da Vercel: `vercel pull --environment=preview`.
+  - `scripts/cf-vercel-env.mjs build` exporta só as `NEXT_PUBLIC_*` para o build, nunca num `.env`. Um passo falha se houver `.env`, `.env.local`, `.env.production` ou `.env.production.local` na raiz, porque o OpenNext os põe no bundle.
+  - `scripts/cf-vercel-env.mjs secrets` copia os secrets de runtime para os Workers com `wrangler secret put`, pelo stdin: `CRON_SECRET`, `SANITY_VIEWER_TOKEN`, `SANITY_WEBHOOK_SECRET`, `SANITY_PREVIEW_SECRET`, `PROJECT_CACHE_REVALIDATION_SECRET` e `FIRECRAWL_API_KEY`. O Worker de roteamento só recebe o `CRON_SECRET`.
+- Passos: `cf:build`, `cf:size`, `scripts/cf-populate-r2.mjs` (o cache do build no R2), deploy do Worker do Next, deploy do Worker de roteamento, secrets e smoke test.
+- O job é pulado enquanto o repositório não tiver `vars.CLOUDFLARE_ACCOUNT_ID` e `secrets.CLOUDFLARE_API_TOKEN`.
+
+**Cron:** o `/api/cron/warm-sitemaps` (a cada 6 h) lê o `sitemap_index.xml` do `SITE_URL` e cada sitemap filho, para o Data Cache deles ficar sempre quente. Assim um crawler nunca é quem dispara a regeneração. O `CRON_SECRET` é o token que a Vercel manda no `Authorization` da chamada, para que ninguém mais dispare a rota. A Vercel só roda crons em produção, então o staging da Vercel também não tem cron.
+
+**Tenants whitelabel:** comparação da Vercel (produção) com o Worker de teste, mesmo host via `x-karma-test-host`, 28 caminhos × 2 tenants.
+- Só dois tenants respondem hoje: `grantsapp.scroll.io` e `app.filpgf.io`. `app.opgrants.io`, `testapp.opgrants.io`, `founders.polygon.technology` e `foundersapp.polygon.technology` não têm DNS, e `grants.filecoin.io` redireciona para `fil.org`.
+- Os caminhos cobrem: home, `/programs` (307 → `/`), `/community/<slug>` (307 → caminho limpo), `/applications` (307 → `/dashboard`), `/blog` (301 → `www`), Studio, `/project/…`, `/projects`, `/impact`, `/funding-map`, `/donations`, `robots.txt`, sitemaps, `/t/<slug>` (404), 404, favicon, assets, `/api/geo` e query strings.
+- **Status e `Location` iguais nos 56 casos.** Títulos iguais nas 32 páginas, com a marca do tenant.
+- Diferenças:
+  - Redirecionamentos sem `content-type`; a Vercel manda `text/plain`, e o corpo é vazio nos dois.
+  - O Studio tem título "Sanity Studio" em vez de "Sanity Studio | Scroll", porque aqui ele é o build estático. O noindex vem por cabeçalho em vez de `<meta>`.
+- O conteúdo pode diferir, porque o Worker lê o indexer de staging e o tenant da Vercel lê o de produção.
+
 ### Isolate novo do Worker do Next: onde vai o tempo (19/11)
 
 O que precisa do Next paga o isolate novo dele: 2–6 s numa rota fria. Perfil de CPU do 1º request de um isolate novo no workerd local (`/api/geo`, bundle do deploy, profiler ligado antes do request):
