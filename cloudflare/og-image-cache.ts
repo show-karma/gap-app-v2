@@ -156,6 +156,7 @@ export async function serveOgImage(
             },
           })
         )
+        // SUPPRESSED: reported through onError; the client already has the image.
         .catch(onError)
     );
     return response;
@@ -165,6 +166,7 @@ export async function serveOgImage(
   try {
     object = await bucket.get(key);
   } catch (error) {
+    // SUPPRESSED: reported through onError; an R2 failure draws the image instead.
     onError(error);
   }
   if (!object) return withCacheStatus(await renderAndStore(), "MISS");
@@ -183,6 +185,7 @@ export async function serveOgImage(
       renderAndStore()
         .then((response) => response.body?.cancel())
         .catch(onError)
+        // SUPPRESSED: the .catch above reports through onError; the stale copy was already served.
         .finally(() => refreshing.delete(key))
     );
   }
