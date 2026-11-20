@@ -13,7 +13,7 @@ name: Deploy to Cloudflare staging
 #
 # Needs:
 #   secrets.CLOUDFLARE_API_TOKEN  "Edit Cloudflare Workers" template, Karma account only
-#   vars.CLOUDFLARE_ACCOUNT_ID
+#   CLOUDFLARE_ACCOUNT_ID         a variable or a secret (not secret, but either works)
 #   secrets.VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID (already used by staging.yml)
 
 on:
@@ -34,7 +34,7 @@ env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
   WRANGLER_SEND_METRICS: 'false'
   STAGING_URL: https://gap-app-v2-staging.dawn-sound-c6f7.workers.dev
   R2_BUCKET: gap-app-v2-staging-opennext-cache
@@ -43,15 +43,16 @@ env:
 jobs:
   deploy:
     name: Deploy to Cloudflare staging
-    # Skipped, not failed, until the Cloudflare account is configured for the repo.
-    if: github.repository == 'show-karma/gap-app-v2' && vars.CLOUDFLARE_ACCOUNT_ID != ''
+    # A job-level `if` cannot read secrets, so a missing account fails the first
+    # step instead of skipping the job.
+    if: github.repository == 'show-karma/gap-app-v2'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Check the Cloudflare credentials
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "::error::Set secrets.CLOUDFLARE_API_TOKEN and vars.CLOUDFLARE_ACCOUNT_ID."
+            echo "::error::Set secrets.CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (variable or secret)."
             exit 1
           fi
 
