@@ -270,6 +270,8 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '22'
+          # Only npx runs here: no pnpm, so no cache from package.json's packageManager.
+          package-manager-cache: false
 
       - name: Delete both Workers
         # The Next server Worker first: it binds the routing Worker's Durable Objects.
