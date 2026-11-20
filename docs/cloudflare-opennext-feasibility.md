@@ -314,6 +314,21 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Preview por PR (20/11)
+
+`.github/workflows/cloudflare-pr-preview.yml` faz para cada PR o que a Vercel faz com o preview dela:
+- Cada PR ganha um par de Workers: `gap-app-v2-pr-<n>` (roteamento, com URL `workers.dev`) e `gap-app-v2-pr-<n>-app` (Next, sem URL). A URL vai num comentário do PR, atualizado a cada push.
+- Os dois Workers são apagados quando o PR fecha ou entra.
+- O build é o mesmo do staging (`.github/actions/cloudflare-build`), com o ambiente Preview da Vercel, a partir do commit do PR.
+- `scripts/cf-pr-config.mjs <n>` gera os configs a partir do `env.staging`, trocando só os nomes.
+- Todos os PRs usam o bucket `gap-app-v2-pr-opennext-cache`, criado pela primeira execução, com expiração de 14 dias para `incremental-cache/` e 8 dias para `og-images/`.
+
+Não usamos versões de preview dos Workers de staging porque o Worker de roteamento chama o do Next pelo nome, pela service binding, e isso sempre cai na versão publicada. A versão de preview rodaria o roteamento do PR com o Next do staging.
+
+No primeiro deploy de um PR, o Worker de roteamento sobe antes e sem a binding `NEXT_SERVER`, porque o Worker do Next se liga aos Durable Objects dele pelo nome. Depois sobem o do Next e o de roteamento completo.
+
+Só PRs de branches deste repositório: PR de fork não recebe os secrets. Por enquanto, só PRs para `migration-cloudflare`; na virada, para `main`. O workflow também roda à mão (Run workflow), para publicar ou apagar o preview de um número de PR.
+
 ### Staging pelo CI e tenants whitelabel (19/11)
 
 **Deploy automático** (`.github/workflows/cloudflare-staging.yml`):
@@ -494,6 +509,8 @@ Com tráfego só meu, a maior parte das páginas cai em isolate novo, como no Wo
 | Worker | `gap-app-v2-staging-app` (o servidor do Next do staging, `env.staging` no `wrangler.app.jsonc`, sem URL pública) |
 | Durable Object namespaces | `DOQueueHandler` e `DOShardedTagCache` do `gap-app-v2-staging` (saem com o Worker) |
 | Bucket R2 | `gap-app-v2-staging-opennext-cache`, com as mesmas duas regras do bucket de produção (`og-images/` 8 dias, `incremental-cache/` 30 dias) |
+| Bucket R2 | `gap-app-v2-pr-opennext-cache`, dos previews de PR, criado pela primeira execução do `cloudflare-pr-preview.yml` (`og-images/` 8 dias, `incremental-cache/` 14 dias) |
+| Workers | `gap-app-v2-pr-<n>` e `gap-app-v2-pr-<n>-app`, um par por PR aberto; o workflow apaga quando o PR fecha |
 
 **Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, vazio, com duas regras de ciclo de vida. Nenhum Worker usa ele ainda.
 - `expire-og-images`: `og-images/`, 8 dias.

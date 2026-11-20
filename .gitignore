@@ -84,5 +84,8 @@ dogfood-output/
 # Cloudflare Workers (opennextjs-cloudflare build output, wrangler local state)
 /.open-next
 /.wrangler
+# PR preview configs, written by scripts/cf-pr-config.mjs
+/wrangler.pr.jsonc
+/wrangler.app.pr.jsonc
 .dev.vars*
 /.sanity
