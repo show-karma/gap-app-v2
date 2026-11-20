@@ -59,50 +59,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - name: Build and bundle
+        uses: ./.github/actions/cloudflare-build
         with:
-          # Wrangler 4 needs Node 22 or newer; the other workflows stay on 20.
-          node-version: '22'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Pull the Vercel preview environment
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: npx --yes vercel@latest pull --yes --environment=preview --token="$VERCEL_TOKEN"
-
-      - name: Export the build variables
-        # NEXT_PUBLIC_* only, into the step environment. Never a .env at the app
-        # root: OpenNext copies it into the Worker bundle.
-        run: |
-          node scripts/cf-vercel-env.mjs build "$VERCEL_ENV_FILE"
-          {
-            echo "NEXT_PUBLIC_APP_ENV=preview"
-            echo "APP_ENV=preview"
-          } >> "$GITHUB_ENV"
-
-      - name: Refuse a .env in the bundle
-        run: |
-          # The files OpenNext copies or inlines into the Worker; .env.example is fine.
-          for f in .env .env.local .env.production .env.production.local; do
-            if [ -e "$f" ]; then
-              echo "::error::$f is at the app root; OpenNext would put it in the Worker bundle."
-              exit 1
-            fi
-          done
-
-      - name: Build
-        run: pnpm cf:build
-
-      - name: Bundle and check both Workers
-        # Latin-1 and size budgets; deploy these files as they are, never re-bundled.
-        run: pnpm cf:size
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
 
       - name: Upload the incremental cache to R2
         run: node scripts/cf-populate-r2.mjs "$R2_BUCKET"
