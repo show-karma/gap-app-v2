@@ -202,12 +202,18 @@ jobs:
         run: rm -rf .vercel
 
       - name: Smoke test
+        # On a PR's first deploy the routing Worker's new binding to the Next
+        # server Worker answers 404 for a few seconds, so each path gets a minute.
         env:
           URL: ${{ steps.routing.outputs.url }}
         run: |
           fail=0
           for path in / /communities /api/geo /sitemap_index.xml /admin/studio; do
-            status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path")
+            for attempt in 1 2 3 4 5 6; do
+              status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path")
+              [ "$status" = "200" ] && break
+              sleep 10
+            done
             echo "$status $path"
             [ "$status" = "200" ] || fail=1
           done
