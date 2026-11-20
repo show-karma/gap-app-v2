@@ -3,6 +3,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { sentryIgnoredSpans } from "./utilities/sentry/ignoredSpans";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 import { isTransientHttpError, isTransientNetworkError } from "./utilities/sentry/transientErrors";
 
@@ -10,6 +11,7 @@ Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   ignoreErrors: sentryIgnoreErrors,
+  ignoreSpans: sentryIgnoredSpans,
   // Drop transient indexer outages that crash SSR. A 504 (and the rest of
   // the 5xx gateway family) from `NEXT_PUBLIC_GAP_INDEXER_URL` during a
   // server render bubbles up here as a minified `Request failed with status
