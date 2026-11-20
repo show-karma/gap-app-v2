@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   Cog6ToothIcon,
@@ -46,7 +47,7 @@ interface SidebarTabItem extends SidebarItemBase {
 
 /** Navigates to its own page instead of switching a tab in place. */
 interface SidebarLinkItem extends SidebarItemBase {
-  key: "integrations";
+  key: "integrations" | "follow-up";
   href: (communityId: string, programId: string) => string;
 }
 
@@ -146,13 +147,20 @@ const getSidebarSections = (
         description: "External evaluation integrations",
         href: PAGES.MANAGE.FUNDING_PLATFORM.INTEGRATIONS,
       },
+      {
+        key: "follow-up",
+        label: "Follow-up agent",
+        icon: ChatBubbleLeftRightIcon,
+        description: "What the follow-up agent did",
+        href: PAGES.MANAGE.FUNDING_PLATFORM.FOLLOW_UP,
+      },
     ],
   },
 ];
 
 interface SettingsSidebarProps {
-  /** A tab key, or "integrations" when rendered on the standalone integrations page. */
-  activeTab: SidebarTabKey | "integrations";
+  /** A tab key, or the key of a standalone page rendered with this sidebar. */
+  activeTab: SidebarTabKey | SidebarLinkItem["key"];
   onTabChange: (tab: SidebarTabKey) => void;
   communityId: string;
   programId: string;

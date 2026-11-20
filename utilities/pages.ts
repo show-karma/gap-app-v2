@@ -92,6 +92,8 @@ export const PAGES = {
         `/community/${community}/manage/funding-platform/${programId}/setup`,
       INTEGRATIONS: (community: string, programId: string) =>
         `/community/${community}/manage/funding-platform/${programId}/integrations`,
+      FOLLOW_UP: (community: string, programId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/follow-up`,
       MILESTONES: (
         community: string,
         programId: string,
