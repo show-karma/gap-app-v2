@@ -96,4 +96,8 @@ export const QUERY_KEYS = {
   simocracyComments: (referenceNumber: string) => ["simocracy-comments", referenceNumber] as const,
   simocracyMilestoneVerdicts: (referenceNumber: string) =>
     ["simocracy-milestone-verdicts", referenceNumber] as const,
+  followUpCases: (programId: string, page: number) => ["follow-up-cases", programId, page] as const,
+  followUpPlaybook: (programId: string) => ["follow-up-playbook", programId] as const,
+  followUpCase: (programId: string, milestoneUid: string) =>
+    ["follow-up-case", programId, milestoneUid] as const,
 };
