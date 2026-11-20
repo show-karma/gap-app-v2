@@ -1,5 +1,6 @@
 "use client";
 
+import DOMPurify from "dompurify";
 import { useEffect, useRef } from "react";
 
 interface Props {
@@ -22,7 +23,7 @@ interface Props {
  * its `<style>` tags + body content into the shadow root, drop the
  * legacy in-content Export PDF button, and harden against unsafe
  * markup that could land in `report.content` via the admin Edit
- * textarea (see sanitizeFragment).
+ * textarea (see sanitizeReportDocument).
  */
 export function HtmlReportFrame({ html, title }: Props) {
   const hostRef = useRef<HTMLElement | null>(null);
@@ -33,9 +34,7 @@ export function HtmlReportFrame({ html, title }: Props) {
 
     const root = host.shadowRoot ?? host.attachShadow({ mode: "open" });
 
-    const doc = new DOMParser().parseFromString(html, "text/html");
-
-    sanitizeFragment(doc);
+    const doc = sanitizeReportDocument(html);
 
     // Drop the legacy on-screen Export PDF button. New reports don't
     // emit it; reports already in storage from before that BE change
@@ -62,49 +61,44 @@ export function HtmlReportFrame({ html, title }: Props) {
   return <section ref={hostRef} aria-label={title} />;
 }
 
-/**
- * Strip XSS surface from the parsed HTML before it's injected into the
- * shadow root. Shadow DOM `innerHTML` does not auto-execute `<script>`
- * tags, but it DOES fire `onerror` / `onload` / other inline event
- * handlers — and a same-origin shadow root can read the host page's
- * cookies. The Edit textarea on the editor page lets a community
- * admin paste arbitrary HTML; if their account is ever compromised,
- * stored content shouldn't become an XSS sink.
- *
- * - Removes `<script>` and `<iframe>` and similar active elements.
- * - Drops `on*` event-handler attributes from every remaining node.
- * - Rewrites `javascript:` / `data:` / `vbscript:` URLs in href/src.
- */
-function sanitizeFragment(doc: Document): void {
-  const ACTIVE_TAGS = new Set([
-    "script",
-    "iframe",
-    "object",
-    "embed",
-    "frame",
-    "frameset",
-    "applet",
-    "meta",
-    "base",
-  ]);
-  const UNSAFE_URL = /^\s*(javascript|vbscript|data):/i;
+const FORBIDDEN_TAGS = [
+  "meta",
+  "base",
+  "iframe",
+  "object",
+  "embed",
+  "form",
+  "input",
+  "button",
+  "textarea",
+  "select",
+];
 
-  for (const node of Array.from(doc.querySelectorAll("*"))) {
-    if (ACTIVE_TAGS.has(node.tagName.toLowerCase())) {
-      node.remove();
-      continue;
-    }
-    for (const attr of Array.from(node.attributes)) {
-      if (attr.name.toLowerCase().startsWith("on")) {
-        node.removeAttribute(attr.name);
-        continue;
-      }
-      if (
-        (attr.name === "href" || attr.name === "src" || attr.name === "xlink:href") &&
-        UNSAFE_URL.test(attr.value)
-      ) {
-        node.removeAttribute(attr.name);
-      }
+const ALLOWED_STYLESHEET_PREFIX = "https://fonts.googleapis.com/";
+
+/**
+ * The shadow root is same-origin with the app, and report content can be
+ * authored by a community admin, so it is allowlist-sanitized: anything
+ * DOMPurify does not know to be inert is dropped. Forms are removed outright
+ * and the only external stylesheet kept is the web-font host.
+ */
+function sanitizeReportDocument(html: string): Document {
+  const root = DOMPurify.sanitize(html, {
+    WHOLE_DOCUMENT: true,
+    RETURN_DOM: true,
+    ADD_TAGS: ["style", "link"],
+    FORBID_TAGS: FORBIDDEN_TAGS,
+  }) as HTMLHtmlElement;
+  const doc = root.ownerDocument;
+
+  for (const link of doc.querySelectorAll("link")) {
+    const isFontStylesheet =
+      link.getAttribute("rel") === "stylesheet" &&
+      (link.getAttribute("href") ?? "").startsWith(ALLOWED_STYLESHEET_PREFIX);
+    if (!isFontStylesheet) {
+      link.remove();
     }
   }
+
+  return doc;
 }

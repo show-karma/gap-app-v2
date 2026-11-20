@@ -296,7 +296,7 @@ export function useReportPageData({
   );
 
   const handleExportCSV = useCallback(() => {
-    downloadCommunityReport({
+    void downloadCommunityReport({
       communityId,
       sortBy,
       selectedProgramIds:

@@ -1,4 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
+import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -11,11 +12,14 @@ interface DownloadReportOptions {
   status?: string;
 }
 
+const REPORT_FILE_NAME = "grants.csv";
+
 /**
- * Utility function to download community reports
- * @param options DownloadReportOptions containing communityId and optional filtering parameters
+ * Downloads a community report. The request carries the caller's token so the
+ * export can include the private columns community admins are entitled to;
+ * an anonymous download still works and simply omits them.
  */
-export const downloadCommunityReport = (options: DownloadReportOptions): void => {
+export const downloadCommunityReport = async (options: DownloadReportOptions): Promise<void> => {
   const {
     communityId,
     sortBy = "totalMilestones",
@@ -37,9 +41,23 @@ export const downloadCommunityReport = (options: DownloadReportOptions): void =>
       download: true,
     });
 
-    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${path}`;
-    window.open(url, "_blank");
-  } catch (error: any) {
+    const token = await TokenManager.getToken();
+    const response = await fetch(`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${path}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) {
+      throw new Error(`Report download failed with status ${response.status}`);
+    }
+
+    const objectUrl = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = REPORT_FILE_NAME;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+  } catch (error: unknown) {
     errorManager("Error downloading report", error);
   }
 };

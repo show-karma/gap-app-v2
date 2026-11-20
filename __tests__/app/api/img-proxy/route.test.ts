@@ -99,6 +99,30 @@ describe("GET /api/img-proxy", () => {
       expect(res.headers.get("Content-Type")).toBe("image/png");
     });
 
+    it("sandboxes an SVG so it cannot run script when opened on the app origin", async () => {
+      const target = "https://attacker.example.com/x.svg";
+      const svg = new TextEncoder().encode(
+        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
+      ).buffer;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          url: target,
+          headers: { get: (key: string) => (key === "Content-Type" ? "image/svg+xml" : null) },
+          arrayBuffer: async () => svg,
+        })
+      );
+
+      const res = await GET(makeRequest(target));
+
+      const csp = res.headers.get("Content-Security-Policy") ?? "";
+      expect(csp).toContain("sandbox");
+      expect(csp).toContain("default-src 'none'");
+      expect(csp).not.toContain("script-src");
+      expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    });
+
     it("returns 400 'URL is not an image' when the upstream response isn't an image", async () => {
       vi.stubGlobal(
         "fetch",
