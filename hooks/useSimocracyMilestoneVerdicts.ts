@@ -3,11 +3,20 @@ import toast from "react-hot-toast";
 import { QUERY_KEYS } from "@/hooks/fundingPlatformQueryKeys";
 import {
   approveSimocracyVerdict,
+  fetchSimocracyApplicationVerdicts,
   fetchSimocracyMilestoneVerdicts,
-  type SimocracyMilestoneVerdictsResult,
+  type SimocracyVerdictRow,
+  type SimocracyVerdictSubject,
+  type SimocracyVerdictsResult,
 } from "@/services/fundingApplicationIntegrations.service";
 
 const VERDICTS_STALE_TIME_MS = 30 * 1000;
+
+function verdictsKey(referenceNumber: string, subject: SimocracyVerdictSubject) {
+  return subject === "application"
+    ? QUERY_KEYS.simocracyApplicationVerdicts(referenceNumber)
+    : QUERY_KEYS.simocracyMilestoneVerdicts(referenceNumber);
+}
 
 // Reviewer-only: the endpoint answers 403 for anyone else, which the fetch
 // turns into `forbidden` so the section simply stays hidden.
@@ -23,22 +32,41 @@ export function useSimocracyMilestoneVerdicts(
   });
 }
 
+export function useSimocracyApplicationVerdicts(
+  referenceNumber: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.simocracyApplicationVerdicts(referenceNumber),
+    queryFn: () => fetchSimocracyApplicationVerdicts(referenceNumber),
+    enabled: (options?.enabled ?? true) && !!referenceNumber,
+    staleTime: VERDICTS_STALE_TIME_MS,
+  });
+}
+
 // Publishes one verdict. While the request runs the card shows "Publishing…"
 // (and a progress toast); on success the row flips to published and the
 // public comment list is refetched so the verdict reappears there.
 const APPROVE_TOAST_ID = "simocracy-verdict-approve";
 
-function useVerdictPatcher(referenceNumber: string) {
+interface ApproveInput {
+  verdictId: string;
+  revision: number;
+  subject: SimocracyVerdictSubject;
+}
+
+export function useApproveSimocracyVerdict(referenceNumber: string) {
   const queryClient = useQueryClient();
-  const verdictsKey = QUERY_KEYS.simocracyMilestoneVerdicts(referenceNumber);
 
   const patchVerdict = (
+    subject: SimocracyVerdictSubject,
     verdictId: string,
-    patch: Partial<SimocracyMilestoneVerdictsResult["verdicts"][number]>
+    patch: Partial<SimocracyVerdictRow>
   ) => {
-    const current = queryClient.getQueryData<SimocracyMilestoneVerdictsResult>(verdictsKey);
+    const key = verdictsKey(referenceNumber, subject);
+    const current = queryClient.getQueryData<SimocracyVerdictsResult>(key);
     if (!current) return;
-    queryClient.setQueryData<SimocracyMilestoneVerdictsResult>(verdictsKey, {
+    queryClient.setQueryData<SimocracyVerdictsResult>(key, {
       ...current,
       verdicts: current.verdicts.map((verdict) =>
         verdict.verdictId === verdictId ? { ...verdict, ...patch } : verdict
@@ -46,19 +74,14 @@ function useVerdictPatcher(referenceNumber: string) {
     });
   };
 
-  return { queryClient, verdictsKey, patchVerdict };
-}
-
-export function useApproveSimocracyVerdict(referenceNumber: string) {
-  const { queryClient, verdictsKey, patchVerdict } = useVerdictPatcher(referenceNumber);
-
   return useMutation({
-    mutationFn: (input: { verdictId: string; revision: number }) =>
-      approveSimocracyVerdict(referenceNumber, input.verdictId, input.revision),
-    onMutate: async ({ verdictId }) => {
-      await queryClient.cancelQueries({ queryKey: verdictsKey });
-      const previous = queryClient.getQueryData<SimocracyMilestoneVerdictsResult>(verdictsKey);
-      patchVerdict(verdictId, {
+    mutationFn: ({ verdictId, revision, subject }: ApproveInput) =>
+      approveSimocracyVerdict(referenceNumber, verdictId, revision, subject),
+    onMutate: async ({ verdictId, subject }) => {
+      const key = verdictsKey(referenceNumber, subject);
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<SimocracyVerdictsResult>(key);
+      patchVerdict(subject, verdictId, {
         status: "publishing",
         canPublish: false,
         publishBlocker: "publishing",
@@ -66,14 +89,14 @@ export function useApproveSimocracyVerdict(referenceNumber: string) {
       toast.loading("Publishing to Simocracy…", { id: APPROVE_TOAST_ID });
       return { previous };
     },
-    onError: (error: Error, _input, context) => {
+    onError: (error: Error, { subject }, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(verdictsKey, context.previous);
+        queryClient.setQueryData(verdictsKey(referenceNumber, subject), context.previous);
       }
       toast.error(error.message, { id: APPROVE_TOAST_ID });
     },
-    onSuccess: (result, { verdictId, revision }) => {
-      patchVerdict(verdictId, {
+    onSuccess: (result, { verdictId, revision, subject }) => {
+      patchVerdict(subject, verdictId, {
         status: "published",
         publishedRevision: revision,
         canPublish: false,
@@ -84,8 +107,8 @@ export function useApproveSimocracyVerdict(referenceNumber: string) {
         { id: APPROVE_TOAST_ID }
       );
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: verdictsKey });
+    onSettled: (_result, _error, { subject }) => {
+      queryClient.invalidateQueries({ queryKey: verdictsKey(referenceNumber, subject) });
       queryClient.refetchQueries({ queryKey: QUERY_KEYS.simocracyComments(referenceNumber) });
       queryClient.invalidateQueries({ queryKey: ["simocracy-feedback", referenceNumber] });
     },

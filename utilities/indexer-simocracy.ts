@@ -28,5 +28,9 @@ export const SIMOCRACY_ROUTES = {
       `/v2/funding-applications/${referenceNumber}/integrations/simocracy/milestone-evaluations`,
     SIMOCRACY_MILESTONE_VERDICT_APPROVE: (referenceNumber: string, verdictId: string) =>
       `/v2/funding-applications/${referenceNumber}/integrations/simocracy/milestone-evaluations/${verdictId}/approve`,
+    SIMOCRACY_APPLICATION_VERDICTS: (referenceNumber: string) =>
+      `/v2/funding-applications/${referenceNumber}/integrations/simocracy/application-evaluations`,
+    SIMOCRACY_APPLICATION_VERDICT_APPROVE: (referenceNumber: string, verdictId: string) =>
+      `/v2/funding-applications/${referenceNumber}/integrations/simocracy/application-evaluations/${verdictId}/approve`,
   },
 } as const;
