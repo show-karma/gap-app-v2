@@ -23,6 +23,8 @@ interface IntegrationsTabProps {
   referenceNumber: string;
   /** Enables sim-evaluation feedback controls (manage view; admin-scoped). */
   feedbackAdmin?: boolean;
+  /** A program reviewer: the verdict desk shows the drafts of the Sims they own. */
+  verdictReviewer?: boolean;
 }
 
 const LoadingSkeleton: FC = () => (
@@ -115,9 +117,14 @@ const SProcessSection: FC<SProcessSectionProps> = ({ data, summary, feedback }) 
 interface SimocracySectionProps {
   referenceNumber: string;
   feedbackAdmin?: boolean;
+  verdictReviewer?: boolean;
 }
 
-const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedbackAdmin }) => {
+const SimocracySection: FC<SimocracySectionProps> = ({
+  referenceNumber,
+  feedbackAdmin,
+  verdictReviewer,
+}) => {
   const { data, isLoading, isError, error, refetch } = useSimocracyEvaluations(referenceNumber);
   const { data: summary } = useSimocracyProgramSummary(data?.programId ?? "");
   const { address } = useAuth();
@@ -138,9 +145,12 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
   }, [feedbackAdmin, runId, referenceNumber, viewerAddresses]);
   // Milestone verdicts take feedback independently of any S-Process run.
   const commentFeedbackConfig = useMemo(() => {
-    if (!feedbackAdmin) return undefined;
-    return { referenceNumber, viewerAddresses, canGiveFeedback: () => true };
-  }, [feedbackAdmin, referenceNumber, viewerAddresses]);
+    if (feedbackAdmin) return { referenceNumber, viewerAddresses, canGiveFeedback: () => true };
+    if (verdictReviewer) {
+      return { referenceNumber, viewerAddresses, canGiveFeedback: () => false };
+    }
+    return undefined;
+  }, [feedbackAdmin, verdictReviewer, referenceNumber, viewerAddresses]);
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -161,7 +171,7 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
       <SimComments
         referenceNumber={referenceNumber}
         feedback={commentFeedbackConfig}
-        review={feedbackAdmin}
+        review={feedbackAdmin || verdictReviewer}
       />
     </div>
   );
@@ -240,7 +250,11 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
   );
 };
 
-export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber, feedbackAdmin }) => {
+export const IntegrationsTab: FC<IntegrationsTabProps> = ({
+  referenceNumber,
+  feedbackAdmin,
+  verdictReviewer,
+}) => {
   const { data, isLoading, isError, error, refetch } = useApplicationIntegrations(referenceNumber);
 
   if (isLoading) {
@@ -270,7 +284,11 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber, fee
   return (
     <div className="space-y-6">
       {hasSimocracy ? (
-        <SimocracySection referenceNumber={referenceNumber} feedbackAdmin={feedbackAdmin} />
+        <SimocracySection
+          referenceNumber={referenceNumber}
+          feedbackAdmin={feedbackAdmin}
+          verdictReviewer={verdictReviewer}
+        />
       ) : (
         <EmptyState
           title="No active integrations"

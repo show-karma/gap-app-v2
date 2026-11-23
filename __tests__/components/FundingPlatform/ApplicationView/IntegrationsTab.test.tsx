@@ -14,6 +14,8 @@ const mockFetchSimocracy = vi.fn();
 const mockFetchSimocracyComments = vi.fn();
 const mockFetchSimocracyFeedback = vi.fn();
 const mockSubmitSimocracyFeedback = vi.fn();
+const mockFetchMilestoneVerdicts = vi.fn();
+const mockFetchApplicationVerdicts = vi.fn();
 
 vi.mock("@/services/fundingApplicationIntegrations.service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/fundingApplicationIntegrations.service")>()),
@@ -22,6 +24,8 @@ vi.mock("@/services/fundingApplicationIntegrations.service", async (importOrigin
   fetchSimocracyComments: (...args: unknown[]) => mockFetchSimocracyComments(...args),
   fetchSimocracyFeedback: (...args: unknown[]) => mockFetchSimocracyFeedback(...args),
   submitSimocracyFeedback: (...args: unknown[]) => mockSubmitSimocracyFeedback(...args),
+  fetchSimocracyMilestoneVerdicts: (...args: unknown[]) => mockFetchMilestoneVerdicts(...args),
+  fetchSimocracyApplicationVerdicts: (...args: unknown[]) => mockFetchApplicationVerdicts(...args),
   fetchSimocracyProgramSummary: () => new Promise(() => {}),
   fetchSimocracyCouncil: () => new Promise(() => {}),
 }));
@@ -59,7 +63,7 @@ const simocracyEnabled: IntegrationSummary[] = [{ key: "simocracy", enabled: tru
 
 let queryClient: QueryClient;
 
-function renderTab(props: { feedbackAdmin?: boolean } = {}) {
+function renderTab(props: { feedbackAdmin?: boolean; verdictReviewer?: boolean } = {}) {
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -73,6 +77,8 @@ describe("IntegrationsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetchSimocracyFeedback.mockResolvedValue([]);
+    mockFetchMilestoneVerdicts.mockResolvedValue({ verdicts: [], forbidden: false });
+    mockFetchApplicationVerdicts.mockResolvedValue({ verdicts: [], forbidden: false });
   });
 
   afterEach(() => {
@@ -316,6 +322,74 @@ describe("IntegrationsTab", () => {
         screen.queryByRole("button", { name: "Represented faithfully" })
       ).not.toBeInTheDocument();
       expect(mockFetchSimocracyFeedback).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("reviewer view", () => {
+    const ownDraft = {
+      verdictId: "v-own",
+      subject: "application" as const,
+      milestoneUid: null,
+      milestoneTitle: null,
+      simUri: "at://did:plc:host/org.simocracy.sim/own",
+      simName: "Own Sim",
+      commentUri: "at://did:plc:host/org.impactindexer.review.comment/ap-app-1-own",
+      text: "Recommend. The plan is concrete.",
+      status: "pending_review" as const,
+      revision: 1,
+      publishedRevision: null,
+      publishedAt: null,
+      publishedBy: null,
+      dismissedAt: null,
+      dismissedBy: null,
+      updatedAt: "2026-11-23T00:00:00.000Z",
+      mayAct: true,
+      canPublish: true,
+      publishBlocker: null,
+      feedback: [],
+      revisions: [
+        {
+          revision: 1,
+          text: "Recommend. The plan is concrete.",
+          submittedAt: "2026-11-23T00:00:00.000Z",
+          outcome: "current" as const,
+          publishedAt: null,
+          dismissedAt: null,
+          dismissedBy: null,
+          feedback: [],
+        },
+      ],
+    };
+
+    function setupReviewer() {
+      mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
+      mockFetchSimocracy.mockResolvedValue(createSimocracyResponse());
+      mockFetchSimocracyComments.mockResolvedValue({
+        referenceNumber: "APP-SIMO-0001",
+        programId: "simo-test-1",
+        forbidden: false,
+        comments: [],
+      });
+      mockFetchApplicationVerdicts.mockResolvedValue({ verdicts: [ownDraft], forbidden: false });
+    }
+
+    it("shows a reviewer the draft of a Sim they own, ready to publish", async () => {
+      setupReviewer();
+
+      renderTab({ verdictReviewer: true });
+
+      expect(await screen.findByText("Recommend. The plan is concrete.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
+      expect(mockFetchApplicationVerdicts).toHaveBeenCalledWith("APP-SIMO-0001");
+    });
+
+    it("gives a reviewer feedback on their own Sim verdict, not on the S-Process round", async () => {
+      setupReviewer();
+
+      renderTab({ verdictReviewer: true });
+
+      await screen.findByText("Recommend. The plan is concrete.");
+      expect(screen.getAllByRole("button", { name: "Represented faithfully" })).toHaveLength(1);
     });
   });
 

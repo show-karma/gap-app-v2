@@ -401,6 +401,7 @@ export function useApplicationDetailView({
     isLoadingComments,
     // Permissions / derived flags
     isAdmin,
+    isReviewer,
     canViewNotes,
     showIntegrationsTab,
     canEditApplication,

@@ -77,6 +77,7 @@ export default function ApplicationDetailView({
     isLoading,
     isLoadingComments,
     isAdmin,
+    isReviewer,
     canViewNotes,
     showIntegrationsTab,
     canEditApplication,
@@ -223,6 +224,7 @@ export default function ApplicationDetailView({
                 <IntegrationsTab
                   referenceNumber={application.referenceNumber}
                   feedbackAdmin={isAdmin}
+                  verdictReviewer={isReviewer}
                 />
               </TabPanel>
             ),
