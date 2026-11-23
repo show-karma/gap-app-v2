@@ -27,6 +27,7 @@ import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly } from "@/src/core/rbac";
 import { PrivateNotesTab } from "@/src/features/application-notes/components/PrivateNotesTab";
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
+import { ReviewerDiscussionTab } from "@/src/features/reviewer-discussion/components/ReviewerDiscussionTab";
 import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
@@ -258,6 +259,26 @@ export default function ApplicationDetailView({
         </TabPanel>
       ),
     },
+    ...(canViewNotes
+      ? [
+          {
+            id: "reviewer-discussion",
+            label: "Reviewer Discussion",
+            icon: TabIcons.ReviewerDiscussion,
+            content: (
+              <TabPanel>
+                <ReviewerDiscussionTab
+                  referenceNumber={application.referenceNumber}
+                  programId={programId}
+                  canView={canViewNotes}
+                  isAdmin={isAdmin}
+                  currentUserAddress={currentUserAddress}
+                />
+              </TabPanel>
+            ),
+          } satisfies TabConfig,
+        ]
+      : []),
     // Private notes tab — reviewer/admin-only. Conditional spread fails closed:
     // no "Notes" entry exists in the tab bar for a non-reviewer or while
     // permissions resolve (DEV-515 no-glimpse). The BE endpoint is the real guard.

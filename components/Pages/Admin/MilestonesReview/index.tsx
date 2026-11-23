@@ -36,6 +36,7 @@ import {
 } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { ReviewerType } from "@/src/core/rbac/types";
+import { MilestoneReviewerDiscussion } from "@/src/features/reviewer-discussion/components/MilestoneReviewerDiscussion";
 import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -1039,6 +1040,12 @@ function MilestonesReviewPageContent({
                     </p>
                   </div>
                 )
+              ) : activePanelTab === "reviewer-discussion" ? (
+                <MilestoneReviewerDiscussion
+                  projectUID={project.uid}
+                  programId={parsedProgramId}
+                  communityId={communityId}
+                />
               ) : isLoadingFundingApp && !referenceNumber ? (
                 <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                   <div className="h-5 w-40 animate-pulse rounded bg-gray-200 dark:bg-zinc-700" />

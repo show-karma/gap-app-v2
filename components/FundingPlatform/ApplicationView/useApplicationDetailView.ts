@@ -48,6 +48,7 @@ const KNOWN_TAB_IDS = [
   "ai-analysis",
   "integrations",
   "comments",
+  "reviewer-discussion",
   "notes",
 ] as const;
 type KnownTabId = (typeof KNOWN_TAB_IDS)[number];
