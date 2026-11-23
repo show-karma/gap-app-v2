@@ -2,7 +2,7 @@
 
 import { CheckIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import pluralize from "pluralize";
-import { type FC, type ReactNode, useMemo, useState } from "react";
+import { type FC, type ReactNode, useId, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -73,7 +73,7 @@ const FilterChips: FC<{
 }> = ({ value, counts, onChange }) => (
   <fieldset
     aria-label="Filter Sim verdicts"
-    className="inline-flex items-center gap-1 rounded-lg border-0 bg-gray-100 p-1 dark:bg-zinc-800"
+    className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-lg border-0 bg-gray-100 p-1 dark:bg-zinc-800"
   >
     {FILTERS.map((filter) => {
       const active = filter.key === value;
@@ -133,6 +133,7 @@ const SubjectRail: FC<{
 }> = ({ options, value, onChange }) => {
   const application = options.find((option) => option.subject === "application");
   const milestones = options.filter((option) => option.subject === "milestone");
+  const milestonesLabelId = useId();
   return (
     <nav aria-label="Sim verdict subjects" className="space-y-0.5">
       <RailRow
@@ -157,13 +158,13 @@ const SubjectRail: FC<{
       {milestones.length > 0 && (
         <div className="pt-3">
           <p
-            id="sim-verdict-rail-milestones"
+            id={milestonesLabelId}
             className="flex items-center gap-2 px-3 pb-1 text-xs font-medium text-gray-500 dark:text-gray-400"
           >
             <SubjectIcon kind="milestone" className="h-3.5 w-3.5" />
             Milestones
           </p>
-          <ul aria-labelledby="sim-verdict-rail-milestones" className="space-y-0.5">
+          <ul aria-labelledby={milestonesLabelId} className="space-y-0.5">
             {milestones.map((option) => (
               <li key={option.key}>
                 <RailRow
@@ -239,13 +240,6 @@ const SubjectPicker: FC<{
           variant={selected ? "secondary" : "outline"}
           size="chip"
           aria-pressed={!!selected}
-          aria-label={
-            selected
-              ? selected.subject === "application"
-                ? "Showing the application's Sim verdicts"
-                : `Showing milestone: ${selected.title}`
-              : "Filter by application or milestone"
-          }
           className={cn(
             "max-w-[min(320px,calc(100vw-2rem))] font-medium",
             selected && "border border-primary-500 text-primary-700 dark:text-primary-300"

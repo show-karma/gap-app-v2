@@ -249,18 +249,15 @@ const SubjectLine: FC<{ verdict: SimocracyVerdictRow; submittedAt: string | null
   const isApplication = verdict.subject === "application";
   const date = formatDate(submittedAt);
   return (
-    <span className="flex min-w-0 items-center gap-1.5">
-      <SubjectIcon kind={verdict.subject} className="h-3.5 w-3.5" />
-      <span className="min-w-0 truncate">
+    <span className="flex min-w-0 items-start gap-1.5">
+      <SubjectIcon kind={verdict.subject} className="mt-px h-3.5 w-3.5" />
+      <span className="min-w-0 break-words">
         {isApplication ? (
           "Application evaluation"
         ) : (
           <>
             Milestone evaluation ·{" "}
-            <span
-              className="text-gray-700 dark:text-gray-300"
-              title={verdict.milestoneTitle ?? undefined}
-            >
+            <span className="text-gray-700 dark:text-gray-300">
               {verdict.milestoneTitle ?? "Untitled milestone"}
             </span>
           </>
@@ -323,11 +320,13 @@ export const VerdictCard: FC<VerdictCardProps> = memo(
         aria-busy={isPublishing}
       >
         <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
-          <SimAuthor
-            name={verdict.simName}
-            avatar={avatar}
-            detail={<SubjectLine verdict={verdict} submittedAt={shown.submittedAt} />}
-          />
+          <div className="min-w-0 max-w-full">
+            <SimAuthor
+              name={verdict.simName}
+              avatar={avatar}
+              detail={<SubjectLine verdict={verdict} submittedAt={shown.submittedAt} />}
+            />
+          </div>
           <div className="flex items-center gap-3">
             <StatusBadge verdict={verdict} shown={shown} />
             <RevisionPicker
