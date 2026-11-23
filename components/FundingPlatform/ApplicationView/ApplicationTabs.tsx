@@ -7,6 +7,7 @@ import {
   LockClosedIcon,
   PuzzlePieceIcon,
   SparklesIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -123,6 +124,7 @@ export const TabIcons = {
   Discussion: ChatBubbleLeftRightIcon,
   Milestones: FlagIcon,
   Notes: LockClosedIcon,
+  ReviewerDiscussion: UserGroupIcon,
 };
 
 export default ApplicationTabs;

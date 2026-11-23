@@ -1,15 +1,16 @@
 "use client";
 
 import { ChatBubbleLeftRightIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
-import { UserGroupIcon } from "@heroicons/react/24/solid";
+import { UserGroupIcon, UsersIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
 
-export type ReviewPanelTab = "details" | "comments" | "simocracy";
+export type ReviewPanelTab = "details" | "comments" | "reviewer-discussion" | "simocracy";
 
 const TABS = [
   { key: "details", label: "Details", icon: DocumentTextIcon },
   { key: "comments", label: "Comments", icon: ChatBubbleLeftRightIcon },
+  { key: "reviewer-discussion", label: "Reviewer Discussion", icon: UsersIcon },
   { key: "simocracy", label: "Simocracy", icon: UserGroupIcon },
 ] as const satisfies ReadonlyArray<{
   key: ReviewPanelTab;

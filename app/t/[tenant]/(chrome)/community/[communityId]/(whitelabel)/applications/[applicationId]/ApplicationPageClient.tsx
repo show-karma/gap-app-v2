@@ -19,6 +19,7 @@ import { PrivateNotesTab } from "@/src/features/application-notes/components/Pri
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
 import { useApplication } from "@/src/features/applications/hooks/use-application";
 import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
+import { ReviewerDiscussionTab } from "@/src/features/reviewer-discussion/components/ReviewerDiscussionTab";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
@@ -193,6 +194,13 @@ export function ApplicationPageClient({
     if (hasCommentsSurface) {
       list.push({ key: "comments", label: "Comments", Icon: TAB_ICONS.comments });
     }
+    if (canViewNotes) {
+      list.push({
+        key: "reviewer-discussion",
+        label: "Reviewer Discussion",
+        Icon: TAB_ICONS["reviewer-discussion"],
+      });
+    }
     if (showSimocracy) {
       list.push({ key: "simocracy", label: "Simocracy", Icon: TAB_ICONS.simocracy });
     }
@@ -306,6 +314,14 @@ export function ApplicationPageClient({
             />
           )}
           {hasTabs && activeTab === "comments" && commentsSection}
+          {hasTabs && activeTab === "reviewer-discussion" && canViewNotes && (
+            <ReviewerDiscussionTab
+              referenceNumber={application.referenceNumber}
+              programId={application.programId}
+              canView={canViewNotes}
+              isAdmin={isAdmin}
+            />
+          )}
           {hasTabs && activeTab === "simocracy" && showSimocracy && (
             <IntegrationsTab referenceNumber={application.referenceNumber} />
           )}
