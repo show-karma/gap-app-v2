@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowPathIcon, PuzzlePieceIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ChartBarIcon, PuzzlePieceIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
@@ -82,7 +82,7 @@ const SProcessSection: FC<SProcessSectionProps> = ({ data, summary, feedback }) 
     return (
       <EmptyState
         title="The S-Process round hasn't run yet"
-        description="S-Process sim evaluations will appear here once a Simocracy round runs for this program. Milestone evaluations and deliberation show up in the comments below."
+        description="S-Process sim evaluations will appear here once a Simocracy round runs for this program. Sim verdicts on the application and its milestones show up below."
       />
     );
   }
@@ -90,7 +90,7 @@ const SProcessSection: FC<SProcessSectionProps> = ({ data, summary, feedback }) 
     return (
       <EmptyState
         title="No S-Process evaluations for this application"
-        description="The Sims did not score this application in the latest S-Process run. Milestone evaluations and deliberation show up in the comments below."
+        description="The Sims did not score this application in the latest S-Process run. Sim verdicts on the application and its milestones show up below."
       />
     );
   }
@@ -193,8 +193,11 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div>
-        <div className="flex items-center gap-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Sim evaluations</h3>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+            <ChartBarIcon aria-hidden="true" className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            S-Process round
+          </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {typeof linkedCount === "number" && linkedCount >= count
               ? `${count} of ${linkedCount} linked ${pluralize("sim", linkedCount)} responded`

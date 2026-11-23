@@ -172,7 +172,7 @@ describe("IntegrationsTab", () => {
       renderTab();
 
       expect(await screen.findByText("The S-Process round hasn't run yet")).toBeInTheDocument();
-      expect(await screen.findByText("Sim evaluations")).toBeInTheDocument();
+      expect(await screen.findByText("Sim verdicts")).toBeInTheDocument();
       expect(screen.getByText("Round deliberation")).toBeInTheDocument();
       expect(screen.getByText("S1")).toBeInTheDocument();
     });
@@ -222,7 +222,9 @@ describe("IntegrationsTab", () => {
         screen.getByRole("heading", { level: 4, name: "Round deliberation" })
       ).toBeInTheDocument();
       // the "Milestone:" line is lifted into the heading, not repeated in the body
-      expect(screen.queryAllByText("Milestone: Dashboard MVP")).toHaveLength(1);
+      expect(
+        screen.getAllByRole("heading", { level: 4, name: "Milestone: Dashboard MVP" })
+      ).toHaveLength(1);
     });
 
     it("offers feedback controls on sim-attributed verdicts for admins, one fetch for all", async () => {
@@ -328,7 +330,7 @@ describe("IntegrationsTab", () => {
       expect(screen.getByText("deepseek/deepseek-v4-flash-0731")).toBeInTheDocument();
       expect(screen.getByText("Curve anchors at ~$197.")).toBeInTheDocument();
       expect(screen.getByTitle("Mechanism run spg-008qx5b0-a6mnyn5tvpwr")).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: "Sim evaluations" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "S-Process round" })).toBeInTheDocument();
       expect(screen.getByText("1 sim")).toBeInTheDocument();
     });
 
