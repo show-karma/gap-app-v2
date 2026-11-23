@@ -3,10 +3,18 @@ import { SimComments } from "../SimComments";
 
 const mockUseSimocracyComments = vi.fn();
 const mockUseSimocracyMilestoneVerdicts = vi.fn(() => ({ data: undefined }));
+const mockUseSimocracyApplicationVerdicts = vi.fn(
+  (): { data: unknown; isSuccess: boolean; isError?: boolean } => ({
+    data: undefined,
+    isSuccess: true,
+  })
+);
 const mockUseSimocracyFeedback = vi.fn(() => ({ data: [] }));
 vi.mock("@/hooks/useSimocracyMilestoneVerdicts", () => ({
   useSimocracyMilestoneVerdicts: (referenceNumber: string, options?: { enabled?: boolean }) =>
     mockUseSimocracyMilestoneVerdicts(referenceNumber, options),
+  useSimocracyApplicationVerdicts: (referenceNumber: string, options?: { enabled?: boolean }) =>
+    mockUseSimocracyApplicationVerdicts(referenceNumber, options),
   useApproveSimocracyVerdict: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
@@ -61,6 +69,7 @@ function pendingVerdict(overrides: Record<string, unknown> = {}) {
   const revision = (overrides.revision as number | undefined) ?? 1;
   return {
     verdictId: "v1",
+    subject: "milestone",
     milestoneUid: "0xm1",
     milestoneTitle: "Milestone 1",
     simUri: "at://did:plc:host/org.simocracy.sim/s1",
@@ -119,6 +128,7 @@ describe("SimComments", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseSimocracyFeedback.mockReturnValue({ data: [] });
+    mockUseSimocracyApplicationVerdicts.mockReturnValue({ data: undefined, isSuccess: true });
   });
 
   it("renders nothing when the viewer is forbidden", () => {
@@ -229,7 +239,8 @@ describe("SimComments", () => {
         "aria-pressed",
         "true"
       );
-      expect(screen.getByRole("heading", { name: "Milestone 1" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Milestone: Milestone 1" })).toBeInTheDocument();
+      expect(screen.getByText(/Milestone evaluation ·/)).toBeInTheDocument();
       expect(screen.getByText("Demonstrated. The repo shows the release.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^publish$/i })).toBeEnabled();
       // The public comment is not a verdict card, so it stays in the thread below.
@@ -478,6 +489,179 @@ describe("SimComments", () => {
       // A dismissed version can still be published later; nothing is left to dismiss.
       expect(screen.getByRole("button", { name: /^publish$/i })).toBeEnabled();
       expect(screen.queryByRole("button", { name: /^dismiss$/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("application verdicts", () => {
+    const applicationVerdict = (overrides: Record<string, unknown> = {}) =>
+      pendingVerdict({
+        verdictId: "a1",
+        subject: "application",
+        milestoneUid: null,
+        milestoneTitle: null,
+        text: "Strong team, thin budget.",
+        revisions: [
+          {
+            revision: 1,
+            text: "Strong team, thin budget.",
+            submittedAt: "2026-09-30T00:00:00.000Z",
+            outcome: "current",
+            publishedAt: null,
+            dismissedAt: null,
+            dismissedBy: null,
+            feedback: [],
+          },
+        ],
+        ...overrides,
+      });
+
+    it("pins the application's verdicts above the milestone groups on the desk", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: { programId: "1", comments: [], forbidden: false },
+        isLoading: false,
+      });
+      mockUseSimocracyMilestoneVerdicts.mockReturnValue({
+        data: { verdicts: [pendingVerdict()], forbidden: false },
+      });
+      mockUseSimocracyApplicationVerdicts.mockReturnValue({
+        data: {
+          verdicts: [applicationVerdict({ status: "published", publishedRevision: 1 })],
+          forbidden: false,
+        },
+        isSuccess: true,
+      });
+
+      render(<SimComments referenceNumber="APP-1" review />);
+      fireEvent.click(screen.getByRole("button", { name: "All (2)" }));
+
+      const headings = screen
+        .getAllByRole("heading", { level: 4 })
+        .map((heading) => heading.textContent);
+      expect(headings).toEqual(["Application", "Milestone: Milestone 1"]);
+      expect(screen.getByText(/Application evaluation/)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Application/ })).toBeInTheDocument();
+      expect(mockUseSimocracyApplicationVerdicts).toHaveBeenCalledWith("APP-1", { enabled: true });
+    });
+
+    it("waits for the application list before opening the desk", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: { programId: "1", comments: [], forbidden: false },
+        isLoading: false,
+      });
+      mockUseSimocracyMilestoneVerdicts.mockReturnValue({
+        data: { verdicts: [pendingVerdict()], forbidden: false },
+      });
+      mockUseSimocracyApplicationVerdicts.mockReturnValue({ data: undefined, isSuccess: false });
+
+      render(<SimComments referenceNumber="APP-1" review />);
+
+      expect(screen.queryByRole("region", { name: "Sim verdicts" })).not.toBeInTheDocument();
+    });
+
+    it("keeps milestone verdicts reviewable when the application list fails", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: { programId: "1", comments: [], forbidden: false },
+        isLoading: false,
+      });
+      mockUseSimocracyMilestoneVerdicts.mockReturnValue({
+        data: { verdicts: [pendingVerdict()], forbidden: false },
+      });
+      mockUseSimocracyApplicationVerdicts.mockReturnValue({
+        data: undefined,
+        isSuccess: false,
+        isError: true,
+      });
+
+      render(<SimComments referenceNumber="APP-1" review />);
+
+      expect(screen.getByText("Demonstrated. The repo shows the release.")).toBeInTheDocument();
+    });
+
+    it("never loads application verdicts on a milestone pane", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: { programId: "1", comments: [], forbidden: false },
+        isLoading: false,
+      });
+      mockUseSimocracyMilestoneVerdicts.mockReturnValue({
+        data: { verdicts: [pendingVerdict()], forbidden: false },
+      });
+
+      render(
+        <SimComments
+          referenceNumber="APP-1"
+          review
+          milestone={{ uid: "0xM1", title: "Milestone 1" }}
+        />
+      );
+
+      expect(mockUseSimocracyApplicationVerdicts).toHaveBeenCalledWith("APP-1", { enabled: false });
+    });
+
+    it("groups published application verdicts apart from milestones and deliberation", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: {
+          programId: "1",
+          comments: [
+            comment({ commentUri: "at://x/c/d1", text: "Round chatter." }),
+            comment({
+              commentUri: "at://x/c/m1",
+              authorSimUri: "at://sim/1",
+              authorName: "S1",
+              milestoneUid: "0xm1",
+              verdictSubject: "milestone",
+              text: "Milestone: Ship v1\n**Sim milestone evaluation — S1**\n\nShipped.",
+            }),
+            comment({
+              commentUri: "at://x/c/a1",
+              authorSimUri: "at://sim/1",
+              authorName: "S1",
+              milestoneUid: null,
+              verdictSubject: "application",
+              text: "**Sim application evaluation — S1**\n\nFund it.",
+            }),
+          ],
+          forbidden: false,
+        },
+        isLoading: false,
+      });
+
+      render(<SimComments referenceNumber="APP-1" />);
+
+      const headings = screen
+        .getAllByRole("heading", { level: 4 })
+        .map((heading) => heading.textContent);
+      expect(headings).toEqual(["Application", "Milestone: Ship v1", "Round deliberation"]);
+      expect(screen.getByText("Fund it.")).toBeInTheDocument();
+      expect(screen.queryByText(/Sim application evaluation/)).not.toBeInTheDocument();
+    });
+
+    it("leaves application verdicts out of a milestone's published list", () => {
+      mockUseSimocracyComments.mockReturnValue({
+        data: {
+          programId: "1",
+          comments: [
+            comment({
+              commentUri: "at://x/c/a1",
+              verdictSubject: "application",
+              text: "**Sim application evaluation — S1**\n\nFund it.",
+            }),
+            comment({
+              commentUri: "at://x/c/m1",
+              milestoneUid: "0xM1",
+              text: "Milestone: Milestone 1\n\nShipped.",
+            }),
+          ],
+          forbidden: false,
+        },
+        isLoading: false,
+      });
+
+      render(
+        <SimComments referenceNumber="APP-1" milestone={{ uid: "0xm1", title: "Milestone 1" }} />
+      );
+
+      expect(screen.getByText("Shipped.")).toBeInTheDocument();
+      expect(screen.queryByText("Fund it.")).not.toBeInTheDocument();
     });
   });
 });

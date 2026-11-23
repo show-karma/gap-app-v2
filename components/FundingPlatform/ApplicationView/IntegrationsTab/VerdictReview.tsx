@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
+import { CheckIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import pluralize from "pluralize";
 import { type FC, type ReactNode, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,24 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { SimocracyMilestoneVerdictRow } from "@/services/fundingApplicationIntegrations.service";
+import type { SimocracyVerdictRow } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { SimSectionHeading } from "./SimIdentity";
 import { VerdictCard, type VerdictFeedbackContext } from "./VerdictCard";
+import { SubjectIcon, SubjectTitle } from "./VerdictSubject";
+import {
+  countVerdicts,
+  groupVerdictsBySubject,
+  inVerdictBucket,
+  milestoneSubjectKey,
+  type VerdictCounts,
+  type VerdictFilter,
+  type VerdictSubjectGroup,
+  verdictSubjectKey,
+} from "./verdictSubjects";
 
-type Filter = "all" | "pending" | "published" | "dismissed";
+type Filter = VerdictFilter;
+type Counts = VerdictCounts;
 
 // Dismissal exists on the API but is off the desk for now.
 const FILTERS: { key: Filter; label: string; dot?: string }[] = [
@@ -26,67 +38,6 @@ const FILTERS: { key: Filter; label: string; dot?: string }[] = [
   { key: "pending", label: "Pending human review", dot: "bg-amber-500" },
   { key: "published", label: "Published", dot: "bg-green-500" },
 ];
-
-type Bucket = Exclude<Filter, "all">;
-
-// A pair holds one slot on Simocracy, so it can sit in two buckets at once:
-// a version live (published) while a newer one waits (pending).
-function buckets(verdict: SimocracyMilestoneVerdictRow): Bucket[] {
-  const out: Bucket[] = [];
-  if (verdict.publishedRevision !== null) out.push("published");
-  if (verdict.status === "dismissed") out.push("dismissed");
-  else if (verdict.status !== "published") out.push("pending");
-  return out;
-}
-
-function inBucket(verdict: SimocracyMilestoneVerdictRow, filter: Filter): boolean {
-  return filter === "all" || buckets(verdict).includes(filter);
-}
-
-interface Counts {
-  pending: number;
-  published: number;
-  dismissed: number;
-}
-
-function count(verdicts: SimocracyMilestoneVerdictRow[]): Counts {
-  const counts: Counts = { pending: 0, published: 0, dismissed: 0 };
-  for (const verdict of verdicts) for (const key of buckets(verdict)) counts[key] += 1;
-  return counts;
-}
-
-interface MilestoneGroup {
-  milestoneUid: string;
-  title: string;
-  verdicts: SimocracyMilestoneVerdictRow[];
-  counts: Counts;
-}
-
-// Milestones in the order the reviewer meets them on the application: the
-// ones still waiting first, then by title. Sims alphabetical inside.
-function groupByMilestone(verdicts: SimocracyMilestoneVerdictRow[]): MilestoneGroup[] {
-  const groups = new Map<string, MilestoneGroup>();
-  for (const verdict of verdicts) {
-    const key = verdict.milestoneUid.toLowerCase();
-    const group = groups.get(key) ?? {
-      milestoneUid: verdict.milestoneUid,
-      title: verdict.milestoneTitle ?? "Untitled milestone",
-      verdicts: [],
-      counts: { pending: 0, published: 0, dismissed: 0 },
-    };
-    group.verdicts.push(verdict);
-    groups.set(key, group);
-  }
-  const list = [...groups.values()].map((group) => ({
-    ...group,
-    verdicts: [...group.verdicts].sort((a, b) => a.simName.localeCompare(b.simName)),
-    counts: count(group.verdicts),
-  }));
-  return list.sort(
-    (a, b) =>
-      Number(b.counts.pending > 0) - Number(a.counts.pending > 0) || a.title.localeCompare(b.title)
-  );
-}
 
 const DOT: Record<keyof Counts, string> = {
   pending: "bg-amber-500",
@@ -162,51 +113,81 @@ const EMPTY: Record<Filter, string> = {
   dismissed: "No dismissed Sim verdicts.",
 };
 
-interface MilestoneOption {
-  uid: string;
+interface SubjectOption {
+  key: string;
+  subject: VerdictSubjectGroup["subject"];
   title: string;
   counts: Counts;
   total: number;
 }
 
-const ALL_MILESTONES = "All milestones";
+const ALL_SUBJECTS = "All Sim verdicts";
 
 // Desktop: a rail beside the cards, the way the Action Items queue sits
-// beside its detail. One row per milestone with its state tally.
-const MilestoneRail: FC<{
-  options: MilestoneOption[];
+// beside its detail. The application sits on top, then one row per milestone
+// under its own label, each with its state tally.
+const SubjectRail: FC<{
+  options: SubjectOption[];
   value: string | null;
-  onChange: (uid: string | null) => void;
-}> = ({ options, value, onChange }) => (
-  <nav aria-label="Milestones" className="space-y-0.5">
-    <RailRow
-      active={value === null}
-      title={ALL_MILESTONES}
-      trailing={
-        <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400">
-          {options.reduce((sum, option) => sum + option.total, 0)}
-        </span>
-      }
-      onClick={() => onChange(null)}
-    />
-    {options.map((option) => (
+  onChange: (key: string | null) => void;
+}> = ({ options, value, onChange }) => {
+  const application = options.find((option) => option.subject === "application");
+  const milestones = options.filter((option) => option.subject === "milestone");
+  return (
+    <nav aria-label="Sim verdict subjects" className="space-y-0.5">
       <RailRow
-        key={option.uid}
-        active={value === option.uid}
-        title={option.title}
-        trailing={<CountSummary counts={option.counts} compact />}
-        onClick={() => onChange(option.uid)}
+        active={value === null}
+        title={ALL_SUBJECTS}
+        trailing={
+          <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400">
+            {options.reduce((sum, option) => sum + option.total, 0)}
+          </span>
+        }
+        onClick={() => onChange(null)}
       />
-    ))}
-  </nav>
-);
+      {application && (
+        <RailRow
+          active={value === application.key}
+          icon={<SubjectIcon kind="application" />}
+          title="Application"
+          trailing={<CountSummary counts={application.counts} compact />}
+          onClick={() => onChange(application.key)}
+        />
+      )}
+      {milestones.length > 0 && (
+        <div className="pt-3">
+          <p
+            id="sim-verdict-rail-milestones"
+            className="flex items-center gap-2 px-3 pb-1 text-xs font-medium text-gray-500 dark:text-gray-400"
+          >
+            <SubjectIcon kind="milestone" className="h-3.5 w-3.5" />
+            Milestones
+          </p>
+          <ul aria-labelledby="sim-verdict-rail-milestones" className="space-y-0.5">
+            {milestones.map((option) => (
+              <li key={option.key}>
+                <RailRow
+                  active={value === option.key}
+                  title={option.title}
+                  trailing={<CountSummary counts={option.counts} compact />}
+                  onClick={() => onChange(option.key)}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </nav>
+  );
+};
 
 const RailRow: FC<{
   active: boolean;
   title: string;
+  icon?: ReactNode;
   trailing: ReactNode;
   onClick: () => void;
-}> = ({ active, title, trailing, onClick }) => (
+}> = ({ active, title, icon, trailing, onClick }) => (
   <Button
     type="button"
     variant="ghost"
@@ -220,19 +201,36 @@ const RailRow: FC<{
         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-zinc-800/60 dark:hover:text-gray-100"
     )}
   >
-    <span className="min-w-0 truncate text-sm">{title}</span>
+    <span className="flex min-w-0 items-center gap-2">
+      {icon}
+      <span className="truncate text-sm" title={title}>
+        {title}
+      </span>
+    </span>
     <span className="shrink-0">{trailing}</span>
   </Button>
 );
 
 // Below xl the rail folds into the same searchable picker the inbox uses.
-const MilestonePicker: FC<{
-  options: MilestoneOption[];
+const SubjectPicker: FC<{
+  options: SubjectOption[];
   value: string | null;
-  onChange: (uid: string | null) => void;
+  onChange: (key: string | null) => void;
 }> = ({ options, value, onChange }) => {
   const [open, setOpen] = useState(false);
-  const selected = options.find((option) => option.uid === value);
+  const selected = options.find((option) => option.key === value);
+  const application = options.find((option) => option.subject === "application");
+  const milestones = options.filter((option) => option.subject === "milestone");
+  const pick = (key: string | null) => {
+    onChange(key);
+    setOpen(false);
+  };
+  const check = (active: boolean) => (
+    <CheckIcon
+      className={cn("mr-2 h-4 w-4 shrink-0", active ? "opacity-100" : "opacity-0")}
+      aria-hidden="true"
+    />
+  );
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -241,56 +239,57 @@ const MilestonePicker: FC<{
           variant={selected ? "secondary" : "outline"}
           size="chip"
           aria-pressed={!!selected}
-          aria-label={selected ? `Milestone: ${selected.title}` : "Filter by milestone"}
+          aria-label={
+            selected
+              ? selected.subject === "application"
+                ? "Showing the application's Sim verdicts"
+                : `Showing milestone: ${selected.title}`
+              : "Filter by application or milestone"
+          }
           className={cn(
             "max-w-[min(320px,calc(100vw-2rem))] font-medium",
             selected && "border border-primary-500 text-primary-700 dark:text-primary-300"
           )}
         >
-          <span className="truncate">{selected ? selected.title : ALL_MILESTONES}</span>
+          {selected && <SubjectIcon kind={selected.subject} className="text-current" />}
+          <span className="truncate">{selected ? selected.title : ALL_SUBJECTS}</span>
           <ChevronDownIcon className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-0">
         <Command>
-          <CommandInput placeholder="Search milestones" />
+          <CommandInput placeholder="Search application or milestones" />
           <CommandList>
-            <CommandEmpty>No milestone matches.</CommandEmpty>
+            <CommandEmpty>Nothing matches.</CommandEmpty>
             <CommandGroup>
-              <CommandItem
-                value={ALL_MILESTONES}
-                onSelect={() => {
-                  onChange(null);
-                  setOpen(false);
-                }}
-              >
-                <CheckIcon
-                  className={cn("mr-2 h-4 w-4", selected ? "opacity-0" : "opacity-100")}
-                  aria-hidden="true"
-                />
-                {ALL_MILESTONES}
+              <CommandItem value={ALL_SUBJECTS} onSelect={() => pick(null)}>
+                {check(!selected)}
+                {ALL_SUBJECTS}
               </CommandItem>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.uid}
-                  value={`${option.title} ${option.uid}`}
-                  onSelect={() => {
-                    onChange(option.uid);
-                    setOpen(false);
-                  }}
-                >
-                  <CheckIcon
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      option.uid === value ? "opacity-100" : "opacity-0"
-                    )}
-                    aria-hidden="true"
-                  />
-                  <span className="min-w-0 flex-1 truncate">{option.title}</span>
-                  <CountSummary counts={option.counts} compact />
+              {application && (
+                <CommandItem value="Application" onSelect={() => pick(application.key)}>
+                  {check(application.key === value)}
+                  <SubjectIcon kind="application" className="mr-2" />
+                  <span className="min-w-0 flex-1 truncate">Application</span>
+                  <CountSummary counts={application.counts} compact />
                 </CommandItem>
-              ))}
+              )}
             </CommandGroup>
+            {milestones.length > 0 && (
+              <CommandGroup heading="Milestones">
+                {milestones.map((option) => (
+                  <CommandItem
+                    key={option.key}
+                    value={`${option.title} ${option.key}`}
+                    onSelect={() => pick(option.key)}
+                  >
+                    {check(option.key === value)}
+                    <span className="min-w-0 flex-1 truncate">{option.title}</span>
+                    <CountSummary counts={option.counts} compact />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>
@@ -298,9 +297,24 @@ const MilestonePicker: FC<{
   );
 };
 
+const GroupHeading: FC<{ group: VerdictSubjectGroup }> = ({ group }) => (
+  <h4 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+    <SubjectIcon kind={group.subject} />
+    <span className="min-w-0">
+      <SubjectTitle
+        subject={
+          group.subject === "application"
+            ? { kind: "application" }
+            : { kind: "milestone", title: group.title }
+        }
+      />
+    </span>
+  </h4>
+);
+
 interface VerdictReviewProps {
   referenceNumber: string;
-  verdicts: SimocracyMilestoneVerdictRow[];
+  verdicts: SimocracyVerdictRow[];
   avatars: Map<string, string | null>;
   feedback?: VerdictFeedbackContext;
   /** Set when the surface is already scoped to one milestone. */
@@ -308,8 +322,9 @@ interface VerdictReviewProps {
 }
 
 // The reviewer's desk: every Sim verdict of the application, one card per
-// milestone × Sim with its versions. A milestone rail picks what is on the
-// desk; the state filter narrows it further.
+// subject × Sim with its versions. The application's own verdicts sit above
+// the milestones'; a rail picks what is on the desk and the state filter
+// narrows it further.
 export const VerdictReview: FC<VerdictReviewProps> = ({
   referenceNumber,
   verdicts,
@@ -318,11 +333,12 @@ export const VerdictReview: FC<VerdictReviewProps> = ({
   milestoneUid,
 }) => {
   const [picked, setPicked] = useState<string | null>(null);
-  const selectedUid = milestoneUid ?? picked;
-  const options = useMemo<MilestoneOption[]>(
+  const selectedKey = milestoneUid ? milestoneSubjectKey(milestoneUid) : picked;
+  const options = useMemo<SubjectOption[]>(
     () =>
-      groupByMilestone(verdicts).map((group) => ({
-        uid: group.milestoneUid,
+      groupVerdictsBySubject(verdicts).map((group) => ({
+        key: group.key,
+        subject: group.subject,
         title: group.title,
         counts: group.counts,
         total: group.verdicts.length,
@@ -331,28 +347,28 @@ export const VerdictReview: FC<VerdictReviewProps> = ({
   );
   const scoped = useMemo(
     () =>
-      selectedUid
-        ? verdicts.filter((v) => v.milestoneUid.toLowerCase() === selectedUid.toLowerCase())
+      selectedKey
+        ? verdicts.filter((verdict) => verdictSubjectKey(verdict) === selectedKey)
         : verdicts,
-    [verdicts, selectedUid]
+    [verdicts, selectedKey]
   );
-  const counts = useMemo(() => ({ ...count(scoped), all: scoped.length }), [scoped]);
+  const counts = useMemo(() => ({ ...countVerdicts(scoped), all: scoped.length }), [scoped]);
   const [filter, setFilter] = useState<Filter>(() => (counts.pending > 0 ? "pending" : "all"));
-  const groups = useMemo(() => {
-    const visible = scoped.filter((v) => inBucket(v, filter));
-    return groupByMilestone(visible);
-  }, [scoped, filter]);
+  const groups = useMemo(
+    () => groupVerdictsBySubject(scoped.filter((verdict) => inVerdictBucket(verdict, filter))),
+    [scoped, filter]
+  );
 
   if (verdicts.length === 0) {
     return (
       <div className="space-y-2">
-        {!milestoneUid && <SimSectionHeading title="Sim evaluations" />}
+        {!milestoneUid && <SimSectionHeading title="Sim verdicts" />}
         <p className="text-sm text-gray-500 dark:text-gray-400">{EMPTY.all}</p>
       </div>
     );
   }
 
-  const cards = (group: MilestoneGroup) =>
+  const cards = (group: VerdictSubjectGroup) =>
     group.verdicts.map((verdict) => (
       <VerdictCard
         key={`${verdict.verdictId}-${filter}`}
@@ -365,14 +381,14 @@ export const VerdictReview: FC<VerdictReviewProps> = ({
     ));
 
   const showRail = !milestoneUid && options.length > 1;
-  const flat = !!selectedUid;
+  const flat = !!selectedKey;
 
   const desk = (
     <div className="min-w-0 space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         {showRail && (
           <div className="xl:hidden">
-            <MilestonePicker options={options} value={picked} onChange={setPicked} />
+            <SubjectPicker options={options} value={picked} onChange={setPicked} />
           </div>
         )}
         <FilterChips value={filter} counts={counts} onChange={setFilter} />
@@ -384,12 +400,10 @@ export const VerdictReview: FC<VerdictReviewProps> = ({
 
       {flat
         ? groups.map((group) => (
-            <div key={group.milestoneUid} className="space-y-3">
+            <div key={group.key} className="space-y-3">
               {!milestoneUid && (
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {group.title}
-                  </h4>
+                  <GroupHeading group={group} />
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {group.verdicts.length} {pluralize("Sim", group.verdicts.length)}
                   </span>
@@ -399,17 +413,13 @@ export const VerdictReview: FC<VerdictReviewProps> = ({
             </div>
           ))
         : groups.map((group) => (
-            <details key={group.milestoneUid} open className="group">
-              <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1 rounded py-1 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
-                <span
+            <details key={group.key} open className="group">
+              <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 rounded py-1 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
+                <ChevronRightIcon
                   aria-hidden="true"
-                  className="text-gray-400 transition-transform duration-150 group-open:rotate-90"
-                >
-                  ▸
-                </span>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {group.title}
-                </h4>
+                  className="h-4 w-4 shrink-0 text-gray-400 transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none"
+                />
+                <GroupHeading group={group} />
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {group.verdicts.length} {pluralize("Sim", group.verdicts.length)}
                 </span>
@@ -423,11 +433,11 @@ export const VerdictReview: FC<VerdictReviewProps> = ({
 
   return (
     <section className="space-y-4" aria-label="Sim verdicts">
-      {!milestoneUid && <SimSectionHeading title="Sim evaluations" />}
+      {!milestoneUid && <SimSectionHeading title="Sim verdicts" />}
       {showRail ? (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(220px,280px)_minmax(0,1fr)]">
           <aside className="hidden min-w-0 xl:sticky xl:top-4 xl:block xl:max-h-[calc(100vh-2rem)] xl:self-start xl:overflow-y-auto">
-            <MilestoneRail options={options} value={picked} onChange={setPicked} />
+            <SubjectRail options={options} value={picked} onChange={setPicked} />
           </aside>
           {desk}
         </div>
