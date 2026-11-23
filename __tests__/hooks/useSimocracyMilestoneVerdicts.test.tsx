@@ -164,6 +164,26 @@ describe("useSimocracyMilestoneVerdicts", () => {
     });
   });
 
+  it("refreshes the application comments, where the published verdict is mirrored", async () => {
+    mockApprove.mockResolvedValue({
+      verdictId: "v1",
+      commentUri: "at://c1",
+      cid: "cid",
+      publishedRevision: 1,
+      alreadyPublished: false,
+    });
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+
+    const { result } = renderHook(() => useApproveSimocracyVerdict("APP-1"), { wrapper });
+    await act(async () => {
+      result.current.mutate({ verdictId: "v1", revision: 1, subject: "application" });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const invalidated = invalidate.mock.calls.map((call) => JSON.stringify(call[0]?.queryKey));
+    expect(invalidated).toContain(JSON.stringify(["application-comments"]));
+  });
+
   it("rolls the card back and shows the server's reason when publishing fails", async () => {
     const key = QUERY_KEYS.simocracyMilestoneVerdicts("APP-1");
     client.setQueryData(key, { verdicts: [verdict()], forbidden: false });

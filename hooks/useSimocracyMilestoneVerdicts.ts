@@ -111,6 +111,7 @@ export function useApproveSimocracyVerdict(referenceNumber: string) {
       queryClient.invalidateQueries({ queryKey: verdictsKey(referenceNumber, subject) });
       queryClient.refetchQueries({ queryKey: QUERY_KEYS.simocracyComments(referenceNumber) });
       queryClient.invalidateQueries({ queryKey: ["simocracy-feedback", referenceNumber] });
+      queryClient.invalidateQueries({ queryKey: ["application-comments"] });
     },
   });
 }
