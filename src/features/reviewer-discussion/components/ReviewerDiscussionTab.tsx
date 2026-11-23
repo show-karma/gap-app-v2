@@ -66,7 +66,7 @@ function ReviewerDiscussionContent({
       programId={programId}
       enableMentions={!!programId}
       title="Reviewer Discussion"
-      placeholder="Discuss this application with other reviewers... Use @ to mention reviewers."
+      placeholder="Discuss this application with other reviewers..."
       emptyTitle="No reviewer discussion yet"
       emptyDescription="Only reviewers and admins can see this thread. Applicants never do."
       draftKey={`reviewer-discussion:${referenceNumber}`}
