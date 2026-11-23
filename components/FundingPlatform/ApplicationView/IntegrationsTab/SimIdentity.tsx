@@ -76,13 +76,13 @@ export const SimAuthor: FC<SimAuthorProps> = ({ name, avatar, detail, trailing }
 export const SimSectionHeading: FC<{ title: string; count?: ReactNode }> = ({ title, count }) => (
   <div>
     <div className="flex flex-wrap items-center gap-2">
-      <CpuChipIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+      <CpuChipIcon aria-hidden="true" className="h-4 w-4 text-blue-600 dark:text-blue-400" />
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
       {count}
     </div>
     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-      Written by the program&apos;s Sims on Simocracy, the reviewers&apos; AI twins. Reviewer
-      feedback on them stays private.
+      What the program&apos;s Sims on Simocracy, the reviewers&apos; AI twins, wrote about the
+      application and its milestones. Reviewer feedback on them stays private.
     </p>
   </div>
 );

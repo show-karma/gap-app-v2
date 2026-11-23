@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import pluralize from "pluralize";
 import { type FC, memo, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -9,12 +10,21 @@ import {
   useSimocracyCouncil,
   useSimocracyProgramSummary,
 } from "@/hooks/useApplicationIntegrations";
-import { useSimocracyMilestoneVerdicts } from "@/hooks/useSimocracyMilestoneVerdicts";
+import {
+  useSimocracyApplicationVerdicts,
+  useSimocracyMilestoneVerdicts,
+} from "@/hooks/useSimocracyMilestoneVerdicts";
 import type { SimocracyCommentRow } from "@/services/fundingApplicationIntegrations.service";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
 import { SimAuthor, SimSectionHeading } from "./SimIdentity";
 import { VerdictReview } from "./VerdictReview";
+import { SubjectIcon, SubjectTitle } from "./VerdictSubject";
+import {
+  type CommentSubjectGroup,
+  groupCommentsBySubject,
+  splitCommentSubject,
+} from "./verdictSubjects";
 
 // Long comments collapse to three lines with a Show more/less toggle, matching
 // the sim-evaluation reasoning treatment in CouncilEvaluations.
@@ -28,10 +38,13 @@ interface MilestoneFilter {
 
 // Verdicts Karma posted carry the milestone uid; comments synced from
 // elsewhere are matched on their "Milestone: <title>" line instead.
+// Application verdicts never belong to a milestone.
 function isAboutMilestone(comment: SimocracyCommentRow, milestone: MilestoneFilter): boolean {
+  if (comment.verdictSubject === "application") return false;
   if (comment.milestoneUid)
     return comment.milestoneUid.toLowerCase() === milestone.uid.toLowerCase();
-  return splitMilestone(comment.text).milestone === milestone.title;
+  const { subject } = splitCommentSubject(comment.text, comment.verdictSubject);
+  return subject.kind === "milestone" && subject.title === milestone.title;
 }
 
 interface CommentFeedbackContext {
@@ -60,47 +73,7 @@ function buildThreads(comments: SimocracyCommentRow[]): CommentNode[] {
   return roots;
 }
 
-// Milestone evaluations open with a "Milestone: <title>" line (Sims post one
-// comment per milestone); everything else is round deliberation. The line is
-// lifted into the section heading and dropped from the body.
-const MILESTONE_LINE = /^Milestone:\s*(.+)$/;
-
-const ATTRIBUTION_LINE = /^\*\*Sim milestone evaluation — .+\*\*$/;
-
-function splitMilestone(text: string): { milestone: string | null; body: string } {
-  const lines = text.split("\n");
-  for (let i = 0; i < Math.min(2, lines.length); i++) {
-    const match = MILESTONE_LINE.exec(lines[i].trim());
-    if (match) {
-      // The header already names the milestone and the Sim; both lines go.
-      const rest = [...lines.slice(0, i), ...lines.slice(i + 1)];
-      const body = rest.filter((line, index) => !(index < 2 && ATTRIBUTION_LINE.test(line.trim())));
-      return { milestone: match[1].trim(), body: body.join("\n").trim() };
-    }
-  }
-  return { milestone: null, body: text };
-}
-
-interface CommentGroup {
-  milestone: string | null;
-  threads: CommentNode[];
-}
-
-function groupByMilestone(threads: CommentNode[]): CommentGroup[] {
-  const groups = new Map<string | null, CommentNode[]>();
-  for (const node of threads) {
-    const { milestone, body } = splitMilestone(node.text);
-    const bucket = groups.get(milestone);
-    const entry = milestone ? { ...node, text: body } : node;
-    if (bucket) bucket.push(entry);
-    else groups.set(milestone, [entry]);
-  }
-  const milestones = [...groups.entries()]
-    .filter(([key]) => key !== null)
-    .map(([milestone, nodes]) => ({ milestone, threads: nodes }));
-  const deliberation = groups.get(null);
-  return deliberation ? [...milestones, { milestone: null, threads: deliberation }] : milestones;
-}
+type CommentGroup = CommentSubjectGroup<CommentNode>;
 
 function shortenDid(did: string): string {
   return did.length > 20 ? `${did.slice(0, 12)}…${did.slice(-4)}` : did;
@@ -225,6 +198,11 @@ export const SimComments: FC<{
 }> = ({ referenceNumber, feedback, milestone, review = false }) => {
   const { data, isLoading } = useSimocracyComments(referenceNumber);
   const { data: drafts } = useSimocracyMilestoneVerdicts(referenceNumber, { enabled: review });
+  // A milestone-scoped pane only ever shows milestone verdicts.
+  const loadApplicationVerdicts = review && !milestone;
+  const applicationDrafts = useSimocracyApplicationVerdicts(referenceNumber, {
+    enabled: loadApplicationVerdicts,
+  });
   // The program summary answers instantly but only lists Sims linked to a
   // reviewer; the council (read live from ATProto, slower) carries every Sim
   // of the gathering and fills in the rest once it arrives.
@@ -237,18 +215,38 @@ export const SimComments: FC<{
       if (sim.avatar || !map.has(sim.simUri)) map.set(sim.simUri, sim.avatar);
     return map;
   }, [summary?.sims, council]);
-  const reviewVerdicts = review && drafts && !drafts.forbidden ? drafts.verdicts : null;
+  // The desk waits for both lists so the application's group does not pop in
+  // above milestones already on screen; a failed application list leaves
+  // the milestone verdicts reviewable.
+  const applicationSettled =
+    !loadApplicationVerdicts || applicationDrafts.isSuccess || applicationDrafts.isError;
+  const reviewVerdicts = useMemo(() => {
+    if (!review || !drafts || drafts.forbidden || !applicationSettled) return null;
+    const application =
+      applicationDrafts.data && !applicationDrafts.data.forbidden
+        ? applicationDrafts.data.verdicts
+        : [];
+    return [...application, ...drafts.verdicts];
+  }, [review, drafts, applicationSettled, applicationDrafts.data]);
   const groups = useMemo(() => {
     // Verdicts the reviewer sees as cards are not repeated in the thread.
     const covered = new Set((reviewVerdicts ?? []).map((verdict) => verdict.commentUri));
     const comments = (data?.comments ?? []).filter((comment) => !covered.has(comment.commentUri));
-    if (!milestone) return groupByMilestone(buildThreads(comments));
+    if (!milestone) return groupCommentsBySubject(buildThreads(comments));
     const own = comments.filter((comment) => isAboutMilestone(comment, milestone));
     const threads = buildThreads(own).map((node) => ({
       ...node,
-      text: splitMilestone(node.text).body,
+      text: splitCommentSubject(node.text, node.verdictSubject).body,
     }));
-    return threads.length > 0 ? [{ milestone: milestone.title, threads }] : [];
+    return threads.length > 0
+      ? [
+          {
+            key: `milestone:${milestone.title}`,
+            subject: { kind: "milestone" as const, title: milestone.title },
+            threads,
+          },
+        ]
+      : [];
   }, [data?.comments, milestone, reviewVerdicts]);
 
   if (isLoading) {
@@ -323,7 +321,7 @@ const PublishedComments: FC<PublishedCommentsProps> = ({
   if (groups.length === 0) {
     return (
       <div className="space-y-2">
-        {headed && !milestone && <SimSectionHeading title="Sim evaluations" />}
+        {headed && !milestone && <SimSectionHeading title="Sim verdicts" />}
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {milestone
             ? "No published Sim evaluations for this milestone yet."
@@ -354,23 +352,22 @@ const PublishedComments: FC<PublishedCommentsProps> = ({
 
   return (
     <div className="space-y-4">
-      {headed && <SimSectionHeading title="Sim evaluations" />}
+      {headed && <SimSectionHeading title="Sim verdicts" />}
       {!headed && title && (
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
       )}
       {groups.map((group) => (
-        <details key={group.milestone ?? "deliberation"} open className="group space-y-3">
-          <summary className="flex cursor-pointer list-none items-baseline gap-2 rounded text-sm font-medium text-gray-900 marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white [&::-webkit-details-marker]:hidden">
-            <span
+        <details key={group.key} open className="group space-y-3">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded text-sm font-medium text-gray-900 marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white [&::-webkit-details-marker]:hidden">
+            <ChevronRightIcon
               aria-hidden="true"
-              className="text-gray-400 transition-transform duration-150 group-open:rotate-90"
-            >
-              ▸
-            </span>
-            <h4 className="text-sm font-medium">
-              {group.milestone ? `Milestone: ${group.milestone}` : "Round deliberation"}
+              className="h-4 w-4 shrink-0 text-gray-400 transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none"
+            />
+            <SubjectIcon kind={group.subject.kind} />
+            <h4 className="min-w-0 text-sm font-medium">
+              <SubjectTitle subject={group.subject} />
             </h4>
-            <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+            <span className="shrink-0 text-xs font-normal text-gray-500 dark:text-gray-400">
               {group.threads.length} {pluralize("Sim verdict", group.threads.length)}
             </span>
           </summary>
