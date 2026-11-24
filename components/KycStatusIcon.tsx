@@ -1,5 +1,6 @@
 "use client";
 
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import {
   getEffectiveKycStatus,
   getKycBadgeLabel,
@@ -108,6 +109,7 @@ export function KycStatusBadge({
 }) {
   const effectiveStatus = getEffectiveKycStatus(status);
   const badgeLabel = getKycBadgeLabel(status, effectiveStatus, showValidityInLabel);
+  const hasHiddenDates = !showValidityInLabel && Boolean(status?.verifiedAt || status?.expiresAt);
 
   return (
     <TooltipProvider>
@@ -123,6 +125,9 @@ export function KycStatusBadge({
           >
             <KycStatusIcon status={status} size="sm" showTooltip={false} />
             <span>{badgeLabel}</span>
+            {hasHiddenDates && (
+              <InformationCircleIcon className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+            )}
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-sm">

@@ -96,4 +96,6 @@ export const QUERY_KEYS = {
   simocracyComments: (referenceNumber: string) => ["simocracy-comments", referenceNumber] as const,
   simocracyMilestoneVerdicts: (referenceNumber: string) =>
     ["simocracy-milestone-verdicts", referenceNumber] as const,
+  simocracyApplicationVerdicts: (referenceNumber: string) =>
+    ["simocracy-application-verdicts", referenceNumber] as const,
 };

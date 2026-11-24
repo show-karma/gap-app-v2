@@ -14,6 +14,8 @@ const mockFetchSimocracy = vi.fn();
 const mockFetchSimocracyComments = vi.fn();
 const mockFetchSimocracyFeedback = vi.fn();
 const mockSubmitSimocracyFeedback = vi.fn();
+const mockFetchMilestoneVerdicts = vi.fn();
+const mockFetchApplicationVerdicts = vi.fn();
 
 vi.mock("@/services/fundingApplicationIntegrations.service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/fundingApplicationIntegrations.service")>()),
@@ -22,6 +24,8 @@ vi.mock("@/services/fundingApplicationIntegrations.service", async (importOrigin
   fetchSimocracyComments: (...args: unknown[]) => mockFetchSimocracyComments(...args),
   fetchSimocracyFeedback: (...args: unknown[]) => mockFetchSimocracyFeedback(...args),
   submitSimocracyFeedback: (...args: unknown[]) => mockSubmitSimocracyFeedback(...args),
+  fetchSimocracyMilestoneVerdicts: (...args: unknown[]) => mockFetchMilestoneVerdicts(...args),
+  fetchSimocracyApplicationVerdicts: (...args: unknown[]) => mockFetchApplicationVerdicts(...args),
   fetchSimocracyProgramSummary: () => new Promise(() => {}),
   fetchSimocracyCouncil: () => new Promise(() => {}),
 }));
@@ -59,7 +63,7 @@ const simocracyEnabled: IntegrationSummary[] = [{ key: "simocracy", enabled: tru
 
 let queryClient: QueryClient;
 
-function renderTab(props: { feedbackAdmin?: boolean } = {}) {
+function renderTab(props: { feedbackAdmin?: boolean; verdictReviewer?: boolean } = {}) {
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -73,6 +77,8 @@ describe("IntegrationsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetchSimocracyFeedback.mockResolvedValue([]);
+    mockFetchMilestoneVerdicts.mockResolvedValue({ verdicts: [], forbidden: false });
+    mockFetchApplicationVerdicts.mockResolvedValue({ verdicts: [], forbidden: false });
   });
 
   afterEach(() => {
@@ -172,7 +178,7 @@ describe("IntegrationsTab", () => {
       renderTab();
 
       expect(await screen.findByText("The S-Process round hasn't run yet")).toBeInTheDocument();
-      expect(await screen.findByText("Sim evaluations")).toBeInTheDocument();
+      expect(await screen.findByText("Sim verdicts")).toBeInTheDocument();
       expect(screen.getByText("Round deliberation")).toBeInTheDocument();
       expect(screen.getByText("S1")).toBeInTheDocument();
     });
@@ -222,7 +228,9 @@ describe("IntegrationsTab", () => {
         screen.getByRole("heading", { level: 4, name: "Round deliberation" })
       ).toBeInTheDocument();
       // the "Milestone:" line is lifted into the heading, not repeated in the body
-      expect(screen.queryAllByText("Milestone: Dashboard MVP")).toHaveLength(1);
+      expect(
+        screen.getAllByRole("heading", { level: 4, name: "Milestone: Dashboard MVP" })
+      ).toHaveLength(1);
     });
 
     it("offers feedback controls on sim-attributed verdicts for admins, one fetch for all", async () => {
@@ -317,6 +325,74 @@ describe("IntegrationsTab", () => {
     });
   });
 
+  describe("reviewer view", () => {
+    const ownDraft = {
+      verdictId: "v-own",
+      subject: "application" as const,
+      milestoneUid: null,
+      milestoneTitle: null,
+      simUri: "at://did:plc:host/org.simocracy.sim/own",
+      simName: "Own Sim",
+      commentUri: "at://did:plc:host/org.impactindexer.review.comment/ap-app-1-own",
+      text: "Recommend. The plan is concrete.",
+      status: "pending_review" as const,
+      revision: 1,
+      publishedRevision: null,
+      publishedAt: null,
+      publishedBy: null,
+      dismissedAt: null,
+      dismissedBy: null,
+      updatedAt: "2026-11-23T00:00:00.000Z",
+      mayAct: true,
+      canPublish: true,
+      publishBlocker: null,
+      feedback: [],
+      revisions: [
+        {
+          revision: 1,
+          text: "Recommend. The plan is concrete.",
+          submittedAt: "2026-11-23T00:00:00.000Z",
+          outcome: "current" as const,
+          publishedAt: null,
+          dismissedAt: null,
+          dismissedBy: null,
+          feedback: [],
+        },
+      ],
+    };
+
+    function setupReviewer() {
+      mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
+      mockFetchSimocracy.mockResolvedValue(createSimocracyResponse());
+      mockFetchSimocracyComments.mockResolvedValue({
+        referenceNumber: "APP-SIMO-0001",
+        programId: "simo-test-1",
+        forbidden: false,
+        comments: [],
+      });
+      mockFetchApplicationVerdicts.mockResolvedValue({ verdicts: [ownDraft], forbidden: false });
+    }
+
+    it("shows a reviewer the draft of a Sim they own, ready to publish", async () => {
+      setupReviewer();
+
+      renderTab({ verdictReviewer: true });
+
+      expect(await screen.findByText("Recommend. The plan is concrete.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
+      expect(mockFetchApplicationVerdicts).toHaveBeenCalledWith("APP-SIMO-0001");
+    });
+
+    it("gives a reviewer feedback on their own Sim verdict, not on the S-Process round", async () => {
+      setupReviewer();
+
+      renderTab({ verdictReviewer: true });
+
+      await screen.findByText("Recommend. The plan is concrete.");
+      expect(screen.getAllByRole("button", { name: "Represented faithfully" })).toHaveLength(1);
+    });
+  });
+
   describe("populated state", () => {
     it("renders one card per evaluation with sim name, model, reasoning, and run id", async () => {
       mockFetchIntegrations.mockResolvedValue(simocracyEnabled);
@@ -328,7 +404,7 @@ describe("IntegrationsTab", () => {
       expect(screen.getByText("deepseek/deepseek-v4-flash-0731")).toBeInTheDocument();
       expect(screen.getByText("Curve anchors at ~$197.")).toBeInTheDocument();
       expect(screen.getByTitle("Mechanism run spg-008qx5b0-a6mnyn5tvpwr")).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: "Sim evaluations" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "S-Process round" })).toBeInTheDocument();
       expect(screen.getByText("1 sim")).toBeInTheDocument();
     });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import InviteGranteeModal from "@/components/FundingPlatform/ApplicationView/InviteGranteeModal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +22,10 @@ export function ApplicationCoApplicantsSection({
   const access = useApplicationAccess(communityId, referenceNumber);
   const { inviteGrantee, isInviting } = useInviteApplicationGrantee(referenceNumber);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const coApplicantEmails = useMemo(
+    () => coApplicants.map((contact) => contact.email).filter((email): email is string => !!email),
+    [coApplicants]
+  );
 
   const canAdd = !access.isLoading && (access.isOwner || access.canAdminister);
 
@@ -90,6 +94,7 @@ export function ApplicationCoApplicantsSection({
           onInviteGrantee={inviteGrantee}
           isInviting={isInviting}
           onInvited={() => setIsAddOpen(false)}
+          existingEmails={coApplicantEmails}
         />
       )}
     </section>

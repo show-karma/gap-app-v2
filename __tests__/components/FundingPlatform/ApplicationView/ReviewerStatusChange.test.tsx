@@ -45,7 +45,8 @@ vi.mock("next/link", () => ({
 }));
 
 // Mock heroicons
-vi.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@heroicons/react/24/solid")>()),
   ArrowLeftIcon: () => React.createElement("span", { "data-testid": "arrow-left-icon" }),
   EyeIcon: () => React.createElement("span", { "data-testid": "eye-icon" }),
 }));
@@ -133,6 +134,10 @@ vi.mock("@/hooks/usePermissions", () => ({
     hasPermission: true,
     isLoading: false,
   })),
+}));
+
+vi.mock("@/src/features/prompt-management", () => ({
+  useProgramPrompts: () => ({ data: undefined }),
 }));
 
 vi.mock("@/hooks/useApplicationIntegrations", () => ({

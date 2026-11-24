@@ -17,17 +17,20 @@ export interface AIAnalysisTabProps {
   program?: ProgramWithFormSchema;
   onEvaluationComplete?: () => void;
   canRunEvaluation?: boolean;
+  hasExternalPrompt?: boolean;
+  hasInternalPrompt?: boolean;
 }
 
 function getDefaultTab(
   hasExternal: boolean,
   hasInternal: boolean,
-  hasInsights: boolean
+  hasInsights: boolean,
+  visibleTabs: AIAnalysisSubTabId[]
 ): AIAnalysisSubTabId {
   if (hasExternal) return "external";
   if (hasInternal) return "internal";
   if (hasInsights) return "insights";
-  return "external";
+  return visibleTabs[0];
 }
 
 /**
@@ -42,6 +45,8 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
   program,
   onEvaluationComplete,
   canRunEvaluation = true,
+  hasExternalPrompt = true,
+  hasInternalPrompt = true,
 }) => {
   const hasExternalEvaluation = Boolean(application.aiEvaluation?.evaluation);
   const hasInternalEvaluation = Boolean(application.internalAIEvaluation?.evaluation);
@@ -53,16 +58,33 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
   // a project, program added the field, etc.).
   const hasInsightsRecord = Boolean(insightsRecord);
 
-  const [activeSubTab, setActiveSubTab] = useState<AIAnalysisSubTabId>(() =>
-    getDefaultTab(hasExternalEvaluation, hasInternalEvaluation, hasInsightsRecord)
-  );
+  const visibleSubTabs: AIAnalysisSubTabId[] = [
+    ...(hasExternalPrompt || hasExternalEvaluation ? (["external"] as const) : []),
+    ...(hasInternalPrompt || hasInternalEvaluation ? (["internal"] as const) : []),
+    "insights",
+  ];
+
+  const [selectedSubTab, setActiveSubTab] = useState<AIAnalysisSubTabId | null>(null);
+  const activeSubTab =
+    selectedSubTab && visibleSubTabs.includes(selectedSubTab)
+      ? selectedSubTab
+      : getDefaultTab(
+          hasExternalEvaluation,
+          hasInternalEvaluation,
+          hasInsightsRecord,
+          visibleSubTabs
+        );
 
   const referenceNumber = application.referenceNumber || application.id;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <AIAnalysisSubTabs activeTab={activeSubTab} onTabChange={setActiveSubTab} />
+        <AIAnalysisSubTabs
+          activeTab={activeSubTab}
+          onTabChange={setActiveSubTab}
+          visibleTabs={visibleSubTabs}
+        />
         <RunButton
           activeSubTab={activeSubTab}
           referenceNumber={referenceNumber}

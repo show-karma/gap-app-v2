@@ -118,6 +118,10 @@ export const INDEXER = {
           programId ? `?programId=${encodeURIComponent(programId)}` : ""
         }`,
       COMMENTS: (applicationId: string) => `/v2/applications/${applicationId}/comments`,
+      REVIEWER_COMMENTS: (referenceNumber: string) =>
+        `/v2/applications/${referenceNumber}/reviewer-comments`,
+      REVIEWER_COMMENT: (referenceNumber: string, commentId: string) =>
+        `/v2/applications/${referenceNumber}/reviewer-comments/${commentId}`,
       DELETE: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}`,
     },
     SEARCH: (query: string, limit: number = 10) =>
