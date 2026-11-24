@@ -26,6 +26,9 @@
 // - The background step that gives each project or community page its own
 //   cache entry after its first visit, which Vercel does and Next leaves to
 //   the platform (cloudflare/shell-upgrade.ts).
+// - `X-Robots-Tag: noindex` on every response served on *.workers.dev: the
+//   staging, PR previews and the production Worker before its cutover are
+//   copies of the site that search engines must never index.
 
 import "./sentry-safe-random-id";
 import { canonicalUrl, isAliasHost } from "../utilities/domains";
@@ -38,6 +41,7 @@ import {
   queueShellUpgrade,
   type RevalidationQueueNamespace,
 } from "./shell-upgrade";
+import { withWorkersDevNoindex } from "./workers-dev-noindex";
 
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type Env = {
@@ -197,22 +201,26 @@ function handle(request: Request, env: Env, ctx: Context): Promise<Response> {
   });
 }
 
+async function route(incoming: Request, env: Env, ctx: Context): Promise<Response> {
+  const request = withTestHost(incoming, env);
+  if (isStudioPath(new URL(request.url).pathname)) return serveStudio(request, env);
+  if (!isTestWorker(env)) return handle(request, env, ctx);
+  if (!isolateId) {
+    isolateId = crypto.randomUUID().slice(0, 8);
+    isolateFirstRequestAt = Date.now();
+  }
+  isolateRequests++;
+  // Answers without loading the Next.js server, to tell isolate reuse apart
+  // from what the server costs once it is loaded.
+  if (new URL(request.url).pathname === ISOLATE_PROBE_PATH) {
+    return withIsolateHeader(Response.json({ nextLoaded: nextServerLoaded }));
+  }
+  return withIsolateHeader(await handle(request, env, ctx));
+}
+
 export default {
   async fetch(incoming: Request, env: Env, ctx: Context): Promise<Response> {
-    const request = withTestHost(incoming, env);
-    if (isStudioPath(new URL(request.url).pathname)) return serveStudio(request, env);
-    if (!isTestWorker(env)) return handle(request, env, ctx);
-    if (!isolateId) {
-      isolateId = crypto.randomUUID().slice(0, 8);
-      isolateFirstRequestAt = Date.now();
-    }
-    isolateRequests++;
-    // Answers without loading the Next.js server, to tell isolate reuse apart
-    // from what the server costs once it is loaded.
-    if (new URL(request.url).pathname === ISOLATE_PROBE_PATH) {
-      return withIsolateHeader(Response.json({ nextLoaded: nextServerLoaded }));
-    }
-    return withIsolateHeader(await handle(request, env, ctx));
+    return withWorkersDevNoindex(incoming, await route(incoming, env, ctx));
   },
 
   async scheduled(

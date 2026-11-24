@@ -1,7 +1,9 @@
 name: Build the Cloudflare Workers
 description: >
-  Builds gap-app-v2 for Cloudflare Workers with the Vercel "preview" environment
-  and bundles both Workers (cloudflare-staging.yml, cloudflare-pr-preview.yml).
+  Builds gap-app-v2 for Cloudflare Workers with a Vercel environment ("preview"
+  for staging and PR previews, "production" for production) and bundles both
+  Workers (cloudflare-staging.yml, cloudflare-pr-preview.yml,
+  cloudflare-production.yml).
   Leaves the Vercel environment at VERCEL_ENV_FILE for the secrets step; the
   caller removes it. Expects VERCEL_ORG_ID, VERCEL_PROJECT_ID and VERCEL_ENV_FILE
   in the environment and the repository checked out.
@@ -10,6 +12,12 @@ inputs:
   vercel-token:
     description: secrets.VERCEL_TOKEN
     required: true
+  environment:
+    description: >
+      The Vercel environment to build with, and the APP_ENV of the build:
+      preview or production. VERCEL_ENV_FILE must be .vercel/.env.<it>.local.
+    required: false
+    default: preview
 
 runs:
   using: composite
@@ -28,21 +36,33 @@ runs:
       shell: bash
       run: pnpm install --frozen-lockfile
 
-    - name: Pull the Vercel preview environment
+    - name: Pull the Vercel environment
       shell: bash
       env:
         VERCEL_TOKEN: ${{ inputs.vercel-token }}
-      run: npx --yes vercel@latest pull --yes --environment=preview --token="$VERCEL_TOKEN"
+        DEPLOYMENT_ENV: ${{ inputs.environment }}
+      run: |
+        case "$DEPLOYMENT_ENV" in
+          preview | production) ;;
+          *) echo "::error::environment must be preview or production, not $DEPLOYMENT_ENV"; exit 1 ;;
+        esac
+        if [ "$VERCEL_ENV_FILE" != ".vercel/.env.$DEPLOYMENT_ENV.local" ]; then
+          echo "::error::VERCEL_ENV_FILE is $VERCEL_ENV_FILE; vercel pull writes .vercel/.env.$DEPLOYMENT_ENV.local"
+          exit 1
+        fi
+        npx --yes vercel@latest pull --yes --environment="$DEPLOYMENT_ENV" --token="$VERCEL_TOKEN"
 
     - name: Export the build variables
       # NEXT_PUBLIC_* only, into the step environment. Never a .env at the app
       # root: OpenNext copies it into the Worker bundle.
       shell: bash
+      env:
+        DEPLOYMENT_ENV: ${{ inputs.environment }}
       run: |
         node scripts/cf-vercel-env.mjs build "$VERCEL_ENV_FILE"
         {
-          echo "NEXT_PUBLIC_APP_ENV=preview"
-          echo "APP_ENV=preview"
+          echo "NEXT_PUBLIC_APP_ENV=$DEPLOYMENT_ENV"
+          echo "APP_ENV=$DEPLOYMENT_ENV"
         } >> "$GITHUB_ENV"
 
     - name: Refuse a .env in the bundle
@@ -57,8 +77,15 @@ runs:
         done
 
     - name: Build
+      # The Sentry plugin uploads the source maps when the Vercel environment
+      # has SENTRY_AUTH_TOKEN (production does); it is passed to this step only,
+      # never written to a file. Sentry matches maps by debug id, so these do
+      # not mix with the Vercel build's maps of the same release.
       shell: bash
-      run: pnpm cf:build
+      run: |
+        SENTRY_AUTH_TOKEN="$(node scripts/cf-vercel-env.mjs get "$VERCEL_ENV_FILE" SENTRY_AUTH_TOKEN)"
+        export SENTRY_AUTH_TOKEN
+        pnpm cf:build
 
     - name: Bundle and check both Workers
       # Latin-1 and size budgets; deploy these files as they are, never re-bundled.

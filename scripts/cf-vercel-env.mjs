@@ -9,6 +9,10 @@
 //     Never write them to a .env at the app root, because OpenNext copies that
 //     file into the Worker bundle, with whatever secrets it holds.
 //
+//   node scripts/cf-vercel-env.mjs get <env file> <name>
+//     Prints one variable's value (nothing when it is not set), to hand a
+//     build-time secret to one step's environment: SENTRY_AUTH_TOKEN="$(...)".
+//
 //   [CF_SECRETS=A,B] node scripts/cf-vercel-env.mjs secrets <env file> -- <wrangler secret put args>
 //     Stores each runtime secret in RUNTIME_SECRETS (or only those in CF_SECRETS) that the file defines with
 //     `wrangler secret put <name> <args>`, passing the value on stdin. Values
@@ -28,15 +32,20 @@ const RUNTIME_SECRETS = [
 ];
 
 const [mode, envFile, separator, ...wranglerArgs] = process.argv.slice(2);
-if (!envFile || (mode !== "build" && mode !== "secrets")) {
+if (!envFile || !["build", "get", "secrets"].includes(mode)) {
   process.stderr.write(
-    "Usage: cf-vercel-env.mjs build <env file> | secrets <env file> -- <wrangler args>\n"
+    "Usage: cf-vercel-env.mjs build <env file> | get <env file> <name> | " +
+      "secrets <env file> -- <wrangler args>\n"
   );
   process.exit(2);
 }
 const vars = parseEnv(readFileSync(envFile, "utf8"));
 
-if (mode === "build") {
+if (mode === "get") {
+  // The name is the third argument, read here as `separator`.
+  if (!separator) throw new Error("Pass the variable name.");
+  process.stdout.write(vars[separator] ?? "");
+} else if (mode === "build") {
   const githubEnv = process.env.GITHUB_ENV;
   if (!githubEnv) throw new Error("GITHUB_ENV is not set: run this inside GitHub Actions.");
   const names = Object.keys(vars).filter((name) => name.startsWith("NEXT_PUBLIC_") && vars[name]);
