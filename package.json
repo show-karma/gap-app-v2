@@ -10,7 +10,7 @@
     "build:debug-memory": "next build --experimental-debug-memory-usage",
     "build:widget": "vite build --config widget/vite.config.ts",
     "start": "next start",
-    "cf:build": "cross-env KARMA_BUILD_TARGET=cloudflare NODE_OPTIONS=--max-old-space-size=4096 opennextjs-cloudflare build && node scripts/ship-fallback-shells.mjs && pnpm cf:build:studio",
+    "cf:build": "cross-env KARMA_BUILD_TARGET=cloudflare NODE_OPTIONS=--max-old-space-size=4096 opennextjs-cloudflare build && node scripts/ship-fallback-shells.mjs && pnpm cf:build:studio && node scripts/cf-asset-headers.mjs",
     "cf:build:studio": "cross-env SANITY_TELEMETRY_DISABLED=1 sanity build .open-next/assets/admin/studio --yes",
     "cf:preview": "wrangler dev -c wrangler.jsonc -c wrangler.app.jsonc",
     "cf:size": "node --max-old-space-size=6144 scripts/build-worker-bundle.mjs",

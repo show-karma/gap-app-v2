@@ -113,33 +113,65 @@ function storedLifetime(object: OgImageBucketObject): Lifetime {
   };
 }
 
-function withCacheStatus(response: Response, status: "HIT" | "STALE" | "MISS"): Response {
-  const tagged = new Response(response.body, response);
-  tagged.headers.set(OG_IMAGE_CACHE_HEADER, status);
-  return tagged;
-}
-
 // Background redraws in flight in this isolate, so a burst of requests for one
 // stale image draws it once.
 const refreshing = new Set<string>();
 
+/** Response headers worth replaying from a cached copy, besides its type and lifetime. */
+const REPLAYED_HEADERS = ["content-disposition", "content-security-policy", "vary"] as const;
+
+export interface R2ResponseCacheOptions {
+  bucket: OgImageBucket;
+  /** Where the response lives in the bucket; null skips the cache. */
+  key: string | null;
+  render: (request: Request) => Promise<Response>;
+  waitUntil: (promise: Promise<unknown>) => void;
+  /** Response header that reports HIT, STALE or MISS. */
+  statusHeader: string;
+  /** Reports a failure the cache recovered from. */
+  onError?: (error: unknown) => void;
+  now?: () => number;
+}
+
 /**
- * Answers an OG image request from R2, or draws it with `render` and stores the
- * result. Call it only for GET requests whose path passes `isOgImagePath`.
+ * Answers a GET request from the R2 copy under `key`, or renders it and stores
+ * the result when its own `Cache-Control` allows sharing it (see
+ * `sharedLifetime`). Fresh for `s-maxage`, then served for
+ * `stale-while-revalidate` more while it is rendered again in the background.
+ * Shared by the OG images and the `next/image` optimizer
+ * (cloudflare/next-image-cache.ts).
  */
-export async function serveOgImage(
+export async function serveFromR2Cache(
   request: Request,
-  options: OgImageCacheOptions
+  options: R2ResponseCacheOptions
 ): Promise<Response> {
-  const { bucket, render, waitUntil, onError = () => {}, now = Date.now } = options;
-  const key = ogImageCacheKey(new URL(request.url), options.deploymentId);
+  const {
+    bucket,
+    key,
+    render,
+    waitUntil,
+    statusHeader,
+    onError = () => {},
+    now = Date.now,
+  } = options;
   if (!key) return render(request);
 
-  // Draws the image and stores it. Returns what the client gets.
+  const tag = (response: Response, status: "HIT" | "STALE" | "MISS"): Response => {
+    const tagged = new Response(response.body, response);
+    tagged.headers.set(statusHeader, status);
+    return tagged;
+  };
+
+  // Renders the response and stores it. Returns what the client gets.
   const renderAndStore = async (): Promise<Response> => {
     const response = await render(request);
     const lifetime = sharedLifetime(response);
     if (!lifetime) return response;
+    const replayed: Record<string, string> = {};
+    for (const name of REPLAYED_HEADERS) {
+      const value = response.headers.get(name);
+      if (value !== null) replayed[name] = value;
+    }
     const copy = response.clone();
     waitUntil(
       copy
@@ -153,10 +185,11 @@ export async function serveOgImage(
             customMetadata: {
               sMaxAge: String(lifetime.sMaxAge),
               staleWhileRevalidate: String(lifetime.staleWhileRevalidate),
+              headers: JSON.stringify(replayed),
             },
           })
         )
-        // SUPPRESSED: reported through onError; the client already has the image.
+        // SUPPRESSED: reported through onError; the client already has the response.
         .catch(onError)
     );
     return response;
@@ -166,16 +199,16 @@ export async function serveOgImage(
   try {
     object = await bucket.get(key);
   } catch (error) {
-    // SUPPRESSED: reported through onError; an R2 failure draws the image instead.
+    // SUPPRESSED: reported through onError; an R2 failure renders the response instead.
     onError(error);
   }
-  if (!object) return withCacheStatus(await renderAndStore(), "MISS");
+  if (!object) return tag(await renderAndStore(), "MISS");
 
   const ageSeconds = Math.max(0, Math.floor((now() - object.uploaded.getTime()) / 1000));
   const { sMaxAge, staleWhileRevalidate } = storedLifetime(object);
   if (ageSeconds >= sMaxAge + staleWhileRevalidate) {
     await object.body.cancel();
-    return withCacheStatus(await renderAndStore(), "MISS");
+    return tag(await renderAndStore(), "MISS");
   }
 
   const stale = ageSeconds >= sMaxAge;
@@ -189,12 +222,41 @@ export async function serveOgImage(
         .finally(() => refreshing.delete(key))
     );
   }
-  const headers = new Headers();
+  const headers = new Headers(storedHeaders(object));
   headers.set("content-type", object.httpMetadata?.contentType ?? "image/png");
   if (object.httpMetadata?.cacheControl) {
     headers.set("cache-control", object.httpMetadata.cacheControl);
   }
   headers.set("age", String(ageSeconds));
-  headers.set(OG_IMAGE_CACHE_HEADER, stale ? "STALE" : "HIT");
+  headers.set(statusHeader, stale ? "STALE" : "HIT");
   return new Response(object.body, { status: 200, headers });
+}
+
+/** The replayed headers stored with an entry; none for entries written before they were. */
+function storedHeaders(object: OgImageBucketObject): Record<string, string> {
+  try {
+    const parsed: unknown = JSON.parse(object.customMetadata?.headers ?? "{}");
+    if (!parsed || typeof parsed !== "object") return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, string] =>
+          (REPLAYED_HEADERS as readonly string[]).includes(entry[0]) && typeof entry[1] === "string"
+      )
+    );
+  } catch {
+    // SUPPRESSED: a malformed entry is replayed without its extra headers.
+    return {};
+  }
+}
+
+/**
+ * Answers an OG image request from R2, or draws it with `render` and stores the
+ * result. Call it only for GET requests whose path passes `isOgImagePath`.
+ */
+export function serveOgImage(request: Request, options: OgImageCacheOptions): Promise<Response> {
+  return serveFromR2Cache(request, {
+    ...options,
+    key: ogImageCacheKey(new URL(request.url), options.deploymentId),
+    statusHeader: OG_IMAGE_CACHE_HEADER,
+  });
 }
