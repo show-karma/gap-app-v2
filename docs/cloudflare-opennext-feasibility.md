@@ -314,6 +314,33 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Isolate novo do Worker do Next: a causa e a correção (24/11)
+
+**Medido no staging, com o token:** cada colo da Cloudflare sobe isolates próprios, e o tráfego deste servidor cai em vários (ATL, YYZ, IAD, EWR, DFW). Por isso uma rota "repetida" ainda pega isolates novos.
+- Isolate quente do Worker do Next: 8–90 ms de CPU por request; resposta ao cliente 0,3–0,45 s.
+- Isolate novo: 1,25–3,6 s de CPU **dentro** do request, mais 1–3,5 s antes de o request chegar ao Worker do Next (o roteamento espera; é o carregamento do script de 55 MB).
+
+**Causa da CPU dentro do request:**
+- O esbuild embrulha o `handler.mjs`, que tem top-level await, numa `async () => { ... }` passada ao helper `__esm`. Nesse bundle é uma função só, de 53,9 MiB (47 MB são uma única expressão com vírgulas juntando 2.717 módulos).
+- O V8 faz uma pré-análise do corpo quando compila o script. Para uma arrow function ele descarta essa análise e analisa o corpo inteiro de novo na 1ª chamada. Para uma `function` ele reaproveita a análise e pula as funções internas.
+- Reproduzido no Node com o corpo real: 1ª chamada em 989 ms como `async` arrow, 1.007 ms como arrow sem `async`, 7 ms como `function` e 7 ms como `async function`. O sintético de 19/11 compilava rápido porque usava `function`.
+
+**Correção:** `scripts/build-worker-bundle.mjs` (`rewriteModuleWrappers`) troca, depois do Latin-1, toda arrow sem parâmetros passada a uma chamada que inicializa um `var` de topo (a forma dos wrappers do `__esm`) por uma `function`.
+- As duas só diferem em `this`, `arguments`, `super` e `new.target`. O script recusa o build se o corpo usar algum deles fora de uma função própria. No bundle atual não usa.
+- Custa ~6 s no `pnpm cf:size`.
+
+**Resultado na Cloudflare** (mesmo bundle, Workers de teste, 40 requests em `/api/geo` por versão, logo após o deploy):
+
+| Isolate novo do Worker do Next | Arrow | Function |
+|---|---|---|
+| CPU dentro do request (mediana) | 1.763 ms | **383 ms** |
+| Faixa | 1.279–3.653 ms | 317–747 ms |
+| Espera do roteamento antes do Worker do Next (mediana) | 1.578 ms | 1.821 ms |
+| Resposta ao cliente, requests frios (mediana) | ~3,9 s | ~2,5 s |
+| CPU de isolate quente (mediana) | 20 ms | 18 ms |
+
+**O que sobra:** os ~1,6–1,8 s antes do request, que o tamanho do script determina. Os próximos passos são diminuir o Worker do Next (web3 fora do SSR) e medir num domínio próprio, onde o tráfego real mantém mais isolates quentes.
+
 ### Preview por PR (20/11)
 
 `.github/workflows/cloudflare-pr-preview.yml` faz para cada PR o que a Vercel faz com o preview dela:
@@ -369,7 +396,9 @@ O que precisa do Next paga o isolate novo dele: 2–6 s numa rota fria. Perfil d
 - Não há `eval` direto no bundle.
 - Então não é só o tamanho; algo no código real impede o V8 de reaproveitar a análise prévia. Não está explicado.
 
-**Próximos experimentos:**
+**Explicado em 24/11** (seção acima): a função que embrulha o `handler.mjs` era uma arrow function.
+
+**Próximos experimentos (de 19/11):**
 1. Subir o `handler.mjs` como módulo ES separado no upload, sem embrulhar. Exige resolver os imports de WASM por caminho absoluto e o `createRequire`, que o bundling do wrangler trata hoje.
 2. Bisseccionar o bundle real: remover metades dos chunks de SSR até achar o que torna a compilação cara.
 3. Medir no Cloudflare, que pode ter cache de código diferente do local. Pendente do token.

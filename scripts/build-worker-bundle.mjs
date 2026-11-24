@@ -31,8 +31,9 @@
 // Upload these files as they are, never bundling again (`pnpm cf:upload`):
 //   wrangler versions upload .open-next/upload-app/next-server.js --config wrangler.app.jsonc --no-bundle --no-minify
 //   wrangler versions upload .open-next/upload/worker.js --no-bundle --no-minify
-// Re-bundling drops the Latin-1 rewrite, and the Worker silently goes back to
-// a new isolate on every request.
+// Re-bundling drops both rewrites: without the Latin-1 one the Worker silently
+// goes back to a new isolate on every request, and without the function
+// wrappers (below) every new isolate parses the Next server twice.
 //
 // Usage: pnpm cf:size            (after pnpm cf:build)
 import { execFileSync } from "node:child_process";
@@ -145,6 +146,128 @@ export function makeLatin1(source) {
   return { source: out, escaped };
 }
 
+// Why function wrappers. esbuild wraps an ES module that has a top-level await
+// (the OpenNext server handler, and with it ~47 MB of Next.js chunks) in an
+// `async () => { ... }` passed to its __esm helper, called on the first import.
+// V8 preparses that body once when it compiles the script, and for an arrow
+// function it throws that work away and parses the whole body again on the
+// first call; for a `function` it keeps what the preparse learned and skips
+// every inner function. Measured on the Next server Worker body in Node: first
+// call 989 ms as an arrow, 7 ms as an async function. On Cloudflare that first
+// call is inside the first request of every new isolate.
+//
+// So every zero-parameter arrow passed to a call that initializes a top-level
+// `var` (the shape of the __esm wrappers) becomes a function expression. The
+// two only differ in `this`, `arguments`, `super` and `new.target`, which an
+// arrow takes from its surroundings; a body that uses any of them where an
+// arrow would see the outer one is an error, never rewritten.
+
+/** Child nodes of an acorn node. */
+function childNodes(node) {
+  const children = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "type" || key === "start" || key === "end") continue;
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item && typeof item === "object" && typeof item.type === "string") children.push(item);
+    }
+  }
+  return children;
+}
+
+/**
+ * The first `this`, `arguments`, `super` or `new.target` in `body` that would
+ * mean something else once the arrow around it is a function, or null.
+ */
+function lexicalBinding(body) {
+  const stack = [body];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    switch (node.type) {
+      case "ThisExpression":
+      case "Super":
+        return node;
+      case "MetaProperty":
+        if (node.meta.name === "new") return node;
+        continue;
+      case "Identifier":
+        if (node.name === "arguments") return node;
+        continue;
+      // Functions bind their own; their computed keys are handled by the parent.
+      case "FunctionExpression":
+      case "FunctionDeclaration":
+      case "StaticBlock":
+        continue;
+      case "MemberExpression":
+        stack.push(node.object);
+        if (node.computed) stack.push(node.property);
+        continue;
+      case "Property":
+      case "MethodDefinition":
+        if (node.computed) stack.push(node.key);
+        stack.push(node.value);
+        continue;
+      case "PropertyDefinition":
+        // A field initializer runs with the instance as `this`.
+        if (node.computed) stack.push(node.key);
+        continue;
+      default:
+        stack.push(...childNodes(node));
+    }
+  }
+  return null;
+}
+
+/**
+ * Rewrites the arrow functions that wrap whole modules (see above) as function
+ * expressions, so V8 does not parse them twice. Returns the new source and how
+ * many characters of wrapped code changed wrapper.
+ */
+export function rewriteModuleWrappers(source) {
+  const program = Parser.parse(source, {
+    ecmaVersion: "latest",
+    sourceType: "module",
+    allowHashBang: true,
+  });
+  const edits = [];
+  let wrappedChars = 0;
+  for (const statement of program.body) {
+    if (statement.type !== "VariableDeclaration") continue;
+    for (const { init } of statement.declarations) {
+      if (init?.type !== "CallExpression") continue;
+      for (const arrow of init.arguments) {
+        if (
+          arrow.type !== "ArrowFunctionExpression" ||
+          arrow.params.length > 0 ||
+          arrow.body.type !== "BlockStatement"
+        ) {
+          continue;
+        }
+        const binding = lexicalBinding(arrow.body);
+        if (binding) {
+          throw new Error(
+            `A module wrapper at ${arrow.start} uses ${source.slice(binding.start, binding.end)} ` +
+              `at ${binding.start}; it cannot become a function without changing what it means.`
+          );
+        }
+        edits.push({
+          start: arrow.start,
+          end: arrow.body.start,
+          text: arrow.async ? "async function()" : "function()",
+        });
+        wrappedChars += arrow.body.end - arrow.body.start;
+      }
+    }
+  }
+  let out = "";
+  let cursor = 0;
+  for (const edit of edits) {
+    out += source.slice(cursor, edit.start) + edit.text;
+    cursor = edit.end;
+  }
+  out += source.slice(cursor);
+  return { source: out, wrappers: edits.length, wrappedChars };
+}
+
 function filesUnder(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(dir, entry.name);
@@ -167,9 +290,12 @@ function buildWorker({ label, config, outDir, entry, budgetMib }) {
   // wrangler names the bundle after the entry file.
   const workerPath = path.join(outDir, entry);
   const { source, escaped } = makeLatin1(readFileSync(workerPath, "utf8"));
-  writeFileSync(workerPath, source);
+  const wrapped = rewriteModuleWrappers(source);
+  writeFileSync(workerPath, wrapped.source);
   process.stdout.write(
-    `\n${label}: source is Latin-1, ${escaped} characters escaped in regex literals and comments.\n`
+    `\n${label}: source is Latin-1, ${escaped} characters escaped in regex literals and comments.\n` +
+      `${label}: ${wrapped.wrappers} module wrappers are functions, ` +
+      `${(wrapped.wrappedChars / MIB).toFixed(2)} MiB of code no longer parsed twice.\n`
   );
 
   // Source maps and the README wrangler writes next to the bundle are not Worker code.
