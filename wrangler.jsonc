@@ -15,8 +15,9 @@
 //
 // The production R2 bucket is `gap-app-v2-opennext-cache`. Every deployment
 // writes its cache under a new build id and never
-// deletes the old one, so the bucket has two lifecycle rules:
-// `expire-og-images` (og-images/, 8 days) and `expire-incremental-cache`
+// deletes the old one, so the bucket has three lifecycle rules:
+// `expire-og-images` (og-images/, 8 days), `expire-next-images` (next-images/,
+// the next/image results, 8 days) and `expire-incremental-cache`
 // (incremental-cache/, 30 days). An entry the current build still uses but
 // has not rewritten in 30 days is rendered again on its next request; a
 // fallback shell is read from the assets (cloudflare/shell-fallback-cache.ts).

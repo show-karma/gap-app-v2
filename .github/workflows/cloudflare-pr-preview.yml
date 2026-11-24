@@ -114,6 +114,7 @@ jobs:
             # A PR's cache only matters while it is open; a missing page is rendered again.
             npx wrangler r2 bucket lifecycle add "$R2_BUCKET" expire-incremental-cache incremental-cache/ --expire-days 14 --force
             npx wrangler r2 bucket lifecycle add "$R2_BUCKET" expire-og-images og-images/ --expire-days 8 --force
+            npx wrangler r2 bucket lifecycle add "$R2_BUCKET" expire-next-images next-images/ --expire-days 8 --force
           else
             echo "::error::Checking the bucket $R2_BUCKET returned HTTP $status."
             exit 1

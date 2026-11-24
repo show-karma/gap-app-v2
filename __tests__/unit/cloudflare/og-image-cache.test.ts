@@ -153,7 +153,11 @@ describe("serveOgImage", () => {
         contentType: "image/png",
         cacheControl: "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
       },
-      customMetadata: { sMaxAge: String(DAY), staleWhileRevalidate: String(7 * DAY) },
+      customMetadata: {
+        sMaxAge: String(DAY),
+        staleWhileRevalidate: String(7 * DAY),
+        headers: "{}",
+      },
     });
     expect(new TextDecoder().decode(bucket.objects.get(KEY)?.body)).toBe("fresh-png");
   });

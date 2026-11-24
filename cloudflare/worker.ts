@@ -21,8 +21,9 @@
 //   headers the Next.js route had: no framing by other sites, never indexed.
 //   proxy.ts never sees these requests, so the one rule of it the Studio needs,
 //   the 308 from an alias host to the canonical one, is applied here too.
-// - A shared cache for the social preview (OG) images, which on Vercel the CDN
-//   keeps and here nothing does (cloudflare/og-image-cache.ts).
+// - A shared cache for the social preview (OG) images and for the images
+//   `next/image` optimizes, which on Vercel the CDN keeps and here nothing does
+//   (cloudflare/og-image-cache.ts, cloudflare/next-image-cache.ts).
 // - The background step that gives each project or community page its own
 //   cache entry after its first visit, which Vercel does and Next leaves to
 //   the platform (cloudflare/shell-upgrade.ts).
@@ -35,7 +36,18 @@ import { canonicalUrl, isAliasHost } from "../utilities/domains";
 import { PAGES } from "../utilities/pages";
 import { REWRITTEN_PATH_HEADER } from "../utilities/tenant-param";
 import { default as openNextHandler } from "./front-handler";
-import { isOgImagePath, type OgImageBucket, serveOgImage } from "./og-image-cache";
+import {
+  isNextImagePath,
+  NEXT_IMAGE_CACHE_HEADER,
+  nextImageCacheKey,
+  withImageLifetime,
+} from "./next-image-cache";
+import {
+  isOgImagePath,
+  type OgImageBucket,
+  serveFromR2Cache,
+  serveOgImage,
+} from "./og-image-cache";
 import {
   isFallbackShellResponse,
   queueShellUpgrade,
@@ -181,19 +193,29 @@ function handle(request: Request, env: Env, ctx: Context): Promise<Response> {
     }
     return response;
   };
+  const url = new URL(request.url);
   // Without the bucket or the version binding (a config that left one out),
-  // OG images are drawn every time rather than failing.
+  // images are drawn or optimized every time rather than failing.
   const deploymentId = env.CF_VERSION_METADATA?.id;
-  if (
-    request.method !== "GET" ||
-    !isOgImagePath(new URL(request.url).pathname) ||
-    !env.NEXT_INC_CACHE_R2_BUCKET ||
-    !deploymentId
-  ) {
+  const bucket = request.method === "GET" ? env.NEXT_INC_CACHE_R2_BUCKET : undefined;
+  if (isNextImagePath(url.pathname)) {
+    const optimize = async (optimized: Request) =>
+      withImageLifetime(await openNextHandler.fetch(optimized, env, ctx));
+    if (!bucket || !deploymentId) return optimize(request);
+    return serveFromR2Cache(request, {
+      bucket,
+      key: nextImageCacheKey(url, request.headers.get("accept"), deploymentId),
+      render: optimize,
+      waitUntil: (promise) => ctx.waitUntil(promise),
+      statusHeader: NEXT_IMAGE_CACHE_HEADER,
+      onError: (error) => console.error("Image cache:", error),
+    });
+  }
+  if (!bucket || !deploymentId || !isOgImagePath(url.pathname)) {
     return render(request);
   }
   return serveOgImage(request, {
-    bucket: env.NEXT_INC_CACHE_R2_BUCKET,
+    bucket,
     deploymentId,
     render,
     waitUntil: (promise) => ctx.waitUntil(promise),

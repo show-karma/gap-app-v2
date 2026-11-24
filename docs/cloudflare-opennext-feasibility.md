@@ -314,6 +314,22 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### JS, CSS e imagens otimizadas: o que o CDN da Vercel fazia (24/11)
+
+**`/_next/static` (JS, CSS, fontes):** o servidor de assets da Cloudflare respondia `public, max-age=0, must-revalidate`, então o navegador revalidava cada chunk a cada visita. A Vercel manda `public, max-age=31536000, immutable`, porque o caminho tem o hash do conteúdo.
+- `scripts/cf-asset-headers.mjs`, último passo do `pnpm cf:build`, grava `.open-next/assets/_headers` com o mesmo cabeçalho para `/_next/static/*`.
+- O próprio `_headers` não é servido (404).
+
+**`/_next/image`:** o otimizador do OpenNext (binding Images) funciona (webp redimensionado, 245 KB → 10 KB, como na Vercel). Mas transformava a imagem em todo request e respondia sem `Cache-Control`, então nem o navegador guardava.
+- `cloudflare/next-image-cache.ts` guarda o resultado no R2, sob `next-images/`, pelo mesmo cache das imagens OG. O miolo de `cloudflare/og-image-cache.ts` virou `serveFromR2Cache`, usado pelos dois.
+- **Chave:** URL de origem, largura, qualidade e o formato que o `Accept` pede. Imagem local também leva o id do deploy; remota não.
+- **Vida útil:** 4 h fresca (o `images.minimumCacheTTL` padrão do Next), mais 1 semana servida velha enquanto é otimizada de novo em segundo plano. O navegador também guarda por 4 h. Imagem imutável (import estático) fica 1 ano.
+- Erros e respostas que não são imagem passam sem cache.
+- O cache repete `Content-Type`, `Cache-Control`, `Vary`, `Content-Security-Policy` e `Content-Disposition`.
+- Regra `expire-next-images` (8 dias) adicionada aos buckets de produção, staging, previews e teste. O `cloudflare-pr-preview.yml` cria a regra junto com o bucket.
+
+**No par de teste, mesma imagem 5 vezes:** MISS em 0,83 s, depois HIT em 0,41–0,52 s de TTFB (incluindo ~0,23 s de TLS). No `workers.dev`, ler do R2 custa quase o mesmo que transformar. O ganho é não pagar a transformação de novo e o navegador não pedir a imagem por 4 h. Com domínio próprio, a Cache API tiraria também a leitura do R2.
+
 ### Vercel × Cloudflare em produção, e chunks duplicados (24/11)
 
 **Comparação** (`www.karmahq.org` × `gap-app-v2-production.<conta>.workers.dev`, mesmas rotas, hosts alternados a cada request, 6 rodadas, de um servidor na Virgínia). Tempo de servidor = TTFB menos a conexão TLS, mediana em ms:
@@ -599,12 +615,13 @@ Com tráfego só meu, a maior parte das páginas cai em isolate novo, como no Wo
 | Worker | `gap-app-v2-staging-app` (o servidor do Next do staging, `env.staging` no `wrangler.app.jsonc`, sem URL pública) |
 | Durable Object namespaces | `DOQueueHandler` e `DOShardedTagCache` do `gap-app-v2-staging` (saem com o Worker) |
 | Bucket R2 | `gap-app-v2-staging-opennext-cache`, com as mesmas duas regras do bucket de produção (`og-images/` 8 dias, `incremental-cache/` 30 dias) |
-| Bucket R2 | `gap-app-v2-pr-opennext-cache`, dos previews de PR, criado pela primeira execução do `cloudflare-pr-preview.yml` (`og-images/` 8 dias, `incremental-cache/` 14 dias) |
+| Bucket R2 | `gap-app-v2-pr-opennext-cache`, dos previews de PR, criado pela primeira execução do `cloudflare-pr-preview.yml` (`og-images/` 8 dias, `next-images/` 8 dias, `incremental-cache/` 14 dias) |
 | Workers | `gap-app-v2-pr-<n>` e `gap-app-v2-pr-<n>-app`, um par por PR aberto; o workflow apaga quando o PR fecha |
 | Workers | `gap-app-v2-production` e `gap-app-v2-production-app` (`env.production`), criados pelo 1º `cloudflare-production.yml`; usam o bucket de produção |
 
 **Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, com duas regras de ciclo de vida. Os Workers de produção (`env.production`) usam ele.
 - `expire-og-images`: `og-images/`, 8 dias.
+- `expire-next-images`: `next-images/` (as imagens do `next/image`), 8 dias. Adicionada em 24/11, também nos buckets de staging, previews e teste.
 - `expire-incremental-cache`: `incremental-cache/`, 30 dias. Cada deploy grava o cache sob um build id novo e nunca apaga o anterior (chave `incremental-cache/<buildId>/<sha256>.<tipo>`). A regra conta a idade do objeto, não do build: uma entrada do build atual que não foi regravada em 30 dias some e é renderizada de novo no próximo request. O teste com prefixo vazio (`wave-empty-4`, tudo 200) é o pior caso disso, e um shell de fallback que sumir é lido dos assets (#2224). 30 dias também limita até onde um rollback acha o cache da versão antiga.
 
 O subdomínio `dawn-sound-c6f7.workers.dev` já existia na conta. Nenhum outro Worker, KV, D1, rota, domínio ou cron foi criado.
