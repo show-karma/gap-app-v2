@@ -314,6 +314,25 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Produção (24/11)
+
+**Config:** `env.production` no `wrangler.jsonc` e no `wrangler.app.jsonc`.
+- Workers `gap-app-v2-production` (roteamento, Durable Objects) e `gap-app-v2-production-app` (servidor do Next, sem URL pública).
+- Bucket `gap-app-v2-opennext-cache`, `APP_ENV=production`, cron `0 */6 * * *` como no `vercel.json`.
+- Até a virada, o roteamento fica só no `workers.dev`. Preview URLs não servem: a Cloudflare não gera preview de versão para Worker com Durable Objects (`x-preview-user-error`, testado no Worker de teste).
+
+**Deploy:** `.github/workflows/cloudflare-production.yml`, só manual (Actions → Run workflow, do branch ou tag escolhido).
+- Build com o ambiente `production` da Vercel (`vercel pull --environment=production`), `NEXT_PUBLIC_APP_ENV=production`: Sentry ligado. O `SENTRY_AUTH_TOKEN` da Vercel, se existir, vai só para o passo do build, para subir os source maps; o Sentry casa os maps por debug id, então não se misturam com os da Vercel.
+- No 1º deploy, cria o Worker de roteamento sem o `NEXT_SERVER` (`scripts/cf-bootstrap-config.mjs`), como no preview por PR.
+- Copia os secrets de runtime da produção da Vercel e testa `/`, `/communities`, `/api/geo`, `/sitemap_index.xml`, `/admin/studio` e o `noindex` no `workers.dev`.
+- Na virada, o workflow vai para `main` com os gatilhos de tag do `production.yml`.
+
+**`noindex` no `workers.dev`:** toda resposta servida num host `*.workers.dev` (staging, previews, produção antes da virada) sai com `X-Robots-Tag: noindex, nofollow` (`cloudflare/workers-dev-noindex.ts`). Antes, o staging não tinha nenhum.
+
+**Enquanto a virada não acontece:**
+- O cron da produção na Cloudflare aquece os sitemaps do `SITE_URL`, que ainda é a Vercel: um GET a mais em cada sitemap a cada 6 h, como o cron da Vercel já faz.
+- Erros da cópia no `workers.dev` vão para o Sentry de produção.
+
 ### Isolate novo do Worker do Next: a causa e a correção (24/11)
 
 **Medido no staging, com o token:** cada colo da Cloudflare sobe isolates próprios, e o tráfego deste servidor cai em vários (ATL, YYZ, IAD, EWR, DFW). Por isso uma rota "repetida" ainda pega isolates novos.
@@ -540,8 +559,9 @@ Com tráfego só meu, a maior parte das páginas cai em isolate novo, como no Wo
 | Bucket R2 | `gap-app-v2-staging-opennext-cache`, com as mesmas duas regras do bucket de produção (`og-images/` 8 dias, `incremental-cache/` 30 dias) |
 | Bucket R2 | `gap-app-v2-pr-opennext-cache`, dos previews de PR, criado pela primeira execução do `cloudflare-pr-preview.yml` (`og-images/` 8 dias, `incremental-cache/` 14 dias) |
 | Workers | `gap-app-v2-pr-<n>` e `gap-app-v2-pr-<n>-app`, um par por PR aberto; o workflow apaga quando o PR fecha |
+| Workers | `gap-app-v2-production` e `gap-app-v2-production-app` (`env.production`), criados pelo 1º `cloudflare-production.yml`; usam o bucket de produção |
 
-**Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, vazio, com duas regras de ciclo de vida. Nenhum Worker usa ele ainda.
+**Não apagar na limpeza:** o bucket R2 `gap-app-v2-opennext-cache` é o de **produção**, criado em 19/11 a pedido, com duas regras de ciclo de vida. Os Workers de produção (`env.production`) usam ele.
 - `expire-og-images`: `og-images/`, 8 dias.
 - `expire-incremental-cache`: `incremental-cache/`, 30 dias. Cada deploy grava o cache sob um build id novo e nunca apaga o anterior (chave `incremental-cache/<buildId>/<sha256>.<tipo>`). A regra conta a idade do objeto, não do build: uma entrada do build atual que não foi regravada em 30 dias some e é renderizada de novo no próximo request. O teste com prefixo vazio (`wave-empty-4`, tudo 200) é o pior caso disso, e um shell de fallback que sumir é lido dos assets (#2224). 30 dias também limita até onde um rollback acha o cache da versão antiga.
 

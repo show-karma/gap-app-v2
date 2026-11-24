@@ -4,16 +4,17 @@
 // Next server Worker in wrangler.app.jsonc, which only this one calls (through
 // the NEXT_SERVER service binding). Deploy the Next server first.
 //
-// Two NON-PRODUCTION deployments, both only on *.workers.dev, with no routes, zones
-// or custom domains, and they must not get any here:
+// Three deployments, none with routes, zones or custom domains:
 // - the top level is the test Worker, `gap-app-v2-staging-test`, for experiments;
-// - `env.staging` (below) is `gap-app-v2-staging`, a standing staging copy.
-// The production Worker gets its own config when the cutover is planned
-// (docs/cloudflare-opennext-feasibility.md).
+// - `env.staging` (below) is `gap-app-v2-staging`, a standing staging copy on
+//   *.workers.dev;
+// - `env.production` is `gap-app-v2-production`, with production values, on
+//   *.workers.dev only until the cutover adds its custom domains
+//   (docs/cloudflare-opennext-feasibility.md).
+// Every *.workers.dev response says noindex (cloudflare/workers-dev-noindex.ts).
 //
-// Already created for it: the R2 bucket `gap-app-v2-opennext-cache`. Bind it
-// as NEXT_INC_CACHE_R2_BUCKET there, and keep the version_metadata binding
-// below. Every deployment writes its cache under a new build id and never
+// The production R2 bucket is `gap-app-v2-opennext-cache`. Every deployment
+// writes its cache under a new build id and never
 // deletes the old one, so the bucket has two lifecycle rules:
 // `expire-og-images` (og-images/, 8 days) and `expire-incremental-cache`
 // (incremental-cache/, 30 days). An entry the current build still uses but
@@ -121,6 +122,36 @@
       "vars": { "APP_ENV": "preview", "NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS": "30000" },
       // Same reason as the test Worker: the warm-up loads production sitemaps.
       "triggers": { "crons": [] }
+    },
+    // Production (.github/workflows/cloudflare-production.yml). Until the
+    // cutover gives it the production hosts it is only on *.workers.dev, where
+    // the deploy workflow smoke-tests it. Preview URLs stay off: Cloudflare
+    // does not generate them for a Worker that has Durable Objects.
+    "production": {
+      "name": "gap-app-v2-production",
+      "workers_dev": true,
+      "preview_urls": false,
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-production" },
+        { "binding": "NEXT_SERVER", "service": "gap-app-v2-production-app" }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "gap-app-v2-opennext-cache"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
+          { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+        ]
+      },
+      "images": { "binding": "IMAGES" },
+      "version_metadata": { "binding": "CF_VERSION_METADATA" },
+      "vars": { "APP_ENV": "production", "NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS": "30000" },
+      // Keeps the sitemaps' Data Cache warm, as the Vercel cron does (vercel.json).
+      "triggers": { "crons": ["0 */6 * * *"] }
     }
   }
 }

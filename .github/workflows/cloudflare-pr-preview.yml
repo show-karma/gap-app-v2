@@ -169,6 +169,8 @@ jobs:
           OPEN_NEXT_DEPLOY: 'true'
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
+          # Without pipefail, tee would hide a failed deploy from the retry loop.
+          set -o pipefail
           for attempt in $(seq "$DEPLOY_ATTEMPTS"); do
             npx wrangler deploy .open-next/upload/worker.js --config wrangler.pr.jsonc \
               --no-bundle --no-minify --message "PR #$PR at $SHA" | tee deploy.log && break
