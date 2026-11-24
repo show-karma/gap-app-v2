@@ -1,6 +1,6 @@
 import { cookies, headers as nextHeaders } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
-
+import { extractTrustedClientIp } from "@/utilities/client-ip";
 import { envVars } from "@/utilities/enviromentVars";
 
 /**
@@ -53,10 +53,7 @@ function indexerUrl(token: string, query?: URLSearchParams): string {
 }
 
 async function extractClientIp(): Promise<string | null> {
-  const h = await nextHeaders();
-  const xff = h.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0].trim();
-  return h.get("x-real-ip");
+  return extractTrustedClientIp(await nextHeaders());
 }
 
 async function buildForwardHeaders(token: string, contentType?: string): Promise<HeadersInit> {
