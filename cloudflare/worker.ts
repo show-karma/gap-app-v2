@@ -12,8 +12,8 @@
 // - A `scheduled` handler. It replaces the Vercel cron in vercel.json
 //   (`/api/cron/warm-sitemaps`, every six hours) with a Cron Trigger declared in
 //   wrangler.jsonc. The trigger calls the route through the worker's own fetch
-//   handler, with the same bearer token Vercel sends, so the route itself does
-//   not change.
+//   handler, with the same bearer token Vercel sends, and the route emits
+//   Sentry Cron Monitor check-ins via `Sentry.withMonitor`.
 // - The Sanity Studio. On this build it is a static `sanity build` in the
 //   assets (`pnpm cf:build:studio`), not a Next.js route, so it stays out of
 //   the Worker bundle. wrangler.jsonc runs this worker first for its paths so
@@ -256,7 +256,19 @@ export default {
     // fetched over the network.
     const origin = env.CRON_WARM_ORIGIN || "http://localhost";
     const request = new Request(new URL(WARM_SITEMAPS_PATH, origin), { headers });
-    ctx.waitUntil(openNextHandler.fetch(request, env, ctx));
+    ctx.waitUntil(
+      openNextHandler
+        .fetch(request, env, ctx)
+        .then(async (response) => {
+          if (!response.ok) {
+            console.error(`Cron ${WARM_SITEMAPS_PATH} returned HTTP ${response.status}`);
+          }
+          await response.body?.cancel();
+        })
+        .catch((error) => {
+          console.error(`Cron ${WARM_SITEMAPS_PATH} failed:`, error);
+        })
+    );
   },
 };
 
