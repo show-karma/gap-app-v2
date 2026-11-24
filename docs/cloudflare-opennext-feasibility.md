@@ -314,6 +314,48 @@ O backport passou de `9dbb209` (30/10) para o head do PR, `4879fe2` (18/11). Em 
 Foi aplicado como o delta do `dist` entre os dois commits (build do adaptador nos dois), por cima do patch existente. **Não resolveu o R2:** mesmo erro, 8 de 9 com o cache vazio. A causa do R2 não estava no adaptador (ver abaixo).
 O PR continua aberto; a política de dependências precisa da mesma exceção já aprovada para o backport.
 
+### Vercel × Cloudflare em produção, e chunks duplicados (24/11)
+
+**Comparação** (`www.karmahq.org` × `gap-app-v2-production.<conta>.workers.dev`, mesmas rotas, hosts alternados a cada request, 6 rodadas, de um servidor na Virgínia). Tempo de servidor = TTFB menos a conexão TLS, mediana em ms:
+
+| Rota | Vercel | Cloudflare | Vercel cache |
+|---|---|---|---|
+| `/` | 62 | 361 | HIT |
+| `/donor-advisors` | 59 | 277 | HIT |
+| `/communities` | 47 | 392 | HIT |
+| `/community/arbitrum` | 55 | 469 | HIT/STALE |
+| `/project/afrocarb` | 99 | 411 | HIT |
+| `/project/akashic` | 80 | 607 | HIT |
+| `/projects` | 67 | 443 | HIT/STALE |
+| `/api/geo` | 79 | 2.677 | função quente |
+| `/robots.txt` | 84 | 2.155 | função quente |
+| `/sitemap_index.xml` | 33 | 2.235 | HIT |
+
+**Onde vai o tempo na Cloudflare** (Workers Logs e traces no Worker de teste):
+- Página no cache: o Worker de roteamento gasta 30–80 ms de CPU, mas 300–570 ms de parede. O resto é I/O: `r2_get` ~140 ms e ~6 chamadas ao Durable Object de tags, de 30 a 110 ms cada; no Worker de teste o DO fica em DFW e o tráfego entra por IAD.
+- A Vercel responde essas páginas do CDN sem rodar nada. A config já tem o equivalente, o cache regional (`withRegionalCache` e `regionalCache: true` no tag cache, `open-next.config.ts`), mas a Cache API não faz nada no `workers.dev`. **Só com um domínio próprio** esse cache passa a valer; aí o R2 e o DO saem do caminho de uma página quente.
+- Rotas que precisam do Next (`/api/geo`, `robots.txt`, sitemap): com pouco tráfego, todos os requests caíram em isolate novo do Worker do Next (~365 ms de CPU) mais ~2 s antes do request chegar a ele.
+- **Esses ~2 s são o tamanho do script.** Com um Worker mínimo no lugar do Next (mesmo par de teste, mesmo binding), 40 de 40 requests responderam em 0,27–0,68 s.
+- `placement` (`mode: "targeted"`, `region: "aws:us-east-1"`, onde está o indexer) não muda nada: o Worker do Next chamado por service binding continuou rodando no colo de entrada (ATL, DFW), e os isolates novos não diminuíram (15 de 25 × 9 de 39).
+
+**Chunks duplicados:** o Turbopack grava o mesmo chunk de servidor com vários nomes, um por grupo de rotas; as cópias só diferem no comentário `//# sourceMappingURL=` do fim. O OpenNext inclui cada arquivo no Worker. Eram 195 cópias, 12,4 MiB dos 72 MiB de JS do servidor (um chunk de 189 KB aparecia 26 vezes).
+- `scripts/dedupe-server-chunks.mjs` roda depois do `next build`, como `buildCommand` do `open-next.config.ts`, só no build da Cloudflare. Cada cópia vira `module.exports=require("./<primeira cópia>")`: o runtime do Turbopack recebe a mesma lista de módulos, e o esbuild inclui o chunk uma vez.
+- Worker do Next: **55,66 → 42,73 MiB**; `handler.mjs` 58,7 → 44,9 MB.
+- No par de teste, isolate novo do Worker do Next (`/api/geo`):
+
+| | 55,7 MiB | 42,7 MiB |
+|---|---|---|
+| Espera antes do request chegar ao Worker do Next (mediana) | 2.025 ms | **1.185 ms** |
+| Pior caso | 11.496 ms | 2.147 ms |
+| CPU do 1º request (mediana) | 398 ms | 359 ms |
+
+- Home, comunidades, comunidade, projetos, projeto, funding map, `robots.txt`, sitemap, `/api/geo` e 404 respondem igual ao staging.
+
+**O que ainda falta para chegar perto da Vercel:**
+1. Domínio próprio (Cache API): páginas quentes sem R2 e sem DO no caminho. É o maior ganho e depende da decisão de DNS.
+2. Script do Next menor (web3 fora do SSR): cada MiB a menos encurta o isolate novo.
+3. Tráfego real: mais isolates quentes por colo.
+
 ### Produção (24/11)
 
 **Config:** `env.production` no `wrangler.jsonc` e no `wrangler.app.jsonc`.

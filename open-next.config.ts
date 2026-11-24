@@ -16,6 +16,8 @@
 //   latency; D1 is the low-traffic option.
 // - revalidation queue: Durable Object, so stale-while-revalidate refreshes
 //   are deduplicated instead of firing one background render per request.
+// - build: duplicate server chunks are collapsed before OpenNext bundles them
+//   (buildCommand below).
 // - cache interception is on: a page the cache holds in full is answered by
 //   the routing layer, before the Next server is loaded or rendered. That
 //   saves the server's load in a new isolate (1.6–3.9 s of CPU) and its render
@@ -32,12 +34,19 @@ import doQueue from "@opennextjs/cloudflare/overrides/queue/do-queue";
 import doShardedTagCache from "@opennextjs/cloudflare/overrides/tag-cache/do-sharded-tag-cache";
 import { withShellFallback } from "./cloudflare/shell-fallback-cache";
 
-export default defineCloudflareConfig({
-  incrementalCache: withRegionalCache(
-    withShellFallback(r2IncrementalCache, staticAssetsIncrementalCache),
-    { mode: "long-lived" }
-  ),
-  tagCache: doShardedTagCache({ baseShardSize: 12, regionalCache: true }),
-  queue: doQueue,
-  enableCacheInterception: true,
-});
+export default {
+  ...defineCloudflareConfig({
+    incrementalCache: withRegionalCache(
+      withShellFallback(r2IncrementalCache, staticAssetsIncrementalCache),
+      { mode: "long-lived" }
+    ),
+    tagCache: doShardedTagCache({ baseShardSize: 12, regionalCache: true }),
+    queue: doQueue,
+    enableCacheInterception: true,
+  }),
+  // The default build (`pnpm build`), then one copy of each Turbopack server
+  // chunk that `next build` writes several times: 12.4 MiB less in the Next
+  // server Worker, which a new isolate loads before its first request
+  // (scripts/dedupe-server-chunks.mjs).
+  buildCommand: "pnpm build && node scripts/dedupe-server-chunks.mjs",
+};
