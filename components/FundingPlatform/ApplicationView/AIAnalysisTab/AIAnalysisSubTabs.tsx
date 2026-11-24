@@ -11,6 +11,7 @@ export interface AIAnalysisSubTabsProps {
   activeTab: AIAnalysisSubTabId;
   /** Callback when tab changes */
   onTabChange: (tab: AIAnalysisSubTabId) => void;
+  visibleTabs?: AIAnalysisSubTabId[];
 }
 
 const tabs: {
@@ -49,10 +50,15 @@ const tabs: {
  * proposal critique), and Applications Insights (reviewer-only track-record
  * verdict on the linked Karma project).
  */
-export const AIAnalysisSubTabs: FC<AIAnalysisSubTabsProps> = ({ activeTab, onTabChange }) => {
+export const AIAnalysisSubTabs: FC<AIAnalysisSubTabsProps> = ({
+  activeTab,
+  onTabChange,
+  visibleTabs,
+}) => {
+  const shownTabs = visibleTabs ? tabs.filter((tab) => visibleTabs.includes(tab.id)) : tabs;
   return (
     <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-700 rounded-lg p-1">
-      {tabs.map((tab) => {
+      {shownTabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
 

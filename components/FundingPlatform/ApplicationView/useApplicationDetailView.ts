@@ -30,6 +30,7 @@ import {
 } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useMilestonesAdminRefetch } from "@/src/features/applications/hooks/use-milestones-admin-refetch";
+import { useProgramPrompts } from "@/src/features/prompt-management";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
 import {
@@ -38,6 +39,7 @@ import {
   STATUS_CONFLICT_TOAST_ID,
 } from "@/utilities/application-status";
 import { PAGES } from "@/utilities/pages";
+import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
 
 // Whitelist used when seeding activeTabId from the `?tab=` query
 // param. Keeps unknown values from drifting the polling-gate state
@@ -164,6 +166,10 @@ export function useApplicationDetailView({
   const { data: program, config } = useProgramConfig(programId);
   // chainId from program config, needed for V1 components
   const chainId = program?.chainID;
+
+  const { data: promptsData } = useProgramPrompts(programId);
+  const { showAIScoreColumn: hasExternalPrompt, showInternalAIScoreColumn: hasInternalPrompt } =
+    getAIColumnVisibility(config?.formSchema, promptsData);
 
   // KYC status keyed by referenceNumber (the consistent identifier across apps)
   const { status: kycStatus } = useKycStatus(application?.referenceNumber, communityId);
@@ -405,6 +411,8 @@ export function useApplicationDetailView({
     isReviewer,
     canViewNotes,
     showIntegrationsTab,
+    hasExternalPrompt,
+    hasInternalPrompt,
     canEditApplication,
     canEditPostApproval,
     showStatusActions,

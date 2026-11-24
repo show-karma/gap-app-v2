@@ -136,6 +136,10 @@ vi.mock("@/hooks/usePermissions", () => ({
   })),
 }));
 
+vi.mock("@/src/features/prompt-management", () => ({
+  useProgramPrompts: () => ({ data: undefined }),
+}));
+
 vi.mock("@/hooks/useApplicationIntegrations", () => ({
   useApplicationIntegrations: () => ({ data: [], isLoading: false, isError: false }),
   useSimocracyEvaluations: () => ({ data: undefined, isLoading: false, isError: false }),
