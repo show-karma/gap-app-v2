@@ -8,8 +8,14 @@ name: Deploy to Cloudflare production
 #                               until the cutover adds the production hosts)
 # Cache bucket: gap-app-v2-opennext-cache.
 #
-# Run by hand only (Actions → this workflow → Run workflow), from the branch or
-# tag picked there, while the migration is in progress. Until the cutover the
+# Started by pushing a tag `cloudflare-production-<anything>` on the commit to
+# deploy, while the migration is in progress: GitHub only offers "Run workflow"
+# for workflows on the default branch, and this one lives on
+# migration-cloudflare until the cutover. The prefix never matches the tags of
+# production.yml ('v*', 'production-*'), so it never deploys Vercel.
+#   git tag cloudflare-production-$(date -u +%Y%m%d-%H%M) origin/migration-cloudflare
+#   git push origin <that tag>
+# Once the file is on `main`, Actions → Run workflow works too. Until the cutover the
 # production hosts stay on Vercel; the workers.dev copy answers noindex
 # (cloudflare/workers-dev-noindex.ts) and is where the smoke test runs. At the
 # cutover, move this file to `main` with the tag triggers of production.yml.
@@ -17,6 +23,9 @@ name: Deploy to Cloudflare production
 # Needs the same secrets as cloudflare-staging.yml.
 
 on:
+  push:
+    tags:
+      - 'cloudflare-production-*'
   workflow_dispatch:
 
 # One production deploy at a time, never cancelled halfway.
