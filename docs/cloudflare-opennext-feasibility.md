@@ -321,7 +321,7 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 - Bucket `gap-app-v2-opennext-cache`, `APP_ENV=production`, cron `0 */6 * * *` como no `vercel.json`.
 - Até a virada, o roteamento fica só no `workers.dev`. Preview URLs não servem: a Cloudflare não gera preview de versão para Worker com Durable Objects (`x-preview-user-error`, testado no Worker de teste).
 
-**Deploy:** `.github/workflows/cloudflare-production.yml`, só manual (Actions → Run workflow, do branch ou tag escolhido).
+**Deploy:** `.github/workflows/cloudflare-production.yml`, disparado por uma tag `cloudflare-production-<qualquer coisa>` no commit a publicar. O GitHub só oferece "Run workflow" para workflows do branch padrão, e este vive no `migration-cloudflare` até a virada. O prefixo nunca casa com as tags do `production.yml` (`v*`, `production-*`), então nunca publica na Vercel.
 - Build com o ambiente `production` da Vercel (`vercel pull --environment=production`), `NEXT_PUBLIC_APP_ENV=production`: Sentry ligado. O `SENTRY_AUTH_TOKEN` da Vercel, se existir, vai só para o passo do build, para subir os source maps; o Sentry casa os maps por debug id, então não se misturam com os da Vercel.
 - No 1º deploy, cria o Worker de roteamento sem o `NEXT_SERVER` (`scripts/cf-bootstrap-config.mjs`), como no preview por PR.
 - Copia os secrets de runtime da produção da Vercel e testa `/`, `/communities`, `/api/geo`, `/sitemap_index.xml`, `/admin/studio` e o `noindex` no `workers.dev`.
