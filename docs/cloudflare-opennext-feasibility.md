@@ -332,6 +332,7 @@ O PR continua aberto; a política de dependências precisa da mesma exceção j�
 **Enquanto a virada não acontece:**
 - O cron da produção na Cloudflare aquece os sitemaps do `SITE_URL`, que ainda é a Vercel: um GET a mais em cada sitemap a cada 6 h, como o cron da Vercel já faz.
 - Erros da cópia no `workers.dev` vão para o Sentry de produção.
+
 ### Isolate novo do Worker do Next: a causa e a correção (24/11)
 
 **Medido no staging, com o token:** cada colo da Cloudflare sobe isolates próprios, e o tráfego deste servidor cai em vários (ATL, YYZ, IAD, EWR, DFW). Por isso uma rota "repetida" ainda pega isolates novos.
