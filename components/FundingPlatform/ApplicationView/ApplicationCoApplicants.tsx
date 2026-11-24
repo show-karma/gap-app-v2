@@ -30,7 +30,7 @@ export const ApplicationCoApplicants: FC<ApplicationCoApplicantsProps> = ({
   const canAdd = !access.isLoading && (access.isOwner || access.canAdminister);
 
   return (
-    <div className="basis-full">
+    <div className="min-w-0">
       <dt className="text-xs text-gray-500 dark:text-gray-400">Co-applicants</dt>
       <dd className="mt-1 flex flex-wrap items-center gap-x-6 gap-y-1 text-gray-600 dark:text-gray-400">
         {isLoading ? (
