@@ -110,6 +110,59 @@ describe("getOgBackgroundImage", () => {
       expect.objectContaining({ tags: expect.objectContaining({ asset: "og-background" }) })
     );
   });
+
+  it("does not share an in-flight ASSETS fetch across concurrent cold calls", async () => {
+    const sampleJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+    const resolvers: Array<(res: Response) => void> = [];
+    const assetsFetch = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+    setCloudflareAssets({ fetch: assetsFetch });
+
+    const firstPromise = getOgBackgroundImage();
+    const secondPromise = getOgBackgroundImage();
+    expect(assetsFetch).toHaveBeenCalledTimes(2);
+
+    resolvers[0]?.(new Response(sampleJpeg, { status: 200 }));
+    resolvers[1]?.(new Response(sampleJpeg, { status: 200 }));
+
+    const [first, second] = await Promise.all([firstPromise, secondPromise]);
+    const expected = `url(data:image/jpeg;base64,${Buffer.from(sampleJpeg).toString("base64")})`;
+    expect(first).toBe(expected);
+    expect(second).toBe(expected);
+
+    const third = await getOgBackgroundImage();
+    expect(third).toBe(expected);
+    expect(assetsFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("cancels non-OK ASSETS body and retries on the next call instead of caching the fallback", async () => {
+    const sampleJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+    const notFound = new Response("Not Found", { status: 404 });
+    if (!notFound.body) {
+      throw new Error("Expected response body on 404 test response");
+    }
+    const cancelSpy = vi.spyOn(notFound.body, "cancel");
+    const assetsFetch = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(notFound)
+      .mockResolvedValueOnce(new Response(sampleJpeg, { status: 200 }));
+    setCloudflareAssets({ fetch: assetsFetch });
+
+    const fallback = await getOgBackgroundImage();
+    expect(fallback).toMatch(new RegExp(`^url\\(https?://[^)]+${OG_BACKGROUND_PATH}\\)$`));
+    expect(cancelSpy).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+
+    const recovered = await getOgBackgroundImage();
+    expect(recovered).toBe(
+      `url(data:image/jpeg;base64,${Buffer.from(sampleJpeg).toString("base64")})`
+    );
+    expect(assetsFetch).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("legacy background.png", () => {

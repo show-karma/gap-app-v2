@@ -17,7 +17,7 @@ interface CloudflareContext {
 
 const CLOUDFLARE_CONTEXT_SYMBOL = Symbol.for("__cloudflare-context__");
 
-let backgroundImage: Promise<string> | undefined;
+let cachedBackgroundImage: string | undefined;
 
 function getCloudflareAssetsBinding(): AssetsBinding | undefined {
   const context = (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL] as
@@ -31,6 +31,7 @@ async function loadBackgroundBytes(): Promise<Buffer> {
   if (assets) {
     const response = await assets.fetch(new Request(`https://assets.local${OG_BACKGROUND_PATH}`));
     if (!response.ok) {
+      await response.body?.cancel();
       throw new Error(`ASSETS fetch for ${OG_BACKGROUND_PATH} returned HTTP ${response.status}`);
     }
     return Buffer.from(await response.arrayBuffer());
@@ -46,20 +47,29 @@ async function loadBackgroundBytes(): Promise<Buffer> {
  * or from the deployment's filesystem (Node/Vercel) and inlined as a data URI,
  * so an OG render does not fetch it over the public CDN.
  *
+ * Caching the resolved string (rather than an in-flight Promise) avoids
+ * sharing request-scoped `ASSETS.fetch` I/O across concurrent Workers requests
+ * and avoids pinning a transient fallback URL for the lifetime of the isolate.
+ *
  * If loading fails, it falls back to the CDN URL and reports to Sentry so the
  * OG card still renders instead of failing the route.
  */
-export function getOgBackgroundImage(): Promise<string> {
-  backgroundImage ??= loadBackgroundBytes()
-    .then((data) => `url(data:image/jpeg;base64,${data.toString("base64")})`)
-    .catch((error: unknown) => {
-      Sentry.captureException(error, { tags: { route: "api/metadata", asset: "og-background" } });
-      return `url(${SITE_URL}${OG_BACKGROUND_PATH})`;
-    });
-  return backgroundImage;
+export async function getOgBackgroundImage(): Promise<string> {
+  if (cachedBackgroundImage) {
+    return cachedBackgroundImage;
+  }
+  try {
+    const data = await loadBackgroundBytes();
+    const dataUri = `url(data:image/jpeg;base64,${data.toString("base64")})`;
+    cachedBackgroundImage = dataUri;
+    return dataUri;
+  } catch (error: unknown) {
+    Sentry.captureException(error, { tags: { route: "api/metadata", asset: "og-background" } });
+    return `url(${SITE_URL}${OG_BACKGROUND_PATH})`;
+  }
 }
 
 /** Test-only: forget the cached value so the next call reads the file again. */
 export function resetOgBackgroundImageForTests(): void {
-  backgroundImage = undefined;
+  cachedBackgroundImage = undefined;
 }
