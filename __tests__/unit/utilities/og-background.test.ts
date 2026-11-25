@@ -21,13 +21,25 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
 const JPEG_DATA_URI = /^url\(data:image\/jpeg;base64,([A-Za-z0-9+/=]+)\)$/;
+const CLOUDFLARE_CONTEXT_SYMBOL = Symbol.for("__cloudflare-context__");
+
+function setCloudflareAssets(assets?: { fetch: (input: RequestInfo | URL) => Promise<Response> }) {
+  (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL] = assets
+    ? { env: { ASSETS: assets } }
+    : undefined;
+}
 
 describe("getOgBackgroundImage", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    delete (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL];
     const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
     readFileMock.mockImplementation(actual.readFile);
     resetOgBackgroundImageForTests();
+  });
+
+  afterEach(() => {
+    delete (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL];
   });
 
   it("inlines the committed JPEG from public/ as a data URI", async () => {
@@ -60,6 +72,96 @@ describe("getOgBackgroundImage", () => {
       error,
       expect.objectContaining({ tags: expect.objectContaining({ asset: "og-background" }) })
     );
+  });
+
+  it("reads from Cloudflare ASSETS binding when present without touching fs or reporting to Sentry", async () => {
+    const sampleJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+    const assetsFetch = vi.fn(async (input: RequestInfo | URL) => {
+      expect(input instanceof Request ? input.url : String(input)).toBe(
+        `https://assets.local${OG_BACKGROUND_PATH}`
+      );
+      return new Response(sampleJpeg, { status: 200 });
+    });
+    setCloudflareAssets({ fetch: assetsFetch });
+
+    const first = await getOgBackgroundImage();
+    const second = await getOgBackgroundImage();
+
+    expect(first).toBe(`url(data:image/jpeg;base64,${Buffer.from(sampleJpeg).toString("base64")})`);
+    expect(second).toBe(first);
+    expect(assetsFetch).toHaveBeenCalledTimes(1);
+    expect(readFileMock).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("falls back to CDN URL and reports to Sentry when Cloudflare ASSETS fetch returns non-OK", async () => {
+    setCloudflareAssets({
+      fetch: vi.fn(async () => new Response("Not Found", { status: 404 })),
+    });
+
+    const value = await getOgBackgroundImage();
+
+    expect(value).toMatch(new RegExp(`^url\\(https?://[^)]+${OG_BACKGROUND_PATH}\\)$`));
+    expect(readFileMock).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: `ASSETS fetch for ${OG_BACKGROUND_PATH} returned HTTP 404`,
+      }),
+      expect.objectContaining({ tags: expect.objectContaining({ asset: "og-background" }) })
+    );
+  });
+
+  it("does not share an in-flight ASSETS fetch across concurrent cold calls", async () => {
+    const sampleJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+    const resolvers: Array<(res: Response) => void> = [];
+    const assetsFetch = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+    setCloudflareAssets({ fetch: assetsFetch });
+
+    const firstPromise = getOgBackgroundImage();
+    const secondPromise = getOgBackgroundImage();
+    expect(assetsFetch).toHaveBeenCalledTimes(2);
+
+    resolvers[0]?.(new Response(sampleJpeg, { status: 200 }));
+    resolvers[1]?.(new Response(sampleJpeg, { status: 200 }));
+
+    const [first, second] = await Promise.all([firstPromise, secondPromise]);
+    const expected = `url(data:image/jpeg;base64,${Buffer.from(sampleJpeg).toString("base64")})`;
+    expect(first).toBe(expected);
+    expect(second).toBe(expected);
+
+    const third = await getOgBackgroundImage();
+    expect(third).toBe(expected);
+    expect(assetsFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("cancels non-OK ASSETS body and retries on the next call instead of caching the fallback", async () => {
+    const sampleJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+    const notFound = new Response("Not Found", { status: 404 });
+    if (!notFound.body) {
+      throw new Error("Expected response body on 404 test response");
+    }
+    const cancelSpy = vi.spyOn(notFound.body, "cancel");
+    const assetsFetch = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(notFound)
+      .mockResolvedValueOnce(new Response(sampleJpeg, { status: 200 }));
+    setCloudflareAssets({ fetch: assetsFetch });
+
+    const fallback = await getOgBackgroundImage();
+    expect(fallback).toMatch(new RegExp(`^url\\(https?://[^)]+${OG_BACKGROUND_PATH}\\)$`));
+    expect(cancelSpy).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+
+    const recovered = await getOgBackgroundImage();
+    expect(recovered).toBe(
+      `url(data:image/jpeg;base64,${Buffer.from(sampleJpeg).toString("base64")})`
+    );
+    expect(assetsFetch).toHaveBeenCalledTimes(2);
   });
 });
 
