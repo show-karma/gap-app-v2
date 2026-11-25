@@ -21,13 +21,25 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
 const JPEG_DATA_URI = /^url\(data:image\/jpeg;base64,([A-Za-z0-9+/=]+)\)$/;
+const CLOUDFLARE_CONTEXT_SYMBOL = Symbol.for("__cloudflare-context__");
+
+function setCloudflareAssets(assets?: { fetch: (input: RequestInfo | URL) => Promise<Response> }) {
+  (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL] = assets
+    ? { env: { ASSETS: assets } }
+    : undefined;
+}
 
 describe("getOgBackgroundImage", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    delete (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL];
     const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
     readFileMock.mockImplementation(actual.readFile);
     resetOgBackgroundImageForTests();
+  });
+
+  afterEach(() => {
+    delete (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL];
   });
 
   it("inlines the committed JPEG from public/ as a data URI", async () => {
@@ -58,6 +70,43 @@ describe("getOgBackgroundImage", () => {
     expect(value).toMatch(new RegExp(`^url\\(https?://[^)]+${OG_BACKGROUND_PATH}\\)$`));
     expect(Sentry.captureException).toHaveBeenCalledWith(
       error,
+      expect.objectContaining({ tags: expect.objectContaining({ asset: "og-background" }) })
+    );
+  });
+
+  it("reads from Cloudflare ASSETS binding when present without touching fs or reporting to Sentry", async () => {
+    const sampleJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+    const assetsFetch = vi.fn(async (input: RequestInfo | URL) => {
+      expect(input instanceof Request ? input.url : String(input)).toBe(
+        `https://assets.local${OG_BACKGROUND_PATH}`
+      );
+      return new Response(sampleJpeg, { status: 200 });
+    });
+    setCloudflareAssets({ fetch: assetsFetch });
+
+    const first = await getOgBackgroundImage();
+    const second = await getOgBackgroundImage();
+
+    expect(first).toBe(`url(data:image/jpeg;base64,${Buffer.from(sampleJpeg).toString("base64")})`);
+    expect(second).toBe(first);
+    expect(assetsFetch).toHaveBeenCalledTimes(1);
+    expect(readFileMock).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("falls back to CDN URL and reports to Sentry when Cloudflare ASSETS fetch returns non-OK", async () => {
+    setCloudflareAssets({
+      fetch: vi.fn(async () => new Response("Not Found", { status: 404 })),
+    });
+
+    const value = await getOgBackgroundImage();
+
+    expect(value).toMatch(new RegExp(`^url\\(https?://[^)]+${OG_BACKGROUND_PATH}\\)$`));
+    expect(readFileMock).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: `ASSETS fetch for ${OG_BACKGROUND_PATH} returned HTTP 404`,
+      }),
       expect.objectContaining({ tags: expect.objectContaining({ asset: "og-background" }) })
     );
   });
