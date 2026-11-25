@@ -51,7 +51,6 @@ treats as the restrictive case: Sentry off, token-bridge allowlist restricted.
 | `NEXT_PUBLIC_VERCEL_ENV` | `utilities/deployment-env.ts` (fallback) | Platform (Vercel) | — (replaced by `NEXT_PUBLIC_APP_ENV`) |
 | `VERCEL_ENV` | `utilities/deployment-env.ts` (fallback) | Platform (Vercel) | — (replaced by `APP_ENV`) |
 | `VERCEL` | `utilities/deployment-env.ts` `isVercelPlatform()`, which decides `output: "standalone"` and the default for `NEXT_PUBLIC_VERCEL_ANALYTICS` | Platform (Vercel) | — |
-| `VERCEL_URL` | `utilities/deployment-env.ts` `platformDeploymentOrigin()`, used by `utilities/fetchFromServer.ts` | Platform (Vercel) | — (falls back to `appOrigin()`) |
 | `NEXT_PUBLIC_VERCEL_ANALYTICS` | `components/DeferredLayoutComponents.tsx`, through `vercelAnalyticsEnabled()` | Build · public (stamped by `next.config.ts`) | — (it is "false" when `VERCEL` is unset). Set only to override |
 
 ## App configuration

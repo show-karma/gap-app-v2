@@ -28,7 +28,6 @@ const RUNTIME_SECRETS = [
   "SANITY_WEBHOOK_SECRET",
   "SANITY_PREVIEW_SECRET",
   "PROJECT_CACHE_REVALIDATION_SECRET",
-  "FIRECRAWL_API_KEY",
 ];
 
 const [mode, envFile, separator, ...wranglerArgs] = process.argv.slice(2);

@@ -26,9 +26,6 @@
 // environment. `pnpm cf:preview` / `wrangler dev` simulate every binding below
 // locally under .wrangler/state.
 //
-// Test-only runtime vars CACHE_PROBE_ENABLED and TEST_WORKER are passed with
-// `wrangler versions upload --var NAME:1` and are not set here.
-//
 // Runtime secrets (CRON_SECRET, SANITY_WEBHOOK_SECRET, ...) go through
 // `wrangler secret put`, never through `vars` and never through a .env at build
 // time: OpenNext copies the build's .env into the Worker bundle.
@@ -97,8 +94,7 @@
   "env": {
     // The staging Worker: same build, its own name, bucket and Durable Objects,
     // still only on *.workers.dev (the karmahq DNS is not on Cloudflare).
-    // Deployed with `wrangler versions upload --env staging`. Unlike the test
-    // Worker it never gets TEST_WORKER, so it behaves as production will.
+    // Deployed with `wrangler versions upload --env staging`.
     // Bindings are not inherited from the top level, so every one is repeated.
     "staging": {
       "name": "gap-app-v2-staging",
