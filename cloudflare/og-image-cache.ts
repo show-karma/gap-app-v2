@@ -118,7 +118,12 @@ function storedLifetime(object: OgImageBucketObject): Lifetime {
 const refreshing = new Set<string>();
 
 /** Response headers worth replaying from a cached copy, besides its type and lifetime. */
-const REPLAYED_HEADERS = ["content-disposition", "content-security-policy", "vary"] as const;
+const REPLAYED_HEADERS = [
+  "content-disposition",
+  "content-security-policy",
+  "vary",
+  "x-frame-options",
+] as const;
 
 export interface R2ResponseCacheOptions {
   bucket: OgImageBucket;

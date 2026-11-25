@@ -27,9 +27,9 @@
 // - The background step that gives each project or community page its own
 //   cache entry after its first visit, which Vercel does and Next leaves to
 //   the platform (cloudflare/shell-upgrade.ts).
-// - `X-Robots-Tag: noindex` on every response served on *.workers.dev: the
-//   staging, PR previews and the production Worker before its cutover are
-//   copies of the site that search engines must never index.
+// - `X-Robots-Tag: noindex, nofollow` on every response served on *.workers.dev
+//   or when `APP_ENV === "preview"` (staging, PR previews and the production
+//   Worker before its cutover) so search engines must never index copies.
 
 import "./sentry-safe-random-id";
 import { canonicalUrl, isAliasHost } from "../utilities/domains";
@@ -58,6 +58,7 @@ import { withWorkersDevNoindex } from "./workers-dev-noindex";
 type Fetcher = { fetch(request: Request): Promise<Response> };
 type Env = {
   ASSETS: Fetcher;
+  APP_ENV?: string;
   NEXT_SERVER: Fetcher;
   NEXT_INC_CACHE_R2_BUCKET?: OgImageBucket;
   NEXT_CACHE_DO_QUEUE?: RevalidationQueueNamespace;
@@ -181,7 +182,7 @@ function route(request: Request, env: Env, ctx: Context): Promise<Response> {
 
 export default {
   async fetch(incoming: Request, env: Env, ctx: Context): Promise<Response> {
-    return withWorkersDevNoindex(incoming, await route(incoming, env, ctx));
+    return withWorkersDevNoindex(incoming, await route(incoming, env, ctx), env.APP_ENV);
   },
 
   async scheduled(
