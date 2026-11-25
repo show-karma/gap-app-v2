@@ -136,7 +136,7 @@ export const ApplicationInsightsPanel: FC<ApplicationInsightsPanelProps> = ({
     <div className="flex flex-col gap-9">
       <div className="flex flex-col gap-5">
         <PanelHeader
-          subtitle={`Track record of ${projectName}, the Karma project linked on the application. Data comes straight from Karma; nothing here is AI-generated.`}
+          subtitle={`Track record of ${projectName}, the Karma project linked on the application. Data comes straight from Karma.`}
           projectHref={
             record.project
               ? PAGES.PROJECT.OVERVIEW(record.project.slug ?? record.project.uid)
