@@ -169,6 +169,8 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
       ACCESS: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}/access`,
+      TRACK_RECORD: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/track-record`,
       MY_APPLICATIONS: (params: {
         communitySlug: string;
         programId?: string;
