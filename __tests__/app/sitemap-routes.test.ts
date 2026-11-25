@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import * as Sentry from "@sentry/nextjs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as warmGet } from "@/app/api/cron/warm-sitemaps/route";
 import { GET as freshIndexGet } from "@/app/sitemap_index.xml/route";
 import { GET as indexGet } from "@/app/sitemap-index.xml/route";
@@ -267,6 +268,10 @@ describe("warm-sitemaps cron route", () => {
     } as unknown as Response;
   }
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
   });
@@ -280,9 +285,11 @@ describe("warm-sitemaps cron route", () => {
 
     expect(res.status).toBe(401);
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(Sentry.withMonitor).not.toHaveBeenCalled();
+    expect(Sentry.flush).not.toHaveBeenCalled();
   });
 
-  it("warms the index and every child it lists", async () => {
+  it("warms the index and every child it lists and wraps execution in Sentry.withMonitor", async () => {
     vi.stubEnv("CRON_SECRET", "s3cret");
     const index = `<?xml version="1.0"?><sitemapindex><sitemap><loc>${SITE}/sitemaps/static/sitemap.xml</loc></sitemap><sitemap><loc>${SITE}/sitemaps/projects/sitemap.xml</loc></sitemap></sitemapindex>`;
     const fetchMock = vi.fn(async (url: string) =>
@@ -304,6 +311,16 @@ describe("warm-sitemaps cron route", () => {
       `${SITE}/sitemaps/static/sitemap.xml`,
       `${SITE}/sitemaps/projects/sitemap.xml`,
     ]);
+    expect(Sentry.withMonitor).toHaveBeenCalledWith("warm-sitemaps", expect.any(Function), {
+      schedule: { type: "crontab", value: "0 */6 * * *" },
+      checkinMargin: 5,
+      maxRuntime: 5,
+      timezone: "UTC",
+    });
+    await expect(vi.mocked(Sentry.withMonitor).mock.results[0].value).resolves.toEqual(
+      payload.warmed
+    );
+    expect(Sentry.flush).toHaveBeenCalledWith(2000);
   });
 
   it("reports failure when the index itself cannot be fetched", async () => {
@@ -314,6 +331,10 @@ describe("warm-sitemaps cron route", () => {
 
     expect(res.status).toBe(502);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    await expect(vi.mocked(Sentry.withMonitor).mock.results[0].value).rejects.toThrow(
+      "warm-sitemaps completed with failed fetches"
+    );
+    expect(Sentry.flush).toHaveBeenCalledWith(2000);
   });
 
   it("reports failure when the index returns 200 but parses to zero children", async () => {
@@ -329,5 +350,28 @@ describe("warm-sitemaps cron route", () => {
     expect(payload.ok).toBe(false);
     // Only the index was fetched; no child warming was attempted.
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    await expect(vi.mocked(Sentry.withMonitor).mock.results[0].value).rejects.toThrow(
+      "warm-sitemaps completed with failed fetches"
+    );
+    expect(Sentry.flush).toHaveBeenCalledWith(2000);
+  });
+
+  it("rejects the Sentry.withMonitor callback and returns 502 when a child sitemap fails", async () => {
+    const index = `<?xml version="1.0"?><sitemapindex><sitemap><loc>${SITE}/sitemaps/static/sitemap.xml</loc></sitemap></sitemapindex>`;
+    const fetchMock = vi.fn(async (url: string) =>
+      url.endsWith("/sitemap_index.xml") ? xmlResponse(index) : xmlResponse("error", 500)
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await warmGet(new Request(`${SITE}/api/cron/warm-sitemaps`));
+    const payload = (await res.json()) as { ok: boolean; warmed: Record<string, number> };
+
+    expect(res.status).toBe(502);
+    expect(payload.ok).toBe(false);
+    expect(payload.warmed[`${SITE}/sitemaps/static/sitemap.xml`]).toBe(500);
+    await expect(vi.mocked(Sentry.withMonitor).mock.results[0].value).rejects.toThrow(
+      "warm-sitemaps completed with failed fetches"
+    );
+    expect(Sentry.flush).toHaveBeenCalledWith(2000);
   });
 });

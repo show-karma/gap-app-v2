@@ -14,6 +14,10 @@ export const init = vi.fn();
 export const withSentryConfig = vi.fn((config: unknown) => config);
 export const addIntegration = vi.fn();
 export const lazyLoadIntegration = vi.fn().mockResolvedValue(vi.fn());
+export const withMonitor = vi.fn(
+  <T>(_monitorSlug: string, callback: () => T, _monitorConfig?: unknown): T => callback()
+);
+export const flush = vi.fn().mockResolvedValue(true);
 
 // Shared Scope stub so `Sentry.withScope((scope) => { ... })` records the
 // level/fingerprint/tags/extras a caller sets before `captureMessage`. Exposed
