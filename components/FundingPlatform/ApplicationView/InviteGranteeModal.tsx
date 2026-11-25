@@ -35,6 +35,7 @@ interface InviteGranteeModalProps {
   onInviteGrantee: (data: InvitedGrantee) => Promise<unknown>;
   isInviting?: boolean;
   onInvited: (grantee: InvitedGrantee) => void;
+  existingEmails?: readonly string[];
 }
 
 const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
@@ -43,11 +44,13 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
   onInviteGrantee,
   isInviting = false,
   onInvited,
+  existingEmails,
 }) => {
   const {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<InviteGranteeFormData>({
     resolver: zodResolver(inviteGranteeSchema),
@@ -56,6 +59,11 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
 
   const onSubmit = useCallback(
     async (data: InviteGranteeFormData) => {
+      const email = data.email.trim().toLowerCase();
+      if (existingEmails?.some((existing) => existing.trim().toLowerCase() === email)) {
+        setError("email", { message: "This person is already a co-applicant." });
+        return;
+      }
       try {
         await onInviteGrantee(data);
         onInvited(data);
@@ -65,7 +73,7 @@ const InviteGranteeModal: FC<InviteGranteeModalProps> = ({
         // Error handled by parent hook callback (shows toast)
       }
     },
-    [onInviteGrantee, onInvited, reset, onClose]
+    [existingEmails, setError, onInviteGrantee, onInvited, reset, onClose]
   );
 
   const handleOpenChange = useCallback(

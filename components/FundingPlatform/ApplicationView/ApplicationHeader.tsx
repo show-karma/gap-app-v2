@@ -69,7 +69,6 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
 }) => {
   const StatusIcon = statusIcons[application.status] || ClockIcon;
   const projectTitle = getProjectTitle(application);
-  const hasActions = statusActions || moreActions;
 
   return (
     <div
@@ -79,33 +78,34 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
       )}
     >
       <div className="p-6">
-        {/* Top row: Title, Status Badge, and More Actions */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">
-              {projectTitle}
-            </h1>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words min-w-0">
+                {projectTitle}
+              </h1>
+              <output
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap",
+                  statusColors[application.status] || "bg-gray-100 text-gray-800 border-gray-200"
+                )}
+                aria-label={`Application status: ${formatApplicationStatus(application.status)}`}
+              >
+                <StatusIcon className="w-4 h-4" aria-hidden="true" />
+                <span>{formatApplicationStatus(application.status)}</span>
+              </output>
+            </div>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono break-all">
               {application.referenceNumber}
             </p>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
-            {/* Status Badge */}
-            <output
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs sm:text-sm font-medium whitespace-nowrap",
-                statusColors[application.status] || "bg-gray-100 text-gray-800 border-gray-200"
-              )}
-              aria-label={`Application status: ${formatApplicationStatus(application.status)}`}
-            >
-              <StatusIcon className="w-4 h-4" aria-hidden="true" />
-              <span>{formatApplicationStatus(application.status)}</span>
-            </output>
-
-            {/* More Actions - always visible */}
-            {moreActions && <div className="flex-shrink-0">{moreActions}</div>}
-          </div>
+          {(statusActions || moreActions) && (
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end flex-shrink-0">
+              {statusActions}
+              {moreActions && <div className="flex-shrink-0">{moreActions}</div>}
+            </div>
+          )}
         </div>
 
         {/* Metadata row */}
@@ -137,6 +137,7 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
                 <KycStatusBadgeWithActions
                   status={kycStatus ?? null}
                   applicationReference={application.referenceNumber}
+                  showValidityInLabel={false}
                 />
               </dd>
             </div>
@@ -144,15 +145,6 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
           {coApplicants}
         </dl>
       </div>
-
-      {/* Actions row - only if there are status actions */}
-      {hasActions && statusActions && (
-        <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">{statusActions}</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

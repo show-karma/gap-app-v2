@@ -7,6 +7,7 @@ import {
   LockClosedIcon,
   PuzzlePieceIcon,
   SparklesIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -76,7 +77,7 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
     <Tabs value={activeTab} onValueChange={handleValueChange} className="w-full">
       <TabsList
         className={cn(
-          "flex w-full justify-start space-x-1 h-auto p-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800 px-2 sm:px-4",
+          "flex flex-wrap w-full justify-start gap-x-1 h-auto p-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800 px-2 sm:px-4",
           connectedToHeader
             ? "border-l border-r rounded-none"
             : "rounded-t-lg border-l border-r border-t"
@@ -88,7 +89,7 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
             key={tab.id}
             value={tab.id}
             className={cn(
-              "flex items-center justify-center gap-2 px-3 sm:px-4 py-3 text-sm font-medium rounded-none",
+              "flex shrink-0 items-center justify-center gap-2 px-3 sm:px-4 py-3 text-sm font-medium rounded-none whitespace-nowrap",
               "border-b-2 -mb-px bg-transparent shadow-none",
               "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
               "data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:dark:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none",
@@ -123,6 +124,7 @@ export const TabIcons = {
   Discussion: ChatBubbleLeftRightIcon,
   Milestones: FlagIcon,
   Notes: LockClosedIcon,
+  ReviewerDiscussion: UserGroupIcon,
 };
 
 export default ApplicationTabs;

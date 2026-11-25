@@ -18,9 +18,12 @@ vi.mock("@/utilities/api/client", () => ({
 
 import {
   addSimocracySimLink,
+  approveSimocracyVerdict,
   deleteSimocracySimLink,
   fetchApplicationIntegrations,
+  fetchSimocracyApplicationVerdicts,
   fetchSimocracyEvaluations,
+  fetchSimocracyMilestoneVerdicts,
   fetchSimocracySimLinks,
   hasEnabledIntegration,
   isIntegrationEnabled,
@@ -248,6 +251,127 @@ describe("fundingApplicationIntegrations service", () => {
       await expect(
         deleteSimocracySimLink("simo-test-1", "at://did:plc:abc/org.simocracy.sim/1")
       ).rejects.toThrow("link not found");
+    });
+  });
+
+  describe("Sim verdict lists", () => {
+    it("reads application verdicts from their own endpoint and tags their subject", async () => {
+      mockApiGet.mockResolvedValue({
+        verdicts: [{ verdictId: "a1", milestoneUid: null, milestoneTitle: null }],
+      });
+
+      const result = await fetchSimocracyApplicationVerdicts("APP-1");
+
+      expect(mockApiGet).toHaveBeenCalledWith(
+        "/v2/funding-applications/APP-1/integrations/simocracy/application-evaluations"
+      );
+      expect(result).toEqual({
+        verdicts: [
+          { verdictId: "a1", milestoneUid: null, milestoneTitle: null, subject: "application" },
+        ],
+        forbidden: false,
+      });
+    });
+
+    it("keeps the server's subject and defaults milestone rows that predate it", async () => {
+      mockApiGet.mockResolvedValue({
+        verdicts: [
+          { verdictId: "m1", milestoneUid: "0xm" },
+          { verdictId: "m2", subject: "milestone" },
+        ],
+      });
+
+      const result = await fetchSimocracyMilestoneVerdicts("APP-1");
+
+      expect(mockApiGet).toHaveBeenCalledWith(
+        "/v2/funding-applications/APP-1/integrations/simocracy/milestone-evaluations"
+      );
+      expect(result.verdicts.map((verdict) => verdict.subject)).toEqual(["milestone", "milestone"]);
+    });
+
+    it("treats a denial as forbidden rather than an error", async () => {
+      mockApiGet.mockRejectedValue(
+        new HttpError(403, {
+          endpoint: "/v2/funding-applications/APP-1/integrations/simocracy/application-evaluations",
+          method: "GET",
+        })
+      );
+
+      await expect(fetchSimocracyApplicationVerdicts("APP-1")).resolves.toEqual({
+        verdicts: [],
+        forbidden: true,
+      });
+    });
+  });
+
+  describe("approveSimocracyVerdict", () => {
+    const approval = {
+      verdictId: "v1",
+      commentUri: "at://c1",
+      cid: "cid",
+      publishedRevision: 2,
+      alreadyPublished: false,
+    };
+
+    it.each([
+      [
+        "application",
+        "/v2/funding-applications/APP-1/integrations/simocracy/application-evaluations/v1/approve",
+      ],
+      [
+        "milestone",
+        "/v2/funding-applications/APP-1/integrations/simocracy/milestone-evaluations/v1/approve",
+      ],
+    ] as const)("routes a %s verdict to %s", async (subject, url) => {
+      mockApiPost.mockResolvedValue(approval);
+
+      await expect(approveSimocracyVerdict("APP-1", "v1", 2, subject)).resolves.toEqual(approval);
+      expect(mockApiPost).toHaveBeenCalledWith(url, { revision: 2 });
+    });
+
+    it("prefers the server's reason on a 422", async () => {
+      mockApiPost.mockRejectedValue(
+        new HttpError(422, {
+          endpoint:
+            "/v2/funding-applications/APP-1/integrations/simocracy/application-evaluations/v1/approve",
+          method: "POST",
+          body: { message: "Application is back in draft" },
+        })
+      );
+
+      await expect(approveSimocracyVerdict("APP-1", "v1", 2, "application")).rejects.toThrow(
+        "Application is back in draft"
+      );
+    });
+
+    it("explains a bare 422 in terms of the verdict's subject", async () => {
+      const bare = () =>
+        new HttpError(422, {
+          endpoint: "/v2/funding-applications/APP-1/integrations/simocracy/x/approve",
+          method: "POST",
+          body: {},
+        });
+      mockApiPost.mockRejectedValueOnce(bare()).mockRejectedValueOnce(bare());
+
+      await expect(approveSimocracyVerdict("APP-1", "v1", 2, "application")).rejects.toThrow(
+        /application is still submitted/
+      );
+      await expect(approveSimocracyVerdict("APP-1", "v1", 2, "milestone")).rejects.toThrow(
+        /milestone is still completed/
+      );
+    });
+
+    it("maps a 409 to the reload hint", async () => {
+      mockApiPost.mockRejectedValue(
+        new HttpError(409, {
+          endpoint: "/v2/funding-applications/APP-1/integrations/simocracy/x/approve",
+          method: "POST",
+        })
+      );
+
+      await expect(approveSimocracyVerdict("APP-1", "v1", 2, "milestone")).rejects.toThrow(
+        /re-ran this verdict/
+      );
     });
   });
 });

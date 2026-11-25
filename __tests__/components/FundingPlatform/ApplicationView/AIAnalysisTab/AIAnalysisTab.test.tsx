@@ -139,6 +139,44 @@ describe("AIAnalysisTab", () => {
     });
   });
 
+  describe("Prompt visibility", () => {
+    it("hides External and Internal when the program has no prompt for them", () => {
+      render(
+        <AIAnalysisTab
+          application={mockApplication as IFundingApplication}
+          program={mockProgram as ProgramWithFormSchema}
+          hasExternalPrompt={false}
+          hasInternalPrompt={false}
+        />
+      );
+
+      expect(screen.queryByText("External Evaluation")).not.toBeInTheDocument();
+      expect(screen.queryByText("Internal Evaluation")).not.toBeInTheDocument();
+      expect(screen.getByText("Applications Insights")).toBeInTheDocument();
+      expect(screen.queryByTestId("run-external-btn")).not.toBeInTheDocument();
+    });
+
+    it("keeps a sub-tab without prompt when the application already has that evaluation", () => {
+      render(
+        <AIAnalysisTab
+          application={
+            {
+              ...mockApplication,
+              aiEvaluation: { evaluation: "{}" },
+            } as IFundingApplication
+          }
+          program={mockProgram as ProgramWithFormSchema}
+          hasExternalPrompt={false}
+          hasInternalPrompt={false}
+        />
+      );
+
+      expect(screen.getByText("External Evaluation")).toBeInTheDocument();
+      expect(screen.queryByText("Internal Evaluation")).not.toBeInTheDocument();
+      expect(screen.getByTestId("external-evaluation")).toBeInTheDocument();
+    });
+  });
+
   describe("Tab Switching", () => {
     it("switches to Internal tab and shows internal run button", async () => {
       const user = userEvent.setup();

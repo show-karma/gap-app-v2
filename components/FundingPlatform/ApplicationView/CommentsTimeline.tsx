@@ -37,7 +37,7 @@ interface CommentsTimelineProps {
   comments: ApplicationComment[];
   statusHistory: IStatusHistoryEntry[];
   versionHistory?: IApplicationVersion[];
-  currentStatus: FundingApplicationStatusV2;
+  currentStatus?: FundingApplicationStatusV2;
   isAdmin: boolean;
   currentUserAddress?: string;
   onCommentAdd?: (content: string) => Promise<void>;
@@ -50,6 +50,11 @@ interface CommentsTimelineProps {
   enableMentions?: boolean;
   /** Application reference number used to fetch grantee contacts for @-mention */
   referenceNumber?: string;
+  title?: string;
+  placeholder?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  draftKey?: string;
 }
 
 // An edit by anyone other than the application owner is attributed to staff;
@@ -178,9 +183,14 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
   programId,
   enableMentions = false,
   referenceNumber,
+  title = "Activity Timeline",
+  placeholder,
+  emptyTitle = "No activity yet",
+  emptyDescription = "Comments and status changes will appear here.",
+  draftKey,
 }: CommentsTimelineProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
-  const draft = useCommentDraft(applicationId);
+  const draft = useCommentDraft(draftKey ?? applicationId);
   const commentContent = draft.value;
   const commentContentRef = useRef(commentContent);
   commentContentRef.current = commentContent;
@@ -238,9 +248,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Activity Timeline
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{title}</h3>
         </div>
         {timelineItems.length > 0 && (
           <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -258,7 +266,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
             onSubmit={handleAddComment}
             isLoading={isAddingComment}
             placeholder={
-              isAdmin ? "Add an admin comment..." : "Add a comment for this application..."
+              placeholder ??
+              (isAdmin ? "Add an admin comment..." : "Add a comment for this application...")
             }
             programId={programId}
             isAdmin={isAdmin}
@@ -272,11 +281,9 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
         <div className="text-center py-12">
           <ChatBubbleLeftRightIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
           <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-            No activity yet
+            {emptyTitle}
           </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Comments and status changes will appear here.
-          </p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{emptyDescription}</p>
         </div>
       ) : (
         <div className="flow-root">

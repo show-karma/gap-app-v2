@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowPathIcon, PuzzlePieceIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ChartBarIcon, PuzzlePieceIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
 import { type FC, useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
@@ -23,6 +23,8 @@ interface IntegrationsTabProps {
   referenceNumber: string;
   /** Enables sim-evaluation feedback controls (manage view; admin-scoped). */
   feedbackAdmin?: boolean;
+  /** A program reviewer: the verdict desk shows the drafts of the Sims they own. */
+  verdictReviewer?: boolean;
 }
 
 const LoadingSkeleton: FC = () => (
@@ -82,7 +84,7 @@ const SProcessSection: FC<SProcessSectionProps> = ({ data, summary, feedback }) 
     return (
       <EmptyState
         title="The S-Process round hasn't run yet"
-        description="S-Process sim evaluations will appear here once a Simocracy round runs for this program. Milestone evaluations and deliberation show up in the comments below."
+        description="S-Process sim evaluations will appear here once a Simocracy round runs for this program. Sim verdicts on the application and its milestones show up below."
       />
     );
   }
@@ -90,7 +92,7 @@ const SProcessSection: FC<SProcessSectionProps> = ({ data, summary, feedback }) 
     return (
       <EmptyState
         title="No S-Process evaluations for this application"
-        description="The Sims did not score this application in the latest S-Process run. Milestone evaluations and deliberation show up in the comments below."
+        description="The Sims did not score this application in the latest S-Process run. Sim verdicts on the application and its milestones show up below."
       />
     );
   }
@@ -115,9 +117,14 @@ const SProcessSection: FC<SProcessSectionProps> = ({ data, summary, feedback }) 
 interface SimocracySectionProps {
   referenceNumber: string;
   feedbackAdmin?: boolean;
+  verdictReviewer?: boolean;
 }
 
-const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedbackAdmin }) => {
+const SimocracySection: FC<SimocracySectionProps> = ({
+  referenceNumber,
+  feedbackAdmin,
+  verdictReviewer,
+}) => {
   const { data, isLoading, isError, error, refetch } = useSimocracyEvaluations(referenceNumber);
   const { data: summary } = useSimocracyProgramSummary(data?.programId ?? "");
   const { address } = useAuth();
@@ -138,9 +145,12 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
   }, [feedbackAdmin, runId, referenceNumber, viewerAddresses]);
   // Milestone verdicts take feedback independently of any S-Process run.
   const commentFeedbackConfig = useMemo(() => {
-    if (!feedbackAdmin) return undefined;
-    return { referenceNumber, viewerAddresses, canGiveFeedback: () => true };
-  }, [feedbackAdmin, referenceNumber, viewerAddresses]);
+    if (feedbackAdmin) return { referenceNumber, viewerAddresses, canGiveFeedback: () => true };
+    if (verdictReviewer) {
+      return { referenceNumber, viewerAddresses, canGiveFeedback: () => false };
+    }
+    return undefined;
+  }, [feedbackAdmin, verdictReviewer, referenceNumber, viewerAddresses]);
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -161,7 +171,7 @@ const SimocracySection: FC<SimocracySectionProps> = ({ referenceNumber, feedback
       <SimComments
         referenceNumber={referenceNumber}
         feedback={commentFeedbackConfig}
-        review={feedbackAdmin}
+        review={feedbackAdmin || verdictReviewer}
       />
     </div>
   );
@@ -193,8 +203,11 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div>
-        <div className="flex items-center gap-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Sim evaluations</h3>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+            <ChartBarIcon aria-hidden="true" className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            S-Process round
+          </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {typeof linkedCount === "number" && linkedCount >= count
               ? `${count} of ${linkedCount} linked ${pluralize("sim", linkedCount)} responded`
@@ -237,7 +250,11 @@ const SimocracySectionHeader: FC<SimocracySectionHeaderProps> = ({
   );
 };
 
-export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber, feedbackAdmin }) => {
+export const IntegrationsTab: FC<IntegrationsTabProps> = ({
+  referenceNumber,
+  feedbackAdmin,
+  verdictReviewer,
+}) => {
   const { data, isLoading, isError, error, refetch } = useApplicationIntegrations(referenceNumber);
 
   if (isLoading) {
@@ -267,7 +284,11 @@ export const IntegrationsTab: FC<IntegrationsTabProps> = ({ referenceNumber, fee
   return (
     <div className="space-y-6">
       {hasSimocracy ? (
-        <SimocracySection referenceNumber={referenceNumber} feedbackAdmin={feedbackAdmin} />
+        <SimocracySection
+          referenceNumber={referenceNumber}
+          feedbackAdmin={feedbackAdmin}
+          verdictReviewer={verdictReviewer}
+        />
       ) : (
         <EmptyState
           title="No active integrations"

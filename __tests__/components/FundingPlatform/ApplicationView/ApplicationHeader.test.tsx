@@ -246,24 +246,19 @@ describe("ApplicationHeader", () => {
       expect(screen.getByRole("button", { name: /more/i })).toBeInTheDocument();
     });
 
-    it("should show actions section with divider when status actions are provided", () => {
+    it("renders status actions next to the more-actions menu", () => {
       const application = createMockApplication();
-      const { container } = renderWithProviders(
-        <ApplicationHeader application={application} statusActions={<button>Approve</button>} />
+      renderWithProviders(
+        <ApplicationHeader
+          application={application}
+          statusActions={<button type="button">Start Review</button>}
+          moreActions={<button type="button">More</button>}
+        />
       );
 
-      expect(container.querySelector(".border-t")).toBeInTheDocument();
-    });
-
-    it("should not show actions section when no status actions", () => {
-      const application = createMockApplication();
-      const { container } = renderWithProviders(
-        <ApplicationHeader application={application} moreActions={<button>More</button>} />
-      );
-
-      // The border-t is only added when statusActions is present
-      const actionSection = container.querySelector(".border-t.border-gray-200");
-      expect(actionSection).not.toBeInTheDocument();
+      const startReview = screen.getByRole("button", { name: "Start Review" });
+      const more = screen.getByRole("button", { name: "More" });
+      expect(startReview.parentElement).toBe(more.parentElement?.parentElement);
     });
   });
 });

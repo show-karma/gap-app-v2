@@ -9,6 +9,7 @@ import {
   RectangleStackIcon,
   SparklesIcon,
   UserGroupIcon,
+  UsersIcon,
 } from "@heroicons/react/20/solid";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,6 +42,7 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
+import { MilestoneReviewerDiscussion } from "@/src/features/reviewer-discussion/components/MilestoneReviewerDiscussion";
 import type { MilestoneAttentionReason } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -54,7 +56,7 @@ const MarkdownPreview = dynamic(
   { ssr: false }
 );
 
-type PanelTabKey = "followup" | "details" | "ai" | "comments" | "simocracy";
+type PanelTabKey = "followup" | "details" | "ai" | "comments" | "reviewer-discussion" | "simocracy";
 interface PanelTab {
   key: PanelTabKey;
   label: string;
@@ -69,6 +71,7 @@ const PANEL_TABS: PanelTab[] = [
   { key: "details", label: "Milestone", icon: DocumentTextIcon },
   { key: "ai", label: "AI Review", icon: SparklesIcon },
   { key: "comments", label: "Comments", icon: ChatBubbleLeftRightIcon },
+  { key: "reviewer-discussion", label: "Reviewer Discussion", icon: UsersIcon },
   { key: "simocracy", label: "Simocracy", icon: UserGroupIcon },
 ];
 const ADMIN_PANEL_TABS: PanelTab[] = [FOLLOW_UP_TAB, ...PANEL_TABS];
@@ -732,6 +735,13 @@ export function InboxMilestoneDetail({
         {activePanelTab === "ai" && <InlineAIEvaluation milestone={selectedMilestone} />}
         {activePanelTab === "comments" && (
           <MilestoneCommentsTab
+            projectUID={project?.uid ?? projectUid}
+            programId={parsedProgramId}
+            communityId={communityId}
+          />
+        )}
+        {activePanelTab === "reviewer-discussion" && (
+          <MilestoneReviewerDiscussion
             projectUID={project?.uid ?? projectUid}
             programId={parsedProgramId}
             communityId={communityId}

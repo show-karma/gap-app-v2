@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Puzzle,
   Target,
+  Users,
 } from "lucide-react";
 import { cn } from "@/utilities/tailwind";
 
@@ -16,6 +17,7 @@ export type ApplicationTabKey =
   | "milestones"
   | "post-approval"
   | "comments"
+  | "reviewer-discussion"
   | "notes"
   | "simocracy";
 
@@ -81,6 +83,7 @@ export const TAB_ICONS = {
   milestones: Target,
   "post-approval": CheckCircle2,
   comments: MessageSquare,
+  "reviewer-discussion": Users,
   notes: Lock,
   simocracy: Puzzle,
 } satisfies Record<ApplicationTabKey, LucideIcon>;

@@ -22,13 +22,14 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { useApproveSimocracyVerdict } from "@/hooks/useSimocracyMilestoneVerdicts";
 import type {
-  SimocracyMilestoneVerdictRow,
   SimocracyVerdictRevision,
+  SimocracyVerdictRow,
 } from "@/services/fundingApplicationIntegrations.service";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 import { EvaluationFeedback } from "./EvaluationFeedback";
 import { SimAuthor } from "./SimIdentity";
+import { SubjectIcon } from "./VerdictSubject";
 
 export interface VerdictFeedbackContext {
   referenceNumber: string;
@@ -50,14 +51,14 @@ export function formatDate(iso: string | null): string {
     : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-const STATUS: Record<SimocracyMilestoneVerdictRow["status"], { dot: string; label: string }> = {
+const STATUS: Record<SimocracyVerdictRow["status"], { dot: string; label: string }> = {
   pending_review: { dot: "bg-amber-500", label: "Pending review" },
   publishing: { dot: "bg-amber-500", label: "Publishing…" },
   published: { dot: "bg-green-500", label: "Published" },
   dismissed: { dot: "bg-gray-400", label: "Dismissed" },
 };
 
-const StatusIcon: FC<{ status: SimocracyMilestoneVerdictRow["status"] }> = ({ status }) => {
+const StatusIcon: FC<{ status: SimocracyVerdictRow["status"] }> = ({ status }) => {
   if (status === "publishing") return <Spinner className="h-3 w-3" />;
   if (status === "published")
     return <CheckCircleIcon className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />;
@@ -75,7 +76,7 @@ const Pill: FC<{ icon: ReactNode; children: ReactNode }> = ({ icon, children }) 
 // The state of the version on screen, not of the pair: an earlier version
 // the Sim replaced is "replaced", whatever the latest one is doing.
 const StatusBadge: FC<{
-  verdict: SimocracyMilestoneVerdictRow;
+  verdict: SimocracyVerdictRow;
   shown: SimocracyVerdictRevision;
 }> = ({ verdict, shown }) => {
   const live = verdict.publishedRevision;
@@ -151,7 +152,7 @@ const RevisionPicker: FC<{
   );
 };
 
-const Outcome: FC<{ verdict: SimocracyMilestoneVerdictRow }> = ({ verdict }) => {
+const Outcome: FC<{ verdict: SimocracyVerdictRow }> = ({ verdict }) => {
   if (verdict.status === "published") {
     return (
       <p className="text-xs text-green-700 dark:text-green-300">
@@ -181,7 +182,7 @@ const Outcome: FC<{ verdict: SimocracyMilestoneVerdictRow }> = ({ verdict }) => 
 };
 
 interface ActionsProps {
-  verdict: SimocracyMilestoneVerdictRow;
+  verdict: SimocracyVerdictRow;
   /** The version on screen; Publish sends this one. */
   revision: number;
   busy: boolean;
@@ -239,8 +240,43 @@ function viewingNote(
   return `Viewing v${shown.revision}${what}. The Sim's latest is v${current}.`;
 }
 
+// Names what the Sim judged, so a card read on its own (inbox, a filtered
+// desk) is never ambiguous between the application and a milestone.
+const SubjectLine: FC<{ verdict: SimocracyVerdictRow; submittedAt: string | null }> = ({
+  verdict,
+  submittedAt,
+}) => {
+  const isApplication = verdict.subject === "application";
+  const date = formatDate(submittedAt);
+  return (
+    <span className="flex min-w-0 items-start gap-1.5">
+      <SubjectIcon kind={verdict.subject} className="mt-px h-3.5 w-3.5" />
+      <span className="min-w-0 break-words">
+        {isApplication ? (
+          "Application evaluation"
+        ) : (
+          <>
+            Milestone evaluation ·{" "}
+            <span className="text-gray-700 dark:text-gray-300">
+              {verdict.milestoneTitle ?? "Untitled milestone"}
+            </span>
+          </>
+        )}
+        {date && ` · ${date}`}
+      </span>
+    </span>
+  );
+};
+
+function publishSubject(verdict: SimocracyVerdictRow): string {
+  if (verdict.subject === "application") return "evaluation of this application";
+  return verdict.milestoneTitle
+    ? `evaluation of milestone "${verdict.milestoneTitle}"`
+    : "evaluation of this milestone";
+}
+
 interface VerdictCardProps {
-  verdict: SimocracyMilestoneVerdictRow;
+  verdict: SimocracyVerdictRow;
   avatar: string | null | undefined;
   referenceNumber: string;
   feedback?: VerdictFeedbackContext;
@@ -270,7 +306,11 @@ export const VerdictCard: FC<VerdictCardProps> = memo(
 
     const publish = () => {
       setConfirming(false);
-      approve.mutate({ verdictId: verdict.verdictId, revision: shown.revision });
+      approve.mutate({
+        verdictId: verdict.verdictId,
+        revision: shown.revision,
+        subject: verdict.subject,
+      });
     };
 
     return (
@@ -280,15 +320,13 @@ export const VerdictCard: FC<VerdictCardProps> = memo(
         aria-busy={isPublishing}
       >
         <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
-          <SimAuthor
-            name={verdict.simName}
-            avatar={avatar}
-            detail={
-              shown.submittedAt
-                ? `AI evaluation by a Simocracy Sim · ${formatDate(shown.submittedAt)}`
-                : undefined
-            }
-          />
+          <div className="min-w-0 max-w-full">
+            <SimAuthor
+              name={verdict.simName}
+              avatar={avatar}
+              detail={<SubjectLine verdict={verdict} submittedAt={shown.submittedAt} />}
+            />
+          </div>
           <div className="flex items-center gap-3">
             <StatusBadge verdict={verdict} shown={shown} />
             <RevisionPicker
@@ -367,9 +405,8 @@ export const VerdictCard: FC<VerdictCardProps> = memo(
             <DialogHeader>
               <DialogTitle>Publish v{shown.revision} of this Sim verdict?</DialogTitle>
               <DialogDescription>
-                v{shown.revision} of {verdict.simName}&apos;s evaluation of &quot;
-                {verdict.milestoneTitle ?? "this milestone"}&quot; will be written to the Simocracy
-                gathering and shown on the public application page
+                v{shown.revision} of {verdict.simName}&apos;s {publishSubject(verdict)} will be
+                written to the Simocracy gathering and shown on the public application page
                 {verdict.publishedRevision !== null && `, replacing v${verdict.publishedRevision}`}
                 {shown.revision !== verdict.revision && `. v${verdict.revision} stays pending`}.
                 Feedback stays private.

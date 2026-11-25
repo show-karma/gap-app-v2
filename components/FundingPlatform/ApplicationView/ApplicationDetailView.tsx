@@ -27,6 +27,7 @@ import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly } from "@/src/core/rbac";
 import { PrivateNotesTab } from "@/src/features/application-notes/components/PrivateNotesTab";
 import { MilestonesTab } from "@/src/features/applications/components/MilestonesTab";
+import { ReviewerDiscussionTab } from "@/src/features/reviewer-discussion/components/ReviewerDiscussionTab";
 import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
@@ -77,8 +78,11 @@ export default function ApplicationDetailView({
     isLoading,
     isLoadingComments,
     isAdmin,
+    isReviewer,
     canViewNotes,
     showIntegrationsTab,
+    hasExternalPrompt,
+    hasInternalPrompt,
     canEditApplication,
     canEditPostApproval,
     showStatusActions,
@@ -128,10 +132,8 @@ export default function ApplicationDetailView({
       );
     }
     return (
-      <div className={cn("min-h-screen bg-gray-50 dark:bg-zinc-900", className)}>
-        <div className="px-4 sm:px-6 lg:px-8 py-6">
-          <ApplicationDetailSkeleton />
-        </div>
+      <div className={cn("min-h-screen", className)}>
+        <ApplicationDetailSkeleton />
       </div>
     );
   }
@@ -205,6 +207,8 @@ export default function ApplicationDetailView({
             application={application}
             program={program}
             onEvaluationComplete={refetchApplication}
+            hasExternalPrompt={hasExternalPrompt}
+            hasInternalPrompt={hasInternalPrompt}
           />
         </TabPanel>
       ),
@@ -223,6 +227,7 @@ export default function ApplicationDetailView({
                 <IntegrationsTab
                   referenceNumber={application.referenceNumber}
                   feedbackAdmin={isAdmin}
+                  verdictReviewer={isReviewer}
                 />
               </TabPanel>
             ),
@@ -258,6 +263,26 @@ export default function ApplicationDetailView({
         </TabPanel>
       ),
     },
+    ...(canViewNotes
+      ? [
+          {
+            id: "reviewer-discussion",
+            label: "Reviewer Discussion",
+            icon: TabIcons.ReviewerDiscussion,
+            content: (
+              <TabPanel>
+                <ReviewerDiscussionTab
+                  referenceNumber={application.referenceNumber}
+                  programId={programId}
+                  canView={canViewNotes}
+                  isAdmin={isAdmin}
+                  currentUserAddress={currentUserAddress}
+                />
+              </TabPanel>
+            ),
+          } satisfies TabConfig,
+        ]
+      : []),
     // Private notes tab — reviewer/admin-only. Conditional spread fails closed:
     // no "Notes" entry exists in the tab bar for a non-reviewer or while
     // permissions resolve (DEV-515 no-glimpse). The BE endpoint is the real guard.
@@ -421,25 +446,17 @@ export default function ApplicationDetailView({
 
   // Page variant: full standalone route layout.
   return (
-    <div className={cn("min-h-screen bg-gray-50 dark:bg-zinc-900", className)}>
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
-        {/* Back Button and Role Indicator */}
-        <div className="mb-4 flex items-center justify-between">
-          <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
-            <ArrowLeftIcon className="w-4 h-4 mr-2" />
-            Back to Applications
-          </Button>
-
-          {!isAdmin && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                Reviewer Mode
-              </span>
-            </div>
-          )}
+    <div className={cn("min-h-screen", className)}>
+      {!isAdmin && (
+        <div className="mb-4 flex justify-end">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+              Reviewer Mode
+            </span>
+          </div>
         </div>
-        {detailBody}
-      </div>
+      )}
+      {detailBody}
     </div>
   );
 }
