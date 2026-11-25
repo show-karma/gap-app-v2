@@ -560,7 +560,7 @@ O que precisa do Next paga o isolate novo dele: 2–6 s numa rota fria. Perfil d
 - A página guardada bate com a da Vercel (título, ~116 KiB, mesmo conteúdo).
 - CPU num isolate quente: **36–64 ms** com a página no cache, contra 150–560 ms renderizando.
 - Num isolate novo continua em 1,6–3,9 s, porque mesmo para servir do cache o servidor do Next inteiro é carregado.
-- `/community/<id>/impact` não ganha entrada, e é esperado: a página tem partes adiadas por desenho. Até a gerada no build (`community/gitcoin/impact`) tem estado `postponed`, então o Next a resume em todo request, como na Vercel, onde o `STALE` se refere só ao shell. A fila tenta à toa e registra erro; o Worker reenvia a mesma página no máximo a cada 10 min por isolate.
+- `/community/<id>/impact` agora gera entrada completa e não adiada (`postponed: false`, `<title>` no HTML e `.rsc` gravado): o `generateMetadata` de `impact/layout.tsx` chamava `getCommunityDetails` sem cache em vez de `getCommunityDetailsCached`. Rotas que continuam parcialmente pré-renderizadas por desenho (como `/community/<id>/funding-opportunities`) seguem sendo resumidas a cada request e são limitadas na fila a no máximo uma tentativa a cada 10 min por isolate.
 
 **O que sobra é o isolate novo:**
 - Mesmo uma resposta que não carrega o Next (`/__karma/isolate`) leva 1,3–2,6 s num isolate novo, o custo de subir o script de 57 MB.
@@ -634,7 +634,7 @@ A plataforma ainda pode reter um preview efêmero `open-next-cache-populate`, cr
 3. **PNG das imagens OG guardado no R2** (feito; ver "PNG das imagens OG guardado no R2"). O bucket de produção `gap-app-v2-opennext-cache` já existe, com regras de ciclo de vida para `og-images/` e `incremental-cache/`; a config de produção deve ligá-lo como `NEXT_INC_CACHE_R2_BUCKET` e manter o binding `version_metadata`.
 4. Repetir as ondas com o Sentry ligado, para provar a correção do `cloudflare/worker.ts`.
 5. **Worker de staging no ar** (ver "Worker de staging (19/11)"). Falta um host próprio: o DNS do `karmahq.org` e do `.xyz` está no Route 53 e a conta não tem zona, então só `workers.dev` por ora.
-6. **Páginas de projeto e comunidade com cache próprio** (feito; ver a seção). Falta `/community/<id>/impact`, e o custo do isolate novo continua no R1.
+6. **Páginas de projeto e comunidade com cache próprio** (feito; ver a seção). `/community/<id>/impact` também passa a gerar entrada completa (corrigido em `impact/layout.tsx` via `getCommunityDetailsCached`), e o custo do isolate novo continua no R1.
 7. **Interceptação de cache** (feito; ver a seção): página no cache custa ~76 ms de CPU mesmo em isolate novo. 
 8. **Dois Workers** (feito; ver "Dois Workers: roteamento e servidor do Next"): página do cache em 0,66 s de TTFB mediano. Falta medir com tráfego real e um domínio próprio (cache regional).
 
