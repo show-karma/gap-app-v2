@@ -4,11 +4,9 @@ import { type FC, useState } from "react";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import { AIEvaluationDisplay } from "../AIEvaluation";
 import AIEvaluationButton from "../AIEvaluationButton";
+import { ApplicationInsightsPanel } from "../ApplicationInsights/ApplicationInsightsPanel";
 import { InternalAIEvaluationDisplay } from "../InternalAIEvaluation";
-import { KarmaProfileEvaluationDisplay } from "../KarmaProfileEvaluation";
 import { ReEvaluateInternalButton } from "../ReEvaluateInternalButton";
-import { ReEvaluateKarmaProfileButton } from "../ReEvaluateKarmaProfileButton";
-import { RunKarmaProfileButton } from "../RunKarmaProfileButton";
 import { type AIAnalysisSubTabId, AIAnalysisSubTabs } from "./AIAnalysisSubTabs";
 import { EmptyEvaluationState } from "./EmptyEvaluationState";
 
@@ -19,26 +17,23 @@ export interface AIAnalysisTabProps {
   canRunEvaluation?: boolean;
   hasExternalPrompt?: boolean;
   hasInternalPrompt?: boolean;
+  onOpenSimocracyTab?: () => void;
 }
 
 function getDefaultTab(
   hasExternal: boolean,
   hasInternal: boolean,
-  hasInsights: boolean,
   visibleTabs: AIAnalysisSubTabId[]
 ): AIAnalysisSubTabId {
   if (hasExternal) return "external";
   if (hasInternal) return "internal";
-  if (hasInsights) return "insights";
   return visibleTabs[0];
 }
 
 /**
- * AI Analysis tab. Three sub-tabs:
- * - External: applicant-visible
- * - Internal: reviewer-only proposal critique
- * - Applications Insights: reviewer-only track-record verdict on the linked
- *   Karma project (independent of Internal — see karma-profile-insights-tab.md)
+ * AI Analysis tab. External (applicant-visible) and Internal (reviewer-only)
+ * evaluations sit beside Applications Insights, the linked project's track
+ * record. When neither evaluation applies, Insights renders without a sub-tab bar.
  */
 export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
   application,
@@ -47,16 +42,11 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
   canRunEvaluation = true,
   hasExternalPrompt = true,
   hasInternalPrompt = true,
+  onOpenSimocracyTab,
 }) => {
   const hasExternalEvaluation = Boolean(application.aiEvaluation?.evaluation);
   const hasInternalEvaluation = Boolean(application.internalAIEvaluation?.evaluation);
-  const insightsRecord = application.karmaProfileEvaluation;
-  // Any non-undefined Insights record (including SKIPPED / FAILED) counts as
-  // "has run" — routes to the Insights tab by default if it's the only one
-  // with signal, AND surfaces the Re-evaluate button so admins can retry
-  // failed/skipped states once the underlying issue is fixed (applicant linked
-  // a project, program added the field, etc.).
-  const hasInsightsRecord = Boolean(insightsRecord);
+  const referenceNumber = application.referenceNumber || application.id;
 
   const visibleSubTabs: AIAnalysisSubTabId[] = [
     ...(hasExternalPrompt || hasExternalEvaluation ? (["external"] as const) : []),
@@ -65,17 +55,20 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
   ];
 
   const [selectedSubTab, setActiveSubTab] = useState<AIAnalysisSubTabId | null>(null);
+
+  const insightsPanel = (
+    <ApplicationInsightsPanel
+      referenceNumber={referenceNumber}
+      onOpenSimocracyTab={onOpenSimocracyTab}
+    />
+  );
+
+  if (visibleSubTabs.length === 1) return insightsPanel;
+
   const activeSubTab =
     selectedSubTab && visibleSubTabs.includes(selectedSubTab)
       ? selectedSubTab
-      : getDefaultTab(
-          hasExternalEvaluation,
-          hasInternalEvaluation,
-          hasInsightsRecord,
-          visibleSubTabs
-        );
-
-  const referenceNumber = application.referenceNumber || application.id;
+      : getDefaultTab(hasExternalEvaluation, hasInternalEvaluation, visibleSubTabs);
 
   return (
     <div className="space-y-6">
@@ -90,7 +83,6 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
           referenceNumber={referenceNumber}
           canRunEvaluation={canRunEvaluation}
           hasInternalEvaluation={hasInternalEvaluation}
-          hasInsightsRecord={hasInsightsRecord}
           onEvaluationComplete={onEvaluationComplete}
         />
       </div>
@@ -123,16 +115,7 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
           />
         ))}
 
-      {activeSubTab === "insights" && (
-        <KarmaProfileEvaluationDisplay
-          evaluation={insightsRecord?.evaluation || null}
-          context={insightsRecord?.context || null}
-          status={insightsRecord?.status}
-          evaluatedAt={insightsRecord?.evaluatedAt}
-          skipReason={insightsRecord?.skipReason}
-          programName={program?.name}
-        />
-      )}
+      {activeSubTab === "insights" && insightsPanel}
     </div>
   );
 };
@@ -142,54 +125,21 @@ interface RunButtonProps {
   referenceNumber: string;
   canRunEvaluation: boolean;
   hasInternalEvaluation: boolean;
-  hasInsightsRecord: boolean;
   onEvaluationComplete?: () => void;
 }
 
-/**
- * Renders the right-side run/re-run button next to the sub-tab bar.
- * Extracted from `AIAnalysisTab` so React reconciles button identity
- * properly when the active sub-tab changes (avoids the render-in-render
- * anti-pattern).
- */
 function RunButton({
   activeSubTab,
   referenceNumber,
   canRunEvaluation,
   hasInternalEvaluation,
-  hasInsightsRecord,
   onEvaluationComplete,
 }: RunButtonProps) {
-  if (!canRunEvaluation) return null;
+  if (!canRunEvaluation || activeSubTab === "insights") return null;
 
   if (activeSubTab === "internal" && hasInternalEvaluation) {
     return (
       <ReEvaluateInternalButton
-        referenceNumber={referenceNumber}
-        onEvaluationComplete={onEvaluationComplete}
-      />
-    );
-  }
-
-  if (activeSubTab === "insights" && hasInsightsRecord) {
-    // Re-evaluate is available for any prior record (completed, failed,
-    // or skipped). The dialog gates destructive overwrites of completed
-    // evals; retrying failed/skipped is cheap.
-    return (
-      <ReEvaluateKarmaProfileButton
-        referenceNumber={referenceNumber}
-        onEvaluationComplete={onEvaluationComplete}
-      />
-    );
-  }
-
-  if (activeSubTab === "insights") {
-    // No prior record at all — most commonly a pre-feature application
-    // (no backfill) or an app whose auto-fire didn't run. Surface a
-    // first-run "Run Insights" button (no confirmation dialog — nothing
-    // to overwrite). Hits the same endpoint as Re-evaluate.
-    return (
-      <RunKarmaProfileButton
         referenceNumber={referenceNumber}
         onEvaluationComplete={onEvaluationComplete}
       />

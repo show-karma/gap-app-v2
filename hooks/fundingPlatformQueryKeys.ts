@@ -85,6 +85,9 @@ export const QUERY_KEYS = {
     referenceNumber,
   ],
   simocracyEvaluations: (referenceNumber: string) => ["simocracy-evaluations", referenceNumber],
+  applicationTrackRecord: (referenceNumber: string) =>
+    ["application-track-record", referenceNumber] as const,
+  projectIndicatorSeries: (projectUID: string) => ["project-indicator-series", projectUID] as const,
   simocracyProgramSummary: (programId: string) => ["simocracy-program-summary", programId] as const,
   simocracySimLinks: (programId: string) => ["simocracy-sim-links", programId] as const,
   simocracyCouncil: (programId: string) => ["simocracy-council", programId] as const,

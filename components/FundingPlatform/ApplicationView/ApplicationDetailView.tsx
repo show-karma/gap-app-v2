@@ -209,6 +209,9 @@ export default function ApplicationDetailView({
             onEvaluationComplete={refetchApplication}
             hasExternalPrompt={hasExternalPrompt}
             hasInternalPrompt={hasInternalPrompt}
+            onOpenSimocracyTab={
+              showIntegrationsTab ? () => handleUserTabChange("integrations") : undefined
+            }
           />
         </TabPanel>
       ),
