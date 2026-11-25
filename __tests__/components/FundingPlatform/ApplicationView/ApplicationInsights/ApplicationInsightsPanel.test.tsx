@@ -129,6 +129,17 @@ describe("ApplicationInsightsPanel", () => {
       expect(screen.getByText("1 of 1 delivered")).toBeInTheDocument();
     });
 
+    it("does not show a zero payout entry as a payment", () => {
+      const zeroPaid = structuredClone(AVAILABLE);
+      zeroPaid.grants[0].milestones[0].paidAmount = "0";
+      trackRecordQuery.mockReturnValue(settled(zeroPaid));
+
+      render(<ApplicationInsightsPanel referenceNumber="APP-1" />);
+
+      expect(screen.queryByText("0 USDC")).not.toBeInTheDocument();
+      expect(screen.queryByText(/after verified/)).not.toBeInTheDocument();
+    });
+
     it("shows the approved total with its token and the late delivery", () => {
       trackRecordQuery.mockReturnValue(settled(AVAILABLE));
 

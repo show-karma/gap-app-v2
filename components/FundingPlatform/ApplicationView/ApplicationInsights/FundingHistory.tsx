@@ -95,7 +95,9 @@ const MilestoneRow = memo(function MilestoneRow({
   const timing = timingText(state);
   const lateDelivery = state.kind === "delivered" && (state.dayOffset ?? 0) > 0;
   const amount = parseAmount(milestone.allocatedAmount);
-  const paid = parseAmount(milestone.paidAmount);
+  const paidAmount = parseAmount(milestone.paidAmount);
+  // A zero entry in a payout's milestone breakdown is not a payment.
+  const paid = paidAmount ? paidAmount : null;
   const note = paymentNote(milestone);
 
   return (
