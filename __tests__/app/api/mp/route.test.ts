@@ -142,6 +142,7 @@ describe("POST /api/mp/[...path]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env = { ...originalEnv, NEXT_PUBLIC_MIXPANEL_KEY: TOKEN };
+    delete process.env.VERCEL;
     fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(upstreamResponse());
   });
 
@@ -379,10 +380,50 @@ describe("POST /api/mp/[...path]", () => {
   });
 
   describe("client IP forwarding", () => {
-    it("prefers the platform-set x-real-ip", async () => {
+    it("prefers cf-connecting-ip over spoofed x-real-ip and x-forwarded-for on Cloudflare", async () => {
       await POST(
         makeRequest({
-          headers: { "x-real-ip": "198.51.100.4", "x-forwarded-for": "1.2.3.4, 5.6.7.8" },
+          headers: {
+            "cf-connecting-ip": "203.0.113.42",
+            "x-real-ip": "198.51.100.4",
+            "x-forwarded-for": "1.2.3.4, 5.6.7.8",
+          },
+        }),
+        ctx(["track"])
+      );
+
+      expect(forwardedHeaders(fetchSpy)["X-REAL-IP"]).toBe("203.0.113.42");
+    });
+
+    it("ignores spoofed x-real-ip on Cloudflare and falls back to rightmost XFF", async () => {
+      await POST(
+        makeRequest({
+          headers: {
+            "x-real-ip": "198.51.100.4",
+            "x-forwarded-for": "9.9.9.9, 203.0.113.7, 70.41.3.18",
+          },
+        }),
+        ctx(["track"])
+      );
+
+      expect(forwardedHeaders(fetchSpy)["X-REAL-IP"]).toBe("70.41.3.18");
+    });
+
+    it("omits X-REAL-IP when only x-real-ip is sent on Cloudflare", async () => {
+      await POST(makeRequest({ headers: { "x-real-ip": "198.51.100.4" } }), ctx(["track"]));
+
+      expect(forwardedHeaders(fetchSpy)).not.toHaveProperty("X-REAL-IP");
+    });
+
+    it("prefers x-real-ip and ignores spoofed cf-connecting-ip when running on Vercel", async () => {
+      process.env.VERCEL = "1";
+      await POST(
+        makeRequest({
+          headers: {
+            "cf-connecting-ip": "203.0.113.42",
+            "x-real-ip": "198.51.100.4",
+            "x-forwarded-for": "1.2.3.4, 5.6.7.8",
+          },
         }),
         ctx(["track"])
       );
@@ -390,17 +431,8 @@ describe("POST /api/mp/[...path]", () => {
       expect(forwardedHeaders(fetchSpy)["X-REAL-IP"]).toBe("198.51.100.4");
     });
 
-    it("falls back to the RIGHTMOST x-forwarded-for entry, which a client cannot forge", async () => {
-      await POST(
-        makeRequest({ headers: { "x-forwarded-for": "9.9.9.9, 203.0.113.7, 70.41.3.18" } }),
-        ctx(["track"])
-      );
-
-      expect(forwardedHeaders(fetchSpy)["X-REAL-IP"]).toBe("70.41.3.18");
-    });
-
-    it("forwards an IPv6 address", async () => {
-      await POST(makeRequest({ headers: { "x-real-ip": "2001:db8::1" } }), ctx(["track"]));
+    it("forwards an IPv6 address from cf-connecting-ip", async () => {
+      await POST(makeRequest({ headers: { "cf-connecting-ip": "2001:db8::1" } }), ctx(["track"]));
 
       expect(forwardedHeaders(fetchSpy)["X-REAL-IP"]).toBe("2001:db8::1");
     });
@@ -415,7 +447,7 @@ describe("POST /api/mp/[...path]", () => {
       ["a partial address", "1.2.3"],
       ["a bracketed IPv6, which is a URL form and not an address", "[2001:db8::1]"],
     ])("drops %s rather than forwarding it", async (_label, value) => {
-      await POST(makeRequest({ headers: { "x-real-ip": value } }), ctx(["track"]));
+      await POST(makeRequest({ headers: { "cf-connecting-ip": value } }), ctx(["track"]));
 
       expect(forwardedHeaders(fetchSpy)).not.toHaveProperty("X-REAL-IP");
     });

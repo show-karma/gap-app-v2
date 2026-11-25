@@ -1,6 +1,6 @@
-import { isIP } from "node:net";
 import * as Sentry from "@sentry/nextjs";
 import { type NextRequest, NextResponse } from "next/server";
+import { extractTrustedClientIp } from "@/utilities/client-ip";
 
 /**
  * Same-origin proxy in front of Mixpanel's ingestion API.
@@ -71,27 +71,6 @@ const resolveUpstreamPath = (segments: string[] | undefined): string | null => {
 /** `application/json; charset=utf-8` -> `application/json`. */
 const mediaTypeOf = (contentType: string | null): string =>
   (contentType ?? "").split(";")[0].trim().toLowerCase();
-
-/**
- * The client's own IP, so Mixpanel geolocates the visitor and not the server.
- *
- * `x-real-ip` is set by the hosting platform and cannot be spoofed by the
- * caller. `x-forwarded-for` can be — a client may prepend entries — so only the
- * RIGHTMOST entry (the one the closest trusted proxy appended) is used.
- *
- * REVIEW-WAIVED: route handlers have no request.ip; header read is validated
- * and limited to x-real-ip / rightmost XFF
- */
-const clientIp = (request: NextRequest): string | null => {
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  if (realIp && isIP(realIp) !== 0) return realIp;
-
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (!forwarded) return null;
-  const entries = forwarded.split(",");
-  const rightmost = entries[entries.length - 1].trim();
-  return isIP(rightmost) !== 0 ? rightmost : null;
-};
 
 /**
  * Reads the body, abandoning it the moment it exceeds the cap. Returns null
@@ -270,7 +249,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     Accept: "application/json",
     "Content-Type": mediaType,
   };
-  const ip = clientIp(request);
+  // Route handlers have no request.ip; extractTrustedClientIp reads the
+  // platform-verified header (cf-connecting-ip on Cloudflare, x-real-ip on
+  // Vercel, or rightmost XFF) and validates with isIP.
+  const ip = extractTrustedClientIp(request.headers);
   if (ip) headers["X-REAL-IP"] = ip;
 
   try {
