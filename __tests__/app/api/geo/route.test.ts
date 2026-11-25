@@ -116,6 +116,25 @@ describe("GET /api/geo", () => {
     });
   });
 
+  it("ignores untrusted x-vercel-ip-* headers when Cloudflare context is present", async () => {
+    (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL] = {
+      cf: undefined,
+    };
+    currentHeaders = new Headers({
+      "x-karma-cf-country": "T1",
+      "x-vercel-ip-country": "FR",
+      "x-vercel-ip-country-region": "IDF",
+      "x-vercel-ip-city": "Paris",
+    });
+
+    const res = await GET();
+    await expect(res.json()).resolves.toEqual({
+      country: "US",
+      region: null,
+      city: null,
+    });
+  });
+
   it("defaults to US with null region and city when no geo headers are present", async () => {
     const res = await GET();
     await expect(res.json()).resolves.toEqual({

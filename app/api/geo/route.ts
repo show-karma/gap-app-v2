@@ -19,11 +19,10 @@ interface CloudflareGeoContext {
   };
 }
 
-function readCloudflareCf(): CloudflareGeoContext["cf"] {
-  const context = (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL] as
+function readCloudflareContext(): CloudflareGeoContext | undefined {
+  return (globalThis as Record<PropertyKey, unknown>)[CLOUDFLARE_CONTEXT_SYMBOL] as
     | CloudflareGeoContext
     | undefined;
-  return context?.cf;
 }
 
 function nonEmptyString(value: unknown): string | null {
@@ -62,22 +61,29 @@ export async function GET() {
       return NextResponse.json({ country, region, city });
     }
 
-    const cf = readCloudflareCf();
+    const cfContext = readCloudflareContext();
+    const cf = cfContext?.cf;
+    // When running on Cloudflare Workers, never fall back to client-spoofable
+    // x-vercel-ip-* headers if Cloudflare omits region/city or emits XX/T1.
+    const allowVercelFallback = cfContext === undefined;
+
     const country =
       normalizeCountry(cf?.country) ??
       normalizeCountry(headersList.get(CF_GEO_COUNTRY_HEADER)) ??
       normalizeCountry(headersList.get("cf-ipcountry")) ??
-      normalizeCountry(headersList.get("x-vercel-ip-country")) ??
+      (allowVercelFallback ? normalizeCountry(headersList.get("x-vercel-ip-country")) : null) ??
       "US";
     const region =
       nonEmptyString(cf?.regionCode) ??
       nonEmptyString(cf?.region) ??
       decodeHeaderValue(headersList.get(CF_GEO_REGION_HEADER)) ??
-      decodeHeaderValue(headersList.get("x-vercel-ip-country-region"));
+      (allowVercelFallback
+        ? decodeHeaderValue(headersList.get("x-vercel-ip-country-region"))
+        : null);
     const city =
       nonEmptyString(cf?.city) ??
       decodeHeaderValue(headersList.get(CF_GEO_CITY_HEADER)) ??
-      decodeHeaderValue(headersList.get("x-vercel-ip-city"));
+      (allowVercelFallback ? decodeHeaderValue(headersList.get("x-vercel-ip-city")) : null);
 
     return NextResponse.json({ country, region, city });
   } catch {
