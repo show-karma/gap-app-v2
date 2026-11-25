@@ -14,9 +14,7 @@ interface UseReEvaluateInternalAIOptions {
 /**
  * Re-run internal AI evaluation for an application. Overwrites any prior
  * internal evaluation with a fresh run against current application data
- * and the latest configured prompt. (Track-record context lives on the
- * separate `karmaProfileEvaluation` field now — see
- * `useReEvaluateKarmaProfileAI`.)
+ * and the latest configured prompt.
  *
  * Invalidates funding-application and applications queries on success.
  */
