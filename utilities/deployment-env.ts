@@ -118,17 +118,6 @@ export function vercelAnalyticsEnabled(): boolean {
 }
 
 /**
- * The origin of this specific deployment when the platform publishes one
- * (Vercel's `VERCEL_URL`, a bare hostname), or `undefined` elsewhere. Server
- * side only.
- */
-export function platformDeploymentOrigin(): string | undefined {
-  const host = process.env.VERCEL_URL?.trim();
-  if (!host) return undefined;
-  return /^https?:\/\//i.test(host) ? host.replace(/\/+$/, "") : `https://${host}`;
-}
-
-/**
  * Public variables next.config.ts derives at build time, so the browser gets
  * an answer even when only the server-side variable was configured.
  *

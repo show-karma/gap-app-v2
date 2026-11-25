@@ -81,9 +81,6 @@ export const serverSchema = z.object({
   // Server-side deployment environment; same precedence as the client pair.
   APP_ENV: deploymentEnvVar,
   VERCEL_ENV: deploymentEnvVar,
-  // Vercel's per-deployment hostname. Optional fallback for the app's own
-  // origin; other platforms leave it unset. See platformDeploymentOrigin().
-  VERCEL_URL: z.string().min(1).optional(),
 
   // Sanity Blog CMS — server-only secrets
   SANITY_VIEWER_TOKEN: z.string().optional().default(""),

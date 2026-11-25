@@ -5,7 +5,6 @@ import {
   isPreviewDeployment,
   isProductionDeployment,
   isVercelPlatform,
-  platformDeploymentOrigin,
   resolveDeploymentEnv,
   vercelAnalyticsEnabled,
 } from "@/utilities/deployment-env";
@@ -16,7 +15,6 @@ const VARS = [
   "VERCEL_ENV",
   "NEXT_PUBLIC_VERCEL_ENV",
   "VERCEL",
-  "VERCEL_URL",
   "NEXT_PUBLIC_VERCEL_ANALYTICS",
 ] as const;
 
@@ -144,24 +142,6 @@ describe("vercelAnalyticsEnabled", () => {
     expect(vercelAnalyticsEnabled()).toBe(false);
     vi.stubEnv("NEXT_PUBLIC_VERCEL_ANALYTICS", "true");
     expect(vercelAnalyticsEnabled()).toBe(true);
-  });
-});
-
-describe("platformDeploymentOrigin", () => {
-  it("is undefined off Vercel", () => {
-    expect(platformDeploymentOrigin()).toBeUndefined();
-    vi.stubEnv("VERCEL_URL", "  ");
-    expect(platformDeploymentOrigin()).toBeUndefined();
-  });
-
-  it("turns Vercel's bare hostname into an https origin", () => {
-    vi.stubEnv("VERCEL_URL", "gap-app-v2-abc123-karma-devs.vercel.app");
-    expect(platformDeploymentOrigin()).toBe("https://gap-app-v2-abc123-karma-devs.vercel.app");
-  });
-
-  it("keeps a value that already carries a scheme, minus a trailing slash", () => {
-    vi.stubEnv("VERCEL_URL", "http://localhost:3000/");
-    expect(platformDeploymentOrigin()).toBe("http://localhost:3000");
   });
 });
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
-import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 type Props = {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ export async function generateMetadata({
   params: Promise<{ communityId: string }>;
 }): Promise<Metadata> {
   const { communityId } = await params;
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   // No self-canonical: this route is a client-rendered shell, so it is absent

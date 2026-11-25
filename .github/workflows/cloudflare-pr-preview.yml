@@ -191,7 +191,7 @@ jobs:
         # Worker reads them; a preview has no cron, so no CRON_SECRET on routing.
         run: |
           have=$(npx wrangler secret list --name "$NEXT_WORKER" --format json | jq -r '.[].name')
-          missing=$(for name in CRON_SECRET SANITY_VIEWER_TOKEN SANITY_WEBHOOK_SECRET SANITY_PREVIEW_SECRET PROJECT_CACHE_REVALIDATION_SECRET FIRECRAWL_API_KEY; do
+          missing=$(for name in CRON_SECRET SANITY_VIEWER_TOKEN SANITY_WEBHOOK_SECRET SANITY_PREVIEW_SECRET PROJECT_CACHE_REVALIDATION_SECRET; do
             grep -qx "$name" <<<"$have" || echo "$name"
           done | paste -sd, -)
           if [ -z "$missing" ]; then

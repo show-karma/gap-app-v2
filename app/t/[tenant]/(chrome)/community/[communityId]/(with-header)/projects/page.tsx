@@ -16,6 +16,7 @@ import {
   getCommunityDetails,
   getCommunityProjects,
 } from "@/utilities/queries/v2/getCommunityData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 type Props = {
   params: Promise<{
@@ -29,7 +30,7 @@ type Props = {
 // at `/community/<id>` and duplicated the root's title.
 export async function generateMetadata({ params }: { params: Props["params"] }): Promise<Metadata> {
   const { communityId } = await params;
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   // No self-canonical: this route is a client-rendered shell, so it is absent
