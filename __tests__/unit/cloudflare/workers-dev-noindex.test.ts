@@ -23,7 +23,31 @@ describe("withWorkersDevNoindex", () => {
     expect(marked.headers.get("x-robots-tag")).toBe("noindex, nofollow");
   });
 
-  it("leaves responses on any other host untouched", () => {
+  it("marks custom domains as noindex when appEnv is preview", async () => {
+    const request = new Request("https://staging.karmahq.org/communities");
+    const response = new Response("staging page", {
+      status: 200,
+      headers: { "content-type": "text/html", "x-robots-tag": "index, follow" },
+    });
+    const marked = withWorkersDevNoindex(request, response, "preview");
+    expect(marked.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    expect(marked.status).toBe(200);
+    expect(marked.headers.get("content-type")).toBe("text/html");
+    expect(await marked.text()).toBe("staging page");
+  });
+
+  it("leaves production custom domains untouched while still marking *.workers.dev", () => {
+    for (const url of ["https://www.karmahq.org/", "https://app.opgrants.io/"]) {
+      const response = new Response("page");
+      expect(withWorkersDevNoindex(new Request(url), response, "production")).toBe(response);
+    }
+
+    const workersDev = new Request("https://gap-app-v2-production.example.workers.dev/");
+    const marked = withWorkersDevNoindex(workersDev, new Response("page"), "production");
+    expect(marked.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+  });
+
+  it("leaves responses on any other host untouched when appEnv is absent", () => {
     for (const url of ["https://example.org/", "https://workers.dev.example.org/"]) {
       const response = new Response("page");
       expect(withWorkersDevNoindex(new Request(url), response)).toBe(response);

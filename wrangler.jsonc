@@ -122,7 +122,10 @@
       "version_metadata": { "binding": "CF_VERSION_METADATA" },
       "vars": { "APP_ENV": "preview", "NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS": "30000" },
       // Same reason as the test Worker: the warm-up loads production sitemaps.
-      "triggers": { "crons": [] }
+      "triggers": { "crons": [] },
+      // Keep staging.karmahq.org attached across CI deploys once the karmahq.org
+      // DNS zone is on Cloudflare. Stripped for PR previews in scripts/cf-pr-config.mjs.
+      "routes": [{ "pattern": "staging.karmahq.org", "custom_domain": true }]
     },
     // Production (.github/workflows/cloudflare-production.yml). Until the
     // cutover gives it the production hosts it is only on *.workers.dev, where

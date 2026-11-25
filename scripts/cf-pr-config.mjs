@@ -60,10 +60,11 @@ function prConfig(file) {
 }
 
 const routingConfig = prConfig("wrangler.jsonc");
-// A preview is reached only through its workers.dev URL, and has no cron.
+// A preview is reached only through its workers.dev URL, and has no cron or custom domains.
 routingConfig.workers_dev = true;
 routingConfig.preview_urls = false;
 routingConfig.triggers = { crons: [] };
+delete routingConfig.routes;
 if (flag === "--without-next-server") {
   routingConfig.services = routingConfig.services.filter((s) => s.binding !== "NEXT_SERVER");
 }
