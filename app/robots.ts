@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
+import { isPreviewDeployment } from "@/utilities/deployment-env";
 import { bareHostname, STAGING_HOST } from "@/utilities/domains";
 import { SITE_URL } from "@/utilities/meta";
 import { getWhitelabelByDomain } from "@/utilities/whitelabel-config";
@@ -48,10 +49,11 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   const headerList = await headers();
   const host = bareHostname(headerList.get("host") ?? "");
 
-  // staging.karmahq.org is a new host created by the .org migration, so it
-  // carries none of the "already ignored by crawlers" protection an old host
-  // would. A cross-domain canonical is only a hint; this is the directive.
-  if (host === STAGING_HOST) {
+  // staging.karmahq.org and any preview deployment (APP_ENV === "preview" /
+  // VERCEL_ENV === "preview", including *.workers.dev and staging custom
+  // domains) are non-production copies. A cross-domain canonical is only a hint;
+  // disallowing `/` outright with no sitemap or host directive keeps crawlers out.
+  if (host === STAGING_HOST || isPreviewDeployment()) {
     return {
       rules: [{ userAgent: "*", disallow: "/" }],
     };

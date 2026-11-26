@@ -247,4 +247,35 @@ describe("serveOgImage", () => {
     expect(await response.text()).toBe("fresh-png");
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "R2 full" }));
   });
+
+  it("replays content-security-policy and x-frame-options from a cached entry", async () => {
+    const bucket = fakeBucket();
+    const { render, serve, settle } = setup(bucket, () =>
+      png({
+        "content-security-policy": "frame-src 'self'; frame-ancestors 'self';",
+        "x-frame-options": "SAMEORIGIN",
+      })
+    );
+
+    const miss = await serve();
+    await settle();
+    expect(miss.headers.get(OG_IMAGE_CACHE_HEADER)).toBe("MISS");
+    expect(miss.headers.get("content-security-policy")).toBe(
+      "frame-src 'self'; frame-ancestors 'self';"
+    );
+    expect(miss.headers.get("x-frame-options")).toBe("SAMEORIGIN");
+    expect(JSON.parse(bucket.objects.get(KEY)?.customMetadata.headers ?? "{}")).toEqual({
+      "content-security-policy": "frame-src 'self'; frame-ancestors 'self';",
+      "x-frame-options": "SAMEORIGIN",
+    });
+
+    const hit = await serve();
+    await settle();
+    expect(render).toHaveBeenCalledTimes(1);
+    expect(hit.headers.get(OG_IMAGE_CACHE_HEADER)).toBe("HIT");
+    expect(hit.headers.get("content-security-policy")).toBe(
+      "frame-src 'self'; frame-ancestors 'self';"
+    );
+    expect(hit.headers.get("x-frame-options")).toBe("SAMEORIGIN");
+  });
 });

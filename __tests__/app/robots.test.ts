@@ -293,3 +293,47 @@ describe("robots on a whitelabel tenant domain", () => {
     expect(rules[0].disallow).toContain("/api/");
   });
 });
+
+describe("robots in preview deployments", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("blocks every crawler on any host when APP_ENV is preview", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "");
+    vi.stubEnv("APP_ENV", "preview");
+    vi.stubEnv("NEXT_PUBLIC_VERCEL_ENV", "");
+    vi.stubEnv("VERCEL_ENV", "");
+
+    for (const host of ["cf-staging.merkador.app", CANONICAL_HOST]) {
+      const preview = await robotsForHost(host);
+      const rules = Array.isArray(preview.rules) ? preview.rules : [preview.rules];
+
+      expect(rules).toHaveLength(1);
+      expect(rules[0].userAgent).toBe("*");
+      expect(rules[0].disallow).toBe("/");
+      expect(rules[0].allow).toBeUndefined();
+      expect(preview.sitemap).toBeUndefined();
+      expect(preview.host).toBeUndefined();
+    }
+  });
+
+  it("keeps the full crawl policy on canonical host and blocks staging host when APP_ENV is production", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "");
+    vi.stubEnv("APP_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_VERCEL_ENV", "");
+    vi.stubEnv("VERCEL_ENV", "");
+
+    const prod = await robotsForHost(CANONICAL_HOST);
+    expect(prod.rules).toHaveLength(13);
+    expect(prod.sitemap).toEqual([`${SITE_URL}/sitemap_index.xml`]);
+    expect(prod.host).toBe(SITE_URL);
+
+    const staging = await robotsForHost(STAGING_HOST);
+    const stagingRules = Array.isArray(staging.rules) ? staging.rules : [staging.rules];
+    expect(stagingRules).toHaveLength(1);
+    expect(stagingRules[0].disallow).toBe("/");
+    expect(staging.sitemap).toBeUndefined();
+    expect(staging.host).toBeUndefined();
+  });
+});
