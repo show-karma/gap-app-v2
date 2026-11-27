@@ -3,9 +3,12 @@ name: Cloudflare preview of a pull request
 # The Cloudflare counterpart of the Vercel preview of each pull request. Every
 # PR gets its own pair of Workers, built from the PR head with the Vercel
 # "preview" environment, like the Cloudflare staging (cloudflare-staging.yml):
-#   gap-app-v2-pr-<n>       routing Worker, https://gap-app-v2-pr-<n>.<account>.workers.dev
+#   gap-app-v2-pr-<n>       routing Worker, served at https://pr-<n>.preview.karmahq.org
 #   gap-app-v2-pr-<n>-app   Next server Worker (no public URL)
-# Both are deleted when the PR is closed or merged. The URL goes in a PR comment.
+# Each PR preview attaches a Worker Custom Domain (pr-<n>.preview.karmahq.org in
+# zone karmahq.org), which automatically provisions DNS and a dedicated 2nd-level
+# TLS certificate on the Free plan. On PR close/merge, the Custom Domain is
+# detached cleanly before both Workers are deleted. The URL goes in a PR comment.
 #
 # One pair per PR, not preview versions of the staging Workers: the routing
 # Worker reaches the Next server through a service binding by Worker name, and
@@ -53,6 +56,8 @@ env:
   ROUTING_WORKER: gap-app-v2-pr-${{ github.event.pull_request.number || inputs.pr }}
   NEXT_WORKER: gap-app-v2-pr-${{ github.event.pull_request.number || inputs.pr }}-app
   R2_BUCKET: gap-app-v2-pr-opennext-cache
+  PREVIEW_HOST: pr-${{ github.event.pull_request.number || inputs.pr }}.preview.karmahq.org
+  PREVIEW_URL: https://pr-${{ github.event.pull_request.number || inputs.pr }}.preview.karmahq.org
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
   WRANGLER_SEND_METRICS: 'false'
@@ -170,20 +175,13 @@ jobs:
           OPEN_NEXT_DEPLOY: 'true'
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          # Without pipefail, tee would hide a failed deploy from the retry loop.
-          set -o pipefail
           for attempt in $(seq "$DEPLOY_ATTEMPTS"); do
             npx wrangler deploy .open-next/upload/worker.js --config wrangler.pr.jsonc \
-              --no-bundle --no-minify --message "PR #$PR at $SHA" | tee deploy.log && break
+              --no-bundle --no-minify --message "PR #$PR at $SHA" && break
             [ "$attempt" = "$DEPLOY_ATTEMPTS" ] && exit 1
             sleep 15
           done
-          url=$(grep -oE "https://$ROUTING_WORKER\.[a-z0-9-]+\.workers\.dev" deploy.log | head -1)
-          if [ -z "$url" ]; then
-            echo "::error::No workers.dev URL in the deploy output."
-            exit 1
-          fi
-          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
       - name: Copy the missing runtime secrets from Vercel
         # Secrets stay with a Worker across deploys, so only the first deploy (or
@@ -205,21 +203,29 @@ jobs:
         run: rm -rf .vercel
 
       - name: Smoke test
-        # On a PR's first deploy the routing Worker's new binding to the Next
-        # server Worker answers 404 for a few seconds, so each path gets a minute.
+        # Issuing the dedicated 2nd-level TLS certificate for a brand-new
+        # pr-<n>.preview.karmahq.org Custom Domain and settling the Worker
+        # binding can take ~30-90s on the first deploy, so retry up to 3 minutes
+        # per path without failing fast on curl TLS/DNS errors.
         env:
-          URL: ${{ steps.routing.outputs.url }}
+          URL: ${{ env.PREVIEW_URL }}
         run: |
           fail=0
           for path in / /communities /api/geo /sitemap_index.xml /admin/studio; do
-            for attempt in 1 2 3 4 5 6; do
-              status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path")
+            status="000"
+            for attempt in $(seq 1 18); do
+              status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path" || true)
               [ "$status" = "200" ] && break
-              sleep 10
+              [ "$attempt" -lt 18 ] && sleep 10
             done
             echo "$status $path"
             [ "$status" = "200" ] || fail=1
           done
+          headers=$(curl -sSI --max-time 30 "$URL/" || true)
+          if ! grep -qi '^x-robots-tag:.*noindex' <<<"$headers"; then
+            echo "::error::Expected X-Robots-Tag containing noindex on $URL/"
+            fail=1
+          fi
           exit $fail
 
       - name: Post the preview URL on the PR
@@ -276,6 +282,33 @@ jobs:
           # Only npx runs here: no pnpm, so no cache from package.json's packageManager.
           package-manager-cache: false
 
+      - name: Detach preview Custom Domain
+        run: |
+          set -euo pipefail
+          auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains"
+
+          resp=$(curl -sS -H "$auth" "$api?hostname=$PREVIEW_HOST")
+          if [ "$(jq -r '.success // empty' <<<"$resp")" != "true" ]; then
+            echo "::error::Failed to list Custom Domains for $PREVIEW_HOST: $(jq -c '.errors // .' <<<"$resp")"
+            exit 1
+          fi
+
+          ids=$(jq -r --arg host "$PREVIEW_HOST" '.result[] | select(.hostname == $host) | .id' <<<"$resp")
+          if [ -z "$ids" ]; then
+            echo "No Custom Domain attached for $PREVIEW_HOST"
+            exit 0
+          fi
+
+          for id in $ids; do
+            del_resp=$(curl -sS -X DELETE -H "$auth" "$api/$id")
+            if [ "$(jq -r '.success // empty' <<<"$del_resp")" != "true" ]; then
+              echo "::error::Failed to detach Custom Domain $PREVIEW_HOST ($id): $(jq -c '.errors // .' <<<"$del_resp")"
+              exit 1
+            fi
+            echo "Detached Custom Domain $PREVIEW_HOST ($id)"
+          done
+
       - name: Delete both Workers
         # The Next server Worker first: it binds the routing Worker's Durable Objects.
         run: |
@@ -301,5 +334,5 @@ jobs:
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" \
               -f body="$COMMENT_MARKER
-          **Cloudflare preview:** removed; Workers \`$ROUTING_WORKER\` and \`$NEXT_WORKER\` deleted." > /dev/null
+          **Cloudflare preview:** removed; Custom Domain \`$PREVIEW_HOST\` detached and Workers \`$ROUTING_WORKER\` and \`$NEXT_WORKER\` deleted." > /dev/null
           fi
