@@ -4,10 +4,11 @@
 // names, so each PR is served by its own code end to end
 // (.github/workflows/cloudflare-pr-preview.yml).
 //
-// Each PR preview is served at https://pr-<n>.karmahq.org via a Workers Route
-// (pr-<n>.karmahq.org/* in zone karmahq.org, covered by Universal SSL
-// *.karmahq.org) paired with a proxied AAAA 100:: DNS record managed by
-// .github/workflows/cloudflare-pr-preview.yml.
+// Each PR preview is served at https://pr-<n>.preview.karmahq.org via a Worker
+// Custom Domain (custom_domain: true on zone karmahq.org, which provisions DNS
+// and a dedicated 2nd-level TLS certificate automatically on the Free plan).
+// At production cutover, add an exclusion Workers Route
+// (`*.preview.karmahq.org/*` -> None) so `*/*` does not override PR previews.
 //
 //   node scripts/cf-pr-config.mjs <pr number> [--without-next-server]
 //
@@ -22,7 +23,7 @@
 //                                        every build writes under its own build id)
 //
 // --without-next-server leaves the routing Worker's NEXT_SERVER binding and
-// zone route out. The first deploy of a PR needs it: the Next server Worker
+// Custom Domain out. The first deploy of a PR needs it: the Next server Worker
 // binds the Durable Objects of the routing Worker by script name, so the
 // routing Worker must exist first, before the Worker its own binding points at.
 import { realpathSync, writeFileSync } from "node:fs";
@@ -32,13 +33,14 @@ import { experimental_readRawConfig } from "wrangler";
 const STAGING = "gap-app-v2-staging";
 const SHARED_BUCKET = "gap-app-v2-pr-opennext-cache";
 export const PREVIEW_ZONE = "karmahq.org";
+export const PREVIEW_DOMAIN = `preview.${PREVIEW_ZONE}`;
 
 /**
  * Returns the preview hostname for a pull request number.
  * @param {string | number} pr
  */
 export function previewHostname(pr) {
-  return `pr-${pr}.${PREVIEW_ZONE}`;
+  return `pr-${pr}.${PREVIEW_DOMAIN}`;
 }
 
 /** Replaces every string that is exactly a staging name; leaves the rest. */
@@ -92,13 +94,14 @@ export function buildPrConfigs(pr, options = {}) {
 
   if (withoutNextServer) {
     routingConfig.services = routingConfig.services.filter((s) => s.binding !== "NEXT_SERVER");
-    // Never route pr-<n>.karmahq.org/* to the bootstrap stub Worker before NEXT_SERVER exists.
+    // Never attach pr-<n>.preview.karmahq.org to the bootstrap stub Worker before NEXT_SERVER exists.
     delete routingConfig.routes;
   } else {
     routingConfig.routes = [
       {
-        pattern: `${previewHostname(prNumber)}/*`,
+        pattern: previewHostname(prNumber),
         zone_name: PREVIEW_ZONE,
+        custom_domain: true,
       },
     ];
   }

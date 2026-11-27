@@ -2,18 +2,24 @@
  * @vitest-environment node
  */
 import { resolve } from "node:path";
-import { buildPrConfigs, PREVIEW_ZONE, previewHostname } from "../../../scripts/cf-pr-config.mjs";
+import {
+  buildPrConfigs,
+  PREVIEW_DOMAIN,
+  PREVIEW_ZONE,
+  previewHostname,
+} from "../../../scripts/cf-pr-config.mjs";
 
 const routingConfigPath = resolve(process.cwd(), "wrangler.jsonc");
 const appConfigPath = resolve(process.cwd(), "wrangler.app.jsonc");
 
 describe("cf-pr-config", () => {
-  it("builds the preview hostname under karmahq.org", () => {
+  it("builds the preview hostname under preview.karmahq.org", () => {
     expect(PREVIEW_ZONE).toBe("karmahq.org");
-    expect(previewHostname("2261")).toBe("pr-2261.karmahq.org");
+    expect(PREVIEW_DOMAIN).toBe("preview.karmahq.org");
+    expect(previewHostname("2261")).toBe("pr-2261.preview.karmahq.org");
   });
 
-  it("builds routing and app configs with the PR route and shared preview bucket", () => {
+  it("builds routing and app configs with the PR custom domain and shared preview bucket", () => {
     const { routing, routingConfig, appConfig } = buildPrConfigs("2261", {
       routingConfigPath,
       appConfigPath,
@@ -23,7 +29,7 @@ describe("cf-pr-config", () => {
     expect(routingConfig.name).toBe("gap-app-v2-pr-2261");
     expect(appConfig.name).toBe("gap-app-v2-pr-2261-app");
     expect(routingConfig.routes).toEqual([
-      { pattern: "pr-2261.karmahq.org/*", zone_name: "karmahq.org" },
+      { pattern: "pr-2261.preview.karmahq.org", zone_name: "karmahq.org", custom_domain: true },
     ]);
     expect(routingConfig.workers_dev).toBe(true);
     expect(routingConfig.preview_urls).toBe(false);
@@ -40,7 +46,7 @@ describe("cf-pr-config", () => {
     expect(JSON.stringify(appConfig)).not.toContain("gap-app-v2-staging");
   });
 
-  it("omits NEXT_SERVER and zone routes when --without-next-server is requested", () => {
+  it("omits NEXT_SERVER and routes when --without-next-server is requested", () => {
     const { routingConfig } = buildPrConfigs("2261", {
       withoutNextServer: true,
       routingConfigPath,
