@@ -105,7 +105,7 @@ describe("AIAnalysisTab", () => {
 
       expect(screen.getByText("External Evaluation")).toBeInTheDocument();
       expect(screen.getByText("Internal Evaluation")).toBeInTheDocument();
-      expect(screen.getByText("Applicant Insights")).toBeInTheDocument();
+      expect(screen.getByText("Review Insights")).toBeInTheDocument();
     });
 
     it("shows external run button by default", () => {
@@ -133,7 +133,7 @@ describe("AIAnalysisTab", () => {
 
       expect(screen.queryByText("External Evaluation")).not.toBeInTheDocument();
       expect(screen.queryByText("Internal Evaluation")).not.toBeInTheDocument();
-      expect(screen.queryByText("Applicant Insights")).not.toBeInTheDocument();
+      expect(screen.queryByText("Review Insights")).not.toBeInTheDocument();
       expect(screen.getByTestId("insights-panel")).toBeInTheDocument();
       expect(screen.queryByTestId("run-external-btn")).not.toBeInTheDocument();
     });
@@ -435,7 +435,7 @@ describe("AIAnalysisTab", () => {
     });
   });
 
-  describe("Applicant Insights", () => {
+  describe("Review Insights", () => {
     it("renders the insights panel for the application when the Insights sub-tab is opened", async () => {
       const user = userEvent.setup();
       render(
@@ -445,7 +445,7 @@ describe("AIAnalysisTab", () => {
         />
       );
 
-      await user.click(screen.getByText("Applicant Insights"));
+      await user.click(screen.getByText("Review Insights"));
 
       expect(screen.getByTestId("insights-panel")).toHaveTextContent("APP-TEST-123");
     });
@@ -459,7 +459,7 @@ describe("AIAnalysisTab", () => {
         />
       );
 
-      await user.click(screen.getByText("Applicant Insights"));
+      await user.click(screen.getByText("Review Insights"));
 
       expect(screen.queryByTestId("run-external-btn")).not.toBeInTheDocument();
       expect(screen.queryByTestId("run-internal-btn")).not.toBeInTheDocument();

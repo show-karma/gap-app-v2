@@ -37,7 +37,7 @@ const tabs: {
   },
   {
     id: "insights",
-    label: "Applicant Insights",
+    label: "Review Insights",
     shortLabel: "Insights",
     icon: ChartBarIcon,
     description: "Project track record",
@@ -47,7 +47,7 @@ const tabs: {
 /**
  * Sub-tab navigation for AI Analysis tab.
  * Switches between External (applicant-visible), Internal (reviewer-only
- * proposal critique), and Applicant Insights (reviewer-only track-record
+ * proposal critique), and Review Insights (reviewer-only track-record
  * verdict on the linked Karma project).
  */
 export const AIAnalysisSubTabs: FC<AIAnalysisSubTabsProps> = ({
