@@ -25,9 +25,7 @@ const PanelHeader: FC<{ subtitle: string; projectHref?: string }> = ({ subtitle,
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <ChartBarIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Applications Insights
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Applicant Insights</h3>
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
     </div>

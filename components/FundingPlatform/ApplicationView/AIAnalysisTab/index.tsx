@@ -32,7 +32,7 @@ function getDefaultTab(
 
 /**
  * AI Analysis tab. External (applicant-visible) and Internal (reviewer-only)
- * evaluations sit beside Applications Insights, the linked project's track
+ * evaluations sit beside Applicant Insights, the linked project's track
  * record. When neither evaluation applies, Insights renders without a sub-tab bar.
  */
 export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
