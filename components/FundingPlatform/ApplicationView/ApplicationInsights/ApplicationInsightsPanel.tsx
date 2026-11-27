@@ -20,14 +20,17 @@ export interface ApplicationInsightsPanelProps {
   onOpenSimocracyTab?: () => void;
 }
 
-const PanelHeader: FC<{ subtitle: string; projectHref?: string }> = ({ subtitle, projectHref }) => (
+const PANEL_SUBTITLE =
+  "AI analysis of this application alongside the applicant's past funding and delivery history, to help you review it.";
+
+const PanelHeader: FC<{ projectHref?: string }> = ({ projectHref }) => (
   <div className="flex flex-wrap items-start justify-between gap-2">
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <ChartBarIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Applicant Insights</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Review Insights</h3>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{PANEL_SUBTITLE}</p>
     </div>
     {projectHref ? (
       <Link
@@ -95,7 +98,7 @@ export const ApplicationInsightsPanel: FC<ApplicationInsightsPanelProps> = ({
   if (record.status === "no_project_linked") {
     return (
       <div className="flex flex-col gap-5">
-        <PanelHeader subtitle="Track record of the Karma project linked on the application." />
+        <PanelHeader />
         <NoProjectState
           title="No Karma project linked"
           description="The applicant didn't link a Karma project on this application, so there is no funding history, metrics or activity to show."
@@ -107,7 +110,7 @@ export const ApplicationInsightsPanel: FC<ApplicationInsightsPanelProps> = ({
   if (record.status === "project_not_found") {
     return (
       <div className="flex flex-col gap-5">
-        <PanelHeader subtitle="Track record of the Karma project linked on the application." />
+        <PanelHeader />
         <NoProjectState
           title="Linked project not found"
           description="The application links a Karma project that no longer exists or hasn't been indexed yet."
@@ -116,7 +119,6 @@ export const ApplicationInsightsPanel: FC<ApplicationInsightsPanelProps> = ({
     );
   }
 
-  const projectName = record.project?.title ?? "the linked project";
   const commitmentCounts = indicators.data
     ? {
         met: commitments.filter((commitment) => commitment.met).length,
@@ -134,7 +136,6 @@ export const ApplicationInsightsPanel: FC<ApplicationInsightsPanelProps> = ({
     <div className="flex flex-col gap-9">
       <div className="flex flex-col gap-5">
         <PanelHeader
-          subtitle={`Track record of ${projectName}, the Karma project linked on the application. Data comes straight from Karma.`}
           projectHref={
             record.project
               ? PAGES.PROJECT.OVERVIEW(record.project.slug ?? record.project.uid)
