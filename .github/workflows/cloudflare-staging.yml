@@ -6,7 +6,7 @@ name: Deploy to Cloudflare staging
 # first and then the public routing Worker (wrangler.app.jsonc, wrangler.jsonc,
 # docs/cloudflare-opennext-feasibility.md):
 #   gap-app-v2-staging-app  (no public URL)
-#   gap-app-v2-staging      (https://gap-app-v2-staging.dawn-sound-c6f7.workers.dev)
+#   gap-app-v2-staging      (https://staging.karmahq.org)
 #
 # Runs on pushes to migration-cloudflare while the migration is in progress;
 # move it to `main` together with staging.yml at the cutover.
@@ -36,7 +36,7 @@ env:
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
   WRANGLER_SEND_METRICS: 'false'
-  STAGING_URL: https://gap-app-v2-staging.dawn-sound-c6f7.workers.dev
+  STAGING_URL: https://staging.karmahq.org
   R2_BUCKET: gap-app-v2-staging-opennext-cache
   VERCEL_ENV_FILE: .vercel/.env.preview.local
 
@@ -102,4 +102,9 @@ jobs:
             echo "$status $path"
             [ "$status" = "200" ] || fail=1
           done
+          headers=$(curl -sSI --max-time 30 "$STAGING_URL/" || true)
+          if ! grep -qi '^x-robots-tag:.*noindex' <<<"$headers"; then
+            echo "::error::Expected X-Robots-Tag containing noindex on $STAGING_URL/"
+            fail=1
+          fi
           exit $fail

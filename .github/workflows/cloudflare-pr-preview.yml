@@ -3,9 +3,12 @@ name: Cloudflare preview of a pull request
 # The Cloudflare counterpart of the Vercel preview of each pull request. Every
 # PR gets its own pair of Workers, built from the PR head with the Vercel
 # "preview" environment, like the Cloudflare staging (cloudflare-staging.yml):
-#   gap-app-v2-pr-<n>       routing Worker, https://gap-app-v2-pr-<n>.<account>.workers.dev
+#   gap-app-v2-pr-<n>       routing Worker, served at https://pr-<n>.karmahq.org
 #   gap-app-v2-pr-<n>-app   Next server Worker (no public URL)
-# Both are deleted when the PR is closed or merged. The URL goes in a PR comment.
+# Each PR preview attaches a Workers Route (pr-<n>.karmahq.org/* in zone
+# karmahq.org, covered by Universal SSL *.karmahq.org) and a proxied AAAA
+# 100:: DNS record. Both Workers and the DNS record are deleted when the PR is
+# closed or merged. The URL goes in a PR comment.
 #
 # One pair per PR, not preview versions of the staging Workers: the routing
 # Worker reaches the Next server through a service binding by Worker name, and
@@ -53,6 +56,9 @@ env:
   ROUTING_WORKER: gap-app-v2-pr-${{ github.event.pull_request.number || inputs.pr }}
   NEXT_WORKER: gap-app-v2-pr-${{ github.event.pull_request.number || inputs.pr }}-app
   R2_BUCKET: gap-app-v2-pr-opennext-cache
+  PREVIEW_ZONE: karmahq.org
+  PREVIEW_HOST: pr-${{ github.event.pull_request.number || inputs.pr }}.karmahq.org
+  PREVIEW_URL: https://pr-${{ github.event.pull_request.number || inputs.pr }}.karmahq.org
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
   WRANGLER_SEND_METRICS: 'false'
@@ -170,20 +176,65 @@ jobs:
           OPEN_NEXT_DEPLOY: 'true'
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          # Without pipefail, tee would hide a failed deploy from the retry loop.
-          set -o pipefail
           for attempt in $(seq "$DEPLOY_ATTEMPTS"); do
             npx wrangler deploy .open-next/upload/worker.js --config wrangler.pr.jsonc \
-              --no-bundle --no-minify --message "PR #$PR at $SHA" | tee deploy.log && break
+              --no-bundle --no-minify --message "PR #$PR at $SHA" && break
             [ "$attempt" = "$DEPLOY_ATTEMPTS" ] && exit 1
             sleep 15
           done
-          url=$(grep -oE "https://$ROUTING_WORKER\.[a-z0-9-]+\.workers\.dev" deploy.log | head -1)
-          if [ -z "$url" ]; then
-            echo "::error::No workers.dev URL in the deploy output."
+
+      - name: Ensure preview DNS record
+        id: dns
+        run: |
+          set -euo pipefail
+          auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          api="https://api.cloudflare.com/client/v4"
+
+          zone_resp=$(curl -sS -H "$auth" "$api/zones?name=$PREVIEW_ZONE&account.id=$CLOUDFLARE_ACCOUNT_ID")
+          if [ "$(jq -r '.success // empty' <<<"$zone_resp")" != "true" ]; then
+            echo "::error::Failed to look up Cloudflare zone $PREVIEW_ZONE: $(jq -c '.errors // .' <<<"$zone_resp")"
             exit 1
           fi
-          echo "url=$url" >> "$GITHUB_OUTPUT"
+          zone_id=$(jq -r '.result[0].id // empty' <<<"$zone_resp")
+          if [ -z "$zone_id" ]; then
+            echo "::error::Cloudflare zone $PREVIEW_ZONE not found in account."
+            exit 1
+          fi
+
+          rec_resp=$(curl -sS -H "$auth" "$api/zones/$zone_id/dns_records?name=$PREVIEW_HOST&type=AAAA")
+          if [ "$(jq -r '.success // empty' <<<"$rec_resp")" != "true" ]; then
+            echo "::error::Failed to query DNS records for $PREVIEW_HOST (check Zone DNS Write permission): $(jq -c '.errors // .' <<<"$rec_resp")"
+            exit 1
+          fi
+
+          rec_id=$(jq -r '.result[0].id // empty' <<<"$rec_resp")
+          rec_content=$(jq -r '.result[0].content // empty' <<<"$rec_resp")
+          rec_proxied=$(jq -r '.result[0].proxied // false' <<<"$rec_resp")
+
+          payload=$(jq -nc --arg name "$PREVIEW_HOST" --arg comment "PR #$PR Cloudflare preview" \
+            '{type: "AAAA", name: $name, content: "100::", proxied: true, ttl: 1, comment: $comment}')
+
+          if [ "$rec_content" = "100::" ] && [ "$rec_proxied" = "true" ]; then
+            echo "DNS record $PREVIEW_HOST AAAA 100:: (proxied) already exists ($rec_id)"
+          elif [ -n "$rec_id" ]; then
+            upd_resp=$(curl -sS -X PUT -H "$auth" -H "Content-Type: application/json" \
+              -d "$payload" "$api/zones/$zone_id/dns_records/$rec_id")
+            if [ "$(jq -r '.success // empty' <<<"$upd_resp")" != "true" ]; then
+              echo "::error::Failed to update DNS record $PREVIEW_HOST (check Zone DNS Write permission): $(jq -c '.errors // .' <<<"$upd_resp")"
+              exit 1
+            fi
+            echo "Updated DNS record $PREVIEW_HOST AAAA 100:: (proxied)"
+          else
+            crt_resp=$(curl -sS -X POST -H "$auth" -H "Content-Type: application/json" \
+              -d "$payload" "$api/zones/$zone_id/dns_records")
+            if [ "$(jq -r '.success // empty' <<<"$crt_resp")" != "true" ]; then
+              echo "::error::Failed to create DNS record $PREVIEW_HOST (check Zone DNS Write permission): $(jq -c '.errors // .' <<<"$crt_resp")"
+              exit 1
+            fi
+            echo "Created DNS record $PREVIEW_HOST AAAA 100:: (proxied)"
+          fi
+
+          echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
       - name: Copy the missing runtime secrets from Vercel
         # Secrets stay with a Worker across deploys, so only the first deploy (or
@@ -205,27 +256,34 @@ jobs:
         run: rm -rf .vercel
 
       - name: Smoke test
-        # On a PR's first deploy the routing Worker's new binding to the Next
-        # server Worker answers 404 for a few seconds, so each path gets a minute.
+        # DNS propagation for a brand-new pr-<n>.karmahq.org record and the
+        # routing Worker's NEXT_SERVER binding can each take a few seconds, so
+        # retry up to 2 minutes per path without failing fast on curl DNS errors.
         env:
-          URL: ${{ steps.routing.outputs.url }}
+          URL: ${{ env.PREVIEW_URL }}
         run: |
           fail=0
           for path in / /communities /api/geo /sitemap_index.xml /admin/studio; do
-            for attempt in 1 2 3 4 5 6; do
-              status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path")
+            status="000"
+            for attempt in $(seq 1 12); do
+              status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path" || true)
               [ "$status" = "200" ] && break
-              sleep 10
+              [ "$attempt" -lt 12 ] && sleep 10
             done
             echo "$status $path"
             [ "$status" = "200" ] || fail=1
           done
+          headers=$(curl -sSI --max-time 30 "$URL/" || true)
+          if ! grep -qi '^x-robots-tag:.*noindex' <<<"$headers"; then
+            echo "::error::Expected X-Robots-Tag containing noindex on $URL/"
+            fail=1
+          fi
           exit $fail
 
       - name: Post the preview URL on the PR
-        if: always() && steps.routing.outputs.url != ''
+        if: always() && steps.dns.outputs.url != ''
         env:
-          URL: ${{ steps.routing.outputs.url }}
+          URL: ${{ steps.dns.outputs.url }}
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           SMOKE: ${{ job.status }}
         run: |
@@ -294,6 +352,44 @@ jobs:
             fi
           done
 
+      - name: Delete preview DNS record
+        run: |
+          set -euo pipefail
+          auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          api="https://api.cloudflare.com/client/v4"
+
+          zone_resp=$(curl -sS -H "$auth" "$api/zones?name=$PREVIEW_ZONE&account.id=$CLOUDFLARE_ACCOUNT_ID")
+          if [ "$(jq -r '.success // empty' <<<"$zone_resp")" != "true" ]; then
+            echo "::error::Failed to look up Cloudflare zone $PREVIEW_ZONE: $(jq -c '.errors // .' <<<"$zone_resp")"
+            exit 1
+          fi
+          zone_id=$(jq -r '.result[0].id // empty' <<<"$zone_resp")
+          if [ -z "$zone_id" ]; then
+            echo "::error::Cloudflare zone $PREVIEW_ZONE not found in account."
+            exit 1
+          fi
+
+          rec_resp=$(curl -sS -H "$auth" "$api/zones/$zone_id/dns_records?name=$PREVIEW_HOST&type=AAAA")
+          if [ "$(jq -r '.success // empty' <<<"$rec_resp")" != "true" ]; then
+            echo "::error::Failed to query DNS records for $PREVIEW_HOST: $(jq -c '.errors // .' <<<"$rec_resp")"
+            exit 1
+          fi
+
+          ids=$(jq -r '.result[] | select(.content == "100::") | .id' <<<"$rec_resp")
+          if [ -z "$ids" ]; then
+            echo "No preview AAAA record for $PREVIEW_HOST"
+            exit 0
+          fi
+
+          for id in $ids; do
+            del_resp=$(curl -sS -X DELETE -H "$auth" "$api/zones/$zone_id/dns_records/$id")
+            if [ "$(jq -r '.success // empty' <<<"$del_resp")" != "true" ]; then
+              echo "::error::Failed to delete DNS record $id ($PREVIEW_HOST): $(jq -c '.errors // .' <<<"$del_resp")"
+              exit 1
+            fi
+            echo "Deleted DNS record $PREVIEW_HOST ($id)"
+          done
+
       - name: Mark the PR comment
         run: |
           id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
@@ -301,5 +397,5 @@ jobs:
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" \
               -f body="$COMMENT_MARKER
-          **Cloudflare preview:** removed; Workers \`$ROUTING_WORKER\` and \`$NEXT_WORKER\` deleted." > /dev/null
+          **Cloudflare preview:** removed; Workers \`$ROUTING_WORKER\` and \`$NEXT_WORKER\` and DNS \`$PREVIEW_HOST\` deleted." > /dev/null
           fi
