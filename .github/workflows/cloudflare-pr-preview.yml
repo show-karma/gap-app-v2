@@ -301,12 +301,16 @@ jobs:
           fi
 
           for id in $ids; do
-            del_resp=$(curl -sS -X DELETE -H "$auth" "$api/$id")
-            if [ "$(jq -r '.success // empty' <<<"$del_resp")" != "true" ]; then
-              echo "::error::Failed to detach Custom Domain $PREVIEW_HOST ($id): $(jq -c '.errors // .' <<<"$del_resp")"
+            del_body_file=$(mktemp)
+            del_status=$(curl -sS -o "$del_body_file" -w '%{http_code}' -X DELETE -H "$auth" "$api/$id")
+            del_body=$(cat "$del_body_file")
+            rm -f "$del_body_file"
+            if [ "$del_status" = "204" ] || [ "$del_status" = "404" ] || { [ "$del_status" = "200" ] && { [ -z "$del_body" ] || [ "$(jq -r '.success // empty' <<<"$del_body")" = "true" ]; }; }; then
+              echo "Detached Custom Domain $PREVIEW_HOST ($id, HTTP $del_status)"
+            else
+              echo "::error::Failed to detach Custom Domain $PREVIEW_HOST ($id, HTTP $del_status): $del_body"
               exit 1
             fi
-            echo "Detached Custom Domain $PREVIEW_HOST ($id)"
           done
 
       - name: Delete both Workers
