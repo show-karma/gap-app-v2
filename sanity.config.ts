@@ -18,7 +18,9 @@ import { PAGES } from "@/utilities/pages";
  * the app failing to build.
  */
 export default defineConfig({
-  basePath: PAGES.ADMIN_STUDIO,
+  // The static build for the Cloudflare Worker (sanity.cli.ts) already mounts
+  // the whole app at /admin/studio, so its workspace sits at the root of that.
+  basePath: process.env.KARMA_STUDIO_STATIC_BUILD === "1" ? "/" : PAGES.ADMIN_STUDIO,
   projectId: projectId || "placeholder",
   dataset,
   plugins: [structureTool(), visionTool()],

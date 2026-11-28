@@ -8,24 +8,21 @@ export const maxDuration = 60;
 // silently eating the whole maxDuration budget.
 const FETCH_TIMEOUT_MS = 15_000;
 
-// Vercel cron (see vercel.json) that keeps every sitemap warm: it GETs the
-// index, extracts the child URLs, and GETs each one. The public routes then
-// refresh their own Data Cache entries (stale-while-revalidate), so crawler
-// traffic is never what triggers a refresh and Googlebot only ever sees warm,
-// fast responses — including right after a deploy, when the CDN cache is cold
-// but the Data Cache (which persists across deployments) is not.
-export async function GET(request: Request): Promise<NextResponse> {
-  // Runtime-only. Replaces `export const dynamic = "force-dynamic"`, which
-  // cacheComponents rejects — and simply dropping that export is NOT
-  // equivalent: verified on a production build the route flips to `○`
-  // (statically prerendered), baking the response at build time.
-  await connection();
+const CRON_MONITOR_SLUG = "warm-sitemaps";
+const CRON_MONITOR_CONFIG = {
+  schedule: { type: "crontab" as const, value: "0 */6 * * *" },
+  checkinMargin: 5,
+  maxRuntime: 5,
+  timezone: "UTC",
+};
 
-  const secret = process.env.CRON_SECRET;
-  if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+class WarmSitemapsFailedError extends Error {
+  constructor(readonly warmed: Record<string, number>) {
+    super("warm-sitemaps completed with failed fetches");
   }
+}
 
+async function warmAllSitemaps(): Promise<{ ok: boolean; warmed: Record<string, number> }> {
   const warmed: Record<string, number> = {};
 
   const indexUrl = `${SITE_URL}/sitemap_index.xml`;
@@ -37,7 +34,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     });
     warmed[indexUrl] = indexRes.status;
     if (!indexRes.ok) {
-      return NextResponse.json({ ok: false, warmed }, { status: 502 });
+      return { ok: false, warmed };
     }
     const body = await indexRes.text();
     children = Array.from(body.matchAll(/<loc>([^<]+)<\/loc>/g), (m) => m[1]);
@@ -50,12 +47,12 @@ export async function GET(request: Request): Promise<NextResponse> {
         tags: { route: "/api/cron/warm-sitemaps" },
         extra: { indexUrl },
       });
-      return NextResponse.json({ ok: false, warmed }, { status: 502 });
+      return { ok: false, warmed };
     }
   } catch (err) {
     Sentry.captureException(err, { tags: { route: "/api/cron/warm-sitemaps" } });
     warmed[indexUrl] = 0;
-    return NextResponse.json({ ok: false, warmed }, { status: 502 });
+    return { ok: false, warmed };
   }
 
   // Sequential on purpose: a burst would contend with the indexer's public
@@ -77,5 +74,47 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   const failures = Object.values(warmed).filter((status) => status !== 200).length;
-  return NextResponse.json({ ok: failures === 0, warmed }, { status: failures === 0 ? 200 : 502 });
+  return { ok: failures === 0, warmed };
+}
+
+// Cron handler (vercel.json and wrangler.jsonc) that keeps every sitemap warm:
+// it GETs the index, extracts the child URLs, and GETs each one. The public
+// routes then refresh their own Data Cache entries (stale-while-revalidate), so
+// crawler traffic is never what triggers a refresh and Googlebot only ever sees
+// warm, fast responses — including right after a deploy, when the CDN cache is
+// cold but the Data Cache (which persists across deployments) is not.
+export async function GET(request: Request): Promise<NextResponse> {
+  // Runtime-only. Replaces `export const dynamic = "force-dynamic"`, which
+  // cacheComponents rejects — and simply dropping that export is NOT
+  // equivalent: verified on a production build the route flips to `○`
+  // (statically prerendered), baking the response at build time.
+  await connection();
+
+  const secret = process.env.CRON_SECRET;
+  if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const warmed = await Sentry.withMonitor(
+      CRON_MONITOR_SLUG,
+      async () => {
+        const result = await warmAllSitemaps();
+        if (!result.ok) {
+          throw new WarmSitemapsFailedError(result.warmed);
+        }
+        return result.warmed;
+      },
+      CRON_MONITOR_CONFIG
+    );
+    return NextResponse.json({ ok: true, warmed }, { status: 200 });
+  } catch (err) {
+    if (err instanceof WarmSitemapsFailedError) {
+      return NextResponse.json({ ok: false, warmed: err.warmed }, { status: 502 });
+    }
+    throw err;
+  } finally {
+    // Flush check-ins before the Cloudflare Worker isolate closes after returning the response.
+    await Sentry.flush(2000).catch(() => undefined);
+  }
 }

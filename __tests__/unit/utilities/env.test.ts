@@ -143,6 +143,25 @@ describe("env validation", () => {
       }
     });
 
+    it("accepts valid NEXT_PUBLIC_APP_ENV values", () => {
+      for (const env of ["production", "preview", "development"]) {
+        const result = clientSchema.safeParse({
+          ...validClientEnv,
+          NEXT_PUBLIC_APP_ENV: env,
+        });
+        expect(result.success).toBe(true);
+      }
+    });
+
+    it.each(["staging", "prod", "Production"])(
+      "rejects an unknown deployment environment (%j) in either variable",
+      (env) => {
+        for (const key of ["NEXT_PUBLIC_APP_ENV", "NEXT_PUBLIC_VERCEL_ENV"]) {
+          expect(clientSchema.safeParse({ ...validClientEnv, [key]: env }).success).toBe(false);
+        }
+      }
+    );
+
     it("defaults Sanity vars so an unset CMS never fails validation", () => {
       const result = clientSchema.safeParse(validClientEnv);
       expect(result.success).toBe(true);
@@ -193,6 +212,13 @@ describe("env validation", () => {
       if (trueResult.success) {
         expect(trueResult.data.ANALYZE).toBe(true);
       }
+    });
+
+    it("accepts the server-side deployment environment pair", () => {
+      for (const env of ["production", "preview", "development"]) {
+        expect(serverSchema.safeParse({ APP_ENV: env, VERCEL_ENV: env }).success).toBe(true);
+      }
+      expect(serverSchema.safeParse({ APP_ENV: "staging" }).success).toBe(false);
     });
 
     it("defaults ANALYZE to false", () => {
@@ -251,5 +277,16 @@ describe("env validation", () => {
       expect(result.NEXT_PUBLIC_VERCEL_ENV).toBeUndefined();
       expect(result.NEXT_PUBLIC_SENTRY_DSN).toBeUndefined();
     });
+  });
+});
+
+describe("clientEnvSource", () => {
+  it("lists every client schema key, so each one is inlined at build time", async () => {
+    vi.stubEnv("NEXT_PUBLIC_GAP_INDEXER_URL", "https://indexer.example.com");
+    vi.stubEnv("NEXT_PUBLIC_PRIVY_APP_ID", "test-privy-id");
+    vi.resetModules();
+    const { clientEnvSource } = await import("@/utilities/env");
+    expect(Object.keys(clientEnvSource).sort()).toEqual(Object.keys(clientSchema.shape).sort());
+    vi.unstubAllEnvs();
   });
 });

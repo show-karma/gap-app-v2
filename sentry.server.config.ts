@@ -3,11 +3,12 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { isProductionDeployment } from "./utilities/deployment-env";
 import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 import { isTransientHttpError, isTransientNetworkError } from "./utilities/sentry/transientErrors";
 
 Sentry.init({
-  enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
+  enabled: isProductionDeployment(),
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   ignoreErrors: sentryIgnoreErrors,
   // Drop transient indexer outages that crash SSR. A 504 (and the rest of

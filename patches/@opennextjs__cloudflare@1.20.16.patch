@@ -1,0 +1,621 @@
+diff --git a/dist/cli/build/build.js b/dist/cli/build/build.js
+index 5f376b79e4ee23c8f5f9578fa420ae7cdcc9cf84..3340f6f98a950ac425705e74e32c7bb4e9ac3c67 100644
+--- a/dist/cli/build/build.js
++++ b/dist/cli/build/build.js
+@@ -87,6 +87,6 @@ export async function build(options, config, projectOpts, wranglerConfig, allowU
+     }
+     await createServerBundle(options);
+     await compileDurableObjects(options);
+-    await bundleServer(options, projectOpts);
++    await bundleServer(options, projectOpts, wranglerConfig);
+     logger.info("OpenNext build complete.");
+ }
+diff --git a/dist/cli/build/bundle-server.js b/dist/cli/build/bundle-server.js
+index 7420316008e9651c5a1e41d2edcc3d00b8d023f8..ec249e8ee7ddf3ffc25c3f382afc8db6917fbfbd 100644
+--- a/dist/cli/build/bundle-server.js
++++ b/dist/cli/build/bundle-server.js
+@@ -4,6 +4,7 @@ import path from "node:path";
+ import { fileURLToPath } from "node:url";
+ import * as buildHelper from "@opennextjs/aws/build/helper.js";
+ import { getPackagePath } from "@opennextjs/aws/build/helper.js";
++import logger from "@opennextjs/aws/logger.js";
+ import { ContentUpdater } from "@opennextjs/aws/plugins/content-updater.js";
+ import { build } from "esbuild";
+ import { globSync } from "glob";
+@@ -11,6 +12,8 @@ import { getOpenNextConfig } from "../../api/config.js";
+ import { normalizePath } from "../utils/normalize-path.js";
+ import { patchVercelOgLibrary } from "./patches/ast/patch-vercel-og-library.js";
+ import { patchWebpackRuntime } from "./patches/ast/webpack-runtime.js";
++// Backport of opennextjs/opennextjs-cloudflare#1318 (pnpm patch).
++import { cacheComponentsSchedulerModule, hasMicrotaskCheckpoint, microtaskCheckpointWarning, needsCacheComponentsScheduler, patchCacheComponents, } from "./patches/plugins/cache-components.js";
+ import { inlineDynamicRequires } from "./patches/plugins/dynamic-requires.js";
+ import { inlineFindDir } from "./patches/plugins/find-dir.js";
+ import { patchInstrumentation } from "./patches/plugins/instrumentation.js";
+@@ -50,13 +53,16 @@ const optionalDependencies = [
+  * @returns Resolves when the server bundle and Worker entry point have been written.
+  * @throws When preparing or bundling the server fails.
+  */
+-export async function bundleServer(buildOpts, projectOpts) {
++export async function bundleServer(buildOpts, projectOpts, wranglerConfig) {
+     copyPackageCliFiles(packageDistDir, buildOpts);
+     const { appPath, outputDir, monorepoRoot, debug } = buildOpts;
+     const dotNextPath = path.join(outputDir, "server-functions/default", getPackagePath(buildOpts), ".next");
+     const serverFiles = path.join(dotNextPath, "required-server-files.json");
+     const nextConfig = JSON.parse(fs.readFileSync(serverFiles, "utf-8")).config;
+     const useTurbopack = buildHelper.getBundlerRuntime(buildOpts) === "turbopack";
++    if (needsCacheComponentsScheduler(buildOpts, nextConfig) && !hasMicrotaskCheckpoint(wranglerConfig)) {
++        logger.warn(microtaskCheckpointWarning);
++    }
+     console.log(`\x1b[35m⚙️ Bundling the OpenNext server...\n\x1b[0m`);
+     await patchWebpackRuntime(path.join(dotNextPath, "server"));
+     const outputPath = path.join(outputDir, "server-functions", "default");
+@@ -75,7 +81,16 @@ export async function bundleServer(buildOpts, projectOpts) {
+     const openNextServerBundle = path.join(outputPath, packagePath, `handler.mjs`);
+     const updater = new ContentUpdater(buildOpts);
+     const result = await build({
+-        entryPoints: [openNextServer],
++        // The scheduler wraps `setImmediate`, so it must load before the Next.js server captures it.
++        ...(needsCacheComponentsScheduler(buildOpts, nextConfig)
++            ? {
++                stdin: {
++                    contents: `import "${cacheComponentsSchedulerModule}"; export { handler } from ${JSON.stringify(openNextServer)};`,
++                    resolveDir: appPath,
++                    sourcefile: "cache-components-server-entry.mjs",
++                },
++            }
++            : { entryPoints: [openNextServer] }),
+         bundle: true,
+         outfile: openNextServerBundle,
+         format: "esm",
+@@ -104,6 +119,7 @@ export async function bundleServer(buildOpts, projectOpts) {
+             fixRequire(updater),
+             handleOptionalDependencies(optionalDependencies),
+             patchInstrumentation(updater, buildOpts),
++            patchCacheComponents(updater, buildOpts, nextConfig),
+             patchPagesRouterContext(buildOpts),
+             inlineFindDir(updater, buildOpts),
+             inlineLoadManifest(updater, buildOpts),
+diff --git a/dist/cli/build/open-next/compile-init.js b/dist/cli/build/open-next/compile-init.js
+index fe90393b2497910c8085fcf906ca4bd9a39baa2f..83a24a54415b5483c44c30e2e45a207dc41a3be6 100644
+--- a/dist/cli/build/open-next/compile-init.js
++++ b/dist/cli/build/open-next/compile-init.js
+@@ -2,6 +2,7 @@ import path from "node:path";
+ import { fileURLToPath } from "node:url";
+ import { loadConfig } from "@opennextjs/aws/adapters/config/util.js";
+ import { build } from "esbuild";
++import { needsCacheComponentsScheduler } from "../patches/plugins/cache-components.js";
+ /**
+  * Compiles the initialization code for the workerd runtime
+  */
+@@ -23,6 +24,7 @@ export async function compileInit(options, wranglerConfig) {
+         platform: "node",
+         define: {
+             __BUILD_TIMESTAMP_MS__: JSON.stringify(Date.now()),
++            __CACHE_COMPONENTS_SCHEDULER__: JSON.stringify(needsCacheComponentsScheduler(options, nextConfig)),
+             __NEXT_BASE_PATH__: JSON.stringify(basePath),
+             __ASSETS_RUN_WORKER_FIRST__: JSON.stringify(wranglerConfig.assets?.run_worker_first ?? false),
+             __DEPLOYMENT_ID__: JSON.stringify(deploymentId),
+diff --git a/dist/cli/build/open-next/createServerBundle.js b/dist/cli/build/open-next/createServerBundle.js
+index 5119462944183d6addcb9306ccb49972e1b21e4d..dbbabc0719e99670c1c3934d12036b200ab22fcc 100644
+--- a/dist/cli/build/open-next/createServerBundle.js
++++ b/dist/cli/build/open-next/createServerBundle.js
+@@ -2,7 +2,7 @@
+ // Adapted for cloudflare workers
+ import fs from "node:fs";
+ import path from "node:path";
+-import { loadMiddlewareManifest } from "@opennextjs/aws/adapters/config/util.js";
++import { loadConfig, loadMiddlewareManifest } from "@opennextjs/aws/adapters/config/util.js";
+ import { bundleNextServer } from "@opennextjs/aws/build/bundleNextServer.js";
+ import { compileCache } from "@opennextjs/aws/build/compileCache.js";
+ import { copyTracedFiles } from "@opennextjs/aws/build/copyTracedFiles.js";
+@@ -142,7 +142,7 @@ async function generateBundle(name, options, fnOptions, codeCustomization) {
+         awsPatches.patchBackgroundRevalidation,
+         awsPatches.patchNodeEnvironment,
+         // Cloudflare specific patches
+-        patchModuleLoadingSignal,
++        patchModuleLoadingSignal(loadConfig(path.join(appBuildOutputPath, ".next"))),
+         patchResRevalidate,
+         patchUseCacheIO,
+         patchTurbopackRuntime,
+diff --git a/dist/cli/build/patches/plugins/cache-components.js b/dist/cli/build/patches/plugins/cache-components.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..265ad9e8b56ff149b688a74e5242f6809245e051
+--- /dev/null
++++ b/dist/cli/build/patches/plugins/cache-components.js
+@@ -0,0 +1,107 @@
++/**
++ * Backport of opennextjs/opennextjs-cloudflare#1318 (commit 9dbb209), applied to 1.20.16 with
++ * `pnpm patch`. Remove this patch once a released @opennextjs/cloudflare contains the fix.
++ */
++import path from "node:path";
++import { compareSemver } from "@opennextjs/aws/build/helper.js";
++import { applyRule, parseCode } from "@opennextjs/aws/build/patch/astCodePatcher.js";
++import { getCrossPlatformPathRegex } from "@opennextjs/aws/utils/regex.js";
++export const cacheComponentsSchedulerModule = "__opennext_cache_components_scheduler";
++const microtaskCheckpointFlag = "unhandled_rejection_after_microtask_checkpoint";
++const microtaskCheckpointDate = "2026-03-03";
++/**
++ * The flag is `experimental.dynamicIO` in Next.js 15.4, `experimental.cacheComponents` in 15.5 and
++ * `cacheComponents` from 16.0.
++ */
++export function isCacheComponentsEnabled(nextConfig) {
++    const config = nextConfig;
++    return Boolean(config.cacheComponents ?? config.experimental?.cacheComponents ?? config.experimental?.dynamicIO);
++}
++/** Next.js before 16.2 stages its renders with functions that are not covered. */
++export function needsCacheComponentsScheduler(buildOpts, nextConfig) {
++    return isCacheComponentsEnabled(nextConfig) && !compareSemver(buildOpts.nextVersion, "<", "16.2.0");
++}
++/**
++ * The scheduler finds the end of a render stage with the `unhandledrejection` event, which workerd
++ * dispatches at the end of the microtask checkpoint from this compatibility date or with this flag.
++ */
++export function hasMicrotaskCheckpoint(wranglerConfig) {
++    const flags = wranglerConfig.compatibility_flags ?? [];
++    if (flags.includes(`no_${microtaskCheckpointFlag}`)) {
++        return false;
++    }
++    return (flags.includes(microtaskCheckpointFlag) ||
++        (wranglerConfig.compatibility_date ?? "") >= microtaskCheckpointDate);
++}
++export const microtaskCheckpointWarning = `Cache Components is enabled but workerd cannot report the end of a render stage: cached content can then render at request time instead of from the cache. Set \`compatibility_date\` to ${microtaskCheckpointDate} or later, or add the \`${microtaskCheckpointFlag}\` compatibility flag, in your wrangler config.`;
++const runnerContentFilter = /DANGEROUSLY_runPendingImmediatesAfterCurrentTask/;
++/**
++ * The runner is compiled into the app page runtimes, into the server chunks when the bundler inlines
++ * the runtime, and stays a standalone module for the callers that are not part of a runtime.
++ */
++export const runnerFileFilter = getCrossPlatformPathRegex(String.raw `/(?:next/dist/compiled/next-server/app-page(?:-turbo)?(?:-experimental)?\.runtime\.prod|\.next/server/chunks/.+|next/dist/(?:esm/)?server/app-render/app-render-render-utils)\.js$`, { escape: false });
++export function patchCacheComponents(updater, buildOpts, nextConfig) {
++    if (!needsCacheComponentsScheduler(buildOpts, nextConfig)) {
++        return { name: "patch-cache-components", setup() { } };
++    }
++    let patchedFiles = 0;
++    updater.updateContent("cache-components-scheduler", [
++        {
++            filter: runnerFileFilter,
++            contentFilter: runnerContentFilter,
++            callback: async ({ contents, path: filePath }) => {
++                patchedFiles++;
++                return patchRunInSequentialTasks(contents, filePath);
++            },
++        },
++    ]);
++    return {
++        name: "patch-cache-components",
++        setup(build) {
++            build.onResolve({ filter: new RegExp(`^${cacheComponentsSchedulerModule}$`) }, () => ({
++                path: path.join(buildOpts.outputDir, "cloudflare-templates/cache-components-scheduler.js"),
++            }));
++            build.onEnd((result) => {
++                if (result.errors.length === 0 && patchedFiles === 0) {
++                    throw new Error(`Cache Components is enabled but \`runInSequentialTasks\` was not found in Next.js ${buildOpts.nextVersion}. The app would render incomplete responses on Workers. Please report this to @opennextjs/cloudflare.`);
++                }
++            });
++        },
++    };
++}
++export function patchRunInSequentialTasks(code, filePath) {
++    const root = parseCode(code);
++    const { edits } = applyRule(runInSequentialTasksRule, root);
++    if (edits.length !== 1) {
++        throw new Error(`Expected one \`runInSequentialTasks\` in ${filePath} but found ${edits.length}. Please report this to @opennextjs/cloudflare with your Next.js version.`);
++    }
++    return root.commitEdits(edits);
++}
++/**
++ * The minifier renames the function and inlines its timer group, but both callees are properties of
++ * an external module and keep their names.
++ */
++export const runInSequentialTasksRule = `
++rule:
++  pattern:
++    selector: function_declaration
++    context: "function $FUNCTION($$$ARGS) { $$$BODY }"
++  all:
++    - has:
++        regex: DANGEROUSLY_runPendingImmediatesAfterCurrentTask
++        stopBy: end
++    - has:
++        regex: expectNoPendingImmediates
++        stopBy: end
++    - not:
++        has:
++          kind: function_declaration
++          stopBy: end
++          has:
++            regex: DANGEROUSLY_runPendingImmediatesAfterCurrentTask
++            stopBy: end
++fix: |-
++  function $FUNCTION(first, ...rest) {
++    return require("${cacheComponentsSchedulerModule}").runInSequentialTasks(first, ...rest);
++  }
++`;
+diff --git a/dist/cli/build/patches/plugins/module-loading.js b/dist/cli/build/patches/plugins/module-loading.js
+index 8146287814f2f7558b96baf04de2ec3241b33698..df01b7c992ecc7da9de6b9e23cbfc7de8c4d10e4 100644
+--- a/dist/cli/build/patches/plugins/module-loading.js
++++ b/dist/cli/build/patches/plugins/module-loading.js
+@@ -5,8 +5,9 @@
+  * cancel or notify those timers from a different request's I/O context, so store
+  * the signal on the OpenNext request store and use a fallback outside a request.
+  */
+-import { patchCode } from "@opennextjs/aws/build/patch/astCodePatcher.js";
++import { applyRule, parseCode } from "@opennextjs/aws/build/patch/astCodePatcher.js";
+ import { getCrossPlatformPathRegex } from "@opennextjs/aws/utils/regex.js";
++import { isCacheComponentsEnabled } from "./cache-components.js";
+ /**
+  * ast-grep rule replacing the body of `getModuleLoadingSignal()` to scope the signal to the request.
+  *
+@@ -37,14 +38,30 @@ fix: |-
+     return $SIGNAL ??= new $CACHE_SIGNAL.CacheSignal($$$ARGS);
+   }
+ `;
+-export const patchModuleLoadingSignal = {
+-    name: "patch-module-loading-signal",
+-    patches: [
+-        {
+-            versions: ">=15.4.0",
+-            pathFilter: getCrossPlatformPathRegex(String.raw `/server/app-render/module-loading/track-module-loading\.instance\.js$`, { escape: false }),
+-            contentFilter: /getModuleLoadingSignal/,
+-            patchCode: async ({ code }) => patchCode(code, moduleLoadingSignalRule),
+-        },
+-    ],
+-};
++// Backport of opennextjs/opennextjs-cloudflare#1318 (pnpm patch): fail the build when the rule
++// stops matching instead of shipping a Worker whose overlapping requests can hang.
++export function patchModuleLoadingSignal(nextConfig) {
++    const cacheComponents = isCacheComponentsEnabled(nextConfig);
++    return {
++        name: "patch-module-loading-signal",
++        patches: [
++            {
++                versions: ">=15.4.0",
++                pathFilter: getCrossPlatformPathRegex(String.raw `/server/app-render/module-loading/track-module-loading\.instance\.js$`, { escape: false }),
++                contentFilter: /getModuleLoadingSignal/,
++                patchCode: async ({ code, filePath, buildOptions }) => {
++                    const root = parseCode(code);
++                    const { edits } = applyRule(moduleLoadingSignalRule, root);
++                    if (edits.length !== 1) {
++                        // Next.js tracks module loading only with Cache Components, so a miss is harmless without it.
++                        if (!cacheComponents) {
++                            return code;
++                        }
++                        throw new Error(`Expected one \`getModuleLoadingSignal\` in ${filePath} of Next.js ${buildOptions.nextVersion} but found ${edits.length}. With Cache Components, requests that overlap would hang on Workers. Please report this to @opennextjs/cloudflare.`);
++                    }
++                    return root.commitEdits(edits);
++                },
++            },
++        ],
++    };
++}
+diff --git a/dist/cli/templates/cache-components-scheduler.js b/dist/cli/templates/cache-components-scheduler.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..cc74644134e41e1cbf2a318f57650dc637de4051
+--- /dev/null
++++ b/dist/cli/templates/cache-components-scheduler.js
+@@ -0,0 +1,297 @@
++/**
++ * Backport of opennextjs/opennextjs-cloudflare#1318 (head 4879fe2, 2026-11-18), applied to 1.20.16 with
++ * `pnpm patch`. Remove this patch once a released @opennextjs/cloudflare contains the fix.
++ *
++ * Next.js uses one Node.js timers phase to keep native I/O between render stages out of Cache
++ * Components output. workerd can deliver I/O between timers, so this runner advances all stages in
++ * one workerd task. It drains the render's ticks, promise reactions and immediates before advancing.
++ *
++ * With `unhandled_rejection_after_microtask_checkpoint`, workerd dispatches promise rejection events
++ * after draining the microtask queue. The listener in `init.ts` forwards the runner's own events.
++ * Without the flag or after the checkpoint budget runs out, a bounded microtask wait can advance the
++ * stage early. The runner still completes its stages before returning to the event loop.
++ *
++ * See https://github.com/cloudflare/workerd/issues/7687
++ */
++import { AsyncLocalStorage } from "node:async_hooks";
++import { setImmediate as setImmediatePromise } from "node:timers/promises";
++import { promisify } from "node:util";
++// workerd runs the first checkpoint of a task and at most 64 more. A callback that is still queued
++// after the last one runs in a later task, where workerd can cancel the request as hung.
++const MAX_CHECKPOINTS_PER_TASK = 56;
++// Checkpoints that may separate two immediates. The rest is kept for the end of the stages.
++const TASK_SEPARATION_CHECKPOINTS = 24;
++// React schedules its next immediate within a few microtasks of the previous one.
++const NEARBY_MICROTASKS = 64;
++// The microtasks without activity that end a stage when there is no checkpoint to wait for.
++const QUIET_MICROTASKS = 1024;
++const MISSING_CHECKPOINT = "The render was stopped because workerd did not dispatch the `unhandledrejection` event that ends a Cache Components render stage.";
++const REQUEST_CONTEXT = Symbol.for("__cloudflare-context__");
++const NEXT_ORIGINALS = Symbol.for("next.fast-set-immediate.originals");
++// Note: this symbol needs to be kept in sync with `init.ts`
++const CHECKPOINT = Symbol.for("__opennext-microtask-checkpoint__");
++const globals = globalThis;
++// Captured before Next.js replaces them. Next.js sends the calls that it does not capture itself to the
++// functions installed below, and patches `node:timers` to do the same.
++const nativeSetImmediate = globalThis.setImmediate;
++const nativeClearImmediate = globalThis.clearImmediate;
++const nativeSetImmediatePromise = setImmediatePromise;
++const nativeNextTick = process.nextTick;
++// A group never outlives its task, so at most one is active.
++let activeGroup = null;
++const capturedImmediates = new WeakMap();
++/**
++ * The group that owns the current task. A group stays set when workerd ends its request in the
++ * middle of a stage, so a call from another request is not part of it.
++ */
++function capturingGroup() {
++    return activeGroup !== null && activeGroup.requestContext === globals[REQUEST_CONTEXT] ? activeGroup : null;
++}
++// The native immediate stays scheduled: it carries `ref`, `unref` and `Symbol.dispose`, and it runs
++// the callback when the group does not, after a stage threw for example.
++function capturingSetImmediate(callback, ...args) {
++    const group = capturingGroup();
++    if (group === null || typeof callback !== "function") {
++        return nativeSetImmediate(callback, ...args);
++    }
++    const runInContext = AsyncLocalStorage.snapshot();
++    const captured = { run: () => runInContext(callback, ...args), native: null };
++    const native = nativeSetImmediate(() => {
++        const { run } = captured;
++        captured.run = null;
++        run?.();
++    });
++    captured.native = native;
++    capturedImmediates.set(native, captured);
++    observeDispose(native, captured);
++    group.immediates.push(captured);
++    return native;
++}
++function capturingClearImmediate(immediate) {
++    if (typeof immediate === "object" && immediate !== null) {
++        const captured = capturedImmediates.get(immediate);
++        if (captured)
++            captured.run = null;
++    }
++    nativeClearImmediate(immediate);
++}
++// The native promise stays in charge of the abort signal and of the validation of the arguments.
++function capturingSetImmediatePromise(value, options) {
++    const group = capturingGroup();
++    const native = nativeSetImmediatePromise(value, options);
++    if (group === null) {
++        return native;
++    }
++    return new Promise((resolve, reject) => {
++        native.then(resolve, reject);
++        group.immediates.push({ run: () => resolve(value), native: null });
++    });
++}
++function capturingNextTick(callback, ...args) {
++    const group = capturingGroup();
++    if (group === null || typeof callback !== "function") {
++        nativeNextTick(callback, ...args);
++        return;
++    }
++    const runInContext = AsyncLocalStorage.snapshot();
++    group.ticks.push(() => runInContext(callback, ...args));
++}
++/**
++ * workerd does not show that an immediate was cleared. The global `clearImmediate` is wrapped, and
++ * so is `Symbol.dispose` here. `clearImmediate` imported by name from `node:timers` is not.
++ */
++function observeDispose(native, captured) {
++    const dispose = native[Symbol.dispose];
++    try {
++        Object.defineProperty(native, Symbol.dispose, {
++            configurable: true,
++            value: () => {
++                captured.run = null;
++                return dispose.call(native);
++            },
++        });
++    }
++    catch {
++        // The immediate is not extensible. The callback of a disposed immediate would run.
++    }
++}
++/** The callback of an immediate that the group runs ahead of the native one. */
++function takeImmediate(captured) {
++    const { run, native } = captured;
++    captured.run = null;
++    // Node.js marks the immediates that it cleared.
++    return native !== null && native._destroyed === true ? null : run;
++}
++function hasImmediate(group) {
++    const { immediates } = group;
++    let cleared = 0;
++    while (cleared < immediates.length && immediates[cleared].run === null)
++        cleared++;
++    if (cleared > 0)
++        immediates.splice(0, cleared);
++    return immediates.length > 0;
++}
++function runNextImmediate(group) {
++    const captured = group.immediates.shift();
++    if (!captured)
++        return;
++    const run = takeImmediate(captured);
++    if (run === null)
++        return;
++    if (captured.native !== null)
++        nativeClearImmediate(captured.native);
++    runTask(run);
++}
++/** Node.js runs all the ticks of a task, the ones they schedule included, before a promise reaction. */
++function runTicks(group) {
++    for (let index = 0; index < group.ticks.length; index++) {
++        runTask(group.ticks[index]);
++    }
++    group.ticks.length = 0;
++}
++// An error of a tick or of an immediate is uncaught, and must not stop the stages.
++function runTask(task) {
++    try {
++        task();
++    }
++    catch (error) {
++        queueMicrotask(() => {
++            throw error;
++        });
++    }
++}
++const checkpointHub = globals[CHECKPOINT];
++let checkpointAvailable = checkpointHub !== undefined;
++if (checkpointHub) {
++    checkpointHub.onCheckpoint = (signal) => {
++        const group = capturingGroup();
++        const pending = group?.pendingCheckpoint;
++        if (group && pending?.signal === signal) {
++            group.pendingCheckpoint = undefined;
++            pending.resolve();
++        }
++    };
++}
++/** Resolves when the microtask queue is empty, before the task ends. */
++function microtaskCheckpoint(group) {
++    return new Promise((resolve, reject) => {
++        group.pendingCheckpoint = { signal: Promise.reject(CHECKPOINT), resolve, reject };
++        group.checkpoints++;
++    });
++}
++async function waitMicrotasks(count, isDone) {
++    for (let index = 0; index < count; index++) {
++        await null;
++        if (isDone?.())
++            return true;
++    }
++    return false;
++}
++/**
++ * Run ticks, then let promise reactions run. Repeat if the reactions schedule ticks. Each immediate
++ * starts a new round. When workerd can report a checkpoint, the runner can skip polling the queues.
++ */
++async function settle(group, hasCheckpoint) {
++    const hasTicks = () => group.ticks.length > 0;
++    for (;;) {
++        runTicks(group);
++        const hasPendingImmediate = hasImmediate(group);
++        const limit = hasPendingImmediate ? TASK_SEPARATION_CHECKPOINTS : MAX_CHECKPOINTS_PER_TASK;
++        if (hasCheckpoint && group.checkpoints < limit) {
++            await microtaskCheckpoint(group);
++        }
++        else if (!hasPendingImmediate) {
++            if (await waitMicrotasks(QUIET_MICROTASKS, () => !hasTicks() && hasImmediate(group)))
++                continue;
++        }
++        else if (await waitMicrotasks(NEARBY_MICROTASKS, hasTicks)) {
++            // Reserve the remaining checkpoints for ticks and stage boundaries.
++            if (hasCheckpoint && group.checkpoints < MAX_CHECKPOINTS_PER_TASK) {
++                await microtaskCheckpoint(group);
++            }
++            else {
++                await waitMicrotasks(QUIET_MICROTASKS);
++            }
++        }
++        if (hasTicks())
++            continue;
++        if (!hasImmediate(group))
++            return;
++        runNextImmediate(group);
++    }
++}
++async function runStages(first, rest, group, runInContext) {
++    // A queued render can start before the previous render's end-of-task watchdog.
++    if (activeGroup?.pendingCheckpoint)
++        checkpointAvailable = false;
++    activeGroup = group;
++    const hasCheckpoint = checkpointAvailable;
++    // An application rejection listener can prevent workerd from dispatching later checkpoints.
++    // If the task ends while the runner waits, reject the staged result before any stage advances.
++    const taskEnded = hasCheckpoint
++        ? nativeSetImmediate(() => {
++            const pending = group.pendingCheckpoint;
++            if (!pending)
++                return;
++            checkpointAvailable = false;
++            group.pendingCheckpoint = undefined;
++            pending.reject(new Error(MISSING_CHECKPOINT));
++        })
++        : undefined;
++    try {
++        const result = runInContext(first);
++        // A later stage can reject this promise. The caller observes it through the returned promise.
++        if (isThenable(result))
++            result.then(noop, noop);
++        await settle(group, hasCheckpoint);
++        for (const stage of rest) {
++            runInContext(stage);
++            await settle(group, hasCheckpoint);
++        }
++        return result;
++    }
++    finally {
++        if (taskEnded !== undefined)
++            nativeClearImmediate(taskEnded);
++        if (activeGroup === group)
++            activeGroup = null;
++        // After an error. The immediates that are left run from their native immediate.
++        for (const tick of group.ticks)
++            nativeNextTick(tick);
++    }
++}
++/** Runs the render stages and drains their work within one workerd task. */
++export function runInSequentialTasks(first, ...rest) {
++    const group = {
++        requestContext: globals[REQUEST_CONTEXT],
++        ticks: [],
++        immediates: [],
++        checkpoints: 0,
++    };
++    const runInContext = AsyncLocalStorage.snapshot();
++    return new Promise((resolve, reject) => {
++        // Start with a fresh checkpoint budget after any running stages have settled.
++        nativeSetImmediate(() => {
++            runStages(first, rest, group, runInContext).then(resolve, reject);
++        });
++    });
++}
++function isThenable(value) {
++    return (value !== null && typeof value === "object" && typeof value.then === "function");
++}
++function noop() { }
++// Next.js reads this hook when it installs its own `node:timers/promises` `setImmediate`. Node.js
++// defines the hook on the global function, workerd does not.
++Object.defineProperty(capturingSetImmediate, promisify.custom, { value: capturingSetImmediatePromise });
++globalThis.setImmediate = capturingSetImmediate;
++globalThis.clearImmediate = capturingClearImmediate;
++process.nextTick = capturingNextTick;
++// Next.js also keeps the originals in a registry that the first copy of `fast-set-immediate` to load
++// fills. The Node.js middleware bundle has a copy and loads before the server, so the registry can
++// already hold the native functions, and the server would then send every call to them.
++const nextOriginals = globals[NEXT_ORIGINALS];
++if (nextOriginals) {
++    nextOriginals.setImmediate = capturingSetImmediate;
++    nextOriginals.clearImmediate = capturingClearImmediate;
++    nextOriginals.nextTick = capturingNextTick;
++}
+diff --git a/dist/cli/templates/init.js b/dist/cli/templates/init.js
+index 296c995ead0d2bd566a9d51265476d4965b52317..fe7efe4b528ec9a9544c81416dc7cdf699088069 100644
+--- a/dist/cli/templates/init.js
++++ b/dist/cli/templates/init.js
+@@ -15,6 +15,24 @@ Object.defineProperty(globalThis, Symbol.for("__cloudflare-context__"), {
+         return cloudflareContextALS.getStore();
+     },
+ });
++// The Cache Components scheduler rejects a promise with this symbol to find the end of a render
++// stage: workerd dispatches `unhandledrejection` once the microtask queue is empty. The listener is
++// added when the worker starts, ahead of the listeners of the app, which never see the rejection.
++// Note: this symbol needs to be kept in sync with `cache-components-scheduler.ts`
++if (__CACHE_COMPONENTS_SCHEDULER__ &&
++    Cloudflare.compatibilityFlags.unhandled_rejection_after_microtask_checkpoint) {
++    const checkpoint = Symbol.for("__opennext-microtask-checkpoint__");
++    const hub = {};
++    Object.defineProperty(globalThis, checkpoint, { value: hub });
++    addEventListener("unhandledrejection", (event) => {
++        if (event.reason !== checkpoint) {
++            return;
++        }
++        event.preventDefault();
++        event.stopImmediatePropagation();
++        hub.onCheckpoint?.(event.promise);
++    });
++}
+ /**
+  * Executes the handler with the Cloudflare context.
+  */

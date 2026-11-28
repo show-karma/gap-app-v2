@@ -1,0 +1,109 @@
+name: Deploy to Cloudflare staging
+
+# The Cloudflare Workers copy of the Vercel staging deployment (staging.yml),
+# built from the same code with the same environment: the Vercel "preview"
+# variables, read with `vercel pull`. It deploys two Workers, the Next server
+# first and then the public routing Worker (wrangler.app.jsonc, wrangler.jsonc,
+# docs/cloudflare-opennext-feasibility.md):
+#   gap-app-v2-staging-app  (no public URL)
+#   gap-app-v2-staging      (https://staging.karmahq.org)
+#
+# Runs on pushes to main, in parallel with staging.yml while Vercel stays as fallback.
+#
+# Needs:
+#   secrets.CLOUDFLARE_API_TOKEN  "Edit Cloudflare Workers" template, Karma account only
+#   CLOUDFLARE_ACCOUNT_ID         a variable or a secret (not secret, but either works)
+#   secrets.VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID (already used by staging.yml)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# One deploy at a time; a newer push waits instead of racing the R2 upload.
+concurrency:
+  group: cloudflare-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+  WRANGLER_SEND_METRICS: 'false'
+  STAGING_URL: https://staging.karmahq.org
+  R2_BUCKET: gap-app-v2-staging-opennext-cache
+  VERCEL_ENV_FILE: .vercel/.env.preview.local
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare staging
+    # A job-level `if` cannot read secrets, so a missing account fails the first
+    # step instead of skipping the job.
+    if: github.repository == 'show-karma/gap-app-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check the Cloudflare credentials
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Set secrets.CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (variable or secret)."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Build and bundle
+        uses: ./.github/actions/cloudflare-build
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Upload the incremental cache to R2
+        run: node scripts/cf-populate-r2.mjs "$R2_BUCKET"
+
+      - name: Deploy the Next server Worker
+        env:
+          OPEN_NEXT_DEPLOY: 'true'
+        run: >
+          npx wrangler deploy .open-next/upload-app/next-server.js
+          --config wrangler.app.jsonc --env staging --no-bundle --no-minify
+          --message "${{ github.sha }}"
+
+      - name: Deploy the routing Worker
+        env:
+          OPEN_NEXT_DEPLOY: 'true'
+        run: >
+          npx wrangler deploy .open-next/upload/worker.js
+          --env staging --no-bundle --no-minify
+          --message "${{ github.sha }}"
+
+      - name: Copy the runtime secrets from Vercel
+        # The route handlers that read them run in the Next server Worker; the
+        # routing Worker's cron handler also sends CRON_SECRET.
+        run: |
+          node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --config wrangler.app.jsonc --env staging
+          CF_SECRETS=CRON_SECRET node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --env staging
+
+      - name: Remove the pulled environment
+        if: always()
+        run: rm -rf .vercel
+
+      - name: Smoke test
+        run: |
+          fail=0
+          for path in / /communities /api/geo /sitemap_index.xml /admin/studio; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$STAGING_URL$path")
+            echo "$status $path"
+            [ "$status" = "200" ] || fail=1
+          done
+          headers=$(curl -sSI --max-time 30 "$STAGING_URL/" || true)
+          if ! grep -qi '^x-robots-tag:.*noindex' <<<"$headers"; then
+            echo "::error::Expected X-Robots-Tag containing noindex on $STAGING_URL/"
+            fail=1
+          fi
+          exit $fail

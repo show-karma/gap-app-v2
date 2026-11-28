@@ -1,0 +1,179 @@
+name: Deploy to Cloudflare production
+
+# The Cloudflare counterpart of production.yml: builds with the Vercel
+# "production" environment and deploys two Workers (wrangler.jsonc and
+# wrangler.app.jsonc, env.production), the Next server first:
+#   gap-app-v2-production-app  (no public URL)
+#   gap-app-v2-production      (https://gap-app-v2-production.<account>.workers.dev
+#                               and custom domains once routed in Cloudflare)
+# Cache bucket: gap-app-v2-opennext-cache.
+#
+# Triggered on `v*` and `production-*` release tags (matching production.yml so
+# Cloudflare and Vercel stay in lockstep until Vercel is retired),
+# `cloudflare-production-*` tags, or manual workflow_dispatch (with optional
+# `tag` input, defaulting to the selected branch head).
+#
+# Needs the same secrets as cloudflare-staging.yml.
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'production-*'
+      - 'cloudflare-production-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag or ref to deploy (defaults to branch head)'
+        required: false
+        type: string
+
+# One production deploy at a time, never cancelled halfway.
+concurrency:
+  group: cloudflare-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+  WRANGLER_SEND_METRICS: 'false'
+  ROUTING_WORKER: gap-app-v2-production
+  R2_BUCKET: gap-app-v2-opennext-cache
+  VERCEL_ENV_FILE: .vercel/.env.production.local
+  # Right after wrangler creates a Worker, its next API call can still answer
+  # "This Worker does not exist" (code 10007); a deploy is retried for that.
+  DEPLOY_ATTEMPTS: '3'
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare production
+    if: github.repository == 'show-karma/gap-app-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check the Cloudflare credentials
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Set secrets.CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (variable or secret)."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.sha }}
+
+      - name: Build and bundle
+        uses: ./.github/actions/cloudflare-build
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          environment: production
+
+      - name: Upload the incremental cache to R2
+        run: node scripts/cf-populate-r2.mjs "$R2_BUCKET"
+
+      - name: Create the routing Worker on the first deploy
+        # The Next server Worker binds the routing Worker's Durable Objects by
+        # script name, so the routing Worker must exist before it. Its first
+        # version has no NEXT_SERVER binding; the deploy below adds it.
+        env:
+          OPEN_NEXT_DEPLOY: 'true'
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$ROUTING_WORKER/settings")
+          if [ "$status" = "200" ]; then
+            echo "$ROUTING_WORKER exists"
+          elif [ "$status" = "404" ]; then
+            node scripts/cf-bootstrap-config.mjs production
+            for attempt in $(seq "$DEPLOY_ATTEMPTS"); do
+              npx wrangler deploy .open-next/upload/worker.js --config wrangler.bootstrap.jsonc \
+                --no-bundle --no-minify --message "first version, without the Next server" && break
+              [ "$attempt" = "$DEPLOY_ATTEMPTS" ] && exit 1
+              sleep 15
+            done
+          else
+            echo "::error::Checking the Worker $ROUTING_WORKER returned HTTP $status."
+            exit 1
+          fi
+
+      - name: Deploy the Next server Worker
+        env:
+          OPEN_NEXT_DEPLOY: 'true'
+          DEPLOY_REF: ${{ inputs.tag || github.ref_name }}
+        run: |
+          for attempt in $(seq "$DEPLOY_ATTEMPTS"); do
+            npx wrangler deploy .open-next/upload-app/next-server.js \
+              --config wrangler.app.jsonc --env production --no-bundle --no-minify \
+              --message "$DEPLOY_REF at $GITHUB_SHA" && break
+            [ "$attempt" = "$DEPLOY_ATTEMPTS" ] && exit 1
+            sleep 15
+          done
+
+      - name: Deploy the routing Worker
+        id: routing
+        env:
+          OPEN_NEXT_DEPLOY: 'true'
+          DEPLOY_REF: ${{ inputs.tag || github.ref_name }}
+        run: |
+          # Without pipefail, tee would hide a failed deploy from the retry loop.
+          set -o pipefail
+          for attempt in $(seq "$DEPLOY_ATTEMPTS"); do
+            npx wrangler deploy .open-next/upload/worker.js --env production \
+              --no-bundle --no-minify \
+              --message "$DEPLOY_REF at $GITHUB_SHA" | tee deploy.log && break
+            [ "$attempt" = "$DEPLOY_ATTEMPTS" ] && exit 1
+            sleep 15
+          done
+          url=$(grep -oE "https://$ROUTING_WORKER\.[a-z0-9-]+\.workers\.dev" deploy.log | head -1)
+          if [ -z "$url" ]; then
+            echo "::error::No workers.dev URL in the deploy output."
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Copy the runtime secrets from Vercel
+        # The route handlers that read them run in the Next server Worker; the
+        # routing Worker's cron handler also sends CRON_SECRET.
+        run: |
+          node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --config wrangler.app.jsonc --env production
+          CF_SECRETS=CRON_SECRET node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --env production
+
+      - name: Remove the pulled environment
+        if: always()
+        run: rm -rf .vercel
+
+      - name: Smoke test
+        # On the first deploy the workers.dev hostname can take a few minutes to
+        # answer, and the new NEXT_SERVER binding answers 404 for a few seconds,
+        # so the first path gets five minutes and the others a minute each.
+        env:
+          URL: ${{ steps.routing.outputs.url }}
+        run: |
+          echo "URL: $URL"
+          fail=0
+          for path in / /communities /api/geo /sitemap_index.xml /admin/studio; do
+            attempts=6
+            [ "$path" = "/" ] && attempts=30
+            status="000"
+            for attempt in $(seq "$attempts"); do
+              status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path" || true)
+              [ "$status" = "200" ] && break
+              sleep 10
+            done
+            echo "$status $path"
+            [ "$status" = "200" ] || fail=1
+          done
+          headers=$(curl -sSI --max-time 60 "$URL/" || true)
+          if grep -qi '^x-robots-tag: noindex' <<<"$headers"; then
+            echo "noindex on workers.dev"
+          else
+            echo "::error::$URL/ has no X-Robots-Tag noindex; search engines could index it."
+            fail=1
+          fi
+          exit $fail

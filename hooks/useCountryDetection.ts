@@ -22,7 +22,7 @@ export function useCountryDetection(): CountryData {
 
     const detectCountry = async () => {
       try {
-        // Use our API route which reads Vercel's x-vercel-ip-country header
+        // Use our API route which reads the hosting platform's geo headers
         const response = await fetch("/api/geo", { signal: controller.signal });
         if (!response.ok) throw new Error("Geolocation failed");
 

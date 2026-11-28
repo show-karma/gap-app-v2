@@ -71,9 +71,8 @@ describe("isAllowedBridgeOrigin", () => {
 });
 
 describe("tenant allowlists", () => {
-  const env = { ...process.env };
   afterEach(() => {
-    process.env = { ...env };
+    vi.unstubAllEnvs();
   });
 
   it("gives filecoin its two landing-site origins", () => {
@@ -81,28 +80,29 @@ describe("tenant allowlists", () => {
   });
 
   it("gives a tenant with no embedder nothing — not even the preview hosts", () => {
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
     expect(tokenBridgeOriginsFor("karma")).toEqual([]);
     expect(tokenBridgeOriginsFor(null)).toEqual([]);
   });
 
   it("adds the preview hosts outside production builds only", () => {
-    process.env.NODE_ENV = "development";
-    process.env.VERCEL_ENV = undefined;
-    process.env.NEXT_PUBLIC_VERCEL_ENV = undefined;
+    vi.stubEnv("NODE_ENV", "development");
+    for (const key of ["APP_ENV", "NEXT_PUBLIC_APP_ENV", "VERCEL_ENV", "NEXT_PUBLIC_VERCEL_ENV"]) {
+      vi.stubEnv(key, undefined);
+    }
     expect(tokenBridgeOriginsFor("filecoin")).toEqual([
       ...TOKEN_BRIDGE_ORIGINS.filecoin!,
       ...TOKEN_BRIDGE_PREVIEW_ORIGINS,
     ]);
 
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     expect(tokenBridgeOriginsFor("filecoin")).toEqual(TOKEN_BRIDGE_ORIGINS.filecoin);
     expect(allTokenBridgeOrigins()).toEqual(TOKEN_BRIDGE_ORIGINS.filecoin);
   });
 
   it("adds the preview hosts to a Vercel preview even though NODE_ENV is production", () => {
-    process.env.NODE_ENV = "production";
-    process.env.VERCEL_ENV = "preview";
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "preview");
     expect(allTokenBridgeOrigins()).toEqual(
       expect.arrayContaining(TOKEN_BRIDGE_PREVIEW_FRAME_ORIGINS)
     );

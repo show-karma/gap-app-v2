@@ -62,7 +62,7 @@ vi.mock("next/link", () => ({
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source?: string }) => <div>{source}</div>,
 }));
-vi.mock("@/utilities/enviromentVars", () => ({ envVars: { VERCEL_ENV: "test" } }));
+vi.mock("@/utilities/enviromentVars", () => ({ envVars: { DEPLOYMENT_ENV: "test" } }));
 vi.mock("@/utilities/pages", () => ({
   FUNDING_PLATFORM_PAGES: { APPLY: () => "/apply" },
   PAGES: {},

@@ -1,0 +1,154 @@
+// Cloudflare Workers config for gap-app-v2 (@opennextjs/cloudflare).
+//
+// The routing Worker. Each deployment is two Workers: this one, public, and the
+// Next server Worker in wrangler.app.jsonc, which only this one calls (through
+// the NEXT_SERVER service binding). Deploy the Next server first.
+//
+// Three deployments, none with routes, zones or custom domains:
+// - the top level is the test Worker, `gap-app-v2-staging-test`, for experiments;
+// - `env.staging` (below) is `gap-app-v2-staging`, a standing staging copy on
+//   *.workers.dev;
+// - `env.production` is `gap-app-v2-production`, with production values, on
+//   *.workers.dev only until the cutover adds its custom domains
+//   (docs/cloudflare-opennext-feasibility.md).
+// Every *.workers.dev response says noindex (cloudflare/workers-dev-noindex.ts).
+//
+// The production R2 bucket is `gap-app-v2-opennext-cache`. Every deployment
+// writes its cache under a new build id and never
+// deletes the old one, so the bucket has three lifecycle rules:
+// `expire-og-images` (og-images/, 8 days), `expire-next-images` (next-images/,
+// the next/image results, 8 days) and `expire-incremental-cache`
+// (incremental-cache/, 30 days). An entry the current build still uses but
+// has not rewritten in 30 days is rendered again on its next request; a
+// fallback shell is read from the assets (cloudflare/shell-fallback-cache.ts).
+//
+// No account_id on purpose: wrangler reads CLOUDFLARE_ACCOUNT_ID from the
+// environment. `pnpm cf:preview` / `wrangler dev` simulate every binding below
+// locally under .wrangler/state.
+//
+// Runtime secrets (CRON_SECRET, SANITY_WEBHOOK_SECRET, ...) go through
+// `wrangler secret put`, never through `vars` and never through a .env at build
+// time: OpenNext copies the build's .env into the Worker bundle.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gap-app-v2-staging-test",
+  "main": "cloudflare/worker.ts",
+  // Must not be newer than the bundled workerd (wrangler 4.148.0 → 2026-10-06).
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Only the uncompressed upload counts against the 64 MiB limit, and the 1 s startup
+  // budget scales with script size; minifying takes ~25% off both.
+  "minify": true,
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+    // The static Sanity Studio build: the worker adds its headers and the
+    // index.html fallback for client-side Studio routes (cloudflare/worker.ts).
+    "run_worker_first": ["/admin/studio", "/admin/studio/*"],
+    // Required by OpenNext once run_worker_first is set: public files are only
+    // served at their exact path, as Next.js does, so nothing bypasses proxy.ts.
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "services": [
+    // Self-reference used by the cache layer; must match "name".
+    { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging-test" },
+    // The Next server Worker (wrangler.app.jsonc), for what the cache cannot answer.
+    { "binding": "NEXT_SERVER", "service": "gap-app-v2-staging-test-app" }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "gap-app-v2-staging-test-opennext-cache"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
+      { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+    ]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] }],
+  "images": { "binding": "IMAGES" },
+  // Its id scopes the OG image cache to the deployment (cloudflare/og-image-cache.ts),
+  // which also keeps its PNGs in NEXT_INC_CACHE_R2_BUCKET, under og-images/.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  // Server-side deployment environment (utilities/deployment-env.ts). "preview"
+  // matches the Vercel staging deployment: Sepolia programs, Sentry off.
+  // NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS: the revalidation queue gives up
+  // on a render after 10 s by default, and a page rendered in a new isolate
+  // (loading the Next server first) can take longer, so it would never be
+  // stored. That includes the first render of each project and community page
+  // (cloudflare/shell-upgrade.ts).
+  "vars": { "APP_ENV": "preview", "NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS": "30000" },
+  // No Cron Trigger on the test Worker. /api/cron/warm-sitemaps fetches the
+  // sitemaps on SITE_URL, the production host, so a test Worker running it would
+  // load production every six hours. The scheduled() handler in
+  // cloudflare/worker.ts stays and is exercised locally with
+  // /cdn-cgi/handler/scheduled; the production config re-adds
+  // "triggers": { "crons": ["0 */6 * * *"] }.
+  "triggers": { "crons": [] },
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "env": {
+    // The staging Worker: same build, its own name, bucket and Durable Objects,
+    // still only on *.workers.dev (the karmahq DNS is not on Cloudflare).
+    // Deployed with `wrangler versions upload --env staging`.
+    // Bindings are not inherited from the top level, so every one is repeated.
+    "staging": {
+      "name": "gap-app-v2-staging",
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-staging" },
+        { "binding": "NEXT_SERVER", "service": "gap-app-v2-staging-app" }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "gap-app-v2-staging-opennext-cache"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
+          { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+        ]
+      },
+      "images": { "binding": "IMAGES" },
+      "version_metadata": { "binding": "CF_VERSION_METADATA" },
+      "vars": { "APP_ENV": "preview", "NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS": "30000" },
+      // Same reason as the test Worker: the warm-up loads production sitemaps.
+      "triggers": { "crons": [] }
+    },
+    // Production (.github/workflows/cloudflare-production.yml). Until the
+    // cutover gives it the production hosts it is only on *.workers.dev, where
+    // the deploy workflow smoke-tests it. Preview URLs stay off: Cloudflare
+    // does not generate them for a Worker that has Durable Objects.
+    "production": {
+      "name": "gap-app-v2-production",
+      "workers_dev": true,
+      "preview_urls": false,
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "gap-app-v2-production" },
+        { "binding": "NEXT_SERVER", "service": "gap-app-v2-production-app" }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "gap-app-v2-opennext-cache"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
+          { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+        ]
+      },
+      "images": { "binding": "IMAGES" },
+      "version_metadata": { "binding": "CF_VERSION_METADATA" },
+      "vars": { "APP_ENV": "production", "NEXT_CACHE_DO_QUEUE_REVALIDATION_TIMEOUT_MS": "30000" },
+      // Keeps the sitemaps' Data Cache warm, as the Vercel cron does (vercel.json).
+      "triggers": { "crons": ["0 */6 * * *"] }
+    }
+  }
+}

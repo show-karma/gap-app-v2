@@ -14,8 +14,10 @@
  * signed-in visitor's token.
  *
  * No path aliases or app imports here — next.config.ts loads this before the
- * alias resolver exists.
+ * alias resolver exists. The one import is relative and itself import-free.
  */
+
+import { isPreviewDeployment } from "../deployment-env";
 
 export const TOKEN_BRIDGE_PATH = "/auth/token-bridge";
 
@@ -29,22 +31,21 @@ export const TOKEN_BRIDGE_ORIGINS: Readonly<Partial<Record<string, readonly stri
 /**
  * Whether this build may also be framed by preview and local hosts.
  *
- * Deliberately opt-in rather than `NODE_ENV !== "production"`: Vercel builds
- * previews with NODE_ENV=production, so that test would quietly drop the extra
- * origins exactly where they are needed. Reading the environment explicitly
- * also fails safe — if the VERCEL_ENV variables go missing on a production
- * build, NODE_ENV is still "production" and nothing relaxes.
+ * Deliberately opt-in rather than `NODE_ENV !== "production"`: preview
+ * deployments are built with NODE_ENV=production, so that test would quietly
+ * drop the extra origins exactly where they are needed. Reading the deployment
+ * environment explicitly also fails safe — if every deployment variable goes
+ * missing, or holds anything but exactly "preview", on a production build,
+ * NODE_ENV is still "production" and nothing relaxes.
  *
- * `NEXT_PUBLIC_VERCEL_ENV` is what survives into the client bundle, which is
- * where the bridge itself checks origins; `VERCEL_ENV` is what next.config.ts
- * sees at build time. Both are read so the two agree.
+ * The deployment environment comes from `utilities/deployment-env.ts`: the
+ * neutral `NEXT_PUBLIC_APP_ENV` / `APP_ENV` first, Vercel's variables as the
+ * fallback. The NEXT_PUBLIC_ one is what survives into the client bundle,
+ * where the bridge itself checks origins; the server-side one is what
+ * next.config.ts sees at build time.
  */
 export function tokenBridgeAllowsPreviewOrigins(): boolean {
-  return (
-    process.env.VERCEL_ENV === "preview" ||
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
-    process.env.NODE_ENV !== "production"
-  );
+  return isPreviewDeployment() || process.env.NODE_ENV !== "production";
 }
 
 /**

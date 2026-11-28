@@ -15,6 +15,7 @@ import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 import {
   isTenantExemptPath,
   isTenantRoutePath,
+  REWRITTEN_PATH_HEADER,
   resolveTenantParam,
   tenantNotFoundPathname,
   tenantRewritePathname,
@@ -66,7 +67,9 @@ function tenantRewrite(
     pathname
   );
 
-  return NextResponse.rewrite(url, init);
+  const response = NextResponse.rewrite(url, init);
+  response.headers.set(REWRITTEN_PATH_HEADER, url.pathname);
+  return response;
 }
 
 /**

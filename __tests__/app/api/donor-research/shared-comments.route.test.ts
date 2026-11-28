@@ -61,12 +61,17 @@ function fetchResponse(opts: { status?: number; body?: unknown; setCookies?: str
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("VERCEL", undefined);
   cookieStore.get.mockReset();
   headerStore.get.mockReset();
 });
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe("GET /api/donor-research/shared/[token]/comments", () => {
-  it("forwards x-forwarded-for, x-drsc-session, and Origin to the indexer", async () => {
+  it("forwards rightmost x-forwarded-for, x-drsc-session, and Origin to the indexer", async () => {
     headerStore.get.mockImplementation((k: string) => {
       if (k === "x-forwarded-for") return "1.2.3.4, 5.6.7.8";
       if (k === "origin") return "http://localhost:3000";
@@ -92,10 +97,47 @@ describe("GET /api/donor-research/shared/[token]/comments", () => {
     expect(String(calledUrl)).toContain("cursor=abc");
     expect(String(calledUrl)).toContain("limit=10");
     const h = options?.headers as Record<string, string>;
-    expect(h["x-forwarded-for"]).toBe("1.2.3.4");
+    expect(h["x-forwarded-for"]).toBe("5.6.7.8");
     expect(h["x-drsc-session"]).toBe("cookie-payload");
     expect(h["Origin"]).toBe("http://localhost:3000");
     expect(res.status).toBe(200);
+  });
+
+  it("prefers cf-connecting-ip over spoofed x-real-ip and x-forwarded-for on Cloudflare", async () => {
+    headerStore.get.mockImplementation((k: string) => {
+      if (k === "cf-connecting-ip") return "203.0.113.42";
+      if (k === "x-real-ip") return "198.51.100.4";
+      if (k === "x-forwarded-for") return "1.2.3.4, 5.6.7.8";
+      return null;
+    });
+    cookieStore.get.mockReturnValue(undefined);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(fetchResponse({ status: 200, body: { roots: [] } }));
+
+    await GET(makeRequest(), ctx());
+
+    const [, options] = fetchSpy.mock.calls[0];
+    const h = options?.headers as Record<string, string>;
+    expect(h["x-forwarded-for"]).toBe("203.0.113.42");
+  });
+
+  it("ignores spoofed x-real-ip and invalid IP values when not on Vercel", async () => {
+    headerStore.get.mockImplementation((k: string) => {
+      if (k === "cf-connecting-ip") return "not-an-ip";
+      if (k === "x-real-ip") return "198.51.100.4";
+      return null;
+    });
+    cookieStore.get.mockReturnValue(undefined);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(fetchResponse({ status: 200, body: { roots: [] } }));
+
+    await GET(makeRequest(), ctx());
+
+    const [, options] = fetchSpy.mock.calls[0];
+    const h = options?.headers as Record<string, string>;
+    expect(h).not.toHaveProperty("x-forwarded-for");
   });
 
   it("forwards the Authorization header so the indexer can resolve the advisor branch", async () => {

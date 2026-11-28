@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
 import { communitySubpageMetadata } from "@/utilities/metadata/communityCanonical";
-import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { getCommunityDetailsCached } from "@/utilities/queries/v2/getCommunityData.cached";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -18,7 +18,7 @@ export async function generateMetadata({
   params: Promise<{ communityId: string }>;
 }): Promise<Metadata> {
   const { communityId } = await params;
-  const community = await getCommunityDetails(communityId);
+  const community = await getCommunityDetailsCached(communityId);
   const communityName = community?.details?.name || communityId;
 
   // Self-canonical (whitelabel-aware): the page now server-renders the program

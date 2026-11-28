@@ -1,0 +1,42 @@
+diff --git a/dist/core/routing/cacheInterceptor.js b/dist/core/routing/cacheInterceptor.js
+index 4fa130cdfc2248e6fbb821f5add58d405f438656..703bb0e40b5d8a9ac1c82ce255bb7d2907f641e8 100644
+--- a/dist/core/routing/cacheInterceptor.js
++++ b/dist/core/routing/cacheInterceptor.js
+@@ -313,7 +313,8 @@ function getCacheKey(event, localizedPath, resolvedRoutes) {
+     const manifests = getRouteCacheManifests();
+     if (Object.hasOwn(manifests.prerenderManifest.routes, localizedPath)) {
+         const manifestKey = getPrerenderRouteCacheKey(localizedPath, manifests);
+-        const selectedRoute = resolvedRoutes?.[0];
++        // Skip prerender-only routes no page owns, as for runtime entries below.
++        const selectedRoute = resolvedRoutes?.find((route) => getRouteCacheOwner(route.route, manifests));
+         // The routing handler always supplies matches. An empty list there means
+         // ownership could not be proven and scoped interception must fail closed.
+         if (resolvedRoutes && !selectedRoute)
+@@ -328,9 +329,10 @@ function getCacheKey(event, localizedPath, resolvedRoutes) {
+     }
+     // Not prerendered, the entry might have been cached at runtime by a dynamic route.
+     // Dynamic routes are sorted by specificity, the first match is the one Next.js renders.
+-    const dynamicRoute = resolvedRoutes
+-        ? resolvedRoutes[0]
+-        : dynamicRouteMatcher(event.rawPath)[0];
++    // Next.js 16 also lists routes that only the prerenderer knows, such as
++    // `/t/karma/project/[projectId]` for `/t/[tenant]/project/[projectId]`. No page
++    // owns them, so Next.js renders, and caches under, the next match that has an owner.
++    const dynamicRoute = (resolvedRoutes ?? dynamicRouteMatcher(event.rawPath)).find((route) => getRouteCacheOwner(route.route, manifests));
+     const dynamicPrerender = dynamicRoute
+         ? manifests.prerenderManifest.dynamicRoutes[dynamicRoute.route]
+         : undefined;
+@@ -394,6 +396,13 @@ export async function cacheInterceptor(event, resolvedRoutes) {
+             if (!cachedData?.value) {
+                 return event;
+             }
++            // A partially prerendered page keeps only its static shell in the cache; the rest
++            // is rendered per request by resuming the postponed state. Serving the shell alone
++            // would leave those parts unrendered, so let the server resume it.
++            if (cachedData.value.type === "app" && cachedData.value.meta?.postponed) {
++                debug("Postponed entry, falling back to the server", cacheKey);
++                return event;
++            }
+             const tags = getTagsFromValue(cachedData.value);
+             // We need to check the tag cache now
+             if (cachedData.value?.type === "app" ||

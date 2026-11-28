@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import {
+  deploymentBuildEnv,
+  isPreviewDeployment,
+  isVercelPlatform,
+} from "./utilities/deployment-env";
 import { NONPROFITS_ORIGIN } from "./utilities/domains";
 import { allTokenBridgeOrigins, TOKEN_BRIDGE_PATH } from "./utilities/token-bridge/origins";
 
@@ -46,14 +51,29 @@ const removeImports = require("next-remove-imports")();
 // report `app_version: "unknown"`.
 const { version: APP_VERSION } = require("./package.json");
 
+// Set only by `pnpm cf:build` (the Cloudflare Workers build, see
+// docs/cloudflare-opennext-feasibility.md). Vercel and the CI standalone build
+// never set it, so everything gated on it is a no-op there.
+const isCloudflareBuild = process.env.KARMA_BUILD_TARGET === "cloudflare";
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The Sanity Studio route files are named `*.studio.tsx`. Vercel and the CI
+  // build compile them as the /admin/studio route; the Cloudflare build leaves
+  // them out and serves a static `sanity build` of the same Studio instead, so
+  // its ~13 MiB never reach the Worker bundle (docs/cloudflare-opennext-feasibility.md).
+  pageExtensions: isCloudflareBuild
+    ? ["tsx", "ts", "jsx", "js"]
+    : ["tsx", "ts", "jsx", "js", "studio.tsx"],
   // Stamped into the client bundle at build time so every analytics event
   // carries the release it came from (see the `app_version` super property in
   // utilities/analytics/client.ts).
   env: {
     NEXT_PUBLIC_APP_VERSION: APP_VERSION,
+    // NEXT_PUBLIC_VERCEL_ANALYTICS, plus NEXT_PUBLIC_APP_ENV when only APP_ENV
+    // is configured. See utilities/deployment-env.ts.
+    ...deploymentBuildEnv(),
   },
   // Cap per-page static generation at 2 min. The app has no
   // generateStaticParams and builds in ~5 min, so nothing legitimately
@@ -74,7 +94,7 @@ const nextConfig: NextConfig = {
   // step (copyTracedFiles) opens that exact path and dies with ENOENT.
   // CI still gets the bundle: VERCEL is unset on GitHub Actions, which is
   // where build-main.yml and e2e-tests.yml pack .next/standalone.
-  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
+  ...(isVercelPlatform() ? {} : { output: "standalone" as const }),
   turbopack: {
     resolveAlias: {
       // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
@@ -99,6 +119,14 @@ const nextConfig: NextConfig = {
   // still win. Requires cacheComponents and does nothing without it.
   partialPrefetching: true,
   experimental: {
+    // Workers only. Next inflates the PPR resume data cache with
+    // `maxOutputLength` = 5 x maxPostponedStateSize (100 MB by default, so
+    // 500 MB), and workerd's node:zlib rejects anything above 128 MiB with a
+    // RangeError. The resume then fails and every route with a postponed
+    // shell (/project/*, /community/*) is served as the bare static shell:
+    // no <title>, no content, still a 200. 20 MB keeps the inflate cap at
+    // 100 MB; real postponed states here are 9-24 KB.
+    ...(isCloudflareBuild ? { maxPostponedStateSize: "20mb" as const } : {}),
     // app/global-not-found.tsx is the 404 for everything the router cannot
     // match. The flag still exists in 16.3.3 and defaults to false; without it
     // the file is ignored and Next serves its own unbranded 404.
@@ -355,18 +383,17 @@ const withSentry = withSentryConfig(
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
 
-    // Enables automatic instrumentation of Vercel Cron Monitors.
-    // See the following for more information:
-    // https://docs.sentry.io/product/crons/
-    // https://vercel.com/docs/cron-jobs
-    automaticVercelMonitors: true,
+    // Cron check-ins are explicitly instrumented via Sentry.withMonitor in
+    // app/api/cron/warm-sitemaps/route.ts so Cloudflare Workers and Vercel
+    // report to the same monitor without duplicates.
+    automaticVercelMonitors: false,
   }
 );
 
 // The Sentry SDK is switched OFF at runtime on every non-production
 // deployment — sentry.server.config.ts, sentry.edge.config.ts and
-// instrumentation-client.ts all set `enabled: NEXT_PUBLIC_VERCEL_ENV ===
-// "production"`. Preview builds were still paying the full build-time cost
+// instrumentation-client.ts all set `enabled: isProductionDeployment()`
+// (utilities/deployment-env.ts). Preview builds were still paying the full build-time cost
 // of the Sentry plugin (source map generation/processing/upload plus
 // reactComponentAnnotation, an SWC transform applied to every component in
 // the tree) to produce artifacts for an SDK that never initializes on those
@@ -381,7 +408,6 @@ const withSentry = withSentryConfig(
 // variable is missing or holds anything else — including a production build
 // or a local build — Sentry stays fully enabled, so production
 // instrumentation can never be dropped by accident.
-const isPreviewBuild =
-  process.env.VERCEL_ENV === "preview" || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+const isPreviewBuild = isPreviewDeployment();
 
 export default isPreviewBuild ? bundleAnalyzer : withSentry;

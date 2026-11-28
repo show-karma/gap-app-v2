@@ -69,8 +69,12 @@ vi.mock("@/src/features/api-keys/components/api-key-management-modal", () => ({
 // The other deferred components are not under test here. Stub them to no-op
 // so the test environment doesn't try to load analytics/toast/etc.
 vi.mock("react-hot-toast", () => ({ Toaster: () => null }));
-vi.mock("@vercel/analytics/react", () => ({ Analytics: () => null }));
-vi.mock("@vercel/speed-insights/next", () => ({ SpeedInsights: () => null }));
+vi.mock("@vercel/analytics/react", () => ({
+  Analytics: () => <div data-testid="vercel-analytics" hidden />,
+}));
+vi.mock("@vercel/speed-insights/next", () => ({
+  SpeedInsights: () => <div data-testid="vercel-speed-insights" hidden />,
+}));
 vi.mock("@/components/AgentChat/AgentChatBubble", () => ({ AgentChatBubble: () => null }));
 vi.mock("@/components/ProgressBarWrapper", () => ({ ProgressBarWrapper: () => null }));
 vi.mock("@/components/Utilities/HotjarAnalytics", () => ({ default: () => null }));
@@ -116,6 +120,37 @@ describe("DeferredLayoutComponents", () => {
     await waitFor(() => {
       expect(screen.getByTestId("onboarding-dialog-mount")).toBeInTheDocument();
       expect(screen.getByTestId("api-key-modal-mount")).toBeInTheDocument();
+    });
+  });
+
+  describe("Vercel Web Analytics and Speed Insights", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("mounts both on a Vercel build", async () => {
+      vi.stubEnv("NEXT_PUBLIC_VERCEL_ANALYTICS", "true");
+      render(<DeferredLayoutComponents toasterConfig={toasterConfig} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("vercel-analytics")).toBeInTheDocument();
+        expect(screen.getByTestId("vercel-speed-insights")).toBeInTheDocument();
+      });
+    });
+
+    it.each([
+      ["unset", undefined],
+      ["false", "false"],
+    ])("mounts neither off Vercel (flag %s), so their scripts never 404", async (_, value) => {
+      vi.stubEnv("NEXT_PUBLIC_VERCEL_ANALYTICS", value);
+      render(<DeferredLayoutComponents toasterConfig={toasterConfig} />);
+
+      // The always-mounted dialogs resolving proves the lazy loaders have run.
+      await waitFor(() => {
+        expect(screen.getByTestId("api-key-modal-mount")).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId("vercel-analytics")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("vercel-speed-insights")).not.toBeInTheDocument();
     });
   });
 });
