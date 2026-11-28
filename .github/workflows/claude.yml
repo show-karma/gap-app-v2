@@ -92,20 +92,52 @@ jobs:
               return;
             }
 
-            console.log(`Checking Vercel deployment for PR #${pr_number}, SHA: ${head_sha}`);
+            console.log(`Checking preview deployment for PR #${pr_number}, SHA: ${head_sha}`);
             core.setOutput('pr_number', pr_number);
 
-            // Wait for Vercel deployment (max 3 minutes — Vercel preview is
-            // typically ready in 90-120s; if not, we fall back to a degraded
-            // run without PREVIEW_URL rather than blocking for 10 minutes).
+            // Wait for preview deployment (max 3 minutes; if not ready in time,
+            // we fall back to a run without PREVIEW_URL rather than blocking).
             let deploymentUrl = '';
             let attempts = 0;
             const maxAttempts = 18; // 18 * 10 seconds = 3 minutes
+            const shortSha = head_sha ? head_sha.slice(0, 7) : '';
 
             while (attempts < maxAttempts && !deploymentUrl) {
               attempts++;
 
-              // Check deployments API for Vercel deployment
+              // 1. Check PR comments for the Cloudflare preview URL
+              let comments = [];
+              try {
+                ({ data: comments } = await github.rest.issues.listComments({
+                  owner,
+                  repo,
+                  issue_number: pr_number,
+                  per_page: 100
+                }));
+
+                const cfComments = comments.filter(comment =>
+                  comment.body?.includes('<!-- cloudflare-pr-preview -->')
+                );
+                const cfComment =
+                  (shortSha && cfComments.find(comment => comment.body.includes(shortSha))) ||
+                  cfComments.find(comment =>
+                    comment.body.includes(`https://pr-${pr_number}.preview.karmahq.org`)
+                  ) ||
+                  cfComments[cfComments.length - 1];
+
+                if (cfComment) {
+                  const urlMatch = cfComment.body.match(/https:\/\/pr-\d+\.preview\.karmahq\.org/i);
+                  if (urlMatch) {
+                    deploymentUrl = urlMatch[0];
+                    console.log(`Found Cloudflare preview URL from comment: ${deploymentUrl}`);
+                    break;
+                  }
+                }
+              } catch (e) {
+                console.log(`PR comment check failed: ${e.message}`);
+              }
+
+              // 2. Check Deployments API for this commit's Preview deployment
               try {
                 const { data: deployments } = await github.rest.repos.listDeployments({
                   owner,
@@ -115,6 +147,7 @@ jobs:
                   per_page: 5
                 });
 
+                const candidateUrls = [];
                 for (const deployment of deployments) {
                   const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
                     owner,
@@ -124,43 +157,39 @@ jobs:
                   });
 
                   if (statuses.length > 0 && statuses[0].state === 'success') {
-                    deploymentUrl = statuses[0].environment_url || statuses[0].target_url;
-                    if (deploymentUrl) {
-                      console.log(`Found Vercel deployment URL: ${deploymentUrl}`);
-                      break;
-                    }
+                    const url = statuses[0].environment_url || statuses[0].target_url;
+                    if (url) candidateUrls.push(url);
                   }
+                }
+
+                if (candidateUrls.length > 0) {
+                  deploymentUrl =
+                    candidateUrls.find(url => !url.includes('.vercel.app')) || candidateUrls[0];
+                  console.log(`Found preview deployment URL: ${deploymentUrl}`);
+                  break;
                 }
               } catch (e) {
                 console.log(`Deployment API check failed: ${e.message}`);
               }
 
-              // Fallback: Check PR comments for Vercel bot comment
-              if (!deploymentUrl) {
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner,
-                  repo,
-                  issue_number: pr_number
-                });
-
+              // 3. Fallback: Check PR comments for Vercel bot comment
+              if (!deploymentUrl && comments.length > 0) {
                 const vercelComment = comments.find(comment =>
                   (comment.user.login === 'vercel[bot]' || comment.user.login === 'vercel') &&
                   comment.body.includes('vercel.app')
                 );
 
                 if (vercelComment) {
-                  // Extract Preview URL from Vercel comment
                   const urlMatch = vercelComment.body.match(/https:\/\/[a-z0-9-]+\.vercel\.app/i);
                   if (urlMatch) {
                     deploymentUrl = urlMatch[0];
                     console.log(`Found Vercel URL from comment: ${deploymentUrl}`);
+                    break;
                   }
                 }
               }
 
-              if (deploymentUrl) break;
-
-              console.log(`Waiting for Vercel deployment... (attempt ${attempts}/${maxAttempts})`);
+              console.log(`Waiting for preview deployment... (attempt ${attempts}/${maxAttempts})`);
               await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
             }
 
@@ -177,7 +206,7 @@ jobs:
                     redirect: 'follow'
                   });
                   if (response.ok || response.status === 308) {
-                    console.log('✅ Vercel deployment is ready');
+                    console.log('✅ Preview deployment is ready');
                     healthy = true;
                     break;
                   }
@@ -188,7 +217,7 @@ jobs:
               }
               core.setOutput('deployment_ready', healthy ? 'true' : 'false');
             } else {
-              console.log('⚠️ No Vercel deployment URL found');
+              console.log('⚠️ No preview deployment URL found');
               core.setOutput('deployment_ready', 'false');
             }
 
