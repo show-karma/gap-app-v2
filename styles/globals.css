@@ -888,3 +888,93 @@ body[data-scroll-locked] .karma-assistant-panel {
 [data-embed="login"] #privy-dialog-backdrop {
   display: none !important;
 }
+
+/*
+  Karma Panels — a full-screen authoring surface where an agent-written HTML
+  sheet is reviewed and marked up. Light is the default: the sheet is white, so
+  a warm near-white ground lets it sit on the page instead of being cut out of
+  a black field. Dark mirrors the app's own ground.
+
+  Both accents read the runtime --color-primary* triplets so a tenant's brand
+  still drives them. --kp-accent is a fill (dark ink sits on it); the bright
+  brand teal only reaches 1.57:1 on white, so strokes and dots on a light
+  surface use --kp-accent-strong instead. Custom properties cross shadow
+  boundaries, which is what lets the canvas stylesheet inside the shadow root
+  use the same values without hardcoding them.
+*/
+.kp-studio {
+  --kp-ground: hsl(40 12% 95.5%);
+  --kp-ground-deep: hsl(40 10% 93%);
+  --kp-panel: hsl(0 0% 100%);
+  --kp-raised: hsl(40 14% 97%);
+  --kp-line: hsl(40 8% 88%);
+  --kp-line-strong: hsl(40 7% 78%);
+  --kp-ink: hsl(228 12% 12%);
+  --kp-ink-soft: hsl(228 6% 38%);
+  --kp-ink-faint: hsl(228 6% 43%);
+  --kp-sheet: hsl(0 0% 100%);
+  --kp-sheet-ink: hsl(228 10% 12%);
+  --kp-tip: hsl(228 14% 14%);
+  --kp-tip-ink: hsl(0 0% 97%);
+  --kp-accent: rgb(var(--color-primary));
+  --kp-accent-strong: rgb(var(--color-primary-dark));
+  --kp-accent-ink: hsl(228 30% 8%);
+  --kp-danger: hsl(357 62% 40%);
+  --kp-sheet-shadow: 0 1px 2px hsl(40 10% 55% / 0.16), 0 14px 36px -12px hsl(40 12% 40% / 0.24);
+  --kp-badge-shadow: 0 1px 3px hsl(228 30% 20% / 0.35);
+}
+
+.dark .kp-studio {
+  --kp-ground: hsl(228 18% 6%);
+  --kp-ground-deep: hsl(228 20% 4%);
+  --kp-panel: hsl(228 14% 9%);
+  --kp-raised: hsl(228 13% 12%);
+  --kp-line: hsl(228 12% 17%);
+  --kp-line-strong: hsl(228 12% 24%);
+  --kp-ink: hsl(0 0% 97%);
+  --kp-ink-soft: hsl(228 9% 64%);
+  --kp-ink-faint: hsl(228 9% 54%);
+  --kp-accent-strong: rgb(var(--color-primary));
+  --kp-danger: hsl(357 62% 62%);
+  --kp-sheet-shadow: 0 1px 2px hsl(228 30% 2% / 0.6), 0 18px 48px -12px hsl(228 30% 2% / 0.7);
+  --kp-badge-shadow: 0 1px 3px hsl(228 30% 2% / 0.5);
+}
+
+.kp-studio ::selection {
+  background: color-mix(in srgb, var(--kp-accent) 34%, transparent);
+  color: var(--kp-ink);
+}
+
+.kp-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--kp-line-strong) transparent;
+}
+.kp-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.kp-scroll::-webkit-scrollbar-track { background: transparent; }
+.kp-scroll::-webkit-scrollbar-thumb {
+  background: var(--kp-line-strong);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+.kp-scroll::-webkit-scrollbar-thumb:hover {
+  background-clip: content-box;
+  background-color: var(--kp-ink-faint);
+}
+
+@keyframes kp-sheet-in {
+  from { opacity: 0; transform: translateY(10px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.kp-sheet-in { animation: kp-sheet-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes kp-pop-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.kp-pop-in { animation: kp-pop-in 160ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kp-sheet-in,
+  .kp-pop-in { animation: none; }
+}

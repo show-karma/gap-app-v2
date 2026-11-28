@@ -1,0 +1,39 @@
+"use client";
+
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/src/components/navigation/Link";
+
+export default function PanelsError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-xl px-4 py-12">
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+        </div>
+        <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
+        <p className="text-sm text-muted-foreground">
+          We encountered an error loading the Panels page. Please try again.
+        </p>
+        {error.digest ? (
+          <p className="text-xs text-muted-foreground">Error ID: {error.digest}</p>
+        ) : null}
+        <div className="flex gap-3">
+          <Button type="button" onClick={reset}>
+            <RefreshCw className="h-4 w-4" />
+            Try again
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/">Go home</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
