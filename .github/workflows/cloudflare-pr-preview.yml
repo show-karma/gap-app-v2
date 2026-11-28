@@ -1,8 +1,8 @@
 name: Cloudflare preview of a pull request
 
-# The Cloudflare counterpart of the Vercel preview of each pull request. Every
-# PR gets its own pair of Workers, built from the PR head with the Vercel
-# "preview" environment, like the Cloudflare staging (cloudflare-staging.yml):
+# Every PR gets its own pair of Workers, built from the PR head using build and
+# runtime secrets from the GitHub Environment `Preview`, like Cloudflare staging
+# (cloudflare-staging.yml), with no Vercel dependency:
 #   gap-app-v2-pr-<n>       routing Worker, served at https://pr-<n>.preview.karmahq.org
 #   gap-app-v2-pr-<n>-app   Next server Worker (no public URL)
 # Each PR preview attaches a Worker Custom Domain (pr-<n>.preview.karmahq.org in
@@ -76,14 +76,13 @@ jobs:
          github.event.pull_request.head.repo.full_name == github.repository &&
          github.actor != 'dependabot[bot]')
       )
+    environment: Preview
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_ENV_FILE: .vercel/.env.preview.local
     steps:
       - name: Check the inputs and credentials
+        env:
+          CF_PUBLIC_ENV: ${{ secrets.CF_PUBLIC_ENV }}
         run: |
           if ! [[ "$PR" =~ ^[1-9][0-9]*$ ]]; then
             echo "::error::Not a pull request number: $PR"
@@ -93,18 +92,24 @@ jobs:
             echo "::error::Set secrets.CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (variable or secret)."
             exit 1
           fi
+          if [ -z "$CF_PUBLIC_ENV" ]; then
+            echo "::error::Set secrets.CF_PUBLIC_ENV in the Preview GitHub Environment."
+            exit 1
+          fi
 
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          # The branch as pushed, like the Vercel preview; a dispatch builds the
-          # branch it was run from.
+          # The branch as pushed, matching HEAD of the PR; a dispatch builds
+          # the branch it was run from.
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Build and bundle
         uses: ./.github/actions/cloudflare-build
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          public-env: ${{ secrets.CF_PUBLIC_ENV }}
+          sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          environment: preview
 
       - name: Create the shared cache bucket if missing
         run: |
@@ -182,10 +187,16 @@ jobs:
           done
           echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
-      - name: Copy the missing runtime secrets from Vercel
+      - name: Sync missing runtime secrets
         # Secrets stay with a Worker across deploys, so only the first deploy (or
         # one after a failed first deploy) copies them. Only the Next server
         # Worker reads them; a preview has no cron, so no CRON_SECRET on routing.
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SANITY_VIEWER_TOKEN: ${{ secrets.SANITY_VIEWER_TOKEN }}
+          SANITY_WEBHOOK_SECRET: ${{ secrets.SANITY_WEBHOOK_SECRET }}
+          SANITY_PREVIEW_SECRET: ${{ secrets.SANITY_PREVIEW_SECRET }}
+          PROJECT_CACHE_REVALIDATION_SECRET: ${{ secrets.PROJECT_CACHE_REVALIDATION_SECRET }}
         run: |
           have=$(npx wrangler secret list --name "$NEXT_WORKER" --format json | jq -r '.[].name')
           missing=$(for name in CRON_SECRET SANITY_VIEWER_TOKEN SANITY_WEBHOOK_SECRET SANITY_PREVIEW_SECRET PROJECT_CACHE_REVALIDATION_SECRET; do
@@ -194,12 +205,8 @@ jobs:
           if [ -z "$missing" ]; then
             echo "Every runtime secret is set."
           else
-            CF_SECRETS="$missing" node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --config wrangler.app.pr.jsonc
+            CF_SECRETS="$missing" node scripts/cf-env.mjs secrets -- --config wrangler.app.pr.jsonc
           fi
-
-      - name: Remove the pulled environment
-        if: always()
-        run: rm -rf .vercel
 
       - name: Smoke test
         # Issuing the dedicated 2nd-level TLS certificate for a brand-new
