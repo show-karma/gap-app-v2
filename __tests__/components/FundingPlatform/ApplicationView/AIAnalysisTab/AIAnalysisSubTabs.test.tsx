@@ -14,7 +14,7 @@ describe("AIAnalysisSubTabs", () => {
 
       expect(screen.getByText("External Evaluation")).toBeInTheDocument();
       expect(screen.getByText("Internal Evaluation")).toBeInTheDocument();
-      expect(screen.getByText("Applications Insights")).toBeInTheDocument();
+      expect(screen.getByText("Review Insights")).toBeInTheDocument();
     });
 
     it("shows external tab as active by default", () => {
@@ -55,13 +55,13 @@ describe("AIAnalysisSubTabs", () => {
       expect(mockOnTabChange).toHaveBeenCalledWith("internal");
     });
 
-    it("calls onTabChange with 'insights' when Applications Insights tab is clicked", async () => {
+    it("calls onTabChange with 'insights' when Review Insights tab is clicked", async () => {
       const user = userEvent.setup();
       const mockOnTabChange = vi.fn();
 
       render(<AIAnalysisSubTabs activeTab="external" onTabChange={mockOnTabChange} />);
 
-      await user.click(screen.getByText("Applications Insights"));
+      await user.click(screen.getByText("Review Insights"));
 
       expect(mockOnTabChange).toHaveBeenCalledWith("insights");
     });
