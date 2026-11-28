@@ -5,28 +5,28 @@ name: Deploy to Cloudflare production
 # wrangler.app.jsonc, env.production), the Next server first:
 #   gap-app-v2-production-app  (no public URL)
 #   gap-app-v2-production      (https://gap-app-v2-production.<account>.workers.dev
-#                               until the cutover adds the production hosts)
+#                               and custom domains once routed in Cloudflare)
 # Cache bucket: gap-app-v2-opennext-cache.
 #
-# Started by pushing a tag `cloudflare-production-<anything>` on the commit to
-# deploy, while the migration is in progress: GitHub only offers "Run workflow"
-# for workflows on the default branch, and this one lives on
-# migration-cloudflare until the cutover. The prefix never matches the tags of
-# production.yml ('v*', 'production-*'), so it never deploys Vercel.
-#   git tag cloudflare-production-$(date -u +%Y%m%d-%H%M) origin/migration-cloudflare
-#   git push origin <that tag>
-# Once the file is on `main`, Actions → Run workflow works too. Until the cutover the
-# production hosts stay on Vercel; the workers.dev copy answers noindex
-# (cloudflare/workers-dev-noindex.ts) and is where the smoke test runs. At the
-# cutover, move this file to `main` with the tag triggers of production.yml.
+# Triggered on `v*` and `production-*` release tags (matching production.yml so
+# Cloudflare and Vercel stay in lockstep until Vercel is retired),
+# `cloudflare-production-*` tags, or manual workflow_dispatch (with optional
+# `tag` input, defaulting to the selected branch head).
 #
 # Needs the same secrets as cloudflare-staging.yml.
 
 on:
   push:
     tags:
+      - 'v*'
+      - 'production-*'
       - 'cloudflare-production-*'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag or ref to deploy (defaults to branch head)'
+        required: false
+        type: string
 
 # One production deploy at a time, never cancelled halfway.
 concurrency:
@@ -65,6 +65,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.sha }}
 
       - name: Build and bundle
         uses: ./.github/actions/cloudflare-build
@@ -103,11 +105,12 @@ jobs:
       - name: Deploy the Next server Worker
         env:
           OPEN_NEXT_DEPLOY: 'true'
+          DEPLOY_REF: ${{ inputs.tag || github.ref_name }}
         run: |
           for attempt in $(seq "$DEPLOY_ATTEMPTS"); do
             npx wrangler deploy .open-next/upload-app/next-server.js \
               --config wrangler.app.jsonc --env production --no-bundle --no-minify \
-              --message "$GITHUB_REF_NAME at $GITHUB_SHA" && break
+              --message "$DEPLOY_REF at $GITHUB_SHA" && break
             [ "$attempt" = "$DEPLOY_ATTEMPTS" ] && exit 1
             sleep 15
           done
@@ -116,13 +119,14 @@ jobs:
         id: routing
         env:
           OPEN_NEXT_DEPLOY: 'true'
+          DEPLOY_REF: ${{ inputs.tag || github.ref_name }}
         run: |
           # Without pipefail, tee would hide a failed deploy from the retry loop.
           set -o pipefail
           for attempt in $(seq "$DEPLOY_ATTEMPTS"); do
             npx wrangler deploy .open-next/upload/worker.js --env production \
               --no-bundle --no-minify \
-              --message "$GITHUB_REF_NAME at $GITHUB_SHA" | tee deploy.log && break
+              --message "$DEPLOY_REF at $GITHUB_SHA" | tee deploy.log && break
             [ "$attempt" = "$DEPLOY_ATTEMPTS" ] && exit 1
             sleep 15
           done
@@ -156,15 +160,17 @@ jobs:
           for path in / /communities /api/geo /sitemap_index.xml /admin/studio; do
             attempts=6
             [ "$path" = "/" ] && attempts=30
+            status="000"
             for attempt in $(seq "$attempts"); do
-              status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path")
+              status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$URL$path" || true)
               [ "$status" = "200" ] && break
               sleep 10
             done
             echo "$status $path"
             [ "$status" = "200" ] || fail=1
           done
-          if curl -sI --max-time 60 "$URL/" | grep -qi '^x-robots-tag: noindex'; then
+          headers=$(curl -sSI --max-time 60 "$URL/" || true)
+          if grep -qi '^x-robots-tag: noindex' <<<"$headers"; then
             echo "noindex on workers.dev"
           else
             echo "::error::$URL/ has no X-Robots-Tag noindex; search engines could index it."

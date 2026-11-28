@@ -8,8 +8,7 @@ name: Deploy to Cloudflare staging
 #   gap-app-v2-staging-app  (no public URL)
 #   gap-app-v2-staging      (https://staging.karmahq.org)
 #
-# Runs on pushes to migration-cloudflare while the migration is in progress;
-# move it to `main` together with staging.yml at the cutover.
+# Runs on pushes to main, in parallel with staging.yml while Vercel stays as fallback.
 #
 # Needs:
 #   secrets.CLOUDFLARE_API_TOKEN  "Edit Cloudflare Workers" template, Karma account only
@@ -19,7 +18,7 @@ name: Deploy to Cloudflare staging
 on:
   push:
     branches:
-      - migration-cloudflare
+      - main
   workflow_dispatch:
 
 # One deploy at a time; a newer push waits instead of racing the R2 upload.

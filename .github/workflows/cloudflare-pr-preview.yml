@@ -20,8 +20,7 @@ name: Cloudflare preview of a pull request
 # what closed PRs leave behind.
 #
 # Only PRs from branches of this repository: a fork's PR gets no secrets.
-# Runs on PRs into migration-cloudflare while the migration is in progress, where
-# the Workers code lives; move it to `main` at the cutover.
+# Runs on PRs into main.
 #
 # By hand (Actions → this workflow → Run workflow): deploy or delete the preview
 # of a PR number, from the branch picked there.
@@ -29,7 +28,7 @@ name: Cloudflare preview of a pull request
 on:
   pull_request:
     branches:
-      - migration-cloudflare
+      - main
     types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
     inputs:
