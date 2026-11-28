@@ -1,19 +1,21 @@
 name: Deploy to Cloudflare production
 
-# The Cloudflare counterpart of production.yml: builds with the Vercel
-# "production" environment and deploys two Workers (wrangler.jsonc and
-# wrangler.app.jsonc, env.production), the Next server first:
+# Deploys the Cloudflare Workers production environment using build and runtime
+# secrets from the GitHub Environment `Production` (secrets.CF_PUBLIC_ENV,
+# optional SENTRY_AUTH_TOKEN, and runtime secrets) — no Vercel credentials
+# needed. Deploys two Workers (wrangler.jsonc and wrangler.app.jsonc,
+# env.production), the Next server first:
 #   gap-app-v2-production-app  (no public URL)
 #   gap-app-v2-production      (https://gap-app-v2-production.<account>.workers.dev
 #                               and custom domains once routed in Cloudflare)
 # Cache bucket: gap-app-v2-opennext-cache.
 #
-# Triggered on `v*` and `production-*` release tags (matching production.yml so
-# Cloudflare and Vercel stay in lockstep until Vercel is retired),
-# `cloudflare-production-*` tags, or manual workflow_dispatch (with optional
-# `tag` input, defaulting to the selected branch head).
+# Triggered on `v*` and `production-*` release tags, `cloudflare-production-*`
+# tags, or manual workflow_dispatch (with optional `tag` input, defaulting to
+# the selected branch head).
 #
-# Needs the same secrets as cloudflare-staging.yml.
+# Needs repo CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID plus GitHub
+# Environment `Production` secrets (CF_PUBLIC_ENV, SENTRY_AUTH_TOKEN, runtime secrets).
 
 on:
   push:
@@ -37,14 +39,11 @@ permissions:
   contents: read
 
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
   WRANGLER_SEND_METRICS: 'false'
   ROUTING_WORKER: gap-app-v2-production
   R2_BUCKET: gap-app-v2-opennext-cache
-  VERCEL_ENV_FILE: .vercel/.env.production.local
   # Right after wrangler creates a Worker, its next API call can still answer
   # "This Worker does not exist" (code 10007); a deploy is retried for that.
   DEPLOY_ATTEMPTS: '3'
@@ -53,13 +52,20 @@ jobs:
   deploy:
     name: Deploy to Cloudflare production
     if: github.repository == 'show-karma/gap-app-v2'
+    environment: Production
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Check the Cloudflare credentials
+        env:
+          CF_PUBLIC_ENV: ${{ secrets.CF_PUBLIC_ENV }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "::error::Set secrets.CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (variable or secret)."
+            exit 1
+          fi
+          if [ -z "$CF_PUBLIC_ENV" ]; then
+            echo "::error::Set secrets.CF_PUBLIC_ENV in the Production GitHub Environment."
             exit 1
           fi
 
@@ -71,7 +77,8 @@ jobs:
       - name: Build and bundle
         uses: ./.github/actions/cloudflare-build
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          public-env: ${{ secrets.CF_PUBLIC_ENV }}
+          sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
           environment: production
 
       - name: Upload the incremental cache to R2
@@ -137,16 +144,18 @@ jobs:
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Copy the runtime secrets from Vercel
+      - name: Sync runtime secrets
         # The route handlers that read them run in the Next server Worker; the
         # routing Worker's cron handler also sends CRON_SECRET.
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SANITY_VIEWER_TOKEN: ${{ secrets.SANITY_VIEWER_TOKEN }}
+          SANITY_WEBHOOK_SECRET: ${{ secrets.SANITY_WEBHOOK_SECRET }}
+          SANITY_PREVIEW_SECRET: ${{ secrets.SANITY_PREVIEW_SECRET }}
+          PROJECT_CACHE_REVALIDATION_SECRET: ${{ secrets.PROJECT_CACHE_REVALIDATION_SECRET }}
         run: |
-          node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --config wrangler.app.jsonc --env production
-          CF_SECRETS=CRON_SECRET node scripts/cf-vercel-env.mjs secrets "$VERCEL_ENV_FILE" -- --env production
-
-      - name: Remove the pulled environment
-        if: always()
-        run: rm -rf .vercel
+          node scripts/cf-env.mjs secrets -- --config wrangler.app.jsonc --env production
+          CF_SECRETS=CRON_SECRET node scripts/cf-env.mjs secrets -- --env production
 
       - name: Smoke test
         # On the first deploy the workers.dev hostname can take a few minutes to
